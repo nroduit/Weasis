@@ -50,26 +50,37 @@ public class HiddenSeriesManager {
       Attributes dicom,
       String originSeriesUID,
       Function<String, Map<String, Set<LazyContourLoader>>> addSeries) {
-    if (dicom == null || !StringUtil.hasText(originSeriesUID)) {
+    if (dicom == null) {
       return;
     }
     Sequence seriesRef = dicom.getSequence(Tag.ReferencedSeriesSequence);
     if (seriesRef != null) {
-      for (Attributes ref : seriesRef) {
-        String seriesUID = ref.getString(Tag.SeriesInstanceUID);
-        if (StringUtil.hasText(seriesUID)) {
-          reference2Series
-              .computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>())
-              .add(originSeriesUID);
-          if (addSeries != null) {
-            Map<String, Set<LazyContourLoader>> refMap = addSeries.apply(seriesUID);
-            Sequence instanceSeq = ref.getSequence(Tag.ReferencedInstanceSequence);
-            if (instanceSeq != null) {
-              for (Attributes instance : instanceSeq) {
-                String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUID);
-                if (StringUtil.hasText(sopInstanceUID)) {
-                  refMap.computeIfAbsent(sopInstanceUID, _ -> new LinkedHashSet<>());
-                }
+      registerReferencedSeries(seriesRef, originSeriesUID, addSeries);
+    }
+  }
+
+  /** Same as above for referenced series items gathered elsewhere, e.g. from a blending state. */
+  public void registerReferencedSeries(
+      Iterable<Attributes> seriesRef,
+      String originSeriesUID,
+      Function<String, Map<String, Set<LazyContourLoader>>> addSeries) {
+    if (seriesRef == null || !StringUtil.hasText(originSeriesUID)) {
+      return;
+    }
+    for (Attributes ref : seriesRef) {
+      String seriesUID = ref.getString(Tag.SeriesInstanceUID);
+      if (StringUtil.hasText(seriesUID)) {
+        reference2Series
+            .computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>())
+            .add(originSeriesUID);
+        if (addSeries != null) {
+          Map<String, Set<LazyContourLoader>> refMap = addSeries.apply(seriesUID);
+          Sequence instanceSeq = ref.getSequence(Tag.ReferencedInstanceSequence);
+          if (instanceSeq != null) {
+            for (Attributes instance : instanceSeq) {
+              String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUID);
+              if (StringUtil.hasText(sopInstanceUID)) {
+                refMap.computeIfAbsent(sopInstanceUID, _ -> new LinkedHashSet<>());
               }
             }
           }

@@ -16,6 +16,7 @@ import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GL2GL3;
 import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.GLEventListener;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -38,8 +39,10 @@ import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.IntBuffer;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +50,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
@@ -54,6 +58,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
+import javax.swing.Timer;
 import javax.swing.ToolTipManager;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Matrix3d;
@@ -80,8 +85,11 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.*;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
+import org.weasis.core.ui.editor.image.export.AnimationExportDialog;
+import org.weasis.core.ui.editor.image.export.RecorderSourceBuilder;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
+import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -90,6 +98,7 @@ import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.SpecialElementRegion;
+import org.weasis.dicom.codec.export.DicomScSinkFactory;
 import org.weasis.dicom.codec.geometry.PatientOrientation;
 import org.weasis.dicom.codec.seg.SegBuildScheduler;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
@@ -104,9 +113,12 @@ import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
+import org.weasis.dicom.viewer3d.Messages;
 import org.weasis.dicom.viewer3d.OpenGLInfo;
 import org.weasis.dicom.viewer3d.View3DFactory;
+import org.weasis.dicom.viewer3d.dockable.DisplayTool;
 import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
+import org.weasis.dicom.viewer3d.export.RotationSourceBuilder;
 import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.View;
@@ -119,7 +131,8 @@ public class View3d extends VolumeCanvas
     implements ViewCanvas<DicomImageElement>,
         RenderingLayerChangeListener<DicomImageElement>,
         GLEventListener,
-        ViewProgress {
+        ViewProgress,
+        LiveCaptureView {
 
   private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(View3d.class);
 
@@ -143,11 +156,29 @@ public class View3d extends VolumeCanvas
   private final TextureData texture;
   private final Program program;
   private final Program quadProgram;
+
+  /**
+   * The path tracer, built from the same includes as {@link #program} but linked on its own and
+   * only when first needed: together, the two took the driver's linker several times as long.
+   */
+  private final Program tracerProgram;
+
+  /** Whether the tracer program has been linked and given the uniform setters of the main one. */
+  private boolean tracerReady;
+
+  /** Whether the background link of the tracer program has been started. */
+  private boolean tracerPrelinkStarted;
+
+  /** Post-pass of the path tracer: filters the running average into the display image. */
+  private final Program denoiseProgram;
+
   private final boolean useComputeShader;
   protected final RenderingLayer<DicomImageElement> renderingLayer;
 
   private int vertexBuffer;
   protected Preset volumePreset;
+  private Preset renderedPreset;
+  private final ConcurrentLinkedQueue<Preset> retiredPresets = new ConcurrentLinkedQueue<>();
   private JProgressBar progressBar;
 
   private volatile Vector3d mprCrossHairPosition; // NOSONAR visibility reference
@@ -162,6 +193,60 @@ public class View3d extends VolumeCanvas
 
   /** Frame-time breakdown, inert unless {@link RenderProfiler#P_PROFILE} is set. */
   private final RenderProfiler profiler = new RenderProfiler(this);
+
+  /** Samples per pixel a path-traced scene accumulates before the view stops refining itself. */
+  public static final int PATH_TRACING_FRAMES = 512;
+
+  /** Displayed frame time the sample count per frame is tuned to. */
+  private static final long TARGET_FRAME_NANOS = 50_000_000L;
+
+  /** Samples per pixel one displayed frame may trace at most, whatever the frame time. */
+  private static final int MAX_SAMPLES_PER_FRAME = 64;
+
+  /** Running average of the path tracer, allocated on first use. */
+  private final AccumulationBuffers accumulation = new AccumulationBuffers();
+
+  /** Set while an export captures the view, to keep the convergence message out of the frames. */
+  private boolean capturing;
+
+  /** Samples per pixel already averaged when the frame being rendered starts; 0 restarts. */
+  private int frameIndex;
+
+  /**
+   * Samples per pixel a displayed frame traces. Each displayed frame costs a Swing repaint, the
+   * denoise pass and the panel read-back on top of the tracing, so the count doubles while a frame
+   * stays well under {@link #TARGET_FRAME_NANOS} and halves when it overshoots.
+   */
+  private int samplesPerFrame = 1;
+
+  /** Samples the frame being rendered traces; 0 outside a path-traced frame. */
+  private int tracedSamples;
+
+  /** Whether the frame being rendered bounds its extinction per block of the majorant grid. */
+  private boolean majorantGridReady;
+
+  /** Per-block extinction bounds of the tracer, baked from the grid for the current window. */
+  private final MajorantMap majorantMap = new MajorantMap();
+
+  /** Fingerprint of the scene the current average belongs to. */
+  private long sceneFingerprint;
+
+  /** Bumped by every change that is not visible in the fingerprint's other inputs. */
+  private int sceneVersion;
+
+  /** Repaints while the average converges; coalesced so the EDT keeps serving other events. */
+  private final Timer accumulationTimer =
+      new Timer(
+          0,
+          e -> {
+            if (isShowing()) {
+              repaint();
+            }
+          });
+
+  /** Environment textures of this context, uploaded on first use and kept until disposal. */
+  private final Map<EnvironmentMap, EnvironmentTexture> environmentTextures =
+      new EnumMap<>(EnvironmentMap.class);
 
   /** 1×1×1 placeholders keeping the segmentation sampler units complete, see bindSegTextures. */
   private int segPlaceholderTextureId;
@@ -203,12 +288,25 @@ public class View3d extends VolumeCanvas
     if (useComputeShader) {
       this.texture = new ComputeTexture(this, ComputeTexture.COMPUTE_LOCAL_SIZE);
       this.program = new Program("compute", ShaderManager.COMPUTE_SHADER); // NON-NLS
+      this.tracerProgram =
+          new Program("pathTracing", ShaderManager.PATH_TRACING_COMPUTE_SHADER); // NON-NLS
+      this.denoiseProgram = new Program("denoise", ShaderManager.DENOISE_COMPUTE_SHADER); // NON-NLS
       LOGGER.info("Volume rendering: using compute shader path (OpenGL >= 4.3)");
     } else {
       this.texture = new FboRenderTexture(this);
       this.program =
           new Program(
               "fbo", ShaderManager.FBO_VERTEX_SHADER, ShaderManager.FBO_FRAGMENT_SHADER); // NON-NLS
+      this.tracerProgram =
+          new Program(
+              "pathTracingFbo", // NON-NLS
+              ShaderManager.FBO_VERTEX_SHADER,
+              ShaderManager.PATH_TRACING_FBO_FRAGMENT_SHADER);
+      this.denoiseProgram =
+          new Program(
+              "denoiseFbo", // NON-NLS
+              ShaderManager.FBO_VERTEX_SHADER,
+              ShaderManager.DENOISE_FBO_FRAGMENT_SHADER);
       LOGGER.info(
           "Volume rendering: using FBO fragment-shader path (OpenGL 3.3 fallback{})",
           View3DFactory.isFboForced()
@@ -225,8 +323,11 @@ public class View3d extends VolumeCanvas
     setLayout(null);
 
     this.renderingLayer = new RenderingLayer<>();
+    renderingLayer.getShadingOptions().loadCinematic(GuiUtils.getUICore().getLocalPersistence());
+    accumulationTimer.setRepeats(false);
     this.volumePreset = Preset.getDefaultPreset(null);
-    volumePreset.setRequiredBuilding(true);
+    this.renderedPreset = volumePreset;
+    renderedPreset.setRequiredBuilding(true);
 
     actionsInView.put(ActionVol.ORIENTATION_CUBE.cmd(), false);
 
@@ -326,11 +427,23 @@ public class View3d extends VolumeCanvas
     if (volTexture != null) {
       GuiUtils.getUICore().closeSeries(volTexture.getSeries());
     }
+    accumulationTimer.stop();
     GL2ES2 gl = OpenglUtils.getGL();
     if (gl != null) {
       program.destroy(gl);
+      tracerProgram.destroy(gl);
+      tracerReady = false;
       quadProgram.destroy(gl);
+      denoiseProgram.destroy(gl);
       texture.destroy(gl);
+      accumulation.destroy(gl);
+      majorantMap.dispose(gl);
+      environmentTextures.values().forEach(t -> t.destroy(gl));
+      environmentTextures.clear();
+      destroyRetiredPresets(gl);
+      if (renderedPreset != null && renderedPreset.isPreview()) {
+        renderedPreset.destroy(gl);
+      }
       SegVolumeTexture svt = segVolumeTexture;
       if (svt != null) {
         // destroy() releases the SegVolumeTexture's retain on the SegmentationVolume.
@@ -345,6 +458,7 @@ public class View3d extends VolumeCanvas
 
   @Override
   public void handleLayerChanged(RenderingLayer<DicomImageElement> layer) {
+    sceneVersion++;
     display();
   }
 
@@ -406,14 +520,39 @@ public class View3d extends VolumeCanvas
   protected void paintComponent(Graphics graphs) {
     profiler.beginFrame();
     long panelStart = profiler.start();
+    long frameStart = System.nanoTime();
+    tracedSamples = 0;
     // Triggers display() — the GL pass — then the GLJPanel read-back into the Java2D pipeline.
     super.paintComponent(graphs);
+    adaptSamplesPerFrame(System.nanoTime() - frameStart);
     long overlayStart = profiler.start();
     if (graphs instanceof Graphics2D graphics2D) {
       draw(graphics2D);
     }
     profiler.endFrame(
-        panelStart, overlayStart, camera.isAdjusting(), getPassWidth(), getPassHeight());
+        panelStart,
+        overlayStart,
+        camera.isAdjusting(),
+        getPassWidth(),
+        getPassHeight(),
+        tracedSamples,
+        majorantGridReady);
+  }
+
+  /**
+   * Tunes the samples per displayed frame to the time the frame just painted took, which covers the
+   * tracing, the denoise pass and the read-back. A frame trimmed to the end of the budget says
+   * nothing about the cost of a full one and is ignored.
+   */
+  private void adaptSamplesPerFrame(long frameNanos) {
+    if (tracedSamples == 0 || tracedSamples != samplesPerFrame) {
+      return;
+    }
+    if (frameNanos < TARGET_FRAME_NANOS / 2) {
+      samplesPerFrame = Math.min(samplesPerFrame * 2, MAX_SAMPLES_PER_FRAME);
+    } else if (frameNanos > TARGET_FRAME_NANOS * 3 / 2) {
+      samplesPerFrame = Math.max(samplesPerFrame / 2, 1);
+    }
   }
 
   protected void draw(Graphics2D g2d) {
@@ -449,6 +588,27 @@ public class View3d extends VolumeCanvas
     }
     drawProgressBar(g2d, progressBar);
     drawSegLoadingMessage(g2d);
+    drawPathTracingProgress(g2d);
+  }
+
+  /**
+   * Paints how far the path-traced average has converged, in the place and style of the
+   * segmentation message, until the frame budget is spent. Hidden while the camera moves, since the
+   * preview shown then is not accumulating.
+   */
+  private void drawPathTracingProgress(Graphics2D g2d) {
+    if (capturing || !isPathTracingFrame() || frameIndex >= PATH_TRACING_FRAMES) {
+      return;
+    }
+    String msg =
+        MessageFormat.format(
+            Messages.getString("path.tracing.progress"),
+            Math.round(100.0 * frameIndex / PATH_TRACING_FRAMES));
+    g2d.setFont(getLayerFont());
+    FontMetrics fm = g2d.getFontMetrics();
+    float x = (getWidth() - fm.stringWidth(msg)) / 2f;
+    float y = getHeight() - fm.getHeight() * 2f;
+    FontTools.paintColorFontOutline(g2d, msg, x, y, Color.ORANGE);
   }
 
   /**
@@ -593,7 +753,12 @@ public class View3d extends VolumeCanvas
         "lightColor",
         (g, loc) -> g.glUniform3fv(loc, 1, lColor.get(Buffers.newDirectFloatBuffer(3))));
     program.allocateUniform(
-        gl, "shading", (g, loc) -> g.glUniform1i(loc, renderingLayer.isShading() ? 1 : 0));
+        gl,
+        "shading",
+        (g, loc) ->
+            g.glUniform1i(loc, renderingLayer.isShading() || isPathTracingPreview() ? 1 : 0));
+    allocateCinematicUniforms(gl);
+    allocatePathTracingUniforms(gl);
     program.allocateUniform(
         gl,
         "texelSize",
@@ -609,7 +774,7 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl,
         "renderingType",
-        (g, loc) -> ((GL2ES3) g).glUniform1ui(loc, renderingLayer.getRenderingType().getId()));
+        (g, loc) -> ((GL2ES3) g).glUniform1ui(loc, effectiveRenderingType().getId()));
     program.allocateUniform(
         gl,
         "mipType",
@@ -640,12 +805,29 @@ public class View3d extends VolumeCanvas
           g.glUniform1f(
               loc,
               isSegMode()
-                  ? volumePreset.getWidth()
+                  ? renderedPreset.getWidth()
                   : (tex != null ? (float) tex.getLevelMax() : 1f));
         });
     program.allocateUniform(gl, "outputLevelMin", (g, loc) -> g.glUniform1f(loc, 0));
     program.allocateUniform(
-        gl, "outputLevelMax", (g, loc) -> g.glUniform1f(loc, volumePreset.getWidth()));
+        gl, "outputLevelMax", (g, loc) -> g.glUniform1f(loc, renderedPreset.getWidth()));
+    program.allocateUniform(
+        gl, "visibleMin", (g, loc) -> g.glUniform1f(loc, renderedPreset.getVisibleRange()[0]));
+    program.allocateUniform(
+        gl, "visibleMax", (g, loc) -> g.glUniform1f(loc, renderedPreset.getVisibleRange()[1]));
+    program.allocateUniform(
+        gl,
+        "gradientOpacityEnabled",
+        (g, loc) -> g.glUniform1i(loc, renderedPreset.getGradientOpacityTable() != null ? 1 : 0));
+    program.allocateUniform(
+        gl,
+        "gradientOpacity",
+        (g, loc) -> {
+          float[] table = renderedPreset.getGradientOpacityTable();
+          if (table != null) {
+            g.glUniform1fv(loc, table.length, table, 0);
+          }
+        });
     program.allocateUniform(
         gl,
         "windowWidth",
@@ -653,7 +835,7 @@ public class View3d extends VolumeCanvas
             g.glUniform1f(
                 loc,
                 isSegMode()
-                    ? volumePreset.getColorMax() - volumePreset.getColorMin()
+                    ? renderedPreset.getColorMax() - renderedPreset.getColorMin()
                     : renderingLayer.getWindowWidth()));
     program.allocateUniform(
         gl,
@@ -662,7 +844,7 @@ public class View3d extends VolumeCanvas
             g.glUniform1f(
                 loc,
                 isSegMode()
-                    ? (volumePreset.getColorMin() + volumePreset.getColorMax()) / 2f
+                    ? (renderedPreset.getColorMin() + renderedPreset.getColorMax()) / 2f
                     : renderingLayer.getWindowCenter()));
 
     if (!useComputeShader) {
@@ -690,8 +872,8 @@ public class View3d extends VolumeCanvas
     if (volTexture != null) {
       volTexture.init(gl);
     }
-    if (volumePreset != null) {
-      volumePreset.init(gl, renderingLayer.isInvertLut());
+    if (renderedPreset != null) {
+      renderedPreset.init(gl, renderingLayer.isInvertLut());
     }
 
     // MPR crosshair uniforms — position in normalized [0,1]³ volume-texture space
@@ -764,6 +946,24 @@ public class View3d extends VolumeCanvas
     quadProgram.allocateUniform(
         gl, "texScale", (g, loc) -> g.glUniform2f(loc, getRenderScaleX(), getRenderScaleY()));
 
+    denoiseProgram.init(gl);
+    denoiseProgram.shareUniforms(
+        gl,
+        program,
+        "viewMatrix",
+        "projectionMatrix",
+        "texelSize",
+        "overlayScale",
+        "crosshairPos",
+        "crosshairRot",
+        "crosshairVisible",
+        "crosshairCutMode",
+        "exposure",
+        "frameIndex",
+        "historyMap",
+        "featureMap",
+        "momentMap");
+
     gl.glGenBuffers(1, intBuffer);
     vertexBuffer = intBuffer.get(0);
     gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBuffer);
@@ -772,6 +972,37 @@ public class View3d extends VolumeCanvas
         (long) vertexBufferData.length * Float.BYTES,
         Buffers.newDirectFloatBuffer(vertexBufferData),
         GL.GL_STATIC_DRAW);
+    prelinkTracer();
+  }
+
+  /**
+   * Links the tracer program on the shared context, off the EDT, so choosing path tracing does not
+   * wait the seconds the driver takes to link it the first time it sees this shader. Program
+   * objects are shared between the contexts; a frame that needs it before this is done links it
+   * itself, one of the two waiting on the other.
+   */
+  private void prelinkTracer() {
+    if (tracerPrelinkStarted) {
+      return;
+    }
+    tracerPrelinkStarted = true;
+    CompletableFuture.runAsync(
+            () -> {
+              GLContext context = OpenglUtils.getDefaultGlContext();
+              context.makeCurrent();
+              try {
+                GL2ES2 gl = context.getGL().getGL2ES2();
+                tracerProgram.init(gl);
+                gl.glFlush();
+              } finally {
+                context.release();
+              }
+            })
+        .exceptionally(
+            e -> {
+              LOGGER.warn("Cannot link the path tracing program in the background", e);
+              return null;
+            });
   }
 
   private boolean isSegMode() {
@@ -794,6 +1025,298 @@ public class View3d extends VolumeCanvas
 
   public void display(GLAutoDrawable drawable) {
     render(drawable.getGL().getGL2ES2());
+  }
+
+  private void allocateCinematicUniforms(GL2ES2 gl) {
+    ShadingOptions options = renderingLayer.getShadingOptions();
+    program.allocateUniform(
+        gl,
+        "cinematic",
+        (g, loc) ->
+            g.glUniform1i(loc, renderingLayer.isCinematic() || isPathTracingPreview() ? 1 : 0));
+    program.allocateUniform(
+        gl,
+        "keyLightDir",
+        (g, loc) ->
+            g.glUniform3fv(
+                loc, 1, options.getKeyLightDirection().get(Buffers.newDirectFloatBuffer(3))));
+    program.allocateUniform(
+        gl, "shadowStrength", (g, loc) -> g.glUniform1f(loc, options.getShadowStrength()));
+    program.allocateUniform(
+        gl, "aoStrength", (g, loc) -> g.glUniform1f(loc, options.getAoStrength()));
+    program.allocateUniform(gl, "exposure", (g, loc) -> g.glUniform1f(loc, options.getExposure()));
+    program.allocateUniform(
+        gl, "shadowSteps", (g, loc) -> g.glUniform1i(loc, getCinematicQuality().getShadowSteps()));
+    program.allocateUniform(
+        gl, "aoSteps", (g, loc) -> g.glUniform1i(loc, getCinematicQuality().getAoSteps()));
+    program.allocateUniform(
+        gl, "cinematicScale", (g, loc) -> g.glUniform1f(loc, (float) getInteractiveQualityRate()));
+    program.allocateUniform(
+        gl, "envMap", (g, loc) -> g.glUniform1i(loc, EnvironmentTexture.TEXTURE_UNIT));
+    program.allocateUniform(
+        gl, "envEnabled", (g, loc) -> g.glUniform1i(loc, environmentTexture() != null ? 1 : 0));
+    program.allocateUniform(
+        gl, "envStrength", (g, loc) -> g.glUniform1f(loc, options.getEnvironmentStrength()));
+    program.allocateUniform(
+        gl, "envMaxLod", (g, loc) -> g.glUniform1f(loc, EnvironmentTexture.maxLod()));
+    program.allocateUniform(
+        gl,
+        "envSh",
+        (g, loc) -> {
+          EnvironmentTexture env = environmentTexture();
+          if (env != null) {
+            g.glUniform3fv(loc, 9, env.getIrradianceSh(), 0);
+          }
+        });
+  }
+
+  private void allocatePathTracingUniforms(GL2ES2 gl) {
+    program.allocateUniform(
+        gl, "historyMap", (g, loc) -> g.glUniform1i(loc, AccumulationBuffers.HISTORY_UNIT));
+    program.allocateUniform(
+        gl, "featureMap", (g, loc) -> g.glUniform1i(loc, AccumulationBuffers.FEATURE_UNIT));
+    program.allocateUniform(
+        gl, "momentMap", (g, loc) -> g.glUniform1i(loc, AccumulationBuffers.MOMENT_UNIT));
+    program.allocateUniform(gl, "frameIndex", (g, loc) -> g.glUniform1i(loc, frameIndex));
+    program.allocateUniform(gl, "ptSamples", (g, loc) -> g.glUniform1i(loc, tracedSamples));
+    program.allocateUniform(
+        gl, "ptMaxBounces", (g, loc) -> g.glUniform1i(loc, getCinematicQuality().getBounces()));
+    program.allocateUniform(
+        gl, "majorantMap", (g, loc) -> g.glUniform1i(loc, MajorantMap.TEXTURE_UNIT));
+    program.allocateUniform(
+        gl, "ptGridEnabled", (g, loc) -> g.glUniform1i(loc, majorantGridReady ? 1 : 0));
+    program.allocateUniform(
+        gl,
+        "ptGridSize",
+        (g, loc) -> {
+          MajorantGrid grid = majorantGridReady ? volTexture.getMajorantGrid() : null;
+          if (grid != null) {
+            g.glUniform3i(loc, grid.getWidth(), grid.getHeight(), grid.getDepth());
+          } else {
+            g.glUniform3i(loc, 1, 1, 1);
+          }
+        });
+    program.allocateUniform(
+        gl, "ptMaxAlpha", (g, loc) -> g.glUniform1f(loc, renderedPreset.getMaxAlpha()));
+  }
+
+  /** Path tracing is asked for, but the camera is moving: the cinematic composite stands in. */
+  private boolean isPathTracingPreview() {
+    return renderingLayer.getRenderingType() == RenderingType.PATH_TRACING && camera.isAdjusting();
+  }
+
+  private boolean isPathTracingFrame() {
+    return renderingLayer.getRenderingType() == RenderingType.PATH_TRACING && !camera.isAdjusting();
+  }
+
+  /** Whether the volume and its segmentation overlay have finished loading. */
+  public boolean isLoadFinished() {
+    return volTexture != null && volTexture.isLoadFinished() && !segBuildRunning;
+  }
+
+  /** Whether the view renders a progressive path-traced image. */
+  public boolean isPathTracing() {
+    return renderingLayer.getRenderingType() == RenderingType.PATH_TRACING;
+  }
+
+  /** Samples averaged into the current path-traced image, or 0 when the scene changed since. */
+  public int getAccumulatedSamples() {
+    return isPathTracingFrame() && sceneFingerprint == computeSceneFingerprint() ? frameIndex : 0;
+  }
+
+  public void setCapturing(boolean capturing) {
+    this.capturing = capturing;
+  }
+
+  @Override
+  public List<LayerItem> getCaptureItems() {
+    return DisplayTool.ANNOTATION_ITEMS;
+  }
+
+  @Override
+  public Runnable beginCapture(DisplayProfile profile) {
+    boolean wasCapturing = capturing;
+    capturing = true;
+    Runnable restoreLayer = () -> {};
+    if (profile != null && infoLayer instanceof AbstractInfoLayer<?> layer) {
+      Map<LayerItem, Boolean> items = new EnumMap<>(LayerItem.class);
+      DisplayTool.ANNOTATION_ITEMS.forEach(
+          item -> items.put(item, profile.annotationItems().contains(item)));
+      restoreLayer = layer.overrideForCapture(profile.annotations(), items);
+    }
+    Runnable restore = restoreLayer;
+    return () -> {
+      restore.run();
+      capturing = wasCapturing;
+    };
+  }
+
+  private RenderingType effectiveRenderingType() {
+    return isPathTracingPreview() ? RenderingType.COMPOSITE : renderingLayer.getRenderingType();
+  }
+
+  /**
+   * Everything the average depends on. A frame whose fingerprint matches the previous one refines
+   * the average; any other frame restarts it, so a repaint caused by a popup or an expose keeps the
+   * progress while a camera move, a preset, a cut or a segmentation change starts over.
+   */
+  private long computeSceneFingerprint() {
+    return Objects.hash(
+        camera.getViewMatrix(),
+        camera.getProjectionMatrix(),
+        getSurfaceWidth(),
+        getSurfaceHeight(),
+        sceneVersion,
+        mprCrossHairPosition,
+        mprCrossHairRotation,
+        mprCrossHairCutMode,
+        getSegType(),
+        System.identityHashCode(segVolumeTexture),
+        System.identityHashCode(renderedPreset));
+  }
+
+  // Binds the history and the write target of the average, restarting it when the scene changed.
+  private void beginPathTracingFrame(GL2ES2 gl) {
+    long fingerprint = computeSceneFingerprint();
+    if (fingerprint != sceneFingerprint) {
+      sceneFingerprint = fingerprint;
+      frameIndex = 0;
+    }
+    tracedSamples = Math.max(1, Math.min(samplesPerFrame, PATH_TRACING_FRAMES - frameIndex));
+    MajorantGrid grid = volTexture.getMajorantGrid();
+    majorantGridReady = grid.isComplete() && renderedPreset != null && isMajorantGridEnabled();
+    if (!tracerReady) {
+      tracerProgram.shareAllUniforms(gl, program);
+      tracerReady = true;
+    }
+    accumulation.prepare(gl, getSurfaceWidth(), getSurfaceHeight());
+    setAccumulationTargets(
+        accumulation.getWriteId(),
+        accumulation.getFeatureWriteId(),
+        accumulation.getMomentWriteId());
+  }
+
+  /**
+   * Binds the baked bounds of the tracer on their unit, baking them first when the preset or the
+   * window changed since; a single placeholder block stands in while the volume is loading. The
+   * bake runs its own program, so the active one is restored afterwards. The vertex array of the
+   * quad must be set up.
+   */
+  private void bindMajorantMap(GL2ES2 gl, Program active) {
+    if (!majorantGridReady) {
+      majorantMap.bindPlaceholder(gl);
+      return;
+    }
+    MajorantGrid grid = volTexture.getMajorantGrid();
+    long fingerprint =
+        Objects.hash(
+            System.identityHashCode(renderedPreset),
+            renderingLayer.getWindowWidth(),
+            renderingLayer.getWindowCenter(),
+            renderingLayer.getLutShapeId(),
+            isSegMode());
+    if (!majorantMap.isBaked(grid, fingerprint)) {
+      grid.render(gl);
+      majorantMap.bake(gl, program, grid, fingerprint, getSurfaceWidth(), getSurfaceHeight());
+      active.use(gl);
+    }
+    majorantMap.bind(gl);
+  }
+
+  /**
+   * Makes the frame just traced the history, filters it into the display image with the denoise
+   * pass, then schedules the next refinement until the frame budget is spent. On the FBO path the
+   * vertex array must still be set up.
+   */
+  private void endPathTracingFrame(GL2ES2 gl) {
+    accumulation.swap();
+    int before = frameIndex;
+    frameIndex += tracedSamples;
+    accumulation.bindHistory(gl);
+    if (profiler.isEnabled() && ConvergenceReport.crosses(before, frameIndex)) {
+      ConvergenceReport.log(
+          gl,
+          accumulation.getHistoryId(),
+          accumulation.getMomentHistoryId(),
+          getSurfaceWidth(),
+          getSurfaceHeight(),
+          frameIndex,
+          profiler.getName());
+    }
+    denoiseProgram.use(gl);
+    denoiseProgram.setUniforms(gl);
+    if (texture instanceof ComputeTexture compute) {
+      GL4 gl4 = gl.getGL4();
+      compute.dispatch(gl4);
+      gl4.glMemoryBarrier(GL2ES3.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    } else if (texture instanceof FboRenderTexture fbo) {
+      fbo.renderDenoisePass(gl);
+    }
+    if (frameIndex < PATH_TRACING_FRAMES) {
+      accumulationTimer.restart();
+    }
+  }
+
+  private void setAccumulationTargets(
+      int colorTextureId, int featureTextureId, int momentTextureId) {
+    if (texture instanceof ComputeTexture compute) {
+      compute.setAccumulationTargets(colorTextureId, featureTextureId, momentTextureId);
+    } else if (texture instanceof FboRenderTexture fbo) {
+      fbo.setAccumulationTargets(colorTextureId, featureTextureId, momentTextureId);
+    }
+  }
+
+  /** Texture of the selected environment, baked and cached on first request; null for NONE. */
+  private EnvironmentTexture environmentTexture() {
+    EnvironmentMap map = renderingLayer.getShadingOptions().getEnvironment();
+    boolean lit = renderingLayer.isCinematic() && renderingLayer.isShading();
+    if (!lit && renderingLayer.getRenderingType() != RenderingType.PATH_TRACING) {
+      return null;
+    }
+    EnvironmentMap.Baked baked = map.bake();
+    return baked == null
+        ? null
+        : environmentTextures.computeIfAbsent(map, m -> new EnvironmentTexture(baked));
+  }
+
+  // The sampler must always see a complete texture on its unit, so the environment is bound even
+  // when unused: the first available one stands in for NONE.
+  private void bindEnvironmentTexture(GL2ES2 gl) {
+    EnvironmentTexture env = environmentTexture();
+    if (env == null) {
+      env =
+          environmentTextures.computeIfAbsent(
+              ShadingOptions.DEFAULT_ENVIRONMENT, m -> new EnvironmentTexture(m.bake()));
+    }
+    env.render(gl);
+  }
+
+  /** The grid is on unless the property says otherwise, in the JVM or the local persistence. */
+  private static boolean isMajorantGridEnabled() {
+    boolean fallback = !"false".equals(System.getProperty(RenderingLayer.P_MAJORANT_GRID));
+    return GuiUtils.getUICore()
+        .getLocalPersistence()
+        .getBooleanProperty(RenderingLayer.P_MAJORANT_GRID, fallback);
+  }
+
+  private static CinematicQuality getCinematicQuality() {
+    return CinematicQuality.fromOrdinal(
+        GuiUtils.getUICore()
+            .getLocalPersistence()
+            .getIntProperty(
+                RenderingLayer.P_CINEMATIC_QUALITY, CinematicQuality.DEFAULT.ordinal()));
+  }
+
+  /** Quality factor of the current frame: the dynamic-quality rate while adjusting, 1 otherwise. */
+  private double getInteractiveQualityRate() {
+    if (!camera.isAdjusting()) {
+      return 1.0;
+    }
+    return GuiUtils.getUICore()
+            .getLocalPersistence()
+            .getIntProperty(
+                RenderingLayer.P_DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE)
+        / 100.0;
   }
 
   /**
@@ -874,36 +1397,67 @@ public class View3d extends VolumeCanvas
     gl.glActiveTexture(GL.GL_TEXTURE0);
   }
 
+  // A replaced preview preset belongs to this view only: its textures go at the next frame.
+  private void retire(Preset old, Preset replacement) {
+    if (old != null && old != replacement && old.isPreview()) {
+      retiredPresets.add(old);
+    }
+  }
+
+  private void destroyRetiredPresets(GL2ES2 gl) {
+    Preset retired;
+    while ((retired = retiredPresets.poll()) != null) {
+      retired.destroy(gl);
+    }
+  }
+
   private void render(GL2ES2 gl2) {
     long start = profiler.start();
+    destroyRetiredPresets(gl2);
     gl2.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
     if (volTexture != null && volTexture.isReadyForDisplay()) {
       int sampleCount = renderingLayer.getQuality();
       if (camera.isAdjusting()) {
-        double quality =
-            GuiUtils.getUICore()
-                    .getLocalPersistence()
-                    .getIntProperty(
-                        RenderingLayer.P_DYNAMIC_QUALITY,
-                        RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE)
-                / 100.0;
-        sampleCount = Math.max(64, (int) Math.round(sampleCount * quality));
+        sampleCount = Math.max(64, (int) Math.round(sampleCount * getInteractiveQualityRate()));
       }
       renderingLayer.setDepthSampleNumber(sampleCount);
 
+      boolean pathTracing = isPathTracingFrame();
+      if (pathTracing) {
+        beginPathTracingFrame(gl2);
+      } else {
+        frameIndex = 0;
+        tracedSamples = 0;
+        majorantGridReady = false;
+        accumulation.bindHistory(gl2);
+        setAccumulationTargets(0, 0, 0);
+      }
+
+      Program active = pathTracing ? tracerProgram : program;
       if (useComputeShader) {
         // --- Compute shader path (OpenGL >= 4.3) ---
         // Cast to GL4 here: compute shaders (glDispatchCompute, glBindImageTexture) are GL4-only.
         GL4 gl4 = gl2.getGL4();
-        program.use(gl4);
-        program.setUniforms(gl4);
+        active.use(gl4);
+        active.setUniforms(gl4);
         volTexture.render(gl4);
         if (volumePreset != null) {
-          volumePreset.render(gl4, renderingLayer.isInvertLut());
+          renderedPreset.render(gl4, renderingLayer.isInvertLut());
         }
         // Bind segmentation overlay textures (units 4 and 5)
         bindSegTextures(gl4);
+        bindEnvironmentTexture(gl4);
+        if (pathTracing) {
+          gl4.glEnableVertexAttribArray(0);
+          gl4.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBuffer);
+          gl4.glVertexAttribPointer(0, 2, GL.GL_FLOAT, false, 0, 0);
+          bindMajorantMap(gl4, active);
+          gl4.glDisableVertexAttribArray(0);
+        }
         texture.render(gl4);
+        if (pathTracing) {
+          endPathTracingFrame(gl4);
+        }
         quadProgram.use(gl4);
         quadProgram.setUniforms(gl4);
 
@@ -920,24 +1474,31 @@ public class View3d extends VolumeCanvas
         gl4.glDisable(GL.GL_BLEND);
       } else {
         // --- FBO fragment-shader fallback path (OpenGL 3.3+, e.g., macOS GL3) ---
-        program.use(gl2);
-        program.setUniforms(gl2);
+        active.use(gl2);
+        active.setUniforms(gl2);
 
         // Bind volume and LUT textures on their expected texture units
         volTexture.render(gl2);
         if (volumePreset != null) {
-          volumePreset.render(gl2, renderingLayer.isInvertLut());
+          renderedPreset.render(gl2, renderingLayer.isInvertLut());
         }
         // Bind segmentation overlay textures (units 4 and 5)
         bindSegTextures(gl2);
+        bindEnvironmentTexture(gl2);
 
         // Set up the vertex array so FboRenderTexture.render() can call glDrawArrays
         gl2.glEnableVertexAttribArray(0);
         gl2.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBuffer);
         gl2.glVertexAttribPointer(0, 2, GL.GL_FLOAT, false, 0, 0);
+        if (pathTracing) {
+          bindMajorantMap(gl2, active);
+        }
 
         // Render into FBO (binds FBO, draws quad, unbinds FBO, restores viewport)
         texture.render(gl2);
+        if (pathTracing) {
+          endPathTracingFrame(gl2);
+        }
         gl2.glDisableVertexAttribArray(0);
 
         // Step 2: Blit the FBO colour-attachment texture to the screen using the quad program.
@@ -978,6 +1539,7 @@ public class View3d extends VolumeCanvas
   }
 
   public void updateSegmentation() {
+    sceneVersion++;
     Type currentType = getSegType();
     DicomVolTexture tex = volTexture;
     Volume<?, ?> volume = tex == null ? null : tex.getVolume();
@@ -1272,6 +1834,7 @@ public class View3d extends VolumeCanvas
     // Build the colour LUT from the Preset region map (reflects the tree's checkbox state)
     Map<Integer, RegionAttributes> overrideAttrs = buildRegionOverrideMap();
     svt.setPendingColorLut(svt.getSegVolume().buildSegmentColorLUT(overrideAttrs));
+    sceneVersion++;
     display();
   }
 
@@ -1408,15 +1971,19 @@ public class View3d extends VolumeCanvas
 
   public void setVolumePreset(Preset preset) {
     this.volumePreset = Objects.requireNonNull(preset);
-    volumePreset.setRequiredBuilding(true);
+    sceneVersion++;
+    Preset rendered = preset.forVolume(volTexture);
+    retire(this.renderedPreset, rendered);
+    this.renderedPreset = rendered;
+    rendered.setRequiredBuilding(true);
 
-    PresetWindowLevel defaultPreset = getVolTexture().getDefaultPreset(volumePreset);
+    PresetWindowLevel defaultPreset = getVolTexture().getDefaultPreset(rendered);
     changePresetWindowLevel(defaultPreset);
 
-    renderingLayer.applyVolumePreset(volumePreset, false);
+    renderingLayer.applyVolumePreset(rendered, false);
     eventManager
         .getAction(ActionVol.VOL_SHADING)
-        .ifPresent(a -> a.setSelectedWithoutTriggerAction(volumePreset.isShade()));
+        .ifPresent(a -> a.setSelectedWithoutTriggerAction(rendered.isShade()));
     display();
   }
 
@@ -1430,8 +1997,14 @@ public class View3d extends VolumeCanvas
     eventManager.applyDefaultWindowLevel(this);
   }
 
+  /** The selected preset, as listed in the menus. */
   public Preset getVolumePreset() {
     return volumePreset;
+  }
+
+  /** The preset the view renders: the selected one compiled for the loaded volume. */
+  public Preset getRenderedPreset() {
+    return renderedPreset;
   }
 
   @Override
@@ -1714,7 +2287,36 @@ public class View3d extends VolumeCanvas
 
   @Override
   public List<Action> getExportActions() {
-    return null;
+    if (volTexture == null) {
+      return null;
+    }
+    ImageViewerPlugin<DicomImageElement> container = eventManager.getSelectedView2dContainer();
+    RecorderSourceBuilder recorder = new RecorderSourceBuilder(container != null);
+    return List.of(
+        CaptureAction.SCREENSHOT.action(
+            ActionW.EXPORT_VIEW.getTitle(), _ -> ScreenshotDialog.showDialog(this)),
+        CaptureAction.ANIMATION.action(
+            Messages.getString("rotation.export"), _ -> showAnimationExport()),
+        CaptureAction.RECORD.action(
+            recorder.title(),
+            _ ->
+                AnimationExportDialog.showDialog(
+                    recorder,
+                    this,
+                    container,
+                    DicomScSinkFactory.defaultSinks(volTexture.getSeries(), recorder.title()))));
+  }
+
+  private void showAnimationExport() {
+    if (volTexture == null) {
+      return;
+    }
+    RotationSourceBuilder builder = new RotationSourceBuilder(this);
+    AnimationExportDialog.showDialog(
+        builder,
+        this,
+        eventManager.getSelectedView2dContainer(),
+        DicomScSinkFactory.defaultSinks(volTexture.getSeries(), builder.title()));
   }
 
   public MouseActionAdapter getMouseAdapter(String command) {
@@ -1801,6 +2403,11 @@ public class View3d extends VolumeCanvas
   }
 
   @Override
+  public GraphicMouseHandler<DicomImageElement> getGraphicMouseHandler() {
+    return graphicMouseHandler;
+  }
+
+  @Override
   public JPopupMenu buildGraphicContextMenu(MouseEvent evt, List<Graphic> selected) {
     return null;
   }
@@ -1818,6 +2425,7 @@ public class View3d extends VolumeCanvas
 
       GuiUtils.addItemToMenu(popupMenu, manager.getViewTypeMenu(null));
       GuiUtils.addItemToMenu(popupMenu, manager.getShadingMenu(null));
+      GuiUtils.addItemToMenu(popupMenu, manager.getCinematicMenu(null));
       GuiUtils.addItemToMenu(popupMenu, manager.getSProjectionMenu(null));
       count = addSeparatorToPopupMenu(popupMenu, count);
 
@@ -1939,8 +2547,7 @@ public class View3d extends VolumeCanvas
           // re-applying here would only trigger a redundant repaint. Targets adopt the full 3D
           // rotation that the integer slider angle cannot represent.
           if (!isSource) {
-            camera.getRotation().set(quat);
-            camera.updateCameraTransform();
+            camera.setRotation(quat);
           }
         } else if (command.equals(ActionW.RESET.cmd())) {
           reset();
@@ -1969,8 +2576,8 @@ public class View3d extends VolumeCanvas
           setVolumePreset((Preset) val);
         } else if (command.equals(ActionW.INVERT_LUT.cmd())) {
           if (val instanceof Boolean invertLut) {
-            if (volumePreset != null && renderingLayer.isInvertLut() != invertLut) {
-              volumePreset.setRequiredBuilding(true);
+            if (renderedPreset != null && renderingLayer.isInvertLut() != invertLut) {
+              renderedPreset.setRequiredBuilding(true);
             }
             renderingLayer.setInvertLut(invertLut);
           }
@@ -1988,6 +2595,13 @@ public class View3d extends VolumeCanvas
             if (type != oldType) {
               renderingLayer.setEnableRepaint(false);
               renderingLayer.setRenderingType(type);
+              if (type == RenderingType.PATH_TRACING && !renderingLayer.isCinematic()) {
+                // Path tracing is the cinematic lighting taken to its end, so it turns it on.
+                setCinematic(true);
+                eventManager
+                    .getAction(ActionVol.VOL_CINEMATIC)
+                    .ifPresent(a -> a.setSelectedWithoutTriggerAction(true));
+              }
               renderingLayer.setEnableRepaint(true);
               display();
             }
@@ -2007,6 +2621,10 @@ public class View3d extends VolumeCanvas
         } else if (command.equals(ActionVol.VOL_SHADING.cmd())) {
           if (val instanceof Boolean shading) {
             renderingLayer.setShading(shading);
+          }
+        } else if (command.equals(ActionVol.VOL_CINEMATIC.cmd())) {
+          if (val instanceof Boolean cinematic) {
+            setCinematic(cinematic);
           }
         } else if (command.equals(ActionVol.SEG_TYPE.cmd())) {
           if (val instanceof Type type) {
@@ -2036,6 +2654,20 @@ public class View3d extends VolumeCanvas
         }
       }
     }
+  }
+
+  // Cinematic lighting is a refinement of the shading, so switching it on switches shading on too.
+  private void setCinematic(boolean cinematic) {
+    renderingLayer.setEnableRepaint(false);
+    renderingLayer.setCinematic(cinematic);
+    if (cinematic && !renderingLayer.isShading()) {
+      renderingLayer.setShading(true);
+      eventManager
+          .getAction(ActionVol.VOL_SHADING)
+          .ifPresent(a -> a.setSelectedWithoutTriggerAction(true));
+    }
+    renderingLayer.setEnableRepaint(true);
+    renderingLayer.fireLayerChanged();
   }
 
   private void ensureMprIsOpen() {

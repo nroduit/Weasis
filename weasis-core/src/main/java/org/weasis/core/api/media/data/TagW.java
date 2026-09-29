@@ -106,9 +106,16 @@ public class TagW {
   public static final TagW ThumbnailPath = new TagW("ThumbnailPath", TagType.STRING);
   public static final TagW ExplorerModel =
       new TagW("ExplorerModel", Messages.getString("TagElement.exp_model"), TagType.OBJECT);
-  public static final TagW PresentationModel = new TagW("PesentationModel", TagType.OBJECT);
-  public static final TagW PresentationModelBirary =
-      new TagW("PesentationModelBinary", TagType.BYTE);
+  public static final TagW PresentationModel = new TagW("PresentationModel", TagType.OBJECT);
+  public static final TagW PresentationModelBinary =
+      new TagW("PresentationModelBinary", TagType.BYTE);
+
+  /**
+   * @deprecated use {@link #PresentationModelBinary}.
+   */
+  @Deprecated(since = "4.8.0", forRemoval = true)
+  public static final TagW PresentationModelBirary = PresentationModelBinary;
+
   public static final TagW SplitSeriesNumber =
       new TagW("SplitSeriesNumber", Messages.getString("TagElement.split_no"), TagType.INTEGER);
   public static final TagW SeriesSelected =
@@ -128,6 +135,10 @@ public class TagW {
       new TagW("ImageBitsPerPixel", Messages.getString("TagElement.img_bpp"), TagType.INTEGER);
   public static final TagW ImageCache = new TagW("ImageCache", TagType.BOOLEAN);
   public static final TagW ShutterFinalShape = new TagW("ShutterFinalShape", TagType.OBJECT);
+
+  /** Holds the redaction mask; value is an {@code org.weasis.dicom.codec.Redaction.Mask}. */
+  public static final TagW RedactionMask = new TagW("RedactionMask", TagType.OBJECT);
+
   public static final TagW ShutterRGBColor = new TagW("ShutterRGBColor", TagType.COLOR);
   public static final TagW ShutterPSValue = new TagW("ShutterPSValue", TagType.INTEGER);
   public static final TagW ImageDescriptor = new TagW("ImageDescriptor", TagType.OBJECT);
@@ -149,6 +160,11 @@ public class TagW {
       new TagW("DicomSpecialElementList", TagType.LIST);
   public static final TagW SlicePosition = new TagW("SlicePosition", TagType.DOUBLE);
   public static final TagW SuvFactor = new TagW("SUVFactor", TagType.DOUBLE);
+
+  /**
+   * Pixel value that a percent color map takes as 100 %, e.g. the prescribed dose of a dose grid.
+   */
+  public static final TagW PercentReference = new TagW("PercentReference", TagType.DOUBLE);
 
   public static final TagW RootElement = new TagW("RootElement", TagType.STRING);
   public static final TagW FilePath = new TagW("FilePath", TagType.STRING);
@@ -197,6 +213,7 @@ public class TagW {
     addTag(SeriesSelected);
     addTag(SlicePosition);
     addTag(SuvFactor);
+    addTag(PercentReference);
     addTag(DirectDownloadFile);
     addTag(DirectDownloadThumbnail);
     addTag(RootElement);
@@ -205,6 +222,7 @@ public class TagW {
     addTag(CurrentFolder);
 
     // DICOM
+    addTag(PatientPseudoUID);
     addTag(SubseriesInstanceUID);
     addTag(PRLUTsExplanation);
     addTag(PrDicomObject);
@@ -216,7 +234,7 @@ public class TagW {
   protected final String keyword;
   protected final String displayedName;
   protected final TagType type;
-  protected int anonymizationType;
+  protected TagCategory category;
   protected final int vmMin;
   protected final int vmMax;
   protected final transient Object defaultValue;
@@ -233,7 +251,7 @@ public class TagW {
     this.keyword = keyword;
     this.displayedName = displayedName;
     this.type = type == null ? TagType.STRING : type;
-    this.anonymizationType = 0;
+    this.category = TagCategory.OTHER;
     this.defaultValue = defaultValue;
     this.vmMax = Math.max(vmMax, 1);
     this.vmMin = Math.max(vmMin, 1);
@@ -426,12 +444,22 @@ public class TagW {
     return TagType.STRING.equals(type) || TagType.TEXT.equals(type) || TagType.URI.equals(type);
   }
 
-  public synchronized int getAnonymizationType() {
-    return anonymizationType;
+  /**
+   * What kind of information this tag carries; {@link TagCategory#OTHER} by default. The action to
+   * take is decided by the {@link MaskingProfile} in force, not here, so several profiles can be
+   * active at once on different threads.
+   */
+  public synchronized TagCategory getCategory() {
+    return category;
   }
 
-  public synchronized void setAnonymizationType(int anonymizationType) {
-    this.anonymizationType = anonymizationType;
+  public synchronized void setCategory(TagCategory category) {
+    this.category = category == null ? TagCategory.OTHER : category;
+  }
+
+  /** Keys by which a masking configuration may name this tag, see {@link MaskingModel}. */
+  public List<String> maskingKeys() {
+    return keyword == null ? List.of() : List.of(MaskingModel.INTERNAL_PREFIX + keyword);
   }
 
   public String addGMTOffset(String format, TagReadable readable) {

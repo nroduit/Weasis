@@ -385,9 +385,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
 
   @Override
   public void mouseReleased(MouseEvent e) {
-    if (basicState.isActionEnabled()
-        && !e.isConsumed()
-        && (e.getModifiers() & getButtonMask()) != 0) {
+    if (basicState.isActionEnabled() && !e.isConsumed() && isBoundButton(e)) {
       model.setValueIsAdjusting(false);
     }
   }

@@ -70,8 +70,14 @@ public class ResourceUtil {
     DRAW("svg/action/draw.svg"), // NON-NLS
     DRAW_4POINTS_ANGLE("svg/action/draw4PointsAngle.svg"), // NON-NLS
     DRAW_ANGLE("svg/action/drawAngle.svg"), // NON-NLS
+    DRAW_ARROW("svg/action/drawArrow.svg"), // NON-NLS
+    DRAW_BIDIRECTIONAL("svg/action/drawBidirectional.svg"), // NON-NLS
+    DRAW_FREEHAND("svg/action/drawFreehand.svg"), // NON-NLS
+    DRAW_RULER("svg/action/drawRuler.svg"), // NON-NLS
     DRAW_CIRCLE("svg/action/drawCircle.svg"), // NON-NLS
+    DRAW_CIRCLE_ROI("svg/action/drawCircleRoi.svg"), // NON-NLS
     DRAW_COBB("svg/action/drawCobb.svg"), // NON-NLS
+    DRAW_CTR("svg/action/drawCtr.svg"), // NON-NLS
     DRAW_ELLIPSE("svg/action/drawEllipse.svg"), // NON-NLS
     DRAW_LINE("svg/action/drawLine.svg"), // NON-NLS
     DRAW_OPEN_ANGLE("svg/action/drawOpenAngle.svg"), // NON-NLS
@@ -89,6 +95,10 @@ public class ResourceUtil {
     EXPORT_CLIPBOARD("svg/action/exportClipboard.svg"), // NON-NLS
     EXPORT_DICOM("svg/action/exportDicom.svg"), // NON-NLS
     EXPORT_IMAGE("svg/action/exportImage.svg"), // NON-NLS
+    CAPTURE("svg/action/capture.svg"), // NON-NLS
+    SCREENSHOT("svg/action/screenshot.svg"), // NON-NLS
+    EXPORT_ANIMATION("svg/action/exportAnimation.svg"), // NON-NLS
+    RECORD("svg/action/record.svg"), // NON-NLS
     EXPORT_ANNOTATIONS("svg/action/exportAnnotations.svg"), // NON-NLS
     FILTER("svg/action/filter.svg"), // NON-NLS
     FLIP("svg/action/flip.svg"), // NON-NLS
@@ -123,6 +133,10 @@ public class ResourceUtil {
     PLUS("svg/action/plus.svg"), // NON-NLS
     PRINT("svg/action/print.svg"), // NON-NLS
     PREVIOUS("svg/action/previous.svg"), // NON-NLS
+    REDACT("svg/action/redact.svg"), // NON-NLS
+    REDACT_CLEAR("svg/action/redactClear.svg"), // NON-NLS
+    REDACT_DEVICE("svg/action/redactDevice.svg"), // NON-NLS
+    REDACT_SAVE("svg/action/redactSave.svg"), // NON-NLS
     RESET("svg/action/reset.svg"), // NON-NLS
     ROTATE_CLOCKWISE("svg/action/rotateClockwise.svg"), // NON-NLS
     ROTATE_COUNTERCLOCKWISE("svg/action/rotateCounterclockwise.svg"), // NON-NLS

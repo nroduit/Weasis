@@ -13,22 +13,32 @@ import org.weasis.core.Messages;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 
 public interface ImageStatistics {
-  Measurement IMAGE_MIN = new Measurement(Messages.getString("measure.min"), 1, false, true, false);
-  Measurement IMAGE_MAX = new Measurement(Messages.getString("measure.max"), 2, false, true, false);
+  Measurement IMAGE_MIN =
+      new Measurement("stats.min", Messages.getString("measure.min"), 1, false, true, false);
+  Measurement IMAGE_MAX =
+      new Measurement("stats.max", Messages.getString("measure.max"), 2, false, true, false);
   Measurement IMAGE_MEAN =
-      new Measurement(Messages.getString("measure.mean"), 3, false, true, true);
+      new Measurement("stats.mean", Messages.getString("measure.mean"), 3, false, true, true);
   Measurement IMAGE_STD =
-      new Measurement(Messages.getString("measure.stdev"), 4, false, true, false);
+      new Measurement("stats.stdev", Messages.getString("measure.stdev"), 4, false, true, false);
   Measurement IMAGE_SKEW =
-      new Measurement(Messages.getString("measure.skew"), 5, false, true, false);
+      new Measurement("stats.skew", Messages.getString("measure.skew"), 5, false, true, false);
   Measurement IMAGE_KURTOSIS =
-      new Measurement(Messages.getString("measure.kurtosis"), 6, false, true, false);
+      new Measurement(
+          "stats.kurtosis", Messages.getString("measure.kurtosis"), 6, false, true, false);
   Measurement IMAGE_PIXELS =
-      new Measurement(Messages.getString("ImageStatistics.pixels"), 7, false, true, false);
+      new Measurement(
+          "stats.pixels", Messages.getString("ImageStatistics.pixels"), 7, false, true, false);
   Measurement IMAGE_MEDIAN =
-      new Measurement(Messages.getString("ImageStatistics.median"), 8, false, true, false);
+      new Measurement(
+          "stats.median", Messages.getString("ImageStatistics.median"), 8, false, true, false);
   Measurement IMAGE_ENTROPY =
-      new Measurement(Messages.getString("ImageStatistics.entropy"), 9, false, true, false);
+      new Measurement(
+          "stats.entropy", Messages.getString("ImageStatistics.entropy"), 9, false, true, false);
+
+  /** Sum of the real values: the counts of a nuclear medicine region. */
+  Measurement IMAGE_SUM =
+      new Measurement("stats.sum", Messages.getString("measure.sum"), 10, false, true, false);
 
   Measurement[] ALL_MEASUREMENTS = {
     IMAGE_PIXELS,
@@ -36,6 +46,7 @@ public interface ImageStatistics {
     IMAGE_MAX,
     IMAGE_MEDIAN,
     IMAGE_MEAN,
+    IMAGE_SUM,
     IMAGE_STD,
     IMAGE_SKEW,
     IMAGE_KURTOSIS,

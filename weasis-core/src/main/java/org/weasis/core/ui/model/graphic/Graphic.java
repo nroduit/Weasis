@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.gui.util.KeyActionValue;
+import org.weasis.core.api.image.measure.PlaneGeometry;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.Copyable;
@@ -39,7 +40,13 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 @XmlJavaTypeAdapter(AbstractGraphic.Adapter.class)
 public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Graphic> {
+  /**
+   * Color of a graphic that does not state one, as in files written before the color was always
+   * stored; it must not change. The color of new graphics is a preference, see {@code
+   * ViewSetting.DEFAULT_LINE_COLOR}.
+   */
   Color DEFAULT_COLOR = Color.YELLOW;
+
   Float DEFAULT_LINE_THICKNESS = 1f;
   Float DEFAULT_FILL_OPACITY = 1f;
   Boolean DEFAULT_LABEL_VISIBLE = Boolean.TRUE;
@@ -51,10 +58,22 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
   String ACTION_TO_BACK = "toBack";
   String ACTION_REMOVE = "remove"; // NON-NLS
   String ACTION_REMOVE_REPAINT = "remove.repaint";
+  String PROPERTY_ANCHOR = "anchor"; // NON-NLS
 
   Integer HANDLE_SIZE = 6;
   Integer SELECTION_SIZE = 10;
   Integer UNDEFINED = -1;
+
+  /**
+   * Colour of what is drawn over the image without being part of the graphic: a midpoint handle
+   * waiting to become a vertex, the preview of the segment that would close a path. It is neither
+   * the black and white of the real handles nor a colour a measurement is normally given, so an
+   * affordance is never read as something that was drawn or measured.
+   */
+  Color EDIT_HINT_COLOR = new Color(255, 77, 210);
+
+  /** Behind {@link #EDIT_HINT_COLOR}, so a hint stays readable on a bright image. */
+  Color EDIT_HINT_HALO_COLOR = new Color(0, 0, 0, 160);
 
   default List<MeasureItem> computeMeasurements(
       MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
@@ -114,6 +133,11 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
    */
   Paint getColorPaint();
 
+  /** True when a dark halo is painted under the lines so they stand out on any image. */
+  default boolean isOutlined() {
+    return false;
+  }
+
   /**
    * Returns <b>TRUE</b> if the graphic is filled, <b>FALSE</b> otherwise (Default value:
    * <b>FALSE</b>)
@@ -162,6 +186,16 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
   void removePropertyChangeListener(PropertyChangeListener propertychangelistener);
 
   void fireRemoveAction();
+
+  /**
+   * Removes the graphic from its model even when it is still being drawn.
+   *
+   * <p>{@link #fireRemoveAction()} ignores an incomplete graphic on purpose: it is also called from
+   * {@code buildShape}, which runs on every drag, and must not drop what the user is in the middle
+   * of placing. Cancelling a draft, or discarding a trace too small to be a shape, is the opposite
+   * situation and goes through here.
+   */
+  void fireRemoveDraftAction();
 
   void toFront();
 
@@ -230,6 +264,30 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
   void setVariablePointsNumber(Boolean variablePointsNumber);
 
   LayerType getLayerType();
+
+  /** Patient-space position of the handle points, or {@code null} when never anchored. */
+  default SpatialAnchor getAnchor() {
+    return null;
+  }
+
+  /** Sets the patient-space position and fires {@link #PROPERTY_ANCHOR} when it changes. */
+  default void setAnchor(SpatialAnchor anchor) {
+    // Graphics without patient-space support ignore the anchor
+  }
+
+  /** Records the patient-space position of the handle points from the plane they lie on. */
+  default void anchor(PlaneGeometry geometry) {
+    if (geometry != null && isGraphicComplete() && !getPts().isEmpty()) {
+      setAnchor(SpatialAnchor.of(geometry, getPts()));
+    }
+  }
+
+  /** Anchors the graphic on the plane of the view, when the view has a located plane. */
+  default void anchorOn(ViewCanvas<?> view) {
+    if (view != null && view.getMeasurableLayer() != null) {
+      anchor(view.getMeasurableLayer().getPlaneGeometry());
+    }
+  }
 
   void removeAllPropertyChangeListener();
 

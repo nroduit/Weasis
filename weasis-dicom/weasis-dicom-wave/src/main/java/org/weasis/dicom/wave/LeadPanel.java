@@ -47,6 +47,10 @@ public class LeadPanel extends JPanel {
 
   private int selectedPosition;
   private final List<SignalMarker> markers;
+
+  /** Sample indexes of the annotations coming from other objects (SR TCOORD items). */
+  private final List<Integer> annotationPositions = new ArrayList<>();
+
   private final Measure measureType;
   private final Font fontTitle = new Font("SanSerif", Font.BOLD, 11);
 
@@ -74,6 +78,15 @@ public class LeadPanel extends JPanel {
 
   public MarkerAnnotation getMarkerAnnotation() {
     return markerAnnotation;
+  }
+
+  /** Replaces the annotation markers of this lead (0-based sample indexes) and repaints. */
+  public void setAnnotationPositions(List<Integer> positions) {
+    annotationPositions.clear();
+    if (positions != null) {
+      annotationPositions.addAll(positions);
+    }
+    repaint();
   }
 
   public void setTime(double start, double length) {
@@ -404,6 +417,17 @@ public class LeadPanel extends JPanel {
     drawMarker(g2, selectedPosition - sampleOffset, dim);
     for (SignalMarker marker : markers) {
       drawMarker(g2, marker.getPosition() - sampleOffset, dim);
+    }
+    if (!annotationPositions.isEmpty()) {
+      g2.setColor(Color.MAGENTA);
+      g2.setStroke(
+          new BasicStroke(
+              1.2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1f, new float[] {4f, 3f}, 0f));
+      for (Integer position : annotationPositions) {
+        if (position != null && position < sampleOffset + sampleNumber) {
+          drawMarker(g2, position - sampleOffset, dim);
+        }
+      }
     }
   }
 

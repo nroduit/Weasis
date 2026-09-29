@@ -30,7 +30,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
@@ -64,6 +63,12 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   public static final String DICOM_SHUTTER = Messages.getString("DisplayTool.shutter");
   public static final String DICOM_ANNOTATIONS = Messages.getString("DisplayTool.dicom_ano");
 
+  /**
+   * Parent node of the graphic layers; not the "Drawings" action title, which the DRAW layer type
+   * already uses.
+   */
+  public static final String GRAPHICS = Messages.getString("DisplayTool.graphics");
+
   public static final String BUTTON_NAME = Messages.getString("DisplayTool.display");
 
   private final JCheckBox applyAllViews =
@@ -76,6 +81,21 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   private DefaultMutableTreeNode dicomInfo;
   private DefaultMutableTreeNode drawings;
   private DefaultMutableTreeNode crosslines;
+
+  /**
+   * Layer types a user can show or hide, in display order. Left out: the types created by the
+   * viewer itself (image annotations, temporary drawings, footprints), the unused POINTS and BLOB
+   * types, and DICOM SEG and RT whose visibility is managed per structure by their own tools.
+   */
+  static final List<LayerType> LAYER_TYPES =
+      List.of(
+          LayerType.MEASURE,
+          LayerType.DRAW,
+          LayerType.ANNOTATION,
+          LayerType.DICOM_PR,
+          LayerType.DICOM_SR);
+
+  private final List<DefaultMutableTreeNode> layerTypeNodes = new ArrayList<>();
   private DefaultMutableTreeNode minAnnotations;
 
   public DisplayTool(String pluginName) {
@@ -100,7 +120,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ANNOTATIONS, true));
     minAnnotations = new DefaultMutableTreeNode(LayerItem.MIN_ANNOTATIONS, false);
     dicomInfo.add(minAnnotations);
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ANONYM_ANNOTATIONS, false));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.SCALE, true));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.LUT, true));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.FUSION_LUT, true));
@@ -111,10 +130,15 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.FRAME, true));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.PIXEL, true));
     rootNode.add(dicomInfo);
-    drawings = new DefaultMutableTreeNode(ActionW.DRAWINGS, true);
+    drawings = new DefaultMutableTreeNode(GRAPHICS, true);
     rootNode.add(drawings);
     crosslines = new DefaultMutableTreeNode(LayerType.CROSSLINES, false);
     drawings.add(crosslines);
+    for (LayerType type : LAYER_TYPES) {
+      DefaultMutableTreeNode node = new DefaultMutableTreeNode(type, false);
+      layerTypeNodes.add(node);
+      drawings.add(node);
+    }
 
     DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
     tree.setModel(model);
@@ -223,14 +247,15 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
               }
             }
           }
-          if (LayerItem.ANONYM_ANNOTATIONS.equals(item)) {
-            // Send message to listeners, only selected view
-            ViewCanvas<?> v = container.getSelectedViewCanvas();
-            Series<?> series = (Series<?>) v.getSeries();
-            EventManager.getInstance()
-                .fireSeriesViewerListeners(
-                    new SeriesViewerEvent(container, series, v.getImage(), EVENT.ANONYM));
-          }
+        }
+      } else if (drawings.equals(parent)
+          && selObject instanceof DefaultMutableTreeNode node
+          && node.getUserObject() instanceof LayerType type
+          && type != LayerType.CROSSLINES) {
+        // Toggling a type only flips the visible flag of its layers: no graphic is deleted or
+        // rebuilt, and the view keeps the state for the images displayed afterwards
+        for (ViewCanvas<?> v : views) {
+          v.setLayerTypeVisibility(type, selected);
         }
       } else if (drawings.equals(parent) && selObject == crosslines) {
         for (ViewCanvas<?> v : views) {
@@ -310,6 +335,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         tree,
         getTreePath(crosslines),
         LangUtil.nullToTrue((Boolean) view.getActionValue(LayerType.CROSSLINES.name())));
+    for (DefaultMutableTreeNode node : layerTypeNodes) {
+      if (node.getUserObject() instanceof LayerType type) {
+        TreeBuilder.setPathSelection(tree, getTreePath(node), view.isLayerTypeVisible(type));
+      }
+    }
   }
 
   private static TreePath getTreePath(TreeNode node) {

@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -29,6 +30,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
@@ -89,7 +91,6 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
-import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -101,11 +102,11 @@ import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.Draggable;
+import org.weasis.core.ui.model.utils.GraphicOutline;
 import org.weasis.core.ui.model.utils.bean.GraphicClipboard;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.Monitor;
-import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.LangUtil;
@@ -113,6 +114,7 @@ import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.ColorLut;
+import org.weasis.opencv.op.lut.colormap.ColorMap;
 
 /**
  * @author Nicolas Roduit
@@ -159,6 +161,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   private final PanPoint highlightedPosition = new PanPoint(PanPoint.State.CENTER);
   private final PanPoint startedDragPoint = new PanPoint(PanPoint.State.DRAGSTART);
   private int pointerType = 0;
+  private static final int PROBE_GAP = 4;
+  private static final int PROBE_ARM = 14;
+  private Point2D probePosition;
 
   protected final RenderedImageLayer<E> imageLayer;
 
@@ -211,6 +216,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     panner = Optional.ofNullable(panner).orElseGet(() -> new Panner<>(this));
   }
 
+  /** Whether a map synchronized from another view may be applied here; all of them by default. */
+  protected boolean acceptsSynchronizedLut(Object lut) {
+    return true;
+  }
+
   @Override
   public void copyActionWState(HashMap<String, Object> actionsInView) {
     actionsInView.putAll(this.actionsInView);
@@ -244,6 +254,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     disOp.setParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA, KernelData.NONE);
     disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, ColorLut.IMAGE.getByteLut());
     disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, false);
+    disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_OUTPUT_BITS, ColorMap.MIN_BITS);
+    disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_OUTPUT_RANGE, null);
+    disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_INPUT_BITS, ColorMap.MIN_BITS);
   }
 
   @Override
@@ -1365,6 +1378,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     g2d.translate(-p.getX(), -p.getY());
 
     drawPointer(g2d, pointerType);
+    drawProbe(g2d);
     drawAffineInvariant(g2d);
     if (infoLayer != null) {
       g2d.setFont(getLayerFont());
@@ -1786,7 +1800,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
       } else if (command.equals(ActionW.LUT.cmd())) {
         // Apply lookup table (color mapping)
-        if (manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, entry.getValue())) {
+        if ((this == synch.getView() || acceptsSynchronizedLut(entry.getValue()))
+            && manager.setParamValue(
+                PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, entry.getValue())) {
+          int bits = WindowOp.outputBitsOf(entry.getValue());
+          manager.setParamValue(WindowOp.OP_NAME, WindowOp.P_OUTPUT_BITS, bits);
+          manager.setParamValue(
+              WindowOp.OP_NAME,
+              WindowOp.P_OUTPUT_RANGE,
+              WindowOp.outputRangeOf(entry.getValue()).orElse(null));
+          manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_INPUT_BITS, bits);
           imageLayer.updateDisplayOperations();
         }
       } else if (command.equals(ActionW.INVERT_LUT.cmd())) {
@@ -1940,6 +1963,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   @Override
+  public GraphicMouseHandler<E> getGraphicMouseHandler() {
+    return graphicMouseHandler;
+  }
+
+  @Override
   public void keyTyped(KeyEvent e) {}
 
   @Override
@@ -1953,6 +1981,34 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   @Override
   public int getPointerType() {
     return pointerType;
+  }
+
+  @Override
+  public void setProbePosition(Point2D imagePoint) {
+    if (!Objects.equals(probePosition, imagePoint)) {
+      probePosition = imagePoint == null ? null : (Point2D) imagePoint.clone();
+      repaint();
+    }
+  }
+
+  /** Small crosshair, open at its centre so the pixel stays visible, on a dark halo. */
+  private void drawProbe(Graphics2D g2d) {
+    if (probePosition == null) {
+      return;
+    }
+    Point p = getMouseCoordinatesFromImage(probePosition.getX(), probePosition.getY());
+    Object[] oldHints = GuiUtils.setRenderingHints(g2d, true, true, false);
+    Path2D cross = new Path2D.Double();
+    for (int[] d : new int[][] {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+      cross.moveTo(p.x + d[0] * PROBE_GAP, p.y + d[1] * PROBE_GAP);
+      cross.lineTo(p.x + d[0] * PROBE_ARM, p.y + d[1] * PROBE_ARM);
+    }
+    BasicStroke line = new BasicStroke(1.5f);
+    GraphicOutline.draw(g2d, cross, line);
+    g2d.setPaint(MeasureTool.viewSetting.getLineColor());
+    g2d.setStroke(line);
+    g2d.draw(cross);
+    GuiUtils.resetRenderingHints(g2d, oldHints);
   }
 
   @Override
@@ -1984,12 +2040,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   @Override
   public List<Action> getExportActions() {
     List<Action> list = new ArrayList<>();
-    DefaultAction exportAction =
-        new DefaultAction(
-            ActionW.EXPORT_VIEW.getTitle(),
-            ActionW.EXPORT_VIEW.getIcon(),
-            _ -> ScreenshotDialog.showDialog(this));
-    list.add(exportAction);
+    list.add(
+        CaptureAction.SCREENSHOT.action(
+            ActionW.EXPORT_VIEW.getTitle(), _ -> ScreenshotDialog.showDialog(this)));
     return list;
   }
 
@@ -2043,25 +2096,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     return viewButtons;
   }
 
+  /**
+   * @deprecated use {@link GraphicEditActions#paste(ViewCanvas, GraphicClipboard.PasteMode,
+   *     java.awt.geom.Point2D)}, which pastes where the user is looking and re-anchors on the
+   *     target.
+   */
+  @Deprecated(since = "4.8.0", forRemoval = true)
   protected void copyGraphicsFromClipboard() {
-    List<Graphic> graphs = DefaultView2d.GRAPHIC_CLIPBOARD.getGraphics();
-    if (graphs != null) {
-      Rectangle2D area = getViewModel().getModelArea();
-      if (graphs.stream().anyMatch(g -> !g.getBounds(null).intersects(area))) {
-        int option =
-            JOptionPane.showConfirmDialog(
-                this,
-                "At least one graphic is outside the image.\n Do you want to continue?"); // NON-NLS
-        if (option != JOptionPane.YES_OPTION) {
-          return;
-        }
-      }
-
-      graphs.forEach(g -> AbstractGraphicModel.addGraphicToModel(this, g.copy()));
-
-      // Repaint all because labels are not drawn
-      repaint();
-    }
+    GraphicEditActions.paste(this, GraphicClipboard.PasteMode.IN_PLACE, null);
   }
 
   public static Cursor getNewCursor(int type) {

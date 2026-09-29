@@ -117,7 +117,6 @@ public final class ResourceMonitor {
         this::sample, SAMPLE_INTERVAL_SECONDS, SAMPLE_INTERVAL_SECONDS, TimeUnit.SECONDS);
     scheduler.scheduleWithFixedDelay(
         this::saveHistory, SAVE_INTERVAL_SECONDS, SAVE_INTERVAL_SECONDS, TimeUnit.SECONDS);
-    Runtime.getRuntime().addShutdownHook(new Thread(this::saveHistory, "weasis-resource-save"));
     installOutOfMemoryDetector();
   }
 
@@ -157,6 +156,15 @@ public final class ResourceMonitor {
 
   public static ResourceMonitor getInstance() {
     return INSTANCE;
+  }
+
+  /**
+   * Stops sampling and saves the history; called when the core bundle stops, while its classes
+   * (OSHI included) can still be loaded, which is no longer the case in a JVM shutdown hook.
+   */
+  public void shutdown() {
+    scheduler.shutdownNow();
+    saveHistory();
   }
 
   /** Records that {@code count} cache entries were evicted under memory pressure. */
@@ -350,23 +358,26 @@ public final class ResourceMonitor {
     return properties;
   }
 
+  // Writes the counters only: snapshot() would also run the hardware probe, which can take
+  // seconds (OSHI runs lshw/lspci on Linux) and must not delay the application exit.
   private void saveHistory() {
     try {
       Path file = statsFile();
-      Snapshot s = snapshot();
+      long uptime = ManagementFactory.getRuntimeMXBean().getUptime();
+      long heapUsed = memoryBean.getHeapMemoryUsage().getUsed();
       Properties properties = new Properties();
       properties.setProperty(VERSION_KEY, AppProperties.WEASIS_VERSION);
-      properties.setProperty("sessionCount", Long.toString(s.sessionCount()));
-      properties.setProperty("totalUptimeMillis", Long.toString(s.totalUptimeMillis()));
-      properties.setProperty("peakHeapUsed", Long.toString(s.heapPeakUsed()));
-      properties.setProperty("peakNativePressure", Double.toString(s.nativePeakPressure()));
-      properties.setProperty("peakProcessCpuLoad", Double.toString(s.peakProcessCpuLoad()));
-      properties.setProperty("peakGcOverhead", Double.toString(s.peakGcOverhead()));
-      properties.setProperty("cacheEvictions", Long.toString(s.cacheEvictions()));
-      properties.setProperty("outOfMemoryEvents", Long.toString(s.outOfMemoryEvents()));
-      properties.setProperty("volumeDiskFallbacks", Long.toString(s.volumeDiskFallbacks()));
-      properties.setProperty("largestImageBytes", Long.toString(s.largestImageBytes()));
-      properties.setProperty("largestVolumeSlices", Long.toString(s.largestVolumeSlices()));
+      properties.setProperty("sessionCount", Long.toString(previousSessions + 1));
+      properties.setProperty("totalUptimeMillis", Long.toString(previousUptimeMillis + uptime));
+      properties.setProperty("peakHeapUsed", Long.toString(Math.max(heapPeakUsed, heapUsed)));
+      properties.setProperty("peakNativePressure", Double.toString(nativePeakPressure));
+      properties.setProperty("peakProcessCpuLoad", Double.toString(peakProcessCpuLoad));
+      properties.setProperty("peakGcOverhead", Double.toString(peakGcOverhead));
+      properties.setProperty("cacheEvictions", Long.toString(cacheEvictions.get()));
+      properties.setProperty("outOfMemoryEvents", Long.toString(outOfMemoryEvents.get()));
+      properties.setProperty("volumeDiskFallbacks", Long.toString(volumeDiskFallbacks.get()));
+      properties.setProperty("largestImageBytes", Long.toString(largestImageBytes.get()));
+      properties.setProperty("largestVolumeSlices", Long.toString(largestVolumeSlices.get()));
       GraphicsInfo.get()
           .ifPresent(
               gpu -> {

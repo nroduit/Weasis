@@ -26,7 +26,6 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
-import javax.swing.KeyStroke;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Quaterniond;
 import org.weasis.core.api.gui.layout.MigLayoutModel;
@@ -36,6 +35,7 @@ import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.KeyBinding;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -103,6 +103,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newOpacityAction());
 
     setAction(newVolumeShadingAction());
+    setAction(newVolumeCinematicAction());
     setAction(newVolumeProjection());
     setAction(newAxisRotationAction());
 
@@ -182,8 +183,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
       @Override
       public void mouseReleased(MouseEvent e) {
-        int buttonMask = getButtonMask();
-        if (!e.isConsumed() && (e.getModifiers() & buttonMask) != 0) {
+        if (!e.isConsumed() && isBoundButton(e)) {
           View3d view3d = getView3d(e);
           if (view3d != null) {
             view3d.getCamera().setAdjusting(false);
@@ -441,6 +441,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     };
   }
 
+  private ToggleButtonListener newVolumeCinematicAction() {
+    return new ToggleButtonListener(ActionVol.VOL_CINEMATIC, false) {
+      @Override
+      public void actionPerformed(boolean selected) {
+        firePropertyChange(
+            ActionW.SYNCH.cmd(),
+            null,
+            new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
+      }
+    };
+  }
+
   private ToggleButtonListener newVolumeProjection() {
     return new ToggleButtonListener(ActionVol.VOL_PROJECTION, false) {
       @Override
@@ -478,14 +490,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   @Override
   public void keyPressed(KeyEvent e) {
-    int keyEvent = e.getKeyCode();
-    int modifiers = e.getModifiers();
-
-    if (ShortcutManager.getInstance()
-        .matches(ShortcutManager.ID_VIEWER_ESCAPE, keyEvent, modifiers)) {
+    if (ShortcutManager.getInstance().matches(ShortcutManager.ID_VIEWER_ESCAPE, e)) {
       resetDisplay();
     } else {
-      triggerDrawingToolKeyEvent(keyEvent, modifiers);
+      triggerDrawingToolKeyEvent(e.getKeyCode(), KeyBinding.modifiersOf(e));
     }
   }
 
@@ -582,6 +590,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     viewType.ifPresent(a -> a.setSelectedItemWithoutTriggerAction(rendering.getRenderingType()));
 
     Optional<ToggleButtonListener> volumeLighting = getAction(ActionVol.VOL_SHADING);
+    Optional<ToggleButtonListener> volumeCinematic = getAction(ActionVol.VOL_CINEMATIC);
     Optional<SliderChangeListener> volumeQuality = getAction(ActionVol.VOL_QUALITY);
     Optional<SliderChangeListener> volumeOpacity = getAction(ActionVol.VOL_OPACITY);
     Optional<ToggleButtonListener> volumeProjection = getAction(ActionVol.VOL_PROJECTION);
@@ -589,6 +598,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     Optional<ComboItemListener<CrosshairCutMode>> crosshairCutMode =
         getAction(ActionVol.CROSSHAIR_CUT_MODE);
     volumeLighting.ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isShading()));
+    volumeCinematic.ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isCinematic()));
     volumeProjection.ifPresent(
         a -> a.setSelectedWithoutTriggerAction(canvas.getCamera().isOrthographicProjection()));
     volumeQuality.ifPresent(a -> a.setSliderValue(rendering.getQuality(), false));
@@ -694,8 +704,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     } else if (ResetTools.WL.equals(action)) {
       if (selectedView2dContainer != null) {
         if (selectedView2dContainer.getSelectedViewCanvas() instanceof View3d view3d) {
-          var volumePreset = view3d.getVolumePreset();
-          PresetWindowLevel defaultPreset = view3d.getVolTexture().getDefaultPreset(volumePreset);
+          PresetWindowLevel defaultPreset =
+              view3d.getVolTexture().getDefaultPreset(view3d.getRenderedPreset());
           updatePreset(ActionW.PRESET.cmd(), defaultPreset, false);
         }
       }
@@ -844,7 +854,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         for (final ResetTools action : ResetTools.values()) {
           final JMenuItem item = new JMenuItem(action.toString());
           if (ResetTools.ALL.equals(action)) {
-            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+            item.setAccelerator(
+                ShortcutManager.getInstance().getKeyStroke(ShortcutManager.ID_VIEWER_ESCAPE));
           }
           item.addActionListener(e -> reset(action));
           menu.add(item);
@@ -966,6 +977,20 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
             shadingAction
                 .get()
                 .createUnregisteredJCCheckBoxMenuItem(ActionVol.VOL_SHADING.getTitle());
+      }
+    }
+    return menu;
+  }
+
+  public JCheckBoxMenuItem getCinematicMenu(String prop) {
+    JCheckBoxMenuItem menu = null;
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+      Optional<ToggleButtonListener> cinematicAction = getAction(ActionVol.VOL_CINEMATIC);
+      if (cinematicAction.isPresent()) {
+        menu =
+            cinematicAction
+                .get()
+                .createUnregisteredJCCheckBoxMenuItem(ActionVol.VOL_CINEMATIC.getTitle());
       }
     }
     return menu;

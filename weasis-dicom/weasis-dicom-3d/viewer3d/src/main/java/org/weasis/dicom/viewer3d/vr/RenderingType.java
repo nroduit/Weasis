@@ -16,7 +16,9 @@ public enum RenderingType {
   MIP_MAX(Messages.getString("mip.max"), 1, 3),
   MIP_MIN(Messages.getString("mip.min"), 1, 1),
   MIP_MEAN(Messages.getString("mip.mean"), 1, 2),
-  ISO2(Messages.getString("iso.surface"), 2, 0);
+  ISO2(Messages.getString("iso.surface"), 2, 0),
+  /** Progressive Monte Carlo rendering; shown as the cinematic composite while interacting. */
+  PATH_TRACING(Messages.getString("path.tracing"), 7, 0);
 
   final int id;
   final int mipTypeId;

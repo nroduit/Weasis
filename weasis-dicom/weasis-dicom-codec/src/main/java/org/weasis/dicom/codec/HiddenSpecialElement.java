@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.codec;
 
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 
 public abstract class HiddenSpecialElement extends DicomSpecialElement {
@@ -18,4 +19,12 @@ public abstract class HiddenSpecialElement extends DicomSpecialElement {
   }
 
   public abstract ResourceIconPath getIconPath();
+
+  /**
+   * The image series behind this element, such as the frames of a dose grid, so a viewer can use it
+   * as an overlay; null when the element holds no images.
+   */
+  public MediaSeries<DicomImageElement> getImageSeries() {
+    return null;
+  }
 }

@@ -19,6 +19,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.gui.util.ShortcutActions;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.AuditLog;
@@ -28,6 +29,7 @@ public abstract class PannerListener extends MouseActionAdapter
     implements ActionState, KeyListener {
 
   private final BasicActionState basicState;
+  private final ShortcutActions shortcuts = buildShortcuts();
   private final boolean triggerAction = true;
   protected Point pickPoint;
 
@@ -139,8 +141,7 @@ public abstract class PannerListener extends MouseActionAdapter
 
   @Override
   public void mouseReleased(MouseEvent e) {
-    int buttonMask = getButtonMask();
-    if (!e.isConsumed() && (e.getModifiers() & buttonMask) != 0) {
+    if (!e.isConsumed() && isBoundButton(e)) {
       ViewCanvas<?> panner = getViewCanvas(e);
       if (panner != null) {
         panner.resetPointerType(ViewCanvas.CENTER_POINTER);
@@ -155,27 +156,23 @@ public abstract class PannerListener extends MouseActionAdapter
 
   @Override
   public void keyPressed(KeyEvent e) {
-    ShortcutManager sm = ShortcutManager.getInstance();
-    int keyCode = e.getKeyCode();
-    int modifiers = e.getModifiers();
+    shortcuts.dispatch(e);
+  }
 
-    if (sm.matches(ShortcutManager.ID_PAN_LEFT_FAST, keyCode, modifiers)) {
-      setPoint(new PanPoint(PanPoint.State.MOVE, 10, 0));
-    } else if (sm.matches(ShortcutManager.ID_PAN_RIGHT_FAST, keyCode, modifiers)) {
-      setPoint(new PanPoint(PanPoint.State.MOVE, -10, 0));
-    } else if (sm.matches(ShortcutManager.ID_PAN_UP_FAST, keyCode, modifiers)) {
-      setPoint(new PanPoint(PanPoint.State.MOVE, 0, 10));
-    } else if (sm.matches(ShortcutManager.ID_PAN_DOWN_FAST, keyCode, modifiers)) {
-      setPoint(new PanPoint(PanPoint.State.MOVE, 0, -10));
-    } else if (sm.matches(ShortcutManager.ID_PAN_LEFT, keyCode, modifiers)) {
-      setPoint(new PanPoint(PanPoint.State.MOVE, 5, 0));
-    } else if (sm.matches(ShortcutManager.ID_PAN_RIGHT, keyCode, modifiers)) {
-      setPoint(new PanPoint(PanPoint.State.MOVE, -5, 0));
-    } else if (sm.matches(ShortcutManager.ID_PAN_UP, keyCode, modifiers)) {
-      setPoint(new PanPoint(PanPoint.State.MOVE, 0, 5));
-    } else if (sm.matches(ShortcutManager.ID_PAN_DOWN, keyCode, modifiers)) {
-      setPoint(new PanPoint(PanPoint.State.MOVE, 0, -5));
-    }
+  private ShortcutActions buildShortcuts() {
+    return new ShortcutActions()
+        .on(ShortcutManager.ID_PAN_LEFT_FAST, () -> move(10, 0))
+        .on(ShortcutManager.ID_PAN_RIGHT_FAST, () -> move(-10, 0))
+        .on(ShortcutManager.ID_PAN_UP_FAST, () -> move(0, 10))
+        .on(ShortcutManager.ID_PAN_DOWN_FAST, () -> move(0, -10))
+        .on(ShortcutManager.ID_PAN_LEFT, () -> move(5, 0))
+        .on(ShortcutManager.ID_PAN_RIGHT, () -> move(-5, 0))
+        .on(ShortcutManager.ID_PAN_UP, () -> move(0, 5))
+        .on(ShortcutManager.ID_PAN_DOWN, () -> move(0, -5));
+  }
+
+  private void move(int dx, int dy) {
+    setPoint(new PanPoint(PanPoint.State.MOVE, dx, dy));
   }
 
   @Override

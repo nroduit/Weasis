@@ -43,9 +43,9 @@ public class PixelInfoGraphic extends AnnotationGraphic {
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_PIXEL_INFO);
 
   public static final Measurement ANCHOR_POINT_X =
-      new Measurement(Messages.getString("PixelInfoGraphic.x"), 1, true, true, false);
+      new Measurement("anchor.x", Messages.getString("PixelInfoGraphic.x"), 1, true, true, false);
   public static final Measurement ANCHOR_POINT_Y =
-      new Measurement(Messages.getString("PixelInfoGraphic.y"), 2, true, true, false);
+      new Measurement("anchor.y", Messages.getString("PixelInfoGraphic.y"), 2, true, true, false);
 
   private PixelInfo pixelInfo;
 
@@ -78,11 +78,6 @@ public class PixelInfoGraphic extends AnnotationGraphic {
   @Override
   public String getUIName() {
     return Messages.getString("Tools.pixelInfo");
-  }
-
-  @Override
-  public int getKeyCode() {
-    return 0;
   }
 
   @Override
@@ -220,6 +215,7 @@ public class PixelInfoGraphic extends AnnotationGraphic {
             for (int i = 0; i < values.length; i++) {
               Measurement m =
                   new Measurement(
+                      "pixel." + i, // NON-NLS
                       (channelNames == null || i >= channelNames.length)
                           ? Messages.getString("PixelInfoGraphic.unknown")
                           : channelNames[i],

@@ -18,6 +18,7 @@ import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_MIN;
 import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_PIXELS;
 import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_SKEW;
 import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_STD;
+import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_SUM;
 
 import java.awt.Point;
 import java.awt.Shape;
@@ -271,6 +272,7 @@ public class ImageRegionStatistics {
         || IMAGE_MAX.getComputed()
         || IMAGE_MEDIAN.getComputed()
         || IMAGE_MEAN.getComputed()
+        || IMAGE_SUM.getComputed()
         || IMAGE_STD.getComputed()
         || IMAGE_SKEW.getComputed()
         || IMAGE_KURTOSIS.getComputed()
@@ -398,6 +400,7 @@ public class ImageRegionStatistics {
           layer.pixelToRealValue(medianBin(bins, sum / 2.0) * binFactor + offset),
           unit);
       addMeasure(measList, IMAGE_MEAN, channelIndex, dispMean, unit);
+      addMeasure(measList, IMAGE_SUM, channelIndex, dispMean * pixelCount, unit);
       addMeasure(measList, IMAGE_STD, channelIndex, dispStd, null);
       addMeasure(measList, IMAGE_SKEW, channelIndex, skew, null);
       addMeasure(measList, IMAGE_KURTOSIS, channelIndex, kurtosis, null);

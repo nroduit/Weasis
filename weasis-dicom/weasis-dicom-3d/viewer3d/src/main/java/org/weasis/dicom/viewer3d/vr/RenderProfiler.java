@@ -59,6 +59,14 @@ final class RenderProfiler {
     return enabled ? System.nanoTime() : 0L;
   }
 
+  boolean isEnabled() {
+    return enabled;
+  }
+
+  String getName() {
+    return name;
+  }
+
   /** Drains the GL pipeline so the elapsed time covers the work itself, not just its submission. */
   void endGpu(GL gl, long start) {
     if (enabled) {
@@ -67,14 +75,24 @@ final class RenderProfiler {
     }
   }
 
+  /**
+   * {@code samples} is what a path-traced frame added per pixel, 0 for any other frame; {@code
+   * grid} whether that frame bounded its extinction per block of the majorant grid.
+   */
   void endFrame(
-      long panelStart, long overlayStart, boolean adjusting, int passWidth, int passHeight) {
+      long panelStart,
+      long overlayStart,
+      boolean adjusting,
+      int passWidth,
+      int passHeight,
+      int samples,
+      boolean grid) {
     if (!enabled) {
       return;
     }
     long now = System.nanoTime();
     Stage stage = adjusting ? drag : idle;
-    stage.add(gpuNanos, overlayStart - panelStart - gpuNanos, now - overlayStart);
+    stage.add(gpuNanos, overlayStart - panelStart - gpuNanos, now - overlayStart, samples, grid);
     stage.pass = passWidth + "x" + passHeight; // NON-NLS
 
     if (lastReport == 0L) {
@@ -97,12 +115,15 @@ final class RenderProfiler {
     private long readMax;
     private long drawSum;
     private long drawMax;
+    private long sampleSum;
+    private long tracedFrames;
+    private long gridFrames;
 
     Stage(String mode) {
       this.mode = mode;
     }
 
-    void add(long gl, long readback, long overlay) {
+    void add(long gl, long readback, long overlay, int samples, boolean grid) {
       frames++;
       glSum += gl;
       glMax = Math.max(glMax, gl);
@@ -110,6 +131,13 @@ final class RenderProfiler {
       readMax = Math.max(readMax, readback);
       drawSum += overlay;
       drawMax = Math.max(drawMax, overlay);
+      sampleSum += samples;
+      if (samples > 0) {
+        tracedFrames++;
+        if (grid) {
+          gridFrames++;
+        }
+      }
     }
 
     void log(String name) {
@@ -118,7 +146,7 @@ final class RenderProfiler {
       }
       double total = (glSum + readSum + drawSum) / (double) frames / 1_000_000.0;
       LOGGER.info(
-          "3D {} {}: {} frames at {} — gl {} ms, readback {} ms, overlay {} ms, total {} ms avg (≈{} fps)", // NON-NLS
+          "3D {} {}: {} frames at {} — gl {} ms, readback {} ms, overlay {} ms, total {} ms avg (≈{} fps){}", // NON-NLS
           name,
           mode,
           frames,
@@ -127,7 +155,16 @@ final class RenderProfiler {
           avgMax(readSum, readMax),
           avgMax(drawSum, drawMax),
           format(total),
-          format(total > 0 ? 1000.0 / total : 0));
+          format(total > 0 ? 1000.0 / total : 0),
+          sampleSum == 0
+              ? ""
+              : String.format(
+                  Locale.ROOT,
+                  ", %d path-traced frames: %.1f samples/frame, %.1f ms/sample, grid %s", // NON-NLS
+                  tracedFrames,
+                  sampleSum / (double) tracedFrames,
+                  (glSum + readSum + drawSum) / 1_000_000.0 / sampleSum,
+                  gridFrames == tracedFrames ? "on" : gridFrames == 0 ? "off" : "mixed"));
       reset();
     }
 
@@ -147,6 +184,9 @@ final class RenderProfiler {
       readMax = 0;
       drawSum = 0;
       drawMax = 0;
+      sampleSum = 0;
+      tracedFrames = 0;
+      gridFrames = 0;
     }
   }
 }

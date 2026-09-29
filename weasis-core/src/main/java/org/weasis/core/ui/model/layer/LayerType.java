@@ -60,6 +60,14 @@ public enum LayerType {
       Boolean.TRUE,
       Boolean.TRUE),
 
+  /** Where graphics of other planes cross this one (MPR); never persisted, never selectable. */
+  FOOTPRINT(
+      55,
+      Messages.getString("LayerType.footprint"),
+      Boolean.TRUE,
+      Boolean.TRUE,
+      Boolean.FALSE,
+      Boolean.FALSE),
   TEMP_DRAW(
       60, "Drawings [Temp]", Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE), // NON-NLS
 

@@ -47,18 +47,23 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.prefs.Preferences;
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import org.pf4j.PluginState;
+import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.ShortcutManager;
+import org.weasis.core.api.gui.util.ShortcutTable;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
@@ -67,12 +72,16 @@ import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.net.URLParameters;
 import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.api.util.ResourceMonitor;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.launcher.Launcher;
+import org.weasis.core.ui.model.graphic.GraphicRegistry;
+import org.weasis.core.ui.model.graphic.GraphicToolProvider;
+import org.weasis.core.ui.model.graphic.profile.MeasurementProfiles;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
@@ -100,6 +109,11 @@ public final class UICore {
   private final CControl dockingControl;
   private final CContentArea baseArea;
   private final CWorkingArea mainArea;
+  private volatile ViewerPlugin<?> selectedPlugin;
+
+  /** The graphic tool providers registered per plugin, to unregister them when it stops. */
+  private final Map<String, List<GraphicToolProvider>> graphicToolProviders =
+      new ConcurrentHashMap<>();
 
   private final WProperties systemPreferences;
   private final WProperties localPersistence;
@@ -199,8 +213,56 @@ public final class UICore {
       AbstractInfoLayer.applyPreferences(prefs);
       MeasureTool.viewSetting.initMonitors(localPersistence);
       MeasureTool.viewSetting.applyPreferences(prefs);
+
+      // Initialize keyboard shortcut manager
+      ShortcutManager shortcutManager = ShortcutManager.getInstance();
+      shortcutManager.registerDefaults();
+      GraphicRegistry.getInstance().registerShortcuts();
+      shortcutManager.loadPreferences(prefs);
+      shortcutManager.applyToFeatures();
+
+      GraphicRegistry.getInstance()
+          .addListener(() -> MeasureTool.viewSetting.applyLabelsOfNewTools(prefs));
+      listenGraphicToolProviders();
     } catch (Exception e) {
       LOGGER.error("Error starting Weasis core plugin", e);
+    }
+  }
+
+  /**
+   * Feeds the {@link GraphicRegistry} with the {@link GraphicToolProvider} extensions of the
+   * started plugins, and follows the plugins started or stopped afterwards.
+   */
+  private void listenGraphicToolProviders() {
+    WeasisPluginManager pluginManager = getPluginManager();
+    for (PluginWrapper plugin : pluginManager.getStartedPlugins()) {
+      registerGraphicToolProviders(plugin);
+    }
+    pluginManager.addPluginStateListener(
+        event -> {
+          if (event.getPluginState() == PluginState.STARTED) {
+            registerGraphicToolProviders(event.getPlugin());
+          } else if (event.getPluginState() == PluginState.STOPPED) {
+            unregisterGraphicToolProviders(event.getPlugin());
+          }
+        });
+  }
+
+  private void registerGraphicToolProviders(PluginWrapper plugin) {
+    List<GraphicToolProvider> providers =
+        plugin.getPluginManager().getExtensions(GraphicToolProvider.class, plugin.getPluginId());
+    if (!providers.isEmpty()
+        && graphicToolProviders.putIfAbsent(plugin.getPluginId(), providers) == null) {
+      GraphicRegistry registry = GraphicRegistry.getInstance();
+      providers.forEach(registry::register);
+    }
+  }
+
+  private void unregisterGraphicToolProviders(PluginWrapper plugin) {
+    List<GraphicToolProvider> providers = graphicToolProviders.remove(plugin.getPluginId());
+    if (providers != null) {
+      GraphicRegistry registry = GraphicRegistry.getInstance();
+      providers.forEach(registry::unregister);
     }
   }
 
@@ -211,8 +273,11 @@ public final class UICore {
       // Save preferences
       Preferences prefs = BundlePreferences.getDefaultPreferences(AppProperties.CORE_PLUGIN_ID);
       AbstractInfoLayer.savePreferences(prefs);
+      MeasurementProfiles.restoreUserSettings();
       MeasureTool.viewSetting.savePreferences(prefs);
+      ShortcutManager.getInstance().savePreferences(prefs);
       prefs.sync();
+      ResourceMonitor.getInstance().shutdown();
 
       Path dataFolder = BundlePreferences.getDataFolder(AppProperties.CORE_PLUGIN_ID);
       Path filePath = dataFolder.resolve("persistence.properties");
@@ -372,15 +437,14 @@ public final class UICore {
       return null;
     }
 
+    private final ShortcutTable<Integer> tabShifts =
+        new ShortcutTable<Integer>()
+            .on(ShortcutManager.ID_DOCKING_NEXT_TAB, 1)
+            .on(ShortcutManager.ID_DOCKING_PREV_TAB, -1);
+
     @Override
     public boolean keyPressed(DockElement element, KeyEvent event) {
-      ShortcutManager sm = ShortcutManager.getInstance();
-      if (sm.matches(ShortcutManager.ID_DOCKING_NEXT_TAB, event)) {
-        return shift(element, 1);
-      } else if (sm.matches(ShortcutManager.ID_DOCKING_PREV_TAB, event)) {
-        return shift(element, -1);
-      }
-      return false;
+      return tabShifts.find(event).map(delta -> shift(element, delta)).orElse(false);
     }
 
     @Override
@@ -523,6 +587,16 @@ public final class UICore {
 
   public List<ViewerPlugin<?>> getViewerPlugins() {
     return viewerPlugins;
+  }
+
+  /** The viewer whose tab is selected in the main window. */
+  public Optional<ViewerPlugin<?>> getSelectedPlugin() {
+    return Optional.ofNullable(selectedPlugin);
+  }
+
+  /** Called by the main window only, which owns the selection. */
+  public void setSelectedPlugin(ViewerPlugin<?> plugin) {
+    this.selectedPlugin = plugin;
   }
 
   public List<Toolbar> getExplorerPluginToolbars() {

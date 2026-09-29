@@ -16,7 +16,7 @@ Voxel Index Space           [0, size.i)
       ▼
 VR-Space                    [0, volSize.i)       ← getRealVolumeTransformation output
       │
-      │  (conversion only in getRealVolumeTransformation)
+      │  rotation around the volume center (getRealVolumeTransformation)
       ▼
 Isotropic Slice Space       [0, sliceSize]²      ← AxesControl.center, crosshair, mouse
       │
@@ -24,6 +24,9 @@ Isotropic Slice Space       [0, sliceSize]²      ← AxesControl.center, crossh
       ▼
 Screen / Viewport Space
 ```
+
+All 3D positions follow the DICOM LPS convention (see
+[mpr-architecture.md](mpr-architecture.md#31-patient-coordinate-system-dicom-lps)).
 
 ---
 
@@ -35,21 +38,10 @@ Screen / Viewport Space
 |----------|-------|
 | **Range** | `[0, size.x) × [0, size.y) × [0, size.z)` |
 | **Units** | integer voxel indices |
-| **Defined by** | `Volume.size` (`Vector3i`) |
+| **Defined by** | `Volume.getSize()` (`Vector3i`) |
 
-The raw 3D voxel grid. Physical spacing per voxel is `pixelRatio` (mm):
-
-```
-pixelRatio = (rowSpacing, columnSpacing, sliceSpacing)
-```
-
-For typical axial CT: `pixelRatio.x ≈ pixelRatio.y`, but `pixelRatio.z` differs
-→ the volume is **anisotropic**.
-
-**Key methods:**
-- `Volume.getSize()` → `Vector3i`
-- `Volume.getPixelRatio()` → `Vector3d`
-- `Volume.getValue(x, y, z, channel)` — direct voxel access
+The raw 3D voxel grid. Physical spacing per voxel is `Volume.getPixelRatio()` (mm). The
+spacing usually differs along the slice axis, so the volume is generally **anisotropic**.
 
 ### 2.2 VR-Space (Voxel-Ratio-Scaled Space)
 
@@ -62,30 +54,10 @@ For typical axial CT: `pixelRatio.x ≈ pixelRatio.y`, but `pixelRatio.z` differ
 Compensates for anisotropic spacing so that equal distances in VR-space correspond
 to equal physical distances.
 
-```java
-voxelRatio = pixelRatio / min(pixelRatio)
-// smallest spacing → 1.0, others > 1.0
-
-volSize = Vector3d(size) × voxelRatio
-// e.g. size=(256,256,128), pixelRatio=(0.5, 0.5, 2.0)
-//   → minRatio=0.5, voxelRatio=(1, 1, 4), volSize=(256, 256, 512)
 ```
-
-`getRealVolumeTransformation()` maps slice pixels into this space.
-`interpolateVolume()` then divides by `voxelRatio` to reach Voxel Index Space:
-
-```java
-double xIndex = point.x / voxelRatio.x;   // VR → Voxel Index
+voxelRatio = pixelRatio / min(pixelRatio)     // Volume.getVoxelRatio()
+voxelIndex = vrPosition / voxelRatio          // per component, when sampling
 ```
-
-**Key relationship:**
-```
-sliceSize = ceil( length(volSize) )    // the 3D diagonal of VR-space
-```
-
-**Key methods:**
-- `Volume.getVoxelRatio()` → `Vector3d`
-- `Volume.getSliceSize()` → `int`
 
 ### 2.3 Isotropic Slice Space (= crosshair space = working space)
 
@@ -96,78 +68,33 @@ sliceSize = ceil( length(volSize) )    // the 3D diagonal of VR-space
 | **Pixel spacing** | `min(pixelRatio)` mm in all directions |
 | **Center** | `(halfSlice, halfSlice, halfSlice)` where `halfSlice = sliceSize / 2.0` |
 
-This is where everything user-facing happens:
+```
+sliceSize = ceil( length(volSize) )    // Volume.getSliceSize(), the 3D diagonal of VR-space
+```
 
-- **`AxesControl.center`** — the crosshair position
-- **Crosshair intersection** — drawn at `getCenterForCanvas(view)`
-- **Mouse coordinates** — from `getImageCoordinatesFromMouse()`
+The slice image is always a square of `sliceSize × sliceSize` pixels, large enough to contain
+the volume at any rotation. This is where everything user-facing happens:
+
+- **`AxesControl.center`** — the crosshair position (`getCenter()` / `setCenter()`)
+- **Crosshair intersection** — drawn at `AxesControl.getCenterForCanvas(view)`
+- **Mouse coordinates** — from `MprView.getImageCoordinatesFromMouse()`
 - **Control points** — rotation handles, MIP extension handles
-- **`recenter()`** — pans the view so the crosshair is visible
-
-The slice image is always a square of `sliceSize × sliceSize` pixels.
-Each pixel represents `min(pixelRatio)` mm uniformly.
-
-**Key methods:**
-- `AxesControl.getCenter()` → `Vector3d` (in slice pixel coords)
-- `AxesControl.setCenter(Vector3d)` — stores directly in slice pixel coords
-- `AxesControl.getCenterForCanvas(SliceCanvas)` — projects center to a view's 2D plane
-- `MprController.getCrossHairPosition(MprAxis)` — center projected to the view's canvas
-- `MprController.getCrossHairPosition()` — raw volume center (for rendering)
 
 ---
 
-## 3. Conversion between Slice Space and VR-Space
+## 3. Data Flow Diagrams
 
-This conversion is only needed in **one place**: `MprAxis.getRealVolumeTransformation()`,
-which builds the matrix that maps slice pixels → VR-space for volume sampling.
-
-### 3.1 Slice → VR (per-component)
-
-```
-vrPosition.i = slicePosition.i × (volSize.i / sliceSize)
-```
-
-This is anisotropic because `volSize.x`, `volSize.y`, `volSize.z` are generally different.
-
-### 3.2 VR → Slice (per-component)
-
-```
-slicePosition.i = vrPosition.i × (sliceSize / volSize.i)
-```
-
-### 3.3 Why the crosshair offset needs this conversion
-
-In `getRealVolumeTransformation()`, the perpendicular offset determines how far from
-the VR-space center the slice plane sits. The crosshair offset is in slice-space, so
-it must be converted to VR-space before computing the dot product with the rotated normal:
-
-```java
-Vector3d crossHairOffset = crossHair − volCenter;   // in slice-space
-// Convert to VR-space:
-Vector3d offsetVR = new Vector3d(
-    crossHairOffset.x * volSize.x / sliceSize,
-    crossHairOffset.y * volSize.y / sliceSize,
-    crossHairOffset.z * volSize.z / sliceSize
-);
-double perpendicularOffset = offsetVR.dot(sliceNormal);
-```
-
----
-
-## 4. Data Flow Diagrams
-
-### 4.1 Rendering a slice pixel
+### 3.1 Rendering a slice pixel
 
 ```
 Slice pixel (px, py, 0)
         │
-        │  getRealVolumeTransformation() matrix
+        │  MprAxis.getRealVolumeTransformation() matrix
         │  (rotation around VR-center, plane orientation, perpendicular offset)
-        │  NOTE: crosshair offset converted from slice-space to VR-space internally
         ▼
 VR-Space (vr_x, vr_y, vr_z)
         │
-        │  ÷ voxelRatio  (in interpolateVolume)
+        │  ÷ voxelRatio
         ▼
 Voxel Index (ix, iy, iz)
         │
@@ -176,7 +103,7 @@ Voxel Index (ix, iy, iz)
 Pixel intensity value
 ```
 
-### 4.2 Mouse click → update crosshair
+### 3.2 Mouse click → update crosshair
 
 ```
 Mouse (screen_x, screen_y)
@@ -194,7 +121,7 @@ Volume center in slice-space (vx, vy, vz)
 Crosshair updated → trigger repaint of all three views
 ```
 
-### 4.3 Drawing crosshair lines
+### 3.3 Drawing crosshair lines
 
 ```
 AxesControl.center                             ← Isotropic Slice Space

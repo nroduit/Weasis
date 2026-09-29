@@ -46,6 +46,7 @@ import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
+import org.weasis.core.api.gui.util.KeyBinding;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.ShortcutManager.ShortcutEntry;
 import org.weasis.core.api.service.BundlePreferences;
@@ -356,11 +357,12 @@ public class ShortcutPrefView extends AbstractItemDialogPage {
               if (kc == KeyEvent.VK_SHIFT
                   || kc == KeyEvent.VK_CONTROL
                   || kc == KeyEvent.VK_ALT
-                  || kc == KeyEvent.VK_META) {
+                  || kc == KeyEvent.VK_META
+                  || kc == KeyEvent.VK_ALT_GRAPH) {
                 return;
               }
               capturedKeyCode = kc;
-              capturedModifier = e.getModifiers();
+              capturedModifier = KeyBinding.modifiersOf(e);
               KeyStroke ks = KeyStroke.getKeyStroke(capturedKeyCode, capturedModifier);
               captureField.setText(ShortcutManager.formatKeyStroke(ks));
               e.consume();

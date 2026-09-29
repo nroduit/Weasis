@@ -9,8 +9,22 @@
  */
 package org.weasis.dicom.viewer3d.geometry;
 
+import org.joml.Vector3d;
+import org.joml.Vector3dc;
+
 public enum Axis {
-  X,
-  Y,
-  Z
+  X(1, 0, 0),
+  Y(0, 1, 0),
+  Z(0, 0, 1);
+
+  private final Vector3dc direction;
+
+  Axis(double x, double y, double z) {
+    this.direction = new Vector3d(x, y, z);
+  }
+
+  /** Unit vector of this axis in the volume frame. */
+  public Vector3dc direction() {
+    return direction;
+  }
 }

@@ -46,7 +46,10 @@ public class DefaultDragSequence implements Draggable {
 
     lastPoint.setLocation(evt.getImageX(), evt.getImageY());
 
-    if (!graphic.isGraphicComplete()) {
+    if (graphic.isGraphicComplete()) {
+      // Anchor on the handle center so the first drag step brings the handle under the cursor
+      draggedHandlePoint().ifPresent(lastPoint::setLocation);
+    } else {
       if (graphic.getPts().isEmpty()) {
         graphic.getPts().add(evt.getImageCoordinates());
       }
@@ -58,6 +61,24 @@ public class DefaultDragSequence implements Draggable {
       // force index to match actual dragging point
       handlePointIndex = graphic.getPts().size() - 1;
     }
+  }
+
+  /**
+   * Points the sequence back at the last vertex, after the point list was changed under it — as
+   * when the last placed vertex of a drawing in progress is dropped.
+   */
+  public void syncToLastPoint() {
+    handlePointIndex = graphic.getPts().size() - 1;
+    if (handlePointIndex >= 0) {
+      lastPoint.setLocation(graphic.getPts().get(handlePointIndex));
+    }
+  }
+
+  private Optional<Point2D> draggedHandlePoint() {
+    List<Point2D> pts = graphic.getPts();
+    return handlePointIndex >= 0 && handlePointIndex < pts.size()
+        ? Optional.ofNullable(pts.get(handlePointIndex))
+        : Optional.empty();
   }
 
   @Override
@@ -99,6 +120,8 @@ public class DefaultDragSequence implements Draggable {
         graphic.setResizeOrMoving(Boolean.FALSE);
         graphic.setShape(null, mouseEvent);
         graphic.buildShape(mouseEvent);
+        // Some graphics (annotations) do not update their label on release, so anchor here
+        graphic.anchorOn(graphic.getDefaultView2d(mouseEvent));
         if (mouseEvent.getClickCount() == 2 && !mouseEvent.isConsumed()) {
           ViewCanvas<?> graphPane = graphic.getDefaultView2d(mouseEvent);
           if (graphPane != null) {

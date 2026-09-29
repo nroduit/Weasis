@@ -26,7 +26,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
@@ -54,6 +53,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   public static final String DICOM_ANNOTATIONS = Messages.getString("dicom.annotations");
 
   public static final String BUTTON_NAME = Messages.getString("display");
+
+  /** The annotation items this tool offers, in their order; captures offer the same. */
+  public static final List<LayerItem> ANNOTATION_ITEMS =
+      List.of(
+          LayerItem.ANNOTATIONS, LayerItem.MIN_ANNOTATIONS, LayerItem.WINDOW_LEVEL, LayerItem.ZOOM);
 
   private final JCheckBox applyAllViews =
       new JCheckBox(Messages.getString("apply.all.views"), true);
@@ -83,17 +87,13 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     tree.getCheckingModel().setCheckingMode(CheckingMode.SIMPLE);
 
     dicomInfo = new DefaultMutableTreeNode(DICOM_ANNOTATIONS, true);
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ANNOTATIONS, true));
-    minAnnotations = new DefaultMutableTreeNode(LayerItem.MIN_ANNOTATIONS, false);
-    dicomInfo.add(minAnnotations);
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ANONYM_ANNOTATIONS, false));
-    //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.SCALE, true));
-    //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.LUT, true));
-    //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.IMAGE_ORIENTATION, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.WINDOW_LEVEL, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ZOOM, true));
-    //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ROTATION, true));
-    //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.PIXEL, true));
+    for (LayerItem item : ANNOTATION_ITEMS) {
+      DefaultMutableTreeNode node = new DefaultMutableTreeNode(item, false);
+      if (item == LayerItem.MIN_ANNOTATIONS) {
+        minAnnotations = node;
+      }
+      dicomInfo.add(node);
+    }
     rootNode.add(dicomInfo);
     //    drawings = new DefaultMutableTreeNode(ActionW.DRAWINGS, true);
     //    rootNode.add(drawings);
@@ -176,16 +176,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
               if (layer != null && layer.setDisplayPreferencesValue(item, selected)) {
                 v.getJComponent().repaint();
               }
-            }
-            if (LayerItem.ANONYM_ANNOTATIONS.equals(item)) {
-              // Send message to listeners, only selected view
-              ImageViewerPlugin<DicomImageElement> container =
-                  EventManager.getInstance().getSelectedView2dContainer();
-              ViewCanvas<DicomImageElement> v = container.getSelectedViewCanvas();
-              Series<?> series = (Series<?>) v.getSeries();
-              EventManager.getInstance()
-                  .fireSeriesViewerListeners(
-                      new SeriesViewerEvent(container, series, v.getImage(), EVENT.ANONYM));
             }
           }
         }

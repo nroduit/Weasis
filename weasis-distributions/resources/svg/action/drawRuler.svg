@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="22" height="22" version="1.1" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+ <g fill="none" stroke-width="1.467">
+  <path d="M5.411 16.589L16.589 5.411" stroke="#6e6e6e"/>
+  <path d="M7.57 14.43l1.838 1.838M11 11l2.687 2.687M14.43 7.57l1.838 1.838" stroke="#6e6e6e"/>
+  <rect x="1.733" y="17.322" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+  <rect x="17.322" y="1.733" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+ </g>
+</svg>

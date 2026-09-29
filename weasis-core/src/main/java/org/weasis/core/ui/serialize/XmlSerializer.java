@@ -13,13 +13,17 @@ import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.Unmarshaller;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import javax.xml.stream.XMLInputFactory;
@@ -31,8 +35,14 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.GraphicRegistry;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 
+/**
+ * XML binding of the presentation model. The context knows every tool of the {@link
+ * GraphicRegistry}, so a plugin tool round-trips as long as its plugin is loaded, and it is rebuilt
+ * when the registry changes.
+ */
 public class XmlSerializer {
   private static final Logger LOGGER = LoggerFactory.getLogger(XmlSerializer.class);
 
@@ -40,7 +50,7 @@ public class XmlSerializer {
    * A {@link JAXBContext} is immutable and thread-safe, but building one costs ~185 ms the first
    * time and a few ms afterwards, which every conversion used to pay. {@link ClassValue} keys on
    * the root class itself, so a context is released together with the pf4j class loader that
-   * declared it — graphic classes may come from a plugin (e.g. {@code CrossLineGraphic}).
+   * declared it.
    */
   private static final ClassValue<JAXBContext> CONTEXTS =
       new ClassValue<>() {
@@ -56,6 +66,16 @@ public class XmlSerializer {
 
   /** Shared so the StAX factory lookup is not repeated on every conversion. */
   private static final XMLInputFactory XML_INPUT_FACTORY = createXmlInputFactory();
+
+  /**
+   * Context of the presentation model and of every tool type of the registry. Dropped when the
+   * registry changes (a plugin started or stopped) and rebuilt on the next use.
+   */
+  private static volatile JAXBContext presentationContext;
+
+  static {
+    GraphicRegistry.getInstance().addListener(() -> presentationContext = null);
+  }
 
   private XmlSerializer() {}
 
@@ -81,21 +101,25 @@ public class XmlSerializer {
   }
 
   /**
-   * Builds the graphic model context ahead of the first presentation state, so its one-off cost is
+   * Builds the presentation context ahead of the first presentation state, so its one-off cost is
    * not paid on a user action. Safe to call from any thread and more than once.
    */
   public static void preloadContext() {
     try {
-      getJaxbContext(XmlGraphicModel.class);
+      presentationContext();
     } catch (JAXBException e) {
       LOGGER.error("Cannot preload the JAXB context", e);
     }
   }
 
   public static GraphicModel readPresentationModel(File gpxFile) {
-    if (gpxFile.canRead()) {
-      try (InputStream in = Files.newInputStream(gpxFile.toPath())) {
-        return getGraphicModel(unmarshal(in, XmlGraphicModel.class));
+    return readPresentationModel(gpxFile.toPath());
+  }
+
+  public static GraphicModel readPresentationModel(Path gpxFile) {
+    if (Files.isReadable(gpxFile)) {
+      try (InputStream in = Files.newInputStream(gpxFile)) {
+        return getGraphicModel(unmarshalPresentation(createStreamReader(in)));
       } catch (Exception e) {
         LOGGER.error("Cannot load xml: ", e);
       }
@@ -103,30 +127,52 @@ public class XmlSerializer {
     return null;
   }
 
+  public static GraphicModel readPresentationModel(Reader reader) throws JAXBException {
+    try {
+      return getGraphicModel(unmarshalPresentation(createStreamReader(reader)));
+    } catch (XMLStreamException e) {
+      throw new JAXBException(e);
+    }
+  }
+
   public static void writePresentation(ImageElement img, File destinationFile) {
+    writePresentation(img, destinationFile.toPath());
+  }
+
+  /** Writes the model of the image next to the destination file, as {@code <name>.xml}. */
+  public static void writePresentation(ImageElement img, Path destinationFile) {
     GraphicModel model = (GraphicModel) img.getTagValue(TagW.PresentationModel);
     if (model != null && !model.getModels().isEmpty()) {
-      File gpxFile = new File(destinationFile.getParent(), destinationFile.getName() + ".xml");
-
-      try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(gpxFile.toPath()))) {
-        Marshaller jaxbMarshaller = getJaxbContext(model.getClass()).createMarshaller();
-
-        // output pretty printed
-        jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        jaxbMarshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
-
-        jaxbMarshaller.marshal(model, out);
+      Path gpxFile = destinationFile.resolveSibling(destinationFile.getFileName() + ".xml");
+      try (Writer writer = Files.newBufferedWriter(gpxFile)) {
+        writePresentation(model, writer);
       } catch (Exception e) {
         LOGGER.error("Cannot save xml: ", e);
       }
     }
   }
 
+  public static void writePresentation(GraphicModel model, Writer writer) throws JAXBException {
+    Marshaller marshaller = presentationContext().createMarshaller();
+    marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+    marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8"); // NON-NLS
+    marshaller.marshal(model, writer);
+  }
+
+  public static String toXml(GraphicModel model) throws JAXBException {
+    StringWriter writer = new StringWriter();
+    Marshaller marshaller = presentationContext().createMarshaller();
+    marshaller.marshal(model, writer);
+    return writer.toString();
+  }
+
   public static <T> T deserialize(Reader reader, Class<T> clazz) throws JAXBException {
+    JAXBContext context =
+        GraphicModel.class.isAssignableFrom(clazz) ? presentationContext() : getJaxbContext(clazz);
     XMLStreamReader streamReader = null;
     try {
       streamReader = createStreamReader(reader);
-      return clazz.cast(getJaxbContext(clazz).createUnmarshaller().unmarshal(streamReader));
+      return clazz.cast(context.createUnmarshaller().unmarshal(streamReader));
     } catch (XMLStreamException e) {
       throw new JAXBException(e);
     } finally {
@@ -137,20 +183,18 @@ public class XmlSerializer {
   public static GraphicModel buildPresentationModel(byte[] gzipData) {
     // Inflates as it parses instead of materializing the whole XML in an intermediate byte[].
     try (InputStream in = new GZIPInputStream(new ByteArrayInputStream(gzipData))) {
-      return getGraphicModel(unmarshal(in, XmlGraphicModel.class));
-    } catch (Exception e) {
+      return getGraphicModel(unmarshalPresentation(createStreamReader(in)));
+    } catch (IOException | JAXBException | XMLStreamException e) {
       LOGGER.error("Cannot load xml graphic model: ", e);
     }
     return null;
   }
 
-  private static <T> T unmarshal(InputStream in, Class<T> clazz)
-      throws JAXBException, XMLStreamException {
-    XMLStreamReader streamReader = null;
+  private static GraphicModel unmarshalPresentation(XMLStreamReader streamReader)
+      throws JAXBException {
     try {
-      streamReader = createStreamReader(in);
-      Unmarshaller unmarshaller = getJaxbContext(clazz).createUnmarshaller();
-      return clazz.cast(unmarshaller.unmarshal(streamReader));
+      Unmarshaller unmarshaller = presentationContext().createUnmarshaller();
+      return (GraphicModel) unmarshaller.unmarshal(streamReader);
     } finally {
       close(streamReader);
     }
@@ -177,6 +221,18 @@ public class XmlSerializer {
       LOGGER.warn("Removing {} graphics without an attached layer", removed);
     }
     return model;
+  }
+
+  /** Context of the presentation model and of every registered tool type. */
+  public static JAXBContext presentationContext() throws JAXBException {
+    JAXBContext context = presentationContext;
+    if (context == null) {
+      List<Class<?>> types = new ArrayList<>(GraphicRegistry.getInstance().xmlTypes());
+      types.addFirst(XmlGraphicModel.class);
+      context = ContextFactory.createContext(types.toArray(new Class<?>[0]), null);
+      presentationContext = context;
+    }
+    return context;
   }
 
   public static JAXBContext getJaxbContext(Class<?>... clazz) throws JAXBException {

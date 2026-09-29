@@ -12,17 +12,19 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.DataBuffer;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.prefs.Preferences;
 import javax.swing.BoundedRangeModel;
 import javax.swing.ButtonGroup;
@@ -47,8 +49,11 @@ import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.KeyBinding;
 import org.weasis.core.api.gui.util.RadioMenuItem;
+import org.weasis.core.api.gui.util.ShortcutActions;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -59,9 +64,11 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.op.ByteLutCollection;
+import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.media.data.IdentityMask;
+import org.weasis.core.api.media.data.MaskingModelRegistry;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
@@ -76,15 +83,15 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.SynchCineEvent;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchManager;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
+import org.weasis.core.ui.editor.image.lut.ColorMapRadioMenu;
 import org.weasis.core.ui.launcher.Launcher;
-import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -94,8 +101,8 @@ import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.display.WindowPresetRegistry;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.exp.DicomExportAction;
 import org.weasis.dicom.explorer.main.DicomExplorer;
@@ -130,6 +137,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   private static EventManager instance;
 
   // Opacity actions are kept typed so their title can follow the real modality of each fused layer.
+  private final ShortcutActions dicomShortcuts = buildDicomShortcuts();
+  private final ShortcutActions mprShortcuts = buildMprShortcuts();
   private final FusionOpacityListener fusionBaseOpacity;
   private final FusionOpacityListener fusionOverlayOpacity;
 
@@ -177,8 +186,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new MigLayoutModel[0])));
     setAction(newSynchAction(SynchView.DEFAULT_STACK));
     setAction(newSynchModeAction());
-    setAction(newMeasurementAction(MeasureToolBar.getMeasureGraphicList().toArray(new Graphic[0])));
-    setAction(newDrawAction(MeasureToolBar.getDrawGraphicList().toArray(new Graphic[0])));
+    setAction(newMeasurementAction());
+    setAction(newDrawAction());
     setAction(newSpatialUnit(Unit.values()));
     setAction(newPanAction());
     setAction(newCrosshairAction());
@@ -206,6 +215,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             "PT"); // NON-NLS
     setAction(fusionBaseOpacity);
     setAction(fusionOverlayOpacity);
+
+    // The regions of the device library depend on the mask in force and on the document itself
+    IdentityMask.addChangeListener(() -> GuiExecutor.execute(RedactionToolBar::refreshOpenViews));
+    MaskingModelRegistry.getInstance()
+        .addListener(() -> GuiExecutor.execute(RedactionToolBar::refreshOpenViews));
 
     String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
     Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);
@@ -395,7 +409,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             } else {
               if (oldPreset != null) {
                 for (PresetWindowLevel preset : newPresetList) {
-                  if (preset.getName().equals(oldPreset.getName())) {
+                  if (preset.isSamePreset(oldPreset)) {
                     newPreset = preset;
                     break;
                   }
@@ -561,6 +575,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   private ComboItemListener<PresetWindowLevel> newPresetAction() {
+    WindowPresetRegistry.getInstance()
+        .addListener(() -> GuiExecutor.execute(this::refreshConfiguredPresets));
     return new ComboItemListener<>(ActionW.PRESET, null) {
 
       @Override
@@ -568,6 +584,31 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         updatePreset(getActionW().cmd(), object);
       }
     };
+  }
+
+  /** Re-reads the presets of every displayed image after the preset documents changed. */
+  private void refreshConfiguredPresets() {
+    List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (viewerPlugins) {
+      for (final ViewerPlugin<?> p : viewerPlugins) {
+        if (p instanceof View2dContainer viewer) {
+          for (ViewCanvas<DicomImageElement> v : viewer.getImagePanels()) {
+            DicomImageElement image = v.getImage();
+            if (image != null) {
+              boolean pixelPadding =
+                  v.getDisplayOpManager()
+                      .getParamValue(
+                          WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), Boolean.class)
+                      .orElse(true);
+              PrDicomObject pr =
+                  PRManager.getPrDicomObject(v.getActionValue(ActionW.PR_STATE.cmd()));
+              image.getPresetList(new DefaultWlPresentation(pr, pixelPadding), true);
+            }
+          }
+        }
+      }
+    }
+    updateComponentsListener(getSelectedViewPane());
   }
 
   private ComboItemListener<LutShape> newLutShapeAction() {
@@ -607,8 +648,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         setFusionControlsEnabled(selected);
         if (selected) {
           getAction(FusionAction.LUT)
-              .ifPresent(
-                  a -> FusionController.applyParam(FusionOp.P_FUSION_LUT, a.getSelectedItem()));
+              .ifPresent(a -> FusionController.applyLut(a.getSelectedItem()));
           // The series combo is populated without triggering its listener, so push the current
           // selection to the op here; otherwise the overlay has no PET series and stays hidden.
           getAction(FusionAction.SERIES)
@@ -630,10 +670,28 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       public void itemStateChanged(Object object) {
         FusionController.applyParam(FusionOp.P_FUSION_SERIES, object);
         fusionOverlayOpacity.setModalityLabel(FusionController.modalityOf(object));
+        selectDefaultFusionLut(FusionController.modalityOf(object));
         applyDefaultFusionWindow(object);
         FusionController.buildVolume(object);
       }
     };
+  }
+
+  // The map flagged as default for the overlay's modality (PET SUV, Isodose) takes over.
+  private void selectDefaultFusionLut(String modality) {
+    ColorMapRegistry registry = ColorMapRegistry.getInstance();
+    registry
+        .defaultFor(modality)
+        .map(registry::byteLut)
+        .ifPresent(
+            lut ->
+                getAction(FusionAction.LUT)
+                    .ifPresent(
+                        a -> {
+                          if (Arrays.asList(a.getAllItem()).contains(lut)) {
+                            a.setSelectedItem(lut);
+                          }
+                        }));
   }
 
   /**
@@ -653,12 +711,17 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         new ComboItemListener<>(FusionAction.LUT, luts) {
           @Override
           public void itemStateChanged(Object object) {
-            FusionController.applyParam(FusionOp.P_FUSION_LUT, object);
+            FusionController.applyLut(object);
           }
         };
-    // PET is a hot-metal palette (monotonic luminance) tuned for PET overlays; use it by default.
+    // The map flagged as PT default (an SUVbw preset), else the hot-metal PET palette.
+    ByteLut preferred =
+        ColorMapRegistry.getInstance()
+            .defaultFor("PT") // NON-NLS
+            .map(ColorMapRegistry.getInstance()::byteLut)
+            .orElse(null);
     for (ByteLut lut : luts) {
-      if ("PET".equals(lut.name())) { // NON-NLS
+      if (lut.equals(preferred) || (preferred == null && "PET".equals(lut.name()))) { // NON-NLS
         action.setSelectedItemWithoutTriggerAction(lut);
         break;
       }
@@ -666,12 +729,68 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     return action;
   }
 
+  /** Gray plus every 2D map that applies to any modality or to the functional modalities. */
   private static ByteLut[] fusionLutList() {
+    ColorMapRegistry registry = ColorMapRegistry.getInstance();
     List<ByteLut> lutEntries = new ArrayList<>();
     lutEntries.add(ColorLut.GRAY.getByteLut());
-    ByteLutCollection.readLutFilesFromResourcesDir(
-        lutEntries, ResourceUtil.getResource(DicomResource.LUTS).toPath());
+    registry.mapsFor(null).stream().map(registry::byteLut).forEach(lutEntries::add);
+    for (String modality : List.of("PT", "NM", "RTDOSE")) { // NON-NLS
+      registry.mapsFor(modality).stream()
+          .filter(m -> !m.modalities().isEmpty())
+          .map(registry::byteLut)
+          .filter(l -> !lutEntries.contains(l))
+          .forEach(lutEntries::add);
+    }
     return lutEntries.toArray(new ByteLut[0]);
+  }
+
+  /** The identity and gray LUTs, then every color map that applies to {@code modality}. */
+  private static List<ByteLut> lutEntries(String modality) {
+    List<ByteLut> lutEntries = new ArrayList<>();
+    lutEntries.add(ColorLut.IMAGE.getByteLut());
+    lutEntries.add(ColorLut.GRAY.getByteLut());
+    lutEntries.addAll(ColorMapRegistry.getInstance().byteLutsFor(modality));
+    return lutEntries;
+  }
+
+  private String lutMenuModality;
+  private int lutMenuRevision = -1;
+  private List<ByteLut> lutMenuBase = List.of();
+  private ByteLut lutMenuExtra;
+
+  /**
+   * The menus follow the displayed modality and the registry, rebuilt only when either changed; the
+   * map the view shows is always listed, even when synchronized from another modality.
+   */
+  private void refreshLutEntries(
+      ComboItemListener<ByteLut> action, DicomImageElement image, ByteLut shown) {
+    String modality = image == null ? null : TagD.getTagValue(image, Tag.Modality, String.class);
+    int revision = ColorMapRegistry.getInstance().revision();
+    boolean sameBase = revision == lutMenuRevision && Objects.equals(modality, lutMenuModality);
+    if (!sameBase) {
+      lutMenuRevision = revision;
+      lutMenuModality = modality;
+      lutMenuBase = lutEntries(modality);
+    }
+    ByteLut extra = shown != null && !lutMenuBase.contains(shown) ? shown : null;
+    if (sameBase && Objects.equals(extra, lutMenuExtra)) {
+      return;
+    }
+    lutMenuExtra = extra;
+    List<ByteLut> entries = new ArrayList<>(lutMenuBase);
+    if (extra != null) {
+      entries.add(extra);
+    }
+    action.setDataListWithoutTriggerAction(entries.toArray(ByteLut[]::new));
+    if (!sameBase) {
+      getAction(FusionAction.LUT)
+          .ifPresent(a -> a.setDataListWithoutTriggerAction(fusionLutList()));
+    }
+  }
+
+  private static ByteLut selectedLut(ComboItemListener<ByteLut> action) {
+    return action.getSelectedItem() instanceof ByteLut lut ? lut : null;
   }
 
   /**
@@ -858,14 +977,19 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   private ComboItemListener<ByteLut> newLutAction() {
-    List<ByteLut> lutEntries = new ArrayList<>();
-    lutEntries.add(ColorLut.GRAY.getByteLut());
-    ByteLutCollection.readLutFilesFromResourcesDir(
-        lutEntries, ResourceUtil.getResource(DicomResource.LUTS).toPath());
-    // Set default first as the list has been sorted
-    lutEntries.addFirst(ColorLut.IMAGE.getByteLut());
-
-    return new ComboItemListener<>(ActionW.LUT, lutEntries.toArray(new ByteLut[0])) {
+    ColorMapRegistry.getInstance()
+        .addListener(
+            () ->
+                GuiExecutor.execute(
+                    () -> {
+                      ViewCanvas<DicomImageElement> view = getSelectedViewPane();
+                      getAction(ActionW.LUT)
+                          .ifPresent(
+                              a ->
+                                  refreshLutEntries(
+                                      a, view == null ? null : view.getImage(), selectedLut(a)));
+                    }));
+    return new ComboItemListener<>(ActionW.LUT, lutEntries(null).toArray(ByteLut[]::new)) {
 
       @Override
       public void itemStateChanged(Object object) {
@@ -915,79 +1039,80 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   @Override
   public void keyPressed(KeyEvent e) {
-    if (!commonDisplayShortcuts(e)) {
-      int keyEvent = e.getKeyCode();
-      int modifiers = e.getModifiers();
-      boolean isMpr = selectedView2dContainer instanceof MprContainer;
-      ShortcutManager sm = ShortcutManager.getInstance();
+    if (commonDisplayShortcuts(e) || dicomShortcuts.dispatch(e)) {
+      return;
+    }
+    if (selectedView2dContainer instanceof MprContainer && mprShortcuts.dispatch(e)) {
+      return;
+    }
+    int keyEvent = e.getKeyCode();
+    int modifiers = KeyBinding.modifiersOf(e);
+    keyPreset(keyEvent, modifiers);
+    triggerDrawingToolKeyEvent(keyEvent, modifiers);
+  }
 
-      if (sm.matches(ShortcutManager.ID_DICOM_PREV_STUDY, keyEvent, modifiers)) {
-        moveStudy(ListPosition.PREVIOUS);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_NEXT_STUDY, keyEvent, modifiers)) {
-        moveStudy(ListPosition.NEXT);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_PREV_SERIES, keyEvent, modifiers)) {
-        moveSeries(ListPosition.PREVIOUS);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_NEXT_SERIES, keyEvent, modifiers)) {
-        moveSeries(ListPosition.NEXT);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_PREV_PATIENT, keyEvent, modifiers)) {
-        movePatient(ListPosition.PREVIOUS);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_NEXT_PATIENT, keyEvent, modifiers)) {
-        movePatient(ListPosition.NEXT);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_FIRST_STUDY, keyEvent, modifiers)) {
-        moveStudy(ListPosition.FIRST);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_LAST_STUDY, keyEvent, modifiers)) {
-        moveStudy(ListPosition.LAST);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_FIRST_SERIES, keyEvent, modifiers)) {
-        moveSeries(ListPosition.FIRST);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_LAST_SERIES, keyEvent, modifiers)) {
-        moveSeries(ListPosition.LAST);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_FIRST_PATIENT, keyEvent, modifiers)) {
-        movePatient(ListPosition.FIRST);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_LAST_PATIENT, keyEvent, modifiers)) {
-        movePatient(ListPosition.LAST);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_TOGGLE_SEG, keyEvent, modifiers)) {
-        SegComponentFactory.toggleSegmentationsVisibility(selectedView2dContainer);
-      } else if (isMpr
-          && (sm.matches(ShortcutManager.ID_MPR_RECENTER, keyEvent, modifiers)
-              || sm.matches(ShortcutManager.ID_MPR_RECENTER_ALL, keyEvent, modifiers))) {
-        if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
-          mprView.recenterAxis(
-              sm.matches(ShortcutManager.ID_MPR_RECENTER_ALL, keyEvent, modifiers));
-        }
-      } else if (isMpr
-          && (sm.matches(ShortcutManager.ID_MPR_TOGGLE_CENTER, keyEvent, modifiers)
-              || sm.matches(ShortcutManager.ID_MPR_TOGGLE_CENTER_ALL, keyEvent, modifiers))) {
-        if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
-          boolean showCenter = MprView.getViewProperty(mprView, MprView.SHOW_CROSS_CENTER);
-          mprView.showCrossCenter(
-              !showCenter,
-              sm.matches(ShortcutManager.ID_MPR_TOGGLE_CENTER_ALL, keyEvent, modifiers));
-        }
-      } else if (isMpr
-          && (sm.matches(ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES, keyEvent, modifiers)
-              || sm.matches(ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES_ALL, keyEvent, modifiers))) {
-        if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
-          boolean showCrossLines = MprView.getViewProperty(mprView, MprView.HIDE_CROSSLINES);
-          mprView.showCrossLines(
-              showCrossLines,
-              sm.matches(ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES_ALL, keyEvent, modifiers));
-        }
-      } else if (isMpr && sm.matches(ShortcutManager.ID_MPR_CYCLE_MIP, keyEvent, modifiers)) {
-        if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
-          MprController controller = mprView.getMprController();
-          if (controller != null) {
-            ComboItemListener<MipView.Type> mipCombo = controller.getMipTypeOption();
-            MipView.Type currentType = (MipView.Type) mipCombo.getSelectedItem();
-            MipView.Type[] types = MipView.Type.values();
-            int nextIndex = (currentType.ordinal() + 1) % types.length;
-            mipCombo.setSelectedItemWithoutTriggerAction(types[nextIndex]);
-            controller.updateAllViews();
-          }
-        }
-      } else {
-        keyPreset(keyEvent, modifiers);
-        triggerDrawingToolKeyEvent(keyEvent, modifiers);
-      }
+  private ShortcutActions buildDicomShortcuts() {
+    return new ShortcutActions()
+        .on(ShortcutManager.ID_DICOM_PREV_STUDY, () -> moveStudy(ListPosition.PREVIOUS))
+        .on(ShortcutManager.ID_DICOM_NEXT_STUDY, () -> moveStudy(ListPosition.NEXT))
+        .on(ShortcutManager.ID_DICOM_PREV_SERIES, () -> moveSeries(ListPosition.PREVIOUS))
+        .on(ShortcutManager.ID_DICOM_NEXT_SERIES, () -> moveSeries(ListPosition.NEXT))
+        .on(ShortcutManager.ID_DICOM_PREV_PATIENT, () -> movePatient(ListPosition.PREVIOUS))
+        .on(ShortcutManager.ID_DICOM_NEXT_PATIENT, () -> movePatient(ListPosition.NEXT))
+        .on(ShortcutManager.ID_DICOM_FIRST_STUDY, () -> moveStudy(ListPosition.FIRST))
+        .on(ShortcutManager.ID_DICOM_LAST_STUDY, () -> moveStudy(ListPosition.LAST))
+        .on(ShortcutManager.ID_DICOM_FIRST_SERIES, () -> moveSeries(ListPosition.FIRST))
+        .on(ShortcutManager.ID_DICOM_LAST_SERIES, () -> moveSeries(ListPosition.LAST))
+        .on(ShortcutManager.ID_DICOM_FIRST_PATIENT, () -> movePatient(ListPosition.FIRST))
+        .on(ShortcutManager.ID_DICOM_LAST_PATIENT, () -> movePatient(ListPosition.LAST))
+        .on(
+            ShortcutManager.ID_DICOM_TOGGLE_SEG,
+            () -> SegComponentFactory.toggleSegmentationsVisibility(selectedView2dContainer));
+  }
+
+  /** Only dispatched while the selected container is an MPR. */
+  private ShortcutActions buildMprShortcuts() {
+    return new ShortcutActions()
+        .on(ShortcutManager.ID_MPR_RECENTER, () -> onMprView(v -> v.recenterAxis(false)))
+        .on(ShortcutManager.ID_MPR_RECENTER_ALL, () -> onMprView(v -> v.recenterAxis(true)))
+        .on(ShortcutManager.ID_MPR_TOGGLE_CENTER, () -> onMprView(v -> toggleCrossCenter(v, false)))
+        .on(
+            ShortcutManager.ID_MPR_TOGGLE_CENTER_ALL,
+            () -> onMprView(v -> toggleCrossCenter(v, true)))
+        .on(
+            ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES,
+            () -> onMprView(v -> toggleCrossLines(v, false)))
+        .on(
+            ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES_ALL,
+            () -> onMprView(v -> toggleCrossLines(v, true)))
+        .on(ShortcutManager.ID_MPR_CYCLE_MIP, () -> onMprView(EventManager::cycleMipType));
+  }
+
+  private void onMprView(Consumer<MprView> action) {
+    if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
+      action.accept(mprView);
+    }
+  }
+
+  private static void toggleCrossCenter(MprView mprView, boolean allViews) {
+    boolean showCenter = MprView.getViewProperty(mprView, MprView.SHOW_CROSS_CENTER);
+    mprView.showCrossCenter(!showCenter, allViews);
+  }
+
+  private static void toggleCrossLines(MprView mprView, boolean allViews) {
+    boolean hidden = MprView.getViewProperty(mprView, MprView.HIDE_CROSSLINES);
+    mprView.showCrossLines(hidden, allViews);
+  }
+
+  private static void cycleMipType(MprView mprView) {
+    MprController controller = mprView.getMprController();
+    if (controller != null) {
+      ComboItemListener<MipView.Type> mipCombo = controller.getMipTypeOption();
+      MipView.Type currentType = (MipView.Type) mipCombo.getSelectedItem();
+      MipView.Type[] types = MipView.Type.values();
+      mipCombo.setSelectedItemWithoutTriggerAction(
+          types[(currentType.ordinal() + 1) % types.length]);
+      controller.updateAllViews();
     }
   }
 
@@ -1234,11 +1359,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
     getAction(ActionW.LUT)
         .ifPresent(
-            a ->
-                a.setSelectedItemWithoutTriggerAction(
-                    dispOp
-                        .getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT)
-                        .orElse(ColorLut.IMAGE.getByteLut())));
+            a -> {
+              ByteLut shown =
+                  dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT).orElse(null)
+                          instanceof ByteLut lut
+                      ? lut
+                      : ColorLut.IMAGE.getByteLut();
+              refreshLutEntries(a, view2d.getImage(), shown);
+              a.setSelectedItemWithoutTriggerAction(shown);
+            });
     getAction(ActionW.INVERT_LUT)
         .ifPresent(
             a ->
@@ -1605,6 +1734,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
           }
         }
+        menu.addSeparator();
+        menu.add(WindowPresetActions.saveCurrentItem(this, menu));
       }
     }
     return menu;
@@ -1652,13 +1783,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         menu.setEnabled(rotateAction.get().isActionEnabled());
 
         if (rotateAction.get().isActionEnabled()) {
+          ShortcutManager sm = ShortcutManager.getInstance();
           JMenuItem menuItem = new JMenuItem(ActionW.RESET.getTitle());
           menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
           menu.add(menuItem);
           menuItem = new JMenuItem(Messages.getString("View2dContainer.-90"));
           menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_COUNTERCLOCKWISE));
           GuiUtils.applySelectedIconEffect(menuItem);
-          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.ALT_DOWN_MASK));
+          menuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_VIEWER_ROTATE_LEFT));
           menuItem.addActionListener(
               e ->
                   rotateAction
@@ -1668,7 +1800,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           menuItem = new JMenuItem(Messages.getString("View2dContainer.+90"));
           menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_CLOCKWISE));
           GuiUtils.applySelectedIconEffect(menuItem);
-          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK));
+          menuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_VIEWER_ROTATE_RIGHT));
           menuItem.addActionListener(
               e ->
                   rotateAction
@@ -1693,8 +1825,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                         Messages.getString("View2dContainer.flip_h"),
                         ResourceUtil.getIcon(ActionIcon.FLIP));
             GuiUtils.applySelectedIconEffect(menuItem);
-            menuItem.setAccelerator(
-                KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.ALT_DOWN_MASK));
+            menuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_VIEWER_FLIP_HORIZONTAL));
             menu.add(menuItem);
           }
         }
@@ -1775,11 +1906,17 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<ComboItemListener<ByteLut>> lutAction = getAction(ActionW.LUT);
       if (lutAction.isPresent()) {
-        menu =
-            lutAction
-                .get()
-                .createUnregisteredRadioMenu(
-                    ActionW.LUT.getTitle(), ResourceUtil.getIcon(ActionIcon.LUT));
+        ViewCanvas<DicomImageElement> view = getSelectedViewPane();
+        DicomImageElement image = view == null ? null : view.getImage();
+        ColorMapRadioMenu radioMenu = new ColorMapRadioMenu();
+        radioMenu.setModel(lutAction.get().getModel());
+        radioMenu.setModality(
+            image == null ? null : TagD.getTagValue(image, Tag.Modality, String.class));
+        menu = radioMenu.createMenu(ActionW.LUT.getTitle(), ResourceUtil.getIcon(ActionIcon.LUT));
+        menu.setEnabled(lutAction.get().isActionEnabled());
+        menu.addSeparator();
+        GuiUtils.addItemToMenu(menu, radioMenu.createFavoriteItem());
+        menu.add(LutToolBar.buildEditMapsItem(this, view == null ? null : view.getJComponent()));
       }
     }
     return menu;

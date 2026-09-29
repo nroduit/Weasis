@@ -173,9 +173,7 @@ public abstract class CrosshairListener extends MouseActionAdapter
   @Override
   public void mouseReleased(MouseEvent e) {
     releaseWinLevelAdapter();
-    if (basicState.isActionEnabled()
-        && !e.isConsumed()
-        && (e.getModifiers() & getButtonMask()) != 0) {
+    if (basicState.isActionEnabled() && !e.isConsumed() && isBoundButton(e)) {
       ViewCanvas<?> panner = getViewCanvas(e);
       if (Objects.nonNull(panner) && Objects.nonNull(pickPoint)) {
         Point2D pt = panner.getImageCoordinatesFromMouse(e.getX(), e.getY());

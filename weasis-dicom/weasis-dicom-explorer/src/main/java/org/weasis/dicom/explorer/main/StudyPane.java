@@ -256,6 +256,12 @@ public class StudyPane extends JPanel {
     }
   }
 
+  /** Re-resolves this study's title and its series captions after session masking changed. */
+  public void refreshIdentityLabels() {
+    updateText();
+    getSeriesPaneStream().forEach(SeriesPane::updateText);
+  }
+
   /**
    * Checks if this study pane represents the specified DICOM study.
    *

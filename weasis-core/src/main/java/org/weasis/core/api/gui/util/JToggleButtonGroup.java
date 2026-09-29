@@ -26,6 +26,7 @@ public class JToggleButtonGroup<T> implements ActionListener, ComboBoxModelAdapt
   protected final List<JToggleButton> itemList;
   protected final HashMap<JToggleButton, Object> map = new HashMap<>();
   protected ComboBoxModel<T> dataModel;
+  private Runnable rebuildListener;
 
   public JToggleButtonGroup() {
     this.itemList = new ArrayList<>();
@@ -50,6 +51,17 @@ public class JToggleButtonGroup<T> implements ActionListener, ComboBoxModelAdapt
       b.addActionListener(this);
       itemList.add(b);
     }
+    if (rebuildListener != null) {
+      rebuildListener.run();
+    }
+  }
+
+  /**
+   * Called each time the group has built new buttons, which happens whenever its model gets a new
+   * list: a container showing the buttons has to take the new ones.
+   */
+  public void setRebuildListener(Runnable rebuildListener) {
+    this.rebuildListener = rebuildListener;
   }
 
   @Override

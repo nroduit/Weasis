@@ -22,6 +22,11 @@ public class RenderingLayer<E extends ImageElement> {
   public static final String P_MAX_TEX_XY = "volume.texture.max.xy";
   public static final String P_MAX_TEX_Z = "volume.texture.max.z";
 
+  /** Set to false to trace with the global extinction bound instead of the majorant grid. */
+  public static final String P_MAJORANT_GRID = "weasis.3d.pt.grid"; // NON-NLS
+
+  public static final String P_CINEMATIC_QUALITY = "volume.cinematic.quality";
+
   public static final int MAX_QUALITY = 8192;
   public static final int MIN_QUALITY = 128;
   public static final int MIN_TEXTURE_SIZE = 2048;
@@ -31,6 +36,7 @@ public class RenderingLayer<E extends ImageElement> {
   private int windowWidth;
   private int windowCenter;
   private boolean shading;
+  private boolean cinematic;
 
   private boolean invertLut;
   private int quality;
@@ -47,6 +53,7 @@ public class RenderingLayer<E extends ImageElement> {
     this.windowWidth = 200;
     this.windowCenter = 40;
     this.shading = false;
+    this.cinematic = false;
     this.quality = 1024;
     this.renderingType = RenderingType.COMPOSITE;
     this.enableRepaint = true;
@@ -130,6 +137,18 @@ public class RenderingLayer<E extends ImageElement> {
     }
   }
 
+  public boolean isCinematic() {
+    return cinematic;
+  }
+
+  /** Cinematic lighting only applies while {@link #isShading()} is on. */
+  public void setCinematic(boolean cinematic) {
+    if (this.cinematic != cinematic) {
+      this.cinematic = cinematic;
+      fireLayerChanged();
+    }
+  }
+
   public boolean isInvertLut() {
     return invertLut;
   }
@@ -193,7 +212,9 @@ public class RenderingLayer<E extends ImageElement> {
       return 0;
     }
     return switch (lutShape.getFunctionType()) {
-      case LINEAR -> 0;
+      // Deviation: the shader has a single linear ramp; LINEAR_EXACT (PS3.3 C.11.2.1.3.2) only
+      // shifts it by half a value, which is invisible on the interpolated volume.
+      case LINEAR, LINEAR_EXACT -> 0;
       case SIGMOID -> 1;
       case SIGMOID_NORM -> 2;
       case LOG -> 3;

@@ -42,6 +42,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.*;
+import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.PluginTool;
@@ -94,6 +95,7 @@ public class DicomExplorer extends PluginTool
   private final DicomTaskManager taskManager;
 
   private final PatientPane selectedPatient;
+  private final Runnable maskListener = () -> GuiExecutor.execute(this::refreshIdentityLabels);
   private final JScrollPane thumbnailView;
   private final LoadingPanel loadingPanel;
   private final SeriesSelectionModel selectionList;
@@ -162,6 +164,7 @@ public class DicomExplorer extends PluginTool
     // Initialize patient selection manager
     this.patientSelectionManager = new PatientSelectionManager(this);
     this.patientSelectionManager.addPatientSelectionListener(selectedPatient);
+    IdentityMask.addChangeListener(maskListener);
 
     // Configure dockable
     dockable.setMaximizable(true);
@@ -1042,6 +1045,25 @@ public class DicomExplorer extends PluginTool
 
   // ========== Thumbnail Size Management ==========
 
+  /** Re-resolves every cached identity label after {@link IdentityMask} session masking changed. */
+  public void refreshIdentityLabels() {
+    selectedPatient.refreshIdentityLabels();
+    refreshComboEditor(patientCombobox);
+    // Only a selected study is a cached label: typed filter text must stay as the user wrote it
+    if (seriesFilterField.getSelectedItem() instanceof MediaSeriesGroup) {
+      refreshComboEditor(seriesFilterField);
+    }
+  }
+
+  /**
+   * The drop-down list renders items on demand, but an editable combo keeps the label of the
+   * selected item as text in its editor: re-setting the item is what rebuilds it.
+   */
+  private static void refreshComboEditor(JComboBox<?> combo) {
+    combo.getEditor().setItem(combo.getSelectedItem());
+    combo.repaint();
+  }
+
   public void updateThumbnailSize(int thumbnailSize) {
     updateDockableWidth(computeThumbnailPanelWidth(thumbnailSize));
     MediaSeriesGroup patient = getSelectedPatient();
@@ -1463,6 +1485,7 @@ public class DicomExplorer extends PluginTool
 
   @Override
   public void dispose() {
+    IdentityMask.removeChangeListener(maskListener);
     if (model != null) {
       model.removePropertyChangeListener(this);
     }

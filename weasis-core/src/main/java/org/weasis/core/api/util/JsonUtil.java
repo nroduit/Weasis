@@ -186,6 +186,20 @@ public final class JsonUtil {
     return values;
   }
 
+  /** Returns a mutable list, empty when the member is absent or not an array of numbers. */
+  public static List<Double> getNumberList(JsonObject json, String name) {
+    List<Double> values = new ArrayList<>();
+    JsonValue value = json.get(name);
+    if (value instanceof JsonArray array) {
+      for (JsonValue item : array) {
+        if (item instanceof JsonNumber number) {
+          values.add(number.doubleValue());
+        }
+      }
+    }
+    return values;
+  }
+
   /** Returns a mutable map, empty when the member is absent or not an object of strings. */
   public static Map<String, String> getStringMap(JsonObject json, String name) {
     Map<String, String> values = new LinkedHashMap<>();

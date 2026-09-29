@@ -9,12 +9,15 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
+import java.awt.Component;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
@@ -24,10 +27,15 @@ import javax.swing.JSeparator;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
+import org.weasis.core.api.image.lut.ColorMapRegistry;
+import org.weasis.core.ui.editor.image.lut.ColorMapEditorDialog;
+import org.weasis.core.ui.editor.image.lut.ColorMapRadioMenu;
+import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.Messages;
+import org.weasis.opencv.op.lut.colormap.ColorMap;
 
 public class PresetRadioMenu extends GroupRadioMenu<Preset> {
 
@@ -76,7 +84,42 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
     return new EnumMap<>(menuGroup);
   }
 
+  /** Marks the presets tagged for the cinematic modes next to the rendering-cost dots. */
+  private static final String CINEMATIC_BADGE = "✦";
+
+  // The cost badge depends on the loaded volume, so the labels are refreshed each time a menu is
+  // built.
+  private void refreshCostBadges() {
+    View3d view3d = EventManager.getInstance().getSelectedViewPane() instanceof View3d v ? v : null;
+    for (RadioMenuItem item : itemList) {
+      if (!(item.getUserObject() instanceof Preset preset)) {
+        continue;
+      }
+      ColorMap map = preset.toColorMap();
+      PresetCost cost = view3d == null ? null : VolumePresetHost.cost(view3d, map);
+      boolean cinematic = Preset.isCinematic(map);
+      StringBuilder text = new StringBuilder(preset.toString());
+      List<String> tips = new ArrayList<>();
+      if (cost != null) {
+        text.append("  ").append(cost.badge());
+        tips.add(
+            Messages.getString("preset.cost")
+                + StringUtil.COLON_AND_SPACE
+                + MessageFormat.format(
+                    Messages.getString("preset.cost.visible"),
+                    Math.round(100.0 * cost.visibleFraction())));
+      }
+      if (cinematic) {
+        text.append(cost != null ? " " : "  ").append(CINEMATIC_BADGE);
+        tips.add(Messages.getString("preset.cinematic"));
+      }
+      item.setText(text.toString());
+      item.setToolTipText(tips.isEmpty() ? null : String.join("<br>", tips)); // NON-NLS
+    }
+  }
+
   public JPopupMenu createJPopupMenu(Modality curModality) {
+    refreshCostBadges();
     JPopupMenu popupMouseButtons = new JPopupMenu();
     addSubMenu(
         popupMouseButtons, getMenuGroup(), curModality == null ? Modality.DEFAULT : curModality);
@@ -84,6 +127,7 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
   }
 
   public JMenu createMenu(String title, Icon icon, Modality curModality) {
+    refreshCostBadges();
     JMenu menu = new JMenu(title);
     if (icon != null) {
       menu.setIcon(icon);
@@ -94,44 +138,101 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
     return menu;
   }
 
-  private static void addSubMenu(
+  // Root: the favorites, the presets of the current modality, then the modality-free ones.
+  private void addSubMenu(
       JComponent component, Map<Modality, List<RadioMenuItem>> map, Modality curModality) {
-    addRootMenu(component, map, curModality);
+    addRootItems(
+        component,
+        org.weasis.core.Messages.getString("ColorMapEditor.favorites"),
+        takeFavorites(map));
     if (curModality != Modality.DEFAULT) {
-      component.add(new JSeparator());
-      addRootMenu(component, map, Modality.DEFAULT);
+      addRootItems(component, curModality.toString(), map.remove(curModality));
+    }
+    addRootItems(
+        component,
+        org.weasis.core.Messages.getString("ColorMapEditor.general"),
+        map.remove(Modality.DEFAULT));
+
+    for (Entry<Modality, List<RadioMenuItem>> entry : map.entrySet()) {
+      if (entry.getValue().isEmpty()) {
+        continue;
+      }
+      separate(component);
+      JMenu modMenu = new JMenu(entry.getKey().toString());
+      component.add(modMenu);
+      addGroup(modMenu, entry.getValue());
     }
 
-    component.add(new JSeparator());
-    for (Entry<Modality, List<RadioMenuItem>> entry : map.entrySet()) {
-      Modality modality = entry.getKey();
-      JMenu modMenu = new JMenu(modality.toString());
-      component.add(modMenu);
-      for (RadioMenuItem menuItem : entry.getValue()) {
-        modMenu.add(menuItem);
+    separate(component);
+    if (dataModel.getSelectedItem() instanceof Preset preset) {
+      JMenuItem favorite = ColorMapRadioMenu.createFavoriteItem(preset.toColorMap());
+      if (favorite != null) {
+        component.add(favorite);
       }
     }
-
-    // ── Edit Volume LUT entry ──
-    component.add(new JSeparator());
-    JMenuItem editLutItem = new JMenuItem(Messages.getString("edit.volume.lut") + Suffix.THREE_PTS);
+    JMenuItem editLutItem =
+        new JMenuItem(org.weasis.core.Messages.getString("ColorMapEditor.edit") + Suffix.THREE_PTS);
     editLutItem.addActionListener(
         e -> {
           if (EventManager.getInstance().getSelectedViewPane() instanceof View3d view3d) {
-            VolumeLutEditorDialog dialog = new VolumeLutEditorDialog(view3d);
-            GuiUtils.showCenterScreen(dialog);
+            ColorMapEditorDialog.open(view3d, new VolumePresetHost(view3d));
           }
         });
     component.add(editLutItem);
   }
 
-  private static void addRootMenu(
-      JComponent component, Map<Modality, List<RadioMenuItem>> map, Modality curModality) {
-    List<RadioMenuItem> items = map.remove(curModality);
-    if (items != null) {
-      for (RadioMenuItem menuItem : items) {
-        component.add(menuItem);
+  // Favorites leave their modality group for the root; the groups are replaced, never mutated.
+  private static List<RadioMenuItem> takeFavorites(Map<Modality, List<RadioMenuItem>> map) {
+    ColorMapRegistry registry = ColorMapRegistry.getInstance();
+    List<RadioMenuItem> favorites = new ArrayList<>();
+    for (Entry<Modality, List<RadioMenuItem>> entry : map.entrySet()) {
+      List<RadioMenuItem> rest = new ArrayList<>();
+      for (RadioMenuItem item : entry.getValue()) {
+        boolean favorite =
+            item.getUserObject() instanceof Preset preset
+                && registry.isFavorite(preset.toColorMap());
+        (favorite ? favorites : rest).add(item);
       }
+      entry.setValue(rest);
+    }
+    return favorites;
+  }
+
+  private static void addRootItems(JComponent component, String title, List<RadioMenuItem> items) {
+    if (items == null || items.isEmpty()) {
+      return;
+    }
+    separate(component);
+    component.add(GuiUtils.createMenuSectionLabel(title));
+    addGroup(component, items);
+  }
+
+  // Presets without a category come first, the others in one submenu per category.
+  private static void addGroup(JComponent component, List<RadioMenuItem> items) {
+    Map<String, List<RadioMenuItem>> categories = new TreeMap<>();
+    for (RadioMenuItem item : items) {
+      String category =
+          item.getUserObject() instanceof Preset preset ? preset.toColorMap().category() : null;
+      if (category == null) {
+        component.add(item);
+      } else {
+        categories.computeIfAbsent(category, k -> new ArrayList<>()).add(item);
+      }
+    }
+    categories.forEach(
+        (name, presets) -> {
+          JMenu menu = new JMenu(name);
+          presets.forEach(menu::add);
+          component.add(menu);
+        });
+  }
+
+  // A separator between sections, never at the top nor twice in a row.
+  private static void separate(JComponent component) {
+    Component[] entries =
+        component instanceof JMenu menu ? menu.getMenuComponents() : component.getComponents();
+    if (entries.length > 0 && !(entries[entries.length - 1] instanceof JSeparator)) {
+      component.add(new JSeparator());
     }
   }
 }

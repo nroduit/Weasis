@@ -39,6 +39,7 @@ import org.weasis.dicom.viewer3d.View3DContainer;
 import org.weasis.dicom.viewer3d.View3DFactory;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.CameraView;
+import org.weasis.dicom.viewer3d.vr.CinematicQuality;
 import org.weasis.dicom.viewer3d.vr.RenderingLayer;
 
 public class Viewer3dPrefView extends AbstractItemDialogPage {
@@ -51,6 +52,8 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
       new JComboBox<>(View3DContainer.LAYOUT_LIST.toArray(new MigLayoutModel[0]));
 
   private final JComboBox<CameraView> comboBoxOrientations = new JComboBox<>(CameraView.values());
+  private final JComboBox<CinematicQuality> comboBoxCinematic =
+      new JComboBox<>(CinematicQuality.values());
   private final JSpinner spinnerMaxXY;
   private final JSpinner spinnerMaxZ;
 
@@ -240,6 +243,19 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
         GuiUtils.getHorizontalBoxLayoutPanel(
             ITEM_SEPARATOR, new JLabel(Messages.getString("dynamic.quality")), sliderDynamic));
 
+    comboBoxCinematic.setSelectedItem(
+        CinematicQuality.fromOrdinal(
+            localPersistence.getIntProperty(
+                RenderingLayer.P_CINEMATIC_QUALITY, CinematicQuality.DEFAULT.ordinal())));
+    otherPanel.add(
+        GuiUtils.getFlowLayoutPanel(
+            FlowLayout.LEADING,
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR,
+            GuiUtils.boxHorizontalStrut(shiftX),
+            new JLabel(Messages.getString("cinematic.quality") + StringUtil.COLON),
+            comboBoxCinematic));
+
     labelLayout = new JLabel(Messages.getString("default.orientation") + StringUtil.COLON);
     otherPanel.add(
         GuiUtils.getFlowLayoutPanel(
@@ -298,6 +314,9 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     preferences.put(
         Camera.P_DEFAULT_ORIENTATION, ((CameraView) comboBoxOrientations.getSelectedItem()).name());
     localPersistence.putIntProperty(
+        RenderingLayer.P_CINEMATIC_QUALITY,
+        ((CinematicQuality) comboBoxCinematic.getSelectedItem()).ordinal());
+    localPersistence.putIntProperty(
         RenderingLayer.P_MAX_TEX_XY,
         spinnerMaxXY.getValue() instanceof Integer val ? val : View3DFactory.getMax3dTextureSize());
     localPersistence.putIntProperty(
@@ -320,6 +339,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
     enableOpenGL.setSelected(true);
     sliderDynamic.setValue(RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE);
+    comboBoxCinematic.setSelectedItem(CinematicQuality.DEFAULT);
     int maxSize = View3DFactory.getMax3dTextureSize();
     localPersistence.putIntProperty(RenderingLayer.P_MAX_TEX_XY, maxSize);
     localPersistence.putIntProperty(RenderingLayer.P_MAX_TEX_Z, maxSize);

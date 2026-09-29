@@ -11,7 +11,6 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -24,7 +23,6 @@ import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
@@ -40,6 +38,7 @@ import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -67,17 +66,18 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
-import org.weasis.core.ui.editor.image.ScreenshotToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.pref.LauncherToolBar;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
+import org.weasis.core.ui.util.SegRegionTool;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -86,6 +86,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.SpecialElementOverlay;
 import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -204,15 +205,6 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           preferences,
           plugInId,
           componentName,
-          InsertableUtil.getCName(ScreenshotToolBar.class),
-          key,
-          true)) {
-        toolBars.add(new ScreenshotToolBar<>(evtMg, 9));
-      }
-      if (InsertableUtil.getBooleanProperty(
-          preferences,
-          plugInId,
-          componentName,
           InsertableUtil.getCName(ViewerToolBar.class),
           key,
           true)) {
@@ -264,6 +256,15 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           key,
           true)) {
         toolBars.add(new LutToolBar(evtMg, 40));
+      }
+      if (InsertableUtil.getBooleanProperty(
+          preferences,
+          plugInId,
+          componentName,
+          InsertableUtil.getCName(RedactionToolBar.class),
+          key,
+          true)) {
+        toolBars.add(new RedactionToolBar(evtMg, 45));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -551,9 +552,16 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             }
           }
         }
+      } else if (ObservableEvent.BasicAction.ADD.equals(action)
+          && newVal instanceof Series<?> addedSeries) {
+        // The special element joins its series right after this event
+        SwingUtilities.invokeLater(() -> refreshOverlays(addedSeries));
       } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
         if (newVal instanceof MediaSeriesGroup group) {
           removeViews(this, group, event);
+          if (group instanceof Series<?> removedSeries && hasOverlay(removedSeries)) {
+            SwingUtilities.invokeLater(this::refreshOverlays);
+          }
         }
       } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
         if (newVal instanceof Series series) {
@@ -617,12 +625,26 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         } else if (specialElement instanceof KOSpecialElement koSpecialElement) {
           // Update if necessary all the views with the KOSpecialElement
           setKOSpecialElement(koSpecialElement, null, false, true);
+        } else if (specialElement instanceof SpecialElementOverlay) {
+          refreshOverlays();
         }
       } else if (ObservableEvent.BasicAction.SELECT.equals(action)
           && newVal instanceof KOSpecialElement koSpecialElement) {
         // Match using UID of the plugin window and the source event
         if (this.getDockableUID().equals(evt.getSource())) {
           setKOSpecialElement(koSpecialElement, true, true, false);
+        }
+      } else if (ObservableEvent.BasicAction.SELECT.equals(action)
+          && newVal instanceof PRSpecialElement pr) {
+        // A report asked to show an image with the presentation state it references
+        if (this.getDockableUID().equals(evt.getSource())) {
+          applyPresentationState(pr);
+        }
+      } else if (ObservableEvent.BasicAction.SELECT.equals(action)
+          && newVal instanceof SegRegion<?> region) {
+        // A report asked to show a segment of a segmentation object
+        if (this.getDockableUID().equals(evt.getSource())) {
+          showSegment(region);
         }
       }
     }
@@ -842,7 +864,9 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
                       SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
               ColorLayerUI.showCenterScreen(dialog, layer);
             });
-    printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
+    printStd.putValue(
+        Action.ACCELERATOR_KEY,
+        ShortcutManager.getInstance().getKeyStroke(ShortcutManager.ID_VIEWER_PRINT));
     actions.add(printStd);
 
     final String title2 = Messages.getString("View2dContainer.dcm_print");
@@ -864,5 +888,43 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   @Override
   public List<MigLayoutModel> getLayoutList() {
     return getLayoutList(this, DEFAULT_LAYOUT_LIST);
+  }
+
+  private void applyPresentationState(PRSpecialElement pr) {
+    ViewCanvas<DicomImageElement> view = getSelectedViewCanvas();
+    if (view instanceof View2d view2d
+        && PresentationStateReader.isImageApplicable(pr, view2d.getImage())) {
+      view2d.setPresentationState(pr, false);
+    }
+  }
+
+  private static void showSegment(SegRegion<?> region) {
+    for (DockableTool tool : UI.tools) {
+      if (tool instanceof SegRegionTool segTool) {
+        segTool.updateVisibleNode();
+        segTool.show(region);
+        return;
+      }
+    }
+    LOGGER.warn("No segmentation tool to show the segment {}", region.getLabel());
+  }
+
+  private static boolean hasOverlay(Series<?> series) {
+    return DicomModel.getFirstSpecialElement(series, SpecialElementOverlay.class) != null;
+  }
+
+  private void refreshOverlays(Series<?> series) {
+    if (hasOverlay(series)) {
+      refreshOverlays();
+    }
+  }
+
+  /** Rebuilds the SR overlays of every view of this container. */
+  private void refreshOverlays() {
+    for (ViewCanvas<DicomImageElement> view : cellManager) {
+      if (view instanceof View2d view2d) {
+        view2d.updateOverlays();
+      }
+    }
   }
 }

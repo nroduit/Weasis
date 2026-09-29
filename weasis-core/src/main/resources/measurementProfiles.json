@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "profiles": [
+    {
+      "id": "default",
+      "name": "Default",
+      "modalities": []
+    },
+    {
+      "id": "cross-sectional",
+      "name": "Cross-sectional (CT, MR, PET)",
+      "modalities": ["CT", "MR", "PT", "NM"],
+      "tools": [
+        "weasis.line", "weasis.polyline", "weasis.rectangle", "weasis.ellipse", "weasis.circle",
+        "weasis.circle3", "weasis.freehand", "weasis.bidirectional", "weasis.angle", "weasis.probe",
+        "weasis.draw.line", "weasis.arrow", "weasis.text"
+      ],
+      "statistics": ["stats.pixels", "stats.min", "stats.max", "stats.mean", "stats.stdev"]
+    },
+    {
+      "id": "radiography",
+      "name": "Radiography (CR, DX)",
+      "modalities": ["CR", "DX", "RF", "XA"],
+      "tools": [
+        "weasis.line", "weasis.polyline", "weasis.angle", "weasis.open-angle", "weasis.angle4",
+        "weasis.cobb-angle", "weasis.ctr", "weasis.parallel", "weasis.perpendicular",
+        "weasis.draw.line", "weasis.arrow", "weasis.ruler", "weasis.text"
+      ],
+      "labels": { "weasis.ctr": ["ctr.ratio"] },
+      "statistics": []
+    },
+    {
+      "id": "ultrasound",
+      "name": "Ultrasound",
+      "modalities": ["US"],
+      "tools": [
+        "weasis.line", "weasis.polyline", "weasis.ellipse", "weasis.freehand", "weasis.bidirectional",
+        "weasis.angle", "weasis.arrow", "weasis.text"
+      ],
+      "statistics": []
+    }
+  ]
+}

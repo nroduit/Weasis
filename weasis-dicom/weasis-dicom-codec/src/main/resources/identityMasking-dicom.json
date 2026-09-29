@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "tags": [
+    { "tag": "PatientName", "category": "DIRECT_ID" },
+    { "tag": "PatientID", "category": "DIRECT_ID" },
+    { "tag": "AccessionNumber", "category": "DIRECT_ID" },
+    { "tag": "StudyID", "category": "DIRECT_ID" },
+    { "tag": "ReferringPhysicianName", "category": "DIRECT_ID" },
+
+    { "tag": "PatientSex", "category": "PATIENT_CHARACTERISTIC" },
+    { "tag": "PatientAge", "category": "PATIENT_CHARACTERISTIC" },
+    { "tag": "PatientWeight", "category": "PATIENT_CHARACTERISTIC" },
+    { "tag": "PatientSize", "category": "PATIENT_CHARACTERISTIC" },
+
+    { "tag": "PatientBirthDate", "category": "BIRTH_DATE" },
+    { "tag": "PatientBirthTime", "category": "BIRTH_DATE" },
+
+    { "tag": "StudyDate", "category": "DATE" },
+    { "tag": "StudyTime", "category": "DATE" },
+    { "tag": "SeriesDate", "category": "DATE" },
+    { "tag": "SeriesTime", "category": "DATE" },
+    { "tag": "AcquisitionDate", "category": "DATE" },
+    { "tag": "AcquisitionTime", "category": "DATE" },
+    { "tag": "ContentDate", "category": "DATE" },
+    { "tag": "ContentTime", "category": "DATE" },
+
+    { "tag": "InstitutionName", "category": "INSTITUTION" },
+    { "tag": "InstitutionalDepartmentName", "category": "INSTITUTION" },
+
+    { "tag": "StationName", "category": "DEVICE" },
+    { "tag": "DeviceSerialNumber", "category": "DEVICE" },
+
+    { "tag": "StudyDescription", "category": "DESCRIPTOR" },
+    { "tag": "SeriesDescription", "category": "DESCRIPTOR" },
+    { "tag": "ProtocolName", "category": "DESCRIPTOR" },
+
+    { "tag": "PatientComments", "category": "FREE_TEXT" },
+    { "tag": "ImageComments", "category": "FREE_TEXT" },
+    { "tag": "AdditionalPatientHistory", "category": "FREE_TEXT" }
+  ]
+}

@@ -26,6 +26,8 @@ import org.weasis.dicom.explorer.exp.CheckTreeModel.ToolTipStudyNode;
 
 public class ExportTree extends JPanel {
 
+  private CheckTreeModel checkTreeModel;
+
   public ExportTree(DicomModel dicomModel) {
     this(new CheckTreeModel(dicomModel));
   }
@@ -35,8 +37,14 @@ public class ExportTree extends JPanel {
     setCheckboxTreeModel(checkTreeModel);
   }
 
+  /** The model holding what is checked. */
+  public CheckTreeModel getCheckTreeModel() {
+    return checkTreeModel;
+  }
+
   public void setCheckboxTreeModel(CheckTreeModel checkTreeModel) {
     Objects.requireNonNull(checkTreeModel);
+    this.checkTreeModel = checkTreeModel;
     CheckboxTree checkboxTree = buildCheckboxTree(checkTreeModel);
     initTree(checkTreeModel, checkboxTree);
     add(checkboxTree, BorderLayout.CENTER);

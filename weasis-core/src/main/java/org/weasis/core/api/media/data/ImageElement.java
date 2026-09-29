@@ -32,6 +32,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
+import org.weasis.core.api.image.measure.PlaneGeometry;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ResourceMonitor;
 import org.weasis.core.api.util.SystemMemory;
@@ -168,8 +169,25 @@ public class ImageElement extends MediaElement {
     return pixelSizeY <= pixelSizeX ? 1.0 : pixelSizeY / pixelSizeX;
   }
 
+  /** Position of the image in patient space, or {@code null} when the image has none. */
+  public PlaneGeometry getPlaneGeometry() {
+    return null;
+  }
+
   public double getPixelSize() {
     return Math.min(pixelSizeX, pixelSizeY);
+  }
+
+  /**
+   * Sets the pixel size, its unit and its origin back to what the image itself provides; without
+   * such information the image is measured in pixels.
+   */
+  public void initPixelConfiguration() {
+    this.pixelSizeX = 1.0;
+    this.pixelSizeY = 1.0;
+    this.pixelSpacingUnit = Unit.PIXEL;
+    this.pixelSizeCalibrationDescription = null;
+    this.pixelSizeModifiedByUser = false;
   }
 
   public void setPixelSize(double pixelSize) {
@@ -328,7 +346,37 @@ public class ImageElement extends MediaElement {
     window = (window == null) ? getDefaultWindow(pr) : window;
     level = (level == null) ? getDefaultLevel(pr) : level;
 
+    if (params != null && imageSource.channels() == 1) {
+      // A map anchored to physical values is indexed over its own range, whatever the window
+      if (params.get(WindowOp.P_OUTPUT_RANGE) instanceof WindowOp.OutputRange range) {
+        window = range.window();
+        level = range.level();
+      }
+      if (params.get(WindowOp.P_OUTPUT_BITS) instanceof Integer bits && bits > 8) {
+        return getDefaultRenderedImage(this, imageSource, window, level, bits);
+      }
+    }
     return getDefaultRenderedImage(this, imageSource, window, level, pixelPadding);
+  }
+
+  /**
+   * Window/level of a single-channel source to a 16-bit index image over {@code [0, 2^bits - 1]},
+   * the input of a wide {@link org.weasis.core.api.image.PseudoColorOp}. Not for DICOM images.
+   */
+  public static PlanarImage getDefaultRenderedImage(
+      ImageElement image, PlanarImage source, double window, double level, int bits) {
+    if (image == null || source == null) {
+      return null;
+    }
+    double maxOut = (1 << Math.clamp(bits, 9, 16)) - 1;
+    double low = level - window / 2.0;
+    double high = level + window / 2.0;
+    double range = Math.max(high - low, 1.0);
+    double slope = maxOut / range;
+    double yInt = maxOut - slope * high;
+    ImageCV result = new ImageCV();
+    source.toMat().convertTo(result, CvType.CV_16U, slope, yInt);
+    return result;
   }
 
   /**

@@ -23,7 +23,7 @@ import org.weasis.core.ui.util.tree.TreeCheckingModel.CheckState;
 /**
  * Renders a node as a FlatLaf tri-state checkbox followed by a standard tree label. A node with
  * partially checked descendants gets two distinct marks, depending on whether the node itself is
- * checked: a check mark above the indeterminate bar, or the bar alone.
+ * checked: a check mark above a bar, or an empty box holding a small accent square.
  */
 public class DefaultCheckboxTreeCellRenderer extends JPanel implements CheckboxTreeCellRenderer {
 
@@ -74,11 +74,10 @@ public class DefaultCheckboxTreeCellRenderer extends JPanel implements CheckboxT
   }
 
   private void applyState(CheckState state) {
-    checkBoxIcon.setPartial(state == CheckState.CHECKED_PARTIAL);
+    checkBoxIcon.setState(state);
     checkBox.setState(
         switch (state) {
-          case UNCHECKED -> State.UNSELECTED;
-          case PARTIAL -> State.INDETERMINATE;
+          case UNCHECKED, PARTIAL -> State.UNSELECTED;
           case CHECKED, CHECKED_PARTIAL -> State.SELECTED;
         });
   }

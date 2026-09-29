@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="22" height="22" version="1.1" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
  <g fill="none" stroke-width="1.467">
+  <path d="M15.9 4.9 4.73 2.9 2.99 10.3 6 18.97 19.1 16.5z" fill="#389fd6" fill-opacity="0.22" stroke="none"/>
   <g stroke="#6e6e6e" stroke-linejoin="bevel">
    <path d="m17.645 16.986-10.174 1.8826"/>
    <path d="m5.3298 17.537-2.0669-5.7215"/>
    <path d="m3.3017 8.9736 1.1139-4.6074"/>
    <path d="m6.4037 3.0294 8.2839 1.5518"/>
   </g>
-  <g stroke="#389fd6">
-   <rect x="4.5265" y="17.497" width="2.944" height="2.944" style="paint-order:stroke fill markers"/>
-   <rect x="3.2569" y="1.4335" width="2.944" height="2.944" style="paint-order:stroke fill markers"/>
-   <rect x="17.624" y="15.036" width="2.944" height="2.944" style="paint-order:stroke fill markers"/>
-   <rect x="14.447" y="3.4134" width="2.944" height="2.944" style="paint-order:stroke fill markers"/>
-   <rect x="1.5172" y="8.841" width="2.944" height="2.944" style="paint-order:stroke fill markers"/>
-  </g>
+  <path d="M17.1 7.5 18.9 14.2" stroke="#389fd6" stroke-dasharray="2.2 1.5"/>
+  <rect x="4.527" y="17.497" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+  <rect x="3.257" y="1.433" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+  <rect x="17.624" y="15.036" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+  <rect x="1.517" y="8.841" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+  <circle cx="15.9" cy="4.9" r="2.6" stroke="#389fd6"/>
  </g>
 </svg>

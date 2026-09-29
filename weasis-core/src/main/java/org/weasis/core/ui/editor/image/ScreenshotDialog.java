@@ -19,6 +19,7 @@ import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.util.Objects;
@@ -41,10 +42,17 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.ui.editor.image.export.CaptureScope;
+import org.weasis.core.ui.editor.image.export.FrameGrabber;
 import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.DisplayProfileSelector;
+import org.weasis.core.ui.util.MaskingProfileSelector;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
@@ -101,7 +109,9 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
               + ")",
           false);
 
-  private final JCheckBox anonymize = new JCheckBox(Messages.getString("anonymize"), true);
+  private final MaskingProfileSelector maskingProfile =
+      MaskingProfileSelector.withDefault(MaskingProfile.DISPLAY_ID);
+  private final DisplayProfileSelector displayProfile;
   private final JLabel labelSize =
       new JLabel(Messages.getString("size") + " (%)" + StringUtil.COLON);
   private final JSpinner spinner = new JSpinner();
@@ -116,6 +126,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
         .addChangeListener(
             e -> setImageSize((Integer) ((SpinnerNumberModel) e.getSource()).getValue()));
     this.viewCanvas = Objects.requireNonNull(viewCanvas);
+    this.displayProfile = new DisplayProfileSelector(() -> viewCanvas);
     initComponents();
     pack();
   }
@@ -146,21 +157,37 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
 
     setImageSize(100);
     boolean dicom = viewCanvas.getPanner() == null;
-    panel.add(GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, viewRadio));
-    panel.add(GuiUtils.getHorizontalBoxLayoutPanel(buildViewPanel(dicom)));
-    panel.add(GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, imageRadio));
-    panel.add(GuiUtils.getHorizontalBoxLayoutPanel(buildImagePanel(dicom)));
+    if (isView2d()) {
+      panel.add(
+          GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, viewRadio));
+      panel.add(GuiUtils.getHorizontalBoxLayoutPanel(buildViewPanel(dicom)));
+      panel.add(
+          GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, imageRadio));
+      panel.add(GuiUtils.getHorizontalBoxLayoutPanel(buildImagePanel(dicom)));
+    } else {
+      // A rendered view (3D) has no original image to export: only the view as displayed
+      panel.add(GuiUtils.getHorizontalBoxLayoutPanel(buildViewPanel(dicom)));
+    }
 
     JButton clipButton = new JButton(Messages.getString("clipboard"));
     clipButton.addActionListener(
         e -> {
-          if (viewRadio.isSelected()) {
+          if (!isView2d()) {
+            BufferedImage captured = captureDisplayed();
+            if (captured != null) {
+              Toolkit.getDefaultToolkit()
+                  .getSystemClipboard()
+                  .setContents(ViewTransferHandler.transferable(captured), null);
+            }
+          } else if (viewRadio.isSelected()) {
             ViewTransferHandler imageTransferHandler =
-                new ViewTransferHandler(anonymize.isSelected());
-            imageTransferHandler.exportToClipboard(
-                viewCanvas.getJComponent(),
-                Toolkit.getDefaultToolkit().getSystemClipboard(),
-                TransferHandler.COPY);
+                new ViewTransferHandler(displayProfile.getSelection().apply(viewCanvas));
+            maskingProfile.runMaskedAction(
+                () ->
+                    imageTransferHandler.exportToClipboard(
+                        viewCanvas.getJComponent(),
+                        Toolkit.getDefaultToolkit().getSystemClipboard(),
+                        TransferHandler.COPY));
           } else {
             I img = viewCanvas.getImage();
             if (img != null) {
@@ -172,6 +199,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
                       shutterCheckBox.isSelected(),
                       overlayCheckBox.isSelected(),
                       ratio);
+              addViewRedaction(manager);
               ImageTransferHandler imageTransferHandler = new ImageTransferHandler(manager);
               imageTransferHandler.exportToClipboard(
                   viewCanvas.getJComponent(),
@@ -185,10 +213,16 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
         e -> {
           boolean mustBeReleased = false;
           PlanarImage result = null;
-          if (viewRadio.isSelected()) {
+          if (!isView2d()) {
+            BufferedImage captured = captureDisplayed();
+            result = captured == null ? null : ImageConversion.toMat(captured);
+          } else if (viewRadio.isSelected()) {
             if (viewCanvas instanceof DefaultView2d<I> view2DPane) {
               RenderedImage imgP =
-                  ViewTransferHandler.createComponentImage(view2DPane, anonymize.isSelected());
+                  maskingProfile.runMasked(
+                      () ->
+                          ViewTransferHandler.createComponentImage(
+                              view2DPane, displayProfile.getSelection().apply(view2DPane)));
               result = ImageConversion.toMat(imgP);
             }
           } else {
@@ -202,6 +236,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
                       shutterCheckBox.isSelected(),
                       overlayCheckBox.isSelected(),
                       ratio);
+              addViewRedaction(manager);
               Optional<PlanarImage> inputImage = manager.getFirstNodeInputImage();
               if (inputImage.isPresent()) {
                 Optional<PlanarImage> rimage = manager.process();
@@ -216,6 +251,14 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
           saveImageFile(result, mustBeReleased);
         });
 
+    panel.add(
+        GuiUtils.getFlowLayoutPanel(
+            FlowLayout.LEADING,
+            0,
+            ITEM_SEPARATOR_SMALL,
+            MaskingProfileSelector.createReviewWarning(
+                viewCanvas.getImage(), viewCanvas.getSeries())));
+
     getRootPane().setDefaultButton(saveButton);
     saveButton.addActionListener(evt -> doClose());
     panel.add(
@@ -224,6 +267,38 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     panel.add(GuiUtils.boxYLastElement(ITEM_SEPARATOR));
 
     this.setContentPane(panel);
+  }
+
+  /**
+   * The original image skips the view pipeline, so the redaction regions burned by the view are
+   * copied in, before the zoom that would move them out of image coordinates.
+   */
+  private void addViewRedaction(SimpleOpManager manager) {
+    viewCanvas
+        .getDisplayOpManager()
+        .getNode(OpManager.REDACTION_OP_NAME)
+        .ifPresent(
+            node ->
+                manager.addImageOperationAction(
+                    node.copy(),
+                    SimpleOpManager.Position.BEFORE,
+                    manager.getNode(ZoomOp.OP_NAME).orElse(null)));
+  }
+
+  private boolean isView2d() {
+    return viewCanvas instanceof DefaultView2d<?>;
+  }
+
+  /**
+   * Paints a view that cannot be re-rendered off-screen, under the selected masking and display
+   * profiles.
+   */
+  private BufferedImage captureDisplayed() {
+    FrameGrabber grabber =
+        new FrameGrabber(
+            CaptureScope.VIEW, viewCanvas, null, maskingProfile.getSelectedProfile(), 1.0);
+    grabber.setDisplayProfile(displayProfile.getSelection());
+    return grabber.grab();
   }
 
   private void saveImageFile(PlanarImage image, boolean mustBeReleased) {
@@ -287,14 +362,23 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     shutterCheckBox.setEnabled(enable);
     overlayCheckBox.setEnabled(enable);
 
-    anonymize.setEnabled(!enable);
+    maskingProfile.setEnabled(!enable);
+    displayProfile.setEnabled(!enable);
   }
 
   private JPanel buildViewPanel(boolean dicom) {
     JPanel dataPanel = new JPanel();
     dataPanel.setLayout(new MigLayout("insets 0 25lp 30lp 10lp, fillx", "[grow 0]")); // NON-NLS
+    if (DisplayProfile.supports(viewCanvas)) {
+      dataPanel.add(
+          GuiUtils.getHorizontalBoxLayoutPanel(
+              displayProfile.createLabel(), displayProfile, displayProfile.getEditButton()),
+          GuiUtils.NEWLINE);
+    }
     if (dicom) {
-      dataPanel.add(anonymize, GuiUtils.NEWLINE);
+      dataPanel.add(
+          GuiUtils.getHorizontalBoxLayoutPanel(maskingProfile.createLabel(), maskingProfile),
+          GuiUtils.NEWLINE);
     }
     return dataPanel;
   }

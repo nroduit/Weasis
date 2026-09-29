@@ -47,7 +47,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
   @Override
   public String toString() {
-    String val = displayTag.getFormattedText(false, this);
+    String val = displayTag.getFormattedText(this);
     return val == null ? Messages.getString("MediaSeriesGroupNode.no_val") : val;
   }
 

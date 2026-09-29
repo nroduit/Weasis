@@ -23,10 +23,10 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.model.graphic.imp.BuiltinGraphicTools;
 
 public class RectifyPanel extends AbstractAcquireActionPanel {
 
@@ -81,7 +81,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
 
     view.getEventManager()
         .getAction(EditionToolFactory.DRAW_EDITION)
-        .ifPresent(a -> a.setSelectedItem(MeasureToolBar.selectionGraphic));
+        .ifPresent(a -> a.setSelectedItem(BuiltinGraphicTools.SELECTION));
     ImageViewerPlugin<?> container =
         WinUtil.getParentOfClass(view.getJComponent(), ImageViewerPlugin.class);
     applyEditAction(this, container);

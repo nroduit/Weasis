@@ -26,6 +26,7 @@ import java.util.function.Predicate;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -71,6 +72,7 @@ public class AcquirePublishDialog extends JDialog {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishDialog.class);
   private static final String LAST_SEL_NODE = "lastSelectedNode";
   public static final String P_LAST_RESOLUTION = "last.resolution";
+  public static final String P_REMOVE_JPEG_METADATA = "remove.jpeg.metadata";
   public static final String PREFERENCE_NODE = "publish"; // NON-NLS
   private static final String LAST_CALLING_NODE = "lastCallingNode";
   private final JComboBox<AbstractDicomNode> comboCallingNode = new JComboBox<>();
@@ -118,6 +120,7 @@ public class AcquirePublishDialog extends JDialog {
 
   private PublishTree publishTree;
   private JComboBox<Resolution> resolutionCombo;
+  private JCheckBox removeMetadataCheckBox;
   private JButton publishButton;
   private JButton cancelButton;
   private JProgressBar progressBar;
@@ -171,15 +174,21 @@ public class AcquirePublishDialog extends JDialog {
             Messages.getString("AcquirePublishDialog.resolution") + StringUtil.COLON_AND_SPACE),
         "split 2, span"); // NON-NLS
     resolutionCombo = new JComboBox<>(Resolution.values());
+    removeMetadataCheckBox =
+        new JCheckBox(Messages.getString("AcquirePublishDialog.remove_metadata"), true);
+    removeMetadataCheckBox.setToolTipText(
+        Messages.getString("AcquirePublishDialog.remove_metadata_tip"));
     String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
     Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);
     if (prefs != null) {
       Preferences p = prefs.node(PREFERENCE_NODE);
       resolutionCombo.setSelectedItem(
           Resolution.getInstance(p.get(P_LAST_RESOLUTION, Resolution.ORIGINAL.name())));
+      removeMetadataCheckBox.setSelected(p.getBoolean(P_REMOVE_JPEG_METADATA, true));
     }
     resolutionCombo.setEnabled(false);
     contentPane.add(resolutionCombo, "wrap"); // NON-NLS
+    contentPane.add(removeMetadataCheckBox, "span, wrap"); // NON-NLS
 
     JLabel lblDestination =
         new JLabel(
@@ -337,7 +346,8 @@ public class AcquirePublishDialog extends JDialog {
 
   private SwingWorker<Path, AcquireMediaInfo> setupPublishingTask(
       List<AcquireMediaInfo> toPublish, File exportDir) {
-    SwingWorker<Path, AcquireMediaInfo> dicomizeTask = new DicomizeTask(toPublish);
+    SwingWorker<Path, AcquireMediaInfo> dicomizeTask =
+        new DicomizeTask(toPublish, removeMetadataCheckBox.isSelected());
     ActionListener taskCancelActionListener = _ -> dicomizeTask.cancel(true);
 
     dicomizeTask.addPropertyChangeListener(
@@ -350,6 +360,7 @@ public class AcquirePublishDialog extends JDialog {
 
             if (StateValue.STARTED == evt.getNewValue()) {
               resolutionCombo.setEnabled(false);
+              removeMetadataCheckBox.setEnabled(false);
               progressBar.setVisible(true);
               publishButton.setEnabled(false);
               cancelButton.removeActionListener(clearAndHideActionListener);
@@ -381,6 +392,7 @@ public class AcquirePublishDialog extends JDialog {
 
               if (tempDirDicom == null) {
                 resolutionCombo.setEnabled(!getOversizedSelected(publishTree).isEmpty());
+                removeMetadataCheckBox.setEnabled(true);
                 progressBar.setValue(0);
                 progressBar.setVisible(false);
                 publishButton.setEnabled(true);
@@ -463,6 +475,8 @@ public class AcquirePublishDialog extends JDialog {
       if (resolution != null) {
         BundlePreferences.putStringPreferences(p, P_LAST_RESOLUTION, resolution.name());
       }
+      BundlePreferences.putBooleanPreferences(
+          p, P_REMOVE_JPEG_METADATA, removeMetadataCheckBox.isSelected());
     }
     dispose();
   }

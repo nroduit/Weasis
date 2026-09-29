@@ -104,7 +104,7 @@ public abstract class Feature<T> implements KeyActionValue {
     this.title = title;
     this.command = command;
     this.keyCode = keyEvent;
-    this.modifier = modifier;
+    this.modifier = KeyBinding.toExtended(modifier);
     this.cursor = cursor;
     this.icon = ResourceUtil.getIcon("svg/action/" + command + ".svg"); // NON-NLS
   }
@@ -166,10 +166,10 @@ public abstract class Feature<T> implements KeyActionValue {
    * Sets the modifier mask for this feature's shortcut. Used by {@link ShortcutManager} to apply
    * user customizations.
    *
-   * @param modifier the new modifier mask
+   * @param modifier the new modifiers, as {@code InputEvent.*_DOWN_MASK}
    */
   public void setModifier(int modifier) {
-    this.modifier = modifier;
+    this.modifier = KeyBinding.toExtended(modifier);
   }
 
   public boolean isDrawingAction() {

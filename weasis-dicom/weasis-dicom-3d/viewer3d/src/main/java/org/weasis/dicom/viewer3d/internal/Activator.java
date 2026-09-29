@@ -12,9 +12,11 @@ package org.weasis.dicom.viewer3d.internal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.viewer3d.View3DContainer;
 import org.weasis.dicom.viewer3d.vr.OpenglUtils;
+import org.weasis.dicom.viewer3d.vr.Preset;
 import org.weasis.plugin.PluginContext;
 import org.weasis.plugin.WeasisPlugin;
 
@@ -28,6 +30,8 @@ public class Activator extends WeasisPlugin {
 
   @Override
   public void start() {
+    ColorMapRegistry.getInstance().addBuiltIn(Preset.builtInMaps());
+    Preset.migrateLegacyCustomPresets();
     BundleTools.registerExistingComponents(View3DContainer.UI);
   }
 

@@ -97,8 +97,9 @@ float getWindowLevelFunc(float pixValue, bool normalize, uint type) {
     return clamp(val + outputLevelMin, outputLevelMin, outputLevelMax);;
 }
 
-float getWindowLevel(vec3 texCoord) {
-    float val = getOriginalVoxelValue(getVoxelValue(texCoord));
+// Windowed value of a raw voxel value, in [outputLevelMin, outputLevelMax]. Every shape is
+// monotonic in the raw value, so the windowed range of an interval is the interval of its ends.
+float windowLevelOf(float val) {
     if (lutShape == lutShapeLinear) {
         val = getWindowLevelLinear(val);
     } else if (lutShape == lutShapeSigmoid) {
@@ -115,7 +116,15 @@ float getWindowLevel(vec3 texCoord) {
     return val;
 }
 
+float getWindowLevel(vec3 texCoord) {
+    return windowLevelOf(getOriginalVoxelValue(getVoxelValue(texCoord)));
+}
+
+// Windowed value normalized to [0, 1] over the output range.
+float normalizedWindowLevelOf(float val) {
+    return (windowLevelOf(val) - outputLevelMin) / (outputLevelMax - outputLevelMin);
+}
+
 float getNormalizedWindowLevel(vec3 texCoord) {
-    // normalize to 0-1 range according to the outputRange
-    return (getWindowLevel(texCoord) - outputLevelMin) / (outputLevelMax - outputLevelMin);
+    return normalizedWindowLevelOf(getOriginalVoxelValue(getVoxelValue(texCoord)));
 }

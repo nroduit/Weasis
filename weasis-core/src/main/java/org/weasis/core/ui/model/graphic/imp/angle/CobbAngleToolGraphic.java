@@ -38,9 +38,15 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_COBB);
 
   public static final Measurement ANGLE =
-      new Measurement(Messages.getString("measure.angle"), 1, true);
+      new Measurement("angle", Messages.getString("measure.angle"), 1, true);
   public static final Measurement COMPLEMENTARY_ANGLE =
-      new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false);
+      new Measurement(
+          "angle.complementary",
+          Messages.getString("measure.complement_angle"),
+          2,
+          true,
+          true,
+          false);
 
   protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
 

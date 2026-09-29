@@ -1,4 +1,7 @@
 #version 430
+// Ray-cast volume rendering (composite, MIP, iso-surface, slices). The path tracer is a program of
+// its own, pathTracing.comp, built from the same includes: linked together, the two took the
+// NVIDIA linker three times as long as they take apart.
 
 layout (local_size_x = 16, local_size_y = 16) in ;
 layout (rgba32f, binding = 0) uniform image2D outputImage;
@@ -7,6 +10,11 @@ layout (binding = 1) uniform sampler2D colorMap;
 layout (binding = 2) uniform sampler2D lightingMap;
 layout (binding = 4) uniform usampler3D segTexture;
 layout (binding = 5) uniform sampler2D segColorMap;
+layout (binding = 6) uniform sampler2D envMap;
+layout (binding = 7) uniform sampler2D historyMap;
+layout (binding = 8) uniform sampler2D featureMap;
+layout (binding = 12) uniform sampler2D momentMap;
+layout (binding = 11) uniform sampler3D majorantMap;
 
 #include "voxelUniforms.glsl"
 

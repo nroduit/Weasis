@@ -390,8 +390,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void mouseDragged(MouseEvent e) {
-      int mods = e.getModifiers();
-      if (pickPoint != null && (mods & InputEvent.BUTTON1_MASK) != 0) {
+      if (pickPoint != null && (e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) != 0) {
         Point p = e.getPoint();
         int dx = p.x - pickPoint.x;
         int dy = p.y - pickPoint.y;

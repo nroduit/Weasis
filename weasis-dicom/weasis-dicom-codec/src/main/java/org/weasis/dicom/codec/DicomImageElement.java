@@ -41,6 +41,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.measure.PlaneGeometry;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
@@ -50,6 +51,7 @@ import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.dicom.codec.geometry.SlicePlaneGeometry;
 import org.weasis.dicom.codec.utils.Ultrasound;
 import org.weasis.dicom.param.AttributeEditorContext;
 import org.weasis.opencv.data.ImageCV;
@@ -67,7 +69,12 @@ public class DicomImageElement extends ImageElement implements DicomElement {
 
   public static final List<LutShape> DEFAULT_LUT_FUNCTIONS =
       List.of(
-          LutShape.LINEAR, LutShape.SIGMOID, LutShape.SIGMOID_NORM, LutShape.LOG, LutShape.LOG_INV);
+          LutShape.LINEAR,
+          LutShape.LINEAR_EXACT,
+          LutShape.SIGMOID,
+          LutShape.SIGMOID_NORM,
+          LutShape.LOG,
+          LutShape.LOG_INV);
   private DicomImageAdapter adapter = null;
   private Collection<LutShape> lutShapeCollection = null;
 
@@ -77,10 +84,9 @@ public class DicomImageElement extends ImageElement implements DicomElement {
     initPixelConfiguration();
   }
 
+  @Override
   public void initPixelConfiguration() {
-    this.pixelSizeX = 1.0;
-    this.pixelSizeY = 1.0;
-    this.pixelSpacingUnit = Unit.PIXEL;
+    super.initPixelConfiguration();
 
     double[] val;
     String modality = TagD.getTagValue(mediaIO, Tag.Modality, String.class);
@@ -114,7 +120,6 @@ public class DicomImageElement extends ImageElement implements DicomElement {
        */
       setPixelSize(val[1], val[0]);
       pixelSpacingUnit = Unit.MILLIMETER;
-      pixelSizeModifiedByUser = false;
     }
 
     initPixelValueUnit(modality);
@@ -494,12 +499,42 @@ public class DicomImageElement extends ImageElement implements DicomElement {
         readParams.setApplyWindowLevelToColorImage((Boolean) params.get(WindowOp.P_APPLY_WL_COLOR));
         readParams.setInverseLut((Boolean) params.get(WindowOp.P_INVERSE_LEVEL));
         readParams.setFillOutsideLutRange((Boolean) params.get(WindowOp.P_FILL_OUTSIDE_LUT));
+        if (imageSource.channels() == 1) {
+          readParams.setOutputBits((Integer) params.get(WindowOp.P_OUTPUT_BITS));
+          applyOutputRange(readParams, params);
+        }
       }
       if (isImageInitialized()) {
         return ImageRendering.getVoiLutImage(imageSource, adapter, readParams);
       }
     }
     return null;
+  }
+
+  // A map anchored to physical values is indexed over exactly its own range, whatever the window
+  // is: LINEAR_EXACT, as DICOM LINEAR would end one unit short.
+  private static void applyOutputRange(DicomImageReadParam readParams, Map<String, Object> params) {
+    if (params.get(WindowOp.P_OUTPUT_RANGE) instanceof WindowOp.OutputRange range) {
+      readParams.setWindowWidth(range.window());
+      readParams.setWindowCenter(range.level());
+      readParams.setVoiLutShape(LutShape.LINEAR_EXACT);
+    }
+  }
+
+  @Override
+  public PlaneGeometry getPlaneGeometry() {
+    GeometryOfSlice geometry = getSliceGeometry();
+    return geometry == null ? null : new SlicePlaneGeometry(geometry, getFrameOfReferenceUID());
+  }
+
+  /** Frame of reference of the image: its own tag, else the one of the reader's data set. */
+  public String getFrameOfReferenceUID() {
+    String uid = TagD.getTagValue(this, Tag.FrameOfReferenceUID, String.class);
+    if (uid == null && getMediaReader() instanceof DcmMediaReader reader) {
+      Attributes dcm = reader.getDicomObject();
+      uid = dcm == null ? null : dcm.getString(Tag.FrameOfReferenceUID);
+    }
+    return uid;
   }
 
   public GeometryOfSlice getSliceGeometry() {

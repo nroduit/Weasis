@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.media.data;
 
+import java.util.function.Function;
 import java.util.stream.Stream;
 import org.weasis.core.util.StringUtil;
 
@@ -42,16 +43,41 @@ public class TagView {
     return false;
   }
 
-  public String getFormattedText(boolean anonymize, TagReadable... taggable) {
+  /**
+   * Formats the first tag of this view that yields text, applying the active {@link IdentityMask}.
+   */
+  public String getFormattedText(TagReadable... taggable) {
     TagReadable readable =
         Stream.of(taggable).filter(t -> t.containTagKey(TagW.Timezone)).findFirst().orElse(null);
+    return resolveText(t -> TagUtil.getTagValue(t, taggable), readable);
+  }
+
+  /**
+   * Shared resolution used by every annotation layer: walks the candidate tags, applies the active
+   * mask, and returns the first non-empty rendering.
+   *
+   * @param valueLookup supplies the raw value of a tag from the caller's own context
+   * @param timeZoneSource source of {@link TagW#Timezone} for time formatting, may be null
+   */
+  public String resolveText(Function<TagW, Object> valueLookup, TagReadable timeZoneSource) {
+    IdentityMask mask = IdentityMask.active().orElse(null);
     for (TagW t : this.tag) {
-      if (!anonymize || t.getAnonymizationType() != 1) {
-        String f = t.addGMTOffset(format, readable);
-        String str = t.getFormattedTagValue(TagUtil.getTagValue(t, taggable), f);
-        if (StringUtil.hasText(str)) {
-          return str;
-        }
+      AnonymizationAction action = mask == null ? AnonymizationAction.KEEP : mask.actionFor(t);
+      if (action == AnonymizationAction.REMOVE) {
+        continue;
+      }
+      if (action == AnonymizationAction.CLEAR) {
+        return StringUtil.EMPTY_STRING;
+      }
+      Object value = valueLookup.apply(t);
+      if (value == null) {
+        continue;
+      }
+      String str =
+          t.getFormattedTagValue(
+              mask == null ? value : mask.apply(t, value), t.addGMTOffset(format, timeZoneSource));
+      if (StringUtil.hasText(str)) {
+        return str;
       }
     }
     return StringUtil.EMPTY_STRING;

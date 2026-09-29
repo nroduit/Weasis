@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<arrow fill="false" showLabel="true" thickness="1.0" uuid="test.graphic-abcd-123-efg45.1">
+  <paint rgb="000000"/>
+  <pts>
+    <pt x="10.0" y="10.0"/>
+    <pt x="110.0" y="60.0"/>
+  </pts>
+</arrow>

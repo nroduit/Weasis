@@ -13,11 +13,18 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
+import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.ref.AnatomicRegion;
+import org.weasis.dicom.ref.RegionGroup;
 
 /**
  * Stateful, single-mode filter for the DICOM explorer thumbnail grid. Only the active {@link
@@ -144,12 +151,51 @@ public class SeriesFilter {
     if (number != null && contains(number.toString())) {
       return true;
     }
+    if (matchesAnatomy(anatomyOf(series))) {
+      return true;
+    }
     for (int tag : STUDY_TEXT_TAGS) {
       if (contains(TagD.getTagValue(study, tag, String.class))) {
         return true;
       }
     }
     return false;
+  }
+
+  // The meaning of the region, or the name of a region group it lies in: "chest" finds a lung CT
+  private boolean matchesAnatomy(AnatomicRegion anatomy) {
+    if (anatomy == null) {
+      return false;
+    }
+    if (contains(anatomy.getRegion().getCodeMeaning())) {
+      return true;
+    }
+    for (RegionGroup group : RegionGroup.values()) {
+      if (anatomy.isIn(group)
+          && (contains(group.getLabel()) || contains(group.name().replace('_', ' ')))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * The anatomy of the first image when loaded (Anatomic Region Sequence, else Body Part Examined),
+   * otherwise the Body Part Examined of the series.
+   */
+  static AnatomicRegion anatomyOf(MediaSeriesGroup series) {
+    if (series instanceof MediaSeries<?> images
+        && images.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null) instanceof MediaElement m
+        && m.getTagValue(TagW.AnatomicRegion) instanceof AnatomicRegion region) {
+      return region;
+    }
+    String bodyPart = TagD.getTagValue(series, Tag.BodyPartExamined, String.class);
+    if (!StringUtil.hasText(bodyPart)) {
+      return null;
+    }
+    Attributes attributes = new Attributes(1);
+    attributes.setString(Tag.BodyPartExamined, VR.CS, bodyPart);
+    return AnatomicRegion.read(attributes);
   }
 
   private static String modalityOf(MediaSeriesGroup series) {

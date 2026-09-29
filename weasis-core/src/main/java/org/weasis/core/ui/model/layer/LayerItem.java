@@ -17,8 +17,6 @@ public enum LayerItem {
   MIN_ANNOTATIONS(
       "minAnnotations", Messages.getString("LayerAnnotation.min_anot"), false), // NON-NLS
 
-  ANONYM_ANNOTATIONS("anonym", Messages.getString("AnnotationsLayer.anonym"), false), // NON-NLS
-
   SCALE("scale", Messages.getString("AnnotationsLayer.scale"), true), // NON-NLS
 
   LUT("lut", Messages.getString("AnnotationsLayer.lut"), false), // NON-NLS

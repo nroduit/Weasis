@@ -56,6 +56,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicLabel;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
 import org.weasis.core.ui.model.graphic.imp.PointGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.CircleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.ObliqueRectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
@@ -63,6 +64,7 @@ import org.weasis.core.ui.model.graphic.imp.area.ThreePointsCircleGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicLayer;
+import org.weasis.core.ui.model.utils.GraphicOutline;
 import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
@@ -409,7 +411,7 @@ public class DicomPrSerializer {
 
   private static void writePrivateTags(GraphicModel model, Attributes attributes) {
     try {
-      JAXBContext jaxbContext = XmlSerializer.getJaxbContext(model.getClass());
+      JAXBContext jaxbContext = XmlSerializer.presentationContext();
       Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
       try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
         jaxbMarshaller.marshal(model, outputStream);
@@ -610,6 +612,10 @@ public class DicomPrSerializer {
         List<Point2D> points = Arrays.asList(centerPt, graphic.getPts().getFirst());
         return new GraphicTypeInfo(PrGraphicUtil.CIRCLE, points, false);
       }
+      case CircleGraphic _ -> {
+        // The two handles are the GSPS definition of a CIRCLE: centre, then a point on the circle
+        return new GraphicTypeInfo(PrGraphicUtil.CIRCLE, List.copyOf(graphic.getPts()), false);
+      }
       case PolygonGraphic _ -> {
         List<Point2D> points = new ArrayList<>(graphic.getPts());
         points.add(points.getFirst()); // Close the polygon
@@ -667,11 +673,14 @@ public class DicomPrSerializer {
 
     styleAttributes.setFloat(Tag.LineThickness, VR.FL, graphic.getLineThickness());
     styleAttributes.setString(Tag.LineDashingStyle, VR.CS, "SOLID");
-    styleAttributes.setString(Tag.ShadowStyle, VR.CS, "OFF");
+    // The dark halo of the display is the OUTLINED shadow style of PS3.3 C.10.7.1.1
+    boolean outlined = graphic.isOutlined();
+    styleAttributes.setString(Tag.ShadowStyle, VR.CS, outlined ? "OUTLINED" : "OFF");
     styleAttributes.setFloat(Tag.ShadowOffsetX, VR.FL, 0.0f);
     styleAttributes.setFloat(Tag.ShadowOffsetY, VR.FL, 0.0f);
-    styleAttributes.setInt(Tag.ShadowColorCIELabValue, VR.US, labColor);
-    styleAttributes.setFloat(Tag.ShadowOpacity, VR.FL, 0.0f);
+    styleAttributes.setInt(
+        Tag.ShadowColorCIELabValue, VR.US, outlined ? CIELab.rgbToDicomLab(Color.BLACK) : labColor);
+    styleAttributes.setFloat(Tag.ShadowOpacity, VR.FL, outlined ? GraphicOutline.OPACITY : 0.0f);
     styleAttributes.setFloat(Tag.PatternOnOpacity, VR.FL, 1.0f);
     styleAttributes.setInt(Tag.PatternOnColorCIELabValue, VR.US, labColor);
     styleAttributes.setFloat(Tag.PatternOffOpacity, VR.FL, 0.0f);

@@ -334,7 +334,7 @@ public class SegRegionTree extends CheckboxTree {
     List<MeasureItem> measList =
         ImageRegionStatistics.getImageStatistics(contour.getSegGraphic(), layer, true);
 
-    JPanel tableContainer = HistogramView.buildStatisticsTable(measList);
+    JPanel tableContainer = HistogramView.buildStatisticsTable(measList, layer);
     JOptionPane.showMessageDialog(
         this.getParent(),
         tableContainer,

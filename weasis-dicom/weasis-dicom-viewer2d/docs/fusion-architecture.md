@@ -3,8 +3,7 @@
 This document describes the image fusion system in Weasis: overlaying a
 functional series (PET, SPECT/NM) onto an anatomical one (CT, MR) with a
 color LUT and an alpha-modulated blend. It covers the concept, the value
-pipeline (SUV), the two geometry paths, the LUT/alpha mapping, and the
-measurement and color-scale integration.
+pipeline, the two geometry paths, and the invariants to preserve.
 
 All classes live in `org.weasis.dicom.viewer2d.fusion` unless noted otherwise.
 
@@ -56,9 +55,9 @@ slice and on every path.
 | `FusionWindow` | Series-wide display window (record): real-value bounds + display factor/unit (SUVbw) |
 | `FusionWindowEstimator` | Robust (percentile) maximum of the volume, excluding physiologic outliers |
 | `FusionVolumeBuilder` | Builds the rectified PET `Volume` off the EDT (reuses the MPR `Volume` machinery) |
-| `FusionVolumeResampler` | Reslices the PET volume on an arbitrary display plane (fork/join, trilinear) |
-| `FusionSliceMatcher` | Finds the nearest native PET slice for a base slice (projection on the PET normal) |
-| `FusionRegistration` | 2D-affine aligns a native PET slice onto the base pixel grid (warpAffine) |
+| `FusionVolumeResampler` | Reslices the PET volume on an arbitrary display plane |
+| `FusionSliceMatcher` | Finds the nearest native PET slice for a base slice |
+| `FusionRegistration` | 2D-affine aligns a native PET slice onto the base pixel grid |
 | `FusionController` | Stateless glue for the EventManager actions: applies params to the target panes, builds the volume, clears caches |
 | `FusionState` | Snapshot of a view's fusion configuration (to seed a newly opened MPR) |
 | `FusionCompatibility` | Decides which same-study series can be fused onto the base series |
@@ -71,220 +70,68 @@ slice and on every path.
 
 ## 3. Value Pipeline: from stored pixels to SUVbw
 
-### 3.1 SUV factor
-
-`DicomMediaUtils.computeSUVFactor` follows the QIBA vendor-neutral
-pseudocode. It sets `TagW.SuvFactor` on a PT image only when the conversion
-is fully determined; otherwise the blocking attribute is logged (debug) and
-the series displays in raw units.
-
-Requirements: `CorrectedImage` contains `ATTN` + `DECY`, and `Units` is one of:
-
-| Units | Factor |
-|---|---|
-| `BQML` | `weight(kg) × 1000 / (dose × 2^(−Δt/T½))` — dose decayed from injection to series time (`DecayCorrection` must be `START`) |
-| `CNTS` | Philips private factor `(7053,1000)` when creator is `Philips PET Private Group` |
-| `GML` | `1.0` (already grams/milliliter = SUVbw) |
-
-`SUVbw = real_value × SuvFactor`. The factor is computed per image; the
-fusion window uses the middle slice's factor (uniform in practice, since the
-decay reference is the series time).
-
-### 3.2 Display window (`FusionWindow`)
-
-The window is a series-wide record `(min, max, displayFactor, displayUnit)`
-holding **real values**, never a user control — it is derived from the data,
-as in dedicated PET viewers, and the `FusionColorBar` is the only place it
-can be read.
-
-- **SUV series**: `min = 1 SUVbw` (normal blood pool ≈ 1; below is
-  background and stays untinted), `max = ceil(robust SUVmax)` clamped to
-  `[4, 30]` SUVbw. `displayFactor = SuvFactor`, `displayUnit = "SUVbw"`.
-- **Non-SUV series**: `0 → dataMax`, factor 1, unit = the DICOM pixel value
-  unit (e.g. `BQML`, `CNTS`).
-
-Two constructors, one refinement step:
-
-1. `fromSlice(series)` — provisional, middle-slice max only, cheap enough
-   for the EDT. Pushed immediately when the user selects an overlay series.
-2. `fromVolume(series, volume)` — measured on the whole built volume via
-   `FusionWindowEstimator.robustMax`: the 99.5th percentile of the active
-   voxels (2048-bin histogram, background = values ≤ 0.1% of max, strided to
-   ~4M samples). Physiologic outliers (bladder, injection site) saturate at
-   the top of the LUT instead of owning the scale.
-
-`isQuantitative()` is true only for SUVbw — anything else depends on dose,
-weight and uptake time and cannot be compared between acquisitions.
-
-### 3.3 Normalization
-
-Both paths map real values to 8-bit gray with the same linear ramp:
-
-```
-gray = clamp(round((v − min) × 255 / (max − min)), 0, 255)
-```
-
-Values below `min` clamp to 0 (transparent background), values above `max`
-saturate at 255 (the hottest LUT entry).
+- **SUV factor.** `DicomMediaUtils.computeSUVFactor` sets `TagW.SuvFactor` on a
+  PT image only when the conversion is fully determined (QIBA vendor-neutral
+  approach); otherwise the series displays in raw units.
+  `SUVbw = real_value × SuvFactor`.
+- **Display window.** `FusionWindow` is a series-wide record
+  `(min, max, displayFactor, displayUnit)` holding **real values**. It is
+  derived from the data, not a user control. A provisional window
+  (`fromSlice`) is computed on the EDT as soon as an overlay series is
+  selected, then refined on the whole volume (`fromVolume`, using
+  `FusionWindowEstimator`) so physiologic outliers saturate instead of
+  owning the scale. SUV is only a display factor on top of real values.
+- **Normalization.** Both paths map real values to 8-bit gray with the same
+  linear ramp between `min` and `max`: below `min` is transparent
+  background, above `max` saturates at the hottest LUT entry.
 
 ---
 
 ## 4. Geometry: two sampling paths
 
-### 4.1 Volume reslice (preferred)
-
-`FusionVolumeBuilder.build` creates a rectified `Volume` from the overlay
-series (same machinery as MPR; slices are loaded through
-`getUncachedModalityLutImage`, so voxels are real values). Built on a worker
-thread; until it completes, fusion renders through the slice path.
-
-`FusionVolumeResampler.resampleToGray` then walks the displayed plane pixel
-by pixel (DICOM pixel-center convention):
-
-```
-LPS(c, r) = TLHC + c·row·spacingX + r·col·spacingY
-voxel     = volume.lpsToVoxel(LPS)          // exact inverse of the volume writes
-v         = volume.getInterpolatedDouble()  // trilinear, sign-safe
-```
-
-This stays correct for MPR coronal/sagittal and oblique reslices, where a
-single-slice 2D affine cannot be. Out-of-volume pixels stay at gray 0
-(transparent). The work is split over the fork/join common pool by bands of
-rows.
-
-`resampleToValue` is the statistics variant: `CV_32FC1`, **nearest-neighbour**
-(no interpolation loss on SUVmax), `NaN` outside the volume.
-
-### 4.2 Single-slice fallback
-
-When no volume is available (still building, or non-rectifiable geometry):
-
-1. `FusionSliceMatcher` projects the base slice center onto the PET normal
-   and picks the nearest PET slice.
-2. The slice's real values (`getModalityLutImage`) are windowed and colorized.
-3. `FusionRegistration.alignOverlayToBase` maps it onto the base grid with a
-   single `warpAffine` (scale from the `PixelSpacing` ratio + translation
-   from the projected TLHC for coplanar series; a 3-corner affine through
-   patient space otherwise; plain resize when geometry is missing).
-
-Only valid when the displayed plane is (near) parallel to the PET slices —
-the usual axial PET/CT case.
-
-### 4.3 Caches
-
-Colorized overlays are cached with the color **baked in** but the opacity
-**not** (opacity is applied at composite time, so moving the opacity slider
-never invalidates a cache):
-
-- Slice path: `WeakHashMap<DicomImageElement, PlanarImage>` keyed by the
-  matched PET slice.
-- Volume path: bounded LRU keyed by `GeometryOfSlice` (value equality).
-  MPR reuses a single `DicomImageElement` per axis and only mutates its
-  geometry between reslices, so identity keying would serve the first
-  plane's overlay for every subsequent reslice.
-
-`FusionController` clears the caches whenever the series, LUT, window or
-volume changes.
+- **Volume reslice (preferred).** `FusionVolumeBuilder` builds a rectified
+  `Volume` from the overlay series on a worker thread (voxels are real
+  values). `FusionVolumeResampler` then samples it on the displayed plane,
+  which stays correct for MPR coronal, sagittal and oblique reslices.
+- **Single-slice fallback.** While no volume is available,
+  `FusionSliceMatcher` picks the nearest native PET slice and
+  `FusionRegistration` maps it onto the base grid with one 2D affine. Only
+  valid when the displayed plane is (near) parallel to the PET slices — the
+  usual axial PET/CT case.
+- **Caches.** `FusionOp` caches colorized overlays with the color baked in
+  but not the opacity. The volume-path cache is keyed by `GeometryOfSlice`
+  value, because MPR reuses one `DicomImageElement` per axis and only
+  mutates its geometry.
 
 ---
 
-## 5. LUT and alpha mapping
+## 5. LUT, alpha and compositing
 
-### 5.1 `ByteLutAlpha`
-
-A `[4][256]` ABGR LUT built from a standard 3-channel BGR `ByteLut`
-(`fromColorLut`). The channel order matches `TYPE_4BYTE_ABGR`. The alpha
-channel is a piecewise ramp:
-
-```
-alpha
- 255·op ┤          ┌────────────────────────────
-        │        ╱
-        │      ╱
-     0  ┤─────┘
-        └─────┬────┬───────────────────────────┬─ entry
-              2    25                          255
-        transparent  ramp   full overlay opacity
-```
-
-- Entries `0..2` (`ALPHA_TRANSPARENT_BELOW = 256/100`): fully transparent —
-  air / outside the body never tints the anatomy.
-- Full opacity from entry `25` (`ALPHA_OPAQUE_FROM = 256/10`): alpha must
-  saturate early. The color LUT already encodes the value; if alpha also
-  ramped across the whole range, a low entry would be dark *and*
-  transparent, and everything but the hottest voxels would vanish.
-
-The LUT is built with opacity `1.0`; the user's overlay opacity is applied
-at composite time only (never double-applied, caches survive it).
-
-### 5.2 Colorization in one native call
-
-```java
-Core.merge(List.of(gray, gray, gray, gray), src4);  // replicate intensity
-Core.LUT(src4, abgrLutMat, dst);                    // ABGR lookup per pixel
-```
-
-The gray mask is replicated into all four channels so **every** output
-channel — alpha included — is looked up from the same intensity.
-(`GRAY2BGRA` would pin the 4th channel to 255, i.e. alpha would always read
-entry 255.)
-
-### 5.3 Compositing
-
-```
-result = baseOpacity · base · (1 − a)  +  overlay · a
-a      = (overlayAlpha / 255) · overlayOpacity
-```
-
-Defaults: base opacity `1.0`, overlay opacity `0.5` — the even split PET/CT
-readers expect: the LUT bottom is black, so the overlay dims the anatomy by
-half where uptake is low, and pushing higher darkens the CT more than it
-reveals.
+`ByteLutAlpha` turns a standard 3-channel `ByteLut` into an ABGR LUT whose
+alpha is a ramp: the lowest entries are fully transparent (air never tints
+the anatomy) and alpha saturates early, since the color already encodes the
+value. The windowed gray image is looked up through this LUT in all four
+channels, then alpha-blended over the base image using the base and overlay
+opacities (`P_OPACITY_BASE`, `P_OPACITY_OVERLAY`). The overlay opacity is
+applied only at composite time.
 
 ---
 
-## 6. Color bar (`FusionColorBar`)
+## 6. Color bar and measurements
 
-Painted by `InfoLayer` (preference `LayerItem.FUSION_LUT`, on by default).
-Since the window is derived rather than user-set, the bar is the only place
-the scale can be read:
-
-- Labels are in the **display unit**: SUVbw when the factor is known, the
-  raw DICOM unit otherwise, and a percentage of the window when even that is
-  unknown — an unlabelled number would be read as a value.
-- Both clip bounds are always labelled; intermediate ticks use a 1-2-5
-  "nice step" (~4 intervals).
-- Fully transparent LUT entries are left blank, so the deliberately hidden
-  background band is visible as such instead of being mistaken for a color.
-- It shifts left when the base image LUT bar already occupies the right edge.
-
-`FusionOp.getColorScale()` exposes the exact `FusionWindow` + `ByteLutAlpha`
-being painted, so the bar can never drift from the rendering.
+- **Color bar.** `FusionColorBar`, painted by `InfoLayer` (`LayerItem.FUSION_LUT`),
+  is the only place the derived scale can be read. It is labelled in the
+  display unit (SUVbw when known). `FusionOp.getColorScale()` exposes the
+  exact window and LUT being painted, so the bar cannot drift from the rendering.
+- **Measurements.** An area measurement on the fused base image also reports
+  overlay statistics through `FusionMeasurableLayer` (`FusionOp.getStatsLayer`).
+  For coplanar series the ROI is mapped onto the native PET slice and
+  statistics run on the stored voxels; for oblique/MPR planes they run on
+  resampled real values. `SuvFactor` converts the result to SUV.
 
 ---
 
-## 7. Measurements (`FusionOp.getStatsLayer`)
-
-An area measurement drawn on the fused base image additionally reports
-overlay statistics (labelled with the overlay modality, e.g. `PT`), through
-a `FusionMeasurableLayer`:
-
-- **Native slice mode** (preferred): the ROI is affine-mapped through
-  patient space into the matched PET slice's pixel grid
-  (`baseToOverlayTransform`, planes must be near-parallel: |n₁·n₂| ≥ 0.999)
-  and statistics run on the **untouched stored voxels** with the slice's own
-  rescale — identical to measuring on the PET series directly, no
-  interpolation loss on SUVmax.
-- **Resampled volume mode** (oblique/MPR fallback): `resampleToValue` output
-  — real values on the base grid, `NaN` excluded from statistics.
-
-In both modes the `SuvFactor` of the reference slice converts real values to
-SUV on top. The layer is computed on demand (statistics are only requested
-on measurement release), never cached.
-
----
-
-## 8. Control flow and lifecycle
+## 7. Control flow and lifecycle
 
 ```
 User selects overlay series (EventManager FusionAction.SERIES)
@@ -298,7 +145,7 @@ User selects overlay series (EventManager FusionAction.SERIES)
 ```
 
 - Fusion is **per-view**; MPR is the exception — its three panes take every
-  change together (`FusionController.targetViews`).
+  change together.
 - A 2D view's fusion state is snapshot (`FusionState`) and re-applied when
   an MPR of the same series opens, reusing the already-built volume.
 - `RESET_DISPLAY` turns fusion off and releases the volume reference;
@@ -307,7 +154,7 @@ User selects overlay series (EventManager FusionAction.SERIES)
 
 ---
 
-## 9. Invariants to preserve
+## 8. Invariants to preserve
 
 1. **One value domain.** Window bounds, volume voxels and slice samples are
    all modality-LUT (real) values. Never feed stored pixel values to the
@@ -327,14 +174,3 @@ User selects overlay series (EventManager FusionAction.SERIES)
    keep SUVmax free of resampling loss for the coplanar case.
 7. **Volume building stays off the EDT**, and applying its result must keep
    the "series still selected" guard (async builds can finish out of order).
-
----
-
-## 10. Related tests
-
-| Test | Covers |
-|---|---|
-| `SuvFactorTest` (weasis-dicom-codec) | BQML decay formula, GML, missing-attribute guards, non-PT modality |
-| `FusionWindowTest` | SUV scale bounds/clamping, display factor, raw fallback, degenerate range |
-| `FusionColorBarTest` | 1-2-5 tick step |
-| `ByteLutAlphaTest` (weasis-core) | ABGR layout, alpha ramp, validation |

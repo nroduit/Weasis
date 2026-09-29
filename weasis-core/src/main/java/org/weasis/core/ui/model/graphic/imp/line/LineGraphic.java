@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.swing.Icon;
 import org.weasis.core.Messages;
-import org.weasis.core.api.gui.util.ShortcutManager;
+import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -44,30 +44,37 @@ public class LineGraphic extends AbstractDragGraphic {
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_LINE);
 
   public static final Measurement FIRST_POINT_X =
-      new Measurement(Messages.getString("measure.firstx"), 1, true, true, false);
+      new Measurement("first.x", Messages.getString("measure.firstx"), 1, true, true, false);
   public static final Measurement FIRST_POINT_Y =
-      new Measurement(Messages.getString("measure.firsty"), 2, true, true, false);
+      new Measurement("first.y", Messages.getString("measure.firsty"), 2, true, true, false);
   public static final Measurement LAST_POINT_X =
-      new Measurement(Messages.getString("measure.lastx"), 3, true, true, false);
+      new Measurement("last.x", Messages.getString("measure.lastx"), 3, true, true, false);
   public static final Measurement LAST_POINT_Y =
-      new Measurement(Messages.getString("measure.lasty"), 4, true, true, false);
+      new Measurement("last.y", Messages.getString("measure.lasty"), 4, true, true, false);
   public static final Measurement LINE_LENGTH =
-      new Measurement(Messages.getString("measure.length"), 5, true, true, true);
+      new Measurement("length", Messages.getString("measure.length"), 5, true, true, true);
   public static final Measurement ORIENTATION =
-      new Measurement(Messages.getString("measure.orientation"), 6, true, true, false);
+      new Measurement(
+          "orientation", Messages.getString("measure.orientation"), 6, true, true, false);
   public static final Measurement AZIMUTH =
-      new Measurement(Messages.getString("measure.azimuth"), 7, true, true, false);
+      new Measurement("azimuth", Messages.getString("measure.azimuth"), 7, true, true, false);
+  public static final Measurement DELTA_X =
+      new Measurement("length.dx", Messages.getString("measure.dx"), 8, true, true, false);
+  public static final Measurement DELTA_Y =
+      new Measurement("length.dy", Messages.getString("measure.dy"), 9, true, true, false);
 
-  protected static final List<Measurement> measurementList = new ArrayList<>();
+  protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
 
   static {
-    measurementList.add(FIRST_POINT_X);
-    measurementList.add(FIRST_POINT_Y);
-    measurementList.add(LAST_POINT_X);
-    measurementList.add(LAST_POINT_Y);
-    measurementList.add(LINE_LENGTH);
-    measurementList.add(ORIENTATION);
-    measurementList.add(AZIMUTH);
+    MEASUREMENT_LIST.add(FIRST_POINT_X);
+    MEASUREMENT_LIST.add(FIRST_POINT_Y);
+    MEASUREMENT_LIST.add(LAST_POINT_X);
+    MEASUREMENT_LIST.add(LAST_POINT_Y);
+    MEASUREMENT_LIST.add(LINE_LENGTH);
+    MEASUREMENT_LIST.add(DELTA_X);
+    MEASUREMENT_LIST.add(DELTA_Y);
+    MEASUREMENT_LIST.add(ORIENTATION);
+    MEASUREMENT_LIST.add(AZIMUTH);
   }
 
   // Let AB be a simple a line segment
@@ -133,13 +140,27 @@ public class LineGraphic extends AbstractDragGraphic {
   }
 
   @Override
-  public int getKeyCode() {
-    return ShortcutManager.getInstance().getKeyCode(ShortcutManager.ID_GRAPHIC_LINE);
+  public Integer moveAndResizeOnDrawing(
+      Integer handlePointIndex, Double deltaX, Double deltaY, MouseEventDouble mouseEvent) {
+    handlePointIndex = super.moveAndResizeOnDrawing(handlePointIndex, deltaX, deltaY, mouseEvent);
+    snapToAxisWithShift(this, handlePointIndex, mouseEvent);
+    return handlePointIndex;
   }
 
-  @Override
-  public int getModifier() {
-    return ShortcutManager.getInstance().getModifier(ShortcutManager.ID_GRAPHIC_LINE);
+  /** Shift held while dragging an end of a segment keeps it horizontal or vertical. */
+  static void snapToAxisWithShift(
+      AbstractDragGraphic graphic, Integer handlePointIndex, MouseEventDouble mouseEvent) {
+    if (mouseEvent != null
+        && mouseEvent.isShiftDown()
+        && handlePointIndex != null
+        && (handlePointIndex == 0 || handlePointIndex == 1)
+        && graphic.getHandlePointListSize() > 1) {
+      Point2D anchor = graphic.getHandlePoint(1 - handlePointIndex);
+      Point2D moving = graphic.getHandlePoint(handlePointIndex);
+      if (anchor != null && moving != null) {
+        graphic.setHandlePoint(handlePointIndex, GeomUtil.snapToAxis(anchor, moving));
+      }
+    }
   }
 
   @Override
@@ -189,6 +210,20 @@ public class LineGraphic extends AbstractDragGraphic {
               new MeasureItem(
                   LINE_LENGTH, ptA.distance(ptB) * adapter.calibrationRatio(), adapter.unit()));
         }
+        if (DELTA_X.getComputed()) {
+          measVal.add(
+              new MeasureItem(
+                  DELTA_X,
+                  Math.abs(ptB.getX() - ptA.getX()) * adapter.calibrationRatio(),
+                  adapter.unit()));
+        }
+        if (DELTA_Y.getComputed()) {
+          measVal.add(
+              new MeasureItem(
+                  DELTA_Y,
+                  Math.abs(ptB.getY() - ptA.getY()) * adapter.calibrationRatio(),
+                  adapter.unit()));
+        }
         if (ORIENTATION.getComputed()) {
           measVal.add(
               new MeasureItem(
@@ -226,6 +261,6 @@ public class LineGraphic extends AbstractDragGraphic {
 
   @Override
   public List<Measurement> getMeasurementList() {
-    return measurementList;
+    return MEASUREMENT_LIST;
   }
 }

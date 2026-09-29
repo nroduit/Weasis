@@ -9,12 +9,15 @@
  */
 package org.weasis.dicom.viewer2d.fusion;
 
+import java.util.Locale;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.mpr.Volume;
+import org.weasis.opencv.op.lut.colormap.ColorMap;
+import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
 
 /**
  * Series-wide display window applied to a fusion overlay before colorization.
@@ -65,9 +68,19 @@ public record FusionWindow(double min, double max, double displayFactor, String 
    * @return the window, or {@code null} when the series holds no image
    */
   public static FusionWindow fromSlice(MediaSeries<DicomImageElement> series) {
+    return fromSlice(series, null);
+  }
+
+  /** Same, but a map anchored to physical values declares the window when it applies. */
+  public static FusionWindow fromSlice(MediaSeries<DicomImageElement> series, ColorMap map) {
     DicomImageElement ref =
         series == null ? null : series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
-    return ref == null ? null : windowFor(ref, ref.getMaxValue(null));
+    if (ref == null) {
+      return null;
+    }
+    double dataMax = ref.getMaxValue(null);
+    FusionWindow declared = fromMap(map, ref, dataMax);
+    return declared != null ? declared : windowFor(ref, dataMax);
   }
 
   /**
@@ -79,14 +92,90 @@ public record FusionWindow(double min, double max, double displayFactor, String 
    */
   public static FusionWindow fromVolume(
       MediaSeries<DicomImageElement> series, Volume<?, ?> volume) {
+    return fromVolume(series, volume, null);
+  }
+
+  /** Same, but a map anchored to physical values declares the window when it applies. */
+  public static FusionWindow fromVolume(
+      MediaSeries<DicomImageElement> series, Volume<?, ?> volume, ColorMap map) {
     DicomImageElement ref =
         series == null ? null : series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
     if (ref == null) {
       return null;
     }
-    double dataMax =
-        volume != null && !volume.isBasic() ? volume.getMaximumAsDouble() : ref.getMaxValue(null);
-    return windowFor(ref, FusionWindowEstimator.robustMax(volume, dataMax));
+    double dataMax = dataMax(ref, volume);
+    FusionWindow declared = fromMap(map, ref, dataMax);
+    return declared != null
+        ? declared
+        : windowFor(ref, FusionWindowEstimator.robustMax(volume, dataMax));
+  }
+
+  /**
+   * The window a color map declares for {@code series}, or {@code null} when the map is relative to
+   * the window or its unit cannot be expressed for this series.
+   */
+  public static FusionWindow declaredBy(
+      ColorMap map, MediaSeries<DicomImageElement> series, Volume<?, ?> volume) {
+    DicomImageElement ref =
+        series == null ? null : series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
+    return ref == null ? null : fromMap(map, ref, dataMax(ref, volume));
+  }
+
+  private static double dataMax(DicomImageElement ref, Volume<?, ?> volume) {
+    return volume != null && !volume.isBasic()
+        ? volume.getMaximumAsDouble()
+        : ref.getMaxValue(null);
+  }
+
+  /**
+   * An absolute or fixed map in SUVbw maps through the SUV factor; one in the series' own pixel
+   * unit maps directly; a percent map relative to the maximum scales the data maximum. Anything
+   * else has no meaning for this series.
+   */
+  private static FusionWindow fromMap(ColorMap map, DicomImageElement ref, double dataMax) {
+    if (map == null) {
+      return null;
+    }
+    ColorMapDomain d = map.domain();
+    return switch (d.kind()) {
+      case ABSOLUTE, FIXED -> {
+        if (isSuvUnit(d.unit())
+            && ref.getTagValue(TagW.SuvFactor) instanceof Double suvFactor
+            && suvFactor > 0.0) {
+          yield new FusionWindow(d.min() / suvFactor, d.max() / suvFactor, suvFactor, SUV_UNIT);
+        }
+        String pixelUnit = ref.getPixelValueUnit();
+        if (StringUtil.hasText(d.unit()) && d.unit().equalsIgnoreCase(pixelUnit)) {
+          yield new FusionWindow(d.min(), d.max(), 1.0, pixelUnit);
+        }
+        yield null;
+      }
+      case PERCENT -> percentWindow(d, ref, dataMax);
+      default -> null;
+    };
+  }
+
+  // Percent of the data maximum, or of the reference value a bundle stored on the series (the
+  // prescribed dose of a dose grid); null when the reference is unknown here.
+  private static FusionWindow percentWindow(
+      ColorMapDomain d, DicomImageElement ref, double dataMax) {
+    double reference;
+    if (ColorMapDomain.REFERENCE_MAX.equals(d.reference())) {
+      reference = dataMax;
+    } else if (ColorMapDomain.REFERENCE_PRESCRIPTION.equals(d.reference())
+        && ref.getTagValue(TagW.PercentReference) instanceof Double stored) {
+      reference = stored;
+    } else {
+      return null;
+    }
+    return reference > 0.0
+        ? new FusionWindow(
+            d.min() / 100.0 * reference, d.max() / 100.0 * reference, 100.0 / reference, "%")
+        : null;
+  }
+
+  private static boolean isSuvUnit(String unit) {
+    return unit != null && unit.toUpperCase(Locale.ROOT).startsWith("SUV"); // NON-NLS
   }
 
   /**

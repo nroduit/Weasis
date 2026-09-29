@@ -12,6 +12,7 @@ package org.weasis.core.api.gui.util;
 import static org.weasis.core.api.gui.util.ActionW.CINESTART;
 
 import com.formdev.flatlaf.util.SystemInfo;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -151,6 +152,7 @@ public final class ShortcutManager {
 
   private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
   private final Map<String, ShortcutEntry> shortcuts = new LinkedHashMap<>();
+  private Preferences loadedNode;
 
   private ShortcutManager() {}
 
@@ -185,10 +187,8 @@ public final class ShortcutManager {
     private final String description;
     private final String category;
     private final ShortcutContext context;
-    private final int defaultKeyCode;
-    private final int defaultModifier;
-    private int keyCode;
-    private int modifier;
+    private final KeyBinding defaultBinding;
+    private KeyBinding binding;
 
     public ShortcutEntry(
         String id,
@@ -201,10 +201,8 @@ public final class ShortcutManager {
       this.description = description != null ? description : id;
       this.category = category != null ? category : "";
       this.context = context != null ? context : ShortcutContext.VIEW_CANVAS;
-      this.defaultKeyCode = defaultKeyCode;
-      this.defaultModifier = defaultModifier;
-      this.keyCode = defaultKeyCode;
-      this.modifier = defaultModifier;
+      this.defaultBinding = new KeyBinding(defaultKeyCode, defaultModifier);
+      this.binding = defaultBinding;
     }
 
     public String getId() {
@@ -224,37 +222,50 @@ public final class ShortcutManager {
       return context;
     }
 
-    public int getDefaultKeyCode() {
-      return defaultKeyCode;
+    public KeyBinding getBinding() {
+      return binding;
     }
 
+    public void setBinding(KeyBinding binding) {
+      this.binding = Objects.requireNonNull(binding);
+    }
+
+    public KeyBinding getDefaultBinding() {
+      return defaultBinding;
+    }
+
+    public int getDefaultKeyCode() {
+      return defaultBinding.keyCode();
+    }
+
+    /** Extended modifiers ({@code InputEvent.*_DOWN_MASK}) of the default binding. */
     public int getDefaultModifier() {
-      return defaultModifier;
+      return defaultBinding.modifiers();
     }
 
     public int getKeyCode() {
-      return keyCode;
+      return binding.keyCode();
     }
 
     public void setKeyCode(int keyCode) {
-      this.keyCode = keyCode;
+      this.binding = new KeyBinding(keyCode, binding.modifiers());
     }
 
+    /** Extended modifiers ({@code InputEvent.*_DOWN_MASK}) of the current binding. */
     public int getModifier() {
-      return modifier;
+      return binding.modifiers();
     }
 
     public void setModifier(int modifier) {
-      this.modifier = modifier;
+      this.binding = new KeyBinding(binding.keyCode(), modifier);
     }
 
     public boolean isModified() {
-      return keyCode != defaultKeyCode || modifier != defaultModifier;
+      return !binding.equals(defaultBinding);
     }
 
     public void resetToDefault() {
-      this.keyCode = defaultKeyCode;
-      this.modifier = defaultModifier;
+      this.binding = defaultBinding;
     }
 
     /**
@@ -263,19 +274,11 @@ public final class ShortcutManager {
      * @return the shortcut text (e.g. "Ctrl+Z"), or an empty string if no key is assigned.
      */
     public String getShortcutText() {
-      return getKeyStrokeText(keyCode, modifier);
+      return binding.text();
     }
 
     public String getDefaultShortcutText() {
-      return getKeyStrokeText(defaultKeyCode, defaultModifier);
-    }
-
-    private static String getKeyStrokeText(int kc, int mod) {
-      if (kc == 0) {
-        return "";
-      }
-      KeyStroke ks = KeyStroke.getKeyStroke(kc, mod);
-      return ks == null ? "" : formatKeyStroke(ks);
+      return defaultBinding.text();
     }
 
     @Override
@@ -304,6 +307,9 @@ public final class ShortcutManager {
 
   // -- Shortcut IDs: Viewer --
   public static final String ID_VIEWER_PRINT = "viewer.print";
+  public static final String ID_VIEWER_SCREENSHOT = "viewer.screenshot";
+  public static final String ID_VIEWER_EXPORT_ANIMATION = "viewer.exportAnimation";
+  public static final String ID_VIEWER_RECORD = "viewer.record";
   public static final String ID_VIEWER_ESCAPE = "viewer.escape";
   public static final String ID_VIEWER_ZOOM_OUT = "viewer.zoomOut";
   public static final String ID_VIEWER_ZOOM_IN = "viewer.zoomIn";
@@ -338,11 +344,33 @@ public final class ShortcutManager {
   public static final String ID_GRAPHIC_POLYGON = "graphic.polygon";
   public static final String ID_GRAPHIC_ANNOTATION = "graphic.annotation";
 
+  /** Ids kept from before every graphic tool had its own shortcut entry. */
+  private static final Map<String, String> LEGACY_GRAPHIC_IDS =
+      Map.of(
+          "weasis.line", ID_GRAPHIC_LINE, // NON-NLS
+          "weasis.angle", ID_GRAPHIC_ANGLE, // NON-NLS
+          "weasis.polyline", ID_GRAPHIC_POLYGON, // NON-NLS
+          "weasis.text", ID_GRAPHIC_ANNOTATION); // NON-NLS
+
   // -- Shortcut IDs: Drawings --
 
   public static final String ID_DRAW_DELETE = "draw.delete";
   public static final String ID_DRAW_DESELECT_ALL = "draw.deselectAll";
   public static final String ID_DRAW_SELECT_ALL = "draw.selectAll";
+  public static final String ID_DRAW_CANCEL_DRAWING = "draw.cancelDrawing";
+  public static final String ID_DRAW_REMOVE_LAST_VERTEX = "draw.removeLastVertex";
+  public static final String ID_DRAW_COPY = "draw.copy";
+  public static final String ID_DRAW_CUT = "draw.cut";
+  public static final String ID_DRAW_PASTE = "draw.paste";
+  public static final String ID_DRAW_PASTE_IN_PLACE = "draw.pasteInPlace";
+  public static final String ID_DRAW_DUPLICATE = "draw.duplicate";
+
+  /**
+   * Mask of the menu shortcuts of the platform: Ctrl on Windows and Linux, Cmd on macOS. The
+   * bindings are stored per operating system, so a shortcut registered with it keeps the modifier
+   * the user expects on each one.
+   */
+  public static final int MENU_SHORTCUT_MASK = KeyBinding.MENU_SHORTCUT_MASK;
 
   // -- Shortcut IDs: Pan --
   public static final String ID_PAN_LEFT = "pan.left";
@@ -458,6 +486,25 @@ public final class ShortcutManager {
         CATEGORY_VIEWER,
         KeyEvent.VK_P,
         0);
+    int captureModifier = KeyBinding.MENU_SHORTCUT_MASK | InputEvent.SHIFT_DOWN_MASK;
+    register(
+        ID_VIEWER_SCREENSHOT,
+        Messages.getString("ShortcutManager.screenshot"),
+        CATEGORY_VIEWER,
+        KeyEvent.VK_S,
+        captureModifier);
+    register(
+        ID_VIEWER_EXPORT_ANIMATION,
+        Messages.getString("ShortcutManager.export_animation"),
+        CATEGORY_VIEWER,
+        KeyEvent.VK_A,
+        captureModifier);
+    register(
+        ID_VIEWER_RECORD,
+        Messages.getString("ShortcutManager.record"),
+        CATEGORY_VIEWER,
+        KeyEvent.VK_R,
+        captureModifier);
     register(
         ID_VIEWER_ESCAPE,
         Messages.getString("ShortcutManager.reset_view"),
@@ -469,19 +516,19 @@ public final class ShortcutManager {
         Messages.getString("ShortcutManager.zoom_out"),
         CATEGORY_VIEWER,
         KeyEvent.VK_SUBTRACT,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_VIEWER_ZOOM_IN,
         Messages.getString("ShortcutManager.zoom_in"),
         CATEGORY_VIEWER,
         KeyEvent.VK_ADD,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_VIEWER_BEST_FIT,
         Messages.getString("ShortcutManager.best_fit"),
         CATEGORY_VIEWER,
         KeyEvent.VK_ENTER,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
 
     // ---- Slice navigation (ImageViewerEventManager.commonDisplayShortcuts()) ----
     register(
@@ -501,13 +548,13 @@ public final class ShortcutManager {
         Messages.getString("ShortcutManager.back_10"),
         CATEGORY_NAVIGATION,
         KeyEvent.VK_UP,
-        KeyEvent.SHIFT_MASK);
+        InputEvent.SHIFT_DOWN_MASK);
     register(
         ID_VIEWER_SCROLL_DOWN_FAST,
         Messages.getString("ShortcutManager.fwd_10"),
         CATEGORY_NAVIGATION,
         KeyEvent.VK_DOWN,
-        KeyEvent.SHIFT_MASK);
+        InputEvent.SHIFT_DOWN_MASK);
     register(
         ID_VIEWER_SCROLL_FIRST,
         Messages.getString("ShortcutManager.first_image"),
@@ -533,13 +580,13 @@ public final class ShortcutManager {
         Messages.getString("ShortcutManager.prev_view"),
         CATEGORY_NAVIGATION,
         KeyEvent.VK_TAB,
-        KeyEvent.SHIFT_MASK);
+        InputEvent.SHIFT_DOWN_MASK);
     register(
         ID_VIEWER_NEXT_MOUSE_ACTION,
         Messages.getString("ShortcutManager.next_mouse_action"),
         CATEGORY_MOUSE_ACTIONS,
         KeyEvent.VK_SPACE,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_VIEWER_TOGGLE_INFO,
         Messages.getString("ShortcutManager.toggle_info"),
@@ -563,45 +610,19 @@ public final class ShortcutManager {
         Messages.getString("ShortcutManager.rotate_left"),
         CATEGORY_VIEWER,
         KeyEvent.VK_L,
-        KeyEvent.ALT_MASK);
+        InputEvent.ALT_DOWN_MASK);
     register(
         ID_VIEWER_ROTATE_RIGHT,
         Messages.getString("ShortcutManager.rotate_right"),
         CATEGORY_VIEWER,
         KeyEvent.VK_R,
-        KeyEvent.ALT_MASK);
+        InputEvent.ALT_DOWN_MASK);
     register(
         ID_VIEWER_FLIP_HORIZONTAL,
         Messages.getString("ShortcutManager.flip_horiz"),
         CATEGORY_VIEWER,
         KeyEvent.VK_F,
-        KeyEvent.ALT_MASK);
-
-    // ---- Graphic tool shortcuts (Graphic.getKeyCode() in various subclasses) ----
-    register(
-        ID_GRAPHIC_LINE,
-        Messages.getString("ShortcutManager.dist_measure"),
-        CATEGORY_MEASURES,
-        KeyEvent.VK_D,
-        0);
-    register(
-        ID_GRAPHIC_ANGLE,
-        Messages.getString("ShortcutManager.angle_measure"),
-        CATEGORY_MEASURES,
-        KeyEvent.VK_A,
-        0);
-    register(
-        ID_GRAPHIC_POLYGON,
-        Messages.getString("ShortcutManager.polyline_measure"),
-        CATEGORY_MEASURES,
-        KeyEvent.VK_Y,
-        0);
-    register(
-        ID_GRAPHIC_ANNOTATION,
-        Messages.getString("ShortcutManager.textbox"),
-        CATEGORY_DRAWINGS,
-        KeyEvent.VK_B,
-        0);
+        InputEvent.ALT_DOWN_MASK);
 
     // ---- Drawing management shortcuts (DrawingsKeyListeners) ----
     register(
@@ -615,13 +636,55 @@ public final class ShortcutManager {
         Messages.getString("ShortcutManager.deselect_all"),
         CATEGORY_DRAWINGS,
         KeyEvent.VK_D,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DRAW_SELECT_ALL,
         Messages.getString("ShortcutManager.select_all_graphics"),
         CATEGORY_DRAWINGS,
         KeyEvent.VK_A,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
+    register(
+        ID_DRAW_CANCEL_DRAWING,
+        Messages.getString("ShortcutManager.cancel_drawing"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_ESCAPE,
+        0);
+    register(
+        ID_DRAW_REMOVE_LAST_VERTEX,
+        Messages.getString("ShortcutManager.remove_last_vertex"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_BACK_SPACE,
+        0);
+    register(
+        ID_DRAW_COPY,
+        Messages.getString("ShortcutManager.copy_graphics"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_C,
+        MENU_SHORTCUT_MASK);
+    register(
+        ID_DRAW_CUT,
+        Messages.getString("ShortcutManager.cut_graphics"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_X,
+        MENU_SHORTCUT_MASK);
+    register(
+        ID_DRAW_PASTE,
+        Messages.getString("ShortcutManager.paste_graphics"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_V,
+        MENU_SHORTCUT_MASK);
+    register(
+        ID_DRAW_PASTE_IN_PLACE,
+        Messages.getString("ShortcutManager.paste_graphics_in_place"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_V,
+        MENU_SHORTCUT_MASK | InputEvent.SHIFT_DOWN_MASK);
+    register(
+        ID_DRAW_DUPLICATE,
+        Messages.getString("ShortcutManager.duplicate_graphics"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_D,
+        MENU_SHORTCUT_MASK | InputEvent.SHIFT_DOWN_MASK);
 
     // ---- Pan with keyboard (PannerListener.keyPressed()) ----
     register(
@@ -629,49 +692,49 @@ public final class ShortcutManager {
         Messages.getString("ShortcutManager.pan_left_5"),
         CATEGORY_PAN,
         KeyEvent.VK_LEFT,
-        KeyEvent.ALT_MASK);
+        InputEvent.ALT_DOWN_MASK);
     register(
         ID_PAN_RIGHT,
         Messages.getString("ShortcutManager.pan_right_5"),
         CATEGORY_PAN,
         KeyEvent.VK_RIGHT,
-        KeyEvent.ALT_MASK);
+        InputEvent.ALT_DOWN_MASK);
     register(
         ID_PAN_UP,
         Messages.getString("ShortcutManager.pan_up_5"),
         CATEGORY_PAN,
         KeyEvent.VK_UP,
-        KeyEvent.ALT_MASK);
+        InputEvent.ALT_DOWN_MASK);
     register(
         ID_PAN_DOWN,
         Messages.getString("ShortcutManager.pan_down_5"),
         CATEGORY_PAN,
         KeyEvent.VK_DOWN,
-        KeyEvent.ALT_MASK);
+        InputEvent.ALT_DOWN_MASK);
     register(
         ID_PAN_LEFT_FAST,
         Messages.getString("ShortcutManager.pan_left_10"),
         CATEGORY_PAN,
         KeyEvent.VK_LEFT,
-        KeyEvent.ALT_MASK | KeyEvent.SHIFT_MASK);
+        InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
     register(
         ID_PAN_RIGHT_FAST,
         Messages.getString("ShortcutManager.pan_right_10"),
         CATEGORY_PAN,
         KeyEvent.VK_RIGHT,
-        KeyEvent.ALT_MASK | KeyEvent.SHIFT_MASK);
+        InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
     register(
         ID_PAN_UP_FAST,
         Messages.getString("ShortcutManager.pan_up_10"),
         CATEGORY_PAN,
         KeyEvent.VK_UP,
-        KeyEvent.ALT_MASK | KeyEvent.SHIFT_MASK);
+        InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
     register(
         ID_PAN_DOWN_FAST,
         Messages.getString("ShortcutManager.pan_down_10"),
         CATEGORY_PAN,
         KeyEvent.VK_DOWN,
-        KeyEvent.ALT_MASK | KeyEvent.SHIFT_MASK);
+        InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
 
     // ---- DICOM series/study/patient navigation (dicom EventManager.keyPressed()) ----
     register(
@@ -694,28 +757,28 @@ public final class ShortcutManager {
         CATEGORY_DICOM_NAV,
         ShortcutContext.DICOM_VIEWER,
         KeyEvent.VK_LEFT,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DICOM_NEXT_STUDY,
         Messages.getString("ShortcutManager.next_study"),
         CATEGORY_DICOM_NAV,
         ShortcutContext.DICOM_VIEWER,
         KeyEvent.VK_RIGHT,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DICOM_PREV_PATIENT,
         Messages.getString("ShortcutManager.prev_patient"),
         CATEGORY_DICOM_NAV,
         ShortcutContext.DICOM_VIEWER,
         KeyEvent.VK_UP,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DICOM_NEXT_PATIENT,
         Messages.getString("ShortcutManager.next_patient"),
         CATEGORY_DICOM_NAV,
         ShortcutContext.DICOM_VIEWER,
         KeyEvent.VK_DOWN,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DICOM_FIRST_SERIES,
         Messages.getString("ShortcutManager.first_series"),
@@ -736,35 +799,35 @@ public final class ShortcutManager {
         CATEGORY_DICOM_NAV,
         ShortcutContext.DICOM_VIEWER,
         KeyEvent.VK_PAGE_UP,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DICOM_LAST_STUDY,
         Messages.getString("ShortcutManager.last_study"),
         CATEGORY_DICOM_NAV,
         ShortcutContext.DICOM_VIEWER,
         KeyEvent.VK_PAGE_DOWN,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DICOM_FIRST_PATIENT,
         Messages.getString("ShortcutManager.first_patient"),
         CATEGORY_DICOM_NAV,
         ShortcutContext.DICOM_VIEWER,
         KeyEvent.VK_HOME,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DICOM_LAST_PATIENT,
         Messages.getString("ShortcutManager.last_patient"),
         CATEGORY_DICOM_NAV,
         ShortcutContext.DICOM_VIEWER,
         KeyEvent.VK_END,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DICOM_TOGGLE_SEG,
         Messages.getString("ShortcutManager.toggle_seg"),
         CATEGORY_DISPLAY,
         ShortcutContext.DICOM_VIEWER,
         KeyEvent.VK_S,
-        KeyEvent.ALT_MASK);
+        InputEvent.ALT_DOWN_MASK);
 
     // ---- MPR-specific shortcuts (dicom viewer2d EventManager.keyPressed() for MPR) ----
     register(
@@ -773,49 +836,49 @@ public final class ShortcutManager {
         CATEGORY_MPR,
         ShortcutContext.MPR,
         KeyEvent.VK_X,
-        KeyEvent.ALT_MASK);
+        InputEvent.ALT_DOWN_MASK);
     register(
         ID_MPR_RECENTER_ALL,
         Messages.getString("ShortcutManager.mpr_recenter_all"),
         CATEGORY_MPR,
         ShortcutContext.MPR,
         KeyEvent.VK_X,
-        KeyEvent.CTRL_MASK | KeyEvent.ALT_MASK);
+        InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
     register(
         ID_MPR_TOGGLE_CENTER,
         Messages.getString("ShortcutManager.mpr_toggle_center"),
         CATEGORY_MPR,
         ShortcutContext.MPR,
         KeyEvent.VK_C,
-        KeyEvent.ALT_MASK);
+        InputEvent.ALT_DOWN_MASK);
     register(
         ID_MPR_TOGGLE_CENTER_ALL,
         Messages.getString("ShortcutManager.mpr_toggle_center_all"),
         CATEGORY_MPR,
         ShortcutContext.MPR,
         KeyEvent.VK_C,
-        KeyEvent.CTRL_MASK | KeyEvent.ALT_MASK);
+        InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
     register(
         ID_MPR_TOGGLE_CROSS_LINES,
         Messages.getString("ShortcutManager.mpr_toggle_cross"),
         CATEGORY_MPR,
         ShortcutContext.MPR,
         KeyEvent.VK_V,
-        KeyEvent.ALT_MASK);
+        InputEvent.ALT_DOWN_MASK);
     register(
         ID_MPR_TOGGLE_CROSS_LINES_ALL,
         Messages.getString("ShortcutManager.mpr_toggle_cross_all"),
         CATEGORY_MPR,
         ShortcutContext.MPR,
         KeyEvent.VK_V,
-        KeyEvent.CTRL_MASK | KeyEvent.ALT_MASK);
+        InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
     register(
         ID_MPR_CYCLE_MIP,
         Messages.getString("ShortcutManager.mpr_cycle_mip"),
         CATEGORY_MPR,
         ShortcutContext.MPR,
         KeyEvent.VK_B,
-        KeyEvent.CTRL_MASK | KeyEvent.ALT_MASK);
+        InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
 
     // ---- Docking framework tab shortcuts (WeasisWin.createMainPanel()) ----
     register(
@@ -823,43 +886,43 @@ public final class ShortcutManager {
         Messages.getString("ShortcutManager.dock_maximize"),
         CATEGORY_DOCKING,
         KeyEvent.VK_M,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DOCKING_EXTERNALIZE,
         Messages.getString("ShortcutManager.dock_externalize"),
         CATEGORY_DOCKING,
         KeyEvent.VK_E,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DOCKING_NORMALIZE,
         Messages.getString("ShortcutManager.dock_normalize"),
         CATEGORY_DOCKING,
         KeyEvent.VK_N,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DOCKING_CLOSE,
         Messages.getString("ShortcutManager.dock_close"),
         CATEGORY_DOCKING,
         KeyEvent.VK_W,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DOCKING_PANEL_LIST,
         Messages.getString("ShortcutManager.dock_panel_list"),
         CATEGORY_DOCKING,
         KeyEvent.VK_E,
-        KeyEvent.CTRL_MASK | KeyEvent.SHIFT_MASK);
+        InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
     register(
         ID_DOCKING_NEXT_TAB,
         Messages.getString("ShortcutManager.dock_next_tab"),
         CATEGORY_DOCKING,
         KeyEvent.VK_TAB,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
     register(
         ID_DOCKING_PREV_TAB,
         Messages.getString("ShortcutManager.dock_prev_tab"),
         CATEGORY_DOCKING,
         KeyEvent.VK_TAB,
-        KeyEvent.CTRL_MASK | KeyEvent.SHIFT_MASK);
+        InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
 
     // ---- DICOM Explorer shortcuts (ThumbnailMouseAndKeyAdapter.keyPressed()) ----
     register(
@@ -917,7 +980,7 @@ public final class ShortcutManager {
         CATEGORY_DICOM_EXPLORER,
         ShortcutContext.DICOM_EXPLORER,
         KeyEvent.VK_A,
-        KeyEvent.CTRL_MASK);
+        InputEvent.CTRL_DOWN_MASK);
   }
 
   /**
@@ -928,7 +991,7 @@ public final class ShortcutManager {
    * @param category the category for grouping in the UI
    * @param context the activation context (determines conflict scope)
    * @param defaultKeyCode the default key code
-   * @param defaultModifier the default modifier mask
+   * @param defaultModifier the default modifiers, as {@code InputEvent.*_DOWN_MASK}
    */
   public void register(
       String id,
@@ -937,8 +1000,33 @@ public final class ShortcutManager {
       ShortcutContext context,
       int defaultKeyCode,
       int defaultModifier) {
-    shortcuts.put(
-        id, new ShortcutEntry(id, description, category, context, defaultKeyCode, defaultModifier));
+    ShortcutEntry entry =
+        new ShortcutEntry(id, description, category, context, defaultKeyCode, defaultModifier);
+    shortcuts.put(id, entry);
+    // A shortcut registered after the preferences were loaded, by a plugin, gets the user's binding
+    if (loadedNode != null) {
+      applyPreference(entry, loadedNode);
+    }
+  }
+
+  /** Shortcut id of a graphic tool, from its registry key. */
+  public static String graphicToolId(String toolKey) {
+    String legacy = LEGACY_GRAPHIC_IDS.get(toolKey);
+    return legacy == null ? "graphic." + toolKey : legacy; // NON-NLS
+  }
+
+  /** Registers the shortcut of a graphic tool unless it already exists. */
+  public void registerGraphicTool(
+      String toolKey,
+      String description,
+      String category,
+      int defaultKeyCode,
+      int defaultModifier) {
+    String id = graphicToolId(toolKey);
+    if (shortcuts.containsKey(id)) {
+      return;
+    }
+    register(id, description, category, defaultKeyCode, defaultModifier);
   }
 
   /**
@@ -960,15 +1048,12 @@ public final class ShortcutManager {
    *
    * @param id the shortcut id
    * @param keyCode the key code to test
-   * @param modifier the modifier mask to test
+   * @param modifier the modifiers to test, see {@link KeyBinding#modifiersOf}
    * @return true if both key code and modifier match
    */
   public boolean matches(String id, int keyCode, int modifier) {
     ShortcutEntry entry = shortcuts.get(id);
-    if (entry == null || entry.getKeyCode() == 0) {
-      return false;
-    }
-    return entry.getKeyCode() == keyCode && entry.getModifier() == modifier;
+    return entry != null && entry.getBinding().matches(keyCode, modifier);
   }
 
   /**
@@ -979,7 +1064,8 @@ public final class ShortcutManager {
    * @return true if both key code and modifier match
    */
   public boolean matches(String id, KeyEvent e) {
-    return matches(id, e.getKeyCode(), e.getModifiers());
+    ShortcutEntry entry = shortcuts.get(id);
+    return entry != null && entry.getBinding().matches(e);
   }
 
   public ShortcutEntry getEntry(String id) {
@@ -1004,6 +1090,12 @@ public final class ShortcutManager {
   public int getModifier(String id) {
     ShortcutEntry entry = shortcuts.get(id);
     return entry != null ? entry.getModifier() : 0;
+  }
+
+  /** Current keystroke of the shortcut, to use as a menu accelerator; {@code null} when unset. */
+  public KeyStroke getKeyStroke(String id) {
+    ShortcutEntry entry = shortcuts.get(id);
+    return entry == null ? null : entry.getBinding().toKeyStroke();
   }
 
   /** Returns an unmodifiable view of all registered shortcut entries. */
@@ -1036,11 +1128,9 @@ public final class ShortcutManager {
     if (entry == null) {
       return false;
     }
-    int oldKeyCode = entry.getKeyCode();
-    int oldModifier = entry.getModifier();
-    entry.setKeyCode(keyCode);
-    entry.setModifier(modifier);
-    if (oldKeyCode != keyCode || oldModifier != modifier) {
+    KeyBinding old = entry.getBinding();
+    entry.setBinding(new KeyBinding(keyCode, modifier));
+    if (!old.equals(entry.getBinding())) {
       pcs.firePropertyChange(PROPERTY_SHORTCUTS_CHANGED, null, entry);
     }
     return true;
@@ -1092,11 +1182,11 @@ public final class ShortcutManager {
     if (keyCode == 0) {
       return Collections.emptyList();
     }
+    KeyBinding binding = new KeyBinding(keyCode, modifier);
     List<ShortcutEntry> conflicts = new ArrayList<>();
     for (ShortcutEntry entry : shortcuts.values()) {
       if (!entry.getId().equals(excludeId)
-          && entry.getKeyCode() == keyCode
-          && entry.getModifier() == modifier
+          && entry.getBinding().equals(binding)
           && context.overlapsWith(entry.getContext())) {
         conflicts.add(entry);
       }
@@ -1144,15 +1234,23 @@ public final class ShortcutManager {
       return;
     }
     Preferences node = prefs.node(getPreferenceNodeName());
+    loadedNode = node;
     for (ShortcutEntry entry : shortcuts.values()) {
-      int kc = node.getInt(entry.getId() + KEY_CODE_SUFFIX, -1);
-      int mod = node.getInt(entry.getId() + MODIFIER_SUFFIX, -1);
-      if (kc >= 0) {
-        entry.setKeyCode(kc);
-      }
-      if (mod >= 0) {
-        entry.setModifier(mod);
-      }
+      applyPreference(entry, node);
+    }
+  }
+
+  /**
+   * The stored modifiers may be written with the deprecated masks of older versions; {@link
+   * KeyBinding} converts them.
+   */
+  private static void applyPreference(ShortcutEntry entry, Preferences node) {
+    int kc = node.getInt(entry.getId() + KEY_CODE_SUFFIX, -1);
+    int mod = node.getInt(entry.getId() + MODIFIER_SUFFIX, -1);
+    KeyBinding current = entry.getBinding();
+    if (kc >= 0 || mod >= 0) {
+      entry.setBinding(
+          new KeyBinding(kc >= 0 ? kc : current.keyCode(), mod >= 0 ? mod : current.modifiers()));
     }
   }
 
@@ -1651,21 +1749,6 @@ public final class ShortcutManager {
     if (ks == null) {
       return "";
     }
-    StringBuilder sb = new StringBuilder();
-    int mod = ks.getModifiers();
-    if ((mod & KeyEvent.CTRL_DOWN_MASK) != 0 || (mod & KeyEvent.CTRL_MASK) != 0) {
-      sb.append("Ctrl+");
-    }
-    if ((mod & KeyEvent.ALT_DOWN_MASK) != 0 || (mod & KeyEvent.ALT_MASK) != 0) {
-      sb.append("Alt+");
-    }
-    if ((mod & KeyEvent.SHIFT_DOWN_MASK) != 0 || (mod & KeyEvent.SHIFT_MASK) != 0) {
-      sb.append("Shift+");
-    }
-    if ((mod & KeyEvent.META_DOWN_MASK) != 0 || (mod & KeyEvent.META_MASK) != 0) {
-      sb.append("Meta+");
-    }
-    sb.append(KeyEvent.getKeyText(ks.getKeyCode()));
-    return sb.toString();
+    return new KeyBinding(ks.getKeyCode(), ks.getModifiers()).text();
   }
 }

@@ -11,7 +11,6 @@ package org.weasis.core.ui.model.graphic.imp.area;
 
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
-import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -27,6 +26,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphicArea;
+import org.weasis.core.ui.model.utils.bean.AdvancedShape;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
@@ -41,17 +41,17 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_CIRCLE);
 
   public static final Measurement AREA =
-      new Measurement(Messages.getString("measure.area"), 1, true, true, true);
+      new Measurement("area", Messages.getString("measure.area"), 1, true, true, true);
   public static final Measurement DIAMETER =
-      new Measurement(Messages.getString("measure.diameter"), 2, true, true, false);
+      new Measurement("diameter", Messages.getString("measure.diameter"), 2, true, true, false);
   public static final Measurement PERIMETER =
-      new Measurement(Messages.getString("measure.perimeter"), 3, true, true, false);
+      new Measurement("perimeter", Messages.getString("measure.perimeter"), 3, true, true, false);
   public static final Measurement CENTER_X =
-      new Measurement(Messages.getString("measure.centerx"), 4, true, true, false);
+      new Measurement("center.x", Messages.getString("measure.centerx"), 4, true, true, false);
   public static final Measurement CENTER_Y =
-      new Measurement(Messages.getString("measure.centery"), 5, true, true, false);
+      new Measurement("center.y", Messages.getString("measure.centery"), 5, true, true, false);
   public static final Measurement RADIUS =
-      new Measurement(Messages.getString("measure.radius"), 6, true, true, false);
+      new Measurement("radius", Messages.getString("measure.radius"), 6, true, true, false);
 
   protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
 
@@ -101,12 +101,15 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
   @Override
   public void buildShape(MouseEventDouble mouseEvent) {
     updateTool();
-    Shape newShape = null;
+    AdvancedShape newShape = null;
 
     if (Objects.nonNull(centerPt) && !Objects.equals(radiusPt, 0d)) {
-      newShape =
+      newShape = new AdvancedShape(this, 2);
+      newShape.addShape(
           new Ellipse2D.Double(
-              centerPt.getX() - radiusPt, centerPt.getY() - radiusPt, 2 * radiusPt, 2 * radiusPt);
+              centerPt.getX() - radiusPt, centerPt.getY() - radiusPt, 2 * radiusPt, 2 * radiusPt));
+      newShape.addScaleInvShape(
+          CircleGraphic.centerMark(centerPt), centerPt, getStroke(1.0f), true);
     }
 
     setShape(newShape, mouseEvent);
@@ -153,6 +156,9 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
                   ? adapter.unit()
                   : adapter.unit() + "2";
           measVal.add(new MeasureItem(AREA, Math.PI * radiusPt * radiusPt * ratio * ratio, unit));
+        }
+        if (PERIMETER.getComputed()) {
+          measVal.add(new MeasureItem(PERIMETER, 2.0 * Math.PI * radiusPt * ratio, adapter.unit()));
         }
 
         List<MeasureItem> stats = getImageStatistics(layer, releaseEvent);

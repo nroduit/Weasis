@@ -44,11 +44,12 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_PERPENDICULAR);
 
   public static final Measurement LINE_LENGTH =
-      new Measurement(Messages.getString("measure.length"), 1, true, true, true);
+      new Measurement("length", Messages.getString("measure.length"), 1, true, true, true);
   public static final Measurement ORIENTATION =
-      new Measurement(Messages.getString("measure.orientation"), 2, true, true, false);
+      new Measurement(
+          "orientation", Messages.getString("measure.orientation"), 2, true, true, false);
   public static final Measurement AZIMUTH =
-      new Measurement(Messages.getString("measure.azimuth"), 3, true, true, false);
+      new Measurement("azimuth", Messages.getString("measure.azimuth"), 3, true, true, false);
 
   protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
 

@@ -34,7 +34,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import javax.swing.SwingUtilities;
-import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.pf4j.Extension;
@@ -765,6 +764,24 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
     return Collections.emptyList();
   }
 
+  /**
+   * Collects the special elements of a type from every series of a patient (SR documents, for
+   * instance). Hidden elements (KO, PR, SEG...) are indexed by {@link HiddenSeriesManager} instead.
+   */
+  public <E> List<E> getSpecialElementsFromPatient(Class<E> clazz, MediaSeriesGroup patient) {
+    List<E> list = new ArrayList<>();
+    if (patient != null && clazz != null) {
+      synchronized (this) { // NOSONAR lock object is the list for iterating its elements safely
+        for (MediaSeriesGroup study : getChildren(patient)) {
+          for (MediaSeriesGroup series : getChildren(study)) {
+            list.addAll(getSpecialElements(series, clazz));
+          }
+        }
+      }
+    }
+    return list;
+  }
+
   public static <E> E getFirstSpecialElement(MediaSeriesGroup group, Class<E> clazz) {
     if (group != null && clazz != null && clazz.isAssignableFrom(clazz)) {
       List<DicomSpecialElement> sps =
@@ -1127,8 +1144,9 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
     } else if (hiddenElement instanceof PRSpecialElement pr) {
       PrDicomObject prDicomObject = pr.getPrDicomObject();
       if (StringUtil.hasText(seriesUID) && prDicomObject != null) {
-        Attributes prAttributes = prDicomObject.getDicomObject();
-        HiddenSeriesManager.getInstance().extractReferencedSeries(prAttributes, seriesUID);
+        // Both layers of a blending state count as references, not only a top-level sequence.
+        HiddenSeriesManager.getInstance()
+            .registerReferencedSeries(prDicomObject.getReferencedSeriesSequence(), seriesUID, null);
       }
     } else if (hiddenElement instanceof KOSpecialElement ko) {
       if (StringUtil.hasText(seriesUID)) {

@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
@@ -34,6 +35,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.Redaction;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -113,6 +115,7 @@ public class SeriesPane extends JPanel {
 
   private String getSeriesDescription() {
     String desc = TagD.getTagValue(dicomSeries, Tag.SeriesDescription, String.class);
+    desc = IdentityMask.maskText(TagD.get(Tag.SeriesDescription), desc);
     return desc == null ? StringUtil.EMPTY_STRING : desc;
   }
 
@@ -249,7 +252,8 @@ public class SeriesPane extends JPanel {
       DicomSeries series, DicomModel dicomModel, int thumbnailSize) {
     Function<String, Set<ResourceUtil.ResourceIconPath>> drawIcons =
         HiddenSeriesManager::getRelatedIcons;
-    SeriesThumbnail thumb = new SeriesThumbnail(series, thumbnailSize, drawIcons);
+    SeriesThumbnail thumb =
+        new SeriesThumbnail(series, thumbnailSize, drawIcons, Redaction.opManagerFor(series));
 
     // Set progress bar if series is being loaded
     if (series.getSeriesLoader() instanceof LoadSeries loader) {

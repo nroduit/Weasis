@@ -355,7 +355,9 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     toolTips.append(title);
     toolTips.append(StringUtil.COLON_AND_SPACE);
     if (tag != null) {
-      toolTips.append(tag.getFormattedTagValue(getTagValue(tag), null));
+      // Tooltips are built on demand, so they follow the mask without needing a refresh
+      toolTips.append(
+          tag.getFormattedTagValue(IdentityMask.maskValue(tag, getTagValue(tag)), null));
     }
     toolTips.append(GuiUtils.HTML_BR);
   }

@@ -104,6 +104,8 @@ public class MprController
   private Point2D selectedPoint;
   private final ComboItemListener<MipView.Type> mipTypeOption;
   private final AxesControl axesControl;
+  private final MprGraphicStore graphicStore = new MprGraphicStore();
+  private boolean graphicsRefreshing;
   private Timer scrollEndTimer;
 
   protected MprController() {
@@ -118,6 +120,27 @@ public class MprController
     this.mipTypeOption = newMipTypeOption();
     mipTypeOption.setSelectedItemWithoutTriggerAction(Type.MAX);
     mipTypeOption.enableAction(true);
+  }
+
+  public MprGraphicStore getGraphicStore() {
+    return graphicStore;
+  }
+
+  /** A graphic changed in one view: the other views update their crossing marks. */
+  void onGraphicsEdited(MprAxis source) {
+    if (graphicsRefreshing) {
+      return;
+    }
+    graphicsRefreshing = true;
+    try {
+      for (MprAxis axis : List.of(axial, coronal, sagittal)) {
+        if (axis != source) {
+          axis.refreshFootprints();
+        }
+      }
+    } finally {
+      graphicsRefreshing = false;
+    }
   }
 
   public MprAxis getSagittal() {

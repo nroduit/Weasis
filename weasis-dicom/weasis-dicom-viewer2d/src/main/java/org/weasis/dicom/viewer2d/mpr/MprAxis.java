@@ -10,12 +10,16 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Color;
+import java.beans.PropertyChangeListener;
 import java.util.Objects;
 import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
+import org.weasis.core.api.image.measure.PlaneGeometry;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
@@ -173,6 +177,27 @@ public class MprAxis {
     return thicknessExtension;
   }
 
+  /** Follows the graphics of the view: adopts them once anchored, drops them when removed. */
+  private final PropertyChangeListener graphicEdits =
+      evt -> {
+        if (mprView == null || !(evt.getSource() instanceof Graphic g)) {
+          return;
+        }
+        String name = evt.getPropertyName();
+        MprGraphicStore store = mprView.mprController.getGraphicStore();
+        boolean changed;
+        if (Graphic.ACTION_REMOVE.equals(name)) {
+          changed = store.remove(g);
+        } else if (Graphic.PROPERTY_ANCHOR.equals(name)) {
+          changed = store.adopt(g);
+        } else {
+          return;
+        }
+        if (changed) {
+          mprView.mprController.onGraphicsEdited(this);
+        }
+      };
+
   public void updateImage() {
     if (mprView != null) {
       GeometryOfSlice oldGeometry = imageElement.getSliceGeometry();
@@ -184,12 +209,10 @@ public class MprAxis {
 
       GeometryOfSlice geometry = imageElement.getSliceGeometry();
       if (!Objects.equals(oldGeometry, geometry)) {
-        GraphicModel model = rawIO.getGraphicModel(geometry);
-        imageElement.setTag(TagW.PresentationModel, model);
-        mprView.updateGraphicManager(imageElement, true);
-
-        if (oldModel != null && oldModel.hasSerializableGraphics()) {
-          rawIO.setGraphicModel(oldGeometry, oldModel);
+        if (geometry == null) {
+          parkGraphics(oldGeometry, oldModel);
+        } else {
+          reprojectGraphics(oldModel);
         }
       }
       // Update segmentation overlays using volume-based reslicing
@@ -197,6 +220,44 @@ public class MprAxis {
       // mprView.center();
       mprView.repaint();
     }
+  }
+
+  /** Basic volume without patient geometry: the model is kept per exact plane, as before. */
+  private void parkGraphics(GeometryOfSlice oldGeometry, GraphicModel oldModel) {
+    GraphicModel model = rawIO.getGraphicModel(null);
+    imageElement.setTag(TagW.PresentationModel, model);
+    mprView.updateGraphicManager(imageElement, true);
+    if (oldModel != null && oldModel.hasSerializableGraphics()) {
+      rawIO.setGraphicModel(oldGeometry, oldModel);
+    }
+  }
+
+  /** Rebuilds the model of the new plane from the anchored graphics of the whole volume. */
+  private void reprojectGraphics(GraphicModel oldModel) {
+    MprGraphicStore store = mprView.mprController.getGraphicStore();
+    store.adopt(oldModel);
+    XmlGraphicModel model = new XmlGraphicModel(imageElement);
+    model.addGraphicChangeHandler(graphicEdits);
+    imageElement.setTag(TagW.PresentationModel, model);
+    mprView.updateGraphicManager(imageElement, true);
+    PlaneGeometry geometry = imageElement.getPlaneGeometry();
+    if (geometry != null) {
+      store.populate(mprView, geometry, halfThickness());
+    }
+  }
+
+  void refreshFootprints() {
+    PlaneGeometry geometry = mprView == null ? null : imageElement.getPlaneGeometry();
+    if (geometry != null) {
+      mprView.mprController.getGraphicStore().refreshFootprints(mprView, geometry, halfThickness());
+      mprView.repaint();
+    }
+  }
+
+  private double halfThickness() {
+    GeometryOfSlice geometry = imageElement.getSliceGeometry();
+    double thickness = geometry == null ? 0 : geometry.getSliceThickness();
+    return Math.max(thickness / 2, 0.01);
   }
 
   public DicomImageElement getImageElement() {

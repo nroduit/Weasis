@@ -16,14 +16,18 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -48,7 +52,11 @@ import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MaskingModel;
+import org.weasis.core.api.media.data.MaskingModel.TagRule;
+import org.weasis.core.api.media.data.MaskingModelRegistry;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.TagCategory;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
@@ -81,53 +89,90 @@ public class DicomMediaUtils {
       new int[] {Tag.WindowCenter, Tag.WindowWidth};
   private static final int[] LUTAttributes = new int[] {Tag.LUTDescriptor, Tag.LUTData};
 
-  public static synchronized void enableAnonymizationProfile(boolean activate) {
-    // Default anonymization profile
-    /*
-     * Other Patient tags to activate if there are accessible 1052673=Other Patient Names (0010,1001) 1052672=Other
-     * Patient IDs (0010,1000) 1052704=Patient's Size (0010,1020) 1052688=Patient's Age (0010,1010)
-     * 1052736=Patient's Address (0010,1040) 1057108=Patient's Telephone Numbers (0010,2154) 1057120=Ethnic Group
-     * (0010,2160)
-     */
+  /** Default classification of the DICOM tags, contributed to {@link MaskingModelRegistry}. */
+  private static final String MASKING_RESOURCE = "/identityMasking-dicom.json"; // NON-NLS
 
-    /*
-     * Other tags to activate if there are accessible 524417=Institution Address (0008,0081) 528456=Physician(s) of
-     * Record (0008,1048) 524436=Referring Physician's Telephone Numbers (0008,0094) 524434=Referring Physician's
-     * Address (0008,0092) 528480=Name of Physician(s) Reading Study (0008,1060) 3280946=Requesting Physician
-     * (0032,1032) 528464=Performing Physician's Name (0008,1050) 528496=Operators' Name (0008,1070)
-     * 1057152=Occupation (0010,2180) 1577008=*Protocol Name (0018,1030) 4194900=*Performed Procedure Step
-     * Description (0040,0254) 3280992=*Requested Procedure Description (0032,1060) 4237104=Content Sequence
-     * (0040,A730) 532753=Derivation Description (0008,2111) 1576960=Device Serial Number (0018,1000)
-     * 1052816=Medical Record Locator (0010,1090) 528512=Admitting Diagnoses Description (0008,1080)
-     * 1057200=Additional Patient History (0010,21B0)
-     */
-    int[] list = {
-      Tag.PatientName,
-      Tag.PatientID,
-      Tag.PatientSex,
-      Tag.PatientBirthDate,
-      Tag.PatientBirthTime,
-      Tag.PatientAge,
-      Tag.PatientComments,
-      Tag.PatientWeight,
-      Tag.AccessionNumber,
-      Tag.StudyID,
-      Tag.InstitutionalDepartmentName,
-      Tag.InstitutionName,
-      Tag.ReferringPhysicianName,
-      Tag.StudyDescription,
-      Tag.SeriesDescription,
-      Tag.StationName,
-      Tag.ImageComments
-    };
-    int type = activate ? 1 : 0;
-    for (int id : list) {
-      TagW t = TagD.getNullable(id);
-      if (t != null) {
-        t.setAnonymizationType(type);
-      }
+  /** Private or unregistered tags named by a masking configuration, by normalized key. */
+  private static final Map<String, TagW> MASKING_ONLY_TAGS = new ConcurrentHashMap<>();
+
+  private static final Set<TagW> CLASSIFIED_TAGS = new HashSet<>();
+  private static MaskingModelRegistry classificationSource;
+
+  /**
+   * Contributes the DICOM classification to the masking model once, then classifies the tags and
+   * keeps them in sync with every reload of the model (site or user configuration).
+   */
+  public static synchronized void classifyTags() {
+    MaskingModelRegistry registry = MaskingModelRegistry.getInstance();
+    if (classificationSource != registry) {
+      classificationSource = registry;
+      registry.addListener(() -> applyClassification(registry.tagRules()));
+      registry.contribute(loadMaskingModel());
     }
-    TagW.PatientPseudoUID.setAnonymizationType(type);
+    applyClassification(registry.tagRules());
+  }
+
+  private static MaskingModel loadMaskingModel() {
+    try (InputStream in = DicomMediaUtils.class.getResourceAsStream(MASKING_RESOURCE)) {
+      return in == null ? MaskingModel.EMPTY : MaskingModel.read(in);
+    } catch (IOException | RuntimeException e) {
+      LOGGER.error("Cannot read the DICOM masking classification", e);
+      return MaskingModel.EMPTY;
+    }
+  }
+
+  /**
+   * Sets the category of every DICOM tag named by {@code rules} and resets the tags classified
+   * before but no longer named. Internal {@code weasis:} rules are left to the registry.
+   */
+  public static synchronized void applyClassification(Collection<TagRule> rules) {
+    Set<TagW> applied = new HashSet<>();
+    for (TagRule rule : rules) {
+      if (rule.isInternal()) {
+        continue;
+      }
+      TagW tag = resolveMaskingTag(rule);
+      if (tag == null) {
+        LOGGER.warn("Unknown DICOM tag in masking configuration: {}", rule.key());
+        continue;
+      }
+      tag.setCategory(rule.category());
+      applied.add(tag);
+    }
+    CLASSIFIED_TAGS.stream()
+        .filter(t -> !applied.contains(t))
+        .forEach(t -> t.setCategory(TagCategory.OTHER));
+    CLASSIFIED_TAGS.clear();
+    CLASSIFIED_TAGS.addAll(applied);
+  }
+
+  private static TagW resolveMaskingTag(TagRule rule) {
+    OptionalInt id = rule.tagId();
+    if (id.isEmpty()) {
+      return TagD.get(rule.keyword());
+    }
+    String creator = rule.privateCreator();
+    TagW tag = TagD.getNullable(id.getAsInt(), creator);
+    if (tag != null) {
+      return tag;
+    }
+    // Private tags are absent from the TagD registry: keep one instance to carry the category
+    return MASKING_ONLY_TAGS.computeIfAbsent(rule.key(), _ -> new TagD(id.getAsInt(), creator));
+  }
+
+  /**
+   * The tag to mask a raw attribute with, including private tags that only a masking configuration
+   * names.
+   *
+   * @return the tag, or null when the attribute is unknown to both
+   */
+  public static TagW maskingTag(int tagId, String privateCreator) {
+    TagW tag = TagD.getNullable(tagId, privateCreator);
+    if (tag != null) {
+      return tag;
+    }
+    String hex = "%08X".formatted(tagId); // NON-NLS
+    return MASKING_ONLY_TAGS.get(privateCreator == null ? hex : hex + "@" + privateCreator);
   }
 
   /**
@@ -481,7 +526,54 @@ public class DicomMediaUtils {
    */
   public static boolean writeFrameGeometry(Taggable taggable, DicomMetaData md, int index) {
     return writePerFrameFunctionalGroupsSequence(taggable, md, index)
-        || writeNmTomoGeometry(taggable, md, index);
+        || writeNmTomoGeometry(taggable, md, index)
+        || writeRtDoseGeometry(taggable, md, index);
+  }
+
+  /**
+   * Derives the per-frame Image Position (Patient) of an RT Dose grid from the Grid Frame Offset
+   * Vector (3004,000C): offsets along the plane normal when relative (first value 0), else absolute
+   * positions along the patient's z axis.
+   *
+   * @param frameIndex zero-based frame index
+   * @return {@code true} when dose grid geometry was found and written
+   */
+  public static boolean writeRtDoseGeometry(Taggable taggable, DicomMetaData md, int frameIndex) {
+    Attributes header = md == null ? null : md.getDicomObject();
+    if (header == null || taggable == null || !"RTDOSE".equals(header.getString(Tag.Modality))) {
+      return false;
+    }
+    double[] iop = header.getDoubles(Tag.ImageOrientationPatient);
+    double[] ipp = header.getDoubles(Tag.ImagePositionPatient);
+    double[] offsets = header.getDoubles(Tag.GridFrameOffsetVector);
+    if (iop == null
+        || iop.length != 6
+        || ipp == null
+        || ipp.length != 3
+        || offsets == null
+        || frameIndex < 0
+        || frameIndex >= offsets.length) {
+      return false;
+    }
+    double[] framePos;
+    if (offsets[0] == 0.0) {
+      Vector3d normal = new Vector3d();
+      new Vector3d(iop[0], iop[1], iop[2]).cross(new Vector3d(iop[3], iop[4], iop[5]), normal);
+      if (normal.lengthSquared() == 0.0) {
+        return false;
+      }
+      normal.normalize();
+      double step = offsets[frameIndex];
+      framePos =
+          new double[] {
+            ipp[0] + normal.x * step, ipp[1] + normal.y * step, ipp[2] + normal.z * step
+          };
+    } else {
+      framePos = new double[] {ipp[0], ipp[1], offsets[frameIndex]};
+    }
+    taggable.setTag(TagD.get(Tag.ImageOrientationPatient), iop);
+    taggable.setTag(TagD.get(Tag.ImagePositionPatient), framePos);
+    return true;
   }
 
   public static boolean writePerFrameFunctionalGroupsSequence(

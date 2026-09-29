@@ -25,6 +25,7 @@ import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
+import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
 public class OverlayOp extends AbstractOp {
@@ -33,6 +34,8 @@ public class OverlayOp extends AbstractOp {
   public static final String P_SHOW = "overlay"; // NON-NLS
   public static final String P_IMAGE_ELEMENT = "img.element";
   public static final String OVERLAY_COLOR_KEY = "overlay.color";
+
+  private OverlayMask overlayMask;
 
   public OverlayOp() {
     setName(OP_NAME);
@@ -82,19 +85,56 @@ public class OverlayOp extends AbstractOp {
           if (image.getKey() instanceof Integer frame) {
             DicomImageReadParam p = new DicomImageReadParam();
             p.setPresentationState((PrDicomObject) params.get(WindowAndPresetsOp.P_PR_ELEMENT));
-            PlanarImage original = source;
-            if (!desc.getEmbeddedOverlay().isEmpty()) {
-              original = reader.getImageFragment(image, (Integer) image.getKey(), false);
-            }
             p.setOverlayColor(
                 GuiUtils.getUICore()
                     .getSystemPreferences()
                     .getColorProperty(OVERLAY_COLOR_KEY, Color.WHITE));
-            result = OverlayData.getOverlayImage(original, source, desc, p, frame);
+            ImageCV mask = getOverlayMask(reader, image, frame, source, desc, p);
+            if (mask != null) {
+              result = OverlayData.applyOverlayMask(source, mask, p);
+            }
           }
         }
       }
     }
     params.put(Param.OUTPUT_IMG, result);
+  }
+
+  /** The overlays of a frame do not depend on its rendering: the mask is kept across windows. */
+  private record OverlayMask(
+      ImageElement image, int frame, PrDicomObject presentationState, ImageCV mask) {
+    boolean isFor(ImageElement image, int frame, PrDicomObject presentationState) {
+      return this.image == image
+          && this.frame == frame
+          && this.presentationState == presentationState;
+    }
+  }
+
+  private ImageCV getOverlayMask(
+      DicomMediaIO reader,
+      ImageElement image,
+      int frame,
+      PlanarImage source,
+      ImageDescriptor desc,
+      DicomImageReadParam p)
+      throws Exception {
+    OverlayMask kept = overlayMask;
+    PrDicomObject pr = p.getPresentationState().orElse(null);
+    if (kept != null && kept.isFor(image, frame, pr)) {
+      return kept.mask();
+    }
+    PlanarImage stored = source;
+    if (!desc.getEmbeddedOverlay().isEmpty()) {
+      stored = reader.getImageFragment(image, frame, false);
+    }
+    ImageCV mask = stored == null ? null : OverlayData.getOverlayMask(stored, desc, p, frame);
+    if (stored != null && stored != source) {
+      stored.release();
+    }
+    if (kept != null && kept.mask() != null) {
+      kept.mask().release();
+    }
+    overlayMask = new OverlayMask(image, frame, pr, mask);
+    return mask;
   }
 }

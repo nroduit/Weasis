@@ -55,8 +55,8 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
+import org.weasis.core.api.gui.util.KeyBinding;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
-import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
@@ -64,8 +64,6 @@ import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.UICore;
-import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
@@ -232,6 +230,29 @@ public interface ViewCanvas<E extends ImageElement>
   }
 
   void registerDefaultListeners();
+
+  /**
+   * Marks a position of the image with a small crosshair, for instance the pixel a chart is
+   * pointing at; {@code null} removes the mark.
+   *
+   * @param imagePoint position in the coordinates of the graphics
+   */
+  default void setProbePosition(Point2D imagePoint) {
+    // No mark by default
+  }
+
+  /**
+   * Gives an image back the calibration it has without the user's one: the image's own, and for the
+   * displayed image whatever the view applies on top of it.
+   */
+  default void restoreCalibration(ImageElement image) {
+    image.initPixelConfiguration();
+  }
+
+  /** True when a manual calibration applies to the whole series unless the user says otherwise. */
+  default boolean isSeriesCalibrationDefault() {
+    return false;
+  }
 
   void copyActionWState(HashMap<String, Object> actionsInView);
 
@@ -491,43 +512,22 @@ public interface ViewCanvas<E extends ImageElement>
   }
 
   default void defaultKeyPressed(ImageViewerEventManager<?> eventManager, KeyEvent e) {
-    ShortcutManager sm = ShortcutManager.getInstance();
-    int keyCode = e.getKeyCode();
-    int modifiers = e.getModifiers();
+    // A drawing in progress owns Escape and Backspace: cancelling the draft comes before the
+    // display reset of the common shortcuts, which this view canvas is the first to receive.
+    if (getDrawingsKeyListeners().handleDrawingKeys(e)) {
+      e.consume();
+      return;
+    }
 
-    if (sm.matches(ShortcutManager.ID_VIEWER_NEXT_MOUSE_ACTION, keyCode, modifiers)) {
-      eventManager.nextLeftMouseAction();
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_TOGGLE_INFO, keyCode, modifiers)
-        || sm.matches(ShortcutManager.ID_VIEWER_TOGGLE_INFO_ALT, keyCode, modifiers)) {
-      eventManager.fireSeriesViewerListeners(
-          new SeriesViewerEvent(
-              eventManager.getSelectedView2dContainer(), null, null, EVENT.TOGGLE_INFO));
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_FULLSCREEN, keyCode, modifiers)) {
-      ImageViewerPlugin<E> c = (ImageViewerPlugin<E>) eventManager.getSelectedView2dContainer();
-      if (c != null) {
-        c.maximizedSelectedImagePane(c.getSelectedViewCanvas(), null);
-      }
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_ROTATE_LEFT, keyCode, modifiers)) {
-      // Counterclockwise
-      eventManager
-          .getAction(ActionW.ROTATION)
-          .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 270) % 360));
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_ROTATE_RIGHT, keyCode, modifiers)) {
-      // Clockwise
-      eventManager
-          .getAction(ActionW.ROTATION)
-          .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 90) % 360));
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_FLIP_HORIZONTAL, keyCode, modifiers)) {
-      // Flip horizontal
-      eventManager.getAction(ActionW.FLIP).ifPresent(f -> f.setSelected(!f.isSelected()));
+    if (eventManager.dispatchViewShortcuts(e)) {
+      return;
+    }
+    Optional<Feature<? extends ActionState>> feature =
+        eventManager.getLeftMouseActionFromKeyEvent(e.getKeyCode(), KeyBinding.modifiersOf(e));
+    if (feature.isPresent()) {
+      eventManager.changeLeftMouseAction(feature.get().cmd());
     } else {
-      Optional<Feature<? extends ActionState>> feature =
-          eventManager.getLeftMouseActionFromKeyEvent(e.getKeyCode(), e.getModifiers());
-      if (feature.isPresent()) {
-        eventManager.changeLeftMouseAction(feature.get().cmd());
-      } else {
-        eventManager.keyPressed(e);
-      }
+      eventManager.keyPressed(e);
     }
   }
 }

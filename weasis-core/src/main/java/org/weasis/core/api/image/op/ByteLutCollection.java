@@ -9,22 +9,14 @@
  */
 package org.weasis.core.api.image.op;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.util.FileUtil;
-import org.weasis.opencv.op.lut.ByteLut;
 
 /**
- * Utility class for managing and manipulating byte lookup tables (LUTs) used in image processing.
- * Provides methods to read, invert, and validate LUTs stored in BGR format (Blue-Green-Red).
+ * Byte lookup tables (LUTs) in BGR order: inversion, and the parser of the legacy 256-line text
+ * table used by the importer.
  */
 public final class ByteLutCollection {
 
@@ -60,33 +52,6 @@ public final class ByteLutCollection {
       }
     }
     return invertedLut;
-  }
-
-  /**
-   * Reads LUT files from a directory and adds them to the provided list. Files are sorted
-   * alphabetically by name.
-   *
-   * @param lutEntries the list to add loaded LUTs to
-   * @param lutFolder the directory containing LUT files
-   * @throws IllegalArgumentException if lutEntries is null
-   */
-  public static void readLutFilesFromResourcesDir(List<ByteLut> lutEntries, Path lutFolder) {
-    Objects.requireNonNull(lutEntries, "LUT list cannot be null");
-
-    if (lutFolder == null || !Files.isDirectory(lutFolder)) {
-      LOGGER.debug("Invalid or non-existent LUT directory: {}", lutFolder);
-      return;
-    }
-    try (var paths = Files.walk(lutFolder, 1)) {
-      paths
-          .filter(Files::isRegularFile)
-          .filter(Files::isReadable)
-          .forEach(path -> loadLutFile(lutEntries, path));
-
-      lutEntries.sort(Comparator.comparing(ByteLut::name));
-    } catch (IOException e) {
-      LOGGER.error("Error reading LUT directory: {}", lutFolder, e);
-    }
   }
 
   /**
@@ -130,16 +95,6 @@ public final class ByteLutCollection {
       if (band.length != expectedLength) {
         throw new IllegalArgumentException("All LUT bands must have the same length");
       }
-    }
-  }
-
-  private static void loadLutFile(List<ByteLut> lutEntries, Path filePath) {
-    try (var scanner = new Scanner(filePath, StandardCharsets.UTF_8)) {
-      byte[][] lut = readLutFile(scanner);
-      String name = FileUtil.nameWithoutExtension(filePath.getFileName().toString());
-      lutEntries.add(new ByteLut(name, lut));
-    } catch (Exception e) {
-      LOGGER.error("Error reading LUT file: {}", filePath, e);
     }
   }
 

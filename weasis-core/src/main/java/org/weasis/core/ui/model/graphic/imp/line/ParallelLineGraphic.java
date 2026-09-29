@@ -44,16 +44,31 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_PARALLEL);
 
   public static final Measurement DISTANCE =
-      new Measurement(Messages.getString("measure.distance"), 1, true, true, true);
+      new Measurement("distance", Messages.getString("measure.distance"), 1, true, true, true);
   public static final Measurement ORIENTATION =
-      new Measurement(Messages.getString("measure.orientation"), 2, true, true, false);
+      new Measurement(
+          "orientation", Messages.getString("measure.orientation"), 2, true, true, false);
   public static final Measurement AZIMUTH =
-      new Measurement(Messages.getString("measure.azimuth"), 3, true, true, false);
+      new Measurement("azimuth", Messages.getString("measure.azimuth"), 3, true, true, false);
+
+  public static final Measurement FIRST_LENGTH =
+      new Measurement(
+          "length.first", Messages.getString("measure.first_length"), 4, true, true, false);
+  public static final Measurement SECOND_LENGTH =
+      new Measurement(
+          "length.second", Messages.getString("measure.second_length"), 5, true, true, false);
+
+  /** Shorter line over longer line. */
+  public static final Measurement RATIO =
+      new Measurement("ratio", Messages.getString("measure.ratio"), 6, true, true, true);
 
   protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
 
   static {
     MEASUREMENT_LIST.add(DISTANCE);
+    MEASUREMENT_LIST.add(FIRST_LENGTH);
+    MEASUREMENT_LIST.add(SECOND_LENGTH);
+    MEASUREMENT_LIST.add(RATIO);
     MEASUREMENT_LIST.add(ORIENTATION);
     MEASUREMENT_LIST.add(AZIMUTH);
   }
@@ -108,6 +123,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
       Integer handlePointIndex, Double deltaX, Double deltaY, MouseEventDouble mouseEvent) {
 
     handlePointIndex = super.moveAndResizeOnDrawing(handlePointIndex, deltaX, deltaY, mouseEvent);
+    LineGraphic.snapToAxisWithShift(this, handlePointIndex, mouseEvent);
 
     if (handlePointIndex >= 0 && handlePointIndex < getHandlePointListSize()) {
       updateTool();
@@ -218,6 +234,20 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
               ptC.distance(GeomUtil.getPerpendicularPointToLine(ptA, ptB, ptC))
                   * adapter.calibrationRatio();
           measVal.add(new MeasureItem(DISTANCE, val, adapter.unit()));
+        }
+        double first = ptA.distance(ptB);
+        double second = ptC.distance(ptD);
+        if (FIRST_LENGTH.getComputed()) {
+          measVal.add(
+              new MeasureItem(FIRST_LENGTH, first * adapter.calibrationRatio(), adapter.unit()));
+        }
+        if (SECOND_LENGTH.getComputed()) {
+          measVal.add(
+              new MeasureItem(SECOND_LENGTH, second * adapter.calibrationRatio(), adapter.unit()));
+        }
+        if (RATIO.getComputed() && Math.max(first, second) > 0) {
+          measVal.add(
+              new MeasureItem(RATIO, Math.min(first, second) / Math.max(first, second), null));
         }
         if (ORIENTATION.getComputed()) {
           measVal.add(

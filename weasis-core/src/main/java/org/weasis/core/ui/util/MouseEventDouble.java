@@ -17,12 +17,21 @@ public class MouseEventDouble extends MouseEvent {
 
   final Point2D.Double point2d;
 
+  /**
+   * Copies an event, keeping its modifiers.
+   *
+   * <p>The <b>extended</b> modifiers are what is carried over, not the deprecated ones: in the old
+   * set {@code ALT_MASK} and {@code BUTTON2_MASK} are the same bit, so rebuilding an event from
+   * {@code getModifiers()} turns a press with Alt held into a press of the middle button and {@link
+   * #isAltDown()} comes back false. Shift and Ctrl have no such collision, which is why only the
+   * Alt gestures ever suffered from it.
+   */
   public MouseEventDouble(MouseEvent e, int x, int y) {
     this(
         (Component) e.getSource(),
         e.getID(),
         e.getWhen(),
-        e.getModifiers(),
+        e.getModifiersEx(),
         x,
         y,
         e.getXOnScreen(),
@@ -32,12 +41,16 @@ public class MouseEventDouble extends MouseEvent {
         e.getButton());
   }
 
+  /**
+   * Copies an event, keeping its extended modifiers; see {@link #MouseEventDouble(MouseEvent, int,
+   * int)}.
+   */
   public MouseEventDouble(MouseEvent e) {
     this(
         (Component) e.getSource(),
         e.getID(),
         e.getWhen(),
-        e.getModifiers(),
+        e.getModifiersEx(),
         e.getX(),
         e.getY(),
         e.getXOnScreen(),

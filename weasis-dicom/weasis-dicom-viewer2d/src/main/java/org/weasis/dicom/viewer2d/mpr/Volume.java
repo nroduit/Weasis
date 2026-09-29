@@ -644,8 +644,11 @@ public abstract sealed class Volume<T extends Number, A>
     return imageCV;
   }
 
-  protected T getPhotometricMinValue() {
-    boolean isPhotometricInverse = stack.getMiddleImage().isPhotometricInterpretationInverse(null);
+  /** The darkest displayed value, shown where a resampled image leaves the volume. */
+  public T getPhotometricMinValue() {
+    // A volume created from its dimensions alone has no source stack
+    boolean isPhotometricInverse =
+        stack != null && stack.getMiddleImage().isPhotometricInterpretationInverse(null);
     return isPhotometricInverse ? maxValue : minValue;
   }
 

@@ -45,5 +45,10 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
+    <!-- SCOORD3D projection; at runtime joml is resolved from its own bundle -->
+    <dependency>
+      <groupId>org.joml</groupId>
+      <artifactId>joml</artifactId>
+    </dependency>
   </dependencies>
 </project>

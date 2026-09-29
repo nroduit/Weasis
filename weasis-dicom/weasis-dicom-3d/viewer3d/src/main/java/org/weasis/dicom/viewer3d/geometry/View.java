@@ -10,24 +10,26 @@
 package org.weasis.dicom.viewer3d.geometry;
 
 import org.joml.Quaterniond;
-import org.joml.Vector3d;
+import org.joml.Quaterniondc;
+import org.joml.Vector3dc;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 
 public interface View {
   String title();
 
-  Vector3d position();
+  Vector3dc position();
 
   double zoom();
 
-  Quaterniond rotation();
+  Quaterniondc rotation();
 
+  /** The rotation of the preset for a volume acquired in {@code plan}; always a new instance. */
   default Quaterniond rotation(Plan plan) {
     if (plan == Plan.CORONAL) {
       return new Quaterniond(rotation()).rotateX(Math.toRadians(270));
     } else if (plan == Plan.SAGITTAL) {
       return new Quaterniond(rotation()).rotateX(Math.toRadians(270)).rotateY(Math.toRadians(270));
     }
-    return rotation();
+    return new Quaterniond(rotation());
   }
 }

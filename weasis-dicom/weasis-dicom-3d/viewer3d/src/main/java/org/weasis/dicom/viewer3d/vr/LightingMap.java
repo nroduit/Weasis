@@ -54,6 +54,7 @@ public class LightingMap extends TextureData {
         init(gl);
       }
       gl.glActiveTexture(GL.GL_TEXTURE2);
+      gl.glBindTexture(GL.GL_TEXTURE_2D, getId());
       gl.glTexImage2D(
           GL.GL_TEXTURE_2D,
           0,

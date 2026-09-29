@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -36,7 +37,9 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.ShortcutActions;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -54,6 +57,10 @@ import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicRegistry;
+import org.weasis.core.ui.model.graphic.ToolCategory;
+import org.weasis.core.ui.model.graphic.profile.MeasurementProfileRegistry;
+import org.weasis.core.ui.model.graphic.profile.MeasurementProfiles;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.ZoomSetting;
@@ -76,6 +83,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   protected final SwingPropertyChangeSupport propertySupport = new SwingPropertyChangeSupport(this);
   protected final HashMap<Feature<? extends ActionState>, ActionState> actions = new HashMap<>();
   protected final SynchManager<E> synchManager;
+  private final ShortcutActions commonShortcuts = buildCommonShortcuts();
+  private final ShortcutActions viewShortcuts = buildViewShortcuts();
 
   protected volatile boolean enabledAction = true;
   protected ImageViewerPlugin<E> selectedView2dContainer;
@@ -459,6 +468,37 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     };
   }
 
+  /** Measurement palette fed by the {@link GraphicRegistry} and refreshed when it changes. */
+  protected ComboItemListener<Graphic> newMeasurementAction() {
+    return newToolAction(ActionW.DRAW_MEASURE, ToolCategory.MEASURE);
+  }
+
+  /** Drawing palette fed by the {@link GraphicRegistry} and refreshed when it changes. */
+  protected ComboItemListener<Graphic> newDrawAction() {
+    return newToolAction(ActionW.DRAW_GRAPHICS, ToolCategory.DRAW);
+  }
+
+  private static ComboItemListener<Graphic> newToolAction(
+      Feature<ComboItemListener<Graphic>> action, ToolCategory category) {
+    ComboItemListener<Graphic> listener =
+        new ComboItemListener<>(
+            action, MeasurementProfiles.activeTools(category).toArray(new Graphic[0])) {
+          @Override
+          public void itemStateChanged(Object object) {
+            // Do nothing
+          }
+        };
+    Runnable refresh =
+        () ->
+            GuiExecutor.execute(
+                () ->
+                    listener.setDataListWithoutTriggerAction(
+                        MeasurementProfiles.activeTools(category).toArray(new Graphic[0])));
+    GraphicRegistry.getInstance().addListener(refresh);
+    MeasurementProfileRegistry.getInstance().addListener(refresh);
+    return listener;
+  }
+
   protected static ComboItemListener<Graphic> newMeasurementAction(Graphic[] graphics) {
     return new ComboItemListener<>(
         ActionW.DRAW_MEASURE, Optional.ofNullable(graphics).orElseGet(() -> new Graphic[0])) {
@@ -801,58 +841,121 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   protected boolean commonDisplayShortcuts(KeyEvent e) {
-    int keyEvent = e.getKeyCode();
-    int modifiers = e.getModifiers();
-    ShortcutManager sm = ShortcutManager.getInstance();
+    return commonShortcuts.dispatch(e);
+  }
 
-    if (sm.matches(ShortcutManager.ID_VIEWER_ESCAPE, keyEvent, modifiers)) {
-      resetDisplay();
-    } else if (keyEvent == ActionW.CINESTART.getKeyCode()
-        && ActionW.CINESTART.getModifier() == modifiers) {
-      Optional<SliderCineListener> cineAction = getAction(ActionW.SCROLL_SERIES);
-      if (cineAction.isPresent() && cineAction.get().isActionEnabled()) {
-        if (cineAction.get().isCining()) {
-          cineAction.get().stop();
-        } else {
-          cineAction.get().start();
-        }
-      }
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_PRINT, keyEvent, modifiers)) {
-      ImageViewerPlugin<? extends ImageElement> view = getSelectedView2dContainer();
-      if (view != null) {
-        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
-        PrintDialog<?> dialog =
-            new PrintDialog<>(
-                SwingUtilities.getWindowAncestor(view),
-                Messages.getString("ImageViewerPlugin.print_layout"),
-                this);
-        ColorLayerUI.showCenterScreen(dialog, layer);
-      }
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_SCROLL_UP, keyEvent, modifiers)) {
-      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() - 1));
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_SCROLL_UP_FAST, keyEvent, modifiers)) {
-      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() - 10));
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_SCROLL_DOWN, keyEvent, modifiers)) {
-      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() + 1));
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_SCROLL_DOWN_FAST, keyEvent, modifiers)) {
-      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() + 10));
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_SCROLL_FIRST, keyEvent, modifiers)) {
-      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderMin()));
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_SCROLL_LAST, keyEvent, modifiers)) {
-      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderMax()));
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_ZOOM_OUT, keyEvent, modifiers)) {
-      getAction(ActionW.ZOOM).ifPresent(a -> a.setSliderValue(a.getSliderValue() - 1));
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_ZOOM_IN, keyEvent, modifiers)) {
-      getAction(ActionW.ZOOM).ifPresent(a -> a.setSliderValue(a.getSliderValue() + 1));
-    } else if (sm.matches(ShortcutManager.ID_VIEWER_BEST_FIT, keyEvent, modifiers)) {
-      firePropertyChange(
-          ActionW.SYNCH.cmd(),
-          null,
-          new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), -200.0));
-    } else {
-      return false;
+  /** Shortcuts of the selected view, evaluated before the mouse action keys. */
+  boolean dispatchViewShortcuts(KeyEvent e) {
+    return viewShortcuts.dispatch(e);
+  }
+
+  private ShortcutActions buildCommonShortcuts() {
+    return new ShortcutActions()
+        .on(ShortcutManager.ID_VIEWER_ESCAPE, this::resetDisplay)
+        .on(ActionW.CINESTART.cmd(), this::toggleCine)
+        .on(ShortcutManager.ID_VIEWER_PRINT, this::showPrintDialog)
+        .on(ShortcutManager.ID_VIEWER_SCREENSHOT, () -> capture(CaptureAction.SCREENSHOT))
+        .on(ShortcutManager.ID_VIEWER_EXPORT_ANIMATION, () -> capture(CaptureAction.ANIMATION))
+        .on(ShortcutManager.ID_VIEWER_RECORD, () -> capture(CaptureAction.RECORD))
+        .on(ShortcutManager.ID_VIEWER_SCROLL_UP, () -> scroll(-1))
+        .on(ShortcutManager.ID_VIEWER_SCROLL_UP_FAST, () -> scroll(-10))
+        .on(ShortcutManager.ID_VIEWER_SCROLL_DOWN, () -> scroll(1))
+        .on(ShortcutManager.ID_VIEWER_SCROLL_DOWN_FAST, () -> scroll(10))
+        .on(
+            ShortcutManager.ID_VIEWER_SCROLL_FIRST,
+            () ->
+                getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderMin())))
+        .on(
+            ShortcutManager.ID_VIEWER_SCROLL_LAST,
+            () ->
+                getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderMax())))
+        .on(ShortcutManager.ID_VIEWER_ZOOM_OUT, () -> zoomStep(-1))
+        .on(ShortcutManager.ID_VIEWER_ZOOM_IN, () -> zoomStep(1))
+        .on(
+            ShortcutManager.ID_VIEWER_BEST_FIT,
+            () ->
+                firePropertyChange(
+                    ActionW.SYNCH.cmd(),
+                    null,
+                    new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), -200.0)));
+  }
+
+  private ShortcutActions buildViewShortcuts() {
+    Runnable toggleInfo =
+        () ->
+            fireSeriesViewerListeners(
+                new SeriesViewerEvent(getSelectedView2dContainer(), null, null, EVENT.TOGGLE_INFO));
+    return new ShortcutActions()
+        .on(ShortcutManager.ID_VIEWER_NEXT_MOUSE_ACTION, this::nextLeftMouseAction)
+        .on(ShortcutManager.ID_VIEWER_TOGGLE_INFO, toggleInfo)
+        .on(ShortcutManager.ID_VIEWER_TOGGLE_INFO_ALT, toggleInfo)
+        .on(ShortcutManager.ID_VIEWER_FULLSCREEN, this::maximizeSelectedView)
+        .on(ShortcutManager.ID_VIEWER_ROTATE_LEFT, () -> rotate(270))
+        .on(ShortcutManager.ID_VIEWER_ROTATE_RIGHT, () -> rotate(90))
+        .on(
+            ShortcutManager.ID_VIEWER_FLIP_HORIZONTAL,
+            () -> getAction(ActionW.FLIP).ifPresent(f -> f.setSelected(!f.isSelected())));
+  }
+
+  private void toggleCine() {
+    getAction(ActionW.SCROLL_SERIES)
+        .filter(SliderCineListener::isActionEnabled)
+        .ifPresent(
+            cine -> {
+              if (cine.isCining()) {
+                cine.stop();
+              } else {
+                cine.start();
+              }
+            });
+  }
+
+  /** Runs the capture of that kind the selected view offers, if any. */
+  private void capture(CaptureAction kind) {
+    ViewCanvas<E> view = getSelectedViewPane();
+    if (view == null) {
+      return;
     }
-    return true;
+    kind.find(view.getExportActions())
+        .ifPresent(
+            a ->
+                a.actionPerformed(
+                    new ActionEvent(
+                        view.getJComponent(), ActionEvent.ACTION_PERFORMED, kind.name())));
+  }
+
+  private void showPrintDialog() {
+    ImageViewerPlugin<? extends ImageElement> view = getSelectedView2dContainer();
+    if (view != null) {
+      ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
+      PrintDialog<?> dialog =
+          new PrintDialog<>(
+              SwingUtilities.getWindowAncestor(view),
+              Messages.getString("ImageViewerPlugin.print_layout"),
+              this);
+      ColorLayerUI.showCenterScreen(dialog, layer);
+    }
+  }
+
+  private void scroll(int step) {
+    getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() + step));
+  }
+
+  private void zoomStep(int step) {
+    getAction(ActionW.ZOOM).ifPresent(a -> a.setSliderValue(a.getSliderValue() + step));
+  }
+
+  /** Rotates the selected view clockwise by the angle in degrees. */
+  private void rotate(int angle) {
+    getAction(ActionW.ROTATION)
+        .ifPresent(a -> a.setSliderValue((a.getSliderValue() + angle) % 360));
+  }
+
+  private void maximizeSelectedView() {
+    ImageViewerPlugin<E> c = getSelectedView2dContainer();
+    if (c != null) {
+      c.maximizedSelectedImagePane(c.getSelectedViewCanvas(), null);
+    }
   }
 
   protected void triggerDrawingToolKeyEvent(int keyEvent, int modifiers) {
@@ -869,7 +972,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     if (drawAction.isPresent() && drawAction.get().isActionEnabled()) {
       for (Object obj : drawAction.get().getAllItem()) {
         if (obj instanceof Graphic g) {
-          if (g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
+          if (keyEvent != 0 && g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
             ImageViewerPlugin<E> view = getSelectedView2dContainer();
             if (view != null) {
               final ViewerToolBar<?> toolBar = view.getViewerToolBar();

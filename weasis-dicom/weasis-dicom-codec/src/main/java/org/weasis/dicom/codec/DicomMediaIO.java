@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
@@ -65,6 +66,7 @@ import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
+import org.weasis.dicom.codec.utils.DicomColorPalette;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.opencv.data.PlanarImage;
@@ -190,8 +192,7 @@ public class DicomMediaIO implements DcmMediaReader {
       readTagsInModalityView(entry.getValue().getCornerInfo(CornerDisplay.BOTTOM_RIGHT).getInfos());
     }
 
-    // TODO init with a profile
-    DicomMediaUtils.enableAnonymizationProfile(true);
+    DicomMediaUtils.classifyTags();
   }
 
   public static final Map<String, DicomSpecialElementFactory> DCM_ELEMENT_FACTORIES =
@@ -392,6 +393,14 @@ public class DicomMediaIO implements DcmMediaReader {
         }
       } else {
         boolean special = setDicomSpecialType(header);
+        if (!special && DicomColorPalette.isColorPalette(header)) {
+          // Not an image: the palette joins the color maps of this session and the file is done.
+          DicomColorPalette.fromAttributes(header)
+              .ifPresent(map -> ColorMapRegistry.getInstance().addImported(map));
+          mimeType = UNREADABLE;
+          close();
+          return Reading.UNSUPPORTED;
+        }
         if (!special) {
           // Valid DICOM file but the SOP Class is not supported by Weasis
           String sopClassUID = header.getString(Tag.SOPClassUID);
@@ -563,6 +572,10 @@ public class DicomMediaIO implements DcmMediaReader {
       setTag(TagW.AnatomicRegion, desc.getAnatomicRegion());
 
       TagD.get(Tag.PixelIntensityRelationship).readValue(header, this);
+
+      // Identity that no tag masking can reach: see PixelPrivacy
+      TagD.get(Tag.BurnedInAnnotation).readValue(header, this);
+      TagD.get(Tag.RecognizableVisualFeatures).readValue(header, this);
 
       TagD.get(Tag.Units).readValue(header, this);
       TagD.get(Tag.NumberOfFrames).readValue(header, this);

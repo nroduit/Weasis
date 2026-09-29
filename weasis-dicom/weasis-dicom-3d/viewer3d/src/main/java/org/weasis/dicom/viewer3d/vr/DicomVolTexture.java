@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
+import com.jogamp.opengl.GL2ES2;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -52,7 +53,9 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   private final PropertyChangeSupport changeSupport;
   private final Vector3d scale;
   private final Volume<?, ?> volume;
+  private boolean loadFinished;
   private final PropertyChangeListener crossHairRelay;
+  private final MajorantGrid majorantGrid;
 
   private String pixelValueUnit;
 
@@ -61,6 +64,7 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     super(size, pixelFormat);
     this.volume = v;
     this.changeSupport = Objects.requireNonNull(changeSupport);
+    this.majorantGrid = new MajorantGrid(width, height, depth);
 
     tags = new HashMap<>();
     tagID = v.getStack().getSeries().getTagID();
@@ -136,12 +140,36 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     return volume.getMinimumAsDouble();
   }
 
+  /** Unit of the voxel values (rescale type, PET units, HU for CT), or null. */
+  public String getPixelValueUnit() {
+    return pixelValueUnit;
+  }
+
+  /** SUVbw per voxel value of the series, or null when it cannot be derived. */
+  public Double getSuvFactor() {
+    return volume.getStack().getMiddleImage().getTagValue(TagW.SuvFactor) instanceof Double f
+            && f > 0
+        ? f
+        : null;
+  }
+
   public double getLevelMax() {
     return volume.getMaximumAsDouble();
   }
 
   public Volume<?, ?> getVolume() {
     return volume;
+  }
+
+  /** Block bounds of the voxel values, complete once the upload has ended without error. */
+  public MajorantGrid getMajorantGrid() {
+    return majorantGrid;
+  }
+
+  @Override
+  public void destroy(GL2ES2 gl) {
+    majorantGrid.destroy(gl);
+    super.destroy(gl);
   }
 
   @Override
@@ -242,6 +270,19 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
 
   public void notifyPartiallyLoaded() {
     firePropertyChange(this, DicomVolTextureFactory.PARTIALLY_LOADED, this);
+  }
+
+  /**
+   * Marks the upload as ended, successfully or not. The flag is raised on the EDT, after the
+   * listeners of an already queued {@link #notifyFullyLoaded()} have reset the views.
+   */
+  public void markLoadFinished() {
+    GuiExecutor.execute(() -> loadFinished = true);
+  }
+
+  /** Whether the upload has ended; always read on the EDT. */
+  public boolean isLoadFinished() {
+    return loadFinished;
   }
 
   public boolean isReadyForDisplay() {

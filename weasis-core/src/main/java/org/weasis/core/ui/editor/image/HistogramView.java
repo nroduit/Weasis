@@ -50,9 +50,10 @@ import org.weasis.core.ui.model.graphic.AbstractDragGraphicArea;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
 import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
+import org.weasis.core.ui.model.utils.MeasureFormat;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
+import org.weasis.core.ui.util.MeasureTables;
 import org.weasis.core.ui.util.SimpleTableModel;
-import org.weasis.core.ui.util.TableNumberRenderer;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.ByteLut;
@@ -220,7 +221,7 @@ public class HistogramView extends JComponent
       measList.addAll(ImageRegionStatistics.getStatistics(hist[i].getData(), channel, i == 0));
     }
 
-    JPanel tableContainer = buildStatisticsTable(measList);
+    JPanel tableContainer = buildStatisticsTable(measList, hist[0].getData().getLayer());
     JOptionPane.showMessageDialog(
         spinnerBins,
         tableContainer,
@@ -229,25 +230,25 @@ public class HistogramView extends JComponent
         null);
   }
 
-  public static JPanel buildStatisticsTable(List<MeasureItem> measList) {
-    JPanel tableContainer = new JPanel();
-    tableContainer.setLayout(new BorderLayout());
-
-    JTable jtable =
-        MeasureTool.createMultipleRenderingTable(
-            new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtable.getTableHeader().setReorderingAllowed(false);
-
+  /**
+   * @param layer image the statistics were computed on: it tells how finely its values can be
+   *     shown, {@code null} when unknown
+   */
+  public static JPanel buildStatisticsTable(List<MeasureItem> measList, MeasurableLayer layer) {
+    JPanel tableContainer = new JPanel(new BorderLayout());
     String[] headers = {
       Messages.getString("MeasureTool.param"), Messages.getString("MeasureTool.val")
     };
-    jtable.setModel(new SimpleTableModel(headers, MeasureTool.getLabels(measList)));
-    jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
-    tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
-    tableContainer.add(jtable, BorderLayout.CENTER);
-    jtable.setShowVerticalLines(true);
-    jtable.getColumnModel().getColumn(0).setPreferredWidth(120);
-    jtable.getColumnModel().getColumn(1).setPreferredWidth(80);
+    JTable jtable =
+        MeasureTool.createMultipleRenderingTable(
+            new SimpleTableModel(headers, MeasureTool.getLabels(measList)));
+    MeasureFormat format = new MeasureFormat(layer, null, MeasureTool.viewSetting.getDecimals());
+    jtable
+        .getColumnModel()
+        .getColumn(1)
+        .setCellRenderer(MeasureTables.valueRenderer(measList, format));
+    MeasureTables.installCopyMenu(jtable);
+    MeasureTables.fit(jtable, tableContainer);
     return tableContainer;
   }
 

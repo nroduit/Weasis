@@ -19,6 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.HardwareInfo.Volume;
@@ -76,7 +77,7 @@ public final class NetworkFileSystems {
   private static final long MOUNT_TABLE_TTL_MS = 30_000;
   private static final long MOUNT_TABLE_MIN_REFRESH_MS = 5_000;
 
-  private static volatile MountTable mountTable;
+  private static final AtomicReference<MountTable> MOUNT_TABLE = new AtomicReference<>();
 
   private NetworkFileSystems() {}
 
@@ -159,16 +160,16 @@ public final class NetworkFileSystems {
   }
 
   private static MountTable mountTable() {
-    MountTable table = mountTable;
+    MountTable table = MOUNT_TABLE.get();
     return table == null || table.isOlderThan(MOUNT_TABLE_TTL_MS) ? refreshMountTable() : table;
   }
 
   /** Re-reads the mount table, at most once every few seconds: it is a WMI query on Windows. */
   private static synchronized MountTable refreshMountTable() {
-    MountTable table = mountTable;
+    MountTable table = MOUNT_TABLE.get();
     if (table == null || table.isOlderThan(MOUNT_TABLE_MIN_REFRESH_MS)) {
       table = new MountTable(HardwareInfo.mountedVolumes());
-      mountTable = table;
+      MOUNT_TABLE.set(table);
     }
     return table;
   }
@@ -179,7 +180,7 @@ public final class NetworkFileSystems {
     private final long createdAt = System.currentTimeMillis();
 
     MountTable(List<Volume> volumes) {
-      this.volumes = volumes;
+      this.volumes = List.copyOf(volumes);
     }
 
     boolean isOlderThan(long millis) {

@@ -11,20 +11,26 @@ package org.weasis.core.ui.editor.image;
 
 import static org.weasis.core.ui.editor.image.ViewCanvas.ZOOM_TYPE_CMD;
 
+import java.awt.MouseInfo;
 import java.awt.Point;
+import java.awt.PointerInfo;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
+import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
 
 public interface Canvas {
@@ -51,9 +57,56 @@ public interface Canvas {
    */
   void setViewModel(ViewModel viewModel);
 
+  /**
+   * The handler that owns the drawing sequence of this canvas, {@code null} when it has none. The
+   * key listeners go through it so that a drawing in progress keeps Escape and Backspace for
+   * itself.
+   */
+  default GraphicMouseHandler<?> getGraphicMouseHandler() {
+    return null;
+  }
+
+  /**
+   * Cursor position in image coordinates, or {@code null} when the pointer is not over this canvas.
+   * A paste triggered from the keyboard lands there, as one triggered from the menu does.
+   */
+  default Point2D getCursorImagePoint() {
+    JComponent component = getJComponent();
+    PointerInfo info = MouseInfo.getPointerInfo();
+    if (info == null || component == null || !component.isShowing()) {
+      return null;
+    }
+    Point point = info.getLocation();
+    SwingUtilities.convertPointFromScreen(point, component);
+    return component.contains(point) ? getImageCoordinatesFromMouse(point.x, point.y) : null;
+  }
+
   Object getActionValue(String action);
 
   Map<String, Object> getActionsInView();
+
+  /**
+   * Tells whether the layers of a type are displayed in this canvas. The state is kept per view in
+   * {@link #getActionsInView()} under {@code type.name()}, so it survives the switch to the graphic
+   * model of another image and applies to layers created afterwards. Unset means visible.
+   */
+  default boolean isLayerTypeVisible(LayerType type) {
+    return LangUtil.nullToTrue((Boolean) getActionValue(type.name()));
+  }
+
+  /**
+   * Shows or hides every layer of a type in this canvas, now and for the graphic models displayed
+   * later.
+   */
+  default void setLayerTypeVisibility(LayerType type, boolean visible) {
+    getActionsInView().put(type.name(), visible);
+    GraphicModel model = getGraphicManager();
+    if (model != null) {
+      model.getLayers().stream()
+          .filter(l -> type.equals(l.getType()) && !Objects.equals(l.getVisible(), visible))
+          .forEach(l -> l.setVisible(visible));
+    }
+  }
 
   /**
    * Zoom from the center of the canvas

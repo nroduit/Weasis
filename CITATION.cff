@@ -1,0 +1,37 @@
+# Machine-readable citation metadata — https://citation-file-format.github.io/
+#
+# GitHub reads this file and shows a "Cite this repository" button that generates
+# BibTeX and APA entries from it. The prose version, with Vancouver and plain-text
+# forms and the companion projects, is at https://weasis.org/en/cite/
+#
+# Keep `version` and `date-released` on the latest *released* version: that is
+# what a reader can obtain and reproduce. Bump both when a release is tagged.
+cff-version: 1.2.0
+message: "If you use Weasis in your work, please cite it as below."
+title: "Weasis DICOM Viewer"
+abstract: >-
+  Free, open-source DICOM viewer for medical imaging. Runs standalone on Windows,
+  macOS and Linux or launches from a web portal, with 2D reading, multiplanar and
+  curved reconstruction, MIP, 3D volume rendering, PET/CT fusion with SUV, DICOM
+  SEG, RT, SR and ECG support, and PACS and DICOMweb integration.
+type: software
+authors:
+  - family-names: Roduit
+    given-names: Nicolas
+    orcid: "https://orcid.org/0009-0000-8103-0428"
+repository-code: "https://github.com/nroduit/Weasis"
+url: "https://weasis.org"
+license:
+  - EPL-2.0
+  - Apache-2.0
+version: 4.7.3
+date-released: 2026-08-25
+keywords:
+  - dicom
+  - dicom-viewer
+  - medical-imaging
+  - pacs
+  - dicomweb
+  - radiology
+  - mpr
+  - volume-rendering

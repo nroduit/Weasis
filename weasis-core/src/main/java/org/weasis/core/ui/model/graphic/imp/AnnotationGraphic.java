@@ -35,7 +35,6 @@ import java.util.Optional;
 import javax.swing.Icon;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GeomUtil;
-import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -162,11 +161,17 @@ public class AnnotationGraphic extends AbstractDragGraphic {
 
   @Override
   public void updateLabel(ViewCanvas<?> view2d, Point2D pos, boolean releasedEvent) {
+    if (releasedEvent) {
+      anchorOn(view2d);
+    }
     setLabel(labels, view2d, pos);
   }
 
   @Override
   public void updateLabel(Object source, ViewCanvas<?> view2d) {
+    if (isReleasedEvent(source)) {
+      anchorOn(view2d);
+    }
     setLabel(labels, view2d);
   }
 
@@ -219,16 +224,6 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     }
 
     setShape(newShape, mouseEvent);
-  }
-
-  @Override
-  public int getKeyCode() {
-    return ShortcutManager.getInstance().getKeyCode(ShortcutManager.ID_GRAPHIC_ANNOTATION);
-  }
-
-  @Override
-  public int getModifier() {
-    return ShortcutManager.getInstance().getModifier(ShortcutManager.ID_GRAPHIC_ANNOTATION);
   }
 
   protected void updateTool() {

@@ -241,7 +241,8 @@ public class CheckTreeModel {
               toolTips.append("</b>");
               toolTips.append(StringUtil.COLON_AND_SPACE);
               String f = tag.addGMTOffset(null, tagReadable);
-              toolTips.append(tag.getFormattedTagValue(i.getValue(), f));
+              toolTips.append(
+                  tag.getFormattedTagValue(IdentityMask.maskValue(tag, i.getValue()), f));
               toolTips.append(GuiUtils.HTML_BR);
             });
     toolTips.append(GuiUtils.HTML_END);

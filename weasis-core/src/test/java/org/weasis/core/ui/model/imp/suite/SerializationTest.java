@@ -40,7 +40,7 @@ class SerializationTest extends ModelListHelper {
     String expected =
         String.format(
             TPL_XML_PREFIX
-                + "<presentation uuid=\"%s\"><references/><layers/><graphics/></presentation>", // NON-NLS
+                + "<presentation version=\"2.7\" uuid=\"%s\"><references/><layers/><graphics/></presentation>", // NON-NLS
             UUID_1);
     assertEquals(expected, actual);
   }
@@ -60,7 +60,7 @@ class SerializationTest extends ModelListHelper {
     String expected =
         String.format(
             TPL_XML_PREFIX
-                + "<presentation uuid=\"%1$s\">" // NON-NLS
+                + "<presentation version=\"2.7\" uuid=\"%1$s\">" // NON-NLS
                 + "<references/>" // NON-NLS
                 + "<layers>" // NON-NLS
                 + "<layer level=\"40\" locked=\"false\" selectable=\"true\" type=\"DRAW\" visible=\"true\" uuid=\"%2$s\"/>" // NON-NLS
@@ -93,7 +93,7 @@ class SerializationTest extends ModelListHelper {
     String expected =
         String.format(
             TPL_XML_PREFIX
-                + "<presentation uuid=\"%s\">" // NON-NLS
+                + "<presentation version=\"2.7\" uuid=\"%s\">" // NON-NLS
                 + "<references>" // NON-NLS
                 + "<series uuid=\"%s\">" // NON-NLS
                 + "<image frames=\"\" uuid=\"%s\"/>" // NON-NLS
@@ -154,7 +154,7 @@ class SerializationTest extends ModelListHelper {
     String expected =
         String.format(
             TPL_XML_PREFIX
-                + "<presentation uuid=\"%s\">" // NON-NLS
+                + "<presentation version=\"2.7\" uuid=\"%s\">" // NON-NLS
                 + "<references>" // NON-NLS
                 + "<series uuid=\"%s\">" // NON-NLS
                 + "<image frames=\"\" uuid=\"%s\"/>" // NON-NLS
@@ -238,7 +238,7 @@ class SerializationTest extends ModelListHelper {
     String expected =
         String.format(
             TPL_XML_PREFIX
-                + "<presentation uuid=\"%s\">" // NON-NLS
+                + "<presentation version=\"2.7\" uuid=\"%s\">" // NON-NLS
                 + "<references>" // NON-NLS
                 + "<series uuid=\"%s\">" // NON-NLS
                 + "<image frames=\"\" uuid=\"%s\"/>" // NON-NLS

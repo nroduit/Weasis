@@ -10,7 +10,16 @@
 package org.weasis.dicom.viewer3d.geometry;
 
 import org.joml.Quaterniond;
+import org.joml.Quaterniondc;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 
-public record ViewData(String title, Vector3d position, Quaterniond rotation, double zoom)
-    implements View {}
+public record ViewData(String title, Vector3dc position, Quaterniondc rotation, double zoom)
+    implements View {
+
+  /** Copies the vectors so the preset cannot change under a caller that keeps mutating them. */
+  public ViewData {
+    position = new Vector3d(position);
+    rotation = new Quaterniond(rotation);
+  }
+}
