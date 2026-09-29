@@ -512,6 +512,45 @@ class SRReaderTest {
         html);
   }
 
+  // ===== Labels =====
+
+  @Test
+  void region_label_comes_from_the_tracking_identifier_then_the_finding() {
+    Attributes root = root();
+    Sequence rootSeq = children(root, 2);
+    Attributes group = container("CONTAINS", "Measurement Group");
+    Sequence groupSeq = children(group, 3);
+    groupSeq.add(text("Tracking Identifier", "Lesion 7"));
+    groupSeq
+        .get(0)
+        .getNestedDataset(Tag.ConceptNameCodeSequence)
+        .setString(Tag.CodeValue, VR.SH, "112039");
+    groupSeq
+        .get(0)
+        .getNestedDataset(Tag.ConceptNameCodeSequence)
+        .setString(Tag.CodingSchemeDesignator, VR.SH, "DCM");
+    Attributes finding = item("CONTAINS", "CODE", "Finding");
+    finding.getNestedDataset(Tag.ConceptNameCodeSequence).setString(Tag.CodeValue, VR.SH, "121071");
+    finding
+        .getNestedDataset(Tag.ConceptNameCodeSequence)
+        .setString(Tag.CodingSchemeDesignator, VR.SH, "DCM");
+    finding.newSequence(Tag.ConceptCodeSequence, 1).add(code("4147007", "SCT", "Mass"));
+    groupSeq.add(finding);
+    Attributes region = polyline(square(10, 10, 20));
+    children(region, 1).add(image("SELECTED FROM", IMAGE_UID));
+    groupSeq.add(region);
+    rootSeq.add(group);
+    Attributes lone = polyline(square(0, 0, 5));
+    children(lone, 1).add(image("SELECTED FROM", IMAGE_UID));
+    rootSeq.add(lone);
+
+    Map<String, SRImageReference> map = new HashMap<>();
+    render(root, map);
+
+    assertEquals("Lesion 7", map.get("1.1.3").getGraphics().get(0).label());
+    assertEquals("Image Region", map.get("1.2").getGraphics().get(0).label());
+  }
+
   // ===== By-reference items =====
 
   @Test

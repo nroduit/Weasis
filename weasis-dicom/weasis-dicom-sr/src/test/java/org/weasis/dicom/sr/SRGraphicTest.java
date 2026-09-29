@@ -150,6 +150,27 @@ class SRGraphicTest {
   }
 
   @Test
+  void highlighted_graphic_shows_its_label() {
+    Attributes plain = new Attributes();
+    plain.setInt(Tag.Columns, VR.US, 512);
+    SRGraphic g =
+        new SRGraphic(
+            "1.1",
+            scoord(null, "POINT", 100, 120),
+            false,
+            SRGraphic.RenderingIntent.PRESENTATION_REQUIRED,
+            "Lesion 1");
+
+    Graphic normal = g.build(frame(plain, 0), false);
+    Graphic highlighted = g.build(frame(plain, 0), true);
+
+    assertNull(normal.getGraphicLabel());
+    assertNotNull(highlighted.getGraphicLabel());
+    assertEquals("Lesion 1", highlighted.getGraphicLabel().getLabels()[0]);
+    assertTrue(highlighted.getLabelVisible());
+  }
+
+  @Test
   void rendering_intent_defaults_to_presentation_required() {
     SRGraphic g = new SRGraphic("1.1", scoord(null, "POINT", 1, 1), false);
     assertEquals(SRGraphic.RenderingIntent.PRESENTATION_REQUIRED, g.intent());

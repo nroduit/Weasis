@@ -747,7 +747,8 @@ public class SRReader {
     String label = StringUtil.hasText(graphicType) ? graphicType : (threeD ? SCOORD3D : SCOORD);
     html.append(sep);
     SRGraphic graphic =
-        new SRGraphic(node.id, c.getAttributes(), threeD, renderingIntent(node));
+        new SRGraphic(
+            node.id, c.getAttributes(), threeD, renderingIntent(node), graphicLabel(node));
     String forUID = threeD ? c.getReferencedFrameOfReferenceUID() : null;
 
     List<ContentNode> targets = resolveImageTargets(node, index);
