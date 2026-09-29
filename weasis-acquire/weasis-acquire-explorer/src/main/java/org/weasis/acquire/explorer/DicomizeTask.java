@@ -33,9 +33,16 @@ public class DicomizeTask extends SwingWorker<Path, AcquireMediaInfo> {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomizeTask.class);
 
   private final Collection<AcquireMediaInfo> toDicomize;
+  private final boolean removeJpegMetadata;
 
-  public DicomizeTask(Collection<AcquireMediaInfo> toDicomize) {
+  /**
+   * @param toDicomize the media to convert to DICOM
+   * @param removeJpegMetadata true to remove the embedded metadata (EXIF, GPS, XMP...) from the
+   *     original JPEG stream
+   */
+  public DicomizeTask(Collection<AcquireMediaInfo> toDicomize, boolean removeJpegMetadata) {
     this.toDicomize = Objects.requireNonNull(toDicomize);
+    this.removeJpegMetadata = removeJpegMetadata;
   }
 
   @Override
@@ -59,7 +66,7 @@ public class DicomizeTask extends SwingWorker<Path, AcquireMediaInfo> {
       for (AcquireMediaInfo imageInfo : toDicomize) {
         setProgress(++nbImageProcessed * 100 / nbImageToProcess);
         if (!Transform2Dicom.dicomize(
-            imageInfo, exportDirDicom, exportDirImage, seriesInstanceUID)) {
+            imageInfo, exportDirDicom, exportDirImage, seriesInstanceUID, removeJpegMetadata)) {
           imageInfo.setStatus(AcquireImageStatus.FAILED);
           continue;
         }

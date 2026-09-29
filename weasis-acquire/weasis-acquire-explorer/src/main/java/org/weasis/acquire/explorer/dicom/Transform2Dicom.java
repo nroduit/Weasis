@@ -66,15 +66,20 @@ public final class Transform2Dicom {
    * @param exportDirDicom the folder to save DICOM files
    * @param exportDirImage the folder to save image files
    * @param seriesInstanceUID Global series for all PR
+   * @param removeJpegMetadata true to remove the JPEG APPn segments (EXIF, GPS, XMP, thumbnail...)
+   *     when the original JPEG stream is encapsulated without re-encoding, and to not copy the
+   *     identifying EXIF tags (serial numbers, owner, GPS) into DICOM attributes
    * @return true when the operation is successful
    */
   public static boolean dicomize(
       AcquireMediaInfo mediaInfo,
       Path exportDirDicom,
       Path exportDirImage,
-      String seriesInstanceUID) {
+      String seriesInstanceUID,
+      boolean removeJpegMetadata) {
     if (mediaInfo instanceof AcquireImageInfo imageInfo) {
-      return processImageElement(imageInfo, exportDirDicom, exportDirImage, seriesInstanceUID);
+      return processImageElement(
+          imageInfo, exportDirDicom, exportDirImage, seriesInstanceUID, removeJpegMetadata);
     } else {
       return processOtherMediaElement(mediaInfo, exportDirDicom);
     }
@@ -126,20 +131,24 @@ public final class Transform2Dicom {
       AcquireImageInfo imageInfo,
       Path exportDirDicom,
       Path exportDirImage,
-      String seriesInstanceUID) {
+      String seriesInstanceUID,
+      boolean removeJpegMetadata) {
 
     ImageElement imageElement = imageInfo.getImage();
     String sopInstanceUID =
         Objects.requireNonNull((String) imageElement.getTagValue(TagD.getUID(Level.INSTANCE)));
 
-    // Transform the image if required
-    Path imgFile = imageElement.getFileCache().getOriginalFile().orElse(null);
+    // Transform the image if required. The pixels have already been rotated according to the EXIF
+    // orientation when reading, so the original JPEG stream can only be kept when it is in the
+    // normal orientation (1) or has no orientation (0).
+    Path originalFile = imageElement.getFileCache().getOriginalFile().orElse(null);
+    Path imgFile = originalFile;
     Integer orientation =
         StringUtil.getInteger((String) imageElement.getTagValue(TagW.ExifOrientation));
     if (imgFile == null
         || !imageElement.getMimeType().contains("jpeg")
         || !imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())
-        || (orientation != null && orientation > 0)) {
+        || (orientation != null && orientation > 1)) {
 
       imgFile = exportDirImage.resolve(sopInstanceUID + ".jpg");
       SimpleOpManager opManager = imageInfo.getPostProcessOpManager();
@@ -157,6 +166,10 @@ public final class Transform2Dicom {
     // Dicomize
     if (Files.isReadable(imgFile)) {
       Attributes attrs = populateDicomAttributes(imageInfo);
+      // EXIF (CP-1736) from the original file: a re-encoded image no longer carries it
+      if (originalFile != null) {
+        Dicomizer.addExifAttributes(attrs, originalFile, !removeJpegMetadata);
+      }
 
       // Spatial calibration
       if (Unit.PIXEL != imageElement.getPixelSpacingUnit()) {
@@ -169,7 +182,8 @@ public final class Transform2Dicom {
       }
 
       try {
-        Dicomizer.jpeg(attrs, imgFile, exportDirDicom.resolve(sopInstanceUID), false);
+        Dicomizer.jpeg(
+            attrs, imgFile, exportDirDicom.resolve(sopInstanceUID), removeJpegMetadata);
       } catch (Exception e) {
         LOGGER.error("Cannot Dicomize {}", imageElement.getName(), e);
         return false;
