@@ -74,10 +74,12 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.pref.LauncherToolBar;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
+import org.weasis.core.ui.util.SegRegionTool;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -635,6 +637,18 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         if (this.getDockableUID().equals(evt.getSource())) {
           setKOSpecialElement(koSpecialElement, true, true, false);
         }
+      } else if (ObservableEvent.BasicAction.SELECT.equals(action)
+          && newVal instanceof PRSpecialElement pr) {
+        // A report asked to show an image with the presentation state it references
+        if (this.getDockableUID().equals(evt.getSource())) {
+          applyPresentationState(pr);
+        }
+      } else if (ObservableEvent.BasicAction.SELECT.equals(action)
+          && newVal instanceof SegRegion<?> region) {
+        // A report asked to show a segment of a segmentation object
+        if (this.getDockableUID().equals(evt.getSource())) {
+          showSegment(region);
+        }
       }
     }
   }
@@ -877,6 +891,25 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   @Override
   public List<MigLayoutModel> getLayoutList() {
     return getLayoutList(this, DEFAULT_LAYOUT_LIST);
+  }
+
+  private void applyPresentationState(PRSpecialElement pr) {
+    ViewCanvas<DicomImageElement> view = getSelectedViewCanvas();
+    if (view instanceof View2d view2d
+        && PresentationStateReader.isImageApplicable(pr, view2d.getImage())) {
+      view2d.setPresentationState(pr, false);
+    }
+  }
+
+  private static void showSegment(SegRegion<?> region) {
+    for (DockableTool tool : UI.tools) {
+      if (tool instanceof SegRegionTool segTool) {
+        segTool.updateVisibleNode();
+        segTool.show(region);
+        return;
+      }
+    }
+    LOGGER.warn("No segmentation tool to show the segment {}", region.getLabel());
   }
 
   private static boolean hasOverlay(Series<?> series) {

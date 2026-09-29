@@ -656,13 +656,35 @@ public class SRReader {
       return;
     }
     html.append(sep);
-    registerReference(map, node.id, sop);
-    appendLink(html, node.id, Messages.getString("SRReader.show_img"));
+    SRImageReference ref = registerReference(map, node.id, sop);
+    Attributes item = node.content.getAttributes().getNestedDataset(Tag.ReferencedSOPSequence);
+    int[] segments =
+        DicomUtils.getIntArrayFromDicomElement(item, Tag.ReferencedSegmentNumber, null);
+    ref.setSegmentNumbers(segments);
+    Attributes pr = item == null ? null : item.getNestedDataset(Tag.ReferencedSOPSequence);
+    String prUID = pr == null ? null : pr.getString(Tag.ReferencedSOPInstanceUID);
+    ref.setPresentationStateUID(StringUtil.hasText(prUID) ? prUID : null);
+
+    appendLink(
+        html,
+        node.id,
+        Messages.getString(ref.isSegmentReference() ? "SRReader.show_seg" : "SRReader.show_img"));
     int[] frames = sop.getReferencedFrameNumber();
     if (frames != null && frames.length > 0) {
       html.append(" (").append(Messages.getString("SRReader.frame")).append(" ");
       html.append(IntStream.of(frames).mapToObj(String::valueOf).collect(Collectors.joining(", ")));
       html.append(")");
+    }
+    if (ref.isSegmentReference()) {
+      html.append(" (").append(Messages.getString("SRReader.segment")).append(" ");
+      html.append(
+          IntStream.of(ref.getSegmentNumbers())
+              .mapToObj(String::valueOf)
+              .collect(Collectors.joining(", ")));
+      html.append(")");
+    }
+    if (ref.getPresentationStateUID() != null) {
+      html.append(" <i>(").append(Messages.getString("SRReader.pr")).append(")</i>");
     }
   }
 

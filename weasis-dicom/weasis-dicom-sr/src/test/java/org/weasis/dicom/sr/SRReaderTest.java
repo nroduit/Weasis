@@ -374,6 +374,46 @@ class SRReaderTest {
         html);
   }
 
+  // ===== IMAGE references with segment and presentation state =====
+
+  @Test
+  void image_item_exposes_segment_number_and_presentation_state() {
+    Attributes root = root();
+    Sequence rootSeq = children(root, 2);
+    Attributes segRef = image("CONTAINS", "1.2.3.seg");
+    Attributes segItem = segRef.getNestedDataset(Tag.ReferencedSOPSequence);
+    segItem.setString(Tag.ReferencedSOPClassUID, VR.UI, UID.SegmentationStorage);
+    segItem.setInt(Tag.ReferencedSegmentNumber, VR.US, 3);
+    rootSeq.add(segRef);
+    Attributes withPr = image("CONTAINS", IMAGE_UID);
+    Attributes pr = new Attributes();
+    pr.setString(Tag.ReferencedSOPClassUID, VR.UI, UID.GrayscaleSoftcopyPresentationStateStorage);
+    pr.setString(Tag.ReferencedSOPInstanceUID, VR.UI, "1.2.3.pr");
+    withPr
+        .getNestedDataset(Tag.ReferencedSOPSequence)
+        .newSequence(Tag.ReferencedSOPSequence, 1)
+        .add(pr);
+    rootSeq.add(withPr);
+
+    Map<String, SRImageReference> map = new HashMap<>();
+    String html = render(root, map);
+
+    assertTrue(map.get("1.1").isSegmentReference());
+    assertEquals(3, map.get("1.1").getSegmentNumbers()[0]);
+    assertNull(map.get("1.1").getPresentationStateUID());
+    assertTrue(
+        html.contains(
+            link("1.1")
+                + Messages.getString("SRReader.show_seg")
+                + "</a> ("
+                + Messages.getString("SRReader.segment")
+                + " 3)"),
+        html);
+    assertFalse(map.get("1.2").isSegmentReference());
+    assertEquals("1.2.3.pr", map.get("1.2").getPresentationStateUID());
+    assertTrue(html.contains("(" + Messages.getString("SRReader.pr") + ")"), html);
+  }
+
   // ===== TCOORD =====
 
   @Test

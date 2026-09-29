@@ -24,6 +24,8 @@ import org.weasis.dicom.macro.SOPInstanceReference;
 public class SRImageReference {
   private SOPInstanceReference sopInstanceReference;
   private String frameOfReferenceUID;
+  private String presentationStateUID;
+  private int[] segmentNumbers;
   private List<SRGraphic> graphics;
   private List<WaveformAnnotation> annotations;
   private final String nodeLevel;
@@ -74,6 +76,29 @@ public class SRImageReference {
 
   public void setFrameOfReferenceUID(String frameOfReferenceUID) {
     this.frameOfReferenceUID = frameOfReferenceUID;
+  }
+
+  /** SOP Instance UID of the softcopy presentation state to apply when showing the image. */
+  public String getPresentationStateUID() {
+    return presentationStateUID;
+  }
+
+  public void setPresentationStateUID(String presentationStateUID) {
+    this.presentationStateUID = presentationStateUID;
+  }
+
+  /** Referenced Segment Numbers when the target is a segmentation object, else null. */
+  public int[] getSegmentNumbers() {
+    return segmentNumbers;
+  }
+
+  public void setSegmentNumbers(int[] segmentNumbers) {
+    this.segmentNumbers =
+        segmentNumbers == null || segmentNumbers.length == 0 ? null : segmentNumbers;
+  }
+
+  public boolean isSegmentReference() {
+    return segmentNumbers != null;
   }
 
   /** The drawable items to overlay, never null. */

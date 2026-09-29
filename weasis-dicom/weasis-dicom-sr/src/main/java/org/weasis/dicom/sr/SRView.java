@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
@@ -43,10 +44,12 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.ViewerOpenOptions;
+import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.dicom.codec.AbstractKOSpecialElement.Reference;
@@ -54,11 +57,14 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.SpecialElementOverlay;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
@@ -245,7 +251,9 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
       return;
     }
     SOPInstanceReference ref = imgRef.getSopInstanceReference();
-    if (ref != null && ref.getReferencedSOPInstanceUID() != null) {
+    if (ref != null && ref.getReferencedSOPInstanceUID() != null && imgRef.isSegmentReference()) {
+      openSegment(model, key, imgRef, ref);
+    } else if (ref != null && ref.getReferencedSOPInstanceUID() != null) {
       openSopInstance(model, key, imgRef, ref);
     } else if (imgRef.getFrameOfReferenceUID() != null) {
       openFrameOfReference(model, key, imgRef);
@@ -311,6 +319,57 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     openImage(model, plugin, dicomSeries, ref, imgRef);
   }
 
+  /**
+   * Shows the segment of a segmentation object: the segmentation is a hidden element attached to
+   * the series it segments, so that series is opened and the viewer is asked to locate the segment.
+   */
+  private void openSegment(
+      DicomModel model, String key, SRImageReference imgRef, SOPInstanceReference ref) {
+    MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
+    String sopUID = ref.getReferencedSOPInstanceUID();
+    SegSpecialElement seg =
+        HiddenSeriesManager.getHiddenElementsFromPatient(SegSpecialElement.class, patient).stream()
+            .filter(e -> sopUID.equals(TagD.getTagValue(e, Tag.SOPInstanceUID, String.class)))
+            .findFirst()
+            .orElse(null);
+    SegRegion<DicomImageElement> region =
+        seg == null ? null : seg.getSegAttributes().get(imgRef.getSegmentNumbers()[0]);
+    if (region == null) {
+      LOGGER.info(
+          "SR reference {} not loaded: segment {} of {}",
+          key,
+          imgRef.getSegmentNumbers()[0],
+          sopUID);
+      showNotFound("SRView.msg_seg");
+      return;
+    }
+    DicomSeries target = null;
+    for (String seriesUID : seg.getRefMap().keySet()) {
+      if (model.getSeriesNode(seriesUID) instanceof DicomSeries dicomSeries) {
+        target = dicomSeries;
+        break;
+      }
+    }
+    if (target == null) {
+      showNotFound("SRView.msg");
+      return;
+    }
+    SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(target.getMimeType());
+    if (plugin == null || plugin instanceof MimeSystemAppFactory) {
+      return;
+    }
+    seg.setVisible(true);
+    region.setSelected(true);
+    ViewerOpenOptions opts =
+        ViewerOpenOptions.builder()
+            .placement(ViewerPlacement.newTab())
+            .uid(UUID.randomUUID().toString())
+            .build();
+    new ViewerPluginBuilder(plugin, List.of(target), model, opts).open();
+    model.firePropertyChange(
+        new ObservableEvent(ObservableEvent.BasicAction.SELECT, opts.uid(), null, region));
+  }
+
   private void showNotFound(String messageKey) {
     JOptionPane.showMessageDialog(
         WinUtil.getValidComponent(this),
@@ -347,6 +406,27 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     new ViewerPluginBuilder(plugin, List.of(dicomSeries), model, opts).open();
     model.firePropertyChange(
         new ObservableEvent(ObservableEvent.BasicAction.SELECT, opts.uid(), null, keyReferences));
+    applyPresentationState(model, opts.uid(), clicked);
+  }
+
+  /** Asks the opened viewer to apply the presentation state the IMAGE item names, if loaded. */
+  private void applyPresentationState(DicomModel model, String viewerUID, SRImageReference ref) {
+    String prUID = ref.getPresentationStateUID();
+    if (prUID == null) {
+      return;
+    }
+    MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
+    PRSpecialElement pr =
+        HiddenSeriesManager.getHiddenElementsFromPatient(PRSpecialElement.class, patient).stream()
+            .filter(e -> prUID.equals(TagD.getTagValue(e, Tag.SOPInstanceUID, String.class)))
+            .findFirst()
+            .orElse(null);
+    if (pr == null) {
+      LOGGER.info("Presentation state {} referenced by the SR is not loaded", prUID);
+      return;
+    }
+    model.firePropertyChange(
+        new ObservableEvent(ObservableEvent.BasicAction.SELECT, viewerUID, null, pr));
   }
 
   // ================================================================================
