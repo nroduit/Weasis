@@ -75,6 +75,21 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   private DefaultMutableTreeNode dicomInfo;
   private DefaultMutableTreeNode drawings;
   private DefaultMutableTreeNode crosslines;
+
+  /**
+   * Layer types a user can show or hide, in display order. Left out: the types created by the
+   * viewer itself (image annotations, temporary drawings, footprints), the unused POINTS and BLOB
+   * types, and DICOM SEG and RT whose visibility is managed per structure by their own tools.
+   */
+  static final List<LayerType> LAYER_TYPES =
+      List.of(
+          LayerType.MEASURE,
+          LayerType.DRAW,
+          LayerType.ANNOTATION,
+          LayerType.DICOM_PR,
+          LayerType.DICOM_SR);
+
+  private final List<DefaultMutableTreeNode> layerTypeNodes = new ArrayList<>();
   private DefaultMutableTreeNode minAnnotations;
 
   public DisplayTool(String pluginName) {
@@ -113,6 +128,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     rootNode.add(drawings);
     crosslines = new DefaultMutableTreeNode(LayerType.CROSSLINES, false);
     drawings.add(crosslines);
+    for (LayerType type : LAYER_TYPES) {
+      DefaultMutableTreeNode node = new DefaultMutableTreeNode(type, false);
+      layerTypeNodes.add(node);
+      drawings.add(node);
+    }
 
     DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
     tree.setModel(model);
@@ -222,6 +242,15 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             }
           }
         }
+      } else if (drawings.equals(parent)
+          && selObject instanceof DefaultMutableTreeNode node
+          && node.getUserObject() instanceof LayerType type
+          && type != LayerType.CROSSLINES) {
+        // Toggling a type only flips the visible flag of its layers: no graphic is deleted or
+        // rebuilt, and the view keeps the state for the images displayed afterwards
+        for (ViewCanvas<?> v : views) {
+          v.setLayerTypeVisibility(type, selected);
+        }
       } else if (drawings.equals(parent) && selObject == crosslines) {
         for (ViewCanvas<?> v : views) {
           if (Boolean.TRUE.equals(v.getActionValue(LayerType.CROSSLINES.name())) != selected) {
@@ -300,6 +329,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         tree,
         getTreePath(crosslines),
         LangUtil.nullToTrue((Boolean) view.getActionValue(LayerType.CROSSLINES.name())));
+    for (DefaultMutableTreeNode node : layerTypeNodes) {
+      if (node.getUserObject() instanceof LayerType type) {
+        TreeBuilder.setPathSelection(tree, getTreePath(node), view.isLayerTypeVisible(type));
+      }
+    }
   }
 
   private static TreePath getTreePath(TreeNode node) {

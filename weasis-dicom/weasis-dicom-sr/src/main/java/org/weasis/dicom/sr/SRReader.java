@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.sr;
 
-import java.awt.Color;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
@@ -32,13 +31,10 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.util.EscapeChars;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 import org.weasis.dicom.macro.Code;
 import org.weasis.dicom.macro.SOPInstanceReference;
 import org.weasis.dicom.macro.SeriesAndInstanceReference;
@@ -66,12 +62,10 @@ public class SRReader {
   /** Prefix of the hyperlinks that open a referenced object (image, waveform, composite). */
   public static final String LINK_PREFIX = "weasis-sr:"; // NON-NLS
 
-  /** Name of the graphic layer holding the SCOORD outlines drawn on a referenced image. */
-  public static final String SCOORD_LAYER_NAME = "SCOORD [DICOM]"; // NON-NLS
-
   static final String CONTAINER = "CONTAINER"; // NON-NLS
   static final String IMAGE = "IMAGE"; // NON-NLS
   static final String SCOORD = "SCOORD"; // NON-NLS
+  static final String SCOORD3D = "SCOORD3D"; // NON-NLS
   static final String WAVEFORM = "WAVEFORM"; // NON-NLS
 
   private final DicomSpecialElement dicomSR;
@@ -498,8 +492,8 @@ public class SRReader {
       case IMAGE -> writeImage(html, node, sep, map);
       case "COMPOSITE" -> writeComposite(html, node, sep, map, false); // NON-NLS
       case WAVEFORM -> writeComposite(html, node, sep, map, true);
-      case SCOORD -> writeScoord(html, node, sep, index, map);
-      case "SCOORD3D" -> writeScoord3D(html, c, sep); // NON-NLS
+      case SCOORD -> writeScoord(html, node, sep, index, map, false);
+      case SCOORD3D -> writeScoord(html, node, sep, index, map, true);
       case "TCOORD" -> writeTcoord(html, c, sep); // NON-NLS
       case "DATETIME" -> { // NON-NLS
         html.append(sep);
@@ -659,53 +653,56 @@ public class SRReader {
     }
   }
 
+  /**
+   * Writes an SCOORD or SCOORD3D item as one link per image it applies to. An SCOORD3D item that
+   * references no image is linked to its Frame of Reference instead, so the viewer can locate the
+   * slices itself.
+   */
   private static void writeScoord(
       StringBuilder html,
       ContentNode node,
       String sep,
       Map<String, ContentNode> index,
-      Map<String, SRImageReference> map) {
-    String graphicType = node.content.getGraphicType();
-    String label = StringUtil.hasText(graphicType) ? graphicType : SCOORD;
+      Map<String, SRImageReference> map,
+      boolean threeD) {
+    SRDocumentContent c = node.content;
+    String graphicType = c.getGraphicType();
+    String label = StringUtil.hasText(graphicType) ? graphicType : (threeD ? SCOORD3D : SCOORD);
     html.append(sep);
+    SRGraphic graphic = new SRGraphic(node.id, c.getAttributes(), threeD);
+    String forUID = threeD ? c.getReferencedFrameOfReferenceUID() : null;
+
     List<ContentNode> targets = resolveImageTargets(node, index);
-    if (targets.isEmpty()) {
+    if (!targets.isEmpty()) {
+      int n = 0;
+      for (ContentNode target : targets) {
+        if (n > 0) {
+          html.append(", ");
+        }
+        String key = linkKey(node.id, n);
+        SRImageReference ref =
+            registerReference(map, key, target.content.getReferencedSOPInstance());
+        ref.setFrameOfReferenceUID(forUID);
+        ref.addGraphic(graphic);
+        appendLink(html, key, label);
+        n++;
+      }
+    } else if (StringUtil.hasText(forUID)) {
+      SRImageReference ref = registerReference(map, node.id, null);
+      ref.setFrameOfReferenceUID(forUID);
+      ref.addGraphic(graphic);
+      appendLink(html, node.id, label);
+    } else {
       html.append(EscapeChars.forHTML(label));
       html.append(" <i>(").append(Messages.getString("SRReader.no_img_ref")).append(")</i>");
-      return;
     }
-    int n = 0;
-    for (ContentNode target : targets) {
-      if (n > 0) {
-        html.append(", ");
-      }
-      String key = linkKey(node.id, n);
-      SRImageReference ref = registerReference(map, key, target.content.getReferencedSOPInstance());
-      // One graphic instance per image: a graphic belongs to a single graphic model
-      ref.addGraphic(buildGraphic(node));
-      appendLink(html, key, label);
-      n++;
-    }
-  }
 
-  private static Graphic buildGraphic(ContentNode scoord) {
-    try {
-      return PrGraphicUtil.buildGraphic(
-          scoord.content.getAttributes(), Color.MAGENTA, false, 1, 1, false, null, true);
-    } catch (InvalidShapeException e) {
-      LOGGER.error("Cannot build graphic from SR item {}", scoord.id, e);
+    if (threeD) {
+      float[] data = c.getGraphicData();
+      int points = data == null ? 0 : data.length / 3;
+      html.append(" <i>3D, ").append(points).append(" "); // NON-NLS
+      html.append(Messages.getString("SRReader.points")).append("</i>");
     }
-    return null;
-  }
-
-  private static void writeScoord3D(StringBuilder html, SRDocumentContent c, String sep) {
-    html.append(sep);
-    String graphicType = c.getGraphicType();
-    html.append(EscapeChars.forHTML(StringUtil.hasText(graphicType) ? graphicType : "SCOORD3D"));
-    float[] data = c.getGraphicData();
-    int points = data == null ? 0 : data.length / 3;
-    html.append(" <i>3D, ").append(points).append(" "); // NON-NLS
-    html.append(Messages.getString("SRReader.points")).append("</i>");
   }
 
   private static void writeTcoord(StringBuilder html, SRDocumentContent c, String sep) {

@@ -12,7 +12,6 @@ package org.weasis.dicom.sr;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -276,7 +275,8 @@ class SRReaderTest {
     assertEquals(IMAGE_UID, second.getSopInstanceReference().getReferencedSOPInstanceUID());
     assertEquals(1, first.getGraphics().size());
     assertEquals(1, second.getGraphics().size());
-    assertNotSame(first.getGraphics().get(0), second.getGraphics().get(0));
+    assertEquals("1.1.1", first.getGraphics().get(0).nodeId());
+    assertEquals("1.2.1", second.getGraphics().get(0).nodeId());
     assertTrue(html.contains(link("1.1.1") + "POLYLINE</a>"), html);
     assertTrue(html.contains(link("1.2.1") + "POLYLINE</a>"), html);
   }
@@ -309,7 +309,10 @@ class SRReaderTest {
     assertEquals(IMAGE_UID, map.get("1.1").getSopInstanceReference().getReferencedSOPInstanceUID());
     assertEquals(
         IMAGE_UID_2, map.get("1.1/1").getSopInstanceReference().getReferencedSOPInstanceUID());
-    assertNotSame(map.get("1.1").getGraphics().get(0), map.get("1.1/1").getGraphics().get(0));
+    // The same item is drawn on both images; the graphic itself is built per image on demand
+    assertEquals(1, map.get("1.1").getGraphics().size());
+    assertEquals(1, map.get("1.1/1").getGraphics().size());
+    assertEquals("1.1", map.get("1.1/1").getGraphics().get(0).nodeId());
     assertTrue(
         html.contains(link("1.1") + "POLYLINE</a>, " + link("1.1/1") + "POLYLINE</a>"), html);
   }
@@ -408,7 +411,7 @@ class SRReaderTest {
   }
 
   @Test
-  void scoord3d_and_tcoord_are_described_instead_of_flagged_unsupported() {
+  void scoord3d_without_image_links_to_its_frame_of_reference() {
     Attributes root = root();
     Sequence rootSeq = children(root, 2);
     Attributes s3d = item("CONTAINS", "SCOORD3D", "Volume Region");
@@ -421,11 +424,40 @@ class SRReaderTest {
     tc.setInt(Tag.ReferencedSamplePositions, VR.UL, 10, 200);
     rootSeq.add(tc);
 
-    String html = render(root, new HashMap<>());
+    Map<String, SRImageReference> map = new HashMap<>();
+    String html = render(root, map);
 
     assertFalse(html.contains(Messages.getString("SRReader.tag_missing")), html);
-    assertTrue(html.contains("POLYGON <i>3D, 4 " + Messages.getString("SRReader.points")), html);
+    assertTrue(
+        html.contains(
+            link("1.1") + "POLYGON</a> <i>3D, 4 " + Messages.getString("SRReader.points")),
+        html);
+    SRImageReference ref = map.get("1.1");
+    assertNull(ref.getSopInstanceReference());
+    assertEquals("1.2.3", ref.getFrameOfReferenceUID());
+    assertEquals(1, ref.getGraphics().size());
+    assertTrue(ref.getGraphics().get(0).threeD());
+    assertEquals("POLYGON", ref.getGraphics().get(0).getGraphicType());
     assertTrue(html.contains("SEGMENT: 10, 200 " + Messages.getString("SRReader.samples")), html);
+  }
+
+  @Test
+  void scoord3d_selected_from_an_image_links_to_that_image() {
+    Attributes root = root();
+    Attributes s3d = item("CONTAINS", "SCOORD3D", "Volume Region");
+    s3d.setString(Tag.GraphicType, VR.CS, "POINT");
+    s3d.setFloat(Tag.GraphicData, VR.FL, 1, 2, 3);
+    s3d.setString(Tag.ReferencedFrameOfReferenceUID, VR.UI, "1.2.3");
+    children(s3d, 1).add(image("SELECTED FROM", IMAGE_UID));
+    children(root, 1).add(s3d);
+
+    Map<String, SRImageReference> map = new HashMap<>();
+    render(root, map);
+
+    SRImageReference ref = map.get("1.1");
+    assertEquals(IMAGE_UID, ref.getSopInstanceReference().getReferencedSOPInstanceUID());
+    assertEquals("1.2.3", ref.getFrameOfReferenceUID());
+    assertEquals("1.1", ref.getGraphics().get(0).nodeId());
   }
 
   @Test

@@ -19,6 +19,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -28,6 +29,8 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
+import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
 
 public interface Canvas {
@@ -81,6 +84,29 @@ public interface Canvas {
   Object getActionValue(String action);
 
   Map<String, Object> getActionsInView();
+
+  /**
+   * Tells whether the layers of a type are displayed in this canvas. The state is kept per view in
+   * {@link #getActionsInView()} under {@code type.name()}, so it survives the switch to the graphic
+   * model of another image and applies to layers created afterwards. Unset means visible.
+   */
+  default boolean isLayerTypeVisible(LayerType type) {
+    return LangUtil.nullToTrue((Boolean) getActionValue(type.name()));
+  }
+
+  /**
+   * Shows or hides every layer of a type in this canvas, now and for the graphic models displayed
+   * later.
+   */
+  default void setLayerTypeVisibility(LayerType type, boolean visible) {
+    getActionsInView().put(type.name(), visible);
+    GraphicModel model = getGraphicManager();
+    if (model != null) {
+      model.getLayers().stream()
+          .filter(l -> type.equals(l.getType()) && !Objects.equals(l.getVisible(), visible))
+          .forEach(l -> l.setVisible(visible));
+    }
+  }
 
   /**
    * Zoom from the center of the canvas

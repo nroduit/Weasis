@@ -269,8 +269,21 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
       }
       if (!layers.contains(layer)) {
         layers.add(layer);
+        fireLayerAdded(layer);
       }
       models.add(graphic);
+    }
+  }
+
+  private void fireLayerAdded(GraphicLayer layer) {
+    for (GraphicModelChangeListener l : List.copyOf(modelListeners)) {
+      l.handleLayerAdded(this, layer);
+    }
+  }
+
+  private void fireLayerRemoved(GraphicLayer layer) {
+    for (GraphicModelChangeListener l : List.copyOf(modelListeners)) {
+      l.handleLayerRemoved(this, layer);
     }
   }
 
@@ -293,6 +306,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         }
         if (!layerExist) {
           layers.remove(layer);
+          fireLayerRemoved(layer);
         }
       }
     }
@@ -379,7 +393,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             }
             return delete;
           });
-      layers.removeIf(l -> Objects.equals(l, layer));
+      if (layers.removeIf(l -> Objects.equals(l, layer))) {
+        fireLayerRemoved(layer);
+      }
     }
   }
 
@@ -396,7 +412,10 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         }
       }
       models.removeIf(g -> Objects.equals(g.getLayer().getType(), type));
-      layers.removeIf(l -> Objects.equals(l.getType(), type));
+      List<GraphicLayer> removed =
+          layers.stream().filter(l -> Objects.equals(l.getType(), type)).toList();
+      layers.removeAll(removed);
+      removed.forEach(this::fireLayerRemoved);
     }
   }
 

@@ -10,11 +10,13 @@
 package org.weasis.dicom.sr;
 
 import java.awt.BorderLayout;
-import java.beans.PropertyChangeListener;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -23,6 +25,7 @@ import javax.swing.JTextPane;
 import javax.swing.event.HyperlinkEvent;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -31,8 +34,6 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.IdentityMask;
-import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -46,19 +47,18 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.GraphicModel;
-import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
-import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
-import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.dicom.codec.AbstractKOSpecialElement.Reference;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.SpecialElementOverlay;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
@@ -239,17 +239,23 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
       LOGGER.warn("No SR reference registered for link {}", key);
       return;
     }
-    SOPInstanceReference ref = imgRef.getSopInstanceReference();
-    if (ref == null || ref.getReferencedSOPInstanceUID() == null) {
-      LOGGER.warn("SR content item {} has no referenced SOP instance", key);
-      return;
-    }
     DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     if (!(dicomView instanceof DicomExplorer)
         || !(dicomView.getDataExplorerModel() instanceof DicomModel model)) {
       return;
     }
+    SOPInstanceReference ref = imgRef.getSopInstanceReference();
+    if (ref != null && ref.getReferencedSOPInstanceUID() != null) {
+      openSopInstance(model, key, imgRef, ref);
+    } else if (imgRef.getFrameOfReferenceUID() != null) {
+      openFrameOfReference(model, key, imgRef);
+    } else {
+      LOGGER.warn("SR content item {} has no referenced SOP instance", key);
+    }
+  }
 
+  private void openSopInstance(
+      DicomModel model, String key, SRImageReference imgRef, SOPInstanceReference ref) {
     MediaSeriesGroup study = model.getParent(series, DicomModel.study);
     MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
     Series<?> s =
@@ -258,11 +264,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
       LOGGER.info(
           "SR reference {} not loaded: SOP Instance {}", key, ref.getReferencedSOPInstanceUID());
       // TODO try to download if IHE IID has been configured
-      JOptionPane.showMessageDialog(
-          WinUtil.getValidComponent(this),
-          Messages.getString(imgRef.hasGraphics() ? "SRView.msg" : "SRView.msg_obj"),
-          Messages.getString("SRView.open"),
-          JOptionPane.WARNING_MESSAGE);
+      showNotFound(imgRef.hasGraphics() ? "SRView.msg" : "SRView.msg_obj");
       return;
     }
 
@@ -280,12 +282,49 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     }
   }
 
+  /** Opens the slice closest to an SCOORD3D item that references a Frame of Reference only. */
+  private void openFrameOfReference(DicomModel model, String key, SRImageReference imgRef) {
+    MediaSeriesGroup study = model.getParent(series, DicomModel.study);
+    MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
+    String forUID = imgRef.getFrameOfReferenceUID();
+    DicomSeries dicomSeries = findSeriesByFrameOfReference(model, patient, study, forUID);
+    DicomImageElement slice =
+        dicomSeries == null ? null : findClosestSlice(dicomSeries, imgRef.getGraphics());
+    if (slice == null) {
+      LOGGER.info("SR reference {} not loaded: Frame of Reference {}", key, forUID);
+      showNotFound("SRView.msg");
+      return;
+    }
+    SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(dicomSeries.getMimeType());
+    if (plugin == null || plugin instanceof MimeSystemAppFactory) {
+      return;
+    }
+    SOPInstanceReference ref = new SOPInstanceReference();
+    ref.setReferencedSOPInstanceUID(TagD.getTagValue(slice, Tag.SOPInstanceUID, String.class));
+    ref.setReferencedSOPClassUID(TagD.getTagValue(slice, Tag.SOPClassUID, String.class));
+    if (slice.getMediaReader().getMediaElementNumber() > 1) {
+      Integer frame = TagD.getTagValue(slice, Tag.InstanceNumber, Integer.class);
+      if (frame != null) {
+        ref.setReferencedFrameNumber(frame);
+      }
+    }
+    openImage(model, plugin, dicomSeries, ref, imgRef);
+  }
+
+  private void showNotFound(String messageKey) {
+    JOptionPane.showMessageDialog(
+        WinUtil.getValidComponent(this),
+        Messages.getString(messageKey),
+        Messages.getString("SRView.open"),
+        JOptionPane.WARNING_MESSAGE);
+  }
+
   private void openImage(
       DicomModel model,
       SeriesViewerFactory plugin,
       DicomSeries dicomSeries,
       SOPInstanceReference ref,
-      SRImageReference imgRef) {
+      SRImageReference clicked) {
     if (keyReferences == null) {
       keyReferences = buildKO(model, dicomSeries);
     }
@@ -302,9 +341,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
             ref.getReferencedFrameNumber());
     keyReferences.addKeyObject(koRef);
 
-    MediaElement mediaElement =
-        dicomSeries.getMedia(0, keyReferences.getSOPInstanceUIDFilter(), null);
-    addGraphicsToView(mediaElement, imgRef);
+    attachGraphics(model, dicomSeries, clicked);
 
     ViewerOpenOptions opts = model.createViewerKeyImageOpenOptions();
     new ViewerPluginBuilder(plugin, List.of(dicomSeries), model, opts).open();
@@ -312,55 +349,53 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         new ObservableEvent(ObservableEvent.BasicAction.SELECT, opts.uid(), null, keyReferences));
   }
 
-  private static void addGraphicsToView(MediaElement mediaElement, SRImageReference imgRef) {
-    if (mediaElement instanceof ImageElement imageElement) {
-      GraphicModel modelList = (GraphicModel) mediaElement.getTagValue(TagW.PresentationModel);
-      if (modelList == null) {
-        modelList = new XmlGraphicModel(imageElement);
-        mediaElement.setTag(TagW.PresentationModel, modelList);
-      }
-      updateScoordLayer(modelList, imgRef.getGraphics());
-    }
-  }
+  // ================================================================================
+  // Graphics
+  // ================================================================================
 
   /**
-   * Replaces the content of the SCOORD layer of a graphic model by the given graphics.
+   * Emphasizes the clicked items and refreshes the SR overlay of every image of the series.
    *
-   * <p>The layer is always rebuilt from the clicked reference: two references may hold the same
-   * number of graphics while being different regions, so the previous content is never a reason to
-   * keep the layer as it is (issue #922).
-   *
-   * @param modelList the graphic model of the image
-   * @param graphics the graphics to display; the layer is emptied when null or empty
+   * <p>The overlay itself is rebuilt by the image view on each image change (see {@link
+   * SpecialElementOverlay}); this pass covers the images already displayed, whose view will not
+   * change image, and clears the emphasis set by a previous click, in this or another report.
    */
-  static void updateScoordLayer(GraphicModel modelList, List<Graphic> graphics) {
-    GraphicLayer layer = null;
-    for (GraphicLayer l : modelList.getLayers()) {
-      if (SRReader.SCOORD_LAYER_NAME.equals(l.getName())) {
-        layer = l;
-        break;
+  private void attachGraphics(DicomModel model, DicomSeries dicomSeries, SRImageReference clicked) {
+    MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
+    List<SpecialElementOverlay> overlays =
+        model.getSpecialElementsFromPatient(SpecialElementOverlay.class, patient);
+    SRSpecialElement current = DicomModel.getFirstSpecialElement(series, SRSpecialElement.class);
+    Set<String> highlighted =
+        clicked.getGraphics().stream().map(SRGraphic::nodeId).collect(Collectors.toSet());
+    for (SpecialElementOverlay overlay : overlays) {
+      if (overlay instanceof SRSpecialElement sr) {
+        sr.setHighlightedNodes(sr == current ? highlighted : Set.of());
       }
     }
-    if (layer == null) {
-      layer = new DefaultLayer(LayerType.DICOM_SR);
-      layer.setName(SRReader.SCOORD_LAYER_NAME);
-      layer.setSerializable(false);
-      layer.setLocked(true);
-      layer.setSelectable(false);
-      layer.setLevel(305);
-    } else {
-      modelList.deleteByLayer(layer);
+    if (current != null && !overlays.contains(current)) {
+      // The report is not attached to the explorer model (dropped file): draw it anyway
+      current.setHighlightedNodes(highlighted);
+      overlays = new ArrayList<>(overlays);
+      overlays.add(current);
     }
 
-    if (graphics == null) {
-      return;
-    }
-    for (Graphic graphic : graphics) {
-      graphic.setLayer(layer);
-      for (PropertyChangeListener listener : modelList.getGraphicsListeners()) {
-        graphic.addPropertyChangeListener(listener);
+    for (DicomImageElement img : dicomSeries.getMedias(null, null)) {
+      GraphicModel modelList = (GraphicModel) img.getTagValue(TagW.PresentationModel);
+      if (modelList == null) {
+        boolean applies = false;
+        for (SpecialElementOverlay overlay : overlays) {
+          if (overlay.appliesTo(img)) {
+            applies = true;
+            break;
+          }
+        }
+        if (!applies) {
+          continue; // nothing to draw and nothing to clear
+        }
+        modelList = new XmlGraphicModel(img);
+        img.setTag(TagW.PresentationModel, modelList);
       }
-      modelList.addGraphic(graphic);
+      SpecialElementOverlay.apply(modelList, img, LayerType.DICOM_SR, overlays);
     }
   }
 
@@ -423,6 +458,81 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
       }
     }
     return false;
+  }
+
+  private static DicomSeries findSeriesByFrameOfReference(
+      DicomModel model, MediaSeriesGroup patient, MediaSeriesGroup study, String forUID) {
+    if (model == null || patient == null || forUID == null) {
+      return null;
+    }
+    DicomSeries s = study == null ? null : findSeriesByFrameOfReference(model, study, forUID);
+    if (s != null) {
+      return s;
+    }
+    synchronized (model) { // NOSONAR lock object is the list for iterating its elements safely
+      for (MediaSeriesGroup st : model.getChildren(patient)) {
+        if (st != study) {
+          s = findSeriesByFrameOfReference(model, st, forUID);
+          if (s != null) {
+            return s;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static DicomSeries findSeriesByFrameOfReference(
+      DicomModel model, MediaSeriesGroup study, String forUID) {
+    synchronized (model) { // NOSONAR lock object is the list for iterating its elements safely
+      for (MediaSeriesGroup seq : model.getChildren(study)) {
+        if (seq instanceof DicomSeries s) {
+          DicomImageElement first = s.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null);
+          if (first != null
+              && forUID.equals(first.getFrameOfReferenceUID())
+              && first.getSliceGeometry() != null) {
+            return s;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /** The slice whose plane is closest to the centroid of the 3D points of the clicked items. */
+  static DicomImageElement findClosestSlice(DicomSeries series, List<SRGraphic> items) {
+    Vector3d centroid = new Vector3d();
+    int count = 0;
+    for (SRGraphic item : items) {
+      if (item.threeD()) {
+        float[] data = item.item().getFloats(Tag.GraphicData);
+        if (data != null) {
+          for (int i = 0; i + 2 < data.length; i += 3) {
+            centroid.add(data[i], data[i + 1], data[i + 2]);
+            count++;
+          }
+        }
+      }
+    }
+    if (count == 0) {
+      return series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
+    }
+    centroid.div(count);
+
+    DicomImageElement best = null;
+    double bestDistance = Double.MAX_VALUE;
+    for (DicomImageElement img : series.getMedias(null, null)) {
+      GeometryOfSlice geometry = img.getSliceGeometry();
+      if (geometry != null) {
+        double d =
+            Math.abs(new Vector3d(centroid).sub(geometry.getTLHC()).dot(geometry.getNormal()));
+        if (d < bestDistance) {
+          bestDistance = d;
+          best = img;
+        }
+      }
+    }
+    return best;
   }
 
   private KOSpecialElement buildKO(DicomModel model, DicomSeries s) {

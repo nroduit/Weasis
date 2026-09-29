@@ -66,6 +66,7 @@ import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
@@ -108,6 +109,7 @@ import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
+import org.weasis.dicom.codec.SpecialElementOverlay;
 import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.OverlayOp;
@@ -147,6 +149,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   /** Set between a {@link #requestSegmentationUpdate()} call and the refresh it posts. EDT only. */
   private boolean segUpdatePending;
+
+  /** Overlay elements (SR...) of the patient of the displayed series; null when stale. */
+  private volatile List<SpecialElementOverlay> overlayElements; // NOSONAR visibility ref
 
   protected Vector3d lastCrosshairPosition;
 
@@ -695,6 +700,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   @Override
   public void setSeries(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
+    overlayElements = null;
     super.setSeries(series, selectedDicom);
 
     // TODO
@@ -735,6 +741,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     if (newImg) {
       updateSegmentation(img);
+      updateOverlays(img);
       updatePrButtonState(img);
       updateKOSelectedState(img);
     }
@@ -808,6 +815,36 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           updateSegmentation();
           repaint();
         });
+  }
+
+  /**
+   * Rebuilds the overlays of the special elements referencing the image (SR regions). Called on
+   * every image change, so the element list of the patient is cached until {@link
+   * #updateOverlays()} or a series change invalidates it.
+   */
+  private void updateOverlays(DicomImageElement img) {
+    SpecialElementOverlay.apply(graphicManager, img, LayerType.DICOM_SR, getOverlayElements());
+  }
+
+  /** Refreshes the overlays after a special element was added to or removed from the patient. */
+  public void updateOverlays() {
+    overlayElements = null;
+    updateOverlays(imageLayer.getSourceImage());
+    repaint();
+  }
+
+  private List<SpecialElementOverlay> getOverlayElements() {
+    List<SpecialElementOverlay> list = overlayElements;
+    if (list == null) {
+      list = List.of();
+      if (series != null && series.getTagValue(TagW.ExplorerModel) instanceof DicomModel model) {
+        MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
+        list =
+            List.copyOf(model.getSpecialElementsFromPatient(SpecialElementOverlay.class, patient));
+      }
+      overlayElements = list;
+    }
+    return list;
   }
 
   private void updateSegmentation(DicomImageElement img) {

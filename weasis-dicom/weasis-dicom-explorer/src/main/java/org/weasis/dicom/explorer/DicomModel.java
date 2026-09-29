@@ -675,6 +675,24 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     return Collections.emptyList();
   }
 
+  /**
+   * Collects the special elements of a type from every series of a patient (SR documents, for
+   * instance). Hidden elements (KO, PR, SEG...) are indexed by {@link HiddenSeriesManager} instead.
+   */
+  public <E> List<E> getSpecialElementsFromPatient(Class<E> clazz, MediaSeriesGroup patient) {
+    List<E> list = new ArrayList<>();
+    if (patient != null && clazz != null) {
+      synchronized (this) { // NOSONAR lock object is the list for iterating its elements safely
+        for (MediaSeriesGroup study : getChildren(patient)) {
+          for (MediaSeriesGroup series : getChildren(study)) {
+            list.addAll(getSpecialElements(series, clazz));
+          }
+        }
+      }
+    }
+    return list;
+  }
+
   public static <E> E getFirstSpecialElement(MediaSeriesGroup group, Class<E> clazz) {
     if (group != null && clazz != null && clazz.isAssignableFrom(clazz)) {
       List<DicomSpecialElement> sps =

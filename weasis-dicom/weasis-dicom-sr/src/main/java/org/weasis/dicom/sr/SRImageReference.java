@@ -12,16 +12,17 @@ package org.weasis.dicom.sr;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.dicom.macro.SOPInstanceReference;
 
 /**
  * The target of a clickable link in the rendered report: a referenced SOP instance (image, waveform
- * or any composite object) and, for an SCOORD item, the graphics to draw on that image.
+ * or any composite object) or, for an SCOORD3D item without image reference, a Frame of Reference;
+ * plus the drawable items to overlay on the referenced image.
  */
 public class SRImageReference {
   private SOPInstanceReference sopInstanceReference;
-  private List<Graphic> graphics;
+  private String frameOfReferenceUID;
+  private List<SRGraphic> graphics;
   private final String nodeLevel;
 
   public SRImageReference(String nodeLevel) {
@@ -29,7 +30,7 @@ public class SRImageReference {
     this.nodeLevel = nodeLevel;
   }
 
-  public void addGraphic(Graphic g) {
+  public void addGraphic(SRGraphic g) {
     if (g != null) {
       if (graphics == null) {
         graphics = new ArrayList<>();
@@ -50,8 +51,17 @@ public class SRImageReference {
     this.sopInstanceReference = sopInstanceReference;
   }
 
-  /** The graphics to overlay, never null. */
-  public List<Graphic> getGraphics() {
+  /** The Frame of Reference an SCOORD3D item applies to when it references no image. */
+  public String getFrameOfReferenceUID() {
+    return frameOfReferenceUID;
+  }
+
+  public void setFrameOfReferenceUID(String frameOfReferenceUID) {
+    this.frameOfReferenceUID = frameOfReferenceUID;
+  }
+
+  /** The drawable items to overlay, never null. */
+  public List<SRGraphic> getGraphics() {
     return graphics == null ? Collections.emptyList() : graphics;
   }
 

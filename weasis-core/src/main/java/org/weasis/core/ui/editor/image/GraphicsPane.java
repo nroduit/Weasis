@@ -37,6 +37,8 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
+import org.weasis.core.ui.model.layer.Layer;
+import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.util.LangUtil;
@@ -90,7 +92,24 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
         graphicManager.updateLabels(Boolean.TRUE, viewCanvas);
       }
       graphicManager.addChangeListener(layerModelHandler);
+      graphicManager.getLayers().forEach(this::applyLayerTypeVisibility);
       firePropertyChange("graphicManager", graphicManagerOld, this.graphicManager);
+    }
+  }
+
+  @Override
+  public void setLayerTypeVisibility(LayerType type, boolean visible) {
+    if (isLayerTypeVisible(type) != visible) {
+      Canvas.super.setLayerTypeVisibility(type, visible);
+      repaint();
+    }
+  }
+
+  /** Applies the per-view visibility of the layer's type (see {@link #isLayerTypeVisible}). */
+  private void applyLayerTypeVisibility(Layer layer) {
+    Boolean visible = (Boolean) actionsInView.get(layer.getType().name());
+    if (visible != null && !visible.equals(layer.getVisible())) {
+      layer.setVisible(visible);
     }
   }
 
@@ -396,6 +415,11 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
     @Override
     public void handleModelChanged(GraphicModel modelList) {
       repaint();
+    }
+
+    @Override
+    public void handleLayerAdded(GraphicModel modelList, Layer layer) {
+      applyLayerTypeVisibility(layer);
     }
   }
 

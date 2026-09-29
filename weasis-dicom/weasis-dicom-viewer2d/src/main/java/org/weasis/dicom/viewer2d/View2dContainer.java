@@ -86,6 +86,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.SpecialElementOverlay;
 import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -552,9 +553,16 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             }
           }
         }
+      } else if (ObservableEvent.BasicAction.ADD.equals(action)
+          && newVal instanceof Series<?> addedSeries) {
+        // The special element joins its series right after this event
+        SwingUtilities.invokeLater(() -> refreshOverlays(addedSeries));
       } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
         if (newVal instanceof MediaSeriesGroup group) {
           removeViews(this, group, event);
+          if (group instanceof Series<?> removedSeries && hasOverlay(removedSeries)) {
+            SwingUtilities.invokeLater(this::refreshOverlays);
+          }
         }
       } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
         if (newVal instanceof Series series) {
@@ -618,6 +626,8 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         } else if (specialElement instanceof KOSpecialElement koSpecialElement) {
           // Update if necessary all the views with the KOSpecialElement
           setKOSpecialElement(koSpecialElement, null, false, true);
+        } else if (specialElement instanceof SpecialElementOverlay) {
+          refreshOverlays();
         }
       } else if (ObservableEvent.BasicAction.SELECT.equals(action)
           && newVal instanceof KOSpecialElement koSpecialElement) {
@@ -867,5 +877,24 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   @Override
   public List<MigLayoutModel> getLayoutList() {
     return getLayoutList(this, DEFAULT_LAYOUT_LIST);
+  }
+
+  private static boolean hasOverlay(Series<?> series) {
+    return DicomModel.getFirstSpecialElement(series, SpecialElementOverlay.class) != null;
+  }
+
+  private void refreshOverlays(Series<?> series) {
+    if (hasOverlay(series)) {
+      refreshOverlays();
+    }
+  }
+
+  /** Rebuilds the SR overlays of every view of this container. */
+  private void refreshOverlays() {
+    for (ViewCanvas<DicomImageElement> view : cellManager) {
+      if (view instanceof View2d view2d) {
+        view2d.updateOverlays();
+      }
+    }
   }
 }
