@@ -57,11 +57,11 @@ public enum TransferSyntax {
 
   JPIP(UID.JPIPReferenced, "JPIP"), // NON-NLS
 
-  JPIP_DEFLATE(UID.JPIPReferencedDeflate, " JPIP Deflate"), // NON-NLS
+  JPIP_DEFLATE(UID.JPIPReferencedDeflate, "JPIP Deflate"), // NON-NLS
 
   MPEG2(UID.MPEG2MPML, "MPEG2 Main Level"), // NON-NLS
 
-  MPEG2_HIGH(UID.MPEG2MPHL, "JPEG 2000 High Level"), // NON-NLS
+  MPEG2_HIGH(UID.MPEG2MPHL, "MPEG2 High Level"), // NON-NLS
 
   MPEG_4(UID.MPEG4HP41, "MPEG-4 AVC/H.264"), // NON-NLS
 

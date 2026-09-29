@@ -17,6 +17,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.StreamUtils;
 import org.slf4j.Logger;
@@ -53,6 +54,7 @@ public class DicomVideoElement extends DicomImageElement implements FileExtracto
     // Should have only 2 fragments: 1) compression marker 2) video stream
     // One fragment shall contain the whole video stream.
     // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.5.html
+    String extension = videoExtension(TagD.getTagValue(this, Tag.TransferSyntaxUID, String.class));
     for (Object data : fragments) {
       if (data instanceof BulkData bulkData) {
         InputStream in = null;
@@ -60,7 +62,7 @@ public class DicomVideoElement extends DicomImageElement implements FileExtracto
         try {
           File file =
               File.createTempFile(
-                  "video_", ".mpg", AppProperties.FILE_CACHE_DIR.toFile()); // NON-NLS
+                  "video_", extension, AppProperties.FILE_CACHE_DIR.toFile()); // NON-NLS
           in = new BufferedInputStream(bulkData.openStream());
           out = new FileOutputStream(file);
           StreamUtils.copy(in, out, bulkData.length());
@@ -73,6 +75,17 @@ public class DicomVideoElement extends DicomImageElement implements FileExtracto
         }
       }
     }
+  }
+
+  /** Extension of the stream container: MPEG-2 program stream or MP4 (H.264 and HEVC). */
+  static String videoExtension(String tsuid) {
+    if (tsuid == null) {
+      return ".mp4"; // NON-NLS
+    }
+    return switch (tsuid) {
+      case UID.MPEG2MPML, UID.MPEG2MPMLF, UID.MPEG2MPHL, UID.MPEG2MPHLF -> ".mpg"; // NON-NLS
+      default -> ".mp4"; // NON-NLS
+    };
   }
 
   @Override
