@@ -374,6 +374,42 @@ class SRReaderTest {
         html);
   }
 
+  // ===== TCOORD =====
+
+  @Test
+  void tcoord_registers_annotations_on_the_referenced_waveform() {
+    Attributes root = root();
+    Attributes num = num("QT Interval", "0.4", code("s", "UCUM", "s"));
+    Attributes tcoord = item("INFERRED FROM", "TCOORD", "Interval");
+    tcoord.setString(Tag.TemporalRangeType, VR.CS, "SEGMENT");
+    tcoord.setInt(Tag.ReferencedSamplePositions, VR.UL, 100, 300);
+    Attributes wave = item("SELECTED FROM", "WAVEFORM", null);
+    Attributes ref = new Attributes();
+    ref.setString(Tag.ReferencedSOPClassUID, VR.UI, UID.TwelveLeadECGWaveformStorage);
+    ref.setString(Tag.ReferencedSOPInstanceUID, VR.UI, "1.2.3.ecg");
+    ref.setInt(Tag.ReferencedWaveformChannels, VR.US, 1, 2);
+    wave.newSequence(Tag.ReferencedSOPSequence, 1).add(ref);
+    children(tcoord, 1).add(wave);
+    children(num, 1).add(tcoord);
+    children(root, 1).add(num);
+
+    Map<String, SRImageReference> map = new HashMap<>();
+    String html = render(root, map);
+
+    SRImageReference r = map.get("1.1.1");
+    assertNotNull(r);
+    assertEquals("1.2.3.ecg", r.getSopInstanceReference().getReferencedSOPInstanceUID());
+    assertEquals(1, r.getAnnotations().size());
+    assertEquals("SEGMENT", r.getAnnotations().get(0).temporalRangeType());
+    assertEquals("QT Interval = 0.4 s", r.getAnnotations().get(0).label());
+    assertTrue(r.getAnnotations().get(0).appliesToChannel(2));
+    assertFalse(r.getAnnotations().get(0).appliesToChannel(1));
+    assertTrue(
+        html.contains(
+            link("1.1.1") + "SEGMENT</a>: 100, 300 " + Messages.getString("SRReader.samples")),
+        html);
+  }
+
   // ===== By-reference items =====
 
   @Test

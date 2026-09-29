@@ -85,6 +85,17 @@ class SRSpecialElementTest {
     mark.newSequence(Tag.ContentSequence, 1).add(image("SELECTED FROM"));
     findingSeq.add(mark);
     rootSeq.add(finding);
+    // 1.5: a TCOORD on a waveform
+    Attributes tcoord = item("CONTAINS", "TCOORD", "R wave");
+    tcoord.setString(Tag.TemporalRangeType, VR.CS, "POINT");
+    tcoord.setInt(Tag.ReferencedSamplePositions, VR.UL, 250);
+    Attributes wave = item("SELECTED FROM", "WAVEFORM", "Waveform");
+    Attributes wref = new Attributes();
+    wref.setString(Tag.ReferencedSOPClassUID, VR.UI, UID.TwelveLeadECGWaveformStorage);
+    wref.setString(Tag.ReferencedSOPInstanceUID, VR.UI, "1.2.3.ecg");
+    wave.newSequence(Tag.ReferencedSOPSequence, 1).add(wref);
+    tcoord.newSequence(Tag.ContentSequence, 1).add(wave);
+    rootSeq.add(tcoord);
 
     DicomMediaIO io = mock(DicomMediaIO.class);
     when(io.getDicomObject()).thenReturn(root);
@@ -138,6 +149,15 @@ class SRSpecialElementTest {
     assertEquals(LayerType.DICOM_SR, element.getOverlayLayerType());
     assertTrue(element.getOverlayLayerName().contains("Imaging Measurement Report"));
     assertEquals(3, element.getGraphicReferences().size());
+  }
+
+  @Test
+  void waveform_annotations_are_served_by_sop_instance() {
+    assertEquals(1, element.getWaveformAnnotations("1.2.3.ecg").size());
+    assertEquals("R wave", element.getWaveformAnnotations("1.2.3.ecg").get(0).label());
+    assertEquals(250, element.getWaveformAnnotations("1.2.3.ecg").get(0).samplePositions()[0]);
+    assertTrue(element.getWaveformAnnotations("other").isEmpty());
+    assertTrue(element.getWaveformAnnotations(null).isEmpty());
   }
 
   @Test

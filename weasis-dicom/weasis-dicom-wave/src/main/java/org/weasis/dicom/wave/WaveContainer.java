@@ -28,6 +28,7 @@ import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +61,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.codec.WaveformAnnotationSource;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.exp.DicomExportAction;
@@ -266,16 +268,41 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
         });
   }
 
+  private static boolean isAnnotationSource(Series<?> series) {
+    return DicomModel.getFirstSpecialElement(series, WaveformAnnotationSource.class) != null;
+  }
+
+  private void refreshAnnotations(Series<?> series) {
+    if (isAnnotationSource(series)) {
+      refreshAnnotations();
+    }
+  }
+
+  private void refreshAnnotations() {
+    if (ecgView != null) {
+      ecgView.refreshAnnotations();
+    }
+  }
+
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (evt instanceof ObservableEvent event) {
       ObservableEvent.BasicAction action = event.getActionCommand();
       Object newVal = event.getNewValue();
 
-      if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
+      if (ObservableEvent.BasicAction.ADD.equals(action) && newVal instanceof Series<?> added) {
+        // The special element joins its series right after this event
+        SwingUtilities.invokeLater(() -> refreshAnnotations(added));
+      } else if (ObservableEvent.BasicAction.UPDATE.equals(action)
+          && (newVal instanceof WaveformAnnotationSource
+              || (newVal instanceof Series<?> updated && isAnnotationSource(updated)))) {
+        refreshAnnotations();
+      } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
         if (newVal instanceof DicomSeries) {
           if (ecgView != null && ecgView.getSeries() == newVal) {
             close();
+          } else if (isAnnotationSource((Series<?>) newVal)) {
+            SwingUtilities.invokeLater(this::refreshAnnotations);
           }
         } else if (newVal instanceof MediaSeriesGroup group) {
           // Patient Group

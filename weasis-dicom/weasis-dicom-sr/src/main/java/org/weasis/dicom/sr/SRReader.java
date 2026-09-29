@@ -36,6 +36,7 @@ import org.weasis.core.util.EscapeChars;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.WaveformAnnotation;
 import org.weasis.dicom.macro.Code;
 import org.weasis.dicom.macro.SOPInstanceReference;
 import org.weasis.dicom.macro.SeriesAndInstanceReference;
@@ -546,7 +547,7 @@ public class SRReader {
       case WAVEFORM -> writeComposite(html, node, sep, map, true);
       case SCOORD -> writeScoord(html, node, sep, index, map, false);
       case SCOORD3D -> writeScoord(html, node, sep, index, map, true);
-      case "TCOORD" -> writeTcoord(html, c, sep); // NON-NLS
+      case "TCOORD" -> writeTcoord(html, node, sep, index, map); // NON-NLS
       case "DATETIME" -> { // NON-NLS
         html.append(sep);
         writeTemporal(html, TagD.getDicomDateTime(c.getDateTimeString()), c.getDateTimeString());
@@ -790,10 +791,45 @@ public class SRReader {
     return SRGraphic.RenderingIntent.PRESENTATION_REQUIRED;
   }
 
-  private static void writeTcoord(StringBuilder html, SRDocumentContent c, String sep) {
+  private static void writeTcoord(
+      StringBuilder html,
+      ContentNode node,
+      String sep,
+      Map<String, ContentNode> index,
+      Map<String, SRImageReference> map) {
+    SRDocumentContent c = node.content;
     html.append(sep);
     String range = c.getTemporalRangeType();
-    html.append(EscapeChars.forHTML(StringUtil.hasText(range) ? range : "TCOORD"));
+    String label = StringUtil.hasText(range) ? range : "TCOORD"; // NON-NLS
+    List<ContentNode> targets = resolveTargets(node, index, WAVEFORM);
+    if (targets.isEmpty()) {
+      html.append(EscapeChars.forHTML(label));
+    } else {
+      int n = 0;
+      for (ContentNode target : targets) {
+        Sequence seq = target.content.getReferencedSOPSequence();
+        if (seq == null) {
+          continue;
+        }
+        for (Attributes item : seq) {
+          if (n > 0) {
+            html.append(", ");
+          }
+          String key = linkKey(node.id, n);
+          SRImageReference ref = registerReference(map, key, new SOPInstanceReference(item));
+          ref.addAnnotation(
+              new WaveformAnnotation(
+                  annotationLabel(node),
+                  label,
+                  c.getReferencedSamplePositions(),
+                  c.getReferencedTimeOffsets(),
+                  c.getReferencedDateTime(),
+                  item.getInts(Tag.ReferencedWaveformChannels)));
+          appendLink(html, key, label);
+          n++;
+        }
+      }
+    }
     int[] samples = c.getReferencedSamplePositions();
     double[] offsets = c.getReferencedTimeOffsets();
     String[] dateTimes = c.getReferencedDateTime();
@@ -816,6 +852,31 @@ public class SRReader {
         writeTemporal(html, TagD.getDicomDateTime(dateTimes[i]), dateTimes[i]);
       }
     }
+  }
+
+  /** The text of a waveform annotation: the measurement it belongs to, else its concept name. */
+  private static String annotationLabel(ContentNode node) {
+    ContentNode parent = node.parent;
+    if (parent != null && parent.isValueType("NUM")) { // NON-NLS
+      StringBuilder text = new StringBuilder();
+      Code name = parent.content.getConceptNameCode();
+      if (name != null && StringUtil.hasText(name.getCodeMeaning())) {
+        text.append(name.getCodeMeaning());
+      }
+      StringBuilder value = new StringBuilder();
+      writeNumericValue(value, parent.content);
+      if (!value.isEmpty()) {
+        text.append(text.isEmpty() ? "" : " = ").append(value.toString().replaceAll("<[^>]+>", ""));
+      }
+      if (!text.isEmpty()) {
+        return text.toString();
+      }
+    }
+    Code name = node.content.getConceptNameCode();
+    if (name != null && StringUtil.hasText(name.getCodeMeaning())) {
+      return name.getCodeMeaning();
+    }
+    return node.id;
   }
 
   // ================================================================================

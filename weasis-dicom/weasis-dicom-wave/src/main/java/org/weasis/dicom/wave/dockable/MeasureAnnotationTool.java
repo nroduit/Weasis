@@ -147,7 +147,19 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     return table;
   }
 
+  /** Rows added by other objects annotating the displayed waveform (SR TCOORD items). */
+  private List<Object[]> externalAnnotations = List.of();
+
+  private Attributes lastAttributes;
+
+  /** Replaces the rows contributed by other objects and rebuilds the table. */
+  public void setExternalAnnotations(List<Object[]> rows) {
+    this.externalAnnotations = rows == null ? List.of() : List.copyOf(rows);
+    readAnnotations(lastAttributes);
+  }
+
   public void readAnnotations(Attributes attributes) {
+    this.lastAttributes = attributes;
     tableTagContainer.removeAll();
 
     // just clear tableContainer if measList is null
@@ -156,6 +168,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       readAcquisitionContextSequence(attributes, list);
       readFiltersFrequency(attributes, list);
       readWaveformAnnotations(attributes, list);
+      list.addAll(externalAnnotations);
 
       Object[][] labels = new Object[list.size()][];
       for (int i = 0; i < labels.length; i++) {

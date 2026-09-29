@@ -28,7 +28,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.BorderFactory;
@@ -62,6 +70,8 @@ import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.WaveformAnnotation;
+import org.weasis.dicom.codec.WaveformAnnotationSource;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.wave.dockable.MeasureAnnotationTool;
@@ -89,6 +99,9 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   private WaveLayoutManager waveLayoutManager;
 
   private MeasureAnnotationTool annotationTool;
+
+  /** The displayed waveform object, kept to refresh the external annotations. */
+  private Attributes currentAttributes;
 
   public WaveView() {
     this(null);
@@ -351,7 +364,113 @@ public class WaveView extends JPanel implements SeriesViewerListener {
           });
     }
     updateMarkersTable();
+    this.currentAttributes = attributes;
     annotationTool.readAnnotations(attributes);
+    applyExternalAnnotations();
+  }
+
+  /** Rebuilds the markers coming from other objects (SR TCOORD items) after the model changed. */
+  public void refreshAnnotations() {
+    applyExternalAnnotations();
+  }
+
+  /**
+   * Collects the annotations of the patient's {@link WaveformAnnotationSource} elements applying to
+   * the displayed waveform, draws them as markers on the matching leads and lists them in the
+   * annotation tool.
+   */
+  private void applyExternalAnnotations() {
+    if (currentAttributes == null || pane == null) {
+      return;
+    }
+    List<WaveformAnnotation> annotations = new ArrayList<>();
+    if (series != null && series.getTagValue(TagW.ExplorerModel) instanceof DicomModel model) {
+      MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
+      String sopUID = currentAttributes.getString(Tag.SOPInstanceUID);
+      for (WaveformAnnotationSource source :
+          model.getSpecialElementsFromPatient(WaveformAnnotationSource.class, patient)) {
+        annotations.addAll(source.getWaveformAnnotations(sopUID));
+      }
+    }
+    Instant start = acquisitionStart(currentAttributes);
+    for (Component c : pane.getComponents()) {
+      if (c instanceof LeadPanel lead) {
+        int channelNumber = lead.getChannels().getPosition() + 1;
+        List<Integer> positions = new ArrayList<>();
+        for (WaveformAnnotation annotation : annotations) {
+          if (annotation.appliesToChannel(channelNumber)) {
+            positions.addAll(toSampleIndexes(annotation, start));
+          }
+        }
+        lead.setAnnotationPositions(positions);
+      }
+    }
+    if (annotationTool != null) {
+      List<Object[]> rows = new ArrayList<>();
+      for (WaveformAnnotation annotation : annotations) {
+        rows.add(new Object[] {annotation.label(), describe(annotation)});
+      }
+      annotationTool.setExternalAnnotations(rows);
+    }
+  }
+
+  /** The 0-based sample indexes of an annotation, whatever its temporal encoding. */
+  List<Integer> toSampleIndexes(WaveformAnnotation annotation, Instant start) {
+    List<Integer> indexes = new ArrayList<>();
+    if (annotation.samplePositions() != null) {
+      for (int position : annotation.samplePositions()) {
+        indexes.add(position - 1); // sample numbers start at 1
+      }
+    } else if (annotation.timeOffsets() != null) {
+      for (double seconds : annotation.timeOffsets()) {
+        indexes.add((int) Math.round(seconds * samplesPerSecond));
+      }
+    } else if (annotation.dateTimes() != null && start != null) {
+      for (String dt : annotation.dateTimes()) {
+        Instant instant = toInstant(TagD.getDicomDateTime(dt));
+        if (instant != null) {
+          double seconds = Duration.between(start, instant).toNanos() / 1e9;
+          indexes.add((int) Math.round(seconds * samplesPerSecond));
+        }
+      }
+    }
+    return indexes;
+  }
+
+  /** Start of the first multiplex group: Acquisition DateTime plus Multiplex Group Time Offset. */
+  private static Instant acquisitionStart(Attributes attributes) {
+    Instant start = toInstant(TagD.getDicomDateTime(attributes.getString(Tag.AcquisitionDateTime)));
+    if (start == null) {
+      return null;
+    }
+    Attributes group = attributes.getNestedDataset(Tag.WaveformSequence);
+    double offsetMs = group == null ? 0 : group.getDouble(Tag.MultiplexGroupTimeOffset, 0);
+    return start.plusNanos(Math.round(offsetMs * 1_000_000));
+  }
+
+  private static Instant toInstant(Temporal temporal) {
+    if (temporal instanceof ZonedDateTime zoned) {
+      return zoned.toInstant();
+    }
+    if (temporal instanceof OffsetDateTime offset) {
+      return offset.toInstant();
+    }
+    if (temporal instanceof LocalDateTime local) {
+      return local.atZone(ZoneId.systemDefault()).toInstant();
+    }
+    return null;
+  }
+
+  private static String describe(WaveformAnnotation annotation) {
+    StringBuilder text = new StringBuilder(annotation.temporalRangeType());
+    if (annotation.samplePositions() != null) {
+      text.append(": ").append(Arrays.toString(annotation.samplePositions()));
+    } else if (annotation.timeOffsets() != null) {
+      text.append(": ").append(Arrays.toString(annotation.timeOffsets())).append(" s"); // NON-NLS
+    } else if (annotation.dateTimes() != null) {
+      text.append(": ").append(String.join(", ", annotation.dateTimes()));
+    }
+    return text.toString();
   }
 
   private void readWaveformData(Attributes dcm) throws IOException {

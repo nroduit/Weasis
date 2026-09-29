@@ -27,6 +27,8 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.SpecialElementOverlay;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.WaveformAnnotation;
+import org.weasis.dicom.codec.WaveformAnnotationSource;
 import org.weasis.dicom.macro.Code;
 import org.weasis.dicom.macro.SOPInstanceReference;
 
@@ -35,13 +37,15 @@ import org.weasis.dicom.macro.SOPInstanceReference;
  * items over the images they reference through {@link SpecialElementOverlay}. The content tree is
  * indexed once, on first use, by the SOP instances and frames of reference it points to.
  */
-public class SRSpecialElement extends DicomSpecialElement implements SpecialElementOverlay {
+public class SRSpecialElement extends DicomSpecialElement
+    implements SpecialElementOverlay, WaveformAnnotationSource {
 
   /** The drawable items of the document and where they apply. */
   private record OverlayIndex(
       List<SRImageReference> references,
       Set<String> sopInstanceUIDs,
-      Set<String> frameOfReferenceUIDs) {}
+      Set<String> frameOfReferenceUIDs,
+      List<SRImageReference> waveformReferences) {}
 
   private volatile OverlayIndex index;
 
@@ -147,6 +151,21 @@ public class SRSpecialElement extends DicomSpecialElement implements SpecialElem
     return new ArrayList<>(graphics.values());
   }
 
+  @Override
+  public List<WaveformAnnotation> getWaveformAnnotations(String sopInstanceUID) {
+    if (sopInstanceUID == null) {
+      return Collections.emptyList();
+    }
+    List<WaveformAnnotation> list = new ArrayList<>();
+    for (SRImageReference ref : getIndex().waveformReferences()) {
+      SOPInstanceReference sop = ref.getSopInstanceReference();
+      if (sop != null && sopInstanceUID.equals(sop.getReferencedSOPInstanceUID())) {
+        list.addAll(ref.getAnnotations());
+      }
+    }
+    return list;
+  }
+
   /** The link targets of the document that carry drawable items. */
   public List<SRImageReference> getGraphicReferences() {
     return getIndex().references();
@@ -178,15 +197,19 @@ public class SRSpecialElement extends DicomSpecialElement implements SpecialElem
   private OverlayIndex buildIndex() {
     Attributes dicom = getMediaReader() == null ? null : getMediaReader().getDicomObject();
     if (dicom == null) {
-      return new OverlayIndex(List.of(), Set.of(), Set.of());
+      return new OverlayIndex(List.of(), Set.of(), Set.of(), List.of());
     }
     Map<String, SRImageReference> map = new HashMap<>();
     new SRReader(this, dicom).readDocumentGeneralModule(new StringBuilder(), map);
 
     List<SRImageReference> refs = new ArrayList<>();
+    List<SRImageReference> waveformRefs = new ArrayList<>();
     Set<String> sops = new HashSet<>();
     Set<String> fors = new HashSet<>();
     for (SRImageReference ref : map.values()) {
+      if (ref.hasAnnotations()) {
+        waveformRefs.add(ref);
+      }
       if (!ref.hasGraphics()) {
         continue;
       }
@@ -201,7 +224,8 @@ public class SRSpecialElement extends DicomSpecialElement implements SpecialElem
         }
       }
     }
-    return new OverlayIndex(List.copyOf(refs), Set.copyOf(sops), Set.copyOf(fors));
+    return new OverlayIndex(
+        List.copyOf(refs), Set.copyOf(sops), Set.copyOf(fors), List.copyOf(waveformRefs));
   }
 
   static boolean referencesInstance(
