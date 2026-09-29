@@ -182,8 +182,7 @@ public final class Transform2Dicom {
       }
 
       try {
-        Dicomizer.jpeg(
-            attrs, imgFile, exportDirDicom.resolve(sopInstanceUID), removeJpegMetadata);
+        Dicomizer.jpeg(attrs, imgFile, exportDirDicom.resolve(sopInstanceUID), removeJpegMetadata);
       } catch (Exception e) {
         LOGGER.error("Cannot Dicomize {}", imageElement.getName(), e);
         return false;

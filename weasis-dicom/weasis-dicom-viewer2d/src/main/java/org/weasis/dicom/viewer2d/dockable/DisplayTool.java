@@ -63,6 +63,12 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   public static final String DICOM_SHUTTER = Messages.getString("DisplayTool.shutter");
   public static final String DICOM_ANNOTATIONS = Messages.getString("DisplayTool.dicom_ano");
 
+  /**
+   * Parent node of the graphic layers; not the "Drawings" action title, which the DRAW layer type
+   * already uses.
+   */
+  public static final String GRAPHICS = Messages.getString("DisplayTool.graphics");
+
   public static final String BUTTON_NAME = Messages.getString("DisplayTool.display");
 
   private final JCheckBox applyAllViews =
@@ -124,7 +130,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.FRAME, true));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.PIXEL, true));
     rootNode.add(dicomInfo);
-    drawings = new DefaultMutableTreeNode(ActionW.DRAWINGS, true);
+    drawings = new DefaultMutableTreeNode(GRAPHICS, true);
     rootNode.add(drawings);
     crosslines = new DefaultMutableTreeNode(LayerType.CROSSLINES, false);
     drawings.add(crosslines);
