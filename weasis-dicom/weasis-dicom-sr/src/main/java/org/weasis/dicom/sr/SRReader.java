@@ -24,6 +24,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
+import org.dcm4che3.img.util.DicomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.IdentityMask;
@@ -364,8 +365,12 @@ public class SRReader {
   }
 
   private static boolean isReferencedImage(ContentNode node) {
+    return isReferencedObject(node, IMAGE);
+  }
+
+  private static boolean isReferencedObject(ContentNode node, String valueType) {
     return node != null
-        && node.isValueType(IMAGE)
+        && node.isValueType(valueType)
         && node.content.getReferencedSOPInstance() != null;
   }
 
@@ -376,34 +381,81 @@ public class SRReader {
    * SCOORD item, and an SCOORD nested under the IMAGE item it belongs to.
    */
   static List<ContentNode> resolveImageTargets(ContentNode scoord, Map<String, ContentNode> index) {
+    return resolveTargets(scoord, index, IMAGE);
+  }
+
+  /** Same as {@link #resolveImageTargets} for any referencing value type (IMAGE, WAVEFORM). */
+  static List<ContentNode> resolveTargets(
+      ContentNode source, Map<String, ContentNode> index, String valueType) {
     List<ContentNode> targets = new ArrayList<>();
-    for (ContentNode child : scoord.children) {
+    for (ContentNode child : source.children) {
       ContentNode target = resolveTarget(child, index);
-      if (isReferencedImage(target) && !targets.contains(target)) {
+      if (isReferencedObject(target, valueType) && !targets.contains(target)) {
         targets.add(target);
       }
     }
     if (targets.isEmpty()) {
-      String refId = scoord.content.getReferencedContentItemNodeId();
+      String refId = source.content.getReferencedContentItemNodeId();
       if (refId != null) {
         ContentNode target = index.get(refId);
-        if (isReferencedImage(target)) {
+        if (isReferencedObject(target, valueType)) {
           targets.add(target);
         }
       }
     }
     if (targets.isEmpty()) {
-      for (ContentNode p = scoord.parent; p != null; p = p.parent) {
-        if (isReferencedImage(p)) {
+      for (ContentNode p = source.parent; p != null; p = p.parent) {
+        if (isReferencedObject(p, valueType)) {
           targets.add(p);
           break;
         }
       }
     }
     if (targets.isEmpty()) {
-      LOGGER.debug("SR SCOORD item {} has no resolvable IMAGE reference", scoord.id);
+      LOGGER.debug("SR item {} has no resolvable {} reference", source.id, valueType);
     }
     return targets;
+  }
+
+  /**
+   * Text identifying a region on the image: the Tracking Identifier of the enclosing measurement
+   * group, else the finding the region belongs to, else the region's own concept name.
+   */
+  static String graphicLabel(ContentNode node) {
+    for (ContentNode n = node.parent; n != null; n = n.parent) {
+      for (ContentNode child : n.children) {
+        if (child.isValueType("TEXT") && hasConcept(child, "112039")) { // NON-NLS
+          String id = child.content.getTextValue();
+          if (StringUtil.hasText(id)) {
+            return id.trim();
+          }
+        }
+      }
+      if (n.isValueType("CODE") // NON-NLS
+          && (hasConcept(n, "121071") || hasConcept(n, "111059"))) { // NON-NLS
+        Code finding = n.content.getConceptCode();
+        if (finding != null && StringUtil.hasText(finding.getCodeMeaning())) {
+          return finding.getCodeMeaning();
+        }
+      }
+      for (ContentNode child : n.children) {
+        if (child.isValueType("CODE") && hasConcept(child, "121071")) { // NON-NLS
+          Code finding = child.content.getConceptCode();
+          if (finding != null && StringUtil.hasText(finding.getCodeMeaning())) {
+            return finding.getCodeMeaning();
+          }
+        }
+      }
+    }
+    Code name = node.content.getConceptNameCode();
+    return name == null ? null : name.getCodeMeaning();
+  }
+
+  private static boolean hasConcept(ContentNode node, String dcmCodeValue) {
+    Code name = node.content.getConceptNameCode();
+    return name != null
+        && dcmCodeValue.equals(name.getCodeValue())
+        && "DCM".equals(name.getCodingSchemeDesignator()); // NON-NLS
   }
 
   // ================================================================================
@@ -669,7 +721,8 @@ public class SRReader {
     String graphicType = c.getGraphicType();
     String label = StringUtil.hasText(graphicType) ? graphicType : (threeD ? SCOORD3D : SCOORD);
     html.append(sep);
-    SRGraphic graphic = new SRGraphic(node.id, c.getAttributes(), threeD);
+    SRGraphic graphic =
+        new SRGraphic(node.id, c.getAttributes(), threeD, renderingIntent(node));
     String forUID = threeD ? c.getReferencedFrameOfReferenceUID() : null;
 
     List<ContentNode> targets = resolveImageTargets(node, index);
@@ -703,6 +756,38 @@ public class SRReader {
       html.append(" <i>3D, ").append(points).append(" "); // NON-NLS
       html.append(Messages.getString("SRReader.points")).append("</i>");
     }
+    if (graphic.intent() == SRGraphic.RenderingIntent.PRESENTATION_OPTIONAL) {
+      html.append(" <i>(").append(Messages.getString("SRReader.intent_optional")).append(")</i>");
+    } else if (graphic.intent() == SRGraphic.RenderingIntent.NOT_FOR_PRESENTATION) {
+      html.append(" <i>(").append(Messages.getString("SRReader.intent_hidden")).append(")</i>");
+    }
+  }
+
+  /**
+   * The Rendering Intent (111056, DCM) governing a graphic item: the value of the nearest such
+   * concept modifier on the item itself or on one of its ancestors, as CAD reports attach it to the
+   * finding that owns the regions (TID 4006, TID 4104). Without one the item is to be presented.
+   */
+  static SRGraphic.RenderingIntent renderingIntent(ContentNode node) {
+    for (ContentNode n = node; n != null; n = n.parent) {
+      for (ContentNode child : n.children) {
+        SRDocumentContent c = child.content;
+        if ("HAS CONCEPT MOD".equals(c.getRelationshipType()) // NON-NLS
+            && "CODE".equals(c.getValueType())) { // NON-NLS
+          Code name = c.getConceptNameCode();
+          if (name != null
+              && "111056".equals(name.getCodeValue())
+              && "DCM".equals(name.getCodingSchemeDesignator())) { // NON-NLS
+            SRGraphic.RenderingIntent intent =
+                SRGraphic.RenderingIntent.fromCode(c.getConceptCode());
+            if (intent != null) {
+              return intent;
+            }
+          }
+        }
+      }
+    }
+    return SRGraphic.RenderingIntent.PRESENTATION_REQUIRED;
   }
 
   private static void writeTcoord(StringBuilder html, SRDocumentContent c, String sep) {

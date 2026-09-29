@@ -127,12 +127,17 @@ public class SRSpecialElement extends DicomSpecialElement implements SpecialElem
         if (graphics.containsKey(item.nodeId())) {
           continue;
         }
+        boolean emphasized = highlighted.contains(item.nodeId());
+        if (!emphasized && !item.isPresentationRequired()) {
+          // Optional or suppressed CAD marks are shown only when the user asks for them
+          continue;
+        }
         boolean applies =
             item.threeD()
                 ? imageFor != null && imageFor.equals(item.getFrameOfReferenceUID())
                 : sameInstance;
         if (applies) {
-          Graphic g = item.build(image, highlighted.contains(item.nodeId()));
+          Graphic g = item.build(image, emphasized);
           if (g != null) {
             graphics.put(item.nodeId(), g);
           }

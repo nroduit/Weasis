@@ -317,6 +317,63 @@ class SRReaderTest {
         html.contains(link("1.1") + "POLYLINE</a>, " + link("1.1/1") + "POLYLINE</a>"), html);
   }
 
+  // ===== Rendering Intent (CAD reports) =====
+
+  private static Attributes renderingIntent(String codeValue, String meaning) {
+    Attributes a = item("HAS CONCEPT MOD", "CODE", "Rendering Intent");
+    a.getNestedDataset(Tag.ConceptNameCodeSequence).setString(Tag.CodeValue, VR.SH, "111056");
+    a.getNestedDataset(Tag.ConceptNameCodeSequence)
+        .setString(Tag.CodingSchemeDesignator, VR.SH, "DCM");
+    Attributes value = code(codeValue, "DCM", meaning);
+    a.newSequence(Tag.ConceptCodeSequence, 1).add(value);
+    return a;
+  }
+
+  private static Attributes finding(String intentCode, String meaning) {
+    Attributes finding = item("CONTAINS", "CODE", "Single Image Finding");
+    finding
+        .newSequence(Tag.ConceptCodeSequence, 1)
+        .add(code("F-01796", "SRT", "Mammography breast density"));
+    Sequence seq = children(finding, 2);
+    if (intentCode != null) {
+      seq.add(renderingIntent(intentCode, meaning));
+    }
+    Attributes region = polyline(square(10, 10, 20));
+    region.setString(Tag.RelationshipType, VR.CS, "HAS PROPERTIES");
+    children(region, 1).add(image("SELECTED FROM", IMAGE_UID));
+    seq.add(region);
+    return finding;
+  }
+
+  @Test
+  void rendering_intent_of_a_finding_applies_to_its_regions() {
+    Attributes root = root();
+    Sequence rootSeq = children(root, 3);
+    rootSeq.add(finding("111152", "Not for Presentation"));
+    rootSeq.add(finding("111151", "Presentation Optional"));
+    rootSeq.add(finding(null, null));
+
+    Map<String, SRImageReference> map = new HashMap<>();
+    String html = render(root, map);
+
+    assertEquals(
+        SRGraphic.RenderingIntent.NOT_FOR_PRESENTATION,
+        map.get("1.1.2").getGraphics().get(0).intent());
+    assertEquals(
+        SRGraphic.RenderingIntent.PRESENTATION_OPTIONAL,
+        map.get("1.2.2").getGraphics().get(0).intent());
+    assertEquals(
+        SRGraphic.RenderingIntent.PRESENTATION_REQUIRED,
+        map.get("1.3.1").getGraphics().get(0).intent());
+    assertTrue(
+        html.contains("POLYLINE</a> <i>(" + Messages.getString("SRReader.intent_hidden") + ")</i>"),
+        html);
+    assertTrue(
+        html.contains(
+            "POLYLINE</a> <i>(" + Messages.getString("SRReader.intent_optional") + ")</i>"),
+        html);
+  }
+
   // ===== By-reference items =====
 
   @Test

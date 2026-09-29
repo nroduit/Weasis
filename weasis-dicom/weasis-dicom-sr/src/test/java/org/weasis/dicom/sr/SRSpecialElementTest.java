@@ -51,7 +51,7 @@ class SRSpecialElementTest {
     root.setString(Tag.ValueType, VR.CS, "CONTAINER");
     root.setString(Tag.ContinuityOfContent, VR.CS, "SEPARATE");
     root.newSequence(Tag.ConceptNameCodeSequence, 1).add(code("Imaging Measurement Report"));
-    Sequence rootSeq = root.newSequence(Tag.ContentSequence, 3);
+    Sequence rootSeq = root.newSequence(Tag.ContentSequence, 5);
 
     // 1.1: IMAGE, 1.2: SCOORD selected from 1.1, 1.3: SCOORD3D in a frame of reference
     rootSeq.add(image("CONTAINS"));
@@ -65,6 +65,26 @@ class SRSpecialElementTest {
     volume.setFloat(Tag.GraphicData, VR.FL, -90, -90, 50);
     volume.setString(Tag.ReferencedFrameOfReferenceUID, VR.UI, FOR);
     rootSeq.add(volume);
+    // 1.4: a CAD finding whose region is not for presentation (Rendering Intent 111152)
+    Attributes finding = item("CONTAINS", "CODE", "Single Image Finding");
+    finding.newSequence(Tag.ConceptCodeSequence, 1).add(code("Density"));
+    Sequence findingSeq = finding.newSequence(Tag.ContentSequence, 2);
+    Attributes intent = item("HAS CONCEPT MOD", "CODE", "Rendering Intent");
+    intent.getNestedDataset(Tag.ConceptNameCodeSequence).setString(Tag.CodeValue, VR.SH, "111056");
+    intent
+        .getNestedDataset(Tag.ConceptNameCodeSequence)
+        .setString(Tag.CodingSchemeDesignator, VR.SH, "DCM");
+    Attributes hidden = code("Not for Presentation");
+    hidden.setString(Tag.CodeValue, VR.SH, "111152");
+    hidden.setString(Tag.CodingSchemeDesignator, VR.SH, "DCM");
+    intent.newSequence(Tag.ConceptCodeSequence, 1).add(hidden);
+    findingSeq.add(intent);
+    Attributes mark = item("HAS PROPERTIES", "SCOORD", "Image Region");
+    mark.setString(Tag.GraphicType, VR.CS, "POINT");
+    mark.setFloat(Tag.GraphicData, VR.FL, 5, 5);
+    mark.newSequence(Tag.ContentSequence, 1).add(image("SELECTED FROM"));
+    findingSeq.add(mark);
+    rootSeq.add(finding);
 
     DicomMediaIO io = mock(DicomMediaIO.class);
     when(io.getDicomObject()).thenReturn(root);
@@ -117,7 +137,22 @@ class SRSpecialElementTest {
   void overlay_is_a_dicom_sr_layer_named_after_the_report() {
     assertEquals(LayerType.DICOM_SR, element.getOverlayLayerType());
     assertTrue(element.getOverlayLayerName().contains("Imaging Measurement Report"));
-    assertEquals(2, element.getGraphicReferences().size());
+    assertEquals(3, element.getGraphicReferences().size());
+  }
+
+  @Test
+  void a_region_not_for_presentation_is_drawn_only_when_highlighted() {
+    DicomImageElement image = slice(IMAGE_UID, "9.9", 0);
+    assertEquals(1, element.buildOverlayGraphics(image).size(), "only the required region");
+
+    element.setHighlightedNodes(Set.of("1.4.2"));
+    List<Graphic> graphics = element.buildOverlayGraphics(image);
+    assertEquals(2, graphics.size());
+    assertEquals(
+        1,
+        graphics.stream()
+            .filter(g -> g.getLineThickness() == SRGraphic.HIGHLIGHT_THICKNESS)
+            .count());
   }
 
   @Test
