@@ -69,6 +69,7 @@ public class SRReader {
   static final String SCOORD = "SCOORD"; // NON-NLS
   static final String SCOORD3D = "SCOORD3D"; // NON-NLS
   static final String WAVEFORM = "WAVEFORM"; // NON-NLS
+  static final String TABLE = "TABLE"; // NON-NLS
 
   private final DicomSpecialElement dicomSR;
   private final Attributes dcmItems;
@@ -548,6 +549,7 @@ public class SRReader {
       case SCOORD -> writeScoord(html, node, sep, index, map, false);
       case SCOORD3D -> writeScoord(html, node, sep, index, map, true);
       case "TCOORD" -> writeTcoord(html, node, sep, index, map); // NON-NLS
+      case TABLE -> writeTable(html, node, sep, index);
       case "DATETIME" -> { // NON-NLS
         html.append(sep);
         writeTemporal(html, TagD.getDicomDateTime(c.getDateTimeString()), c.getDateTimeString());
@@ -877,6 +879,173 @@ public class SRReader {
       return name.getCodeMeaning();
     }
     return node.id;
+  }
+
+  // ================================================================================
+  // TABLE (PS3.3 C.18.10)
+  // ================================================================================
+
+  private static void writeTable(
+      StringBuilder html, ContentNode node, String sep, Map<String, ContentNode> index) {
+    Attributes table = node.content.getAttributes().getNestedDataset(Tag.TabulatedValuesSequence);
+    if (table == null) {
+      html.append(sep).append("<i>").append(TABLE).append(" ");
+      html.append(Messages.getString("SRReader.tag_missing")).append("</i>");
+      return;
+    }
+    int rows = table.getInt(Tag.NumberOfTableRows, 0);
+    int columns = table.getInt(Tag.NumberOfTableColumns, 0);
+    Map<Integer, String> rowNames =
+        definitionNames(table, Tag.TableRowDefinitionSequence, Tag.TableRowNumber);
+    Map<Integer, String> columnNames =
+        definitionNames(table, Tag.TableColumnDefinitionSequence, Tag.TableColumnNumber);
+    Map<Integer, Map<Integer, String>> cells = new HashMap<>();
+    Sequence values = table.getSequence(Tag.CellValuesSequence);
+    if (values != null) {
+      for (Attributes cell : values) {
+        int r = cell.getInt(Tag.TableRowNumber, 0);
+        int col = cell.getInt(Tag.TableColumnNumber, 0);
+        cells.computeIfAbsent(r, k -> new HashMap<>()).put(col, cellText(cell, index));
+        rows = Math.max(rows, r);
+        columns = Math.max(columns, col);
+      }
+    }
+    boolean rowHeaders = !rowNames.isEmpty();
+    html.append("<BR><table border=\"1\" cellspacing=\"0\" cellpadding=\"3\">"); // NON-NLS
+    if (!columnNames.isEmpty()) {
+      html.append("<tr>");
+      if (rowHeaders) {
+        html.append("<th></th>");
+      }
+      for (int col = 1; col <= columns; col++) {
+        html.append("<th>").append(columnNames.getOrDefault(col, "")).append("</th>");
+      }
+      html.append("</tr>");
+    }
+    for (int r = 1; r <= rows; r++) {
+      html.append("<tr>");
+      if (rowHeaders) {
+        html.append("<th align=\"left\">")
+            .append(rowNames.getOrDefault(r, ""))
+            .append("</th>"); // NON-NLS
+      }
+      Map<Integer, String> row = cells.getOrDefault(r, Map.of());
+      for (int col = 1; col <= columns; col++) {
+        html.append("<td>").append(row.getOrDefault(col, "")).append("</td>");
+      }
+      html.append("</tr>");
+    }
+    html.append("</table>");
+  }
+
+  private static Map<Integer, String> definitionNames(
+      Attributes table, int sequenceTag, int numberTag) {
+    Map<Integer, String> names = new HashMap<>();
+    Sequence seq = table.getSequence(sequenceTag);
+    if (seq != null) {
+      int position = 1;
+      for (Attributes def : seq) {
+        int number = def.getInt(numberTag, position);
+        StringBuilder name = new StringBuilder();
+        addCodeMeaning(name, Code.getNestedCode(def, Tag.ConceptNameCodeSequence), null, null);
+        Code unit = Code.getNestedCode(def, Tag.MeasurementUnitsCodeSequence);
+        if (unit != null && !"1".equals(unit.getCodeValue())) {
+          String meaning =
+              StringUtil.hasText(unit.getCodeMeaning())
+                  ? unit.getCodeMeaning()
+                  : unit.getCodeValue();
+          name.append(" (").append(EscapeChars.forHTML(meaning)).append(")");
+        }
+        names.put(number, name.toString());
+        position++;
+      }
+    }
+    return names;
+  }
+
+  /** The HTML of one cell: a link to a content item, a code, or the Selector values with units. */
+  private static String cellText(Attributes cell, Map<String, ContentNode> index) {
+    StringBuilder text = new StringBuilder();
+    String refId =
+        SRDocumentContent.toNodeId(
+            DicomUtils.getIntArrayFromDicomElement(
+                cell, Tag.ReferencedContentItemIdentifier, null));
+    if (refId != null) {
+      ContentNode target = index.get(refId);
+      if (target != null) {
+        text.append("<a href=\"#").append(refId).append("\">"); // NON-NLS
+      }
+      text.append(Messages.getString("SRReader.node")).append(" ").append(refId);
+      if (target != null) {
+        text.append("</a>"); // NON-NLS
+        Code name = target.content.getConceptNameCode();
+        if (name != null) {
+          text.append(" ");
+          addCodeMeaning(text, name, null, null);
+        }
+      }
+      return text.toString();
+    }
+    Code code = Code.getNestedCode(cell, Tag.ConceptCodeSequence);
+    if (code != null) {
+      addCodeMeaning(text, code, null, null);
+    } else {
+      int tag = selectorValueTag(cell.getString(Tag.SelectorAttributeVR));
+      String[] values = tag == 0 ? null : cell.getStrings(tag);
+      if (values != null && values.length > 0) {
+        text.append(
+            EscapeChars.forHTML(
+                Arrays.stream(values).map(String::trim).collect(Collectors.joining(", "))));
+        Code unit = Code.getNestedCode(cell, Tag.MeasurementUnitsCodeSequence);
+        if (unit != null && !"1".equals(unit.getCodeValue())) {
+          String meaning =
+              StringUtil.hasText(unit.getCodeMeaning())
+                  ? unit.getCodeMeaning()
+                  : unit.getCodeValue();
+          text.append(" ").append(EscapeChars.forHTML(meaning));
+        }
+      }
+    }
+    Code qualifier = Code.getNestedCode(cell, Tag.NumericValueQualifierCodeSequence);
+    if (qualifier != null) {
+      if (!text.isEmpty()) {
+        text.append(" ");
+      }
+      addCodeMeaning(text, qualifier, "<i>", "</i>");
+    }
+    return text.toString();
+  }
+
+  /** The Selector Value attribute holding a cell value of the given VR, or 0 when unknown. */
+  static int selectorValueTag(String vr) {
+    if (vr == null) {
+      return 0;
+    }
+    return switch (vr.trim().toUpperCase()) {
+      case "DS" -> Tag.SelectorDSValue;
+      case "DT" -> Tag.SelectorDTValue;
+      case "FD" -> Tag.SelectorFDValue;
+      case "FL" -> Tag.SelectorFLValue;
+      case "IS" -> Tag.SelectorISValue;
+      case "SL" -> Tag.SelectorSLValue;
+      case "SS" -> Tag.SelectorSSValue;
+      case "SV" -> Tag.SelectorSVValue;
+      case "UC" -> Tag.SelectorUCValue;
+      case "UL" -> Tag.SelectorULValue;
+      case "US" -> Tag.SelectorUSValue;
+      case "UV" -> Tag.SelectorUVValue;
+      case "CS" -> Tag.SelectorCSValue;
+      case "DA" -> Tag.SelectorDAValue;
+      case "LO" -> Tag.SelectorLOValue;
+      case "LT" -> Tag.SelectorLTValue;
+      case "PN" -> Tag.SelectorPNValue;
+      case "SH" -> Tag.SelectorSHValue;
+      case "ST" -> Tag.SelectorSTValue;
+      case "TM" -> Tag.SelectorTMValue;
+      case "UI" -> Tag.SelectorUIValue;
+      case "UT" -> Tag.SelectorUTValue;
+      default -> 0;
+    };
   }
 
   // ================================================================================

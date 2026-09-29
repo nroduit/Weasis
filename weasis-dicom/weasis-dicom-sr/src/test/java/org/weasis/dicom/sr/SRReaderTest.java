@@ -410,6 +410,68 @@ class SRReaderTest {
         html);
   }
 
+  // ===== TABLE =====
+
+  @Test
+  void table_item_is_rendered_as_an_html_table() {
+    Attributes root = root();
+    Attributes tableItem = item("CONTAINS", "TABLE", "Results");
+    Attributes table = new Attributes();
+    table.setInt(Tag.NumberOfTableRows, VR.US, 2);
+    table.setInt(Tag.NumberOfTableColumns, VR.US, 2);
+    Sequence cols = table.newSequence(Tag.TableColumnDefinitionSequence, 2);
+    Attributes c1 = new Attributes();
+    c1.setInt(Tag.TableColumnNumber, VR.US, 1);
+    c1.newSequence(Tag.ConceptNameCodeSequence, 1).add(code("42798000", "SCT", "Area"));
+    c1.newSequence(Tag.MeasurementUnitsCodeSequence, 1).add(code("mm2", "UCUM", "mm2"));
+    cols.add(c1);
+    Attributes c2 = new Attributes();
+    c2.setInt(Tag.TableColumnNumber, VR.US, 2);
+    c2.newSequence(Tag.ConceptNameCodeSequence, 1).add(code("121071", "DCM", "Finding"));
+    cols.add(c2);
+    Sequence rows = table.newSequence(Tag.TableRowDefinitionSequence, 2);
+    for (int r = 1; r <= 2; r++) {
+      Attributes def = new Attributes();
+      def.setInt(Tag.TableRowNumber, VR.US, r);
+      def.newSequence(Tag.ConceptNameCodeSequence, 1).add(code("L" + r, "99TEST", "Lesion " + r));
+      rows.add(def);
+    }
+    Sequence cells = table.newSequence(Tag.CellValuesSequence, 3);
+    Attributes v11 = new Attributes();
+    v11.setInt(Tag.TableRowNumber, VR.US, 1);
+    v11.setInt(Tag.TableColumnNumber, VR.US, 1);
+    v11.setString(Tag.SelectorAttributeVR, VR.CS, "DS");
+    v11.setString(Tag.SelectorDSValue, VR.DS, "12.5");
+    cells.add(v11);
+    Attributes v12 = new Attributes();
+    v12.setInt(Tag.TableRowNumber, VR.US, 1);
+    v12.setInt(Tag.TableColumnNumber, VR.US, 2);
+    v12.setString(Tag.SelectorAttributeVR, VR.CS, "SQ");
+    v12.newSequence(Tag.ConceptCodeSequence, 1).add(code("4147007", "SCT", "Mass"));
+    cells.add(v12);
+    Attributes v21 = new Attributes();
+    v21.setInt(Tag.TableRowNumber, VR.US, 2);
+    v21.setInt(Tag.TableColumnNumber, VR.US, 1);
+    v21.setInt(Tag.ReferencedContentItemIdentifier, VR.UL, 1, 2);
+    cells.add(v21);
+    tableItem.newSequence(Tag.TabulatedValuesSequence, 1).add(table);
+    Sequence rootSeq = children(root, 2);
+    rootSeq.add(tableItem);
+    rootSeq.add(text("Comment", "target"));
+
+    String html = render(root, new HashMap<>());
+
+    assertFalse(html.contains(Messages.getString("SRReader.tag_missing")), html);
+    assertTrue(html.contains("<th>Area (mm2)</th><th>Finding</th>"), html);
+    assertTrue(html.contains("<th align=\"left\">Lesion 1</th><td>12.5</td><td>Mass</td>"), html);
+    assertTrue(
+        html.contains(
+            "<th align=\"left\">Lesion 2</th><td><a href=\"#1.2\">"
+                + Messages.getString("SRReader.node")
+                + " 1.2</a> Comment</td><td></td>"),
+        html);
+  }
+
   // ===== By-reference items =====
 
   @Test
