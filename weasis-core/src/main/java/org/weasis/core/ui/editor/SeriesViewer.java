@@ -42,8 +42,6 @@ public interface SeriesViewer<E extends MediaElement> {
 
   MediaSeriesGroup getGroupID();
 
-  String getDockableUID();
-
   default List<Action> getExportActions() {
     return Collections.emptyList();
   }

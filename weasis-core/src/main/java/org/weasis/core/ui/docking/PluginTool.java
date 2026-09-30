@@ -9,78 +9,76 @@
  */
 package org.weasis.core.ui.docking;
 
-import bibliothek.gui.dock.common.CContentArea;
-import bibliothek.gui.dock.common.CControl;
-import bibliothek.gui.dock.common.CLocation;
-import bibliothek.gui.dock.common.DefaultSingleCDockable;
-import bibliothek.gui.dock.common.event.CVetoFocusListener;
-import bibliothek.gui.dock.common.location.CBaseLocation;
-import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.Component;
-import java.util.UUID;
+import javax.swing.Icon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.service.UICore;
+import org.weasis.core.ui.docking.SidePanel.Side;
 
+/**
+ * Base class for explorer/tool side panels. A {@code PluginTool} is a plain panel hosted in the
+ * left (explorers) or right (tools) {@link SidePanel}; it is not part of the central workspace, so
+ * viewers can never be dropped on it. {@link #showDockable()} / {@link #closeDockable()} add and
+ * remove it from its side host.
+ */
 public abstract class PluginTool extends JPanel implements DockableTool {
-
-  public enum POSITION {
-    NORTH,
-    EAST,
-    SOUTH,
-    WEST
-  }
-
-  private final Type type;
+  private final Type panelType;
+  private final String toolName;
+  private final Side side;
 
   private int toolPosition;
   private int dockableWidth;
-  protected final DefaultSingleCDockable dockable;
-  protected POSITION defaultPosition;
-  protected ExtendedMode defaultExtendedMode;
-  protected ExtendedMode previousExtendedMode;
+  private Icon icon;
 
-  protected PluginTool(String toolName, Type type, int position) {
-    this(toolName, null, null, type, position);
+  protected PluginTool(String toolName, Type panelType, int position) {
+    this(toolName, panelType == Type.EXPLORER ? Side.LEFT : Side.RIGHT, panelType, position);
   }
 
-  protected PluginTool(
-      String toolName,
-      POSITION defaultPosition,
-      ExtendedMode defaultMode,
-      Type type,
-      int position) {
+  protected PluginTool(String toolName, Side side, Type panelType, int position) {
+    this.toolName = toolName;
+    setName(toolName);
     // Works only if there is only one instance of pluginTool at the same time
     this.dockableWidth = -1;
-    this.type = type;
+    this.panelType = panelType;
     this.toolPosition = position;
-    this.defaultPosition = defaultPosition;
-    this.defaultExtendedMode = defaultMode;
-
-    this.dockable = new DefaultSingleCDockable(UUID.randomUUID().toString(), null, toolName);
-    this.dockable.setTitleText(toolName);
-    this.dockable.setExternalizable(false);
-    this.dockable.setMaximizable(false);
-    this.dockable.addCDockableLocationListener(
-        event -> {
-          if (event.isLocationChanged()) {
-            changeToolWindowAnchor(event.getNewLocation());
-          }
-        });
+    this.side = side == null ? Side.RIGHT : side;
   }
 
-  protected abstract void changeToolWindowAnchor(CLocation clocation);
+  /** Called when the panel is shown so it can adapt its layout to the side it is docked on. */
+  protected void updateLayoutForSide(Side side) {
+    // most panels need no side-specific layout
+  }
 
-  @Override
-  public Type getType() {
-    return type;
+  /**
+   * When {@code true}, this panel is shown as a fixed-width strip immediately next to the central
+   * work area (the MiniTool) rather than in the collapsible side button stripe.
+   */
+  protected boolean isFixedStrip() {
+    return false;
+  }
+
+  public void setIcon(Icon icon) {
+    this.icon = icon;
+  }
+
+  public Icon getIcon() {
+    return icon;
+  }
+
+  public Type getPanelType() {
+    return panelType;
+  }
+
+  public Side getSide() {
+    return side;
   }
 
   @Override
   public String getComponentName() {
-    return dockable.getTitleText();
+    return toolName;
   }
 
   @Override
@@ -128,7 +126,6 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
   protected void updateDockableWidth(int width) {
     setDockableWidth(width);
-    this.dockable.setVisible(false);
     showDockable();
   }
 
@@ -137,96 +134,44 @@ public abstract class PluginTool extends JPanel implements DockableTool {
     return dockableWidth;
   }
 
-  @Override
-  public final DefaultSingleCDockable getDockable() {
-    return dockable;
+  private SidePanel host() {
+    return UICore.getInstance().getSidePanel(side);
   }
 
   @Override
   public void showDockable() {
-    GuiExecutor.execute(this::updateVisibleState);
-  }
-
-  private void updateVisibleState() {
-    if (!dockable.isVisible()) {
-      CControl control = GuiUtils.getUICore().getDockingControl();
-      CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
-      control.addVetoFocusListener(vetoFocus);
-      Component component = getToolComponent();
-      GuiUtils.setPreferredWidth(component, dockableWidth, dockableWidth);
-      if (dockable.getFocusComponent() == component) {
-        control.addDockable(dockable);
-        ExtendedMode extMode = previousExtendedMode;
-        if (extMode == null) {
-          extMode = defaultExtendedMode;
-        }
-        dockable.setExtendedMode(extMode == null ? ExtendedMode.MINIMIZED : extMode);
-      } else {
-        dockable.add(component);
-        dockable.setFocusComponent(component);
-
-        control.addDockable(dockable);
-        // dockable.setDefaultLocation(ExtendedMode.MINIMIZED,
-        POSITION pos = defaultPosition == null ? POSITION.EAST : defaultPosition;
-        ExtendedMode mode =
-            defaultExtendedMode == null ? ExtendedMode.MINIMIZED : defaultExtendedMode;
-        CContentArea baseArea = GuiUtils.getUICore().getBaseArea();
-        CBaseLocation base = CLocation.base(baseArea);
-
-        CLocation minimizeLocation;
-        if (pos == POSITION.EAST) {
-          minimizeLocation = base.minimalEast();
-        } else {
-          if (pos == POSITION.WEST) {
-            minimizeLocation = base.minimalWest();
+    GuiExecutor.execute(
+        () -> {
+          updateLayoutForSide(side);
+          if (isFixedStrip()) {
+            MiniStrip strip = UICore.getInstance().getMiniStrip();
+            if (strip != null) {
+              strip.show(this);
+            }
           } else {
-            minimizeLocation = pos == POSITION.NORTH ? base.minimalNorth() : base.minimalSouth();
-          }
-        }
-        dockable.setDefaultLocation(ExtendedMode.MINIMIZED, minimizeLocation);
-
-        double w = baseArea.getWidth();
-        if (w > 0) {
-          double ratio = GuiUtils.getScaleLength(dockableWidth) / w;
-          if (ratio > 0.9) {
-            ratio = 0.9;
-          }
-          // Set default size and position for NORMALIZED mode
-          CLocation normalizedLocation;
-          if (pos == POSITION.EAST) {
-            normalizedLocation = base.normalEast(ratio);
-          } else {
-            if (pos == POSITION.WEST) {
-              normalizedLocation = base.normalWest(ratio);
-            } else {
-              normalizedLocation =
-                  pos == POSITION.NORTH ? base.normalNorth(ratio) : base.normalSouth(ratio);
+            SidePanel host = host();
+            if (host != null) {
+              host.show(this);
             }
           }
-          dockable.setDefaultLocation(ExtendedMode.NORMALIZED, normalizedLocation);
-        }
-        // Set default size for FlapLayout
-        dockable.setMinimizedSize(GuiUtils.getDimension(dockableWidth, 50));
-        dockable.setExtendedMode(mode);
-      }
-      dockable.setVisible(true);
-      dockable.setResizeLocked(true);
-      control.removeVetoFocusListener(vetoFocus);
-    }
+        });
   }
 
   @Override
   public void closeDockable() {
-    if (dockable.getControl() != null) {
-      previousExtendedMode = dockable.getExtendedMode();
-      GuiExecutor.execute(
-          () -> {
-            CControl control = GuiUtils.getUICore().getDockingControl();
-            CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
-            control.addVetoFocusListener(vetoFocus);
-            control.removeDockable(dockable);
-            control.removeVetoFocusListener(vetoFocus);
-          });
-    }
+    GuiExecutor.execute(
+        () -> {
+          if (isFixedStrip()) {
+            MiniStrip strip = UICore.getInstance().getMiniStrip();
+            if (strip != null) {
+              strip.hide(this);
+            }
+          } else {
+            SidePanel host = host();
+            if (host != null) {
+              host.hide(this);
+            }
+          }
+        });
   }
 }

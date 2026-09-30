@@ -38,7 +38,7 @@ public abstract class AbstractTabLicense extends JPanel implements Insertable {
   }
 
   @Override
-  public final Type getType() {
+  public final Type getPanelType() {
     return Type.LICENSE;
   }
 

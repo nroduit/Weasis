@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer2d.dockable;
 
-import bibliothek.gui.dock.common.CLocation;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -72,7 +71,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   public SegmentationTool() {
     super(BUTTON_NAME, Type.TOOL, 30);
     this.setLayout(new BorderLayout(0, 0));
-    this.dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.SEGMENTATION));
+    setIcon(ResourceUtil.getIcon(OtherIcon.SEGMENTATION));
     this.setDockableWidth(350);
     this.slider = PropertiesDialog.createOpacitySlider(GRAPHIC_OPACITY);
     slider.setValue(80);
@@ -321,10 +320,5 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     if (EVENT.SELECT_VIEW.equals(e) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
       initTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedViewCanvas());
     }
-  }
-
-  @Override
-  protected void changeToolWindowAnchor(CLocation clocation) {
-    // TODO Auto-generated method stub
   }
 }

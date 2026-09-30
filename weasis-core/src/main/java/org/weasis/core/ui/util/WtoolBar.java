@@ -36,7 +36,7 @@ public class WtoolBar extends JToolBar implements Toolbar {
   }
 
   @Override
-  public Type getType() {
+  public Type getPanelType() {
     return Type.TOOLBAR;
   }
 

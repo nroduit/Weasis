@@ -111,7 +111,7 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
   }
 
   @Override
-  public Type getType() {
+  public Type getPanelType() {
     return Insertable.Type.PREFERENCES;
   }
 

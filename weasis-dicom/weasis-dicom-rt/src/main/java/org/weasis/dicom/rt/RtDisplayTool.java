@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.rt;
 
-import bibliothek.gui.dock.common.CLocation;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -171,7 +170,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   public RtDisplayTool() {
     super(BUTTON_NAME, Insertable.Type.TOOL, 30);
-    this.dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.RADIOACTIVE));
+    this.setLayout(new BorderLayout(0, 0));
+    this.setIcon(ResourceUtil.getIcon(OtherIcon.RADIOACTIVE));
     this.setDockableWidth(350);
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
 
@@ -1264,10 +1264,5 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
         && event.getSeriesViewer() instanceof ImageViewerPlugin<?> plugin) {
       initTreeValues(plugin.getSelectedViewCanvas());
     }
-  }
-
-  @Override
-  protected void changeToolWindowAnchor(CLocation clocation) {
-    // Implementation can be added if needed
   }
 }

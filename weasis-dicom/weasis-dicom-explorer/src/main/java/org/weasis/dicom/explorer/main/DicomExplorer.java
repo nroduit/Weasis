@@ -9,9 +9,6 @@
  */
 package org.weasis.dicom.explorer.main;
 
-import bibliothek.gui.dock.common.CLocation;
-import bibliothek.gui.dock.common.mode.ExtendedMode;
-import bibliothek.gui.dock.control.focus.DefaultFocusRequest;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatSearchIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
@@ -46,6 +43,7 @@ import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.SidePanel;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -134,7 +132,8 @@ public class DicomExplorer extends PluginTool
   }
 
   public DicomExplorer(DicomModel model) {
-    super(NAME, POSITION.WEST, ExtendedMode.NORMALIZED, Insertable.Type.EXPLORER, 20);
+    super(NAME, Insertable.Type.EXPLORER, 20);
+    setIcon(ResourceUtil.getIcon(ResourceUtil.OtherIcon.PATIENT));
 
     // Initialize core model and managers
     this.model = model != null ? model : DicomModel.getApplicationModel();
@@ -166,8 +165,6 @@ public class DicomExplorer extends PluginTool
     this.patientSelectionManager.addPatientSelectionListener(selectedPatient);
     IdentityMask.addChangeListener(maskListener);
 
-    // Configure dockable
-    dockable.setMaximizable(true);
     setupInitialSize();
 
     // Setup UI
@@ -193,7 +190,7 @@ public class DicomExplorer extends PluginTool
   }
 
   @Override
-  protected void changeToolWindowAnchor(CLocation clocation) {
+  protected void updateLayoutForSide(SidePanel.Side side) {
     selectedPatient.refreshLayout();
   }
 
@@ -822,10 +819,8 @@ public class DicomExplorer extends PluginTool
       }
 
       modelPatient.setSelectedItem(patient);
-      GuiUtils.getUICore()
-          .getDockingControl()
-          .getController()
-          .setFocusedDockable(new DefaultFocusRequest(dockable.intern(), this, false, true, false));
+      // bring the explorer to the front of its side panel
+      showDockable();
     }
   }
 

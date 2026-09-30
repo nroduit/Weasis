@@ -9,8 +9,7 @@
  */
 package org.weasis.core.ui.editor;
 
-import bibliothek.gui.dock.common.CLocation;
-import bibliothek.gui.dock.common.CWorkingArea;
+import org.weasis.core.ui.docking.ws.DockSide;
 
 /**
  * Groups a {@link SplitPosition} with a split ratio to fully describe how a new viewer is placed
@@ -96,14 +95,12 @@ public record SplitLayout(SplitPosition position, double ratio) {
   }
 
   /**
-   * Converts this layout to a {@link CLocation} within the given working area.
+   * Maps this layout to the workspace {@link DockSide} of the split.
    *
-   * @param area the docking working area
-   * @return the corresponding {@link CLocation}, or {@code null} for {@link SplitPosition#NONE} and
-   *     {@link SplitPosition#AUTO}
-   * @see SplitPosition#toLocation(CWorkingArea, double)
+   * @return the docking region the new viewer should be docked into
+   * @see SplitPosition#toDockSide()
    */
-  public CLocation toLocation(CWorkingArea area) {
-    return position.toLocation(area, ratio);
+  public DockSide toDockSide() {
+    return position.toDockSide();
   }
 }

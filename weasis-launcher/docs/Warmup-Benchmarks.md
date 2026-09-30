@@ -364,7 +364,7 @@ classloader today.
 
 - **Mechanism (already exists):** the packaging split step routes any bundle jar **without** a
   `Plugin-Id` manifest to `common-lib/` on the classpath. Stop shading → ship the libraries as
-  separate bundle jars → they become AOT-cacheable like docking-frames/weasis-core, and the 9
+  separate bundle jars → they become AOT-cacheable like weasis-core, and the 9
   downstream plugins get dcm4che via parent-first (shared, not duplicated per classloader).
 - **Secondary wins:** plugin jar 2.1 MB → ~0.3 MB; SPI (`ImageIO`, `jakarta.json.spi.JsonProvider`)
   resolves more reliably from the system classloader — the `osgi-resource-locator` bridge may

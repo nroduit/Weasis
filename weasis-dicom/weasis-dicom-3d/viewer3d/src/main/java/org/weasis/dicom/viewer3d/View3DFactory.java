@@ -145,7 +145,7 @@ public class View3DFactory implements SeriesViewerFactory {
       return instance;
     }
 
-    showOpenglErrorMessage(GuiUtils.getUICore().getBaseArea());
+    showOpenglErrorMessage(GuiUtils.getUICore().getCenterWorkspace());
     return null;
   }
 

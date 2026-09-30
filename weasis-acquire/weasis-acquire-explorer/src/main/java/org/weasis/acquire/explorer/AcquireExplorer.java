@@ -9,8 +9,6 @@
  */
 package org.weasis.acquire.explorer;
 
-import bibliothek.gui.dock.common.CLocation;
-import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
@@ -58,7 +56,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
   private final ImportPanel importPanel;
 
   public AcquireExplorer() {
-    super(TOOL_NAME, POSITION.WEST, ExtendedMode.NORMALIZED, Insertable.Type.EXPLORER, 20);
+    super(TOOL_NAME, Insertable.Type.EXPLORER, 20);
     setDockableWidth(400);
 
     JIThumbnailCache thumbCache = new JIThumbnailCache();
@@ -77,7 +75,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
     // Remove dropping capabilities in the central area (limit to import
     // from a browse panel)
-    GuiUtils.getUICore().getMainArea().getComponent().setTransferHandler(null);
+    GuiUtils.getUICore().getCenterWorkspace().setTransferHandler(null);
   }
 
   public static String getLastPath() {
@@ -103,8 +101,8 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
   }
 
   public void initImageGroupPane() {
-    centralPane.getDockable().setCloseable(false);
-    centralPane.showDockable(null);
+    centralPane.setClosable(false);
+    centralPane.showDockable();
     centralPane.setSelectedAndGetFocus();
   }
 
@@ -209,11 +207,6 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
   @Override
   public boolean canImportFiles() {
     return false;
-  }
-
-  @Override
-  protected void changeToolWindowAnchor(CLocation clocation) {
-    // Do nothing
   }
 
   public MediaSource getSystemDrive() {

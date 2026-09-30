@@ -461,10 +461,6 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
     super.addSeries(sequence);
   }
 
-  public SeriesViewerUI getSeriesViewer() {
-    return UI;
-  }
-
   @Override
   public void close() {
     View2dFactory.closeSeriesViewer(this);
@@ -631,19 +627,19 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       } else if (ObservableEvent.BasicAction.SELECT.equals(action)
           && newVal instanceof KOSpecialElement koSpecialElement) {
         // Match using UID of the plugin window and the source event
-        if (this.getDockableUID().equals(evt.getSource())) {
+        if (this.viewId().equals(evt.getSource())) {
           setKOSpecialElement(koSpecialElement, true, true, false);
         }
       } else if (ObservableEvent.BasicAction.SELECT.equals(action)
           && newVal instanceof PRSpecialElement pr) {
         // A report asked to show an image with the presentation state it references
-        if (this.getDockableUID().equals(evt.getSource())) {
+        if (this.viewId().equals(evt.getSource())) {
           applyPresentationState(pr);
         }
       } else if (ObservableEvent.BasicAction.SELECT.equals(action)
           && newVal instanceof SegRegion<?> region) {
         // A report asked to show a segment of a segmentation object
-        if (this.getDockableUID().equals(evt.getSource())) {
+        if (this.viewId().equals(evt.getSource())) {
           showSegment(region);
         }
       }

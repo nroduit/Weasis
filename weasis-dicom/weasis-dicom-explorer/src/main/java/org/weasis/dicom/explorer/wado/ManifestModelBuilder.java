@@ -147,7 +147,7 @@ final class ManifestModelBuilder {
       GuiExecutor.execute(
           () -> {
             ColorLayerUI layer =
-                ColorLayerUI.createTransparentLayerUI(GuiUtils.getUICore().getBaseArea());
+                ColorLayerUI.createTransparentLayerUI(GuiUtils.getUICore().getCenterWorkspace());
             JOptionPane.showMessageDialog(
                 ColorLayerUI.getContentPane(layer), message, title, messageType);
             if (layer != null) {

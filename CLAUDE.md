@@ -67,7 +67,7 @@ weasis-launcher  →  weasis-core  →  weasis-base/*       (generic image viewe
 
 - Swing + **FlatLaf** themes (`com.formdev:flatlaf*`) for L&F.
 - **MigLayout** for layout — see `weasis-core/docs/MigLayoutModel-Best-Practices.md` for the project's `MigLayoutModel` conventions (weights, grow/shrink priorities) before touching layouts.
-- **DockingFrames** (`docking-frames`, `dockingframes.version` in `weasis-parent/pom.xml`) for the dockable viewer/tool windows.
+- **Custom workspace engine** (`org.weasis.core.ui.docking.ws`) for the central viewer area: `WorkspaceManager` (owned by `UICore`) manages tab groups (`TabGroup` on FlatLaf closable tabs) in a `JSplitPane` tree per window, with glass-pane tab drag, detach to `DetachedFrame`, maximize, JSON layout snapshots (`snapshot/`) and the `workspace:` command namespace. Explorer/tool side panels are plain Swing (`SidePanel`/`MiniStrip` in `org.weasis.core.ui.docking`), not part of the workspace tree; the bottom footer hosts embedded import/export panels via the `FooterPanelProvider` extension point.
 - DICOM I/O is provided by the external `weasis-dicom-tools` library (`weasis-dicom-tools.version` in `weasis-parent/pom.xml`; packages `org.weasis.dicom.{geom,hp,macro,mf,op,param,ref,tool,util,web}`). Its source is not in this repo; treat it as a third-party dependency.
 
 ## Conventions to respect

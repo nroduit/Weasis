@@ -34,12 +34,6 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.weasis.thirdparty</groupId>
-      <artifactId>docking-frames</artifactId>
-      <version>${dockingframes.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>org.weasis.base</groupId>
       <artifactId>weasis-base-viewer2d</artifactId>
       <version>${project.parent.version}</version>

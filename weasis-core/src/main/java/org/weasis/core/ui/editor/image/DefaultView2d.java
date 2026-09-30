@@ -87,6 +87,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.image.SynchData.SyncState;
@@ -2032,7 +2033,26 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   @Override
-  public void focusGained(FocusEvent e) {}
+  public void focusGained(FocusEvent e) {
+    if (!e.isTemporary()) {
+      ImageViewerPlugin<E> pane = eventManager.getSelectedView2dContainer();
+      if (pane != null) {
+        if (pane.isContainingView(this)) {
+          pane.setSelectedImagePaneFromFocus(this);
+        } else {
+          UICore.getInstance()
+              .getViewerPlugins()
+              .forEach(
+                  v -> {
+                    if (v instanceof ImageViewerPlugin plugin && plugin.isContainingView(this)) {
+                      plugin.setSelected(true);
+                      plugin.setSelectedImagePaneFromFocus(this);
+                    }
+                  });
+        }
+      }
+    }
+  }
 
   @Override
   public void focusLost(FocusEvent e) {}

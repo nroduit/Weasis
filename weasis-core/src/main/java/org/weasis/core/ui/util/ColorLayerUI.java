@@ -52,7 +52,7 @@ public class ColorLayerUI {
 
   public static ColorLayerUI createTransparentLayerUI(Component parent) {
     if (parent != null) {
-      return createTransparentLayerUI(WinUtil.getRootPaneContainer(parent));
+      return createTransparentLayerUI(WinUtil.getParentOfClass(parent, RootPaneContainer.class));
     }
     return null;
   }

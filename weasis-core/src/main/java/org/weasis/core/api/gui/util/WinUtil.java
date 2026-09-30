@@ -23,7 +23,6 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import javax.swing.JFrame;
-import javax.swing.RootPaneContainer;
 import javax.swing.SwingUtilities;
 
 /** The Class WinUtil. */
@@ -32,30 +31,15 @@ public class WinUtil {
   private WinUtil() {}
 
   public static JFrame getParentJFrame(Component c) {
-    for (Container p = c.getParent(); p != null; p = p.getParent()) {
-      if (p instanceof JFrame frame) {
-        return frame;
-      }
-    }
-    return null;
+    return getParentOfClass(c, JFrame.class);
   }
 
   public static Frame getParentFrame(Component c) {
-    for (Container p = c.getParent(); p != null; p = p.getParent()) {
-      if (p instanceof Frame frame) {
-        return frame;
-      }
-    }
-    return null;
+    return getParentOfClass(c, Frame.class);
   }
 
   public static Dialog getParentDialog(Component c) {
-    for (Container p = c.getParent(); p != null; p = p.getParent()) {
-      if (p instanceof Dialog dialog) {
-        return dialog;
-      }
-    }
-    return null;
+    return getParentOfClass(c, Dialog.class);
   }
 
   public static Component getValidComponent(Component c) {
@@ -65,26 +49,17 @@ public class WinUtil {
     return GuiUtils.getUICore().getApplicationWindow();
   }
 
-  public static RootPaneContainer getRootPaneContainer(Component c) {
-    if (c instanceof RootPaneContainer container) {
-      return container;
-    }
-    for (Container p = c.getParent(); p != null; p = p.getParent()) {
-      if (p instanceof RootPaneContainer container) {
-        return container;
-      }
-    }
-    return null;
-  }
-
-  public static Window getParentWindow(Component component) {
-    return SwingUtilities.getWindowAncestor(component);
+  public static Window getParentWindow(Component c) {
+    return getParentOfClass(c, Window.class);
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> T getParentOfClass(Component component, Class<T> class1) {
-    Component obj = component;
-    while (obj != null && !class1.isAssignableFrom(obj.getClass())) {
+  public static <T> T getParentOfClass(Component comp, Class<T> clazz) {
+    if (clazz.isInstance(comp)) {
+      return (T) comp;
+    }
+    Component obj = comp;
+    while (obj != null && !clazz.isInstance(obj)) {
       obj = obj.getParent();
     }
     return (T) (obj);

@@ -301,7 +301,7 @@ public class Launcher {
       try {
         String val = resolvePlaceholders(uri, eventManager);
         URI ref = new URI(val);
-        GuiUtils.openInDefaultBrowser(GuiUtils.getUICore().getBaseArea(), ref);
+        GuiUtils.openInDefaultBrowser(GuiUtils.getUICore().getCenterWorkspace(), ref);
       } catch (Exception e1) {
         LOGGER.error("Opening launcher", e1);
       }
@@ -500,7 +500,7 @@ public class Launcher {
 
                       if (val != 0) {
                         JOptionPane.showMessageDialog(
-                            GuiUtils.getUICore().getBaseArea(),
+                            GuiUtils.getUICore().getCenterWorkspace(),
                             String.format(Messages.getString("error.launching.app"), binaryPath),
                             Messages.getString("launcher.error"),
                             JOptionPane.ERROR_MESSAGE);

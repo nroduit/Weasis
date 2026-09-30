@@ -9,43 +9,32 @@
  */
 package org.weasis.core.ui.editor.image;
 
-import bibliothek.gui.DockStation;
-import bibliothek.gui.Dockable;
-import bibliothek.gui.dock.StackDockStation;
-import bibliothek.gui.dock.action.view.ActionViewConverter;
-import bibliothek.gui.dock.action.view.ViewTarget;
-import bibliothek.gui.dock.common.CControl;
-import bibliothek.gui.dock.common.CLocation;
-import bibliothek.gui.dock.common.CWorkingArea;
-import bibliothek.gui.dock.common.DefaultSingleCDockable;
-import bibliothek.gui.dock.common.action.CAction;
-import bibliothek.gui.dock.common.action.CButton;
-import bibliothek.gui.dock.common.action.CSeparator;
-import bibliothek.gui.dock.common.action.core.CommonSimpleButtonAction;
-import bibliothek.gui.dock.common.action.predefined.CCloseAction;
-import bibliothek.gui.dock.common.event.CVetoFocusListener;
-import bibliothek.gui.dock.common.intern.AbstractCDockable;
-import bibliothek.gui.dock.common.intern.CDockable;
-import bibliothek.gui.dock.common.intern.CommonDockable;
-import bibliothek.gui.dock.common.intern.DefaultCommonDockable;
-import bibliothek.gui.dock.common.mode.ExtendedMode;
-import bibliothek.gui.dock.control.focus.DefaultFocusRequest;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import org.weasis.core.Messages;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.docking.ws.WorkspaceManager;
+import org.weasis.core.ui.docking.ws.WorkspaceView;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.SplitLayout;
@@ -57,82 +46,37 @@ import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.util.StringUtil;
 
 public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
-    implements SeriesViewer<E> {
+    implements WorkspaceView, SeriesViewer<E> {
 
-  private final String dockableUID;
-  private MediaSeriesGroup groupID;
-  private String pluginName;
   public static final int TITLE_MAX_LENGTH = 25;
 
-  private Supplier<String> identifyingName;
+  private final String uid;
   private final Runnable maskListener = () -> GuiExecutor.execute(this::onMaskingChanged);
-  private final Icon icon;
+  private Supplier<String> identifyingName;
   private final String tooltips;
-  private final DefaultSingleCDockable dockable;
+  private String pluginName;
+  private Icon icon;
+  private boolean closable = true;
+  private boolean detachable = true;
+  private MediaSeriesGroup groupID;
 
   protected ViewerPlugin(String pluginName) {
     this(null, pluginName, null, null);
   }
 
   protected ViewerPlugin(String uid, String pluginName, Icon icon, String tooltips) {
+    this.uid = uid == null ? UUID.randomUUID().toString() : uid;
+    this.pluginName = pluginName;
     setLayout(new BorderLayout());
     setName(pluginName);
-    this.pluginName = pluginName;
-    this.icon = icon;
     this.tooltips = tooltips;
-    this.dockableUID = uid == null ? UUID.randomUUID().toString() : uid;
-    Icon titleIcon = icon instanceof FlatSVGIcon flatSVGIcon ? flatSVGIcon.derive(20, 20) : icon;
-    this.dockable = new DefaultSingleCDockable(dockableUID, titleIcon, pluginName);
-    this.dockable.setTitleText(pluginName);
-    this.dockable.setTitleToolTip(tooltips);
-    this.dockable.setTitleIcon(titleIcon);
-    this.dockable.setFocusComponent(this);
+    setToolTipText(tooltips);
+    this.icon = icon instanceof FlatSVGIcon flatSVGIcon ? flatSVGIcon.derive(20, 20) : icon;
     IdentityMask.addChangeListener(maskListener);
-    this.dockable.setStackable(true);
-    this.dockable.setSingleTabShown(true);
-    this.dockable.putAction(
-        CDockable.ACTION_KEY_CLOSE,
-        new CCloseAction(GuiUtils.getUICore().getDockingControl()) {
-          @Override
-          public void close(CDockable dockable) {
-            CControl control = GuiUtils.getUICore().getDockingControl();
-            CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
-            control.addVetoFocusListener(vetoFocus);
-            super.close(dockable);
-            control.removeVetoFocusListener(vetoFocus);
-            if (dockable.getFocusComponent() instanceof SeriesViewer<?> seriesViewer) {
-              List<DockableTool> oldTool = seriesViewer.getSeriesViewerUI().tools;
-              for (DockableTool p : oldTool) {
-                p.closeDockable();
-              }
-              seriesViewer.close();
-            }
-            Dockable prevDockable =
-                control
-                    .getController()
-                    .getFocusHistory()
-                    .getNewestOn(dockable.getWorkingArea().getStation());
-            if (prevDockable == null) {
-              handleFocusAfterClosing();
-            } else {
-              if (prevDockable instanceof DefaultCommonDockable defaultCommonDockable
-                  && defaultCommonDockable.getDockable()
-                      instanceof AbstractCDockable abstractCDockable) {
-                if (abstractCDockable.getFocusComponent() instanceof SeriesViewer<?> plugin) {
-                  SeriesViewerUI.updateTools(null, plugin, true);
-                }
-                abstractCDockable.toFront();
-              }
-            }
-          }
-        });
-    this.dockable.setCloseable(true);
-    this.dockable.setMinimizable(false);
-    this.dockable.setExternalizable(false);
-    this.dockable.addAction(new CloseOthersAction(dockable, false));
-    this.dockable.addAction(new CloseOthersAction(dockable, true));
-    this.dockable.addAction(CSeparator.MENU_SEPARATOR);
-    TabPlacement.actions(this).forEach(this.dockable::addAction);
+  }
+
+  private static WorkspaceManager workspace() {
+    return GuiUtils.getUICore().getWorkspaceManager();
   }
 
   @Override
@@ -145,8 +89,64 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
   }
 
   @Override
+  public String viewId() {
+    return uid;
+  }
+
+  @Override
+  public JComponent component() {
+    return this;
+  }
+
+  @Override
+  public String tabTitle() {
+    return pluginName;
+  }
+
+  @Override
+  public Icon tabIcon() {
+    return icon;
+  }
+
+  @Override
+  public String tabTooltip() {
+    String current = getToolTipText();
+    return current != null ? current : tooltips;
+  }
+
+  @Override
+  public boolean isClosable() {
+    return closable;
+  }
+
+  public void setClosable(boolean closable) {
+    this.closable = closable;
+  }
+
+  @Override
+  public boolean isDetachable() {
+    return detachable;
+  }
+
+  public void setDetachable(boolean detachable) {
+    this.detachable = detachable;
+  }
+
+  @Override
   public String getPluginName() {
     return pluginName;
+  }
+
+  public void setPluginName(String pluginName) {
+    this.identifyingName = null;
+    this.pluginName = pluginName;
+    setName(pluginName);
+    updateTabInfo();
+  }
+
+  public void setIcon(Icon icon) {
+    this.icon = icon;
+    updateTabInfo();
   }
 
   public Icon getIcon() {
@@ -157,19 +157,8 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     return tooltips;
   }
 
-  @Override
-  public String getDockableUID() {
-    return dockableUID;
-  }
-
-  public void setPluginName(String pluginName) {
-    this.identifyingName = null;
-    this.pluginName = pluginName;
-    this.dockable.setTitleText(pluginName);
-  }
-
   /**
-   * Sets a title derived from identifying data. A docking title is a stored string rather than
+   * Sets a title derived from identifying data. A tab title is a stored string rather than
    * something repainted from the model, so the supplier is retained and re-invoked whenever session
    * masking changes.
    *
@@ -200,30 +189,50 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
             ? null
             : StringUtil.getTruncatedString(
                 fullName, TITLE_MAX_LENGTH, StringUtil.Suffix.THREE_PTS);
-    this.dockable.setTitleText(pluginName);
-    this.dockable.setTitleToolTip(fullName);
+    setName(pluginName);
+    setToolTipText(fullName);
+    updateTabInfo();
+  }
+
+  private void updateTabInfo() {
+    WorkspaceManager manager = workspace();
+    if (manager != null) {
+      manager.updateTabInfo(this);
+    }
   }
 
   /**
-   * Requests focus for this dockable, bringing it to the foreground.
+   * Requests focus for this viewer, bringing its tab to the foreground.
    *
-   * <p>This method unconditionally requests focus. Callers that need to respect a {@link
-   * TabFocusPolicy} should check {@link TabFocusPolicy#shouldBringToFront()} before calling.
+   * <p>Callers that need to respect a {@link TabFocusPolicy} should check {@link
+   * TabFocusPolicy#shouldBringToFront()} before calling.
    */
   public void setSelectedAndGetFocus() {
-    GuiUtils.getUICore()
-        .getDockingControl()
-        .getController()
-        .setFocusedDockable(new DefaultFocusRequest(dockable.intern(), this, false, true, false));
+    WorkspaceManager manager = workspace();
+    if (manager != null && manager.isShowing(this)) {
+      manager.select(this);
+    }
+    requestFocusInWindow();
   }
 
+  /**
+   * Selects another remaining viewer after this one is closed so its tools and toolbars are
+   * restored. When no viewer remains, a {@code NULL_SELECTION} event is fired to clear the UI.
+   */
   public void handleFocusAfterClosing() {
     List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
-    int size = viewerPlugins.size();
-    if (size > 0) {
-      ViewerPlugin<?> lp = viewerPlugins.get(size - 1);
-      if (lp != null) {
-        lp.dockable.toFront();
+    ViewerPlugin<?> last = null;
+    for (int i = viewerPlugins.size() - 1; i >= 0; i--) {
+      ViewerPlugin<?> p = viewerPlugins.get(i);
+      if (p != this) {
+        last = p;
+        break;
+      }
+    }
+    if (last != null) {
+      WorkspaceManager manager = workspace();
+      if (manager != null && manager.isShowing(last)) {
+        manager.select(last);
       }
     } else {
       ViewerPluginBuilder.DefaultDataModel.firePropertyChange(
@@ -241,7 +250,50 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     GuiExecutor.execute(
         () -> {
           GuiUtils.getUICore().getViewerPlugins().remove(ViewerPlugin.this);
-          GuiUtils.getUICore().getDockingControl().removeDockable(dockable);
+          WorkspaceManager manager = workspace();
+          if (manager != null && manager.isShowing(ViewerPlugin.this)) {
+            manager.close(ViewerPlugin.this);
+          }
+        });
+  }
+
+  /**
+   * Invoked by the workspace when the user clicks the tab close button. Disposes this viewer (and
+   * its series) and selects the next viewer.
+   */
+  @Override
+  public boolean requestClose() {
+    // Remove eagerly so handleFocusAfterClosing() does not pick this viewer as the next selection.
+    GuiUtils.getUICore().getViewerPlugins().remove(this);
+    close();
+    handleFocusAfterClosing();
+    return true;
+  }
+
+  @Override
+  public void populateTabMenu(JPopupMenu menu) {
+    JMenuItem closeOthers = new JMenuItem(Messages.getString("ViewerPlugin.close_other"));
+    closeOthers.addActionListener(e -> closeOtherViewers(false));
+    menu.add(closeOthers);
+
+    JMenuItem closeAll = new JMenuItem(Messages.getString("ViewerPlugin.close_all"));
+    closeAll.addActionListener(e -> closeOtherViewers(true));
+    menu.add(closeAll);
+
+    menu.addSeparator();
+    TabPlacement.addMenuItems(menu, this);
+  }
+
+  private void closeOtherViewers(boolean closeAll) {
+    GuiExecutor.execute(
+        () -> {
+          SeriesViewerUI.updateTools(this, closeAll ? null : this, true);
+          for (ViewerPlugin<?> plugin : new ArrayList<>(GuiUtils.getUICore().getViewerPlugins())) {
+            if (plugin.isClosable() && (closeAll || plugin != this)) {
+              plugin.close();
+              plugin.handleFocusAfterClosing();
+            }
+          }
         });
   }
 
@@ -249,129 +301,61 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     return this;
   }
 
-  public final DefaultSingleCDockable getDockable() {
-    return dockable;
+  /**
+   * Workspace snapshot state: the plugin name and the identifiers of the open series, the
+   * foundation for restoring sessions and future hanging protocols. Subclasses may add specifics.
+   */
+  @Override
+  public JsonObject saveState() {
+    JsonObjectBuilder builder = Json.createObjectBuilder().add("name", pluginName); // NON-NLS
+    List<MediaSeries<E>> openSeries = getOpenSeries();
+    if (openSeries != null && !openSeries.isEmpty()) {
+      JsonArrayBuilder series = Json.createArrayBuilder();
+      for (MediaSeries<E> s : openSeries) {
+        Object id = s.getTagValue(s.getTagID());
+        if (id != null) {
+          series.add(id.toString());
+        }
+      }
+      builder.add("series", series); // NON-NLS
+    }
+    return builder.build();
   }
 
-  /**
-   * Makes this viewer's dockable visible, applying placement and focus behaviour from the given
-   * options.
-   *
-   * @param options the open options controlling split layout and tab focus policy; if {@code null},
-   *     defaults are used (tab stacking, foreground focus)
-   */
+  public void showDockable() {
+    showDockable(ViewerOpenOptions.defaults());
+  }
+
   public void showDockable(ViewerOpenOptions options) {
     ViewerOpenOptions opts = options == null ? ViewerOpenOptions.defaults() : options;
     SplitLayout splitLayout =
-        opts.placement() instanceof ViewerPlacement.Split split
-            ? split.splitLayout()
+        opts.placement() instanceof ViewerPlacement.Split(SplitLayout layout)
+            ? layout
             : SplitLayout.NONE;
     TabFocusPolicy focusPolicy = opts.tabFocusPolicy();
 
     GuiExecutor.execute(
         () -> {
-          if (!dockable.isVisible()) {
+          WorkspaceManager manager = workspace();
+          if (manager != null && !manager.isShowing(this)) {
             List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
             if (!viewerPlugins.contains(ViewerPlugin.this)) {
               viewerPlugins.add(ViewerPlugin.this);
             }
+            ViewerPlugin<?> firstViewer =
+                viewerPlugins.stream().filter(manager::isShowing).findFirst().orElse(null);
 
-            dockable.add(getComponent());
-            dockable.setFocusComponent(ViewerPlugin.this);
-            CWorkingArea mainArea = GuiUtils.getUICore().getMainArea();
-            mainArea.add(getDockable());
-            dockable.setDefaultLocation(
-                ExtendedMode.NORMALIZED, CLocation.working(mainArea).stack());
-
-            CControl ctl = GuiUtils.getUICore().getDockingControl();
-            StackDockStation viewerStack = null;
-            Dockable previousFront = null;
-            CDockable singleDockable = null;
-            for (ViewerPlugin<?> vp : viewerPlugins) {
-              if (vp != ViewerPlugin.this && vp.getDockable().isVisible()) {
-                DockStation parent = vp.getDockable().intern().getDockParent();
-                if (parent instanceof StackDockStation stack) {
-                  viewerStack = stack;
-                  previousFront = stack.getFrontDockable();
-                  break;
-                } else if (singleDockable == null) {
-                  // The dockable is alone and not yet part of a StackDockStation
-                  singleDockable = vp.getDockable();
-                }
-              }
-            }
-            // When no stack exists yet, treat the lone visible dockable as the "front"
-            if (viewerStack == null && singleDockable != null) {
-              previousFront = singleDockable.intern();
-            }
-
-            if (!splitLayout.isSplit()) {
-              // Place the new tab at the end of the tab list.
-              CDockable lastInStack = null;
-              if (viewerStack != null) {
-                int count = viewerStack.getDockableCount();
-                if (count > 0) {
-                  Dockable last = viewerStack.getDockable(count - 1);
-                  if (last instanceof CommonDockable commonDockable) {
-                    lastInStack = commonDockable.getDockable();
-                  }
-                }
-              } else if (singleDockable != null) {
-                // No stack yet – use the lone dockable as the placement anchor
-                lastInStack = singleDockable;
-              }
-              if (lastInStack != null) {
-                CDockable target = lastInStack;
-                dockable.setLocationsAside(item -> item == target);
-              } else {
-                dockable.setLocationsAsideFocused();
-              }
+            if (firstViewer == null) {
+              // first viewer fills the (empty) central work area
+              manager.open(this);
+            } else if (splitLayout.isSplit()) {
+              manager.split(this, firstViewer, splitLayout.toDockSide(), splitLayout.ratio());
             } else {
-              // A specific split direction was requested.
-              CLocation explicitLocation = splitLayout.toLocation(mainArea);
-              if (explicitLocation != null) {
-                // Directional split (LEFT, RIGHT, TOP, BOTTOM)
-                dockable.setLocation(explicitLocation);
-              } else {
-                // AUTO mode – place in a different split area from the focused one.
-
-                CDockable focused = ctl.getFocusedCDockable();
-                DockStation focusedParent =
-                    focused != null ? focused.intern().getDockParent() : null;
-                boolean focusedInStack = focusedParent instanceof StackDockStation;
-                boolean found =
-                    dockable.setLocationsAside(
-                        item ->
-                            item != dockable
-                                && item != focused
-                                && item.getWorkingArea() == dockable.getWorkingArea()
-                                && item.isVisible()
-                                // Exclude dockables in the same tab group as the focused one
-                                && !(focusedInStack
-                                    && item.intern().getDockParent() == focusedParent));
-                if (!found) {
-                  // No other dockable exists (no split yet): force a right-side split
-                  dockable.setLocation(CLocation.working(mainArea).east(splitLayout.ratio()));
-                }
-              }
+              manager.stack(this, firstViewer);
             }
-
-            CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
-            ctl.addVetoFocusListener(vetoFocus);
-            dockable.setVisible(true);
-            ctl.removeVetoFocusListener(vetoFocus);
-
-            // When the policy says the tab should stay in background, restore the previously
-            // visible tab as the front one so the user's current view remains undisturbed.
-            if (!focusPolicy.shouldBringToFront() && previousFront != null) {
-              DockStation newParent = dockable.intern().getDockParent();
-              if (newParent instanceof StackDockStation stack) {
-                stack.setFrontDockable(previousFront);
-              } else if (viewerStack != null) {
-                viewerStack.setFrontDockable(previousFront);
-              }
+            if (focusPolicy.shouldBringToFront()) {
+              setSelectedAndGetFocus();
             }
-            setSelectedAndGetFocus();
           }
         });
   }
@@ -386,84 +370,5 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
       }
     }
     return null;
-  }
-
-  private static class CloseOthersAction extends CButton {
-    private final CDockable dockable;
-    private final boolean closeAll;
-
-    public CloseOthersAction(CDockable dockable, boolean closeAll) {
-      // prevent standard initialization of the action by calling the protected constructor
-      super(null);
-      // initialize with a modified action
-      init(new MenuOnlySimpleAction(this));
-      this.dockable = dockable;
-      this.closeAll = closeAll;
-      setText(
-          closeAll
-              ? Messages.getString("ViewerPlugin.close_all")
-              : Messages.getString("ViewerPlugin.close_other"));
-    }
-
-    @Override
-    protected void action() {
-      super.action();
-      if (dockable.getFocusComponent() instanceof SeriesViewer<?> plugin) {
-        SeriesViewerUI.updateTools(plugin, closeAll ? null : plugin, true);
-      }
-      // We need to access the Core API to find out which other Dockables exist.
-      DockStation parent = dockable.intern().getDockParent();
-
-      // Because closing a Dockable may remove the parent DockStation, we first collect all the
-      // Dockables we may later close
-      Dockable[] children = new Dockable[parent.getDockableCount()];
-      for (int i = 0; i < children.length; i++) {
-        children[i] = parent.getDockable(i);
-      }
-      for (Dockable child : children) {
-        // we are not interested in things like entire stacks, or our own Dockable. So let's do
-        // some checks before closing a Dockable
-        if (child instanceof CommonDockable commonDockable) {
-          CDockable cChild = commonDockable.getDockable();
-          if (cChild.isCloseable() && (closeAll || cChild != dockable)) {
-            if (cChild.getFocusComponent() instanceof SeriesViewer<?> seriesViewer) {
-              seriesViewer.close();
-              if (cChild.getFocusComponent() instanceof ViewerPlugin<?> viewerPlugin) {
-                viewerPlugin.handleFocusAfterClosing();
-              }
-            } else {
-              cChild.setVisible(false);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  static class MenuOnlySimpleAction extends CommonSimpleButtonAction {
-    private final Runnable beforeCreateView;
-
-    public MenuOnlySimpleAction(CAction action) {
-      this(action, null);
-    }
-
-    public MenuOnlySimpleAction(CAction action, Runnable beforeCreateView) {
-      super(action);
-      this.beforeCreateView = beforeCreateView;
-    }
-
-    @Override
-    public <V> V createView(
-        ViewTarget<V> target, ActionViewConverter converter, Dockable dockable) {
-      // This method creates the view (e.g. a JMenuItem) for this DockAction. Since we do not want
-      // to show it up everywhere, we just ignore some places (targets).
-      if (ViewTarget.TITLE == target) {
-        return null;
-      }
-      if (beforeCreateView != null) {
-        beforeCreateView.run();
-      }
-      return super.createView(target, converter, dockable);
-    }
   }
 }

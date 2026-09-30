@@ -529,7 +529,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       return false;
     }
     // Include only visible containers with the same group ID and in STACK mode
-    return view2dContainer.getDockable().isShowing()
+    return view2dContainer.isShowing()
         && !viewerPlugin.equals(plugin)
         && viewerPlugin.getGroupID().equals(view2dContainer.getGroupID())
         && Mode.STACK.equals(view2dContainer.getSynchView().getSynchData().getMode());

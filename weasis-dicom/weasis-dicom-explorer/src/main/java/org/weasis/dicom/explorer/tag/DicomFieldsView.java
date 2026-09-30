@@ -490,7 +490,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       Component c =
           container instanceof Component component
               ? component
-              : GuiUtils.getUICore().getMainArea().getComponent();
+              : GuiUtils.getUICore().getCenterWorkspace();
       GuiUtils.showCenterScreen(frame, c);
     }
   }

@@ -3,7 +3,6 @@
 #set( $symbol_escape = '\' )
 package ${package};
 
-import bibliothek.gui.dock.common.CLocation;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Component;
 import java.util.Objects;
@@ -19,7 +18,7 @@ public class SampleTool extends PluginTool {
 
     public SampleTool(Type type) {
         super(BUTTON_NAME, type, 120);
-        dockable.setTitleIcon(
+        setIcon(
             new FlatSVGIcon(
                 (Objects.requireNonNull(SampleTool.class.getResource("/icon/svg/tools.svg")))));
         setDockableWidth(290);
@@ -31,8 +30,4 @@ public class SampleTool extends PluginTool {
         return getToolComponentFromJScrollPane(rootPane);
     }
 
-    @Override
-    protected void changeToolWindowAnchor(CLocation clocation) {
-        // TODO Auto-generated method stub
-    }
 }

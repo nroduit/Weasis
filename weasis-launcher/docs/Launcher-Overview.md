@@ -63,7 +63,7 @@ How code reaches the JVM differs between development and the packaged applicatio
   `WeasisPluginManager.loadCommonLibraries()` publishes them through the common library
   classloader (see below). No AOT cache is used in dev.
 - **Packaged application** — the packaging step splits the bundle jars: jars **without** a
-  `Plugin-Id` manifest header (weasis-core, weasis-core-img, docking-frames, …) ship
+  `Plugin-Id` manifest header (weasis-core, weasis-core-img, …) ship
   uncompressed in `$APPDIR/common-lib/` and jpackage puts them on the **application
   classpath**, so they live in the system classloader from process start; pf4j plugins stay
   `.jar.xz` in `$APPDIR/bundle/`. Only a **remote codebase** launch (`cdb=` parameter) whose

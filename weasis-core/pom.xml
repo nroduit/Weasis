@@ -104,10 +104,6 @@
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>org.weasis.thirdparty</groupId>
-      <artifactId>docking-frames</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.github.oshi</groupId>
       <artifactId>oshi-core-ffm</artifactId>
     </dependency>

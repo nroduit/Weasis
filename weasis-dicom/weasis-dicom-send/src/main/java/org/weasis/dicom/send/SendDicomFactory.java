@@ -16,17 +16,11 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.exp.CheckTreeModel;
 import org.weasis.dicom.explorer.exp.DicomExportFactory;
 import org.weasis.dicom.explorer.exp.ExportDicom;
-import org.weasis.plugin.PluginContext;
 import org.weasis.plugin.SingletonExtension;
-import org.weasis.plugin.WeasisPlugin;
 
 @Extension
 @SingletonExtension
-public class SendDicomFactory extends WeasisPlugin implements DicomExportFactory {
-
-  public SendDicomFactory(PluginContext context) {
-    super(context);
-  }
+public class SendDicomFactory implements DicomExportFactory {
 
   @Override
   public ExportDicom createDicomExportPage(Map<String, Object> properties) {

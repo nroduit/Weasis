@@ -16,6 +16,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -26,7 +28,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
  * explorer interface.
  */
 public class PatientPane extends JPanel
-    implements PatientSelectionManager.PatientSelectionListener {
+    implements PatientSelectionManager.PatientSelectionListener, Scrollable {
 
   private static final String VERTICAL_LAYOUT_CONSTRAINTS = "fillx, flowy, insets 0";
   private static final String HORIZONTAL_LAYOUT_CONSTRAINTS = "fillx, flowx, insets 0";
@@ -45,6 +47,33 @@ public class PatientPane extends JPanel
     setAlignmentX(LEFT_ALIGNMENT);
     setAlignmentY(TOP_ALIGNMENT);
     setFocusable(false);
+  }
+
+  // Track the scroll viewport width so the study panes resize when the explorer is resized and can
+  // re-wrap their thumbnails (vertical scrolling only).
+  @Override
+  public Dimension getPreferredScrollableViewportSize() {
+    return getPreferredSize();
+  }
+
+  @Override
+  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+    return 16;
+  }
+
+  @Override
+  public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+    return orientation == SwingConstants.VERTICAL ? visibleRect.height : visibleRect.width;
+  }
+
+  @Override
+  public boolean getScrollableTracksViewportWidth() {
+    return true;
+  }
+
+  @Override
+  public boolean getScrollableTracksViewportHeight() {
+    return false;
   }
 
   @Override

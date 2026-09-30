@@ -14,7 +14,6 @@ import java.awt.Rectangle;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Optional;
@@ -169,16 +168,6 @@ public class View2d extends DefaultView2d<ImageElement> {
   @Override
   public void handleLayerChanged(ImageLayer layer) {
     repaint();
-  }
-
-  @Override
-  public void focusGained(FocusEvent e) {
-    if (!e.isTemporary()) {
-      ImageViewerPlugin<ImageElement> pane = eventManager.getSelectedView2dContainer();
-      if (pane != null && pane.isContainingView(this)) {
-        pane.setSelectedImagePaneFromFocus(this);
-      }
-    }
   }
 
   public boolean hasValidContent() {

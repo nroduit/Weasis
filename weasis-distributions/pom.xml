@@ -197,13 +197,6 @@
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>org.weasis.thirdparty</groupId>
-                  <artifactId>docking-frames</artifactId>
-                  <version>${dockingframes.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                  <destFileName>docking-frames-${dockingframes.version}.jar</destFileName>
-                </artifactItem>
-                <artifactItem>
                   <groupId>org.joml</groupId>
                   <artifactId>joml</artifactId>
                   <version>${joml.version}</version>

@@ -120,7 +120,7 @@ public class ToolBarContainer extends JPanel {
   private class PopUpToolbars extends JPopupMenu {
     public PopUpToolbars() {
       for (final Toolbar bar : bars) {
-        if (!Insertable.Type.EMPTY.equals(bar.getType())) {
+        if (!Insertable.Type.EMPTY.equals(bar.getPanelType())) {
           var item = new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
           item.addActionListener(
               e -> {
@@ -138,7 +138,7 @@ public class ToolBarContainer extends JPanel {
     var toolBar =
         new WtoolBar(name, 0) {
           @Override
-          public Type getType() {
+          public Type getPanelType() {
             return Type.EMPTY;
           }
         };

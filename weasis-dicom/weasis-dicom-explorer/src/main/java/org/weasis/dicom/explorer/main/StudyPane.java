@@ -22,6 +22,7 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WrapLayout;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 
@@ -127,7 +128,10 @@ public class StudyPane extends JPanel {
     subPanel.removeAll();
   }
 
-  /** Refreshes the layout of the sub-panel to accommodate component changes. */
+  /**
+   * Refreshes the sub-panel layout. The thumbnails are laid out by a {@link WrapLayout} that wraps
+   * to the available width on every layout pass, so this only needs to (re)validate the panel.
+   */
   public void refreshLayout() {
     if (subPanel.getLayout() instanceof MigLayout migLayout) {
       int width = subPanel.getWidth();

@@ -9,8 +9,7 @@
  */
 package org.weasis.core.ui.editor;
 
-import bibliothek.gui.dock.common.CLocation;
-import bibliothek.gui.dock.common.CWorkingArea;
+import org.weasis.core.ui.docking.ws.DockSide;
 
 /**
  * Defines how a new viewer plugin is placed relative to the focused viewer within the docking
@@ -59,22 +58,18 @@ public enum SplitPosition {
   }
 
   /**
-   * Converts this position to a {@link CLocation} within the given working area at the specified
-   * ratio.
+   * Maps this position to the workspace {@link DockSide} of the split; {@link #AUTO} falls back to
+   * {@link DockSide#RIGHT}.
    *
-   * @param area the docking working area
-   * @param ratio the split ratio, between 0.0 and 1.0 (fraction of total space given to the new
-   *     viewer)
-   * @return the corresponding {@link CLocation}, or {@code null} for {@link #NONE} and {@link
-   *     #AUTO}
+   * @throws IllegalStateException when this position is {@link #NONE} (tab stacking, not a split)
    */
-  public CLocation toLocation(CWorkingArea area, double ratio) {
+  public DockSide toDockSide() {
     return switch (this) {
-      case LEFT -> CLocation.working(area).west(ratio);
-      case RIGHT -> CLocation.working(area).east(ratio);
-      case TOP -> CLocation.working(area).north(ratio);
-      case BOTTOM -> CLocation.working(area).south(ratio);
-      default -> null;
+      case NONE -> throw new IllegalStateException("NONE is not a split position");
+      case LEFT -> DockSide.LEFT;
+      case RIGHT, AUTO -> DockSide.RIGHT;
+      case TOP -> DockSide.TOP;
+      case BOTTOM -> DockSide.BOTTOM;
     };
   }
 }

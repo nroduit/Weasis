@@ -42,7 +42,7 @@ public class InsertableUtil {
           prefs.node(componentName).node(type.name().toLowerCase() + "s"); // NON-NLS
       synchronized (list) { // NOSONAR lock object is the list for iterating its elements safely
         for (Insertable c : list) {
-          if (!Type.EMPTY.equals(c.getType())) {
+          if (!Type.EMPTY.equals(c.getPanelType())) {
             String nodeName = getCName(c.getClass());
             String key = "visible"; // NON-NLS
             Preferences node = prefNode.node(nodeName);
@@ -96,7 +96,7 @@ public class InsertableUtil {
       Preferences prefNode = prefs.node(type.name().toLowerCase() + "s"); // NON-NLS
       synchronized (list) { // NOSONAR lock object is the list for iterating its elements safely
         for (Insertable c : list) {
-          if (!Type.EMPTY.equals(c.getType())) {
+          if (!Type.EMPTY.equals(c.getPanelType())) {
             String cname = getCName(c.getClass());
             Preferences node = prefNode.node(cname);
             BundlePreferences.putBooleanPreferences(

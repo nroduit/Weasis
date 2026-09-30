@@ -242,7 +242,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
     GuiExecutor.execute(
         () ->
             JOptionPane.showMessageDialog(
-                GuiUtils.getUICore().getBaseArea(), msg, title, JOptionPane.ERROR_MESSAGE));
+                GuiUtils.getUICore().getCenterWorkspace(), msg, title, JOptionPane.ERROR_MESSAGE));
   }
 
   private static String getFirstParam(List<String> list) {

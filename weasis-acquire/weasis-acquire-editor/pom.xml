@@ -34,10 +34,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.weasis.thirdparty</groupId>
-      <artifactId>docking-frames</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.weasis.launcher</groupId>
       <artifactId>weasis-launcher</artifactId>
       <version>${project.parent.version}</version>

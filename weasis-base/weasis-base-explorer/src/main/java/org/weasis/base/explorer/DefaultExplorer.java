@@ -9,8 +9,6 @@
  */
 package org.weasis.base.explorer;
 
-import bibliothek.gui.dock.common.CLocation;
-import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -76,7 +74,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
   private final JPanel jRootPanel = new JPanel();
 
   public DefaultExplorer(final FileTreeModel model, JIThumbnailCache thumbCache) {
-    super(NAME, POSITION.WEST, ExtendedMode.NORMALIZED, Insertable.Type.EXPLORER, 10);
+    super(NAME, Insertable.Type.EXPLORER, 10);
     if (model == null) {
       throw new IllegalArgumentException();
     }
@@ -513,9 +511,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
   public String getUIName() {
     return NAME;
   }
-
-  @Override
-  protected void changeToolWindowAnchor(CLocation clocation) {}
 
   @Override
   public List<Action> getOpenExportDialogAction() {

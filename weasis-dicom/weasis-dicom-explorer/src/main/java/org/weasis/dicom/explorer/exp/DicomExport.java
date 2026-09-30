@@ -40,7 +40,7 @@ import org.weasis.dicom.explorer.main.DicomExplorer;
 public class DicomExport extends AbstractWizardDialog {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomExport.class);
 
-  private static final String LAST_PAGE = "last.dicom.export.page";
+  public static final String LAST_PAGE = "last.dicom.export.page";
 
   private final DicomModel dicomModel;
   private final CheckTreeModel treeModel;
@@ -84,20 +84,23 @@ public class DicomExport extends AbstractWizardDialog {
 
   @Override
   protected void initializePages() {
+    initTreeCheckingModel(treeModel);
+    for (AbstractItemDialogPage page : createPages(dicomModel, treeModel)) {
+      pagesRoot.add(new DefaultMutableTreeNode(page));
+    }
+    iniTree();
+  }
+
+  /** Builds the sorted export pages (local device and plugin contributions). */
+  public static List<AbstractItemDialogPage> createPages(
+      DicomModel dicomModel, CheckTreeModel treeModel) {
     Map<String, Object> properties = new HashMap<>();
     properties.put(dicomModel.getClass().getName(), dicomModel);
     properties.put(treeModel.getClass().getName(), treeModel);
 
-    initTreeCheckingModel();
-
     ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
     list.add(new LocalExport(dicomModel, treeModel));
 
-    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
-    if (plugInId == null) {
-      LOGGER.error("PplugInId is null, cannot load DICOM export plugins");
-      return;
-    }
     try {
       List<DicomExportFactory> factories =
           GuiUtils.getUICore().getPluginManager().getExtensions(DicomExportFactory.class);
@@ -114,18 +117,14 @@ public class DicomExport extends AbstractWizardDialog {
     }
 
     InsertableUtil.sortInsertable(list);
-    for (AbstractItemDialogPage page : list) {
-      pagesRoot.add(new DefaultMutableTreeNode(page));
-    }
-
-    iniTree();
+    return list;
   }
 
   /**
    * Set the checking Paths for the CheckTreeModel to the open Series for the current selected
    * Patient only <br>
    */
-  protected void initTreeCheckingModel() {
+  public static void initTreeCheckingModel(CheckTreeModel treeModel) {
     TreeCheckingModel checkingModel = treeModel.getCheckingModel();
     checkingModel.setCheckingMode(CheckingMode.PROPAGATE_PRESERVING_UNCHECK);
 

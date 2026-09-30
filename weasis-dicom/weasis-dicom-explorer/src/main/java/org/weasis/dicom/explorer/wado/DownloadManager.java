@@ -261,7 +261,7 @@ public class DownloadManager {
       GuiExecutor.execute(
           () -> {
             ColorLayerUI layer =
-                ColorLayerUI.createTransparentLayerUI(GuiUtils.getUICore().getBaseArea());
+                ColorLayerUI.createTransparentLayerUI(GuiUtils.getUICore().getCenterWorkspace());
             JOptionPane.showOptionDialog(
                 WinUtil.getValidComponent(ColorLayerUI.getContentPane(layer)),
                 StringUtil.getTruncatedString(message, 130, Suffix.THREE_PTS),

@@ -9,8 +9,6 @@
  */
 package org.weasis.core.ui.editor.image.dockable;
 
-import bibliothek.gui.dock.common.CLocation;
-import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,6 +25,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.SidePanel;
 
 public abstract class MiniTool extends PluginTool implements ActionListener {
 
@@ -37,9 +36,9 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
   private boolean vertical = true;
 
   protected MiniTool(String pluginName) {
-    super(pluginName, POSITION.EAST, ExtendedMode.NORMALIZED, Insertable.Type.TOOL, 5);
+    super(pluginName, Insertable.Type.TOOL, 5);
     // TODO display a button to minimize or do not display the tab
-    dockable.setTitleShown(false);
+    // setTitleShown(false);
     setDockableWidth(32);
     currentAction = getActions()[0];
     slider = createSlider(currentAction, vertical);
@@ -69,6 +68,11 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
     add(Box.createRigidArea(dim));
   }
 
+  @Override
+  protected boolean isFixedStrip() {
+    return true;
+  }
+
   public abstract SliderChangeListener[] getActions();
 
   public static JSliderW createSlider(final SliderChangeListener action, boolean vertical) {
@@ -85,7 +89,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
   }
 
   @Override
-  protected void changeToolWindowAnchor(CLocation clocation) {
+  protected void updateLayoutForSide(SidePanel.Side side) {
     int w = getWidth();
     int h = getHeight();
     if (w != 0 && h != 0) {

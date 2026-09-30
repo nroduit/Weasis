@@ -9,8 +9,6 @@
  */
 package org.weasis.dicom.wave.dockable;
 
-import bibliothek.gui.dock.common.CLocation;
-import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
@@ -64,9 +62,9 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
   private JTable tableTag;
 
   public MeasureAnnotationTool() {
-    super(BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, Insertable.Type.TOOL, 30);
+    super(BUTTON_NAME, Insertable.Type.TOOL, 30);
     this.rootPane = new JScrollPane();
-    dockable.setTitleIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
+    setIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     setDockableWidth(280);
     jbInit();
@@ -131,11 +129,6 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
   @Override
   public Component getToolComponent() {
     return getToolComponentFromJScrollPane(rootPane);
-  }
-
-  @Override
-  protected void changeToolWindowAnchor(CLocation clocation) {
-    // Do nothing
   }
 
   public static JTable createMultipleRenderingTable(TableModel model) {

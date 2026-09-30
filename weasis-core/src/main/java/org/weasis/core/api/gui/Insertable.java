@@ -29,7 +29,7 @@ public interface Insertable {
 
   String getComponentName();
 
-  Type getType();
+  Type getPanelType();
 
   boolean isComponentEnabled();
 

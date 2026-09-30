@@ -9,18 +9,6 @@
  */
 package org.weasis.core.api.service;
 
-import bibliothek.gui.DockStation;
-import bibliothek.gui.Dockable;
-import bibliothek.gui.dock.DockElement;
-import bibliothek.gui.dock.StackDockStation;
-import bibliothek.gui.dock.common.CContentArea;
-import bibliothek.gui.dock.common.CControl;
-import bibliothek.gui.dock.common.CWorkingArea;
-import bibliothek.gui.dock.common.DefaultSingleCDockable;
-import bibliothek.gui.dock.common.event.CVetoFocusListener;
-import bibliothek.gui.dock.common.intern.CDockable;
-import bibliothek.gui.dock.common.intern.CommonDockable;
-import bibliothek.gui.dock.event.KeyboardListener;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
@@ -28,7 +16,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import java.awt.GraphicsEnvironment;
 import java.awt.Window;
-import java.awt.event.KeyEvent;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -63,8 +50,6 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.ShortcutManager;
-import org.weasis.core.api.gui.util.ShortcutTable;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -74,6 +59,10 @@ import org.weasis.core.api.net.URLParameters;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceMonitor;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.ui.docking.MiniStrip;
+import org.weasis.core.ui.docking.SidePanel;
+import org.weasis.core.ui.docking.ws.Workspace;
+import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -105,10 +94,10 @@ public final class UICore {
   public final List<ViewerPlugin<?>> viewerPlugins;
   private final List<DataExplorerView> explorerPlugins;
   private final List<Toolbar> explorerPluginToolbars;
-  private final CVetoFocusListener dockingVetoFocus;
-  private final CControl dockingControl;
-  private final CContentArea baseArea;
-  private final CWorkingArea mainArea;
+  private final WorkspaceManager workspaceManager;
+  private final SidePanel leftSidePanel;
+  private final SidePanel rightSidePanel;
+  private final MiniStrip miniStrip;
   private volatile ViewerPlugin<?> selectedPlugin;
 
   /** The graphic tool providers registered per plugin, to unregister them when it stops. */
@@ -128,15 +117,20 @@ public final class UICore {
 
   /** Do not instantiate UICore, get the singleton service from GuiUtils.getUICore() */
   private UICore() {
-    this.dockingControl = new CControl();
-    if (GraphicsEnvironment.isHeadless()) {
-      this.baseArea = null; // For test where no GUI is available
+    Window mainWindow = retrieveMainWindow();
+    if (mainWindow == null || GraphicsEnvironment.isHeadless()) {
+      // No GUI available (e.g. unit tests or headless mode): docking stays uninitialized
+      this.workspaceManager = null;
+      this.leftSidePanel = null;
+      this.rightSidePanel = null;
+      this.miniStrip = null;
     } else {
-      this.baseArea = dockingControl.getContentArea();
+      this.workspaceManager = new WorkspaceManager(mainWindow);
+      this.leftSidePanel = new SidePanel(SidePanel.Side.LEFT);
+      this.rightSidePanel = new SidePanel(SidePanel.Side.RIGHT);
+      this.miniStrip = new MiniStrip();
     }
-    this.mainArea = dockingControl.createWorkingArea("mainArea");
     this.toolbarContainer = new ToolBarContainer();
-
     this.configData = retrieveconfigData();
     this.initialSystemPreferences = new WProperties(configData.getSystemProps());
     this.systemPreferences = new WProperties(configData.getSystemProps());
@@ -145,21 +139,6 @@ public final class UICore {
     this.viewerPlugins = Collections.synchronizedList(new ArrayList<>());
     this.explorerPlugins = Collections.synchronizedList(new ArrayList<>());
     this.explorerPluginToolbars = Collections.synchronizedList(new ArrayList<>());
-    this.dockingVetoFocus =
-        new CVetoFocusListener() {
-
-          @Override
-          public boolean willLoseFocus(CDockable dockable) {
-            return false;
-          }
-
-          @Override
-          public boolean willGainFocus(CDockable dockable) {
-            return false;
-          }
-        };
-    dockingControl.getController().getKeyboardController().addListener(new StackTabSwitcher());
-
     readSystemPreferences();
     this.propsFile =
         new File(systemPreferences.getProperty("weasis.pref.dir"), "weasis.properties");
@@ -187,6 +166,21 @@ public final class UICore {
     this.otherLaunchers = Launcher.loadLaunchers(Launcher.Type.OTHER);
 
     loadPreferences();
+  }
+
+  private static Window retrieveMainWindow() {
+    MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+    try {
+      ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow"); // NON-NLS
+      Object containerObj = server.getAttribute(objectName, "RootPaneContainer");
+      if (containerObj instanceof Window window) {
+        return window;
+      }
+    } catch (InstanceNotFoundException ignored) {
+    } catch (JMException e) {
+      LOGGER.debug("Error while receiving main window", e);
+    }
+    return null;
   }
 
   private static ConfigData retrieveconfigData() {
@@ -420,94 +414,6 @@ public final class UICore {
     return new URLParameters(map, post);
   }
 
-  /**
-   * Handles keyboard-driven tab navigation within {@link StackDockStation} containers only.
-   *
-   * <ul>
-   *   <li>{@code Ctrl+Tab} / {@code Ctrl+Shift+Tab} — cycles tabs within a {@link StackDockStation}
-   *       (tabbed views)
-   * </ul>
-   *
-   * <p>Navigation is intentionally restricted to {@link StackDockStation}; other station types such
-   * as {@code SplitDockStation} display all dockables simultaneously and do not use tab semantics.
-   */
-  public static final class StackTabSwitcher implements KeyboardListener {
-    @Override
-    public DockElement getTreeLocation() {
-      return null;
-    }
-
-    private final ShortcutTable<Integer> tabShifts =
-        new ShortcutTable<Integer>()
-            .on(ShortcutManager.ID_DOCKING_NEXT_TAB, 1)
-            .on(ShortcutManager.ID_DOCKING_PREV_TAB, -1);
-
-    @Override
-    public boolean keyPressed(DockElement element, KeyEvent event) {
-      return tabShifts.find(event).map(delta -> shift(element, delta)).orElse(false);
-    }
-
-    @Override
-    public boolean keyReleased(DockElement element, KeyEvent event) {
-      return false;
-    }
-
-    @Override
-    public boolean keyTyped(DockElement element, KeyEvent event) {
-      return false;
-    }
-
-    private boolean shift(DockElement element, int delta) {
-      StackDockStation stack = resolveStackDockStation(element);
-      if (stack == null) {
-        return false;
-      }
-      Dockable focused = stack.getFrontDockable();
-      int index = -1;
-      for (int i = 0, n = stack.getDockableCount(); i < n; i++) {
-        if (stack.getDockable(i) == focused) {
-          index = i;
-          break;
-        }
-      }
-      if (index != -1) {
-        index = Math.floorMod(index + delta, stack.getDockableCount());
-        Dockable next = stack.getDockable(index);
-        stack.getController().setFocusedDockable(next, true);
-        if (next instanceof CommonDockable commonDockable
-            && commonDockable.getDockable() instanceof DefaultSingleCDockable single) {
-          single.toFront();
-        }
-        return true;
-      }
-      return false;
-    }
-
-    private static StackDockStation resolveStackDockStation(DockElement element) {
-      DockStation asStation = element.asDockStation();
-      if (asStation instanceof StackDockStation stack) {
-        return stack;
-      }
-      DockStation container;
-      if (asStation != null) {
-        container = asStation;
-      } else {
-        if (element instanceof CommonDockable commonDockable
-            && commonDockable.getDockable() instanceof DefaultSingleCDockable single) {
-          if (single.intern().getDockParent() instanceof StackDockStation stack) {
-            return stack;
-          }
-        }
-        return null;
-      }
-      Dockable front = container.getFrontDockable();
-      if (front != null && front.asDockStation() instanceof StackDockStation stack) {
-        return stack;
-      }
-      return null;
-    }
-  }
-
   public String getPrefServiceUrl() {
     return systemPreferences.getProperty("weasis.pref.url");
   }
@@ -553,10 +459,6 @@ public final class UICore {
     }
   }
 
-  public CControl getDockingControl() {
-    return dockingControl;
-  }
-
   public List<Launcher> getDicomLaunchers() {
     return dicomLaunchers;
   }
@@ -565,16 +467,32 @@ public final class UICore {
     return otherLaunchers;
   }
 
-  public CWorkingArea getMainArea() {
-    return mainArea;
+  public WorkspaceManager getWorkspaceManager() {
+    return workspaceManager;
   }
 
-  public CContentArea getBaseArea() {
-    return baseArea;
+  public Workspace getCenterWorkspace() {
+    return workspaceManager == null ? null : workspaceManager.mainWorkspace();
+  }
+
+  public SidePanel getLeftSidePanel() {
+    return leftSidePanel;
+  }
+
+  public SidePanel getRightSidePanel() {
+    return rightSidePanel;
+  }
+
+  public SidePanel getSidePanel(SidePanel.Side side) {
+    return side == SidePanel.Side.LEFT ? leftSidePanel : rightSidePanel;
+  }
+
+  public MiniStrip getMiniStrip() {
+    return miniStrip;
   }
 
   public Window getApplicationWindow() {
-    return WinUtil.getParentWindow(baseArea);
+    return workspaceManager == null ? null : workspaceManager.mainWindow();
   }
 
   public List<DataExplorerView> getExplorerPlugins() {
@@ -605,10 +523,6 @@ public final class UICore {
 
   public List<SeriesViewerFactory> getSeriesViewerFactories() {
     return getPluginManager().getExtensions(SeriesViewerFactory.class);
-  }
-
-  public CVetoFocusListener getDockingVetoFocus() {
-    return dockingVetoFocus;
   }
 
   public List<? extends Codec<? extends MediaElement>> getCodecPlugins() {

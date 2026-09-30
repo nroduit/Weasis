@@ -9,7 +9,6 @@
  */
 package org.weasis.base.viewer2d.dockable;
 
-import bibliothek.gui.dock.common.CLocation;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Component;
 import javax.swing.BorderFactory;
@@ -44,7 +43,7 @@ public class ImageTool extends PluginTool {
 
   public ImageTool(String pluginName) {
     super(pluginName, Insertable.Type.TOOL, 20);
-    dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));
+    setIcon(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));
     setDockableWidth(290);
     init();
   }
@@ -220,10 +219,5 @@ public class ImageTool extends PluginTool {
               transform.add(pane);
             });
     return transform;
-  }
-
-  @Override
-  protected void changeToolWindowAnchor(CLocation clocation) {
-    // Do nothing
   }
 }

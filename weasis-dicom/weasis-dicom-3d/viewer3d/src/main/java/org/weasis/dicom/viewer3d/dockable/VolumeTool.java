@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer3d.dockable;
 
-import bibliothek.gui.dock.common.CLocation;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Component;
 import javax.swing.BorderFactory;
@@ -46,7 +45,7 @@ public class VolumeTool extends PluginTool {
 
   public VolumeTool(String pluginName) {
     super(pluginName, Type.TOOL, 20);
-    dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));
+    setIcon(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));
     setDockableWidth(290);
     init();
   }
@@ -207,10 +206,5 @@ public class VolumeTool extends PluginTool {
               transform.add(pane);
             });
     return transform;
-  }
-
-  @Override
-  protected void changeToolWindowAnchor(CLocation clocation) {
-    // Do nothing
   }
 }

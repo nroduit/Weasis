@@ -19,7 +19,6 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -1281,16 +1280,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   @Override
   public void handleLayerChanged(ImageLayer layer) {
     repaint();
-  }
-
-  @Override
-  public void focusGained(FocusEvent e) {
-    if (!e.isTemporary()) {
-      ImageViewerPlugin<DicomImageElement> pane = eventManager.getSelectedView2dContainer();
-      if (pane != null && pane.isContainingView(this)) {
-        pane.setSelectedImagePaneFromFocus(this);
-      }
-    }
   }
 
   public boolean hasValidContent() {

@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer2d.dockable;
 
-import bibliothek.gui.dock.common.CLocation;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
@@ -100,7 +99,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
   public DisplayTool(String pluginName) {
     super(pluginName, Insertable.Type.TOOL, 10);
-    dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.VIEW_SETTING));
+    setIcon(ResourceUtil.getIcon(OtherIcon.VIEW_SETTING));
     setDockableWidth(230);
 
     tree = new CheckboxTree();
@@ -360,11 +359,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   }
 
   @Override
-  protected void changeToolWindowAnchor(CLocation clocation) {
-    // Do nothing
-  }
-
-  @Override
   public void changingViewContentEvent(SeriesViewerEvent event) {
     // TODO should received layer changes
     EVENT e = event.getEventType();
@@ -411,7 +405,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
       List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
       synchronized (viewerPlugins) {
         for (final ViewerPlugin<?> p : viewerPlugins) {
-          if (p instanceof ImageViewerPlugin<?> plugin && plugin.getDockable().isShowing()) {
+          if (p instanceof ImageViewerPlugin<?> plugin
+              && GuiUtils.getUICore().getWorkspaceManager().isShowing(plugin)) {
             views.addAll(plugin.getImagePanels());
           }
         }

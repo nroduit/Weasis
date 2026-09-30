@@ -9,8 +9,6 @@
  */
 package org.weasis.acquire.dockable;
 
-import bibliothek.gui.dock.common.CLocation;
-import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.Optional;
@@ -50,8 +48,8 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
   private final AcquireSubmitButtonsPanel bottomPanel = new AcquireSubmitButtonsPanel();
 
   public EditionTool(Type type) {
-    super(BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, type, 9);
-    dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.RASTER_IMAGE));
+    super(BUTTON_NAME, type, 9);
+    setIcon(ResourceUtil.getIcon(OtherIcon.RASTER_IMAGE));
     setDockableWidth(300);
     setLayout(new BorderLayout());
 
@@ -64,11 +62,6 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
   @Override
   public Component getToolComponent() {
     return getToolComponentFromJScrollPane(rootPane);
-  }
-
-  @Override
-  protected void changeToolWindowAnchor(CLocation clocation) {
-    // Auto-generated method stub
   }
 
   @Override

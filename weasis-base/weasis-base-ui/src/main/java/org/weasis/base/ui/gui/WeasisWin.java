@@ -11,27 +11,6 @@ package org.weasis.base.ui.gui;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
 
-import bibliothek.extension.gui.dock.theme.EclipseTheme;
-import bibliothek.extension.gui.dock.theme.eclipse.EclipseTabDockActionLocation;
-import bibliothek.extension.gui.dock.theme.eclipse.EclipseTabStateInfo;
-import bibliothek.gui.dock.ScreenDockStation;
-import bibliothek.gui.dock.common.CControl;
-import bibliothek.gui.dock.common.CLocation;
-import bibliothek.gui.dock.common.CWorkingArea;
-import bibliothek.gui.dock.common.DefaultSingleCDockable;
-import bibliothek.gui.dock.common.action.CAction;
-import bibliothek.gui.dock.common.action.predefined.CCloseAction;
-import bibliothek.gui.dock.common.event.CFocusListener;
-import bibliothek.gui.dock.common.event.CVetoFocusListener;
-import bibliothek.gui.dock.common.intern.CDockable;
-import bibliothek.gui.dock.common.mode.ExtendedMode;
-import bibliothek.gui.dock.common.theme.ThemeMap;
-import bibliothek.gui.dock.common.theme.eclipse.CommonEclipseThemeConnector;
-import bibliothek.gui.dock.control.DockableSelector;
-import bibliothek.gui.dock.station.screen.BoundaryRestriction;
-import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
-import bibliothek.gui.dock.util.DirectWindowProvider;
-import bibliothek.gui.dock.util.DockUtilities;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.util.SystemInfo;
 import jakarta.json.JsonException;
@@ -45,6 +24,9 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
+import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Taskbar;
@@ -101,6 +83,7 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextPane;
+import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
 import javax.swing.ScrollPaneConstants;
@@ -142,6 +125,11 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.LogoIcon;
 import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.docking.ImportExportFooter;
+import org.weasis.core.ui.docking.MiniStrip;
+import org.weasis.core.ui.docking.SidePanel;
+import org.weasis.core.ui.docking.ws.Workspace;
+import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.editor.ExternalDisplay;
 import org.weasis.core.ui.editor.MediaFactory;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
@@ -192,23 +180,6 @@ public class WeasisWin {
   private final Frame frame;
   private final RootPaneContainer rootPaneContainer;
 
-  private final CFocusListener selectionListener =
-      new CFocusListener() {
-
-        @Override
-        public void focusGained(CDockable dockable) {
-          if (dockable != null
-              && dockable.getFocusComponent() instanceof ViewerPlugin viewerPlugin) {
-            setSelectedPlugin(viewerPlugin);
-          }
-        }
-
-        @Override
-        public void focusLost(CDockable dockable) {
-          // Do nothing
-        }
-      };
-
   public WeasisWin() {
 
     MBeanServer server = ManagementFactory.getPlatformMBeanServer();
@@ -243,6 +214,17 @@ public class WeasisWin {
         });
     rootPaneContainer = jFrame;
     configureMaskingModel();
+
+    workspace()
+        .addListener(
+            (view, window) -> {
+              if (view instanceof ViewerPlugin<?> viewer) {
+                setSelectedPlugin(viewer);
+              }
+            });
+    KeyEventDispatcher dockingShortcutDispatcher = this::dispatchDockingShortcut;
+    KeyboardFocusManager.getCurrentKeyboardFocusManager()
+        .addKeyEventDispatcher(dockingShortcutDispatcher);
 
     if (GuiUtils.getUICore()
         .getSystemPreferences()
@@ -361,7 +343,11 @@ public class WeasisWin {
     GuiUtils.getUICore().savePreferences();
 
     for (Runnable onClose : runOnClose) {
-      onClose.run();
+      try {
+        onClose.run();
+      } catch (Exception e) {
+        LOGGER.error("Error while closing", e);
+      }
     }
     System.exit(0);
   }
@@ -370,48 +356,67 @@ public class WeasisWin {
     runOnClose.add(run);
   }
 
-  public void destroyOnClose(final CControl control) {
-    runOnClose(control::destroy);
+  private static WorkspaceManager workspace() {
+    return GuiUtils.getUICore().getWorkspaceManager();
   }
 
   public void createMainPanel() {
+    runOnClose(() -> workspace().disposeAll());
+    workspace()
+        .setDragEnabled(
+            GuiUtils.getUICore()
+                .getSystemPreferences()
+                .getBooleanProperty("weasis.docking.drag", true));
 
-    // Do not disable check when debugging
-    if (System.getProperty("maven.localRepository") == null) {
-      DockUtilities.disableCheckLayoutLocked();
-    }
-    CControl control = GuiUtils.getUICore().getDockingControl();
-    applyDockingShortcuts(control);
-    // Keep CControl in sync when the user customises shortcuts
-    ShortcutManager.getInstance()
-        .addPropertyChangeListener(
-            evt -> {
-              if (ShortcutManager.PROPERTY_SHORTCUTS_CHANGED.equals(evt.getPropertyName())) {
-                Object newVal = evt.getNewValue();
-                if (newVal == null
-                    || (newVal instanceof ShortcutManager.ShortcutEntry entry
-                        && entry.getId().startsWith("docking."))) { // NON-NLS
-                  applyDockingShortcuts(control);
-                }
-              }
-            });
+    // Three-zone layout: explorers on the left, the central workspace (viewers only) in the
+    // middle, and the plugin tools on the right. The side panels are NOT part of the workspace
+    // tree, so viewers can only be tabbed/split within the centre.
+    Workspace centerArea = GuiUtils.getUICore().getCenterWorkspace();
+    centerArea.setTransferHandler(new SeriesHandler());
 
-    control.setRootWindow(new DirectWindowProvider(frame));
-    destroyOnClose(control);
-    ThemeMap themes = control.getThemes();
-    themes.select(ThemeMap.KEY_ECLIPSE_THEME);
-    control.getController().getProperties().set(EclipseTheme.PAINT_ICONS_WHEN_DESELECTED, true);
-    control.putProperty(ScreenDockStation.BOUNDARY_RESTRICTION, BoundaryRestriction.HARD);
-    control.putProperty(EclipseTheme.THEME_CONNECTOR, new HidingEclipseThemeConnector(control));
+    SidePanel left = GuiUtils.getUICore().getLeftSidePanel();
+    SidePanel right = GuiUtils.getUICore().getRightSidePanel();
+    MiniStrip miniStrip = GuiUtils.getUICore().getMiniStrip();
 
-    control.addFocusListener(selectionListener);
+    // the central area and the fixed MiniTool strip sit together (mini immediately right of centre)
+    JPanel centreWithMini = new JPanel(new BorderLayout());
+    centreWithMini.add(centerArea, BorderLayout.CENTER);
+    centreWithMini.add(miniStrip, BorderLayout.EAST);
 
-    rootPaneContainer.getContentPane().add(GuiUtils.getUICore().getBaseArea(), BorderLayout.CENTER);
-    // Allow dropping series into the empty main area
-    CWorkingArea mainArea = GuiUtils.getUICore().getMainArea();
-    mainArea.getComponent().setTransferHandler(new SeriesHandler());
-    mainArea.setLocation(CLocation.base().normalRectangle(0, 0, 1, 1));
-    mainArea.setVisible(true);
+    // right tools: the resizable content is the split's right child
+    JSplitPane innerSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, centreWithMini, right);
+    innerSplit.setResizeWeight(1.0); // the centre absorbs resizing, the right content stays fixed
+    innerSplit.setContinuousLayout(true);
+    innerSplit.setBorder(null);
+    right.attachTo(innerSplit, false);
+    JPanel rightGroup = new JPanel(new BorderLayout());
+    rightGroup.add(innerSplit, BorderLayout.CENTER);
+    rightGroup.add(right.getStripe(), BorderLayout.EAST);
+
+    // left explorers: resizable content is the split's left child
+    JSplitPane outerSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, rightGroup);
+    outerSplit.setResizeWeight(0.0); // the left content stays fixed, the rest absorbs resizing
+    outerSplit.setContinuousLayout(true);
+    outerSplit.setBorder(null);
+    left.attachTo(outerSplit, true);
+
+    // bottom footer (import/export): its panel spans the full window width under the three zones
+    ImportExportFooter footer = new ImportExportFooter();
+    JSplitPane footerSplit =
+        new JSplitPane(JSplitPane.VERTICAL_SPLIT, outerSplit, footer.getPanelHost());
+    footerSplit.setResizeWeight(1.0); // the viewing area absorbs resizing, the footer stays fixed
+    footerSplit.setContinuousLayout(true);
+    footerSplit.setBorder(null);
+    footer.attachTo(footerSplit);
+
+    JPanel leftEdge = new JPanel(new BorderLayout());
+    leftEdge.add(left.getStripe(), BorderLayout.CENTER);
+    leftEdge.add(footer, BorderLayout.SOUTH);
+    JPanel mainPanel = new JPanel(new BorderLayout());
+    mainPanel.add(leftEdge, BorderLayout.WEST);
+    mainPanel.add(footerSplit, BorderLayout.CENTER);
+
+    rootPaneContainer.getContentPane().add(mainPanel, BorderLayout.CENTER);
 
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     boolean updateRelease = preferences.getBooleanProperty("weasis.update.release", true);
@@ -489,8 +494,7 @@ public class WeasisWin {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gd = ge.getScreenDevices();
         if (gd.length > 1) {
-          viewer.getDockable().setExternalizable(true);
-          setExternalPosition(viewer.getDockable());
+          viewer.setDetachable(true);
         }
       }
       if (group == null
@@ -509,14 +513,14 @@ public class WeasisWin {
       // Override default plugin icon
       Icon pluginIcon = opts.icon();
       if (pluginIcon != null) {
-        viewer.getDockable().setTitleIcon(pluginIcon);
+        viewer.setIcon(pluginIcon);
       }
 
       // Apply placement-specific configuration
       boolean openInSelection = false;
       boolean registered;
       if (placement instanceof ViewerPlacement.External ext) {
-        registered = registerDetachWindow(viewer, ext.externalDisplay(), opts);
+        registered = registerDetachWindow(viewer, ext.externalDisplay());
       } else {
         if (placement instanceof ViewerPlacement.ReuseViewer reuse) {
           openInSelection = reuse.openInSelection();
@@ -547,104 +551,20 @@ public class WeasisWin {
     }
   }
 
-  private void setExternalPosition(final DefaultSingleCDockable dockable) {
-    // TODO should be set dynamically. Maximize button of external window does not support
-    // multi-screens.
-    ExternalDisplay otherScreen =
-        ExternalDisplay.onOtherScreen(rootPaneContainer.getRootPane().getBounds());
-    if (otherScreen != null) {
-      Rectangle b = otherScreen.screenBounds();
-      dockable.setDefaultLocation(
-          ExtendedMode.EXTERNALIZED, CLocation.external(b.x, b.y, b.width - 150, b.height - 150));
-    }
-  }
-
-  private static boolean registerDetachWindow(
-      final ViewerPlugin plugin, ExternalDisplay extDisplay, ViewerOpenOptions opts) {
-    if (plugin != null && extDisplay != null) {
-      Rectangle screenBound = extDisplay.screenBounds();
-      ViewerPlugin oldWin = null;
-      List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
-      synchronized (viewerPlugins) {
-        for (int i = viewerPlugins.size() - 1; i >= 0; i--) {
-          ViewerPlugin p = viewerPlugins.get(i);
-          if (p.getDockable().isExternalizable()) {
-            Dialog dialog = WinUtil.getParentDialog(p);
-            if (dialog != null
-                && screenBound.equals(WinUtil.getClosedScreenBound(dialog.getBounds()))) {
-              oldWin = p;
-              break;
-            }
-          }
-        }
-      }
-
-      final DefaultSingleCDockable dock = plugin.getDockable();
-      dock.setExternalizable(true);
-
-      if (oldWin == null) {
-        dock.setLocation(
-            CLocation.external(
-                screenBound.x, screenBound.y, screenBound.width - 150, screenBound.height - 150));
-        plugin.showDockable(opts);
-        GuiExecutor.execute(
-            () -> {
-              if (dock.isVisible()) {
-                CControl control = GuiUtils.getUICore().getDockingControl();
-                CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
-                control.addVetoFocusListener(vetoFocus);
-                dock.setExtendedMode(ExtendedMode.MAXIMIZED);
-                control.removeVetoFocusListener(vetoFocus);
-              }
-            });
-      } else {
-        ConfiguredBackgroundPanel parent =
-            WinUtil.getParentOfClass(oldWin, ConfiguredBackgroundPanel.class);
-        if (parent == null) {
-          return false;
-        } else {
-          Rectangle b2 = parent.getBounds();
-          b2.setLocation(parent.getLocationOnScreen());
-          dock.setLocation(CLocation.external(b2.x, b2.y, b2.width, b2.height).stack());
-          plugin.showDockable(opts);
-        }
-      }
-      return true;
-    }
-    return false;
-  }
-
   /**
-   * Reads the docking-tab shortcuts from {@link ShortcutManager} and pushes them into the given
-   * {@link CControl}. Call once at startup and again whenever shortcuts are modified.
+   * Registers a viewer in its own floating window on the given external display. Mirrors {@link
+   * #registerPlugin(ViewerPlugin, ViewerOpenOptions)} but, instead of docking into the main area,
+   * detaches the viewer into a new floating window positioned over the target screen.
    */
-  private static void applyDockingShortcuts(CControl control) {
-    ShortcutManager sm = ShortcutManager.getInstance();
-    control.putProperty(
-        CControl.KEY_MAXIMIZE_CHANGE,
-        KeyStroke.getKeyStroke(
-            sm.getKeyCode(ShortcutManager.ID_DOCKING_MAXIMIZE),
-            sm.getModifier(ShortcutManager.ID_DOCKING_MAXIMIZE)));
-    control.putProperty(
-        CControl.KEY_GOTO_EXTERNALIZED,
-        KeyStroke.getKeyStroke(
-            sm.getKeyCode(ShortcutManager.ID_DOCKING_EXTERNALIZE),
-            sm.getModifier(ShortcutManager.ID_DOCKING_EXTERNALIZE)));
-    control.putProperty(
-        CControl.KEY_GOTO_NORMALIZED,
-        KeyStroke.getKeyStroke(
-            sm.getKeyCode(ShortcutManager.ID_DOCKING_NORMALIZE),
-            sm.getModifier(ShortcutManager.ID_DOCKING_NORMALIZE)));
-    control.putProperty(
-        CControl.KEY_CLOSE,
-        KeyStroke.getKeyStroke(
-            sm.getKeyCode(ShortcutManager.ID_DOCKING_CLOSE),
-            sm.getModifier(ShortcutManager.ID_DOCKING_CLOSE)));
-    control.putProperty(
-        DockableSelector.INIT_SELECTION,
-        KeyStroke.getKeyStroke(
-            sm.getKeyCode(ShortcutManager.ID_DOCKING_PANEL_LIST),
-            sm.getModifier(ShortcutManager.ID_DOCKING_PANEL_LIST)));
+  private boolean registerDetachWindow(ViewerPlugin<?> plugin, ExternalDisplay extDisplay) {
+    if (plugin == null
+        || extDisplay == null
+        || GuiUtils.getUICore().getViewerPlugins().contains(plugin)) {
+      return false;
+    }
+    GuiUtils.getUICore().getViewerPlugins().add(plugin);
+    workspace().detach(plugin, extDisplay.screenBounds());
+    return true;
   }
 
   public boolean registerPlugin(ViewerPlugin plugin, ViewerOpenOptions opts) {
@@ -696,6 +616,66 @@ public class WeasisWin {
     SeriesViewerUI.updateToolbars(oldPlugin, selectedPlugin, false);
 
     selectedPlugin.setSelected(true);
+  }
+
+  /**
+   * Global handler for the docking keyboard shortcuts (next/previous tab, maximize, normalize,
+   * externalize and close) acting on the currently selected viewer.
+   */
+  private boolean dispatchDockingShortcut(KeyEvent e) {
+    if (e.getID() != KeyEvent.KEY_PRESSED) {
+      return false;
+    }
+    ShortcutManager sm = ShortcutManager.getInstance();
+    if (sm.matches(ShortcutManager.ID_DOCKING_NEXT_TAB, e)) {
+      return cycleViewer(1);
+    } else if (sm.matches(ShortcutManager.ID_DOCKING_PREV_TAB, e)) {
+      return cycleViewer(-1);
+    }
+
+    ViewerPlugin<?> plugin = getSelectedPlugin();
+    if (plugin == null) {
+      return false;
+    }
+    WorkspaceManager control = workspace();
+    if (sm.matches(ShortcutManager.ID_DOCKING_MAXIMIZE, e)) {
+      if (control.isMaximized(plugin)) {
+        control.restore(plugin);
+      } else {
+        control.maximize(plugin);
+      }
+      return true;
+    } else if (sm.matches(ShortcutManager.ID_DOCKING_NORMALIZE, e)) {
+      control.restore(plugin);
+      return true;
+    } else if (sm.matches(ShortcutManager.ID_DOCKING_EXTERNALIZE, e)) {
+      if (plugin.isDetachable()) {
+        control.detach(plugin, null);
+      }
+      return true;
+    } else if (sm.matches(ShortcutManager.ID_DOCKING_CLOSE, e)) {
+      if (plugin.isClosable()) {
+        plugin.close();
+        plugin.handleFocusAfterClosing();
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private boolean cycleViewer(int delta) {
+    WorkspaceManager control = workspace();
+    List<ViewerPlugin<?>> docked =
+        GuiUtils.getUICore().getViewerPlugins().stream().filter(control::isShowing).toList();
+    if (docked.size() < 2) {
+      return false;
+    }
+    int index = docked.indexOf(getSelectedPlugin());
+    if (index < 0) {
+      index = 0;
+    }
+    docked.get(Math.floorMod(index + delta, docked.size())).setSelectedAndGetFocus();
+    return true;
   }
 
   public void showWindow() {
@@ -999,7 +979,7 @@ public class WeasisWin {
   private void buildToolBarSubMenu(final JMenu toolBarMenu) {
     List<Toolbar> bars = GuiUtils.getUICore().getToolbarContainer().getRegisteredToolBars();
     for (final Toolbar bar : bars) {
-      if (!Insertable.Type.EMPTY.equals(bar.getType())) {
+      if (!Insertable.Type.EMPTY.equals(bar.getPanelType())) {
         JCheckBoxMenuItem item =
             new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
         item.addActionListener(
@@ -1037,7 +1017,7 @@ public class WeasisWin {
   }
 
   private static void buildSubMenu(JMenu explorerMenu, DockableTool t) {
-    if (!Insertable.Type.EMPTY.equals(t.getType())) {
+    if (!Insertable.Type.EMPTY.equals(t.getPanelType())) {
       JCheckBoxMenuItem item = new JCheckBoxMenuItem(t.getComponentName(), t.isComponentEnabled());
       item.addActionListener(
           e -> {
@@ -1466,27 +1446,6 @@ public class WeasisWin {
     }
     Rectangle bounds = getFrame().getBounds();
     return new Point((int) bounds.getCenterX(), (int) bounds.getCenterY());
-  }
-
-  public static class HidingEclipseThemeConnector extends CommonEclipseThemeConnector {
-    public HidingEclipseThemeConnector(CControl control) {
-      super(control);
-    }
-
-    @Override
-    protected EclipseTabDockActionLocation getLocation(CAction action, EclipseTabStateInfo tab) {
-      if (action instanceof CCloseAction) {
-        /*
-         * By redefining the behavior of the close-action, we can hide it if the tab is not selected
-         */
-        if (tab.isSelected()) {
-          return EclipseTabDockActionLocation.TAB;
-        } else {
-          return EclipseTabDockActionLocation.HIDDEN;
-        }
-      }
-      return super.getLocation(action, tab);
-    }
   }
 
   public void info(String[] argv) {

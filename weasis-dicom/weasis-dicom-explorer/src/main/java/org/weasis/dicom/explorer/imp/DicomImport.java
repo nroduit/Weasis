@@ -28,7 +28,7 @@ import org.weasis.dicom.explorer.*;
 public class DicomImport extends AbstractWizardDialog {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomImport.class);
 
-  private static final String LAST_PAGE = "last.dicom.import.page";
+  public static final String LAST_PAGE = "last.dicom.import.page";
 
   private boolean cancelVeto = false;
   private final DicomModel dicomModel;
@@ -71,6 +71,14 @@ public class DicomImport extends AbstractWizardDialog {
 
   @Override
   protected void initializePages() {
+    for (AbstractItemDialogPage page : createPages()) {
+      pagesRoot.add(new DefaultMutableTreeNode(page));
+    }
+    iniTree();
+  }
+
+  /** Builds the sorted import pages (local, DICOMDIR and plugin contributions). */
+  public static List<AbstractItemDialogPage> createPages() {
     ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
     list.add(new LocalImport());
     list.add(new DicomDirImport());
@@ -91,10 +99,7 @@ public class DicomImport extends AbstractWizardDialog {
     }
 
     InsertableUtil.sortInsertable(list);
-    for (AbstractItemDialogPage page : list) {
-      pagesRoot.add(new DefaultMutableTreeNode(page));
-    }
-    iniTree();
+    return list;
   }
 
   private void importSelection() {

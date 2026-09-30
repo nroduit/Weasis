@@ -37,7 +37,6 @@
     <semver4j.version>6.0.0</semver4j.version>
     <slf4j.version>2.0.18</slf4j.version>
     <logback.version>1.6.1</logback.version>
-    <dockingframes.version>1.1.8</dockingframes.version>
     <weasis-dicom-tools.version>5.35.1-SNAPSHOT</weasis-dicom-tools.version>
     <weasis.core.img.version>5.0.0.1</weasis.core.img.version>
     <weasis.opencv.native.version>5.0.0-dcm</weasis.opencv.native.version>
@@ -388,13 +387,6 @@
         <version>${slf4j.version}</version>
         <type>pom</type>
         <scope>import</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.weasis.thirdparty</groupId>
-        <artifactId>docking-frames</artifactId>
-        <version>${dockingframes.version}</version>
-        <scope>provided</scope>
       </dependency>
 
       <!-- pf4j pulls java-semver, superseded by semver4j (see WeasisVersionManager) -->

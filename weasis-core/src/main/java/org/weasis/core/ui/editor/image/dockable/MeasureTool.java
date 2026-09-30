@@ -9,7 +9,6 @@
  */
 package org.weasis.core.ui.editor.image.dockable;
 
-import bibliothek.gui.dock.common.CLocation;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -140,7 +139,7 @@ public class MeasureTool extends PluginTool
     super(BUTTON_NAME, Insertable.Type.TOOL, 30);
     this.eventManager = eventManager;
     this.rootPane = new JScrollPane();
-    dockable.setTitleIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
+    setIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
     setDockableWidth(
         GuiUtils.getUICore()
             .getLocalPersistence()
@@ -494,11 +493,6 @@ public class MeasureTool extends PluginTool
   @Override
   public Component getToolComponent() {
     return getToolComponentFromJScrollPane(rootPane);
-  }
-
-  @Override
-  protected void changeToolWindowAnchor(CLocation clocation) {
-    // Do nothing
   }
 
   public static JButton buildLineColorButton(Component c) {

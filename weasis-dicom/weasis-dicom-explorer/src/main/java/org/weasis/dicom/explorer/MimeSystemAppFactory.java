@@ -64,11 +64,6 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
         public SeriesViewerUI getSeriesViewerUI() {
           return null;
         }
-
-        @Override
-        public String getDockableUID() {
-          return null;
-        }
       };
 
   @Override
