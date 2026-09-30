@@ -82,6 +82,11 @@ public final class WorkspaceManager {
     return workspace == null ? List.of() : List.copyOf(workspace.groups());
   }
 
+  /** All windows hosting a workspace: the main window first, then the floating ones. */
+  public List<Window> getWindows() {
+    return List.copyOf(workspaces.keySet());
+  }
+
   /** All docked views, in workspace and tab order. */
   public List<WorkspaceView> getViews() {
     List<WorkspaceView> all = new ArrayList<>();

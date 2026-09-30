@@ -68,9 +68,7 @@ public final class TabDragController extends MouseAdapter {
 
   /** Installs a drag controller on the tab strip of the given group. */
   public static void install(WorkspaceManager manager, TabGroup group) {
-    TabDragController controller = new TabDragController(manager, group);
-    group.addMouseListener(controller);
-    group.addMouseMotionListener(controller);
+    group.addTabAreaListener(new TabDragController(manager, group));
   }
 
   @Override

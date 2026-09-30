@@ -10,14 +10,20 @@
 package org.weasis.core.ui.docking.ws;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.function.BiConsumer;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JTabbedPane;
+import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import org.weasis.core.Messages;
 import org.weasis.core.ui.docking.ws.drag.TabDragController;
@@ -31,6 +37,8 @@ public final class TabGroup extends JTabbedPane {
   private final WorkspaceManager manager;
   private final Workspace workspace;
   private final List<WorkspaceView> views = new ArrayList<>();
+  private final List<MouseAdapter> tabAreaListeners = new ArrayList<>();
+  private final Set<Component> forwardTargets = Collections.newSetFromMap(new WeakHashMap<>());
 
   TabGroup(WorkspaceManager manager, Workspace workspace) {
     this.manager = manager;
@@ -49,7 +57,7 @@ public final class TabGroup extends JTabbedPane {
             });
     addChangeListener(e -> manager.tabSelectionChanged(this));
     TabDragController.install(manager, this);
-    addMouseListener(
+    addTabAreaListener(
         new MouseAdapter() {
           @Override
           public void mousePressed(MouseEvent e) {
@@ -61,6 +69,84 @@ public final class TabGroup extends JTabbedPane {
             maybeShowMenu(e);
           }
         });
+    installTabAreaForwarders();
+  }
+
+  /**
+   * Registers a listener for mouse events on the tab strip. With {@code SCROLL_TAB_LAYOUT} the tabs
+   * live inside a nested viewport child that swallows every mouse event, so listeners cannot be
+   * added to the tabbed pane directly: events are captured on the tab-strip child, converted to
+   * this pane's coordinate space and forwarded.
+   */
+  public void addTabAreaListener(MouseAdapter listener) {
+    tabAreaListeners.add(listener);
+  }
+
+  private void installTabAreaForwarders() {
+    attachForwarder(this);
+    for (Component child : getComponents()) {
+      if (child instanceof JViewport viewport && viewport.getView() != null) {
+        attachForwarder(viewport.getView());
+      }
+    }
+  }
+
+  private void attachForwarder(Component target) {
+    if (!forwardTargets.add(target)) {
+      return;
+    }
+    MouseAdapter forwarder =
+        new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent e) {
+            forward(e, MouseAdapter::mousePressed);
+          }
+
+          @Override
+          public void mouseReleased(MouseEvent e) {
+            forward(e, MouseAdapter::mouseReleased);
+          }
+
+          @Override
+          public void mouseClicked(MouseEvent e) {
+            forward(e, MouseAdapter::mouseClicked);
+          }
+
+          @Override
+          public void mouseDragged(MouseEvent e) {
+            forward(e, MouseAdapter::mouseDragged);
+          }
+
+          @Override
+          public void mouseMoved(MouseEvent e) {
+            forward(e, MouseAdapter::mouseMoved);
+          }
+        };
+    target.addMouseListener(forwarder);
+    target.addMouseMotionListener(forwarder);
+  }
+
+  private void forward(MouseEvent e, BiConsumer<MouseAdapter, MouseEvent> method) {
+    MouseEvent converted =
+        e.getComponent() == this ? e : SwingUtilities.convertMouseEvent(e.getComponent(), e, this);
+    for (MouseAdapter listener : tabAreaListeners) {
+      method.accept(listener, converted);
+    }
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (forwardTargets != null) {
+      // the UI recreates the tab-strip viewport; re-hook the event forwarding
+      SwingUtilities.invokeLater(this::installTabAreaForwarders);
+    }
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    installTabAreaForwarders();
   }
 
   private void maybeShowMenu(MouseEvent e) {

@@ -9,8 +9,8 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import java.awt.Frame;
 import java.awt.Rectangle;
-import java.awt.Window;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.Icon;
@@ -47,9 +47,13 @@ final class TabPlacement {
     JMenuItem splitDown = splitItem(plugin, SplitPosition.BOTTOM);
     JMenu moveToGroup = new JMenu(Messages.getString("ViewerPlugin.move_group"));
     moveToGroup.setToolTipText(Messages.getString("ViewerPlugin.move_group_tip"));
+    JMenuItem openInNewWindow = new JMenuItem(Messages.getString("ViewerPlugin.open_win"));
+    openInNewWindow.setToolTipText(Messages.getString("ViewerPlugin.open_win_tip"));
+    openInNewWindow.addActionListener(e -> workspace().detach(plugin, null));
     menu.add(splitRight);
     menu.add(splitDown);
     menu.add(moveToGroup);
+    menu.add(openInNewWindow);
 
     // The menu is built once, so the entries are refreshed each time it is shown: tab groups appear
     // and disappear as the user moves tabs around.
@@ -60,6 +64,7 @@ final class TabPlacement {
             boolean splittable = tabGroup(plugin) != null;
             splitRight.setEnabled(splittable);
             splitDown.setEnabled(splittable);
+            openInNewWindow.setEnabled(plugin.isDetachable());
             moveToGroup.removeAll();
             for (TabGroup group : otherGroups(plugin)) {
               moveToGroup.add(moveItem(plugin, group));
@@ -96,8 +101,13 @@ final class TabPlacement {
 
   private static JMenuItem moveItem(ViewerPlugin<?> plugin, TabGroup group) {
     List<ViewerPlugin<?>> members = viewers(group);
+    String label = groupLabel(members);
+    if (SwingUtilities.getWindowAncestor(plugin) != group.getWorkspace().getWindow()
+        && group.getWorkspace().getWindow() instanceof Frame frame) {
+      label += " — " + frame.getTitle();
+    }
     // Where the group is on screen identifies it, which its name alone cannot do
-    JMenuItem item = new JMenuItem(menuLabel(groupLabel(members)), areaIcon(group));
+    JMenuItem item = new JMenuItem(menuLabel(label), areaIcon(group));
     item.addActionListener(
         e -> {
           workspace().stack(plugin, members.getFirst());
@@ -128,12 +138,12 @@ final class TabPlacement {
     return workspace().groupOf(plugin).filter(group -> group.getViewCount() > 1).orElse(null);
   }
 
-  /** Returns every other tab group holding viewers in the same window as {@code plugin}. */
+  /** Returns every other tab group holding viewers, in this window and in floating ones. */
   private static List<TabGroup> otherGroups(ViewerPlugin<?> plugin) {
     WorkspaceManager manager = workspace();
     TabGroup current = manager.groupOf(plugin).orElse(null);
-    Window window = SwingUtilities.getWindowAncestor(plugin);
-    return manager.getTabGroups(window).stream()
+    return manager.getWindows().stream()
+        .flatMap(window -> manager.getTabGroups(window).stream())
         .filter(group -> group != current && !viewers(group).isEmpty())
         .toList();
   }
