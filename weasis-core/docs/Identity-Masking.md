@@ -60,6 +60,8 @@ Values are masked where they are turned into text, not where they are stored.
   name keeps the PN structure (`ANONYMOUS^…`).
 - Profiles that shift dates move them by one offset for the whole run, so intervals between studies
   are preserved.
+  Only temporal values can be shifted: a date held as text is hidden rather than shown as it is,
+  so a caller that reads raw attributes converts dates and times before masking them.
 
 ## Session and scoped masks
 
@@ -110,6 +112,9 @@ the escape hatch for what the page does not express, such as a per-tag action in
 Most surfaces repaint from the model and follow the mask with no extra work. Surfaces that cache a
 string (a docking tab title, a titled border, a rendered report) register a change listener and
 rebuild it; `ViewerPlugin.setPluginName(Supplier)` does this for plugin titles.
+A cached string follows the session mask only. Code that reports it under a scoped mask (the
+workspace commands, a snapshot written for a remote caller) resolves the title again on the thread
+that binds the mask, which is what `ViewerPlugin.saveState()` does.
 
 - The session is switched from *Tools > Anonymize displayed data*, which asks for the profile.
   While it is on, `MaskingIndicator` shows a badge in the menu bar and the window title carries a

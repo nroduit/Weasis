@@ -83,7 +83,7 @@ public final class Redaction {
 
   /**
    * The mask to apply to {@code image}: its own if set, otherwise the one of its series, otherwise
-   * the regions the device library proposes for the mask in force.
+   * the regions the device library proposes for the mask in force; null when there is none.
    */
   public static Mask effective(ImageElement image, MediaSeries<?> series) {
     Mask mask = read(image);
@@ -91,6 +91,12 @@ public final class Redaction {
       mask = read(series);
     }
     return mask == null ? library(image, series) : mask;
+  }
+
+  /** Whether at least one region hides pixels of {@code image}. */
+  public static boolean isRedacted(ImageElement image, MediaSeries<?> series) {
+    Mask mask = effective(image, series);
+    return mask != null && !mask.isEmpty();
   }
 
   /**
@@ -161,16 +167,17 @@ public final class Redaction {
   }
 
   /**
-   * Whether that image should be looked at before it leaves Weasis: its pixels may carry identity
-   * and nothing is burned over them. Installed as the {@link org.weasis.core.api.media.data
-   * .PixelReviewAdvisor} of the application by the codec.
+   * Whether that image should be looked at before it leaves Weasis: its pixels may carry identity,
+   * nothing is burned over them, and no person has attested them ({@link PixelAttestation}).
+   * Installed as the {@link org.weasis.core.api.media.data .PixelReviewAdvisor} of the application
+   * by the codec.
    */
   public static boolean requiresReview(MediaElement media, MediaSeries<?> series) {
     if (!(media instanceof ImageElement image)) {
       return false;
     }
     Mask mask = effective(image, series);
-    if (mask != null && !mask.isEmpty()) {
+    if ((mask != null && !mask.isEmpty()) || PixelAttestation.covers(image, series)) {
       return false;
     }
     String modality = TagD.getTagValue(series, Tag.Modality, String.class);

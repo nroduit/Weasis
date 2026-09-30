@@ -10,6 +10,7 @@
 package org.weasis.core.api.media.data;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -18,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -159,6 +162,28 @@ class IdentityMaskTest {
     assertAll(
         () -> assertEquals(LocalDate.of(2026, 4, 7), first),
         () -> assertEquals(14, second.toEpochDay() - first.toEpochDay()));
+  }
+
+  @Test
+  @DisplayName("shifting hides a value it cannot shift instead of letting it through")
+  void shift_hidesWhatCannotBeShifted() {
+    TagW tag = dateTag();
+    IdentityMask mask = maskOf(Map.of(tag, AnonymizationAction.SHIFT), 37);
+    LocalDate[] dates = {LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 15)};
+    LocalTime time = LocalTime.of(10, 30);
+
+    assertAll(
+        () -> assertNull(mask.apply(tag, "20260301")),
+        () -> assertEquals("", mask.callMasked(() -> IdentityMask.maskText(tag, "20260301"))),
+        () ->
+            assertEquals(
+                LocalDateTime.of(2026, 4, 7, 8, 0),
+                mask.apply(tag, LocalDateTime.of(2026, 3, 1, 8, 0))),
+        () ->
+            assertArrayEquals(
+                new LocalDate[] {LocalDate.of(2026, 4, 7), LocalDate.of(2026, 4, 21)},
+                (Object[]) mask.apply(tag, dates)),
+        () -> assertEquals(time, mask.apply(tag, time)));
   }
 
   @Test

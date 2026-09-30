@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.swing.Action;
+import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.acquire.explorer.gui.control.BrowsePanel;
@@ -34,9 +35,11 @@ import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.dicom.codec.TagD;
 
 public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
@@ -113,17 +116,19 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
       if (evt.getSource() instanceof AcquireManager) {
         if (ObservableEvent.BasicAction.REPLACE.equals(event.getActionCommand())) {
 
-          String newPatientName =
+          String patientName =
               Optional.ofNullable(evt.getNewValue())
                   .filter(String.class::isInstance)
                   .map(String.class::cast)
-                  .orElse(Messages.getString("AcquireExplorer.album"));
+                  .filter(name -> !TagW.NO_VALUE.equals(name))
+                  .orElse(null);
 
-          if (TagW.NO_VALUE.equals(newPatientName)) {
-            newPatientName = Messages.getString("AcquireExplorer.album");
+          if (patientName == null) {
+            centralPane.setPluginName(Messages.getString("AcquireExplorer.album"));
+          } else {
+            centralPane.setPluginName(
+                () -> IdentityMask.maskText(TagD.get(Tag.PatientName), patientName));
           }
-
-          centralPane.setPluginName(newPatientName);
           centralPane.tabbedPane.clearAll();
           centralPane.tabbedPane.repaint();
 

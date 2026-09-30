@@ -13,9 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
@@ -242,12 +241,18 @@ public record IdentityMask(TagPolicy policy, Pseudonymizer pseudonymizer, int da
     return StringUtil.hasText(text) ? pseudonymizer.pseudonymFor(tag, text) : value;
   }
 
+  /** Hides what it cannot shift: a date held as text must never come out as it is. */
   private Object shift(Object value) {
     return switch (value) {
-      case LocalDate date -> date.plusDays(dateShiftDays);
-      case LocalDateTime dateTime -> dateTime.plusDays(dateShiftDays);
-      case LocalTime time -> time;
-      default -> value;
+      case Temporal temporal when temporal.isSupported(ChronoUnit.DAYS) ->
+          temporal.plus(dateShiftDays, ChronoUnit.DAYS);
+      case Temporal time -> time;
+      case Object[] values -> {
+        Object[] shifted = values.clone();
+        Arrays.setAll(shifted, i -> shift(values[i]));
+        yield shifted;
+      }
+      case null, default -> null;
     };
   }
 

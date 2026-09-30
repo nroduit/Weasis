@@ -71,6 +71,16 @@ class RedactionTest {
   }
 
   @Test
+  @DisplayName("an image is redacted only when a region hides some of its pixels")
+  void isRedacted_needsARegion() {
+    assertAll(
+        () -> assertFalse(Redaction.isRedacted(null, null)),
+        () -> assertFalse(Redaction.isRedacted(taggable(ImageElement.class), null)),
+        () -> assertFalse(Redaction.isRedacted(withMask(new Mask(List.of())), null)),
+        () -> assertTrue(Redaction.isRedacted(withMask(mask(5)), null)));
+  }
+
+  @Test
   @DisplayName("nothing stored means no mask")
   void readsNullWhenUnset() {
     assertAll(

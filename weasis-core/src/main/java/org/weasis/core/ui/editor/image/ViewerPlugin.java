@@ -153,8 +153,11 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     return icon;
   }
 
-  public String getTooltips() {
-    return tooltips;
+  private void updateTabInfo() {
+    WorkspaceManager manager = workspace();
+    if (manager != null) {
+      manager.updateTabInfo(this);
+    }
   }
 
   /**
@@ -184,21 +187,25 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
       return;
     }
     String fullName = identifyingName.get();
-    this.pluginName =
-        fullName == null
-            ? null
-            : StringUtil.getTruncatedString(
-                fullName, TITLE_MAX_LENGTH, StringUtil.Suffix.THREE_PTS);
+    this.pluginName = truncatedTitle(fullName);
     setName(pluginName);
     setToolTipText(fullName);
     updateTabInfo();
   }
 
-  private void updateTabInfo() {
-    WorkspaceManager manager = workspace();
-    if (manager != null) {
-      manager.updateTabInfo(this);
-    }
+  private static String truncatedTitle(String fullName) {
+    return fullName == null
+        ? null
+        : StringUtil.getTruncatedString(fullName, TITLE_MAX_LENGTH, StringUtil.Suffix.THREE_PTS);
+  }
+
+  /**
+   * The title under the {@link IdentityMask} in force on this thread: the displayed one follows
+   * session masking only, which a command bound to a stricter mask must not read.
+   */
+  private String maskedPluginName() {
+    String name = identifyingName == null ? pluginName : truncatedTitle(identifyingName.get());
+    return name == null ? StringUtil.EMPTY_STRING : name;
   }
 
   /**
@@ -307,7 +314,8 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
    */
   @Override
   public JsonObject saveState() {
-    JsonObjectBuilder builder = Json.createObjectBuilder().add("name", pluginName); // NON-NLS
+    JsonObjectBuilder builder =
+        Json.createObjectBuilder().add("name", maskedPluginName()); // NON-NLS
     List<MediaSeries<E>> openSeries = getOpenSeries();
     if (openSeries != null && !openSeries.isEmpty()) {
       JsonArrayBuilder series = Json.createArrayBuilder();

@@ -139,6 +139,12 @@ public class TagW {
   /** Holds the redaction mask; value is an {@code org.weasis.dicom.codec.Redaction.Mask}. */
   public static final TagW RedactionMask = new TagW("RedactionMask", TagType.OBJECT);
 
+  /**
+   * Holds the review a person made of the pixels; value is an {@code
+   * org.weasis.dicom.codec.PixelAttestation}.
+   */
+  public static final TagW PixelAttestation = new TagW("PixelAttestation", TagType.OBJECT);
+
   public static final TagW ShutterRGBColor = new TagW("ShutterRGBColor", TagType.COLOR);
   public static final TagW ShutterPSValue = new TagW("ShutterPSValue", TagType.INTEGER);
   public static final TagW ImageDescriptor = new TagW("ImageDescriptor", TagType.OBJECT);
