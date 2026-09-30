@@ -9,9 +9,9 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.common.nio.Buffers;
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
+import java.lang.foreign.Arena;
+import java.lang.foreign.ValueLayout;
+import org.weasis.dicom.viewer3d.gl.Gl;
 
 public class LightingMap extends TextureData {
 
@@ -23,40 +23,38 @@ public class LightingMap extends TextureData {
   }
 
   @Override
-  public void init(GL2ES2 gl) {
+  public void init(Gl gl) {
     super.init(gl);
-    gl.glActiveTexture(GL.GL_TEXTURE2);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, getId());
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-    gl.glTexImage2D(
-        GL.GL_TEXTURE_2D,
-        0,
-        internalFormat,
-        width,
-        height,
-        0,
-        format,
-        type,
-        Buffers.newDirectFloatBuffer(map).rewind());
+    gl.glActiveTexture(Gl.GL_TEXTURE2);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, getId());
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_LINEAR);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_LINEAR);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_S, Gl.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_T, Gl.GL_CLAMP_TO_EDGE);
+    upload(gl);
   }
 
   @Override
-  public void render(GL2ES2 gl) {
+  public void render(Gl gl) {
     update(gl);
   }
 
-  void update(GL2ES2 gl) {
+  void update(Gl gl) {
     if (gl != null) {
       if (getId() <= 0) {
         init(gl);
+        return;
       }
-      gl.glActiveTexture(GL.GL_TEXTURE2);
-      gl.glBindTexture(GL.GL_TEXTURE_2D, getId());
+      gl.glActiveTexture(Gl.GL_TEXTURE2);
+      gl.glBindTexture(Gl.GL_TEXTURE_2D, getId());
+      upload(gl);
+    }
+  }
+
+  private void upload(Gl gl) {
+    try (Arena arena = Arena.ofConfined()) {
       gl.glTexImage2D(
-          GL.GL_TEXTURE_2D,
+          Gl.GL_TEXTURE_2D,
           0,
           internalFormat,
           width,
@@ -64,7 +62,7 @@ public class LightingMap extends TextureData {
           0,
           format,
           type,
-          Buffers.newDirectFloatBuffer(map).rewind());
+          arena.allocateFrom(ValueLayout.JAVA_FLOAT, map));
     }
   }
 

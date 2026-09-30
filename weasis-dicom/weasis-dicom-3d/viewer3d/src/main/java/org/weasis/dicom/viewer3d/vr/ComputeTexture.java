@@ -9,10 +9,8 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL2ES3;
-import com.jogamp.opengl.GL4;
+import java.lang.foreign.MemorySegment;
+import org.weasis.dicom.viewer3d.gl.Gl;
 
 public class ComputeTexture extends TextureData {
   public static final int COMPUTE_LOCAL_SIZE = 16;
@@ -38,20 +36,20 @@ public class ComputeTexture extends TextureData {
   }
 
   @Override
-  public void init(GL2ES2 gl) {
-    GL4 gl4 = gl.getGL4();
-    super.init(gl4);
+  public void init(Gl gl) {
+    super.init(gl);
     this.width = view3d.getSurfaceWidth();
     this.height = view3d.getSurfaceHeight();
 
-    gl4.glActiveTexture(GL.GL_TEXTURE0);
-    gl4.glBindTexture(GL.GL_TEXTURE_2D, getId());
-    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-    gl4.glTexImage2D(GL.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
-    gl4.glBindImageTexture(0, getId(), 0, false, 0, GL.GL_WRITE_ONLY, internalFormat);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, getId());
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_S, Gl.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_T, Gl.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_NEAREST);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
+    gl.glTexImage2D(
+        Gl.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, MemorySegment.NULL);
+    gl.glBindImageTexture(0, getId(), 0, false, 0, Gl.GL_WRITE_ONLY, internalFormat);
 
     // Force to render next time
     this.width = 1;
@@ -77,36 +75,35 @@ public class ComputeTexture extends TextureData {
   }
 
   @Override
-  public void render(GL2ES2 gl) {
+  public void render(Gl gl) {
     if (gl == null) {
       return;
     }
-    GL4 gl4 = gl.getGL4();
     if (getId() <= 0) {
-      init(gl4);
+      init(gl);
     }
     if (accumulationId > 0) {
-      gl4.glBindImageTexture(1, accumulationId, 0, false, 0, GL.GL_WRITE_ONLY, GL.GL_RGBA32F);
-      gl4.glBindImageTexture(2, featureId, 0, false, 0, GL.GL_WRITE_ONLY, GL.GL_RGBA32F);
-      gl4.glBindImageTexture(3, momentId, 0, false, 0, GL.GL_WRITE_ONLY, GL.GL_RG32F);
+      gl.glBindImageTexture(1, accumulationId, 0, false, 0, Gl.GL_WRITE_ONLY, Gl.GL_RGBA32F);
+      gl.glBindImageTexture(2, featureId, 0, false, 0, Gl.GL_WRITE_ONLY, Gl.GL_RGBA32F);
+      gl.glBindImageTexture(3, momentId, 0, false, 0, Gl.GL_WRITE_ONLY, Gl.GL_RG32F);
     }
-    dispatch(gl4);
+    dispatch(gl);
   }
 
   /** Runs the active compute program over the output image. */
-  public void dispatch(GL4 gl4) {
-
+  public void dispatch(Gl gl) {
     if (width != view3d.getSurfaceWidth() || height != view3d.getSurfaceHeight()) {
-      gl4.glActiveTexture(GL.GL_TEXTURE0);
-      gl4.glBindTexture(GL.GL_TEXTURE_2D, getId());
+      gl.glActiveTexture(Gl.GL_TEXTURE0);
+      gl.glBindTexture(Gl.GL_TEXTURE_2D, getId());
       this.width = view3d.getSurfaceWidth();
       this.height = view3d.getSurfaceHeight();
-      gl4.glTexImage2D(GL.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
+      gl.glTexImage2D(
+          Gl.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, MemorySegment.NULL);
     }
 
     int workSizeX = Math.max(localSize, nextPowerOfTwo(width));
     int workSizeY = Math.max(localSize, nextPowerOfTwo(height));
-    gl4.glDispatchCompute(workSizeX / localSize, workSizeY / localSize, 1);
-    gl4.glMemoryBarrier(GL2ES3.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    gl.glDispatchCompute(workSizeX / localSize, workSizeY / localSize, 1);
+    gl.glMemoryBarrier(Gl.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
   }
 }

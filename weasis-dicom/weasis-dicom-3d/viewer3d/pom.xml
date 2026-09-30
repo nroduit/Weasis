@@ -19,6 +19,18 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!--
+            The FFM OpenGL back-end links against the driver, which is a restricted operation.
+            The same flag is given to the application by launch-options.sh.
+          -->
+          <argLine>@{argLine} -Xshare:off -XX:+EnableDynamicAgentLoading
+            --enable-native-access=ALL-UNNAMED</argLine>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
           <archive>
@@ -68,4 +80,110 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
+
+  <!--
+    The GL tests need the JOGL native libraries, which the application gets at run time from the
+    jogamp-native-* plugins instead. They are pulled in per OS here so that the tests that really
+    render can create a context. Removed together with JOGL.
+  -->
+  <profiles>
+    <profile>
+      <id>jogl-natives-linux-x86-64</id>
+      <activation>
+        <os>
+          <family>unix</family>
+          <arch>amd64</arch>
+        </os>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.jogamp.gluegen</groupId>
+          <artifactId>gluegen-rt</artifactId>
+          <version>${jogamp.version}</version>
+          <classifier>natives-linux-amd64</classifier>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.jogamp.jogl</groupId>
+          <artifactId>jogl-all</artifactId>
+          <version>${jogamp.version}</version>
+          <classifier>natives-linux-amd64</classifier>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>jogl-natives-linux-aarch64</id>
+      <activation>
+        <os>
+          <family>unix</family>
+          <arch>aarch64</arch>
+        </os>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.jogamp.gluegen</groupId>
+          <artifactId>gluegen-rt</artifactId>
+          <version>${jogamp.version}</version>
+          <classifier>natives-linux-aarch64</classifier>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.jogamp.jogl</groupId>
+          <artifactId>jogl-all</artifactId>
+          <version>${jogamp.version}</version>
+          <classifier>natives-linux-aarch64</classifier>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>jogl-natives-windows</id>
+      <activation>
+        <os>
+          <family>windows</family>
+        </os>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.jogamp.gluegen</groupId>
+          <artifactId>gluegen-rt</artifactId>
+          <version>${jogamp.version}</version>
+          <classifier>natives-windows-amd64</classifier>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.jogamp.jogl</groupId>
+          <artifactId>jogl-all</artifactId>
+          <version>${jogamp.version}</version>
+          <classifier>natives-windows-amd64</classifier>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>jogl-natives-macosx</id>
+      <activation>
+        <os>
+          <family>mac</family>
+        </os>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.jogamp.gluegen</groupId>
+          <artifactId>gluegen-rt</artifactId>
+          <version>${jogamp.version}</version>
+          <classifier>natives-macosx-universal</classifier>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.jogamp.jogl</groupId>
+          <artifactId>jogl-all</artifactId>
+          <version>${jogamp.version}</version>
+          <classifier>natives-macosx-universal</classifier>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 </project>

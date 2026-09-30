@@ -9,15 +9,14 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.common.nio.Buffers;
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL2GL3;
-import java.nio.FloatBuffer;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
 import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.dicom.viewer3d.gl.Gl;
 
 /**
  * Reads the path tracer's averages back and logs how converged the image is: the share of covered
@@ -46,36 +45,39 @@ final class ConvergenceReport {
   }
 
   static void log(
-      GL2ES2 gl, int historyId, int momentId, int width, int height, int samples, String name) {
-    if (!gl.isGL2GL3() || width <= 0 || height <= 0) {
+      Gl gl, int historyId, int momentId, int width, int height, int samples, String name) {
+    if (width <= 0 || height <= 0) {
       return;
     }
-    GL2GL3 gl3 = gl.getGL2GL3();
     int pixels = width * height;
-    FloatBuffer colour = Buffers.newDirectFloatBuffer(pixels * 4);
-    FloatBuffer moment = Buffers.newDirectFloatBuffer(pixels * 2);
-    gl3.glActiveTexture(GL.GL_TEXTURE0);
-    gl3.glBindTexture(GL.GL_TEXTURE_2D, historyId);
-    gl3.glGetTexImage(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, GL.GL_FLOAT, colour);
-    gl3.glBindTexture(GL.GL_TEXTURE_2D, momentId);
-    gl3.glGetTexImage(GL.GL_TEXTURE_2D, 0, GL2ES2.GL_RG, GL.GL_FLOAT, moment);
-    gl3.glBindTexture(GL.GL_TEXTURE_2D, 0);
+    float[] colour;
+    float[] moment;
+    try (Arena arena = Arena.ofConfined()) {
+      MemorySegment colourData = arena.allocate(ValueLayout.JAVA_FLOAT, pixels * 4L);
+      MemorySegment momentData = arena.allocate(ValueLayout.JAVA_FLOAT, pixels * 2L);
+      gl.glActiveTexture(Gl.GL_TEXTURE0);
+      gl.glBindTexture(Gl.GL_TEXTURE_2D, historyId);
+      gl.glGetTexImage(Gl.GL_TEXTURE_2D, 0, Gl.GL_RGBA, Gl.GL_FLOAT, colourData);
+      gl.glBindTexture(Gl.GL_TEXTURE_2D, momentId);
+      gl.glGetTexImage(Gl.GL_TEXTURE_2D, 0, Gl.GL_RG, Gl.GL_FLOAT, momentData);
+      gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
+      colour = colourData.toArray(ValueLayout.JAVA_FLOAT);
+      moment = momentData.toArray(ValueLayout.JAVA_FLOAT);
+    }
 
     float[] errors = new float[pixels];
     int covered = 0;
     int stopped = 0;
     double countSum = 0;
     for (int i = 0; i < pixels; i++) {
-      float alpha = colour.get(i * 4 + 3);
+      float alpha = colour[i * 4 + 3];
       if (alpha <= 0f) {
         continue;
       }
       float mean =
-          colour.get(i * 4) * LUMA[0]
-              + colour.get(i * 4 + 1) * LUMA[1]
-              + colour.get(i * 4 + 2) * LUMA[2];
-      float squares = moment.get(i * 2);
-      float count = moment.get(i * 2 + 1);
+          colour[i * 4] * LUMA[0] + colour[i * 4 + 1] * LUMA[1] + colour[i * 4 + 2] * LUMA[2];
+      float squares = moment[i * 2];
+      float count = moment[i * 2 + 1];
       float variance = Math.max(squares - mean * mean, 0f);
       errors[covered++] = (float) Math.sqrt(variance / Math.max(count, 1f));
       countSum += count;

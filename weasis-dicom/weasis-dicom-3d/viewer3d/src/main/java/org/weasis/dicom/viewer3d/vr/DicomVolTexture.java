@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.opengl.GL2ES2;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -41,6 +40,7 @@ import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.viewer2d.SegComponentFactory;
 import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.dicom.viewer3d.ActionVol;
+import org.weasis.dicom.viewer3d.gl.Gl;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageTransformer;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
@@ -167,7 +167,7 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   }
 
   @Override
-  public void destroy(GL2ES2 gl) {
+  public void destroy(Gl gl) {
     majorantGrid.destroy(gl);
     super.destroy(gl);
   }
@@ -272,6 +272,10 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     firePropertyChange(this, DicomVolTextureFactory.PARTIALLY_LOADED, this);
   }
 
+  public void notifyLoadFailed() {
+    firePropertyChange(this, DicomVolTextureFactory.LOAD_FAILED, this);
+  }
+
   /**
    * Marks the upload as ended, successfully or not. The flag is raised on the EDT, after the
    * listeners of an already queued {@link #notifyFullyLoaded()} have reset the views.
@@ -283,10 +287,6 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   /** Whether the upload has ended; always read on the EDT. */
   public boolean isLoadFinished() {
     return loadFinished;
-  }
-
-  public void notifyLoadFailed() {
-    firePropertyChange(this, DicomVolTextureFactory.LOAD_FAILED, this);
   }
 
   public boolean isReadyForDisplay() {

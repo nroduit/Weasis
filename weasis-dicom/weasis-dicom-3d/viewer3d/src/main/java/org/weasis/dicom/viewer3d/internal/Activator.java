@@ -15,7 +15,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.viewer3d.View3DContainer;
-import org.weasis.dicom.viewer3d.vr.OpenglUtils;
+import org.weasis.dicom.viewer3d.gl.GlRuntime;
 import org.weasis.dicom.viewer3d.vr.Preset;
 import org.weasis.plugin.PluginContext;
 import org.weasis.plugin.WeasisPlugin;
@@ -39,8 +39,8 @@ public class Activator extends WeasisPlugin {
   public void stop() {
     GuiUtils.getUICore().closeSeriesViewerType(View3DContainer.class);
     // Must happen here rather than from a JVM shutdown hook: JOGL still needs to load classes to
-    // tear the context down, and the plugin class loaders are closed once the plugins are unloaded.
-    OpenglUtils.destroy();
+    // tear the context down, and the plugin class loaders are closed once plugins are unloaded.
+    GlRuntime.shutdown();
   }
 
   //  @Override

@@ -9,19 +9,13 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL2ES3;
-import com.jogamp.opengl.GLContext;
-import com.jogamp.opengl.util.GLPixelStorageModes;
 import java.awt.Dimension;
-import java.nio.Buffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.JProgressBar;
-import jogamp.opengl.glu.error.Error;
 import org.dcm4che3.img.util.PixelDataUtils;
 import org.joml.Vector3i;
 import org.opencv.core.*;
@@ -40,6 +34,9 @@ import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
+import org.weasis.dicom.viewer3d.gl.Gl;
+import org.weasis.dicom.viewer3d.gl.GlRuntime;
+import org.weasis.dicom.viewer3d.gl.GlThread;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -137,49 +134,53 @@ public final class VolumeBuilder {
         return;
       }
       TextureSliceDataBuffer textureSliceData = TextureSliceDataBuffer.toImageData(slices);
+      int sliceCount = slices.size();
       try {
-        // The path tracer's bounds are folded in from the staging buffer before it goes to the GPU.
+        // The path tracer's bounds are folded in from the staging block before it goes to the GPU.
         volumeBuilder
             .volTexture
             .getMajorantGrid()
-            .accumulate(
-                textureSliceData.buffer(),
-                CvType.channels(slices.getFirst().type()),
-                offset,
-                slices.size());
-        GLContext glContext = OpenglUtils.getDefaultGlContext();
-        glContext.makeCurrent();
-        try {
-          GL2ES3 gl = glContext.getGL().getGL2ES3();
-          gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, volumeBuilder.volTexture.getId());
-          GLPixelStorageModes storageModes = new GLPixelStorageModes();
-          // Uploads are UNPACK operations: the staging buffer holds tightly packed rows, so any
-          // width whose row size is not a multiple of the default 4-byte alignment (e.g. RGB
-          // 8-bit) must not be padded. Setting the pack alignment here has no effect on
-          // glTexSubImage3D.
-          storageModes.setUnpackAlignment(gl, 1);
-          try {
-            setTexImage3DBuffer(gl, textureSliceData.buffer(), slices.size(), offset);
-          } finally {
-            storageModes.restore(gl);
-          }
-          gl.glFinish();
-        } finally {
-          glContext.release();
-        }
-      } finally {
+            .accumulate(textureSliceData.segment(), slices.getFirst().type(), offset, sliceCount);
+      } catch (RuntimeException e) {
         textureSliceData.releaseMemory();
+        throw e;
       }
+      // The loader stays on its own thread for the reading and the staging; only the transfer
+      // needs the context, and it waits behind the frames so the display keeps up while the
+      // volume fills in. The task owns the staging block from here and releases it.
+      GlThread glThread = GlRuntime.thread();
+      glThread.submit(
+          gl -> {
+            try {
+              gl.glBindTexture(Gl.GL_TEXTURE_3D, volumeBuilder.volTexture.getId());
+              // Uploads are UNPACK operations: the staging block holds tightly packed rows, so any
+              // width whose row size is not a multiple of the default 4-byte alignment (e.g. RGB
+              // 8-bit) must not be padded. The default is restored once the slabs are sent.
+              gl.glPixelStorei(Gl.GL_UNPACK_ALIGNMENT, 1);
+              try {
+                setTexImage3DBuffer(gl, textureSliceData, sliceCount, offset);
+              } finally {
+                gl.glPixelStorei(Gl.GL_UNPACK_ALIGNMENT, 4);
+              }
+              gl.glFinish();
+            } finally {
+              textureSliceData.releaseMemory();
+            }
+          });
+      // At most one slab in flight, so the staging memory stays within the budget of the memory
+      // manager and the loader does not run ahead of the GPU.
+      glThread.drain();
     }
 
-    private void setTexImage3DBuffer(GL2ES3 gl, Buffer data, int sliceCount, int offset) {
+    private void setTexImage3DBuffer(
+        Gl gl, TextureSliceDataBuffer data, int sliceCount, int offset) {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
       if (volTexture.getId() <= 0) {
         volTexture.init(gl);
       }
       // See https://docs.gl/gl4/glTexSubImage3D
       gl.glTexSubImage3D(
-          GL2ES2.GL_TEXTURE_3D,
+          Gl.GL_TEXTURE_3D,
           0,
           0,
           0,
@@ -189,13 +190,13 @@ public final class VolumeBuilder {
           sliceCount,
           volTexture.getFormat(),
           volTexture.getType(),
-          data);
-      int error;
-      if ((error = gl.glGetError()) != 0) {
+          data.segment());
+      int error = gl.glGetError();
+      if (error != Gl.GL_NO_ERROR) {
         LOGGER.error(
             "Cannot load volume ({} images) in OpenGL texture3D. OpenGL error: {}",
             volTexture.getDepth(),
-            Error.gluErrorString(error));
+            Gl.errorString(error));
         volumeBuilder.hasError = true;
         volumeBuilder.stop();
         volTexture.notifyLoadFailed();
@@ -210,8 +211,8 @@ public final class VolumeBuilder {
         LOGGER.error("Cannot build the 3D volume texture", e);
         volumeBuilder.hasError = true;
         volumeBuilder.stop();
-        volumeBuilder.volTexture.markLoadFinished();
         volumeBuilder.volTexture.notifyLoadFailed();
+        volumeBuilder.volTexture.markLoadFinished();
         if (EventManager.getInstance().getSelectedViewPane() instanceof View3d view3d) {
           view3d.setProgressBar(null);
           GuiExecutor.execute(view3d::repaint);

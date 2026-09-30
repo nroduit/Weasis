@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer3d;
 
-import com.jogamp.opengl.GL2ES2;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -75,9 +74,9 @@ import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.dicom.viewer2d.mpr.VolumeProvider;
 import org.weasis.dicom.viewer3d.dockable.DisplayTool;
 import org.weasis.dicom.viewer3d.dockable.VolumeTool;
+import org.weasis.dicom.viewer3d.gl.GlRuntime;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
 import org.weasis.dicom.viewer3d.vr.DicomVolTextureFactory;
-import org.weasis.dicom.viewer3d.vr.OpenglUtils;
 import org.weasis.dicom.viewer3d.vr.View3d;
 import org.weasis.dicom.viewer3d.vr.VolumeBuilder;
 
@@ -386,10 +385,8 @@ public class View3DContainer extends DicomViewerPlugin
       }
       try {
         if (volumeBuilder != null) {
-          GL2ES2 gl4 = OpenglUtils.getGL();
-          if (gl4 != null) {
-            volumeBuilder.getVolTexture().destroy(gl4);
-          }
+          DicomVolTexture retired = volumeBuilder.getVolTexture();
+          GlRuntime.submit(retired::destroy);
         }
         GuiUtils.getUICore().closeSeries(oldSequence);
         synchronized (volumeBuilderLock) {
@@ -427,11 +424,9 @@ public class View3DContainer extends DicomViewerPlugin
 
   public void reload() {
     if (volumeBuilder != null) {
-      MediaSeries<DicomImageElement> oldSequence = volumeBuilder.getVolTexture().getSeries();
-      GL2ES2 gl = OpenglUtils.getGL();
-      if (gl != null) {
-        volumeBuilder.getVolTexture().destroy(gl);
-      }
+      DicomVolTexture retired = volumeBuilder.getVolTexture();
+      MediaSeries<DicomImageElement> oldSequence = retired.getSeries();
+      GlRuntime.submit(retired::destroy);
       // Force to rebuild
       this.volumeBuilder = null;
       addSeries(oldSequence);

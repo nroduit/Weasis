@@ -15,9 +15,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.ByteBuffer;
-import java.nio.ShortBuffer;
+import java.lang.foreign.MemorySegment;
 import org.junit.jupiter.api.Test;
+import org.opencv.core.CvType;
 
 class MajorantGridTest {
 
@@ -48,7 +48,7 @@ class MajorantGridTest {
     MajorantGrid grid = new MajorantGrid(SIZE, SIZE, SIZE);
     byte[] voxels = new byte[SIZE * SIZE * SIZE];
     voxels[index(8, 8, 8)] = (byte) 255;
-    grid.accumulate(ByteBuffer.wrap(voxels), 1, 0, SIZE);
+    grid.accumulate(MemorySegment.ofArray(voxels), CvType.CV_8UC1, 0, SIZE);
     grid.complete();
     assertTrue(grid.isComplete());
     assertAll(
@@ -62,7 +62,7 @@ class MajorantGridTest {
     MajorantGrid grid = new MajorantGrid(SIZE, SIZE, SIZE);
     byte[] voxels = new byte[SIZE * SIZE * SIZE];
     voxels[index(3, 3, 3)] = (byte) 255;
-    grid.accumulate(ByteBuffer.wrap(voxels), 1, 0, SIZE);
+    grid.accumulate(MemorySegment.ofArray(voxels), CvType.CV_8UC1, 0, SIZE);
     grid.complete();
     assertAll(
         () -> assertArrayEquals(new float[] {0f, 1f}, grid.rangeAt(0, 0, 0)),
@@ -75,10 +75,10 @@ class MajorantGridTest {
     MajorantGrid grid = new MajorantGrid(SIZE, SIZE, SIZE);
     short[] batch = new short[SIZE * SIZE * 4];
     java.util.Arrays.fill(batch, (short) 13107);
-    grid.accumulate(ShortBuffer.wrap(batch), 1, 0, 4);
+    grid.accumulate(MemorySegment.ofArray(batch), CvType.CV_16UC1, 0, 4);
     short[] rest = new short[SIZE * SIZE * 6];
     java.util.Arrays.fill(rest, (short) 0xFFFF);
-    grid.accumulate(ShortBuffer.wrap(rest), 1, 4, 6);
+    grid.accumulate(MemorySegment.ofArray(rest), CvType.CV_16UC1, 4, 6);
     grid.complete();
     float[] low = grid.rangeAt(0, 0, 0);
     float[] high = grid.rangeAt(0, 0, 1);
@@ -94,7 +94,7 @@ class MajorantGridTest {
     MajorantGrid grid = new MajorantGrid(2, 2, 2);
     byte[] voxels = new byte[2 * 2 * 2 * 3];
     voxels[0] = (byte) 255; // pure red at the first voxel
-    grid.accumulate(ByteBuffer.wrap(voxels), 3, 0, 2);
+    grid.accumulate(MemorySegment.ofArray(voxels), CvType.CV_8UC3, 0, 2);
     grid.complete();
     assertEquals(0.299f, grid.rangeAt(0, 0, 0)[1], 1e-4f);
   }
@@ -102,7 +102,7 @@ class MajorantGridTest {
   @Test
   void unsupportedLayoutLeavesTheGridIncomplete() {
     MajorantGrid grid = new MajorantGrid(2, 2, 2);
-    grid.accumulate(ShortBuffer.wrap(new short[2 * 2 * 2 * 3]), 3, 0, 2);
+    grid.accumulate(MemorySegment.ofArray(new short[2 * 2 * 2 * 3]), CvType.CV_16UC3, 0, 2);
     grid.complete();
     assertFalse(grid.isComplete());
   }

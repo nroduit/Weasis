@@ -9,12 +9,10 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.common.nio.Buffers;
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
-import java.nio.IntBuffer;
+import java.lang.foreign.MemorySegment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.dicom.viewer3d.gl.Gl;
 
 /**
  * OpenGL 3.3-compatible FBO-based render target for volume rendering.
@@ -110,55 +108,56 @@ public class FboRenderTexture extends TextureData {
   }
 
   @Override
-  public void init(GL2ES2 gl) {
+  public void init(Gl gl) {
     super.init(gl);
     this.width = surfaceWidth();
     this.height = surfaceHeight();
 
     // --- Colour-attachment texture (bound on unit 3 to avoid disturbing units 0-2) ---
-    gl.glActiveTexture(GL.GL_TEXTURE0 + OUTPUT_TEXTURE_UNIT);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, getId());
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + OUTPUT_TEXTURE_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, getId());
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_S, Gl.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_T, Gl.GL_CLAMP_TO_EDGE);
     // GL_LINEAR: the blit quad upscales the reduced-resolution pass rendered while interacting.
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-    gl.glTexImage2D(GL.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, 0);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_LINEAR);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_LINEAR);
+    allocateColorAttachment(gl);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
 
     // --- FBO ---
-    IntBuffer buf = IntBuffer.allocate(1);
-    gl.glGenFramebuffers(1, buf);
-    fboId = buf.get(0);
-    gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, fboId);
+    fboId = gl.glGenFramebuffers(1)[0];
+    gl.glBindFramebuffer(Gl.GL_FRAMEBUFFER, fboId);
     gl.glFramebufferTexture2D(
-        GL.GL_FRAMEBUFFER, GL.GL_COLOR_ATTACHMENT0, GL.GL_TEXTURE_2D, getId(), 0);
+        Gl.GL_FRAMEBUFFER, Gl.GL_COLOR_ATTACHMENT0, Gl.GL_TEXTURE_2D, getId(), 0);
 
-    int status = gl.glCheckFramebufferStatus(GL.GL_FRAMEBUFFER);
-    if (status != GL.GL_FRAMEBUFFER_COMPLETE) {
+    int status = gl.glCheckFramebufferStatus(Gl.GL_FRAMEBUFFER);
+    if (status != Gl.GL_FRAMEBUFFER_COMPLETE) {
       LOGGER.error("FBO not complete, status: 0x{}", Integer.toHexString(status));
     }
-    gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0);
+    gl.glBindFramebuffer(Gl.GL_FRAMEBUFFER, 0);
 
     // Restore active texture unit to 0
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
   }
 
-  private void resizeTexture(GL2ES2 gl) {
-    gl.glActiveTexture(GL.GL_TEXTURE0 + OUTPUT_TEXTURE_UNIT);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, getId());
+  private void allocateColorAttachment(Gl gl) {
+    gl.glTexImage2D(
+        Gl.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, MemorySegment.NULL);
+  }
+
+  private void resizeTexture(Gl gl) {
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + OUTPUT_TEXTURE_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, getId());
     this.width = surfaceWidth();
     this.height = surfaceHeight();
-    gl.glTexImage2D(GL.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, 0);
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    allocateColorAttachment(gl);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
   }
 
   /**
    * Renders the volume into the FBO. The FBO ray-casting program must already be active (bound via
    * {@code program.use(gl4)}) and uniforms set before this method is called.
-   *
-   * @param gl the current OpenGL 4 context
    */
   public void setAccumulationTargets(
       int colorTextureId, int featureTextureId, int momentTextureId) {
@@ -168,7 +167,7 @@ public class FboRenderTexture extends TextureData {
   }
 
   @Override
-  public void render(GL2ES2 gl) {
+  public void render(Gl gl) {
     if (gl == null) {
       return;
     }
@@ -184,56 +183,55 @@ public class FboRenderTexture extends TextureData {
     // sub-rectangle while interacting. glClear covers the full attachment, so the region outside
     // the sub-rectangle never holds a stale frame.
     // Units 0 (volTexture 3D), 1 (colorMap), 2 (lightingMap) are already bound by the caller.
-    gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, fboId);
+    gl.glBindFramebuffer(Gl.GL_FRAMEBUFFER, fboId);
     attachAccumulation(gl, accumulationId, featureId, momentId);
     gl.glViewport(0, 0, passWidth(), passHeight());
-    gl.glClear(GL.GL_COLOR_BUFFER_BIT);
+    gl.glClear(Gl.GL_COLOR_BUFFER_BIT);
 
-    gl.glDrawArrays(GL.GL_TRIANGLES, 0, View3d.vertexBufferData.length / 2);
+    gl.glDrawArrays(Gl.GL_TRIANGLES, 0, View3d.vertexBufferData.length / 2);
 
-    gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0);
+    gl.glBindFramebuffer(Gl.GL_FRAMEBUFFER, 0);
     // Restore viewport to the full physical surface size
     gl.glViewport(0, 0, surfaceWidth(), surfaceHeight());
   }
 
   // The averages are only attached while path tracing: a smaller placeholder would shrink the
   // framebuffer's renderable area to its own size.
-  private void attachAccumulation(GL2ES2 gl, int colorId, int featId, int momId) {
+  private void attachAccumulation(Gl gl, int colorId, int featId, int momId) {
     gl.glFramebufferTexture2D(
-        GL.GL_FRAMEBUFFER, GL2ES2.GL_COLOR_ATTACHMENT1, GL.GL_TEXTURE_2D, colorId, 0);
+        Gl.GL_FRAMEBUFFER, Gl.GL_COLOR_ATTACHMENT1, Gl.GL_TEXTURE_2D, colorId, 0);
     gl.glFramebufferTexture2D(
-        GL.GL_FRAMEBUFFER, GL2ES2.GL_COLOR_ATTACHMENT2, GL.GL_TEXTURE_2D, featId, 0);
+        Gl.GL_FRAMEBUFFER, Gl.GL_COLOR_ATTACHMENT2, Gl.GL_TEXTURE_2D, featId, 0);
     gl.glFramebufferTexture2D(
-        GL.GL_FRAMEBUFFER, GL2ES2.GL_COLOR_ATTACHMENT3, GL.GL_TEXTURE_2D, momId, 0);
-    gl.getGL2ES3()
-        .glDrawBuffers(
-            colorId > 0 ? 4 : 1,
-            new int[] {
-              GL.GL_COLOR_ATTACHMENT0,
-              GL2ES2.GL_COLOR_ATTACHMENT1,
-              GL2ES2.GL_COLOR_ATTACHMENT2,
-              GL2ES2.GL_COLOR_ATTACHMENT3
-            },
-            0);
+        Gl.GL_FRAMEBUFFER, Gl.GL_COLOR_ATTACHMENT3, Gl.GL_TEXTURE_2D, momId, 0);
+    if (colorId > 0) {
+      gl.glDrawBuffers(
+          Gl.GL_COLOR_ATTACHMENT0,
+          Gl.GL_COLOR_ATTACHMENT1,
+          Gl.GL_COLOR_ATTACHMENT2,
+          Gl.GL_COLOR_ATTACHMENT3);
+    } else {
+      gl.glDrawBuffers(Gl.GL_COLOR_ATTACHMENT0);
+    }
   }
 
   /**
    * Draws the full-screen quad of the active program into the colour attachment alone, over the
    * whole target. The vertex array must be set up as for {@link #render}.
    */
-  public void renderDenoisePass(GL2ES2 gl) {
-    gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, fboId);
+  public void renderDenoisePass(Gl gl) {
+    gl.glBindFramebuffer(Gl.GL_FRAMEBUFFER, fboId);
     attachAccumulation(gl, 0, 0, 0);
     gl.glViewport(0, 0, width, height);
-    gl.glDrawArrays(GL.GL_TRIANGLES, 0, View3d.vertexBufferData.length / 2);
-    gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0);
+    gl.glDrawArrays(Gl.GL_TRIANGLES, 0, View3d.vertexBufferData.length / 2);
+    gl.glBindFramebuffer(Gl.GL_FRAMEBUFFER, 0);
     gl.glViewport(0, 0, surfaceWidth(), surfaceHeight());
   }
 
   @Override
-  public void destroy(GL2ES2 gl) {
+  public void destroy(Gl gl) {
     if (fboId >= 0) {
-      gl.glDeleteFramebuffers(1, Buffers.newDirectIntBuffer(new int[] {fboId}));
+      gl.glDeleteFramebuffers(fboId);
       fboId = -1;
     }
     super.destroy(gl);

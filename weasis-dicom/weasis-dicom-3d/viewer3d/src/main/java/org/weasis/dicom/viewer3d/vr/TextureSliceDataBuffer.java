@@ -11,22 +11,19 @@ package org.weasis.dicom.viewer3d.vr;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
+import java.lang.foreign.ValueLayout;
 import java.util.List;
 import java.util.Objects;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.weasis.opencv.data.PlanarImage;
 
-public record TextureSliceDataBuffer(Buffer buffer, Arena scope) {
+/** Off-heap staging block holding the pixels of one or more slices, in the texture's own type. */
+public record TextureSliceDataBuffer(MemorySegment segment, Arena scope) {
 
-  public TextureSliceDataBuffer(Buffer buffer, Arena scope) {
-    this.scope = Objects.requireNonNull(scope);
-    this.buffer = buffer;
+  public TextureSliceDataBuffer {
+    Objects.requireNonNull(scope);
+    Objects.requireNonNull(segment);
   }
 
   public void releaseMemory() {
@@ -38,44 +35,23 @@ public record TextureSliceDataBuffer(Buffer buffer, Arena scope) {
     int cvType = CvType.depth(image.type());
     int width = image.width();
     int height = image.height();
+    // Shared arena: the loader thread allocates, the GL thread may release.
+    Arena arena = Arena.ofShared();
     if (cvType == CvType.CV_8U) {
-      byte[] bSrcData = new byte[width * height * channels];
-      image.get(0, 0, bSrcData);
-      // Allow to be closed in another thread
-      Arena arena = Arena.ofShared();
-      MemorySegment bufferSegment = arena.allocate(bSrcData.length);
-      ByteBuffer buffer =
-          bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder()).put(bSrcData).rewind();
-      return new TextureSliceDataBuffer(buffer, arena);
+      byte[] data = new byte[width * height * channels];
+      image.get(0, 0, data);
+      return new TextureSliceDataBuffer(arena.allocateFrom(ValueLayout.JAVA_BYTE, data), arena);
     } else if (cvType == CvType.CV_16U || cvType == CvType.CV_16S) {
-      short[] sSrcData = new short[width * height * channels];
-      image.get(0, 0, sSrcData);
-      Arena arena = Arena.ofShared();
-      MemorySegment bufferSegment = arena.allocate(sSrcData.length * 2L);
-      ShortBuffer buffer =
-          bufferSegment
-              .asByteBuffer()
-              .order(ByteOrder.nativeOrder())
-              .asShortBuffer()
-              .put(sSrcData)
-              .rewind();
-      return new TextureSliceDataBuffer(buffer, arena);
+      short[] data = new short[width * height * channels];
+      image.get(0, 0, data);
+      return new TextureSliceDataBuffer(arena.allocateFrom(ValueLayout.JAVA_SHORT, data), arena);
     } else if (cvType == CvType.CV_32F) {
-      float[] fSrcData = new float[width * height * channels];
-      image.get(0, 0, fSrcData);
-      Arena arena = Arena.ofShared();
-      MemorySegment bufferSegment = arena.allocate(fSrcData.length * 4L);
-      FloatBuffer buffer =
-          bufferSegment
-              .asByteBuffer()
-              .order(ByteOrder.nativeOrder())
-              .asFloatBuffer()
-              .put(fSrcData)
-              .rewind();
-      return new TextureSliceDataBuffer(buffer, arena);
-    } else {
-      throw new IllegalArgumentException("Not supported dataType for LUT transformation:" + image);
+      float[] data = new float[width * height * channels];
+      image.get(0, 0, data);
+      return new TextureSliceDataBuffer(arena.allocateFrom(ValueLayout.JAVA_FLOAT, data), arena);
     }
+    arena.close();
+    throw new IllegalArgumentException("Not supported dataType for LUT transformation:" + image);
   }
 
   public static TextureSliceDataBuffer toImageData(List<Mat> slices) {
@@ -88,45 +64,39 @@ public record TextureSliceDataBuffer(Buffer buffer, Arena scope) {
     long depth = slices.size();
     int size = image.height() * image.width();
 
+    Arena arena = Arena.ofShared();
     if (cvType == CvType.CV_8U) {
-      byte[] bSrcData = new byte[size * channels];
-      Arena arena = Arena.ofShared();
-      MemorySegment bufferSegment = arena.allocate(bSrcData.length * depth);
-      ByteBuffer buf = bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder());
-
+      byte[] data = new byte[size * channels];
+      MemorySegment segment = arena.allocate(data.length * depth);
+      long offset = 0;
       for (Mat slice : slices) {
-        slice.get(0, 0, bSrcData);
-        buf.put(bSrcData);
+        slice.get(0, 0, data);
+        MemorySegment.copy(data, 0, segment, ValueLayout.JAVA_BYTE, offset, data.length);
+        offset += (long) data.length * Byte.BYTES;
       }
-      buf.rewind();
-      return new TextureSliceDataBuffer(buf, arena);
+      return new TextureSliceDataBuffer(segment, arena);
     } else if (cvType == CvType.CV_16U || cvType == CvType.CV_16S) {
-      short[] sSrcData = new short[size * channels];
-      Arena arena = Arena.ofShared();
-      MemorySegment bufferSegment = arena.allocate(sSrcData.length * depth * 2L);
-      ShortBuffer buf = bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder()).asShortBuffer();
-
+      short[] data = new short[size * channels];
+      MemorySegment segment = arena.allocate(data.length * depth * Short.BYTES);
+      long offset = 0;
       for (Mat slice : slices) {
-        slice.get(0, 0, sSrcData);
-        buf.put(sSrcData);
+        slice.get(0, 0, data);
+        MemorySegment.copy(data, 0, segment, ValueLayout.JAVA_SHORT, offset, data.length);
+        offset += (long) data.length * Short.BYTES;
       }
-      buf.rewind();
-
-      return new TextureSliceDataBuffer(buf, arena);
+      return new TextureSliceDataBuffer(segment, arena);
     } else if (cvType == CvType.CV_32F) {
-      float[] fSrcData = new float[size * channels];
-      Arena arena = Arena.ofShared();
-      MemorySegment bufferSegment = arena.allocate(fSrcData.length * depth * 4L);
-      FloatBuffer buf = bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder()).asFloatBuffer();
+      float[] data = new float[size * channels];
+      MemorySegment segment = arena.allocate(data.length * depth * Float.BYTES);
+      long offset = 0;
       for (Mat slice : slices) {
-        slice.get(0, 0, fSrcData);
-        buf.put(fSrcData);
+        slice.get(0, 0, data);
+        MemorySegment.copy(data, 0, segment, ValueLayout.JAVA_FLOAT, offset, data.length);
+        offset += (long) data.length * Float.BYTES;
       }
-      buf.rewind();
-
-      return new TextureSliceDataBuffer(buf, arena);
-    } else {
-      throw new IllegalArgumentException("Not supported dataType for LUT transformation:" + image);
+      return new TextureSliceDataBuffer(segment, arena);
     }
+    arena.close();
+    throw new IllegalArgumentException("Not supported dataType for LUT transformation:" + image);
   }
 }

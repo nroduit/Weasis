@@ -39,6 +39,8 @@ import org.weasis.dicom.viewer3d.View3DContainer;
 import org.weasis.dicom.viewer3d.View3DFactory;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.CameraView;
+import org.weasis.dicom.viewer3d.gl.GlRuntime;
+import org.weasis.dicom.viewer3d.gl.GlThread;
 import org.weasis.dicom.viewer3d.vr.CinematicQuality;
 import org.weasis.dicom.viewer3d.vr.RenderingLayer;
 
@@ -155,6 +157,15 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
       openglPanel.add(GuiUtils.getFlowLayoutPanel(labelCard));
       openglPanel.add(GuiUtils.getFlowLayoutPanel(version));
       openglPanel.add(GuiUtils.getFlowLayoutPanel(texture));
+      GlThread glThread = GlRuntime.threadIfStarted();
+      if (glThread != null) {
+        openglPanel.add(
+            GuiUtils.getFlowLayoutPanel(
+                new JLabel(
+                    Messages.getString("rendering.backend")
+                        + StringUtil.COLON_AND_SPACE
+                        + glThread.context().name())));
+      }
 
       // This minimal version must match with the shader version
       Semver minimalVersion = Semver.create(3, 3, 0);

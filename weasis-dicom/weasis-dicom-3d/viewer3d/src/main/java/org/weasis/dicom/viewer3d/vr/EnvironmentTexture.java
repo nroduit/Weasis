@@ -9,11 +9,10 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.common.nio.Buffers;
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL2GL3;
+import java.lang.foreign.Arena;
+import java.lang.foreign.ValueLayout;
 import java.util.Objects;
+import org.weasis.dicom.viewer3d.gl.Gl;
 
 /**
  * GL form of a baked {@link EnvironmentMap}: an RGB float equirectangular texture whose mip chain
@@ -42,39 +41,41 @@ public class EnvironmentTexture extends TextureData {
   }
 
   @Override
-  public void init(GL2ES2 gl) {
+  public void init(Gl gl) {
     super.init(gl);
-    gl.glActiveTexture(GL.GL_TEXTURE0 + TEXTURE_UNIT);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, getId());
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR_MIPMAP_LINEAR);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + TEXTURE_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, getId());
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_LINEAR_MIPMAP_LINEAR);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_LINEAR);
     // Longitude wraps, latitude clamps at the poles.
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_REPEAT);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL2GL3.GL_TEXTURE_MAX_LEVEL, EnvironmentMap.LEVELS - 1);
-    for (int level = 0; level < EnvironmentMap.LEVELS; level++) {
-      gl.glTexImage2D(
-          GL.GL_TEXTURE_2D,
-          level,
-          GL2GL3.GL_RGB32F,
-          baked.width(level),
-          baked.height(level),
-          0,
-          GL.GL_RGB,
-          GL.GL_FLOAT,
-          Buffers.newDirectFloatBuffer(baked.levels().get(level)).rewind());
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_S, Gl.GL_REPEAT);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_T, Gl.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAX_LEVEL, EnvironmentMap.LEVELS - 1);
+    try (Arena arena = Arena.ofConfined()) {
+      for (int level = 0; level < EnvironmentMap.LEVELS; level++) {
+        gl.glTexImage2D(
+            Gl.GL_TEXTURE_2D,
+            level,
+            Gl.GL_RGB32F,
+            baked.width(level),
+            baked.height(level),
+            0,
+            Gl.GL_RGB,
+            Gl.GL_FLOAT,
+            arena.allocateFrom(ValueLayout.JAVA_FLOAT, baked.levels().get(level)));
+      }
     }
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
   }
 
   /** Binds the texture on its unit, uploading it on first use. */
   @Override
-  public void render(GL2ES2 gl) {
+  public void render(Gl gl) {
     if (getId() <= 0) {
       init(gl);
     }
-    gl.glActiveTexture(GL.GL_TEXTURE0 + TEXTURE_UNIT);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, getId());
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + TEXTURE_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, getId());
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
   }
 }

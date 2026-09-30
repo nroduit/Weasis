@@ -9,9 +9,8 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
-import java.nio.IntBuffer;
+import java.lang.foreign.MemorySegment;
+import org.weasis.dicom.viewer3d.gl.Gl;
 
 /**
  * The linear float textures the path tracer averages into: a colour pair, a feature pair (first-hit
@@ -34,39 +33,39 @@ public class AccumulationBuffers {
   private int width;
   private int height;
 
-  private void allocate(GL2ES2 gl, int w, int h) {
+  private void allocate(Gl gl, int w, int h) {
     if (ids[0] <= 0) {
-      IntBuffer buf = IntBuffer.allocate(6);
-      gl.glGenTextures(6, buf);
-      ids[0] = buf.get(0);
-      ids[1] = buf.get(1);
-      featureIds[0] = buf.get(2);
-      featureIds[1] = buf.get(3);
-      momentIds[0] = buf.get(4);
-      momentIds[1] = buf.get(5);
+      int[] names = gl.glGenTextures(6);
+      ids[0] = names[0];
+      ids[1] = names[1];
+      featureIds[0] = names[2];
+      featureIds[1] = names[3];
+      momentIds[0] = names[4];
+      momentIds[1] = names[5];
     }
     for (int id : new int[] {ids[0], ids[1], featureIds[0], featureIds[1]}) {
-      allocate(gl, id, GL.GL_RGBA32F, GL.GL_RGBA, w, h);
+      allocate(gl, id, Gl.GL_RGBA32F, Gl.GL_RGBA, w, h);
     }
     for (int id : momentIds) {
-      allocate(gl, id, GL.GL_RG32F, GL2ES2.GL_RG, w, h);
+      allocate(gl, id, Gl.GL_RG32F, Gl.GL_RG, w, h);
     }
-    gl.glBindTexture(GL.GL_TEXTURE_2D, 0);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
     width = w;
     height = h;
   }
 
-  private static void allocate(GL2ES2 gl, int id, int internalFormat, int format, int w, int h) {
-    gl.glBindTexture(GL.GL_TEXTURE_2D, id);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-    gl.glTexImage2D(GL.GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, GL.GL_FLOAT, null);
+  private static void allocate(Gl gl, int id, int internalFormat, int format, int w, int h) {
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, id);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_NEAREST);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_S, Gl.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_T, Gl.GL_CLAMP_TO_EDGE);
+    gl.glTexImage2D(
+        Gl.GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, Gl.GL_FLOAT, MemorySegment.NULL);
   }
 
   /** Sizes the pairs to the render target and binds the history textures on their units. */
-  public void prepare(GL2ES2 gl, int w, int h) {
+  public void prepare(Gl gl, int w, int h) {
     if (ids[0] <= 0 || width != w || height != h) {
       allocate(gl, Math.max(w, 1), Math.max(h, 1));
     }
@@ -74,17 +73,17 @@ public class AccumulationBuffers {
   }
 
   /** Binds whatever the pairs hold so the samplers are complete even when history is not read. */
-  public void bindHistory(GL2ES2 gl) {
+  public void bindHistory(Gl gl) {
     if (ids[0] <= 0) {
       allocate(gl, 1, 1);
     }
-    gl.glActiveTexture(GL.GL_TEXTURE0 + HISTORY_UNIT);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, ids[current]);
-    gl.glActiveTexture(GL.GL_TEXTURE0 + FEATURE_UNIT);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, featureIds[current]);
-    gl.glActiveTexture(GL.GL_TEXTURE0 + MOMENT_UNIT);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, momentIds[current]);
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + HISTORY_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, ids[current]);
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + FEATURE_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, featureIds[current]);
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + MOMENT_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, momentIds[current]);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
   }
 
   /** Texture holding the colour average read this frame. */
@@ -117,11 +116,11 @@ public class AccumulationBuffers {
     current = 1 - current;
   }
 
-  public void destroy(GL2ES2 gl) {
+  public void destroy(Gl gl) {
     if (ids[0] > 0) {
-      gl.glDeleteTextures(2, ids, 0);
-      gl.glDeleteTextures(2, featureIds, 0);
-      gl.glDeleteTextures(2, momentIds, 0);
+      gl.glDeleteTextures(ids);
+      gl.glDeleteTextures(featureIds);
+      gl.glDeleteTextures(momentIds);
       ids[0] = 0;
       ids[1] = 0;
       featureIds[0] = 0;

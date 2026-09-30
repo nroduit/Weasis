@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.opengl.awt.GLJPanel;
 import java.awt.GraphicsConfiguration;
 import java.awt.Point;
 import java.awt.Window;
@@ -22,6 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.joml.Vector3d;
 import org.slf4j.Logger;
@@ -45,7 +45,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 
-public class VolumeCanvas extends GLJPanel implements Canvas {
+public class VolumeCanvas extends JPanel implements Canvas {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(VolumeCanvas.class);
 
@@ -68,7 +68,6 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
       ImageViewerEventManager<DicomImageElement> eventManager,
       DicomVolTexture volTexture,
       VolumeViewModel viewModel) {
-    super(OpenglUtils.getDefaultCapabilities());
     this.volTexture = volTexture;
     this.eventManager = (EventManager) eventManager;
     this.camera = new Camera(this);
@@ -190,6 +189,41 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
 
   public double getAspectRatio() {
     return getSurfaceWidth() / (double) getSurfaceHeight();
+  }
+
+  /**
+   * Width of the frame in physical pixels: the panel's own width times the scale of the display it
+   * is on, which is what the ray-caster, the camera and the render target are sized with.
+   */
+  public int getSurfaceWidth() {
+    return (int) Math.round(getWidth() * scale(true));
+  }
+
+  public int getSurfaceHeight() {
+    return (int) Math.round(getHeight() * scale(false));
+  }
+
+  private double scale(boolean horizontal) {
+    GraphicsConfiguration configuration = getGraphicsConfiguration();
+    if (configuration == null) {
+      return 1.0;
+    }
+    AffineTransform transform = configuration.getDefaultTransform();
+    return horizontal ? transform.getScaleX() : transform.getScaleY();
+  }
+
+  /**
+   * Asks for a new frame. The Swing thread paints it; the renderer is not entered from here, so
+   * this is safe to call from anywhere.
+   */
+  public void display() {
+    setDirty();
+    repaint();
+  }
+
+  /** Marks the frame out of date without asking for a repaint yet. */
+  protected void setDirty() {
+    // Overridden by the view that owns a render target.
   }
 
   public void setRotation(Integer val) {

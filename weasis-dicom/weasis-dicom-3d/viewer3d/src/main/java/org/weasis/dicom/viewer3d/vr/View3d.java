@@ -9,15 +9,6 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.common.nio.Buffers;
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL2ES3;
-import com.jogamp.opengl.GL2GL3;
-import com.jogamp.opengl.GL4;
-import com.jogamp.opengl.GLAutoDrawable;
-import com.jogamp.opengl.GLContext;
-import com.jogamp.opengl.GLEventListener;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -38,7 +29,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.nio.IntBuffer;
+import java.lang.foreign.Arena;
+import java.lang.foreign.ValueLayout;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -66,6 +58,7 @@ import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
+import org.joml.Vector4d;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -122,6 +115,10 @@ import org.weasis.dicom.viewer3d.export.RotationSourceBuilder;
 import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.View;
+import org.weasis.dicom.viewer3d.gl.Gl;
+import org.weasis.dicom.viewer3d.gl.GlException;
+import org.weasis.dicom.viewer3d.gl.GlRuntime;
+import org.weasis.dicom.viewer3d.gl.RenderTarget;
 import org.weasis.dicom.viewer3d.vr.TextureData.PixelFormat;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.LutShape;
@@ -130,11 +127,18 @@ import org.weasis.opencv.seg.RegionAttributes;
 public class View3d extends VolumeCanvas
     implements ViewCanvas<DicomImageElement>,
         RenderingLayerChangeListener<DicomImageElement>,
-        GLEventListener,
         ViewProgress,
         LiveCaptureView {
 
   private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(View3d.class);
+
+  /** What the view draws into and what Swing paints from. Owned by the GL thread. */
+  private final RenderTarget renderTarget = new RenderTarget();
+
+  /** Set by everything that used to force a {@code display()}; cleared once the frame is read. */
+  private volatile boolean dirty = true;
+
+  private boolean shadersReady;
 
   static final float[] vertexBufferData =
       new float[] {
@@ -166,8 +170,20 @@ public class View3d extends VolumeCanvas
   /** Whether the tracer program has been linked and given the uniform setters of the main one. */
   private boolean tracerReady;
 
-  /** Whether the background link of the tracer program has been started. */
-  private boolean tracerPrelinkStarted;
+  /**
+   * Set while a driver with parallel shader compile is still linking the tracer program; path
+   * tracing then shows its composite preview and polls the link on {@link #tracerLinkPoll}.
+   */
+  private boolean tracerLinking;
+
+  private final Timer tracerLinkPoll =
+      new Timer(
+          TRACER_LINK_POLL_MS,
+          e -> {
+            if (isShowing()) {
+              display();
+            }
+          });
 
   /** Post-pass of the path tracer: filters the running average into the display image. */
   private final Program denoiseProgram;
@@ -196,6 +212,9 @@ public class View3d extends VolumeCanvas
 
   /** Samples per pixel a path-traced scene accumulates before the view stops refining itself. */
   public static final int PATH_TRACING_FRAMES = 512;
+
+  /** Interval at which a frame checks whether the driver has finished linking the tracer. */
+  private static final int TRACER_LINK_POLL_MS = 50;
 
   /** Displayed frame time the sample count per frame is tuned to. */
   private static final long TARGET_FRAME_NANOS = 50_000_000L;
@@ -234,13 +253,13 @@ public class View3d extends VolumeCanvas
   /** Bumped by every change that is not visible in the fingerprint's other inputs. */
   private int sceneVersion;
 
-  /** Repaints while the average converges; coalesced so the EDT keeps serving other events. */
+  /** Renders again while the average converges; coalesced so the EDT keeps serving other events. */
   private final Timer accumulationTimer =
       new Timer(
           0,
           e -> {
             if (isShowing()) {
-              repaint();
+              display();
             }
           });
 
@@ -315,16 +334,13 @@ public class View3d extends VolumeCanvas
     }
     this.quadProgram =
         new Program("basic", ShaderManager.VERTEX_SHADER, ShaderManager.FRAGMENT_SHADER); // NON-NLS
-    try {
-      setSharedContext(OpenglUtils.getDefaultGlContext());
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
     setLayout(null);
+    setOpaque(true);
 
     this.renderingLayer = new RenderingLayer<>();
     renderingLayer.getShadingOptions().loadCinematic(GuiUtils.getUICore().getLocalPersistence());
     accumulationTimer.setRepeats(false);
+    tracerLinkPoll.setRepeats(false);
     this.volumePreset = Preset.getDefaultPreset(null);
     this.renderedPreset = volumePreset;
     renderedPreset.setRequiredBuilding(true);
@@ -343,8 +359,6 @@ public class View3d extends VolumeCanvas
     setBorder(viewBorder);
     setPreferredSize(new Dimension(4096, 4096));
     setMinimumSize(new Dimension(50, 50));
-
-    addGLEventListener(this);
   }
 
   protected void initActionWState() {
@@ -381,7 +395,7 @@ public class View3d extends VolumeCanvas
             if (currentZoom <= 0.0) {
               zoom(0.0);
             }
-            repaint();
+            display();
           }
         });
   }
@@ -410,7 +424,7 @@ public class View3d extends VolumeCanvas
               && arr[1] instanceof Quaterniond rot) {
             mprCrossHairPosition = new Vector3d(pos);
             mprCrossHairRotation = new Quaterniond(rot);
-            repaint();
+            display();
           }
         };
     mprCrossHairListenerSource = newTexture;
@@ -428,31 +442,36 @@ public class View3d extends VolumeCanvas
       GuiUtils.getUICore().closeSeries(volTexture.getSeries());
     }
     accumulationTimer.stop();
-    GL2ES2 gl = OpenglUtils.getGL();
-    if (gl != null) {
-      program.destroy(gl);
-      tracerProgram.destroy(gl);
-      tracerReady = false;
-      quadProgram.destroy(gl);
-      denoiseProgram.destroy(gl);
-      texture.destroy(gl);
-      accumulation.destroy(gl);
-      majorantMap.dispose(gl);
-      environmentTextures.values().forEach(t -> t.destroy(gl));
-      environmentTextures.clear();
-      destroyRetiredPresets(gl);
-      if (renderedPreset != null && renderedPreset.isPreview()) {
-        renderedPreset.destroy(gl);
-      }
-      SegVolumeTexture svt = segVolumeTexture;
-      if (svt != null) {
-        // destroy() releases the SegVolumeTexture's retain on the SegmentationVolume.
-        // If no other consumer (e.g. MprController) is still holding the volume the CPU
-        // buffers are freed inside release(); otherwise they stay alive for the MPR overlay.
-        svt.destroy(gl);
-        segVolumeTexture = null;
-      }
-    }
+    tracerLinkPoll.stop();
+    Preset retiredPreset =
+        renderedPreset != null && renderedPreset.isPreview() ? renderedPreset : null;
+    SegVolumeTexture svt = segVolumeTexture;
+    segVolumeTexture = null;
+    List<EnvironmentTexture> environments = List.copyOf(environmentTextures.values());
+    environmentTextures.clear();
+    tracerReady = false;
+    GlRuntime.submit(
+        gl -> {
+          program.destroy(gl);
+          tracerProgram.destroy(gl);
+          quadProgram.destroy(gl);
+          denoiseProgram.destroy(gl);
+          texture.destroy(gl);
+          accumulation.destroy(gl);
+          majorantMap.dispose(gl);
+          renderTarget.destroy(gl);
+          environments.forEach(t -> t.destroy(gl));
+          destroyRetiredPresets(gl);
+          if (retiredPreset != null) {
+            retiredPreset.destroy(gl);
+          }
+          if (svt != null) {
+            // destroy() releases the SegVolumeTexture's retain on the SegmentationVolume. If no
+            // other consumer (e.g. MprController) still holds the volume the CPU buffers are
+            // freed inside release(); otherwise they stay alive for the MPR overlay.
+            svt.destroy(gl);
+          }
+        });
     super.disposeView();
   }
 
@@ -522,11 +541,11 @@ public class View3d extends VolumeCanvas
     long panelStart = profiler.start();
     long frameStart = System.nanoTime();
     tracedSamples = 0;
-    // Triggers display() — the GL pass — then the GLJPanel read-back into the Java2D pipeline.
-    super.paintComponent(graphs);
+    renderFrameIfNeeded();
     adaptSamplesPerFrame(System.nanoTime() - frameStart);
     long overlayStart = profiler.start();
     if (graphs instanceof Graphics2D graphics2D) {
+      drawRenderedFrame(graphics2D);
       draw(graphics2D);
     }
     profiler.endFrame(
@@ -553,6 +572,49 @@ public class View3d extends VolumeCanvas
     } else if (frameNanos > TARGET_FRAME_NANOS * 3 / 2) {
       samplesPerFrame = Math.max(samplesPerFrame / 2, 1);
     }
+  }
+
+  /**
+   * Renders on the GL thread and waits for it, as the panel used to wait for its own drawable. An
+   * expose or an overlay-only repaint finds the frame still valid and paints it again for free.
+   */
+  private void renderFrameIfNeeded() {
+    if (!dirty || getWidth() <= 0 || getHeight() <= 0) {
+      return;
+    }
+    dirty = false;
+    try {
+      GlRuntime.thread()
+          .invokeAndWait(
+              gl -> {
+                if (!shadersReady) {
+                  initShaders(gl);
+                  shadersReady = true;
+                }
+                renderTarget.ensureSize(gl, getSurfaceWidth(), getSurfaceHeight());
+                renderTarget.bind(gl);
+                render(gl, renderTarget);
+                renderTarget.unbind(gl);
+                renderTarget.read(gl);
+                return null;
+              });
+    } catch (GlException e) {
+      // The frame is skipped and the previous one stays on screen; 3D is not torn down for it.
+      LOGGER.error("Rendering a 3D frame", e);
+    }
+  }
+
+  /** Paints the last frame, stretched while a live resize outruns the renderer. */
+  private void drawRenderedFrame(Graphics2D g2d) {
+    java.awt.image.BufferedImage frame = renderTarget.image();
+    if (frame != null) {
+      g2d.drawImage(frame, 0, 0, getWidth(), getHeight(), null);
+    }
+  }
+
+  @Override
+  protected void setDirty() {
+    dirty = true;
   }
 
   protected void draw(Graphics2D g2d) {
@@ -681,13 +743,7 @@ public class View3d extends VolumeCanvas
     return progressBar;
   }
 
-  @Override
-  public void init(GLAutoDrawable glAutoDrawable) {
-    GL2ES2 gl = glAutoDrawable.getGL().getGL2ES2();
-    initShaders(gl);
-  }
-
-  public void initShaders(GL2ES2 gl) {
+  public void initShaders(Gl gl) {
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     Color lightColor = preferences.getColorProperty(RenderingLayer.P_LIGHT_COLOR, Color.WHITE);
     Vector3f lColor =
@@ -703,20 +759,13 @@ public class View3d extends VolumeCanvas
         gl,
         "viewMatrix",
         (g, loc) ->
-            g.glUniformMatrix4fv(
-                loc,
-                1,
-                false,
-                camera.getViewMatrix().invert().get(Buffers.newDirectFloatBuffer(16))));
+            g.glUniformMatrix4fv(loc, false, camera.getViewMatrix().invert().get(new float[16])));
     program.allocateUniform(
         gl,
         "projectionMatrix",
         (g, loc) ->
             g.glUniformMatrix4fv(
-                loc,
-                1,
-                false,
-                camera.getProjectionMatrix().invert().get(Buffers.newDirectFloatBuffer(16))));
+                loc, false, camera.getProjectionMatrix().invert().get(new float[16])));
     program.allocateUniform(
         gl,
         "depthSampleNumber",
@@ -724,21 +773,26 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl,
         "lutShape",
-        (g, loc) ->
-            ((GL2ES3) g).glUniform1ui(loc, isSegMode() ? 0 : renderingLayer.getLutShapeId()));
+        (g, loc) -> g.glUniform1ui(loc, isSegMode() ? 0 : renderingLayer.getLutShapeId()));
 
     program.allocateUniform(
         gl,
         "backgroundColor",
-        (g, loc) -> g.glUniform3fv(loc, 1, bColor.get(Buffers.newDirectFloatBuffer(3))));
+        (g, loc) -> g.glUniform3fv(loc, new float[] {bColor.x, bColor.y, bColor.z}));
 
     for (int i = 0; i < 4; ++i) {
       int val = i;
       program.allocateUniform(
           gl,
           String.format("lights[%d].position", val), // NON-NLS
-          (g, loc) ->
-              g.glUniform4fv(loc, 1, camera.getLightOrigin().get(Buffers.newDirectFloatBuffer(4))));
+          (g, loc) -> {
+            Vector4d origin = camera.getLightOrigin();
+            g.glUniform4fv(
+                loc,
+                new float[] {
+                  (float) origin.x, (float) origin.y, (float) origin.z, (float) origin.w
+                });
+          });
       program.allocateUniform(
           gl,
           String.format("lights[%d].specularPower", val), // NON-NLS
@@ -751,7 +805,7 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl,
         "lightColor",
-        (g, loc) -> g.glUniform3fv(loc, 1, lColor.get(Buffers.newDirectFloatBuffer(3))));
+        (g, loc) -> g.glUniform3fv(loc, new float[] {lColor.x, lColor.y, lColor.z}));
     program.allocateUniform(
         gl,
         "shading",
@@ -764,28 +818,25 @@ public class View3d extends VolumeCanvas
         "texelSize",
         (g, loc) -> {
           DicomVolTexture tex = volTexture;
-          Vector3f texelSizeVal =
+          Vector3f texel =
               tex != null
                   ? tex.getNormalizedTexelSize().get(new Vector3f())
                   : new Vector3f(1f, 1f, 1f);
-          g.glUniform3fv(loc, 1, texelSizeVal.get(Buffers.newDirectFloatBuffer(3)));
+          g.glUniform3fv(loc, new float[] {texel.x, texel.y, texel.z});
         });
 
     program.allocateUniform(
-        gl,
-        "renderingType",
-        (g, loc) -> ((GL2ES3) g).glUniform1ui(loc, effectiveRenderingType().getId()));
+        gl, "renderingType", (g, loc) -> g.glUniform1ui(loc, effectiveRenderingType().getId()));
     program.allocateUniform(
         gl,
         "mipType",
-        (g, loc) ->
-            ((GL2ES3) g).glUniform1ui(loc, renderingLayer.getRenderingType().getMipTypeId()));
+        (g, loc) -> g.glUniform1ui(loc, renderingLayer.getRenderingType().getMipTypeId()));
     program.allocateUniform(gl, "volTexture", (g, loc) -> g.glUniform1i(loc, 0));
     program.allocateUniform(gl, "colorMap", (g, loc) -> g.glUniform1i(loc, 1));
     program.allocateUniform(
         gl,
         "textureDataType",
-        (g, loc) -> ((GL2ES3) g).glUniform1ui(loc, TextureData.getDataType(getPixelFormat())));
+        (g, loc) -> g.glUniform1ui(loc, TextureData.getDataType(getPixelFormat())));
 
     program.allocateUniform(
         gl, "opacityFactor", (g, loc) -> g.glUniform1f(loc, (float) renderingLayer.getOpacity()));
@@ -825,7 +876,7 @@ public class View3d extends VolumeCanvas
         (g, loc) -> {
           float[] table = renderedPreset.getGradientOpacityTable();
           if (table != null) {
-            g.glUniform1fv(loc, table.length, table, 0);
+            g.glUniform1fv(loc, table);
           }
         });
     program.allocateUniform(
@@ -867,7 +918,6 @@ public class View3d extends VolumeCanvas
           gl, "overlayScale", (g, loc) -> g.glUniform1f(loc, getRenderScaleX()));
     }
 
-    final IntBuffer intBuffer = IntBuffer.allocate(1);
     texture.init(gl);
     if (volTexture != null) {
       volTexture.init(gl);
@@ -899,7 +949,7 @@ public class View3d extends VolumeCanvas
             (float) m.m01, (float) m.m11, (float) m.m21,
             (float) m.m02, (float) m.m12, (float) m.m22
           };
-          g.glUniformMatrix3fv(loc, 1, false, f, 0);
+          g.glUniformMatrix3fv(loc, false, f);
         });
     program.allocateUniform(
         gl,
@@ -964,45 +1014,20 @@ public class View3d extends VolumeCanvas
         "featureMap",
         "momentMap");
 
-    gl.glGenBuffers(1, intBuffer);
-    vertexBuffer = intBuffer.get(0);
-    gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBuffer);
-    gl.glBufferData(
-        GL.GL_ARRAY_BUFFER,
-        (long) vertexBufferData.length * Float.BYTES,
-        Buffers.newDirectFloatBuffer(vertexBufferData),
-        GL.GL_STATIC_DRAW);
-    prelinkTracer();
-  }
-
-  /**
-   * Links the tracer program on the shared context, off the EDT, so choosing path tracing does not
-   * wait the seconds the driver takes to link it the first time it sees this shader. Program
-   * objects are shared between the contexts; a frame that needs it before this is done links it
-   * itself, one of the two waiting on the other.
-   */
-  private void prelinkTracer() {
-    if (tracerPrelinkStarted) {
-      return;
+    vertexBuffer = gl.glGenBuffers(1)[0];
+    gl.glBindBuffer(Gl.GL_ARRAY_BUFFER, vertexBuffer);
+    try (Arena arena = Arena.ofConfined()) {
+      gl.glBufferData(
+          Gl.GL_ARRAY_BUFFER,
+          (long) vertexBufferData.length * Float.BYTES,
+          arena.allocateFrom(ValueLayout.JAVA_FLOAT, vertexBufferData),
+          Gl.GL_STATIC_DRAW);
     }
-    tracerPrelinkStarted = true;
-    CompletableFuture.runAsync(
-            () -> {
-              GLContext context = OpenglUtils.getDefaultGlContext();
-              context.makeCurrent();
-              try {
-                GL2ES2 gl = context.getGL().getGL2ES2();
-                tracerProgram.init(gl);
-                gl.glFlush();
-              } finally {
-                context.release();
-              }
-            })
-        .exceptionally(
-            e -> {
-              LOGGER.warn("Cannot link the path tracing program in the background", e);
-              return null;
-            });
+    // The driver links the tracer on its own threads while the view shows other renderings, so
+    // choosing path tracing does not wait the seconds the first link of this shader takes.
+    if (gl.isParallelShaderCompile()) {
+      tracerProgram.startLink(gl);
+    }
   }
 
   private boolean isSegMode() {
@@ -1023,11 +1048,7 @@ public class View3d extends VolumeCanvas
     return format;
   }
 
-  public void display(GLAutoDrawable drawable) {
-    render(drawable.getGL().getGL2ES2());
-  }
-
-  private void allocateCinematicUniforms(GL2ES2 gl) {
+  private void allocateCinematicUniforms(Gl gl) {
     ShadingOptions options = renderingLayer.getShadingOptions();
     program.allocateUniform(
         gl,
@@ -1037,9 +1058,10 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl,
         "keyLightDir",
-        (g, loc) ->
-            g.glUniform3fv(
-                loc, 1, options.getKeyLightDirection().get(Buffers.newDirectFloatBuffer(3))));
+        (g, loc) -> {
+          Vector3f dir = options.getKeyLightDirection();
+          g.glUniform3fv(loc, new float[] {dir.x, dir.y, dir.z});
+        });
     program.allocateUniform(
         gl, "shadowStrength", (g, loc) -> g.glUniform1f(loc, options.getShadowStrength()));
     program.allocateUniform(
@@ -1065,12 +1087,12 @@ public class View3d extends VolumeCanvas
         (g, loc) -> {
           EnvironmentTexture env = environmentTexture();
           if (env != null) {
-            g.glUniform3fv(loc, 9, env.getIrradianceSh(), 0);
+            g.glUniform3fv(loc, env.getIrradianceSh());
           }
         });
   }
 
-  private void allocatePathTracingUniforms(GL2ES2 gl) {
+  private void allocatePathTracingUniforms(Gl gl) {
     program.allocateUniform(
         gl, "historyMap", (g, loc) -> g.glUniform1i(loc, AccumulationBuffers.HISTORY_UNIT));
     program.allocateUniform(
@@ -1102,11 +1124,25 @@ public class View3d extends VolumeCanvas
 
   /** Path tracing is asked for, but the camera is moving: the cinematic composite stands in. */
   private boolean isPathTracingPreview() {
-    return renderingLayer.getRenderingType() == RenderingType.PATH_TRACING && camera.isAdjusting();
+    return renderingLayer.getRenderingType() == RenderingType.PATH_TRACING
+        && (camera.isAdjusting() || tracerLinking);
   }
 
   private boolean isPathTracingFrame() {
-    return renderingLayer.getRenderingType() == RenderingType.PATH_TRACING && !camera.isAdjusting();
+    return renderingLayer.getRenderingType() == RenderingType.PATH_TRACING
+        && !camera.isAdjusting()
+        && !tracerLinking;
+  }
+
+  // Polls the tracer link; until it completes, the frame is the composite preview.
+  private void checkTracerLink(Gl gl) {
+    if (renderingLayer.getRenderingType() != RenderingType.PATH_TRACING || camera.isAdjusting()) {
+      return;
+    }
+    tracerLinking = !tracerProgram.isReady(gl);
+    if (tracerLinking) {
+      tracerLinkPoll.restart();
+    }
   }
 
   /** Whether the volume and its segmentation overlay have finished loading. */
@@ -1176,7 +1212,7 @@ public class View3d extends VolumeCanvas
   }
 
   // Binds the history and the write target of the average, restarting it when the scene changed.
-  private void beginPathTracingFrame(GL2ES2 gl) {
+  private void beginPathTracingFrame(Gl gl) {
     long fingerprint = computeSceneFingerprint();
     if (fingerprint != sceneFingerprint) {
       sceneFingerprint = fingerprint;
@@ -1202,7 +1238,7 @@ public class View3d extends VolumeCanvas
    * bake runs its own program, so the active one is restored afterwards. The vertex array of the
    * quad must be set up.
    */
-  private void bindMajorantMap(GL2ES2 gl, Program active) {
+  private void bindMajorantMap(Gl gl, Program active) {
     if (!majorantGridReady) {
       majorantMap.bindPlaceholder(gl);
       return;
@@ -1228,7 +1264,7 @@ public class View3d extends VolumeCanvas
    * pass, then schedules the next refinement until the frame budget is spent. On the FBO path the
    * vertex array must still be set up.
    */
-  private void endPathTracingFrame(GL2ES2 gl) {
+  private void endPathTracingFrame(Gl gl) {
     accumulation.swap();
     int before = frameIndex;
     frameIndex += tracedSamples;
@@ -1246,9 +1282,8 @@ public class View3d extends VolumeCanvas
     denoiseProgram.use(gl);
     denoiseProgram.setUniforms(gl);
     if (texture instanceof ComputeTexture compute) {
-      GL4 gl4 = gl.getGL4();
-      compute.dispatch(gl4);
-      gl4.glMemoryBarrier(GL2ES3.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+      compute.dispatch(gl);
+      gl.glMemoryBarrier(Gl.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     } else if (texture instanceof FboRenderTexture fbo) {
       fbo.renderDenoisePass(gl);
     }
@@ -1281,7 +1316,7 @@ public class View3d extends VolumeCanvas
 
   // The sampler must always see a complete texture on its unit, so the environment is bound even
   // when unused: the first available one stands in for NONE.
-  private void bindEnvironmentTexture(GL2ES2 gl) {
+  private void bindEnvironmentTexture(Gl gl) {
     EnvironmentTexture env = environmentTexture();
     if (env == null) {
       env =
@@ -1346,55 +1381,56 @@ public class View3d extends VolumeCanvas
    * shader never reaches, so leaving the {@code usampler3D} unit empty makes strict implementations
    * (macOS) report an incomplete texture on each draw.
    */
-  private void bindSegTextures(GL2ES2 gl) {
+  private void bindSegTextures(Gl gl) {
     SegVolumeTexture svt = segVolumeTexture;
     if (svt != null && svt.isReady()) {
       svt.bind(gl);
       return;
     }
     if (segPlaceholderTextureId <= 0) {
-      IntBuffer buf = IntBuffer.allocate(2);
-      gl.glGenTextures(2, buf);
-      segPlaceholderTextureId = buf.get(0);
-      segPlaceholderColorId = buf.get(1);
+      int[] names = gl.glGenTextures(2);
+      segPlaceholderTextureId = names[0];
+      segPlaceholderColorId = names[1];
 
-      gl.glActiveTexture(GL.GL_TEXTURE0 + SegVolumeTexture.SEG_TEXTURE_UNIT);
-      gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, segPlaceholderTextureId);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-      gl.glTexImage3D(
-          GL2ES2.GL_TEXTURE_3D,
-          0,
-          GL2ES3.GL_R8UI,
-          1,
-          1,
-          1,
-          0,
-          GL2GL3.GL_RED_INTEGER,
-          GL.GL_UNSIGNED_BYTE,
-          Buffers.newDirectByteBuffer(1));
+      try (Arena arena = Arena.ofConfined()) {
+        gl.glActiveTexture(Gl.GL_TEXTURE0 + SegVolumeTexture.SEG_TEXTURE_UNIT);
+        gl.glBindTexture(Gl.GL_TEXTURE_3D, segPlaceholderTextureId);
+        gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
+        gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_NEAREST);
+        gl.glTexImage3D(
+            Gl.GL_TEXTURE_3D,
+            0,
+            Gl.GL_R8UI,
+            1,
+            1,
+            1,
+            0,
+            Gl.GL_RED_INTEGER,
+            Gl.GL_UNSIGNED_BYTE,
+            arena.allocate(1));
 
-      gl.glActiveTexture(GL.GL_TEXTURE0 + SegVolumeTexture.SEG_COLOR_UNIT);
-      gl.glBindTexture(GL.GL_TEXTURE_2D, segPlaceholderColorId);
-      gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-      gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-      gl.glTexImage2D(
-          GL.GL_TEXTURE_2D,
-          0,
-          GL.GL_RGBA8,
-          1,
-          1,
-          0,
-          GL.GL_RGBA,
-          GL.GL_UNSIGNED_BYTE,
-          Buffers.newDirectByteBuffer(4));
+        gl.glActiveTexture(Gl.GL_TEXTURE0 + SegVolumeTexture.SEG_COLOR_UNIT);
+        gl.glBindTexture(Gl.GL_TEXTURE_2D, segPlaceholderColorId);
+        gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
+        gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_NEAREST);
+        gl.glTexImage2D(
+            Gl.GL_TEXTURE_2D,
+            0,
+            Gl.GL_RGBA8,
+            1,
+            1,
+            0,
+            Gl.GL_RGBA,
+            Gl.GL_UNSIGNED_BYTE,
+            arena.allocate(4));
+      }
     } else {
-      gl.glActiveTexture(GL.GL_TEXTURE0 + SegVolumeTexture.SEG_TEXTURE_UNIT);
-      gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, segPlaceholderTextureId);
-      gl.glActiveTexture(GL.GL_TEXTURE0 + SegVolumeTexture.SEG_COLOR_UNIT);
-      gl.glBindTexture(GL.GL_TEXTURE_2D, segPlaceholderColorId);
+      gl.glActiveTexture(Gl.GL_TEXTURE0 + SegVolumeTexture.SEG_TEXTURE_UNIT);
+      gl.glBindTexture(Gl.GL_TEXTURE_3D, segPlaceholderTextureId);
+      gl.glActiveTexture(Gl.GL_TEXTURE0 + SegVolumeTexture.SEG_COLOR_UNIT);
+      gl.glBindTexture(Gl.GL_TEXTURE_2D, segPlaceholderColorId);
     }
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
   }
 
   // A replaced preview preset belongs to this view only: its textures go at the next frame.
@@ -1404,17 +1440,25 @@ public class View3d extends VolumeCanvas
     }
   }
 
-  private void destroyRetiredPresets(GL2ES2 gl) {
+  private void destroyRetiredPresets(Gl gl) {
     Preset retired;
     while ((retired = retiredPresets.poll()) != null) {
       retired.destroy(gl);
     }
   }
 
-  private void render(GL2ES2 gl2) {
+  private void render(Gl gl) {
+    render(gl, null);
+  }
+
+  /**
+   * Draws one frame into {@code target}. The ray-cast pass of the FBO path binds a framebuffer of
+   * its own and unbinds it when it is done, so the target is bound again before the blit.
+   */
+  private void render(Gl gl, RenderTarget target) {
     long start = profiler.start();
-    destroyRetiredPresets(gl2);
-    gl2.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+    destroyRetiredPresets(gl);
+    gl.glClear(Gl.GL_COLOR_BUFFER_BIT | Gl.GL_DEPTH_BUFFER_BIT);
     if (volTexture != null && volTexture.isReadyForDisplay()) {
       int sampleCount = renderingLayer.getQuality();
       if (camera.isAdjusting()) {
@@ -1422,120 +1466,92 @@ public class View3d extends VolumeCanvas
       }
       renderingLayer.setDepthSampleNumber(sampleCount);
 
+      checkTracerLink(gl);
       boolean pathTracing = isPathTracingFrame();
       if (pathTracing) {
-        beginPathTracingFrame(gl2);
+        beginPathTracingFrame(gl);
       } else {
         frameIndex = 0;
         tracedSamples = 0;
         majorantGridReady = false;
-        accumulation.bindHistory(gl2);
+        accumulation.bindHistory(gl);
         setAccumulationTargets(0, 0, 0);
       }
 
       Program active = pathTracing ? tracerProgram : program;
+      active.use(gl);
+      active.setUniforms(gl);
+      volTexture.render(gl);
+      if (volumePreset != null) {
+        renderedPreset.render(gl, renderingLayer.isInvertLut());
+      }
+      // Bind segmentation overlay textures (units 4 and 5)
+      bindSegTextures(gl);
+      bindEnvironmentTexture(gl);
+
       if (useComputeShader) {
         // --- Compute shader path (OpenGL >= 4.3) ---
-        // Cast to GL4 here: compute shaders (glDispatchCompute, glBindImageTexture) are GL4-only.
-        GL4 gl4 = gl2.getGL4();
-        active.use(gl4);
-        active.setUniforms(gl4);
-        volTexture.render(gl4);
-        if (volumePreset != null) {
-          renderedPreset.render(gl4, renderingLayer.isInvertLut());
-        }
-        // Bind segmentation overlay textures (units 4 and 5)
-        bindSegTextures(gl4);
-        bindEnvironmentTexture(gl4);
         if (pathTracing) {
-          gl4.glEnableVertexAttribArray(0);
-          gl4.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBuffer);
-          gl4.glVertexAttribPointer(0, 2, GL.GL_FLOAT, false, 0, 0);
-          bindMajorantMap(gl4, active);
-          gl4.glDisableVertexAttribArray(0);
+          gl.glEnableVertexAttribArray(0);
+          gl.glBindBuffer(Gl.GL_ARRAY_BUFFER, vertexBuffer);
+          gl.glVertexAttribPointer(0, 2, Gl.GL_FLOAT, false, 0, 0);
+          bindMajorantMap(gl, active);
+          gl.glDisableVertexAttribArray(0);
         }
-        texture.render(gl4);
+        texture.render(gl);
         if (pathTracing) {
-          endPathTracingFrame(gl4);
+          endPathTracingFrame(gl);
         }
-        quadProgram.use(gl4);
-        quadProgram.setUniforms(gl4);
-
-        gl4.glEnable(GL.GL_BLEND);
-        gl4.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-
-        gl4.glEnableVertexAttribArray(0);
-        gl4.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBuffer);
-        gl4.glVertexAttribPointer(0, 2, GL.GL_FLOAT, false, 0, 0);
-        gl4.glActiveTexture(GL.GL_TEXTURE0);
-        gl4.glBindTexture(GL.GL_TEXTURE_2D, texture.getId());
-        gl4.glDrawArrays(GL.GL_TRIANGLES, 0, vertexBufferData.length / 2);
-        gl4.glDisableVertexAttribArray(0);
-        gl4.glDisable(GL.GL_BLEND);
+        rebind(gl, target);
+        blit(gl, Gl.GL_TEXTURE0);
       } else {
         // --- FBO fragment-shader fallback path (OpenGL 3.3+, e.g., macOS GL3) ---
-        active.use(gl2);
-        active.setUniforms(gl2);
-
-        // Bind volume and LUT textures on their expected texture units
-        volTexture.render(gl2);
-        if (volumePreset != null) {
-          renderedPreset.render(gl2, renderingLayer.isInvertLut());
-        }
-        // Bind segmentation overlay textures (units 4 and 5)
-        bindSegTextures(gl2);
-        bindEnvironmentTexture(gl2);
-
-        // Set up the vertex array so FboRenderTexture.render() can call glDrawArrays
-        gl2.glEnableVertexAttribArray(0);
-        gl2.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBuffer);
-        gl2.glVertexAttribPointer(0, 2, GL.GL_FLOAT, false, 0, 0);
+        // Set up the vertex array so FboRenderTexture.render() can call glDrawArrays, then render
+        // into the FBO (binds FBO, draws quad, unbinds FBO, restores viewport).
+        gl.glEnableVertexAttribArray(0);
+        gl.glBindBuffer(Gl.GL_ARRAY_BUFFER, vertexBuffer);
+        gl.glVertexAttribPointer(0, 2, Gl.GL_FLOAT, false, 0, 0);
         if (pathTracing) {
-          bindMajorantMap(gl2, active);
+          bindMajorantMap(gl, active);
         }
-
-        // Render into FBO (binds FBO, draws quad, unbinds FBO, restores viewport)
-        texture.render(gl2);
+        texture.render(gl);
         if (pathTracing) {
-          endPathTracingFrame(gl2);
+          endPathTracingFrame(gl);
         }
-        gl2.glDisableVertexAttribArray(0);
+        gl.glDisableVertexAttribArray(0);
 
-        // Step 2: Blit the FBO colour-attachment texture to the screen using the quad program.
         // The FBO output lives on unit 3 (FboRenderTexture.OUTPUT_TEXTURE_UNIT), so the quad
         // sampler never disturbs the 3D volume texture on unit 0, and texScale restricts the
         // sampling to the sub-rectangle that was ray-cast.
-        quadProgram.use(gl2);
-        quadProgram.setUniforms(gl2);
-
-        gl2.glEnable(GL.GL_BLEND);
-        gl2.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-
-        gl2.glEnableVertexAttribArray(0);
-        gl2.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBuffer);
-        gl2.glVertexAttribPointer(0, 2, GL.GL_FLOAT, false, 0, 0);
-        gl2.glActiveTexture(GL.GL_TEXTURE0 + FboRenderTexture.OUTPUT_TEXTURE_UNIT);
-        gl2.glBindTexture(GL.GL_TEXTURE_2D, texture.getId());
-        gl2.glDrawArrays(GL.GL_TRIANGLES, 0, vertexBufferData.length / 2);
-        gl2.glDisableVertexAttribArray(0);
-        gl2.glDisable(GL.GL_BLEND);
+        rebind(gl, target);
+        blit(gl, Gl.GL_TEXTURE0 + FboRenderTexture.OUTPUT_TEXTURE_UNIT);
       }
     }
-    profiler.endGpu(gl2, start);
+    profiler.endGpu(gl, start);
   }
 
-  public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
-    GL2ES2 gl2 = drawable.getGL().getGL2ES2();
-    gl2.glViewport(0, 0, width, height);
-    camera.resetTransformation();
+  private static void rebind(Gl gl, RenderTarget target) {
+    if (target != null) {
+      target.bind(gl);
+    }
   }
 
-  public void dispose(GLAutoDrawable drawable) {
-    // GL4 gl2 = drawable.getGL().getGL4();
-    // FIXME destroy when release of cache
-    //    if (volTexture != null) {
-    //      volTexture.destroy(gl2);
-    //    }
+  /** Draws the ray-cast output, read from {@code textureUnit}, over the background colour. */
+  private void blit(Gl gl, int textureUnit) {
+    quadProgram.use(gl);
+    quadProgram.setUniforms(gl);
+
+    gl.glEnable(Gl.GL_BLEND);
+    gl.glBlendFunc(Gl.GL_SRC_ALPHA, Gl.GL_ONE_MINUS_SRC_ALPHA);
+
+    gl.glEnableVertexAttribArray(0);
+    gl.glBindBuffer(Gl.GL_ARRAY_BUFFER, vertexBuffer);
+    gl.glVertexAttribPointer(0, 2, Gl.GL_FLOAT, false, 0, 0);
+    gl.glActiveTexture(textureUnit);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, texture.getId());
+    gl.glDrawArrays(Gl.GL_TRIANGLES, 0, vertexBufferData.length / 2);
+    gl.glDisableVertexAttribArray(0);
+    gl.glDisable(Gl.GL_BLEND);
   }
 
   public void updateSegmentation() {
@@ -1760,10 +1776,7 @@ public class View3d extends VolumeCanvas
       int generation, SegVolumeTexture newSvt, List<RenderedSeg> rendered) {
     if (generation != segBuildGeneration.get()) {
       // Superseded while uploading — discard the freshly-built texture.
-      GL2ES2 gl = OpenglUtils.getGL();
-      if (gl != null) {
-        newSvt.destroy(gl);
-      }
+      GlRuntime.submit(newSvt::destroy);
       return;
     }
     this.renderedSegs = rendered;
@@ -1775,10 +1788,7 @@ public class View3d extends VolumeCanvas
     SegVolumeTexture old = this.segVolumeTexture;
     this.segVolumeTexture = newSvt;
     if (old != null) {
-      GL2ES2 gl = OpenglUtils.getGL();
-      if (gl != null) {
-        old.destroy(gl);
-      }
+      GlRuntime.submit(old::destroy);
       // Do NOT free the underlying SegmentationVolume here: it is now owned by the
       // SegSpecialElement's per-image-volume cache (see SegSpecialElement.alignedVolumes) and
       // may still be in use by the MPR overlay or by a re-upload of this very texture.
@@ -1960,12 +1970,9 @@ public class View3d extends VolumeCanvas
     SegVolumeTexture svt = segVolumeTexture;
     if (svt != null) {
       segVolumeTexture = null;
-      GL2ES2 gl = OpenglUtils.getGL();
-      if (gl != null) {
-        svt.destroy(gl);
-      }
       // The underlying SegmentationVolume is owned by the SegSpecialElement's per-image-volume
       // cache; only the GL texture is released here.
+      GlRuntime.submit(svt::destroy);
     }
   }
 

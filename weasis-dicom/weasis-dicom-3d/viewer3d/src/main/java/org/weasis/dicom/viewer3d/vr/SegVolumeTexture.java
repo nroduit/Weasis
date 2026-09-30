@@ -9,19 +9,18 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.common.nio.Buffers;
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL2ES3;
-import com.jogamp.opengl.GL2GL3;
-import com.jogamp.opengl.GLContext;
-import com.jogamp.opengl.util.GLPixelStorageModes;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
+import java.nio.ByteOrder;
 import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.codec.seg.SegmentationVolume;
+import org.weasis.dicom.viewer3d.gl.Gl;
+import org.weasis.dicom.viewer3d.gl.GlRuntime;
+import org.weasis.dicom.viewer3d.gl.GlThread;
 
 /**
  * A 3D OpenGL texture that stores a {@link SegmentationVolume}'s per-voxel <em>storage IDs</em> in
@@ -62,8 +61,8 @@ public final class SegVolumeTexture {
   private byte[] pendingColorLut;
 
   /**
-   * Storage width the texture was allocated with, captured in {@link #init(GL2ES2)} so that {@link
-   * #uploadVolumeData(GL2ES2)} always transfers in the format the texture was created for.
+   * Storage width the texture was allocated with, captured in {@link #init(Gl)} so that {@link
+   * #uploadVolumeData(Gl)} always transfers in the format the texture was created for.
    */
   private boolean shortStorage;
 
@@ -71,7 +70,7 @@ public final class SegVolumeTexture {
    * Creates a new SegVolumeTexture.
    *
    * <p>Acquires one {@link SegmentationVolume#retain()} reference on {@code segVolume}. The
-   * matching {@link SegmentationVolume#release()} is issued in {@link #destroy(GL2ES2)} so the CPU
+   * matching {@link SegmentationVolume#release()} is issued in {@link #destroy(Gl)} so the CPU
    * buffers are kept alive exactly as long as this texture object lives.
    *
    * @param segVolume the segmentation volume to upload
@@ -92,12 +91,11 @@ public final class SegVolumeTexture {
    * Initialises the OpenGL textures. Must be called from the GL thread (or while the shared context
    * is current).
    */
-  public void init(GL2ES2 gl) {
+  public void init(Gl gl) {
     if (segTextureId <= 0) {
-      IntBuffer buf = IntBuffer.allocate(2);
-      gl.glGenTextures(2, buf);
-      segTextureId = buf.get(0);
-      segColorTextureId = buf.get(1);
+      int[] names = gl.glGenTextures(2);
+      segTextureId = names[0];
+      segColorTextureId = names[1];
     }
 
     int sizeX = segVolume.getSizeX();
@@ -105,13 +103,13 @@ public final class SegVolumeTexture {
     int sizeZ = segVolume.getSizeZ();
 
     // ---- 3D segmentation storage-ID texture ----
-    gl.glActiveTexture(GL.GL_TEXTURE0 + SEG_TEXTURE_UNIT);
-    gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, segTextureId);
-    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES2.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE);
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + SEG_TEXTURE_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_3D, segTextureId);
+    gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
+    gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_NEAREST);
+    gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_WRAP_S, Gl.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_WRAP_T, Gl.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_WRAP_R, Gl.GL_CLAMP_TO_EDGE);
 
     // Allocate the 3D texture in the volume's own storage width: storage IDs never exceed a byte
     // (or a short once overlap combinations promote the volume), so GL_R32UI would waste 2–4× the
@@ -119,50 +117,54 @@ public final class SegVolumeTexture {
     // identically, so the shaders are unaffected.
     this.shortStorage = segVolume.isShortMode();
     gl.glTexImage3D(
-        GL2ES2.GL_TEXTURE_3D,
+        Gl.GL_TEXTURE_3D,
         0,
-        shortStorage ? GL2ES3.GL_R16UI : GL2ES3.GL_R8UI,
+        shortStorage ? Gl.GL_R16UI : Gl.GL_R8UI,
         sizeX,
         sizeY,
         sizeZ,
         0,
-        GL2GL3.GL_RED_INTEGER,
-        shortStorage ? GL.GL_UNSIGNED_SHORT : GL.GL_UNSIGNED_BYTE,
-        null);
+        Gl.GL_RED_INTEGER,
+        shortStorage ? Gl.GL_UNSIGNED_SHORT : Gl.GL_UNSIGNED_BYTE,
+        MemorySegment.NULL);
 
     // ---- 1D segment colour LUT texture (RGBA8) ----
-    gl.glActiveTexture(GL.GL_TEXTURE0 + SEG_COLOR_UNIT);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, segColorTextureId);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + SEG_COLOR_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, segColorTextureId);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_NEAREST);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_S, Gl.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_T, Gl.GL_CLAMP_TO_EDGE);
 
-    byte[] colorLut = segVolume.buildSegmentColorLUT();
-    // LUT width = number of allocated storage IDs (= segments + overlap combinations + slot 0
-    // for background). Derived directly from the LUT byte length so it stays in sync with
-    // SegmentationVolume.buildSegmentColorLUT().
-    int lutWidth = Math.max(colorLut.length / 4, 1);
-    gl.glTexImage2D(
-        GL.GL_TEXTURE_2D,
-        0,
-        GL.GL_RGBA8,
-        lutWidth,
-        1,
-        0,
-        GL.GL_RGBA,
-        GL.GL_UNSIGNED_BYTE,
-        Buffers.newDirectByteBuffer(colorLut).rewind());
+    uploadColorLut(gl, segVolume.buildSegmentColorLUT());
 
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
     needsColorUpdate = false;
+  }
+
+  // LUT width = number of allocated storage IDs (= segments + overlap combinations + slot 0 for
+  // background). Derived directly from the LUT byte length so it stays in sync with
+  // SegmentationVolume.buildSegmentColorLUT().
+  private static void uploadColorLut(Gl gl, byte[] colorLut) {
+    try (Arena arena = Arena.ofConfined()) {
+      gl.glTexImage2D(
+          Gl.GL_TEXTURE_2D,
+          0,
+          Gl.GL_RGBA8,
+          Math.max(colorLut.length / 4, 1),
+          1,
+          0,
+          Gl.GL_RGBA,
+          Gl.GL_UNSIGNED_BYTE,
+          arena.allocateFrom(ValueLayout.JAVA_BYTE, colorLut));
+    }
   }
 
   /**
    * Uploads the full SegmentationVolume storage-ID data into the 3D texture, in blocks of slices.
-   * Must be called from the GL thread after {@link #init(GL2ES2)}.
+   * Must be called from the GL thread after {@link #init(Gl)}.
    */
-  public void uploadVolumeData(GL2ES2 gl) {
+  public void uploadVolumeData(Gl gl) {
     if (segTextureId <= 0) {
       init(gl);
     }
@@ -171,20 +173,18 @@ public final class SegVolumeTexture {
     int sizeY = segVolume.getSizeY();
     int sizeZ = segVolume.getSizeZ();
 
-    gl.glActiveTexture(GL.GL_TEXTURE0 + SEG_TEXTURE_UNIT);
-    gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, segTextureId);
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + SEG_TEXTURE_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_3D, segTextureId);
 
-    GLPixelStorageModes storageModes = new GLPixelStorageModes();
     // Uploads are UNPACK operations: rows of a byte texture whose width is not a multiple of 4
-    // would be misread with the default alignment.
-    storageModes.setUnpackAlignment(gl, 1);
+    // would be misread with the default alignment of 4, restored at the end.
+    gl.glPixelStorei(Gl.GL_UNPACK_ALIGNMENT, 1);
 
-    int type = shortStorage ? GL.GL_UNSIGNED_SHORT : GL.GL_UNSIGNED_BYTE;
+    int type = shortStorage ? Gl.GL_UNSIGNED_SHORT : Gl.GL_UNSIGNED_BYTE;
     int sliceBytes = sizeX * sizeY * (shortStorage ? Short.BYTES : Byte.BYTES);
     // Transfer several slices per call: one glTexSubImage3D per slice costs far more in driver
     // round-trips than the memory the staging block occupies.
     int slicesPerBlock = Math.max(1, Math.min(sizeZ, MAX_UPLOAD_BLOCK_BYTES / sliceBytes));
-    ByteBuffer buffer = Buffers.newDirectByteBuffer(slicesPerBlock * sliceBytes);
 
     // VolumeBuilder uploads the volume slices in reverse Z order (axial[depth-1] → z=0), so the seg
     // texture must mirror that reversal to stay aligned — otherwise the overlay is rendered
@@ -192,33 +192,26 @@ public final class SegVolumeTexture {
     // source Z so that each one is contiguous in texture Z.
     long exportNanos = 0;
     long uploadNanos = 0;
-    for (int texZ = 0; texZ < sizeZ; texZ += slicesPerBlock) {
-      int depth = Math.min(slicesPerBlock, sizeZ - texZ);
-      long start = System.nanoTime();
-      buffer.clear();
-      for (int i = 0; i < depth; i++) {
-        segVolume.exportSliceInto(sizeZ - 1 - (texZ + i), buffer);
+    try (Arena arena = Arena.ofConfined()) {
+      MemorySegment staging = arena.allocate((long) slicesPerBlock * sliceBytes);
+      ByteBuffer buffer = staging.asByteBuffer().order(ByteOrder.nativeOrder());
+      for (int texZ = 0; texZ < sizeZ; texZ += slicesPerBlock) {
+        int depth = Math.min(slicesPerBlock, sizeZ - texZ);
+        long start = System.nanoTime();
+        buffer.clear();
+        for (int i = 0; i < depth; i++) {
+          segVolume.exportSliceInto(sizeZ - 1 - (texZ + i), buffer);
+        }
+        long exported = System.nanoTime();
+        gl.glTexSubImage3D(
+            Gl.GL_TEXTURE_3D, 0, 0, 0, texZ, sizeX, sizeY, depth, Gl.GL_RED_INTEGER, type, staging);
+        exportNanos += exported - start;
+        uploadNanos += System.nanoTime() - exported;
       }
-      buffer.flip();
-      long exported = System.nanoTime();
-      gl.glTexSubImage3D(
-          GL2ES2.GL_TEXTURE_3D,
-          0,
-          0,
-          0,
-          texZ,
-          sizeX,
-          sizeY,
-          depth,
-          GL2GL3.GL_RED_INTEGER,
-          type,
-          buffer);
-      exportNanos += exported - start;
-      uploadNanos += System.nanoTime() - exported;
     }
 
-    storageModes.restore(gl);
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glPixelStorei(Gl.GL_UNPACK_ALIGNMENT, 4);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
     needsUpload = false;
 
     LOGGER.info(
@@ -240,22 +233,20 @@ public final class SegVolumeTexture {
    * any thread — this acquires the shared context internally.
    */
   public void uploadVolumeDataAsync() {
-    GLContext glContext = OpenglUtils.getDefaultGlContext();
-    glContext.makeCurrent();
-    try {
-      GL2ES2 gl = glContext.getGL().getGL2ES2();
-      uploadVolumeData(gl);
-      gl.glFinish();
-    } finally {
-      glContext.release();
-    }
+    GlThread glThread = GlRuntime.thread();
+    glThread.submit(
+        gl -> {
+          uploadVolumeData(gl);
+          gl.glFinish();
+        });
+    glThread.drain();
   }
 
   /**
    * Updates only the segment colour LUT texture using the SegmentationVolume's built-in attributes.
    * Cheap compared to re-uploading the entire 3D volume.
    */
-  public void updateColorLUT(GL2ES2 gl) {
+  public void updateColorLUT(Gl gl) {
     updateColorLUT(gl, segVolume.buildSegmentColorLUT());
   }
 
@@ -266,25 +257,14 @@ public final class SegVolumeTexture {
    * @param gl the current GL context
    * @param colorLut a byte[] of size (segmentCount * 4) in RGBA8 format
    */
-  public void updateColorLUT(GL2ES2 gl, byte[] colorLut) {
+  public void updateColorLUT(Gl gl, byte[] colorLut) {
     if (segColorTextureId <= 0) {
       return;
     }
-    int lutWidth = Math.max(colorLut.length / 4, 1);
-
-    gl.glActiveTexture(GL.GL_TEXTURE0 + SEG_COLOR_UNIT);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, segColorTextureId);
-    gl.glTexImage2D(
-        GL.GL_TEXTURE_2D,
-        0,
-        GL.GL_RGBA8,
-        lutWidth,
-        1,
-        0,
-        GL.GL_RGBA,
-        GL.GL_UNSIGNED_BYTE,
-        Buffers.newDirectByteBuffer(colorLut).rewind());
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + SEG_COLOR_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, segColorTextureId);
+    uploadColorLut(gl, colorLut);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
     needsColorUpdate = false;
   }
 
@@ -294,7 +274,7 @@ public final class SegVolumeTexture {
   }
 
   /**
-   * Stores a pre-built segment colour LUT to be uploaded on the next {@link #bind(GL2ES2)} call.
+   * Stores a pre-built segment colour LUT to be uploaded on the next {@link #bind(Gl)} call.
    *
    * @param colorLut an RGBA8 byte[] indexed by storage ID, or {@code null} to fall back to the
    *     volume's built-in attributes
@@ -308,7 +288,7 @@ public final class SegVolumeTexture {
    * Binds the segmentation textures to their respective texture units for rendering. Call this
    * before dispatching the volume rendering shader.
    */
-  public void bind(GL2ES2 gl) {
+  public void bind(Gl gl) {
     if (segTextureId <= 0) {
       return;
     }
@@ -324,11 +304,11 @@ public final class SegVolumeTexture {
       }
     }
 
-    gl.glActiveTexture(GL.GL_TEXTURE0 + SEG_TEXTURE_UNIT);
-    gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, segTextureId);
-    gl.glActiveTexture(GL.GL_TEXTURE0 + SEG_COLOR_UNIT);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, segColorTextureId);
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + SEG_TEXTURE_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_3D, segTextureId);
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + SEG_COLOR_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, segColorTextureId);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
   }
 
   /** Returns {@code true} if the 3D texture has been successfully allocated and uploaded. */
@@ -344,9 +324,9 @@ public final class SegVolumeTexture {
   /**
    * Releases all OpenGL resources and the CPU-buffer reference. Must be called from the GL thread.
    */
-  public void destroy(GL2ES2 gl) {
+  public void destroy(Gl gl) {
     if (segTextureId > 0) {
-      gl.glDeleteTextures(2, new int[] {segTextureId, segColorTextureId}, 0);
+      gl.glDeleteTextures(segTextureId, segColorTextureId);
       segTextureId = 0;
       segColorTextureId = 0;
     }

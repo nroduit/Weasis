@@ -9,11 +9,6 @@
  */
 package org.weasis.dicom.viewer3d;
 
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL4;
-import com.jogamp.opengl.GLContext;
-import com.jogamp.opengl.Threading;
 import java.awt.Component;
 import java.awt.Window;
 import java.util.List;
@@ -53,7 +48,10 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.viewer2d.EventManager;
-import org.weasis.dicom.viewer3d.vr.OpenglUtils;
+import org.weasis.dicom.viewer3d.gl.Gl;
+import org.weasis.dicom.viewer3d.gl.GlRuntime;
+import org.weasis.dicom.viewer3d.gl.GlThread;
+import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
 import org.weasis.plugin.SingletonExtension;
 
 @Extension
@@ -109,6 +107,11 @@ public class View3DFactory implements SeriesViewerFactory {
   @Override
   public Icon getIcon() {
     return ResourceUtil.getIcon(ActionIcon.VOLUME);
+  }
+
+  @Override
+  public String getViewerTypeId() {
+    return "3d"; // NON-NLS
   }
 
   @Override
@@ -176,10 +179,8 @@ public class View3DFactory implements SeriesViewerFactory {
     }
     if (view3dContainer.volumeBuilder != null) {
       try {
-        GL4 gl4 = OpenglUtils.getGL4();
-        if (gl4 != null) {
-          view3dContainer.volumeBuilder.getVolTexture().destroy(gl4);
-        }
+        DicomVolTexture retired = view3dContainer.volumeBuilder.getVolTexture();
+        GlRuntime.submit(retired::destroy);
       } catch (Exception e) {
         LOGGER.error("Closing viewer", e);
       }
@@ -226,7 +227,7 @@ public class View3DFactory implements SeriesViewerFactory {
       WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
       localPersistence.putBooleanProperty(P_OPENGL_PREV_INIT, false);
       try {
-        Threading.invoke(true, View3DFactory::initOpenGLInfo, null);
+        initOpenGLInfo();
       } catch (Throwable e) {
         localPersistence.putBooleanProperty(P_OPENGL_ENABLE, false);
         LOGGER.error("Cannot get basic OpenGL information");
@@ -252,20 +253,18 @@ public class View3DFactory implements SeriesViewerFactory {
     try {
       long startTime = System.currentTimeMillis();
       LOGGER.info("Checking 3D capabilities");
-      GLContext glContext = OpenglUtils.getDefaultGlContext();
-      glContext.makeCurrent();
-      GL var2 = glContext.getGL();
-      int[] textMax = new int[1];
-      var2.glGetIntegerv(GL2ES2.GL_MAX_3D_TEXTURE_SIZE, textMax, 0);
-      String version = var2.glGetString(GL.GL_VERSION);
+      GlThread glThread = GlRuntime.thread();
       openGLInfo =
-          new OpenGLInfo(
-              StringUtil.hasText(version) ? version : "0",
-              glContext.getGLVersion(),
-              var2.glGetString(GL.GL_VENDOR),
-              var2.glGetString(GL.GL_RENDERER),
-              textMax[0]);
-      glContext.release();
+          glThread.invokeAndWait(
+              gl -> {
+                String version = gl.glGetString(Gl.GL_VERSION);
+                return new OpenGLInfo(
+                    StringUtil.hasText(version) ? version : "0",
+                    glThread.context().description(),
+                    gl.glGetString(Gl.GL_VENDOR),
+                    gl.glGetString(Gl.GL_RENDERER),
+                    gl.glGetInteger(Gl.GL_MAX_3D_TEXTURE_SIZE));
+              });
       GraphicsInfo.set(
           openGLInfo.vendor(),
           openGLInfo.renderer(),
@@ -276,11 +275,9 @@ public class View3DFactory implements SeriesViewerFactory {
           AuditLog.MARKER_PERF,
           (System.currentTimeMillis() - startTime));
       localPersistence.putBooleanProperty(P_OPENGL_PREV_INIT, true);
-      LOGGER.info(
-          "Video card for OpenGL: {}, {} {}",
-          openGLInfo.vendor(),
-          openGLInfo.renderer(),
-          openGLInfo.version());
+      // version() carries the context description, which already names the vendor, the renderer
+      // and the binding it was obtained through.
+      LOGGER.info("Video card for OpenGL: {}", openGLInfo.version());
       if (!openGLInfo.isVersionCompliant()) {
         throw new IllegalStateException(
             "OpenGL %s is below the minimum required version 3.3"

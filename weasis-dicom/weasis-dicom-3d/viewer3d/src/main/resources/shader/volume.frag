@@ -10,7 +10,9 @@ in vec2 quadCoordinates;
 layout (location = 0) out vec4 fragColor;
 
 void main() {
-    vec2 position = (quadCoordinates + 1.0) / 2.0 * texScale;
+    // The target is read back into a BufferedImage, whose first row is the top one, while GL
+    // numbers rows from the bottom: sampling upside down here is what saves a CPU flip per frame.
+    vec2 position = vec2(quadCoordinates.x + 1.0, 1.0 - quadCoordinates.y) / 2.0 * texScale;
     // Stay half a texel inside the rendered sub-rectangle: GL_LINEAR would otherwise blend the
     // last row and column with the cleared texels beyond it.
     vec2 halfTexel = 0.5 / vec2(textureSize(compute, 0));

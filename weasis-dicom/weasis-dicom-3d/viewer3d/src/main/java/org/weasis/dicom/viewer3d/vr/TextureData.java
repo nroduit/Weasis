@@ -9,10 +9,7 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL2GL3;
-import java.nio.IntBuffer;
+import org.weasis.dicom.viewer3d.gl.Gl;
 
 public abstract class TextureData {
   public enum PixelFormat {
@@ -50,57 +47,55 @@ public abstract class TextureData {
     this.pixelFormat = pixelFormat;
     switch (pixelFormat) {
       case BYTE -> {
-        this.internalFormat = GL.GL_R8;
-        this.type = GL.GL_UNSIGNED_BYTE;
-        this.format = GL2ES2.GL_RED;
+        this.internalFormat = Gl.GL_R8;
+        this.type = Gl.GL_UNSIGNED_BYTE;
+        this.format = Gl.GL_RED;
       }
       case SIGNED_SHORT, UNSIGNED_SHORT -> {
-        this.internalFormat = GL2GL3.GL_R16;
-        this.type = GL.GL_UNSIGNED_SHORT;
-        this.format = GL2ES2.GL_RED;
+        this.internalFormat = Gl.GL_R16;
+        this.type = Gl.GL_UNSIGNED_SHORT;
+        this.format = Gl.GL_RED;
       }
       case FLOAT -> {
-        this.internalFormat = GL2GL3.GL_R32F;
-        this.type = GL.GL_FLOAT;
-        this.format = GL2ES2.GL_RED;
+        this.internalFormat = Gl.GL_R32F;
+        this.type = Gl.GL_FLOAT;
+        this.format = Gl.GL_RED;
       }
       case RGB8 -> {
-        this.internalFormat = GL.GL_RGB8;
-        this.type = GL.GL_UNSIGNED_BYTE;
-        this.format = GL.GL_RGB;
+        this.internalFormat = Gl.GL_RGB8;
+        this.type = Gl.GL_UNSIGNED_BYTE;
+        this.format = Gl.GL_RGB;
       }
       case RGBA8 -> {
-        this.internalFormat = GL.GL_RGBA8;
-        this.type = GL.GL_UNSIGNED_BYTE;
-        this.format = GL.GL_RGBA;
+        this.internalFormat = Gl.GL_RGBA8;
+        this.type = Gl.GL_UNSIGNED_BYTE;
+        this.format = Gl.GL_RGBA;
       }
       case RGBA16F -> {
         // Half-float: 8 bytes/pixel vs 16 for RGBA32F — halves GPU memory bandwidth on Retina.
-        this.internalFormat = GL2GL3.GL_RGBA16F;
-        this.type = GL.GL_FLOAT;
-        this.format = GL.GL_RGBA;
+        this.internalFormat = Gl.GL_RGBA16F;
+        this.type = Gl.GL_FLOAT;
+        this.format = Gl.GL_RGBA;
       }
       default -> {
-        this.internalFormat = GL.GL_RGBA32F;
-        this.type = GL.GL_FLOAT;
-        this.format = GL.GL_RGBA;
+        this.internalFormat = Gl.GL_RGBA32F;
+        this.type = Gl.GL_FLOAT;
+        this.format = Gl.GL_RGBA;
       }
     }
   }
 
-  public void init(GL2ES2 gl) {
+  public void init(Gl gl) {
     if (id <= 0) {
-      IntBuffer intBuffer = IntBuffer.allocate(1);
-      gl.glGenTextures(1, intBuffer);
-      id = intBuffer.get(0);
+      id = gl.glGenTextures(1)[0];
     }
   }
 
-  public abstract void render(GL2ES2 gl);
+  public abstract void render(Gl gl);
 
-  public void destroy(GL2ES2 gl) {
+  public void destroy(Gl gl) {
     if (id != 0) {
-      gl.glDeleteTextures(1, new int[] {id}, 0);
+      gl.glDeleteTextures(id);
       id = 0;
     }
   }

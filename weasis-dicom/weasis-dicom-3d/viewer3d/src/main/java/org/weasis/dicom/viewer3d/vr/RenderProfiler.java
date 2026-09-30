@@ -9,18 +9,18 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.opengl.GL;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.dicom.viewer3d.gl.Gl;
 
 /**
  * Splits a 3D frame into the three stages it actually spends time in: the GL ray-cast and blit, the
- * {@code GLJPanel} read-back that hands the result to the Java2D pipeline, and the Swing overlays
- * painted on top. Only the first stage scales with the rendering resolution and the sample count,
- * so this is what tells whether tuning the shader can help at all.
+ * read-back that hands the result to the image Swing paints, and the Swing overlays drawn on top.
+ * Only the first stage scales with the rendering resolution and the sample count, so this is what
+ * tells whether tuning the shader can help at all.
  *
  * <p>Off by default; enable it with {@code -Dweasis.3d.profile=true} or the matching local
  * persistence preference, which is read once per frame so it can be toggled on a running instance.
@@ -68,7 +68,7 @@ final class RenderProfiler {
   }
 
   /** Drains the GL pipeline so the elapsed time covers the work itself, not just its submission. */
-  void endGpu(GL gl, long start) {
+  void endGpu(Gl gl, long start) {
     if (enabled) {
       gl.glFinish();
       gpuNanos = System.nanoTime() - start;

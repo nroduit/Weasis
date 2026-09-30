@@ -72,6 +72,7 @@ weasis-launcher  →  weasis-core  →  weasis-base/*       (generic image viewe
 
 ## Conventions to respect
 
+- **Command-first features**: every new feature or plugin exposes what it does as `namespace:verb` commands, because the commands are the scripting surface, the `weasis://` surface and the tool surface of the AI CLI (`weasis-cli` + the `skills/weasis` skill). Design the feature as a headless service first, then a `CommandExtension` with a Picocli model in the plugin that owns it (verbs extend `AbstractVerb`, carry `@Since`, use the `OutputOptions` mixin for `--json`), and make the UI call the same service the verbs call, never the reverse. Verbs take and return stable handles (view ids from `workspace:list`, series UIDs from `dicom:list`, graphic ids), return structured JSON, and echo the new state after a change. EDT work goes through `GuiExecutor.invokeAndRethrow`; identity-bearing output goes through `IdentityMask.callForCommand`; namespaces that must stay local override `isRemotable()`. Adding a verb or option bumps the minor of `CommandManager.API_VERSION`; nothing is removed within a major (deprecate with `@Deprecated`). Cover the syntax with a `LegacyCommandsTest`-style parse test, and when a verb matters to an agent workflow, update `skills/weasis/SKILL.md` and regenerate `reference.md` / `commands.json`.
 - **Spotless will fail the build** if a file is missing the EPL-2.0 OR Apache-2.0 header or isn't Google-Java-Format'd. Run `mvn spotless:apply` before committing. Use `// @formatter:off` / `// @formatter:on` to opt out of formatting for a block.
 - **i18n**: every user-facing module has a `Messages.java` + `messages.properties` pair. Properties files matching `messages*.properties` under `src/main/java/` are picked up as resources by `weasis-parent/pom.xml`. The translated bundles come from the external `weasis-i18n-dist` artifact at distribution time (see `weasis-distributions/pom.xml`), so do not hand-edit non-English `messages_*.properties` files in this repo.
 - **DICOM and IHE conformance**: follow the DICOM standard (tag semantics, value representations, attribute types and conditions, IOD/module rules) and the IHE Radiology profiles Weasis implements:
@@ -123,6 +124,7 @@ Existing docs:
 | `weasis-dicom/weasis-dicom-codec/docs/Segmentation.md` | DICOM SEG model, display paths (2D, MPR, 3D), visibility policy |
 | `weasis-dicom/weasis-dicom-codec/docs/Window-Presets.md` | configured window/level presets: order, model, layers, anatomy matching |
 | `weasis-dicom/weasis-dicom-explorer/docs/Retrieve-Paths.md` | DICOM download transports and shared download layer |
+| `weasis-dicom/weasis-dicom-3d/viewer3d/docs/OpenGL-Backend.md` | OpenGL context and GL thread, the `Gl` facade and its bindings, how a frame reaches Swing |
 | `weasis-dicom/weasis-dicom-viewer2d/docs/mpr-architecture.md` | MPR architecture (entry point for the `mpr-*` docs) |
 | `weasis-dicom/weasis-dicom-viewer2d/docs/mpr-coordinate-systems.md` | MPR coordinate spaces |
 | `weasis-dicom/weasis-dicom-viewer2d/docs/mpr-transformations.md` | MPR transforms and rotations |

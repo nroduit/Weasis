@@ -9,11 +9,10 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.common.nio.Buffers;
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL2ES3;
-import java.nio.IntBuffer;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+import org.weasis.dicom.viewer3d.gl.Gl;
 
 /**
  * The extinction bound of every block of a {@link MajorantGrid}, baked for the current preset and
@@ -68,7 +67,7 @@ final class MajorantMap {
    * up, and the framebuffer and viewport are restored to the given surface afterwards.
    */
   void bake(
-      GL2ES2 gl,
+      Gl gl,
       Program source,
       MajorantGrid grid,
       long fingerprint,
@@ -86,8 +85,7 @@ final class MajorantMap {
       uniformsShared = true;
     }
     program.use(gl);
-    GL2ES3 gl3 = gl.getGL2ES3();
-    gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, fboId);
+    gl.glBindFramebuffer(Gl.GL_FRAMEBUFFER, fboId);
     for (int lvl : new int[] {0, COARSE_LEVEL}) {
       level = lvl;
       int w = width >> lvl;
@@ -96,19 +94,19 @@ final class MajorantMap {
       gl.glViewport(0, 0, w, h);
       for (int z = 0; z < d; z++) {
         layer = z;
-        gl3.glFramebufferTextureLayer(GL.GL_FRAMEBUFFER, GL.GL_COLOR_ATTACHMENT0, id, lvl, z);
+        gl.glFramebufferTextureLayer(Gl.GL_FRAMEBUFFER, Gl.GL_COLOR_ATTACHMENT0, id, lvl, z);
         program.setUniforms(gl);
-        gl.glDrawArrays(GL.GL_TRIANGLES, 0, View3d.vertexBufferData.length / 2);
+        gl.glDrawArrays(Gl.GL_TRIANGLES, 0, View3d.vertexBufferData.length / 2);
       }
     }
-    gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0);
+    gl.glBindFramebuffer(Gl.GL_FRAMEBUFFER, 0);
     gl.glViewport(0, 0, surfaceWidth, surfaceHeight);
     bakedGrid = grid;
     bakedFingerprint = fingerprint;
   }
 
   // (Re)creates the texture for the grid's dimensions, with the mip levels the walk reads.
-  private void allocate(GL2ES2 gl, MajorantGrid grid) {
+  private void allocate(Gl gl, MajorantGrid grid) {
     int w = padded(grid.getWidth());
     int h = padded(grid.getHeight());
     int d = padded(grid.getDepth());
@@ -119,87 +117,84 @@ final class MajorantMap {
     width = w;
     height = h;
     depth = d;
-    IntBuffer buf = IntBuffer.allocate(1);
-    gl.glGenTextures(1, buf);
-    id = buf.get(0);
-    gl.glActiveTexture(GL.GL_TEXTURE0 + TEXTURE_UNIT);
-    gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, id);
-    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES3.GL_TEXTURE_BASE_LEVEL, 0);
-    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES3.GL_TEXTURE_MAX_LEVEL, COARSE_LEVEL);
+    id = gl.glGenTextures(1)[0];
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + TEXTURE_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_3D, id);
+    gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
+    gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_NEAREST);
+    gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_BASE_LEVEL, 0);
+    gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_MAX_LEVEL, COARSE_LEVEL);
     for (int lvl = 0; lvl <= COARSE_LEVEL; lvl++) {
       gl.glTexImage3D(
-          GL2ES2.GL_TEXTURE_3D,
+          Gl.GL_TEXTURE_3D,
           lvl,
-          GL.GL_R32F,
+          Gl.GL_R32F,
           width >> lvl,
           height >> lvl,
           depth >> lvl,
           0,
-          GL2ES2.GL_RED,
-          GL.GL_FLOAT,
-          null);
+          Gl.GL_RED,
+          Gl.GL_FLOAT,
+          MemorySegment.NULL);
     }
-    gl.glActiveTexture(GL.GL_TEXTURE0);
-    gl.glGenFramebuffers(1, buf);
-    fboId = buf.get(0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
+    fboId = gl.glGenFramebuffers(1)[0];
   }
 
   /** Binds the map on its unit; a caller must have baked it first. */
-  void bind(GL2ES2 gl) {
-    gl.glActiveTexture(GL.GL_TEXTURE0 + TEXTURE_UNIT);
-    gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, id);
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+  void bind(Gl gl) {
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + TEXTURE_UNIT);
+    gl.glBindTexture(Gl.GL_TEXTURE_3D, id);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
   }
 
   /**
    * Binds a single empty block on the unit while the grid of the volume is incomplete, so the
    * sampler is complete; the tracer then applies its global bound over a one-block walk.
    */
-  void bindPlaceholder(GL2ES2 gl) {
-    gl.glActiveTexture(GL.GL_TEXTURE0 + TEXTURE_UNIT);
+  void bindPlaceholder(Gl gl) {
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + TEXTURE_UNIT);
     if (placeholderId <= 0) {
-      IntBuffer buf = IntBuffer.allocate(1);
-      gl.glGenTextures(1, buf);
-      placeholderId = buf.get(0);
-      gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, placeholderId);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-      gl.glTexImage3D(
-          GL2ES2.GL_TEXTURE_3D,
-          0,
-          GL.GL_R32F,
-          1,
-          1,
-          1,
-          0,
-          GL2ES2.GL_RED,
-          GL.GL_FLOAT,
-          Buffers.newDirectFloatBuffer(new float[] {0f}).rewind());
+      placeholderId = gl.glGenTextures(1)[0];
+      gl.glBindTexture(Gl.GL_TEXTURE_3D, placeholderId);
+      gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
+      gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_NEAREST);
+      try (Arena arena = Arena.ofConfined()) {
+        gl.glTexImage3D(
+            Gl.GL_TEXTURE_3D,
+            0,
+            Gl.GL_R32F,
+            1,
+            1,
+            1,
+            0,
+            Gl.GL_RED,
+            Gl.GL_FLOAT,
+            arena.allocateFrom(ValueLayout.JAVA_FLOAT, 0f));
+      }
     } else {
-      gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, placeholderId);
+      gl.glBindTexture(Gl.GL_TEXTURE_3D, placeholderId);
     }
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
   }
 
-  void destroy(GL2ES2 gl) {
+  void destroy(Gl gl) {
     if (fboId >= 0) {
-      gl.glDeleteFramebuffers(1, new int[] {fboId}, 0);
+      gl.glDeleteFramebuffers(fboId);
       fboId = -1;
     }
     if (id > 0) {
-      gl.glDeleteTextures(1, new int[] {id}, 0);
+      gl.glDeleteTextures(id);
       id = 0;
     }
     bakedGrid = null;
   }
 
   /** Releases the placeholder and the program too; for the end of the view. */
-  void dispose(GL2ES2 gl) {
+  void dispose(Gl gl) {
     destroy(gl);
     if (placeholderId > 0) {
-      gl.glDeleteTextures(1, new int[] {placeholderId}, 0);
+      gl.glDeleteTextures(placeholderId);
       placeholderId = 0;
     }
     program.destroy(gl);

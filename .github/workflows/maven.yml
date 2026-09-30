@@ -28,6 +28,15 @@ jobs:
           java-version: '26'
           cache: 'maven'
 
+      - name: Install the OpenGL stack the 3D renderer tests draw with
+        # They create a surfaceless EGL context and render the reference frames through it. On a
+        # runner without a GPU that is Mesa's llvmpipe, which compiles every shader and produces
+        # a frame; without these packages the tests skip themselves and the shaders go unchecked.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0
+
       - name: Build with coverage
         # install (not verify) so every reactor module — including inter-module provided deps
         # such as weasis-launcher — lands in the local repo, where the standalone

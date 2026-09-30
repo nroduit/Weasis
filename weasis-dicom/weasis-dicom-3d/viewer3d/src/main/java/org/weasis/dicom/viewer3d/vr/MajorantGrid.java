@@ -9,15 +9,12 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.common.nio.Buffers;
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.util.stream.IntStream;
+import org.opencv.core.CvType;
+import org.weasis.dicom.viewer3d.gl.Gl;
 
 /**
  * Coarse bounds of the voxel values for the path tracer: the lowest and highest sampler value of
@@ -90,15 +87,17 @@ public final class MajorantGrid {
 
   /**
    * Folds {@code sliceCount} slices starting at texture slice {@code firstSlice} into the grid. The
-   * buffer holds them tightly packed as the GPU upload does: one byte, unsigned short or float per
-   * channel, in sampler units once normalized. A colour volume contributes its luminance, as the
-   * shader reads it. Unsupported layouts leave the grid incomplete.
+   * block holds them tightly packed as the GPU upload does, with the depth and channels of the
+   * OpenCV {@code cvType}: one byte, unsigned short or float per channel, in sampler units once
+   * normalized. A colour volume contributes its luminance, as the shader reads it. Unsupported
+   * layouts leave the grid incomplete.
    */
-  void accumulate(Buffer buffer, int channels, int firstSlice, int sliceCount) {
+  void accumulate(MemorySegment data, int cvType, int firstSlice, int sliceCount) {
     if (!supported || sliceCount <= 0) {
       return;
     }
-    SampleReader reader = SampleReader.of(buffer, channels);
+    int channels = CvType.channels(cvType);
+    SampleReader reader = SampleReader.of(data, CvType.depth(cvType), channels);
     if (reader == null) {
       supported = false;
       return;
@@ -200,38 +199,38 @@ public final class MajorantGrid {
   }
 
   /** Uploads the grid on first use and binds it on its unit. Only valid once complete. */
-  public void render(GL2ES2 gl) {
-    gl.glActiveTexture(GL.GL_TEXTURE0 + TEXTURE_UNIT);
+  public void render(Gl gl) {
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + TEXTURE_UNIT);
     if (id <= 0) {
-      IntBuffer buf = IntBuffer.allocate(1);
-      gl.glGenTextures(1, buf);
-      id = buf.get(0);
-      gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, id);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES2.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE);
-      gl.glTexImage3D(
-          GL2ES2.GL_TEXTURE_3D,
-          0,
-          GL.GL_RG32F,
-          width,
-          height,
-          depth,
-          0,
-          GL2ES2.GL_RG,
-          GL.GL_FLOAT,
-          Buffers.newDirectFloatBuffer(range).rewind());
+      id = gl.glGenTextures(1)[0];
+      gl.glBindTexture(Gl.GL_TEXTURE_3D, id);
+      gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
+      gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_NEAREST);
+      gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_WRAP_S, Gl.GL_CLAMP_TO_EDGE);
+      gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_WRAP_T, Gl.GL_CLAMP_TO_EDGE);
+      gl.glTexParameteri(Gl.GL_TEXTURE_3D, Gl.GL_TEXTURE_WRAP_R, Gl.GL_CLAMP_TO_EDGE);
+      try (Arena arena = Arena.ofConfined()) {
+        gl.glTexImage3D(
+            Gl.GL_TEXTURE_3D,
+            0,
+            Gl.GL_RG32F,
+            width,
+            height,
+            depth,
+            0,
+            Gl.GL_RG,
+            Gl.GL_FLOAT,
+            arena.allocateFrom(ValueLayout.JAVA_FLOAT, range));
+      }
     } else {
-      gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, id);
+      gl.glBindTexture(Gl.GL_TEXTURE_3D, id);
     }
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
   }
 
-  public void destroy(GL2ES2 gl) {
+  public void destroy(Gl gl) {
     if (id > 0) {
-      gl.glDeleteTextures(1, new int[] {id}, 0);
+      gl.glDeleteTextures(id);
       id = 0;
     }
   }
@@ -242,17 +241,23 @@ public final class MajorantGrid {
 
     float read(int index);
 
-    static SampleReader of(Buffer buffer, int channels) {
-      return switch (buffer) {
-        case ByteBuffer b when channels == 1 -> new Bytes(b);
-        case ByteBuffer b when channels == 3 || channels == 4 -> new Luminance(b, channels);
-        case ShortBuffer s when channels == 1 -> new Shorts(s);
-        case FloatBuffer f when channels == 1 -> new Floats(f);
-        default -> null;
-      };
+    static SampleReader of(MemorySegment data, int depth, int channels) {
+      if (depth == CvType.CV_8U && channels == 1) {
+        return new Bytes(data);
+      }
+      if (depth == CvType.CV_8U && (channels == 3 || channels == 4)) {
+        return new Luminance(data, channels);
+      }
+      if ((depth == CvType.CV_16U || depth == CvType.CV_16S) && channels == 1) {
+        return new Shorts(data);
+      }
+      if (depth == CvType.CV_32F && channels == 1) {
+        return new Floats(data);
+      }
+      return null;
     }
 
-    record Bytes(ByteBuffer buffer) implements SampleReader {
+    record Bytes(MemorySegment data) implements SampleReader {
       @Override
       public int channels() {
         return 1;
@@ -260,21 +265,22 @@ public final class MajorantGrid {
 
       @Override
       public float read(int index) {
-        return (buffer.get(index) & 0xFF) / 255f;
+        return (data.get(ValueLayout.JAVA_BYTE, index) & 0xFF) / 255f;
       }
     }
 
-    record Luminance(ByteBuffer buffer, int channels) implements SampleReader {
+    record Luminance(MemorySegment data, int channels) implements SampleReader {
       @Override
       public float read(int index) {
-        float r = buffer.get(index) & 0xFF;
-        float g = buffer.get(index + 1) & 0xFF;
-        float b = buffer.get(index + 2) & 0xFF;
+        float r = data.get(ValueLayout.JAVA_BYTE, index) & 0xFF;
+        float g = data.get(ValueLayout.JAVA_BYTE, index + 1L) & 0xFF;
+        float b = data.get(ValueLayout.JAVA_BYTE, index + 2L) & 0xFF;
         return (0.299f * r + 0.587f * g + 0.114f * b) / 255f;
       }
     }
 
-    record Shorts(ShortBuffer buffer) implements SampleReader {
+    // The staging arena only guarantees byte alignment, hence the unaligned layouts.
+    record Shorts(MemorySegment data) implements SampleReader {
       @Override
       public int channels() {
         return 1;
@@ -282,11 +288,11 @@ public final class MajorantGrid {
 
       @Override
       public float read(int index) {
-        return (buffer.get(index) & 0xFFFF) / 65535f;
+        return (data.getAtIndex(ValueLayout.JAVA_SHORT_UNALIGNED, index) & 0xFFFF) / 65535f;
       }
     }
 
-    record Floats(FloatBuffer buffer) implements SampleReader {
+    record Floats(MemorySegment data) implements SampleReader {
       @Override
       public int channels() {
         return 1;
@@ -294,7 +300,7 @@ public final class MajorantGrid {
 
       @Override
       public float read(int index) {
-        return buffer.get(index);
+        return data.getAtIndex(ValueLayout.JAVA_FLOAT_UNALIGNED, index);
       }
     }
   }

@@ -9,9 +9,6 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.common.nio.Buffers;
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2ES2;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -19,7 +16,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.IntBuffer;
+import java.lang.foreign.Arena;
+import java.lang.foreign.ValueLayout;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -45,6 +43,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.View3DContainer;
+import org.weasis.dicom.viewer3d.gl.Gl;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
 import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
 import org.weasis.opencv.op.lut.colormap.ColorMapEdits;
@@ -480,43 +479,32 @@ public class Preset extends TextureData {
   // ── GPU ──
 
   @Override
-  public void init(GL2ES2 gl) {
+  public void init(Gl gl) {
     init(gl, false);
   }
 
-  public void init(GL2ES2 gl, boolean inverse) {
+  public void init(Gl gl, boolean inverse) {
     super.init(gl);
     if (inverse && id2 <= 0) {
-      IntBuffer intBuffer = IntBuffer.allocate(1);
-      gl.glGenTextures(1, intBuffer);
-      id2 = intBuffer.get(0);
+      id2 = gl.glGenTextures(1)[0];
     }
     initColors(this, inverse);
-    gl.glActiveTexture(GL.GL_TEXTURE1);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, inverse ? id2 : getId());
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-    gl.glTexImage2D(
-        GL.GL_TEXTURE_2D,
-        0,
-        internalFormat,
-        width,
-        height,
-        0,
-        format,
-        type,
-        Buffers.newDirectByteBuffer(inverse ? invertColors : colors).rewind());
+    gl.glActiveTexture(Gl.GL_TEXTURE1);
+    gl.glBindTexture(Gl.GL_TEXTURE_2D, inverse ? id2 : getId());
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_LINEAR);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_LINEAR);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_S, Gl.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_T, Gl.GL_CLAMP_TO_EDGE);
+    uploadColors(gl, inverse);
     lightingMap.init(gl);
   }
 
   @Override
-  public void render(GL2ES2 gl) {
+  public void render(Gl gl) {
     render(gl, false);
   }
 
-  void render(GL2ES2 gl, boolean inverse) {
+  void render(Gl gl, boolean inverse) {
     if (gl != null) {
       if (requiredBuilding) {
         this.requiredBuilding = false;
@@ -524,11 +512,20 @@ public class Preset extends TextureData {
           init(gl, inverse);
         }
       }
-      // Bound on every frame: the texture outlives the GL context of a closed view.
-      gl.glActiveTexture(GL.GL_TEXTURE1);
-      gl.glBindTexture(GL.GL_TEXTURE_2D, inverse ? id2 : getId());
+      // Bound on every frame: the views share one context, and another view may have left its
+      // own map on the unit.
+      gl.glActiveTexture(Gl.GL_TEXTURE1);
+      gl.glBindTexture(Gl.GL_TEXTURE_2D, inverse ? id2 : getId());
+      uploadColors(gl, inverse);
+      lightingMap.update(gl);
+      bindAlphaRange(gl);
+    }
+  }
+
+  private void uploadColors(Gl gl, boolean inverse) {
+    try (Arena arena = Arena.ofConfined()) {
       gl.glTexImage2D(
-          GL.GL_TEXTURE_2D,
+          Gl.GL_TEXTURE_2D,
           0,
           internalFormat,
           width,
@@ -536,49 +533,48 @@ public class Preset extends TextureData {
           0,
           format,
           type,
-          Buffers.newDirectByteBuffer(inverse ? invertColors : colors).rewind());
-      lightingMap.update(gl);
-      bindAlphaRange(gl);
+          arena.allocateFrom(ValueLayout.JAVA_BYTE, inverse ? invertColors : colors));
     }
   }
 
   // The alpha of the map does not change with the inverse, so the table is uploaded once.
-  private void bindAlphaRange(GL2ES2 gl) {
-    gl.glActiveTexture(GL.GL_TEXTURE0 + ALPHA_RANGE_UNIT);
+  private void bindAlphaRange(Gl gl) {
+    gl.glActiveTexture(Gl.GL_TEXTURE0 + ALPHA_RANGE_UNIT);
     if (alphaRangeId <= 0) {
-      IntBuffer buf = IntBuffer.allocate(1);
-      gl.glGenTextures(1, buf);
-      alphaRangeId = buf.get(0);
-      gl.glBindTexture(GL.GL_TEXTURE_2D, alphaRangeId);
-      gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-      gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-      gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-      gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-      gl.glTexImage2D(
-          GL.GL_TEXTURE_2D,
-          0,
-          GL.GL_R8,
-          AlphaRangeTable.BINS,
-          AlphaRangeTable.BINS,
-          0,
-          GL2ES2.GL_RED,
-          GL.GL_UNSIGNED_BYTE,
-          Buffers.newDirectByteBuffer(getAlphaRangeTable()).rewind());
+      alphaRangeId = gl.glGenTextures(1)[0];
+      gl.glBindTexture(Gl.GL_TEXTURE_2D, alphaRangeId);
+      gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
+      gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MAG_FILTER, Gl.GL_NEAREST);
+      gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_S, Gl.GL_CLAMP_TO_EDGE);
+      gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_T, Gl.GL_CLAMP_TO_EDGE);
+      try (Arena arena = Arena.ofConfined()) {
+        gl.glTexImage2D(
+            Gl.GL_TEXTURE_2D,
+            0,
+            Gl.GL_R8,
+            AlphaRangeTable.BINS,
+            AlphaRangeTable.BINS,
+            0,
+            Gl.GL_RED,
+            Gl.GL_UNSIGNED_BYTE,
+            arena.allocateFrom(ValueLayout.JAVA_BYTE, getAlphaRangeTable()));
+      }
     } else {
-      gl.glBindTexture(GL.GL_TEXTURE_2D, alphaRangeId);
+      gl.glBindTexture(Gl.GL_TEXTURE_2D, alphaRangeId);
     }
-    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glActiveTexture(Gl.GL_TEXTURE0);
   }
 
   @Override
-  public void destroy(GL2ES2 gl) {
+  public void destroy(Gl gl) {
     super.destroy(gl);
+    lightingMap.destroy(gl);
     if (id2 != 0) {
-      gl.glDeleteTextures(1, new int[] {id2}, 0);
+      gl.glDeleteTextures(id2);
       id2 = 0;
     }
     if (alphaRangeId != 0) {
-      gl.glDeleteTextures(1, new int[] {alphaRangeId}, 0);
+      gl.glDeleteTextures(alphaRangeId);
       alphaRangeId = 0;
     }
   }
