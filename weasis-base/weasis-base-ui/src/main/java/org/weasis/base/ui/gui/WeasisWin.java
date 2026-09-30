@@ -107,6 +107,7 @@ import org.weasis.core.api.gui.util.DynamicMenu;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.ShortcutManager;
+import org.weasis.core.api.gui.util.ShortcutTable;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.IdentityMask;
@@ -176,6 +177,11 @@ public class WeasisWin {
   private ViewerPlugin<?> selectedPlugin = null;
 
   private final List<Runnable> runOnClose = new ArrayList<>();
+  private final ShortcutTable<Integer> tabShifts =
+      new ShortcutTable<Integer>()
+          .on(ShortcutManager.ID_DOCKING_NEXT_TAB, 1)
+          .on(ShortcutManager.ID_DOCKING_PREV_TAB, -1);
+  private final ShortcutTable<Consumer<ViewerPlugin<?>>> dockingActions = buildDockingActions();
 
   private final Frame frame;
   private final RootPaneContainer rootPaneContainer;
@@ -626,41 +632,48 @@ public class WeasisWin {
     if (e.getID() != KeyEvent.KEY_PRESSED) {
       return false;
     }
-    ShortcutManager sm = ShortcutManager.getInstance();
-    if (sm.matches(ShortcutManager.ID_DOCKING_NEXT_TAB, e)) {
-      return cycleViewer(1);
-    } else if (sm.matches(ShortcutManager.ID_DOCKING_PREV_TAB, e)) {
-      return cycleViewer(-1);
+    Optional<Integer> tabShift = tabShifts.find(e);
+    if (tabShift.isPresent()) {
+      return cycleViewer(tabShift.get());
     }
-
     ViewerPlugin<?> plugin = getSelectedPlugin();
     if (plugin == null) {
       return false;
     }
+    Optional<Consumer<ViewerPlugin<?>>> action = dockingActions.find(e);
+    action.ifPresent(a -> a.accept(plugin));
+    return action.isPresent();
+  }
+
+  /** Docking shortcuts acting on the selected viewer. */
+  private ShortcutTable<Consumer<ViewerPlugin<?>>> buildDockingActions() {
+    return new ShortcutTable<Consumer<ViewerPlugin<?>>>()
+        .on(ShortcutManager.ID_DOCKING_MAXIMIZE, this::toggleMaximized)
+        .on(ShortcutManager.ID_DOCKING_NORMALIZE, plugin -> workspace().restore(plugin))
+        .on(
+            ShortcutManager.ID_DOCKING_EXTERNALIZE,
+            plugin -> {
+              if (plugin.isDetachable()) {
+                workspace().detach(plugin, null);
+              }
+            })
+        .on(
+            ShortcutManager.ID_DOCKING_CLOSE,
+            plugin -> {
+              if (plugin.isClosable()) {
+                plugin.close();
+                plugin.handleFocusAfterClosing();
+              }
+            });
+  }
+
+  private void toggleMaximized(ViewerPlugin<?> plugin) {
     WorkspaceManager control = workspace();
-    if (sm.matches(ShortcutManager.ID_DOCKING_MAXIMIZE, e)) {
-      if (control.isMaximized(plugin)) {
-        control.restore(plugin);
-      } else {
-        control.maximize(plugin);
-      }
-      return true;
-    } else if (sm.matches(ShortcutManager.ID_DOCKING_NORMALIZE, e)) {
+    if (control.isMaximized(plugin)) {
       control.restore(plugin);
-      return true;
-    } else if (sm.matches(ShortcutManager.ID_DOCKING_EXTERNALIZE, e)) {
-      if (plugin.isDetachable()) {
-        control.detach(plugin, null);
-      }
-      return true;
-    } else if (sm.matches(ShortcutManager.ID_DOCKING_CLOSE, e)) {
-      if (plugin.isClosable()) {
-        plugin.close();
-        plugin.handleFocusAfterClosing();
-      }
-      return true;
+    } else {
+      control.maximize(plugin);
     }
-    return false;
   }
 
   private boolean cycleViewer(int delta) {

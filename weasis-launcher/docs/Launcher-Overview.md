@@ -68,30 +68,21 @@ How code reaches the JVM differs between development and the packaged applicatio
   classpath**, so they live in the system classloader from process start; pf4j plugins stay
   `.jar.xz` in `$APPDIR/bundle/`. Only a **remote codebase** launch (`cdb=` parameter) whose
   server ships libraries that are not in the app image needs the common library classloader.
-- **AOT cache (JEP 483/514/515)** — on Windows/Linux packaged launches, stage 1
-  (`AotCache.relaunch`, called from the dependency-free `Bootstrap.main` entry point before
-  `AppLauncher` — and thus its Logback/static init — is ever loaded, and before any Singleton
-  interaction) re-executes the native launcher with `JAVA_TOOL_OPTIONS` containing either
-  `-XX:AOTCache=<file>` (cache exists) or `-XX:AOTCacheOutput=<file>` (first launch after
-  install/update trains the cache; the assembly phase spawns `bin/java` at JVM exit — kept in
-  the runtime for this reason). Classpath jars are AOT-cached. Classes defined by the common
-  library classloader and by the pf4j plugin classloaders are cached too, but only while the
-  jar is byte-identical to the one seen by the training run — any jar that changed since then
-  silently falls back to a normal load, so keeping the shared libraries on the classpath
-  remains the reliable option. The cache lives in the per-OS cache directory under
-  `aot/weasis-<version>-<runtime-stamp>.aot`; stale files are pruned. Disable with
-  `-Dweasis.aot.cache=false` (the Dicomizer launcher does). macOS is excluded for now
-  (open-file events target the first process). Any failure falls back to a normal launch:
-  in particular, if the stage-2 child dies within seconds while a cache was in use, stage 1
-  deletes the cache and relaunches once without AOT, so a bad cache can never block startup.
-  Two hard-earned constraints baked into `AotCache`: the child environment must not inherit
-  `_JPACKAGE_LAUNCHER` (the Linux jpackage launcher would then skip its `.cfg` and die on the
-  java usage screen), and training passes `-XX:-AOTClassLinking` — a cache with AOT-linked
-  classes trained against this application crashes the JVM at use time (`InternalError` in
-  `AppClassLoader.<clinit>` on JDK 26; to revisit with future JDK releases).
-- **PERF markers** — `*PERF* AOT cache, type:INIT mode:use|train|off` and
-  `*PERF* AOT relaunch overhead, type:INIT time:<ms>` in `boot.log` measure the pipeline;
-  compare with `*PERF* JVM start` across cold/warm launches.
+- **AOT cache (JEP 483/514/515)** — on Windows and Linux packaged launches, `Bootstrap.main`
+  (a dependency-free entry point that runs before `AppLauncher` and its static initializers)
+  calls `AotCache.relaunch`. The first launch after an install or update re-executes the native
+  launcher with `-XX:AOTCacheOutput` to train a per-user cache; once a trained cache has been
+  used successfully, the `-XX:AOTCache` option is persisted in the launcher `.cfg` so that later
+  launches start in a single process with the cache active. The cache lives in the per-OS cache
+  directory under `aot/` and is keyed by the application version and the runtime image, so an
+  update trains it again. Classpath jars are what the cache reliably serves; classes from the
+  common library and plugin classloaders are served only while their jar is unchanged since
+  training. Every failure falls back to a normal launch, and a cache that crashes the JVM at
+  startup is discarded and disabled for that build, so a bad cache never blocks the
+  application. Disable with `-Dweasis.aot.cache=false` (the Dicomizer launcher does); macOS is
+  excluded for now.
+- **PERF markers** — `*PERF*` lines in `boot.log` (JVM start, AOT cache mode, relaunch
+  overhead, plugin start, global starting) measure the pipeline across cold and warm launches.
 
 ## Class Loaders
 

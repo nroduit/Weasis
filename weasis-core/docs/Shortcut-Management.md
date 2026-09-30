@@ -34,7 +34,8 @@ reported to the user, who may keep them.
 
 Only the bindings that differ from their default are stored, under a node per operating system
 (`ShortcutManager.getPreferenceNodeName()`): preferences can be shared between workstations, while
-the platform modifier and the keys reserved by the system differ from one system to another.
+the platform modifier and the keys reserved by the system differ from one system to another. See
+[Preferences](Preferences-Migration.md) for the store.
 
 ## Key bindings
 
@@ -79,8 +80,8 @@ action cycling, information layer, full screen, rotation, flip), to the keys of 
 actions, then to the event manager: the shortcuts common to all viewers in
 `ImageViewerEventManager`, those of the concrete viewer (`DICOM_VIEWER`, and `MPR` only while an
 MPR container is selected), the window/level preset keys and the keys of the graphic tools. The
-shortcuts that act on the docking layout (tab navigation, maximize, externalize, close) are bound
-to the docking framework, outside the key listeners of the views.
+shortcuts that act on the workspace (tab navigation, maximize, detach, close) are handled globally
+by the main window.
 
 ## Menu accelerators
 
