@@ -71,6 +71,11 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
   }
 
   @Override
+  public String getViewerTypeId() {
+    return "default-app"; // NON-NLS
+  }
+
+  @Override
   public String getUIName() {
     return NAME;
   }

@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.prefs.Preferences;
 import java.util.stream.Stream;
 import javax.swing.Action;
@@ -47,6 +49,8 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.editor.OpenTracker;
+import org.weasis.core.ui.editor.PromptPolicy;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.RotationToolBar;
@@ -176,6 +180,7 @@ public class View3DContainer extends DicomViewerPlugin
   protected VolumeBuilder volumeBuilder;
 
   private final Object volumeBuilderLock = new Object();
+  private final OpenTracker build = new OpenTracker();
 
   protected final Map<String, List<SegRegion<?>>> regionMap = new HashMap<>();
 
@@ -194,6 +199,27 @@ public class View3DContainer extends DicomViewerPlugin
   @Override
   public SeriesViewerUI getSeriesViewerUI() {
     return UI;
+  }
+
+  /** How the volume build settles its questions; {@link PromptPolicy#ASK} shows the dialogs. */
+  public void setPromptPolicy(PromptPolicy policy) {
+    build.setPromptPolicy(policy);
+  }
+
+  public PromptPolicy getPromptPolicy() {
+    return build.promptPolicy();
+  }
+
+  @Override
+  public CompletableFuture<Void> whenReady() {
+    return build.whenReady();
+  }
+
+  @Override
+  public Map<String, Object> openReport() {
+    DicomVolTexture texture = getVolTexture();
+    Volume<?, ?> volume = texture == null ? null : texture.getVolume();
+    return build.report(volume == null ? null : !volume.isBasic());
   }
 
   private void initTools() {
@@ -348,44 +374,50 @@ public class View3DContainer extends DicomViewerPlugin
     if (series == null) {
       return;
     }
-    try {
-      if (View3DFactory.isOpenglEnable()) {
-        MediaSeries<DicomImageElement> oldSequence = null;
+    MediaSeries<DicomImageElement> oldSequence =
+        volumeBuilder == null ? null : volumeBuilder.getVolTexture().getSeries();
+    if (!series.equals(oldSequence)) {
+      // the future exists before anything can fail, so a refusal or an error settles --wait
+      build.begin();
+      if (!View3DFactory.isOpenglEnable()) {
+        build.fail(new IllegalStateException("OpenGL is not available"));
+        View3DFactory.showOpenglErrorMessage(this);
+        return;
+      }
+      try {
         if (volumeBuilder != null) {
-          oldSequence = volumeBuilder.getVolTexture().getSeries();
           GL2ES2 gl4 = OpenglUtils.getGL();
-          if (gl4 != null && !series.equals(oldSequence)) {
+          if (gl4 != null) {
             volumeBuilder.getVolTexture().destroy(gl4);
           }
         }
-
-        if (!series.equals(oldSequence)) {
-          GuiUtils.getUICore().closeSeries(oldSequence);
-          synchronized (volumeBuilderLock) {
-            for (ViewCanvas<DicomImageElement> view : cellManager) {
-              if (view instanceof View3d v) {
-                if (volumeBuilder == null) {
-                  this.volumeBuilder = new VolumeBuilder(factory.createImageSeries(series, v));
-                }
-                v.setVolTexture(volumeBuilder.getVolTexture());
+        GuiUtils.getUICore().closeSeries(oldSequence);
+        synchronized (volumeBuilderLock) {
+          for (ViewCanvas<DicomImageElement> view : cellManager) {
+            if (view instanceof View3d v) {
+              if (volumeBuilder == null) {
+                this.volumeBuilder =
+                    new VolumeBuilder(
+                        factory.createImageSeries(
+                            series, v, build.promptPolicy(), build::addWarning));
               }
+              v.setVolTexture(volumeBuilder.getVolTexture());
             }
-            volumeBuilder.getVolTexture().getSeries().setOpen(true);
-            startVolumeBuilder();
           }
+          volumeBuilder.getVolTexture().getSeries().setOpen(true);
+          startVolumeBuilder();
         }
-      } else {
-        View3DFactory.showOpenglErrorMessage(this);
+      } catch (Exception ex) {
+        build.fail(ex);
+        close();
+        handleFocusAfterClosing();
+        if (ex instanceof IllegalArgumentException) {
+          JOptionPane.showMessageDialog(this, ex.getMessage(), null, JOptionPane.ERROR_MESSAGE);
+        } else {
+          View3DFactory.showOpenglErrorMessage(this);
+        }
+        return;
       }
-    } catch (Exception ex) {
-      close();
-      handleFocusAfterClosing();
-      if (ex instanceof IllegalArgumentException) {
-        JOptionPane.showMessageDialog(this, ex.getMessage(), null, JOptionPane.ERROR_MESSAGE);
-      } else {
-        View3DFactory.showOpenglErrorMessage(this);
-      }
-      return;
     }
 
     String patientName = TagD.getTagValue(series, Tag.PatientName, String.class);
@@ -500,6 +532,7 @@ public class View3DContainer extends DicomViewerPlugin
 
   @Override
   public void close() {
+    build.fail(new CancellationException("3D viewer closed"));
     View3DFactory.closeSeriesViewer(this);
     super.close();
 
@@ -528,7 +561,12 @@ public class View3DContainer extends DicomViewerPlugin
             }
           }
         }
+        if (fullyLoaded) {
+          build.complete();
+        }
       }
+    } else if (DicomVolTextureFactory.LOAD_FAILED.equals(command)) {
+      build.fail(new IllegalStateException("Cannot build the 3D volume texture"));
     }
 
     if (event instanceof ObservableEvent e) {

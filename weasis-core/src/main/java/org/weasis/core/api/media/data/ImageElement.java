@@ -178,6 +178,16 @@ public class ImageElement extends MediaElement {
     return Math.min(pixelSizeX, pixelSizeY);
   }
 
+  /** Spacing between the centers of two adjacent columns, in {@link #getPixelSpacingUnit()}. */
+  public double getPixelSizeX() {
+    return pixelSizeX;
+  }
+
+  /** Spacing between the centers of two adjacent rows, in {@link #getPixelSpacingUnit()}. */
+  public double getPixelSizeY() {
+    return pixelSizeY;
+  }
+
   /**
    * Sets the pixel size, its unit and its origin back to what the image itself provides; without
    * such information the image is measured in pixels.

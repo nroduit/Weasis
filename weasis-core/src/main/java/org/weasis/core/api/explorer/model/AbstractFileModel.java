@@ -11,17 +11,13 @@ package org.weasis.core.api.explorer.model;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.command.Option;
-import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.*;
 
@@ -33,16 +29,6 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
       new TreeModelNode(1, 0, TagW.Group, new TagView(TagW.Group, TagW.FileName));
   public static final TreeModelNode series =
       new TreeModelNode(2, 0, TagW.SubseriesInstanceUID, new TagView(TagW.FileName));
-
-  public static final String CLOSE_USAGE =
-      """
-    Close %s
-    Usage: %s:close (-a | ([-g UID]... [-s UID]...))
-      -a --all         close all series
-      -g --group=UID   close a group from its UID
-      -s --series=UID   close a series/image from its UID
-      -? --help        show help
-    """;
 
   private static final List<TreeModelNode> modelStructure =
       Arrays.asList(TreeModelNode.ROOT, group, series);
@@ -181,51 +167,6 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
       seriesGroup.dispose();
       LOGGER.info("Remove Series/Image: {}", seriesGroup);
     }
-  }
-
-  public abstract void get(String[] argv) throws IOException;
-
-  public void close(String[] argv, String commandName) throws IOException {
-    final Option opt = Options.compile(CLOSE_USAGE.formatted(commandName, commandName)).parse(argv);
-    final List<String> gargs = opt.getList("group"); // NON-NLS
-    final List<String> iargs = opt.getList("series"); // NON-NLS
-
-    if (opt.isSet("help") || (gargs.isEmpty() && iargs.isEmpty() && !opt.isSet("all"))) { // NON-NLS
-      opt.usage();
-      return;
-    }
-
-    GuiExecutor.execute(
-        () -> {
-          AbstractFileModel dataModel = AbstractFileModel.this;
-          firePropertyChange(
-              new ObservableEvent(ObservableEvent.BasicAction.SELECT, dataModel, null, dataModel));
-          if (opt.isSet("all")) { // NON-NLS
-            for (MediaSeriesGroup g : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
-              dataModel.removeTopGroup(g);
-            }
-          } else {
-            if (opt.isSet("group")) { // NON-NLS
-
-              for (String gUID : gargs) {
-                dataModel.removeTopGroup(getHierarchyNode(MediaSeriesGroupNode.rootNode, gUID));
-              }
-            }
-
-            if (opt.isSet("series")) { // NON-NLS
-              for (String uid : iargs) {
-                for (MediaSeriesGroup topGroup :
-                    model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
-                  MediaSeriesGroup s = getHierarchyNode(topGroup, uid);
-                  if (s != null) {
-                    removeSeries(s);
-                    break;
-                  }
-                }
-              }
-            }
-          }
-        });
   }
 
   @Override

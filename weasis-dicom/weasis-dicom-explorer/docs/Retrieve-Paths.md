@@ -58,11 +58,19 @@ Invariants shared by every transport:
 | Entry point | Transports | Callable from code |
 | --- | --- | --- |
 | Query/Retrieve dialog (`DicomQrView`, `RetrieveTask`) | C-GET, C-MOVE, WADO-URI, WADO-RS | no, reads its parameters from the dialog |
-| `dicom:rs` command (`RsQueryParams`, `RsQueryResult`) | WADO-RS | yes |
-| `dicom:get` command (manifest) | WADO-URI and WADO-RS, via a manifest | yes |
+| `dicom:load-dicomweb` command (`RsQueryParams`, `RsQueryResult`) | WADO-RS | yes |
+| `dicom:load` command (manifest) | WADO-URI and WADO-RS, via a manifest | yes |
 
 The Query/Retrieve dialog expresses the series to fetch as a `RetrieveSelection`: checked
 studies, each narrowed to chosen series.
+
+A load command answers with the sources it accepted, each named by its kind, and with how far the
+loading went. Because loading is asynchronous, the caller chooses where the answer is taken:
+straight after queueing, when one series is fully loaded — enough to start working on it while the
+rest arrives — or when every queued source and every download it started is done. The first level
+is the default, so a script or an agent that does not care never blocks; the others are bounded by
+a timeout and answer `loaded: false` when it expires, never an error, since the download keeps
+running.
 
 ## Reference: files and symbols
 
@@ -76,6 +84,6 @@ studies, each narrowed to chosen series.
 | `LoadSeries` | `weasis-dicom-explorer` | Base download task: progress, stop, resume, priority |
 | `SeriesDownloadManager` | `weasis-dicom-explorer` | Per-instance and bulk WADO-RS download, tag overrides |
 | `DownloadManager` | `weasis-dicom-explorer` | Priority queue and the two executors |
-| `RsQueryParams` / `RsQueryResult` | `weasis-dicom-explorer` | Headless QIDO/WADO-RS query behind `dicom:rs` |
+| `RsQueryParams` / `RsQueryResult` | `weasis-dicom-explorer` | Headless QIDO/WADO-RS query behind `dicom:load-dicomweb` |
 | `ManifestModelBuilder` | `weasis-dicom-explorer` | Builds the model and tasks from a manifest |
 | `PatientComparator` | `weasis-dicom-codec` | Patient pseudo UID, the cross-source identity key |

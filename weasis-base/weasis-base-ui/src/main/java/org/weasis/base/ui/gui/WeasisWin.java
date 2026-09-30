@@ -17,7 +17,6 @@ import jakarta.json.JsonException;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Desktop;
-import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
@@ -26,7 +25,6 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
-import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Taskbar;
@@ -40,7 +38,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -82,8 +79,8 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JTextPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
 import javax.swing.ScrollPaneConstants;
@@ -93,8 +90,6 @@ import org.semver4j.Semver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
-import org.weasis.core.api.command.Option;
-import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
@@ -1461,69 +1456,12 @@ public class WeasisWin {
     return new Point((int) bounds.getCenterX(), (int) bounds.getCenterY());
   }
 
-  public void info(String[] argv) {
-    final String[] usage = {
-      "Show information about Weasis", // NON-NLS
-      "Usage: weasis:info (-v | -a)", // NON-NLS
-      "  -v --version    show version", // NON-NLS
-      "  -a --all        show weasis specifications", // NON-NLS
-      "  -? --help       show help" // NON-NLS
-    };
-
-    Option opt = Options.compile(usage).parse(argv);
-
-    if (opt.isSet("version")) {
-      System.out.println(AppProperties.WEASIS_VERSION);
-    } else if (opt.isSet("all")) { // NON-NLS
-      PrintStream out = System.out;
-      out.println("  " + AppProperties.WEASIS_NAME + " " + AppProperties.WEASIS_VERSION);
-      out.println("  Installation path: " + AppProperties.WEASIS_PATH); // NON-NLS
-      out.println("  Path for temporary files: " + AppProperties.APP_TEMP_DIR); // NON-NLS
-      out.println("  Profile: " + AppProperties.WEASIS_PROFILE); // NON-NLS
-      out.println("  User: " + AppProperties.WEASIS_USER); // NON-NLS
-      out.println("  Native specs: " + System.getProperty("native.library.spec")); // NON-NLS
-      out.format(
-          "  Operating system: %s %s %s", // NON-NLS
-          System.getProperty("os.name"),
-          System.getProperty("os.version"),
-          System.getProperty("os.arch"));
-      out.println();
-      out.println("  Java vendor: " + System.getProperty("java.vendor")); // NON-NLS
-      out.println("  Java version: " + System.getProperty("java.version")); // NON-NLS
-      out.println("  Java Path: " + System.getProperty("java.home")); // NON-NLS
-    } else {
-      opt.usage();
-    }
-  }
-
-  public void ui(String[] argv) {
-    final String[] usage = {
-      "Manage user interface", // NON-NLS
-      "Usage: weasis:ui (-q | -v | -m)", // NON-NLS
-      "  -q --quit        shutdown Weasis", // NON-NLS
-      "  -v --visible     set window on top", // NON-NLS
-      "  -m --minimized   minimize the window", // NON-NLS
-      "  -? --help        show help" // NON-NLS
-    };
-
-    Option opt = Options.compile(usage).parse(argv);
-    if (opt.isSet("quit")) { // NON-NLS
-      System.exit(0);
-    } else if (opt.isSet("minimized")) { // NON-NLS
-      GuiExecutor.execute(() -> getFrame().setState(Frame.ICONIFIED));
-    } else if (opt.isSet("visible")) { // NON-NLS
-      GuiExecutor.execute(() -> bringToFront(getFrame()));
-    } else {
-      opt.usage();
-    }
-  }
-
   /**
    * Brings the window to the foreground with the mechanism each platform allows. Desktops with
    * focus-stealing prevention (Windows, GNOME, any Wayland compositor) may only flag the window as
    * demanding attention: no input is simulated to bypass that.
    */
-  private static void bringToFront(Frame app) {
+  static void bringToFront(Frame app) {
     app.setVisible(true);
     if (SystemInfo.isMacOS) {
       Desktop desktop = Desktop.getDesktop();

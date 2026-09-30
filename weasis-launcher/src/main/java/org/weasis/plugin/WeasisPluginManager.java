@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import org.pf4j.CompoundPluginDescriptorFinder;
 import org.pf4j.DefaultPluginManager;
 import org.pf4j.ExtensionFactory;
+import org.pf4j.ExtensionFinder;
 import org.pf4j.PluginDescriptorFinder;
 import org.pf4j.PluginFactory;
 import org.pf4j.PluginLoader;
@@ -36,6 +37,9 @@ public class WeasisPluginManager extends DefaultPluginManager {
 
   private final CommonLibClassLoader commonLibClassLoader =
       new CommonLibClassLoader(WeasisPluginManager.class.getClassLoader());
+
+  // Created by createExtensionFinder(), which pf4j calls lazily from the superclass.
+  private CommonLibExtensionFinder commonLibExtensionFinder;
 
   public WeasisPluginManager() {
     super();
@@ -76,6 +80,14 @@ public class WeasisPluginManager extends DefaultPluginManager {
     return new WeasisExtensionFactory(this);
   }
 
+  /** Classpath extensions are looked up through the common-library loader, see the finder. */
+  @Override
+  protected ExtensionFinder createExtensionFinder() {
+    commonLibExtensionFinder = new CommonLibExtensionFinder(this, this::getCommonLibClassLoader);
+    addPluginStateListener(commonLibExtensionFinder);
+    return commonLibExtensionFinder;
+  }
+
   @Override
   protected VersionManager createVersionManager() {
     return new WeasisVersionManager();
@@ -112,6 +124,9 @@ public class WeasisPluginManager extends DefaultPluginManager {
           .forEach(path -> addCommonLibrary(path, classpathJars));
     } catch (IOException e) {
       LOGGER.error("Failed to list common libraries from: {}", libDir, e);
+    }
+    if (commonLibExtensionFinder != null) {
+      commonLibExtensionFinder.invalidateIndex();
     }
   }
 

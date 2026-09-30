@@ -1,0 +1,190 @@
+/*
+ * Copyright (c) 2026 Weasis Team and other contributors.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
+package org.weasis.core.api.command;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.Callable;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.pf4j.PluginManager;
+import org.weasis.core.api.command.CommandManagerTest.MathExtension;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Spec;
+
+/**
+ * A list of commands in a file, run in one call: the plan of an agent, or a test with its values.
+ */
+class ScriptCommandsTest {
+
+  private static CommandManager manager() {
+    PluginManager plugins = mock(PluginManager.class);
+    when(plugins.getExtensions(CommandExtension.class))
+        .thenReturn(List.of(new MathExtension(), new PlainExtension()));
+    return new CommandManager(plugins, CommandAudit.disabled(), RemotePolicy.allowAll());
+  }
+
+  /** A verb answering a plain line even to a remote caller, as {@code weasis:info -v} does. */
+  static final class PlainExtension implements CommandExtension {
+
+    @Command(name = "plain", description = "Verbs that answer a plain line.")
+    static final class PlainModel {
+
+      @Command(name = "line", description = "Prints a version, not JSON.")
+      static final class Line implements Callable<Integer> {
+        @Spec CommandSpec self;
+
+        @Override
+        public Integer call() {
+          self.commandLine().getOut().println("4.8.0-SNAPSHOT");
+          return 0;
+        }
+      }
+    }
+
+    @Override
+    public String getNamespace() {
+      return "plain";
+    }
+
+    @Override
+    public Object getCommandModel() {
+      return CommandSpec.forAnnotatedObject(new PlainModel())
+          .addSubcommand("line", CommandSpec.forAnnotatedObject(new PlainModel.Line()));
+    }
+  }
+
+  private static CommandResult run(Path script, String... options) {
+    List<String> argv =
+        new java.util.ArrayList<>(List.of("script:run", "--file", script.toString()));
+    argv.addAll(List.of(options));
+    return manager().run(argv, CommandOrigin.REMOTE);
+  }
+
+  private static Path write(Path dir, String name, String text) throws IOException {
+    return Files.writeString(dir.resolve(name), text);
+  }
+
+  @Test
+  void aStepReadsWhatAnEarlierStepReturned(@TempDir Path dir) throws IOException {
+    Path script =
+        write(
+            dir,
+            "sum.weasis",
+            """
+            # two steps, the second reading the first
+            $first = math:add --a ${a} --b 3
+            @expect ${first.sum} == 5
+            math:add --a ${first.sum} --b 0
+            """);
+    CommandResult result = run(script, "--set", "a=2");
+    assertAll(
+        () -> assertEquals(CommandResult.OK, result.status(), result.error()),
+        () -> assertTrue(result.body().contains("\"step\":1"), result.body()),
+        () -> assertTrue(result.body().contains("\"sum\":5"), result.body()),
+        () -> assertTrue(result.body().contains("\"failed\":0"), result.body()),
+        () -> assertTrue(result.body().contains("\"steps\":3"), result.body()));
+  }
+
+  @Test
+  void aFailedExpectationFailsTheRunAndNamesTheStep(@TempDir Path dir) throws IOException {
+    Path script =
+        write(
+            dir,
+            "wrong.weasis",
+            """
+            $first = math:add --a 2 --b 3
+            @expect ${first.sum} ~ 9 +-0.5
+            math:add --a 1 --b 1
+            """);
+    CommandResult stops = run(script);
+    CommandResult keepsGoing = run(script, "--keep-going");
+    assertAll(
+        () -> assertFalse(stops.isOk()),
+        () -> assertTrue(stops.error().contains("Step 2 (line 2)"), stops.error()),
+        () -> assertTrue(stops.body().contains("\"failed\":1"), stops.body()),
+        () -> assertTrue(stops.body().contains("\"skipped\":1"), stops.body()),
+        () -> assertTrue(keepsGoing.body().contains("\"ran\":3"), keepsGoing.body()));
+  }
+
+  @Test
+  void aRunAnswersOneObjectPerStepThenASummary(@TempDir Path dir) throws IOException {
+    Path script = write(dir, "two.weasis", "math:add --a 1 --b 1\nmath:add --a 2 --b 2\n");
+    CommandResult result = run(script, "--brief");
+    List<String> lines = result.body().lines().filter(line -> !line.isBlank()).toList();
+    assertAll(
+        () -> assertEquals(3, lines.size(), result.body()),
+        () -> assertTrue(lines.get(0).startsWith("{"), lines.get(0)),
+        () -> assertTrue(lines.get(0).contains("\"command\":\"math:add\""), lines.get(0)),
+        () -> assertFalse(lines.get(0).contains("\"body\""), "--brief leaves the bodies out"),
+        () -> assertTrue(lines.get(2).contains("\"summary\""), lines.get(2)));
+  }
+
+  @Test
+  void aPlainStepBodyIsQuoted(@TempDir Path dir) throws IOException {
+    Path script = write(dir, "plain.weasis", "plain:line\n");
+    CommandResult result = run(script);
+    String step =
+        result.body().lines().filter(line -> line.contains("\"step\":1")).findFirst().orElseThrow();
+    assertAll(
+        () -> assertEquals(CommandResult.OK, result.status(), result.error()),
+        () -> assertTrue(step.contains("\"body\":\"4.8.0-SNAPSHOT\""), step));
+  }
+
+  @Test
+  void checkParsesWithoutRunning(@TempDir Path dir) throws IOException {
+    Path good = write(dir, "good.weasis", "math:add --a 1\n@expect ${x.sum} == 1\n");
+    Path bad = write(dir, "bad.weasis", "math:pow --a 1\nscript:run --file x\n@expect nothing\n");
+    CommandResult ok =
+        manager()
+            .run(List.of("script:check", "--file", good.toString()), CommandOrigin.LAUNCH_ARGS);
+    CommandResult wrong =
+        manager().run(List.of("script:check", "--file", bad.toString()), CommandOrigin.LAUNCH_ARGS);
+    assertAll(
+        () -> assertEquals(CommandResult.OK, ok.status(), ok.error()),
+        () -> assertTrue(ok.body().replace(" ", "").contains("\"problems\":[]"), ok.body()),
+        () -> assertFalse(wrong.isOk()),
+        () -> assertTrue(wrong.body().contains("unknown command 'math:pow'"), wrong.body()),
+        () -> assertTrue(wrong.body().contains("does not run a script"), wrong.body()),
+        () -> assertTrue(wrong.body().contains("line 3"), wrong.body()));
+  }
+
+  @Test
+  void aLinkDoesNotCarryAScript(@TempDir Path dir) throws IOException {
+    Path script = write(dir, "link.weasis", "math:add --a 1 --b 1\n");
+    CommandResult fromLink =
+        manager().run(List.of("script:run", "--file", script.toString()), CommandOrigin.URI);
+    assertAll(
+        () -> assertFalse(fromLink.isOk()),
+        () -> assertTrue(fromLink.error().contains("weasis://"), fromLink.error()));
+  }
+
+  @Test
+  void aReportIsWrittenForTheContinuousIntegration(@TempDir Path dir) throws IOException {
+    Path script = write(dir, "report.weasis", "math:add --a 1 --b 1\n@expect 1 == 2\n");
+    Path report = dir.resolve("report.xml");
+    run(script, "--keep-going", "--report", report.toString());
+    String xml = Files.readString(report);
+    assertAll(
+        () -> assertTrue(xml.contains("<testsuite name=\"report.weasis\""), xml),
+        () -> assertTrue(xml.contains("failures=\"1\""), xml),
+        () -> assertTrue(xml.contains("<failure message="), xml));
+  }
+}

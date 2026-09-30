@@ -42,5 +42,17 @@ engine.
 ## Commands
 
 `WorkspaceCommands` exposes the engine under the `workspace:` command namespace (list, select,
-close, maximize, restore, stack, split, detach, snapshot, layout), so that a layout can be
-driven from the command line or by an agent.
+close, maximize, unmaximize, stack, split, detach, save, load), so that a layout can be
+driven from the command line, from `weasis-cli` or by an agent. The namespace is a Picocli
+command model (see the command bridge in `weasis-launcher/docs/Launcher-Overview.md`): every
+verb documents itself with `--help`, and the verbs that change the layout return the new state
+when JSON output is on, which is the default for remote calls.
+
+`list` returns the windows with their tab groups and views as JSON. A view carries its id, its
+tab title resolved under the identity mask in force, whether it is selected, and its viewer type
+id when a `SeriesViewerFactory` claims it; an image viewer adds its grid, its synchronization
+and one entry per pane with the series and the image the pane shows (`ViewDisplayState`, in
+`org.weasis.core.ui.editor.image`, builds both that pane description and the full display state
+the display verbs echo). A window reports the view it has maximized. View ids are durable
+handles; the window and group numbers are positions in that listing and change with the
+layout.

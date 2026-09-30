@@ -24,7 +24,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.command.CommandManager;
+import org.weasis.core.api.command.CommandOrigin;
+import org.weasis.core.api.command.CommandResult;
 import org.weasis.pref.ConfigData;
 import org.weasis.pref.PlatformDirectories;
 
@@ -118,9 +119,17 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
   public void newActivation(List<String> arguments) {
     waitWhenStarted();
     if (frameworkLoaded) {
-      CommandManager commandManager = new CommandManager(configData.getPluginManager());
-      executeCommands(commandManager, arguments);
+      executeCommands(commandManager(), arguments);
     }
+  }
+
+  @Override
+  public CommandResult runCommand(List<String> arguments, boolean assumeYes) {
+    waitWhenStarted();
+    if (!frameworkLoaded) {
+      return CommandResult.error("Weasis is still starting, retry in a moment");
+    }
+    return commandManager().run(arguments, CommandOrigin.REMOTE, assumeYes);
   }
 
   private void waitWhenStarted() {

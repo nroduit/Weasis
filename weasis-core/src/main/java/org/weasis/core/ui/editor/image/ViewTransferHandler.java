@@ -11,6 +11,7 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -20,6 +21,7 @@ import java.awt.image.RenderedImage;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 import org.weasis.core.api.gui.model.ViewModel;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.util.ImagePrint;
@@ -137,5 +139,59 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
       exportImage.disposeView();
     }
     return img;
+  }
+
+  /**
+   * An image rendered at its own size: one output pixel per displayed image pixel, whatever the
+   * size, zoom and pan of the view.
+   *
+   * @param corners the image corners (0,0), (w,0), (w,h), (0,h) in output pixels
+   */
+  public record ImageFrame(BufferedImage image, Point[] corners, Rectangle modelArea) {}
+
+  /**
+   * Renders the image of {@code canvas} at zoom 1 on a canvas of its own size, through the display
+   * pipeline of the view (window/level, LUT, presentation state, redaction, rotation and flip) and
+   * showing what {@code profile} selects. A rotation that is not a multiple of 90 degrees is
+   * clipped to the frame. Annotations follow the mask in force on this thread.
+   */
+  public static <E extends ImageElement> ImageFrame createImageFrame(
+      DefaultView2d<E> canvas, DisplayProfile profile) {
+    ExportImage<E> exportImage = new ExportImage<>(canvas, profile);
+    try {
+      Rectangle modelArea = exportImage.getImageBounds(exportImage.getImage());
+      Object angle = exportImage.getActionValue(ActionW.ROTATION.cmd());
+      int rotation = angle instanceof Integer a ? Math.floorMod(a, 360) : 0;
+      boolean swap = rotation == 90 || rotation == 270;
+      int width = Math.max(1, swap ? modelArea.height : modelArea.width);
+      int height = Math.max(1, swap ? modelArea.width : modelArea.height);
+      BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
+      exportImage.getInfoLayer().setBorder(3);
+      ViewModel viewModel = exportImage.getViewModel();
+      ((DefaultViewModel) viewModel).adjustMinViewScaleFromImage(modelArea.width, modelArea.height);
+      viewModel.setModelArea(modelArea);
+      exportImage.setBounds(0, 0, width, height);
+      viewModel.setModelOffset(0.0, 0.0, 1.0);
+      Graphics2D g = img.createGraphics();
+      Point[] corners;
+      try {
+        boolean wasBuffered = ImagePrint.disableDoubleBuffering(exportImage);
+        exportImage.zoom(1.0);
+        exportImage.draw(g);
+        ImagePrint.restoreDoubleBuffering(exportImage, wasBuffered);
+        corners =
+            new Point[] {
+              exportImage.getMouseCoordinatesFromImage(modelArea.getMinX(), modelArea.getMinY()),
+              exportImage.getMouseCoordinatesFromImage(modelArea.getMaxX(), modelArea.getMinY()),
+              exportImage.getMouseCoordinatesFromImage(modelArea.getMaxX(), modelArea.getMaxY()),
+              exportImage.getMouseCoordinatesFromImage(modelArea.getMinX(), modelArea.getMaxY())
+            };
+      } finally {
+        g.dispose();
+      }
+      return new ImageFrame(img, corners, modelArea);
+    } finally {
+      exportImage.disposeView();
+    }
   }
 }

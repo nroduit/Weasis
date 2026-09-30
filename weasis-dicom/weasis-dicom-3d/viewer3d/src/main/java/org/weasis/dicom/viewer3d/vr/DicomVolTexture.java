@@ -285,6 +285,10 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     return loadFinished;
   }
 
+  public void notifyLoadFailed() {
+    firePropertyChange(this, DicomVolTextureFactory.LOAD_FAILED, this);
+  }
+
   public boolean isReadyForDisplay() {
     return getId() > 0;
   }

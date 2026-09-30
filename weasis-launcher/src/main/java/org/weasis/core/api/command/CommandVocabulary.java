@@ -1,0 +1,148 @@
+/*
+ * Copyright (c) 2026 Weasis Team and other contributors.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
+package org.weasis.core.api.command;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+import picocli.CommandLine;
+import picocli.CommandLine.Model.ArgSpec;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
+import picocli.CommandLine.Model.PositionalParamSpec;
+
+/**
+ * Checks a command model against the rules of the command vocabulary: every value is labelled, a
+ * {@link SemanticType} shows the label of its type and can parse itself, long option names are
+ * kebab-case, one option name carries one type, a verb of the 5.0 era has no short option, a file
+ * read is an {@link InputPath} and a file written an {@link OutputPath}. Hidden options are left
+ * out: they are the spellings of an earlier major, kept as they were. A namespace pins the rules in
+ * its own test, and a plugin author sees the same report.
+ *
+ * <p>The checks that need the glossary (every noun a term, no banned synonym, every consumed handle
+ * with a producer) and the one that compares the shipped snapshots with a fresh generation wait for
+ * those parts of the vocabulary work.
+ */
+public final class CommandVocabulary {
+
+  private static final Pattern LONG_OPTION = Pattern.compile("--[a-z0-9]+(-[a-z0-9]+)*");
+
+  /** The option that reads a file, and the option that writes one: one type each. */
+  private static final String FILE_OPTION = "--file"; // NON-NLS
+
+  private static final String OUT_OPTION = "--out"; // NON-NLS
+
+  private CommandVocabulary() {}
+
+  /** The violations of {@code model}, each naming the verb and the value it comes from. */
+  public static List<String> violations(String namespace, Object model) {
+    List<String> violations = new ArrayList<>();
+    Map<String, String> typeOfOption = new HashMap<>();
+    CommandSpec root = CommandModel.newCommandLine(model).getCommandSpec();
+    for (CommandSpec spec : verbs(root)) {
+      String verb = namespace + ":" + spec.name();
+      checkShortOptions(verb, spec, violations);
+      for (OptionSpec option : spec.options()) {
+        // A hidden option is a spelling of an earlier major: its name and its type are history.
+        if (option.usageHelp() || option.versionHelp() || option.hidden()) {
+          continue;
+        }
+        checkOption(verb, option, typeOfOption, violations);
+      }
+      for (PositionalParamSpec parameter : spec.positionalParameters()) {
+        checkLabel(verb, parameter.paramLabel(), parameter, violations);
+      }
+    }
+    return violations;
+  }
+
+  private static void checkOption(
+      String verb, OptionSpec option, Map<String, String> typeOfOption, List<String> violations) {
+    String name = option.longestName();
+    if (option.type() != boolean.class && option.type() != Boolean.class) {
+      checkLabel(verb, option.paramLabel(), option, violations);
+    }
+    if (name.startsWith("--") && !LONG_OPTION.matcher(name).matches()) {
+      violations.add(verb + " " + name + ": a long option name is kebab-case");
+    }
+    checkFileType(verb, name, option, violations);
+    String type = CommandModel.typeName(option);
+    String known = typeOfOption.putIfAbsent(name, type);
+    if (known != null && !known.equals(type)) {
+      violations.add(
+          verb + " " + name + ": carries " + type + " here and " + known + " in another verb");
+    }
+  }
+
+  /** {@code --file} is read, {@code --out} is written, and each states it by its type. */
+  private static void checkFileType(
+      String verb, String name, OptionSpec option, List<String> violations) {
+    Class<?> type = CommandModel.elementType(option);
+    if (FILE_OPTION.equals(name) && type != InputPath.class) {
+      violations.add(verb + " --file: reads a file, so its type is input-path");
+    }
+    if (OUT_OPTION.equals(name) && type != OutputPath.class) {
+      violations.add(verb + " --out: writes a file, so its type is output-path");
+    }
+  }
+
+  /** A verb of the 5.0 era takes long names only; the short letters are the 4.x spellings. */
+  private static void checkShortOptions(String verb, CommandSpec spec, List<String> violations) {
+    if (CommandModel.since(spec.userObject()) == null) {
+      return;
+    }
+    for (OptionSpec option : spec.options()) {
+      if (option.usageHelp() || option.versionHelp() || option.hidden()) {
+        continue;
+      }
+      for (String name : option.names()) {
+        if (!name.startsWith("--")) {
+          violations.add(verb + " " + option.longestName() + ": " + name + " is a short option");
+        }
+      }
+    }
+  }
+
+  private static void checkLabel(String verb, String label, ArgSpec arg, List<String> violations) {
+    String name = arg.isOption() ? ((OptionSpec) arg).longestName() : label;
+    if (label == null || label.isBlank()) {
+      violations.add(verb + " " + name + ": no label");
+      return;
+    }
+    Class<?> type = CommandModel.elementType(arg);
+    if (!SemanticType.class.isAssignableFrom(type)) {
+      return;
+    }
+    String expected = SemanticType.labelOf(type);
+    if (!expected.equals(label)) {
+      violations.add(verb + " " + name + ": label " + label + " instead of " + expected);
+    }
+    try {
+      type.getMethod(SemanticType.PARSE_METHOD, String.class);
+    } catch (NoSuchMethodException e) {
+      violations.add(
+          verb + " " + name + ": " + type.getSimpleName() + " declares no public parse(String)");
+    }
+  }
+
+  private static List<CommandSpec> verbs(CommandSpec root) {
+    List<CommandSpec> specs = new ArrayList<>();
+    if (root.subcommands().isEmpty()) {
+      specs.add(root);
+    }
+    root.subcommands().values().stream()
+        .map(CommandLine::getCommandSpec)
+        .distinct()
+        .forEach(specs::add);
+    return specs;
+  }
+}

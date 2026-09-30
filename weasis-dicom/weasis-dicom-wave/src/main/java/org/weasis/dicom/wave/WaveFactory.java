@@ -38,6 +38,11 @@ public class WaveFactory implements SeriesViewerFactory {
   }
 
   @Override
+  public String getViewerTypeId() {
+    return "waveform"; // NON-NLS
+  }
+
+  @Override
   public String getUIName() {
     return NAME;
   }

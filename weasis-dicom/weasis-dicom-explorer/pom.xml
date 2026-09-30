@@ -54,5 +54,11 @@
       <artifactId>joml</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Only for tests reaching NetworkFileSystems: at runtime oshi is a common library (weasis.plugins.11) -->
+    <dependency>
+      <groupId>com.github.oshi</groupId>
+      <artifactId>oshi-core-ffm</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

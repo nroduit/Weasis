@@ -23,6 +23,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
+import org.weasis.core.ui.editor.PromptPolicy;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerOpenOptions;
@@ -56,6 +57,11 @@ public class MprFactory implements SeriesViewerFactory {
   }
 
   @Override
+  public String getViewerTypeId() {
+    return "mpr"; // NON-NLS
+  }
+
+  @Override
   public String getUIName() {
     return NAME;
   }
@@ -82,6 +88,7 @@ public class MprFactory implements SeriesViewerFactory {
     LayoutModel layout =
         ImageViewerPlugin.getLayoutModel(options, getDefaultMigLayoutModel(), null);
     MprContainer instance = new MprContainer(layout.model(), layout.uid());
+    instance.setPromptPolicy(options == null ? PromptPolicy.ASK : options.promptPolicy());
     // Hand off the fusion captured by getMprAction; open() reaches here synchronously on the EDT.
     instance.setInheritedFusion(pendingFusion);
     pendingFusion = null;

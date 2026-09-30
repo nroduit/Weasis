@@ -11,8 +11,6 @@ package org.weasis.launcher;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -22,29 +20,32 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.command.CommandManager;
+import org.weasis.core.api.command.CommandResult;
 import org.weasis.pref.ConfigData;
-import org.weasis.pref.PlatformDirectories;
 
 public class Singleton {
   private static final Logger LOGGER = LoggerFactory.getLogger(Singleton.class);
 
   private static final String LOCALHOST = "127.0.0.1";
-  private static final File SI_FILEDIR =
-      PlatformDirectories.get(PlatformDirectories.BaseDir.STATE)
-          .resolve("singleton")
-          .toFile(); // NON-NLS
+  private static final Path SI_FILEDIR = SingletonFiles.directory();
+
+  /** Longest wait a remote command may request, in seconds (system property). */
+  public static final String MAX_TIMEOUT_PROP = "weasis.commands.remote.timeout.max";
+
+  private static final int DEFAULT_TIMEOUT_SECONDS = 30;
   private static final String SI_MAGICWORD = "si.init";
   private static final String SI_ARG = "si.arg";
   private static final String SI_PROP = "si.prop";
@@ -56,6 +57,7 @@ public class Singleton {
   private static final int ENCODING_UNICODE = 2;
 
   private static final String ENCODING_UNICODE_NAME = "UTF-16LE"; // NON-NLS
+  private static final String ENCODING_UTF8_NAME = "UTF-8"; // NON-NLS
 
   private static int currPort;
   private static String stringId = null;
@@ -73,6 +75,14 @@ public class Singleton {
     boolean canStartNewActivation(Properties prop);
 
     void newActivation(List<String> arguments);
+
+    /**
+     * Runs a command received on the socket ({@code si.run}); origin is always remote and {@code
+     * assumeYes} answers yes to the confirmations the command would ask.
+     */
+    default CommandResult runCommand(List<String> arguments, boolean assumeYes) {
+      return CommandResult.error("Remote commands are not supported by this application");
+    }
   }
 
   public static void start(SingletonApp sia, String id) {
@@ -123,33 +133,15 @@ public class Singleton {
 
   public static boolean running(String id) {
     LOGGER.debug("Check if another instance running for id: {}", id);
-    String[] fList = SI_FILEDIR.list();
-    if (fList != null) {
-      for (String file : fList) {
-        // if file with the same prefix already exist, server is running
-        if (file.startsWith(id)) {
-          try {
-            currPort = Integer.parseInt(file.substring(file.lastIndexOf('_') + 1));
-          } catch (NumberFormatException nfe) {
-            LOGGER.error("Cannot parse port", nfe);
-            return false;
-          }
-
-          File siFile = new File(SI_FILEDIR, file);
-          // get random number from single instance file
-          try (BufferedReader br =
-              new BufferedReader(new FileReader(siFile, StandardCharsets.UTF_8))) {
-            randomNumberString = br.readLine();
-          } catch (IOException ioe) {
-            LOGGER.error("Cannot read random numbrer from file {}", siFile.getPath());
-          }
-          stringId = id;
-          LOGGER.info("Singleton server {} already running on port {}", stringId, currPort);
-          return true;
-        }
-      }
+    Optional<SingletonFiles.Instance> instance = SingletonFiles.find(SI_FILEDIR, id);
+    if (instance.isEmpty()) {
+      return false;
     }
-    return false;
+    currPort = instance.get().port();
+    randomNumberString = instance.get().secret();
+    stringId = id;
+    LOGGER.info("Singleton server {} already running on port {}", stringId, currPort);
+    return true;
   }
 
   public static boolean invoke(ConfigData configData) {
@@ -247,7 +239,7 @@ public class Singleton {
   }
 
   private static File getSiFile(final String id, final int port) {
-    return new File(SI_FILEDIR, id + "_" + port);
+    return SingletonFiles.file(SI_FILEDIR, id, port).toFile();
   }
 
   private static class SingletonServer {
@@ -280,6 +272,9 @@ public class Singleton {
     final int port;
     final String stringId;
 
+    /** Serializes URI activations and stop requests in arrival order; si.run stays concurrent. */
+    private final ReentrantLock activationLock = new ReentrantLock(true);
+
     int getPort() {
       return port;
     }
@@ -305,26 +300,12 @@ public class Singleton {
     }
 
     private static void createSingletonFile(final String id, final int port) {
-      final File siFile = getSiFile(id, port);
-
-      SI_FILEDIR.mkdirs();
-      String[] fList = SI_FILEDIR.list();
-      if (fList != null) {
-        for (String file : fList) {
-          if (file.startsWith(id)) {
-            LOGGER.info("Remove file with same prefix {}", file);
-            FileUtil.delete(Path.of(SI_FILEDIR.getPath(), file));
-          }
-        }
-      }
-
-      try (PrintStream out = new PrintStream(new FileOutputStream(siFile))) {
-        siFile.deleteOnExit();
-        // write random number to single instance file
+      try {
         randomNumber = random.nextInt();
-        out.print(randomNumber);
+        Path file = SingletonFiles.create(SI_FILEDIR, id, port, String.valueOf(randomNumber));
+        file.toFile().deleteOnExit();
       } catch (IOException e) {
-        LOGGER.error("Cannot add random number to file", e);
+        LOGGER.error("Cannot create the singleton file", e);
       }
     }
 
@@ -344,6 +325,9 @@ public class Singleton {
         case ENCODING_UNICODE -> {
           return ENCODING_UNICODE_NAME;
         }
+        case CommandProtocol.ENCODING_UTF8 -> {
+          return ENCODING_UTF8_NAME;
+        }
         default -> {
           LOGGER.error("Unknown encoding: {}", encoding);
           return null;
@@ -351,18 +335,21 @@ public class Singleton {
       }
     }
 
+    // One virtual thread per connection: a slow remote command must not block URI forwarding.
     private Void runSingletonServer() {
-      try (ExecutorService executor = Executors.newFixedThreadPool(1)) {
-        while (!Thread.currentThread().isInterrupted()) {
-          try {
-            Socket socket = ss.accept();
-            executor.submit(() -> handleClient(socket));
-          } catch (IOException e) {
-            if (ss.isClosed()) {
-              break;
-            }
-            LOGGER.error("Error accepting connection", e);
+      while (!Thread.currentThread().isInterrupted()) {
+        try {
+          Socket socket = ss.accept();
+          Thread.ofVirtual()
+              .name("si-client") // NON-NLS
+              .uncaughtExceptionHandler(
+                  (thread, error) -> LOGGER.error("Unhandled error in {}", thread.getName(), error))
+              .start(() -> handleClient(socket));
+        } catch (IOException e) {
+          if (ss.isClosed()) {
+            break;
           }
+          LOGGER.error("Error accepting connection", e);
         }
       }
       return null;
@@ -381,18 +368,37 @@ public class Singleton {
           line = in.readLine();
           LOGGER.debug("Receive message: {}", line);
 
-          if (SI_MAGICWORD.equals(line)) {
-            handleMagicWord(in, socket, isr);
+          if (CommandProtocol.RUN.equals(line)) {
+            handleRun(in, socket, isr);
+          } else if (SI_MAGICWORD.equals(line)) {
+            runSerially(() -> handleMagicWord(in, socket, isr));
           } else if (SI_STOP.equals(line)) {
-            removeSiFile();
-            ss.close();
+            runSerially(
+                () -> {
+                  removeSiFile();
+                  ss.close();
+                });
           }
         } else {
           handleUnexpectedError();
         }
-      } catch (IOException ex) {
+      } catch (Exception ex) {
         LOGGER.error("Error handling client", ex);
       }
+    }
+
+    private void runSerially(IoRunnable task) throws IOException {
+      activationLock.lock();
+      try {
+        task.run();
+      } finally {
+        activationLock.unlock();
+      }
+    }
+
+    @FunctionalInterface
+    private interface IoRunnable {
+      void run() throws IOException;
     }
 
     private void handleMagicWord(BufferedReader in, Socket s, InputStreamReader isr)
@@ -430,6 +436,53 @@ public class Singleton {
         sendResponse(s, isr, SI_EXIT);
         System.exit(0);
       }
+    }
+
+    private void handleRun(BufferedReader in, Socket s, InputStreamReader isr) throws IOException {
+      CommandProtocol.Request request = CommandProtocol.readRequest(in);
+      CommandResult result;
+      Throwable failure = null;
+      try {
+        result = execute(request);
+      } catch (Exception | LinkageError e) {
+        // A LinkageError is expected when the jars are replaced under a running JVM: a class loaded
+        // for the first time after the rebuild is then missing.
+        failure = e;
+        result = CommandResult.error(e.toString());
+      }
+      try (OutputStream os = s.getOutputStream();
+          PrintStream ps = new PrintStream(os, true, isr.getEncoding())) {
+        CommandProtocol.writeResponse(ps, result);
+      }
+      if (failure != null) {
+        // Logged after the answer: rendering a stack trace can fail for the very same reason.
+        LOGGER.error("Cannot run {}", request.argv(), failure);
+      }
+    }
+
+    private CommandResult execute(CommandProtocol.Request request) {
+      SingletonApp app = siApp;
+      if (request.version() > CommandProtocol.VERSION) {
+        return CommandResult.of(
+            CommandResult.CONNECTION,
+            "The client speaks protocol version "
+                + request.version()
+                + ", this Weasis supports "
+                + CommandProtocol.VERSION
+                + ": update Weasis");
+      }
+      if (app == null) {
+        return CommandResult.error("Application is shutting down");
+      }
+      return CommandManager.runWithTimeout(
+          () -> app.runCommand(request.argv(), request.assumeYes()),
+          timeout(request.timeoutSeconds()));
+    }
+
+    private static Duration timeout(int requestedSeconds) {
+      int max = Integer.getInteger(MAX_TIMEOUT_PROP, 600);
+      int seconds = requestedSeconds > 0 ? requestedSeconds : DEFAULT_TIMEOUT_SECONDS;
+      return Duration.ofSeconds(Math.clamp(seconds, 1, Math.max(1, max)));
     }
 
     private void sendResponse(Socket s, InputStreamReader isr, String response) throws IOException {

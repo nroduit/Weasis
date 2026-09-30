@@ -11,6 +11,7 @@ package org.weasis.dicom.viewer3d.vr;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.function.Consumer;
 import javax.swing.JProgressBar;
 import org.joml.Vector3i;
 import org.opencv.core.CvType;
@@ -21,6 +22,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.ui.editor.PromptPolicy;
 import org.weasis.core.ui.editor.image.ViewProgress;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.Messages;
@@ -38,6 +40,7 @@ public class DicomVolTextureFactory {
 
   public static final String FULLY_LOADED = "texture.fully.loaded";
   public static final String PARTIALLY_LOADED = "texture.partially.loaded";
+  public static final String LOAD_FAILED = "texture.load.failed";
 
   private final PropertyChangeSupport changeSupport;
 
@@ -45,8 +48,15 @@ public class DicomVolTextureFactory {
     this.changeSupport = new PropertyChangeSupport(this);
   }
 
+  /**
+   * Builds the texture of {@code series}; {@code policy} settles the rectification questions and
+   * every question raised goes to {@code warnings}, asked or not.
+   */
   public DicomVolTexture createImageSeries(
-      final MediaSeries<DicomImageElement> series, ViewProgress progress) {
+      final MediaSeries<DicomImageElement> series,
+      ViewProgress progress,
+      PromptPolicy policy,
+      Consumer<String> warnings) {
     DicomImageElement middle = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
     if (middle == null) {
       throw new IllegalStateException("No image");
@@ -78,12 +88,17 @@ public class DicomVolTextureFactory {
     Volume<?, ?> volume = Volume.getSharedVolume(stack);
     if (volume == null) {
       try {
+        String question = null;
         if (stack.isNonParallelSlices()) {
-          MPRGenerator.confirmMessage(bar, Messages.getString("SeriesBuilder.orientation_varying"));
+          question = Messages.getString("SeriesBuilder.orientation_varying");
         } else if (stack.isVariableSliceSpacing()) {
-          MPRGenerator.confirmMessage(bar, Messages.getString("SeriesBuilder.space"));
+          question = Messages.getString("SeriesBuilder.space");
         } else if (stack.isTooFewSlicesForTransformation()) {
-          MPRGenerator.confirmMessage(bar, Messages.getString("SeriesBuilder.too_few_slices"));
+          question = Messages.getString("SeriesBuilder.too_few_slices");
+        }
+        if (question != null) {
+          warnings.accept(question);
+          MPRGenerator.confirmMessage(bar, policy, question);
         }
         // If yes is selected or none of the conditions are met, the volume is generated with
         // geometric rectification

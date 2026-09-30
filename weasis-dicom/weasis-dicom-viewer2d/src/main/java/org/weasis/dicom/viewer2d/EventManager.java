@@ -1270,6 +1270,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           ActionW.SYNCH.cmd(),
           null,
           new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), 0.0));
+    } else if (ResetTools.ROTATION.equals(action)) {
+      getAction(ActionW.ROTATION).ifPresent(a -> a.setSliderValue(0));
     } else if (ResetTools.WL.equals(action)) {
       resetWindowLevel();
     } else if (ResetTools.PAN.equals(action)) {

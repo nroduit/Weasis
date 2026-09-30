@@ -11,6 +11,8 @@ package org.weasis.core.ui.editor;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import javax.swing.Action;
 import javax.swing.JMenu;
 import org.weasis.core.api.media.data.MediaElement;
@@ -48,5 +50,21 @@ public interface SeriesViewer<E extends MediaElement> {
 
   default List<Action> getPrintActions() {
     return Collections.emptyList();
+  }
+
+  /**
+   * Completes once the content built asynchronously after {@link #addSeries} is displayed, e.g. an
+   * MPR volume; already complete for viewers that display the series directly.
+   */
+  default CompletableFuture<Void> whenReady() {
+    return CompletableFuture.completedFuture(null);
+  }
+
+  /**
+   * What the viewer decided while opening, for callers that cannot see its dialogs: values are
+   * booleans, numbers, strings or lists of strings, e.g. {@code rectified} and {@code warnings}.
+   */
+  default Map<String, Object> openReport() {
+    return Map.of();
   }
 }

@@ -37,6 +37,11 @@ public class AuFactory implements SeriesViewerFactory {
   }
 
   @Override
+  public String getViewerTypeId() {
+    return "audio"; // NON-NLS
+  }
+
+  @Override
   public String getUIName() {
     return NAME;
   }

@@ -32,6 +32,11 @@
       <outputDirectory>bin-dist/weasis/resources</outputDirectory>
     </fileSet>
     <fileSet>
+      <!-- the agent skill, shipped next to weasis-cli -->
+      <directory>../skills</directory>
+      <outputDirectory>bin-dist/weasis/skills</outputDirectory>
+    </fileSet>
+    <fileSet>
       <!-- copy application config -->
       <directory>etc/config</directory>
       <outputDirectory>bin-dist/weasis/conf</outputDirectory>

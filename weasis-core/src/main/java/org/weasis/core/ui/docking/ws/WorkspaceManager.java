@@ -88,6 +88,11 @@ public final class WorkspaceManager {
   }
 
   /** All docked views, in workspace and tab order. */
+  /** The open view with this {@link WorkspaceView#viewId()}. */
+  public Optional<WorkspaceView> findView(String viewId) {
+    return getViews().stream().filter(v -> v.viewId().equals(viewId)).findFirst();
+  }
+
   public List<WorkspaceView> getViews() {
     List<WorkspaceView> all = new ArrayList<>();
     for (Workspace workspace : workspaces.values()) {
@@ -342,6 +347,9 @@ public final class WorkspaceManager {
   }
 
   private WorkspaceSnapshot.Node captureNode(Component component) {
+    if (component == null) {
+      return null; // a window whose last view was closed holds no tree
+    }
     if (component instanceof TabGroup group) {
       List<WorkspaceSnapshot.ViewDescriptor> views =
           group.getViews().stream()

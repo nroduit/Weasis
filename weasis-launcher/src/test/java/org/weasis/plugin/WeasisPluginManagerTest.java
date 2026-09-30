@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -27,8 +28,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import javax.tools.ToolProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.pf4j.ExtensionPoint;
+import org.pf4j.IndexedExtensionFinder;
 import org.pf4j.Plugin;
 import org.pf4j.PluginDescriptor;
 import org.pf4j.PluginState;
@@ -140,6 +146,101 @@ class WeasisPluginManagerTest {
     } finally {
       Thread.currentThread().setContextClassLoader(previous);
     }
+  }
+
+  /** Extension point shared with the extension compiled into the common-library jar. */
+  public interface Greeter extends ExtensionPoint {
+    String greet();
+  }
+
+  /** An extension that exists only in a downloaded shared library must be found and created. */
+  @Test
+  void extensionsOfACommonLibraryAreFound(@TempDir Path cacheDir) throws IOException {
+    Path libDir = Files.createDirectories(cacheDir.resolve(ConfigData.F_LIB_FOLDER));
+    Path jar = greeterLibrary(cacheDir, libDir);
+    assumeFalse(jar == null, "No Java compiler available");
+    WeasisPluginManager manager =
+        new WeasisPluginManager(cacheDir.resolve(ConfigData.F_PLUGIN_FOLDER));
+
+    loadCommonLibraries(manager);
+    List<Greeter> greeters = manager.getExtensions(Greeter.class);
+
+    assertEquals(1, greeters.size());
+    assertEquals("hello from the common lib", greeters.getFirst().greet());
+    assertSame(manager.getCommonLibClassLoader(), greeters.getFirst().getClass().getClassLoader());
+  }
+
+  /**
+   * pf4j reads the extension index once: a lookup made before the libraries are published must not
+   * hide their extensions for the rest of the session.
+   */
+  @Test
+  void extensionsOfACommonLibraryAreFoundAfterAnEarlierLookup(@TempDir Path cacheDir)
+      throws IOException {
+    Path libDir = Files.createDirectories(cacheDir.resolve(ConfigData.F_LIB_FOLDER));
+    WeasisPluginManager manager =
+        new WeasisPluginManager(cacheDir.resolve(ConfigData.F_PLUGIN_FOLDER));
+    assertTrue(manager.getExtensions(Greeter.class).isEmpty());
+
+    Path jar = greeterLibrary(cacheDir, libDir);
+    assumeFalse(jar == null, "No Java compiler available");
+    loadCommonLibraries(manager);
+
+    assertEquals(1, manager.getExtensions(Greeter.class).size());
+  }
+
+  /** Compiles a Greeter extension and packs it with its extension index; null without javac. */
+  private static Path greeterLibrary(Path workDir, Path libDir) throws IOException {
+    var compiler = ToolProvider.getSystemJavaCompiler();
+    if (compiler == null) {
+      return null;
+    }
+    Path src = Files.createDirectories(workDir.resolve("src/org/weasis/plugin"));
+    Path classes = Files.createDirectories(workDir.resolve("classes"));
+    Path source = src.resolve("LibGreeter.java");
+    Files.writeString(
+        source,
+        """
+        package org.weasis.plugin;
+        @org.pf4j.Extension
+        public class LibGreeter implements %s {
+          public String greet() { return "hello from the common lib"; }
+        }
+        """
+            .formatted(Greeter.class.getName().replace('$', '.')));
+    String classpath =
+        codeSource(Greeter.class) + File.pathSeparator + codeSource(ExtensionPoint.class);
+    var diagnostics = new java.io.ByteArrayOutputStream();
+    int status =
+        compiler.run(
+            null,
+            diagnostics,
+            diagnostics,
+            "-proc:none",
+            "-cp",
+            classpath,
+            "-d",
+            classes.toString(),
+            source.toString());
+    assertEquals(0, status, "compilation of the test extension: " + diagnostics);
+    Path jar = libDir.resolve("greeter-lib.jar");
+    try (OutputStream out = Files.newOutputStream(jar);
+        JarOutputStream jarOut = new JarOutputStream(out)) {
+      jarOut.putNextEntry(new JarEntry("org/weasis/plugin/LibGreeter.class"));
+      Files.copy(classes.resolve("org/weasis/plugin/LibGreeter.class"), jarOut);
+      jarOut.closeEntry();
+      jarOut.putNextEntry(new JarEntry(IndexedExtensionFinder.EXTENSIONS_RESOURCE));
+      jarOut.write("org.weasis.plugin.LibGreeter\n".getBytes());
+      jarOut.closeEntry();
+    }
+    return jar;
+  }
+
+  private static String codeSource(Class<?> type) {
+    return Path.of(
+            java.net.URI.create(
+                type.getProtectionDomain().getCodeSource().getLocation().toString()))
+        .toString();
   }
 
   /** Plugins must resolve the shared libraries before reaching the application class loader. */

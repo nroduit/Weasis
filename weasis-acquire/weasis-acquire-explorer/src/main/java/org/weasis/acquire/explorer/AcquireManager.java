@@ -9,6 +9,8 @@
  */
 package org.weasis.acquire.explorer;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
 import java.awt.Component;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -24,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -52,15 +55,21 @@ import org.w3c.dom.NodeList;
 import org.weasis.acquire.explorer.core.bean.DefaultTaggable;
 import org.weasis.acquire.explorer.core.bean.Global;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
+import org.weasis.core.api.command.AbstractVerb;
+import org.weasis.core.api.command.Capability;
+import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandExtension;
-import org.weasis.core.api.command.Option;
-import org.weasis.core.api.command.Options;
+import org.weasis.core.api.command.Needs;
+import org.weasis.core.api.command.RemoteUrl;
+import org.weasis.core.api.command.Renamed;
+import org.weasis.core.api.command.Since;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.MimeInspector;
+import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
@@ -70,6 +79,7 @@ import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.net.URLParameters;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.GzipManager;
+import org.weasis.core.ui.editor.PromptPolicy;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.layer.GraphicLayer;
@@ -79,8 +89,17 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TagSeq;
 import org.weasis.dicom.param.DicomNode;
 import org.xml.sax.SAXException;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
+import picocli.CommandLine.ParentCommand;
 
 @Extension
+@Command(
+    name = "acquire",
+    description = "Image acquisition (Dicomizer): patient context.",
+    subcommands = AcquireManager.Patient.class)
 public class AcquireManager implements CommandExtension {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireManager.class);
 
@@ -104,18 +123,6 @@ public class AcquireManager implements CommandExtension {
   private static final Map<String, AcquireMediaInfo> uidToMediaInfoMap = new HashMap<>();
   private static final Map<URI, AcquireMediaInfo> uriToMediaInfoMap = new HashMap<>();
 
-  private static final String GET_USAGE =
-      """
-          Load Patient Context from the first argument
-          Usage: acquire:patient (-x | -i | -s | -u) arg
-          arg is an XML text in UTF8 or an url with the option '--url'
-            -x --xml         Open Patient Context from an XML data containing all DICOM Tags
-            -i --inbound     Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64/GZip]
-            -s --iurlsafe    Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64_URL_SAFE/GZip]
-            -u --url         Open Patient Context from an URL (XML file containing all DICOM TAGs)
-            -? --help        show help
-          """;
-
   private AcquireImageInfo currentAcquireImageInfo = null;
   private ViewCanvas<ImageElement> currentView = null;
 
@@ -134,17 +141,8 @@ public class AcquireManager implements CommandExtension {
   }
 
   @Override
-  public void execute(String commandName, String[] args) throws Exception {
-    if (commandName.equals("patient")) {
-      patient(args);
-    } else {
-      throw new IllegalArgumentException("Unknown command: " + commandName);
-    }
-  }
-
-  @Override
-  public String getHelp() {
-    return String.join("\n", GET_USAGE) + "\n";
+  public Object getCommandModel() {
+    return this;
   }
 
   public static AcquireImageInfo getCurrentAcquireImageInfo() {
@@ -580,53 +578,162 @@ public class AcquireManager implements CommandExtension {
     }
   }
 
-  /**
-   * Set a new Patient Context and in case current state job is not finished ask user if cleaning
-   * unpublished images should be done or canceled.
-   *
-   * @param argv the main arguments
-   */
-  public void patient(String[] argv) {
-    final String[] usage = {
-      "Load Patient Context from the first argument", // NON-NLS
-      "Usage: acquire:patient (-x | -i | -s | -u) arg", // NON-NLS
-      "arg is an XML text in UTF8 or an url with the option '--url'", // NON-NLS
-      "  -x --xml         Open Patient Context from an XML data containing all DICOM Tags ", // NON-NLS
-      "  -i --inbound     Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64/GZip]", // NON-NLS
-      "  -s --iurlsafe    Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64_URL_SAFE/GZip]", // NON-NLS
-      "  -u --url         Open Patient Context from an URL (XML file containing all DICOM TAGs)", // NON-NLS
-      "  -? --help        show help" // NON-NLS
-    };
-
-    final Option opt = Options.compile(usage).parse(argv);
-    final List<String> args = opt.args();
-
-    if (opt.isSet("help") || args.isEmpty()) { // NON-NLS
-      opt.usage();
-      return;
-    }
-
-    GuiExecutor.execute(() -> patientCommand(opt, args.getFirst()));
+  /** How the patient context argument is encoded. */
+  enum PatientSource {
+    XML,
+    INBOUND,
+    URL_SAFE,
+    URL
   }
 
-  private void patientCommand(Option opt, String arg) {
+  void patientCommand(PatientSource source, String arg, PromptPolicy policy) {
+    Document newPatientContext =
+        switch (source) {
+          case XML -> getPatientContext(arg, OPT_NONE);
+          case INBOUND -> getPatientContext(arg, OPT_B64ZIP);
+          case URL_SAFE -> getPatientContext(arg, OPT_B64URL_SAFE_ZIP);
+          case URL -> getPatientContextFromUrl(arg);
+        };
+    if (newPatientContext != null) {
+      applyToGlobal(convert(newPatientContext), policy);
+    }
+  }
 
-    final Document newPatientContext;
+  /** Exclusive encodings of the patient context, each carrying its value. */
+  static class PatientEncoding {
+    String data;
+    PatientSource source;
 
-    if (opt.isSet("xml")) { // NON-NLS
-      newPatientContext = getPatientContext(arg, OPT_NONE);
-    } else if (opt.isSet("inbound")) { // NON-NLS
-      newPatientContext = getPatientContext(arg, OPT_B64ZIP);
-    } else if (opt.isSet("iurlsafe")) { // NON-NLS
-      newPatientContext = getPatientContext(arg, OPT_B64URL_SAFE_ZIP);
-    } else if (opt.isSet("url")) { // NON-NLS
-      newPatientContext = getPatientContextFromUrl(arg);
-    } else {
-      newPatientContext = null;
+    @Option(
+        names = "--xml",
+        paramLabel = "<text>",
+        description = "XML text (UTF-8) holding the DICOM tags.")
+    @Since("5.0")
+    void setXml(String value) {
+      this.data = value;
+      this.source = PatientSource.XML;
     }
 
-    if (newPatientContext != null) {
-      applyToGlobal(convert(newPatientContext));
+    @Option(
+        names = "--xml-gzip",
+        paramLabel = "<base64>",
+        description = "XML encoded as GZIP then Base64.")
+    @Since("5.0")
+    void setXmlGzip(String value) {
+      this.data = value;
+      this.source = PatientSource.INBOUND;
+    }
+
+    @Option(
+        names = "--xml-gzip-urlsafe",
+        paramLabel = "<base64>",
+        description = "XML encoded as GZIP then URL-safe Base64.")
+    @Since("5.0")
+    void setXmlGzipUrlSafe(String value) {
+      this.data = value;
+      this.source = PatientSource.URL_SAFE;
+    }
+
+    @Option(
+        names = "--url",
+        paramLabel = "<remote-url>",
+        description = "URL of an XML file holding the DICOM tags.")
+    @Since("5.0")
+    @Needs(Capability.NETWORK_READ)
+    void setUrl(RemoteUrl value) {
+      this.data = value.toString();
+      this.source = PatientSource.URL;
+    }
+
+    // --xml and --url keep their names: picocli reads the value that follows, so the 4.x line
+    // with the data in a positional and the 5.0 line with it on the option are the same tokens.
+    @Option(names = "-x", hidden = true)
+    @Renamed("--xml with the text on the option")
+    void setLegacyXml(boolean value) {
+      this.source = PatientSource.XML;
+    }
+
+    @Option(
+        names = {"-i", "--inbound"},
+        hidden = true)
+    @Renamed("--xml-gzip with the data on the option")
+    void setLegacyInbound(boolean value) {
+      this.source = PatientSource.INBOUND;
+    }
+
+    @Option(
+        names = {"-s", "--iurlsafe"},
+        hidden = true)
+    @Renamed("--xml-gzip-urlsafe with the data on the option")
+    void setLegacyUrlSafe(boolean value) {
+      this.source = PatientSource.URL_SAFE;
+    }
+
+    @Option(names = "-u", hidden = true)
+    @Renamed("--url with the URL on the option")
+    void setLegacyUrl(boolean value) {
+      this.source = PatientSource.URL;
+    }
+  }
+
+  @Command(
+      name = "patient",
+      description =
+          "Loads the patient context of the acquisition and returns the context it set, masked for "
+              + "a remote caller.")
+  static class Patient extends AbstractVerb {
+    @ParentCommand AcquireManager parent;
+
+    @ArgGroup(multiplicity = "1")
+    PatientEncoding encoding;
+
+    @Parameters(arity = "0..1", hidden = true, paramLabel = "<data>")
+    @Renamed("the value of the option")
+    String legacyData;
+
+    @Override
+    protected void run() {
+      if (encoding.data == null) {
+        if (legacyData == null) {
+          throw invalid("Give the patient context on the option, e.g. --xml <text>");
+        }
+        encoding.data = legacyData;
+      } else if (legacyData != null) {
+        throw invalid("Give the patient context once");
+      }
+      PromptPolicy policy =
+          CommandContext.current().assumeYes() ? PromptPolicy.ACCEPT : PromptPolicy.ASK;
+      print(
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                parent.patientCommand(encoding.source, encoding.data, policy);
+                return IdentityMask.callForCommand(Patient::patientJson);
+              }));
+    }
+
+    /** The patient the acquisition now works for, under the mask in force. */
+    private static String patientJson() {
+      JsonObjectBuilder json = Json.createObjectBuilder();
+      put(json, "patientID", Tag.PatientID); // NON-NLS
+      put(json, "patientName", Tag.PatientName); // NON-NLS
+      put(json, "patientBirthDate", Tag.PatientBirthDate); // NON-NLS
+      put(json, "patientSex", Tag.PatientSex); // NON-NLS
+      return json.build().toString();
+    }
+
+    /** The attribute in its DICOM form: a date in ISO 8601, a sex as M, F or O. */
+    private static void put(JsonObjectBuilder json, String key, int tagId) {
+      TagW tag = TagD.get(tagId);
+      Object masked = IdentityMask.maskValue(tag, GLOBAL.getTagValue(tag));
+      String text =
+          switch (masked) {
+            case null -> null;
+            case TemporalAccessor temporal -> temporal.toString();
+            default -> String.valueOf(masked);
+          };
+      if (StringUtil.hasText(text)) {
+        json.add(key, text);
+      }
     }
   }
 
@@ -676,35 +783,55 @@ public class AcquireManager implements CommandExtension {
   }
 
   public void applyToGlobal(Taggable taggable) {
-    if (taggable != null) {
-      if (GLOBAL.containsSameTagValues(taggable, Global.PATIENT_DICOM_GROUP_NUMBER)) {
-        GLOBAL.updateAllButPatient(taggable);
-        getBySeries().forEach(SeriesGroup::updateDicomTags);
-        notifyPatientContextUpdated();
-      } else {
-        if (!isAcquireImagesAllPublished()
-            && JOptionPane.showConfirmDialog(
-                    WinUtil.getValidComponent(getExplorerViewComponent()),
-                    Messages.getString("AcquireManager.new_patient_load_warn"),
-                    Messages.getString("AcquireManager.new_patient_load_title"),
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE)
-                != JOptionPane.OK_OPTION) {
-          return;
-        }
+    applyToGlobal(taggable, PromptPolicy.ASK);
+  }
 
-        uriToMediaInfoMap.clear();
-        uidToMediaInfoMap.clear();
-        GLOBAL.init(taggable);
-        // Ensure to update all the existing SeriesGroup
-        AcquireManager.getInstance()
-            .getAcquireExplorer()
-            .getCentralPane()
-            .tabbedPane
-            .updateSeriesFromGlobalTags();
-        notifyPatientContextChanged();
-      }
+  /**
+   * Applies a patient context; replacing the patient while images are unpublished is settled by
+   * {@code policy}. Under {@link PromptPolicy#ASK} the question is posted to the event queue, so a
+   * command thread waiting on the EDT is never blocked behind the dialog.
+   */
+  public void applyToGlobal(Taggable taggable, PromptPolicy policy) {
+    if (taggable == null) {
+      return;
     }
+    if (GLOBAL.containsSameTagValues(taggable, Global.PATIENT_DICOM_GROUP_NUMBER)) {
+      GLOBAL.updateAllButPatient(taggable);
+      getBySeries().forEach(SeriesGroup::updateDicomTags);
+      notifyPatientContextUpdated();
+      return;
+    }
+    if (isAcquireImagesAllPublished() || policy == PromptPolicy.ACCEPT) {
+      replacePatient(taggable);
+    } else if (policy == PromptPolicy.DECLINE) {
+      LOGGER.warn("Patient context not replaced: unpublished images");
+    } else {
+      SwingUtilities.invokeLater(
+          () -> {
+            if (confirmNewPatient()) {
+              replacePatient(taggable);
+            }
+          });
+    }
+  }
+
+  private boolean confirmNewPatient() {
+    return JOptionPane.showConfirmDialog(
+            WinUtil.getValidComponent(getExplorerViewComponent()),
+            Messages.getString("AcquireManager.new_patient_load_warn"),
+            Messages.getString("AcquireManager.new_patient_load_title"),
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.QUESTION_MESSAGE)
+        == JOptionPane.OK_OPTION;
+  }
+
+  private void replacePatient(Taggable taggable) {
+    uriToMediaInfoMap.clear();
+    uidToMediaInfoMap.clear();
+    GLOBAL.init(taggable);
+    // Ensure to update all the existing SeriesGroup
+    getAcquireExplorer().getCentralPane().tabbedPane.updateSeriesFromGlobalTags();
+    notifyPatientContextChanged();
   }
 
   public Component getExplorerViewComponent() {

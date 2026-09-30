@@ -25,17 +25,25 @@ import javax.swing.Icon;
  * @param uid an optional unique identifier for the plugin instance
  * @param seriesCount the number of series to display; used as a hint for layout selection (default
  *     1)
+ * @param promptPolicy how the viewer settles the questions it would ask while opening; see {@link
+ *     PromptPolicy}
  */
 public record ViewerOpenOptions(
     ViewerPlacement placement,
     TabFocusPolicy tabFocusPolicy,
     Icon icon,
     String uid,
-    int seriesCount) {
+    int seriesCount,
+    PromptPolicy promptPolicy) {
 
   private static final ViewerOpenOptions DEFAULTS =
       new ViewerOpenOptions(
-          ViewerPlacement.reuseViewer(), TabFocusPolicy.foreground(), null, null, 1);
+          ViewerPlacement.reuseViewer(),
+          TabFocusPolicy.foreground(),
+          null,
+          null,
+          1,
+          PromptPolicy.ASK);
 
   /** Compact constructor – normalises null values. */
   public ViewerOpenOptions {
@@ -44,6 +52,9 @@ public record ViewerOpenOptions(
     }
     if (tabFocusPolicy == null) {
       tabFocusPolicy = TabFocusPolicy.foreground();
+    }
+    if (promptPolicy == null) {
+      promptPolicy = PromptPolicy.ASK;
     }
   }
 
@@ -62,12 +73,17 @@ public record ViewerOpenOptions(
 
   /** Returns a copy of this record with a different {@code seriesCount}. */
   public ViewerOpenOptions withSeriesCount(int count) {
-    return new ViewerOpenOptions(placement, tabFocusPolicy, icon, uid, count);
+    return new ViewerOpenOptions(placement, tabFocusPolicy, icon, uid, count, promptPolicy);
   }
 
   /** Returns a copy of this record with a different {@link TabFocusPolicy}. */
   public ViewerOpenOptions withTabFocusPolicy(TabFocusPolicy policy) {
-    return new ViewerOpenOptions(placement, policy, icon, uid, seriesCount);
+    return new ViewerOpenOptions(placement, policy, icon, uid, seriesCount, promptPolicy);
+  }
+
+  /** Returns a copy of this record with a different {@link PromptPolicy}. */
+  public ViewerOpenOptions withPromptPolicy(PromptPolicy policy) {
+    return new ViewerOpenOptions(placement, tabFocusPolicy, icon, uid, seriesCount, policy);
   }
 
   /** Fluent builder for {@link ViewerOpenOptions}. */
@@ -77,6 +93,7 @@ public record ViewerOpenOptions(
     private Icon icon = null;
     private String uid = null;
     private int seriesCount = 1;
+    private PromptPolicy promptPolicy = PromptPolicy.ASK;
 
     private Builder() {}
 
@@ -149,8 +166,13 @@ public record ViewerOpenOptions(
       return this;
     }
 
+    public Builder promptPolicy(PromptPolicy val) {
+      this.promptPolicy = val;
+      return this;
+    }
+
     public ViewerOpenOptions build() {
-      return new ViewerOpenOptions(placement, tabFocusPolicy, icon, uid, seriesCount);
+      return new ViewerOpenOptions(placement, tabFocusPolicy, icon, uid, seriesCount, promptPolicy);
     }
   }
 }

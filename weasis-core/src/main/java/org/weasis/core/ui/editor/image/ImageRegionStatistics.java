@@ -152,30 +152,38 @@ public class ImageRegionStatistics {
 
   public static List<MeasureItem> getImageStatistics(
       GraphicArea graphic, MeasurableLayer layer, boolean releaseEvent) {
-    if (layer != null && layer.hasContent()) {
-      List<MeasureItem> measVal = new ArrayList<>();
-      if (releaseEvent && isOneComputed()) {
-        List<Mat> imgPr = prepareInputImages(graphic, layer);
-        if (imgPr.size() == 2) {
-          Mat srcImg = imgPr.get(0);
-          Mat mask = imgPr.get(1);
-          RoiPixelStats direct = srcImg.channels() == 1 ? computeRoiPixelStats(srcImg, mask) : null;
-          List<HistogramData> hists = getHistogram(srcImg, mask, layer);
-          for (int i = 0; i < hists.size(); i++) {
-            HistogramData data = hists.get(i);
-            Integer bandIndex = hists.size() == 1 ? null : data.getBandIndex();
-            measVal.addAll(
-                getStatistics(data, bandIndex, i == 0, bandIndex == null ? direct : null));
-          }
-        }
-        for (MeasurableLayer secondary : layer.getSecondaryLayers()) {
-          measVal.addAll(getSuvStatistics(graphic, secondary));
-        }
-      }
-      return measVal;
+    if (layer != null && layer.hasContent() && releaseEvent && isOneComputed()) {
+      return computeStatistics(graphic, layer);
     }
-
     return Collections.emptyList();
+  }
+
+  /**
+   * The statistics of the region the preferences enable; every one of them inside {@link
+   * org.weasis.core.ui.model.utils.bean.Measurement#computingAll}, which is how the commands read
+   * them.
+   */
+  public static List<MeasureItem> computeStatistics(GraphicArea graphic, MeasurableLayer layer) {
+    if (layer == null || !layer.hasContent()) {
+      return Collections.emptyList();
+    }
+    List<MeasureItem> measVal = new ArrayList<>();
+    List<Mat> imgPr = prepareInputImages(graphic, layer);
+    if (imgPr.size() == 2) {
+      Mat srcImg = imgPr.get(0);
+      Mat mask = imgPr.get(1);
+      RoiPixelStats direct = srcImg.channels() == 1 ? computeRoiPixelStats(srcImg, mask) : null;
+      List<HistogramData> hists = getHistogram(srcImg, mask, layer);
+      for (int i = 0; i < hists.size(); i++) {
+        HistogramData data = hists.get(i);
+        Integer bandIndex = hists.size() == 1 ? null : data.getBandIndex();
+        measVal.addAll(getStatistics(data, bandIndex, i == 0, bandIndex == null ? direct : null));
+      }
+    }
+    for (MeasurableLayer secondary : layer.getSecondaryLayers()) {
+      measVal.addAll(getSuvStatistics(graphic, secondary));
+    }
+    return measVal;
   }
 
   /** Direct ROI statistics in stored-pixel units (min, max, mean, standard deviation, count). */

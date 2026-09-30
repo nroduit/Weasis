@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
@@ -186,79 +187,101 @@ public class DicomZipMediaIO implements MediaReader<MediaElement> {
     return false;
   }
 
+  /** Extracts and imports the archive on the loading executor; never blocks the caller. */
   public static void loadDicomZip(
       File file, DicomModel dicomModel, OpeningViewer openingViewer, Component parent) {
     if (file != null && file.canRead()) {
-      Path dir =
-          FileUtil.createTempDir(
-              AppProperties.buildAccessibleTempDirectory("tmp", "zip")); // NON-NLS
-      try (ZipFile zipFile = new ZipFile(file)) {
-        if (zipFile.isEncrypted()) {
-          JPanel panel = new JPanel();
-          JPasswordField pass = new JPasswordField(16);
-          panel.add(new JLabel(Messages.getString("enter.password")));
-          panel.add(pass);
-          ActionListener al = ae -> pass.requestFocusInWindow();
-          Timer timer = new Timer(250, al);
-          timer.setRepeats(false);
-          timer.start();
-          int response =
-              JOptionPane.showOptionDialog(
-                  parent,
-                  panel,
-                  Messages.getString("DicomZipImport.title"),
-                  JOptionPane.OK_CANCEL_OPTION,
-                  JOptionPane.PLAIN_MESSAGE,
-                  null,
-                  null,
-                  pass);
-          if (response == JOptionPane.OK_OPTION) {
-            zipFile.setPassword(pass.getPassword());
-          }
-        }
-        zipFile.extractAll(dir.toString());
-      } catch (IOException e) {
-        LOGGER.error("unzipping", e);
-      }
-      File dicomdir = new File(dir.toFile(), "DICOMDIR");
-      if (dicomdir.canRead()) {
-        DicomDirLoader dirImport = new DicomDirLoader(dicomdir, dicomModel, false);
-        List<LoadSeries> loadSeries = dirImport.readDicomDir();
-        if (loadSeries != null && !loadSeries.isEmpty()) {
-          DicomModel.LOADING_EXECUTOR.execute(
-              new LoadDicomDir(loadSeries, dicomModel, openingViewer));
-        } else {
-          LOGGER.error("Cannot import DICOM from {}", file);
-        }
-      } else {
-        LoadLocalDicom dicom =
-            new LoadLocalDicom(new File[] {dir.toFile()}, true, dicomModel, openingViewer);
-        DicomModel.LOADING_EXECUTOR.execute(dicom);
-      }
+      DicomModel.LOADING_EXECUTOR.execute(
+          () -> extractAndLoad(file, dicomModel, openingViewer, parent));
     }
   }
 
+  private static void extractAndLoad(
+      File file, DicomModel dicomModel, OpeningViewer openingViewer, Component parent) {
+    Path dir =
+        FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip")); // NON-NLS
+    try (ZipFile zipFile = new ZipFile(file)) {
+      if (zipFile.isEncrypted()) {
+        char[] password = GuiExecutor.invokeAndRethrow(() -> askPassword(parent));
+        if (password == null) {
+          FileUtil.delete(dir);
+          return;
+        }
+        zipFile.setPassword(password);
+      }
+      zipFile.extractAll(dir.toString());
+    } catch (IOException e) {
+      LOGGER.error("unzipping", e);
+    }
+    File dicomdir = new File(dir.toFile(), "DICOMDIR");
+    if (dicomdir.canRead()) {
+      DicomDirLoader dirImport = new DicomDirLoader(dicomdir, dicomModel, false);
+      List<LoadSeries> loadSeries = dirImport.readDicomDir();
+      if (loadSeries != null && !loadSeries.isEmpty()) {
+        DicomModel.LOADING_EXECUTOR.execute(
+            new LoadDicomDir(loadSeries, dicomModel, openingViewer));
+      } else {
+        LOGGER.error("Cannot import DICOM from {}", file);
+      }
+    } else {
+      LoadLocalDicom dicom =
+          new LoadLocalDicom(new File[] {dir.toFile()}, true, dicomModel, openingViewer);
+      DicomModel.LOADING_EXECUTOR.execute(dicom);
+    }
+  }
+
+  /** Shows the password dialog on the EDT; null when the user cancels. */
+  private static char[] askPassword(Component parent) {
+    JPanel panel = new JPanel();
+    JPasswordField pass = new JPasswordField(16);
+    panel.add(new JLabel(Messages.getString("enter.password")));
+    panel.add(pass);
+    ActionListener al = ae -> pass.requestFocusInWindow();
+    Timer timer = new Timer(250, al);
+    timer.setRepeats(false);
+    timer.start();
+    int response =
+        JOptionPane.showOptionDialog(
+            parent,
+            panel,
+            Messages.getString("DicomZipImport.title"),
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.PLAIN_MESSAGE,
+            null,
+            null,
+            pass);
+    return response == JOptionPane.OK_OPTION ? pass.getPassword() : null;
+  }
+
+  /** Downloads (when remote) and imports the archive on the loading executor. */
   public static void loadDicomZip(String uri, DicomModel dicomModel) {
     if (StringUtil.hasText(uri)) {
-      File zipFile = null;
-      try {
-        URI u = new URI(uri);
-        if ("file".equals(u.getScheme())) { // NON-NLS
-          zipFile = URIUtils.toFile(u);
-        } else {
-          zipFile =
-              Files.createTempFile(AppProperties.APP_TEMP_DIR, "dicom_", ".zip")
-                  .toFile(); // NON-NLS
+      DicomModel.LOADING_EXECUTOR.execute(() -> downloadAndLoad(uri, dicomModel));
+    }
+  }
 
-          ClosableURLConnection urlConnection =
-              NetworkUtil.getUrlConnection(u.toURL(), URLParameters.DEFAULT);
-          FileUtil.writeStreamWithIOException(urlConnection.getInputStream(), zipFile.toPath());
-        }
-      } catch (Exception e) {
-        LOGGER.error("Loading DICOM Zip", e);
+  private static void downloadAndLoad(String uri, DicomModel dicomModel) {
+    File zipFile = null;
+    try {
+      URI u = new URI(uri);
+      if ("file".equals(u.getScheme())) { // NON-NLS
+        zipFile = URIUtils.toFile(u);
+      } else {
+        zipFile =
+            Files.createTempFile(AppProperties.APP_TEMP_DIR, "dicom_", ".zip").toFile(); // NON-NLS
+        ClosableURLConnection urlConnection =
+            NetworkUtil.getUrlConnection(u.toURL(), URLParameters.DEFAULT);
+        FileUtil.writeStreamWithIOException(urlConnection.getInputStream(), zipFile.toPath());
       }
-      OpeningViewer openingViewer = OpeningViewer.ALL_PATIENTS;
-      loadDicomZip(zipFile, dicomModel, openingViewer, GuiUtils.getUICore().getApplicationWindow());
+    } catch (Exception e) {
+      LOGGER.error("Loading DICOM Zip", e);
+    }
+    if (zipFile != null && zipFile.canRead()) {
+      extractAndLoad(
+          zipFile,
+          dicomModel,
+          OpeningViewer.ALL_PATIENTS,
+          GuiUtils.getUICore().getApplicationWindow());
     }
   }
 }

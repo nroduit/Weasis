@@ -11,6 +11,7 @@ package org.weasis.core.api.util;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonNumber;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.weasis.core.api.command.ListOptions;
 import org.weasis.core.util.StringUtil;
 
 /**
@@ -48,6 +50,29 @@ public final class JsonUtil {
       Json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, Boolean.TRUE));
 
   private JsonUtil() {}
+
+  /**
+   * Adds the entries of a listing under {@code name}, as many as the caller asked for: the window
+   * {@code bounds} describes, and next to it how many entries there are, whether the listing
+   * stopped short and where the next call starts.
+   */
+  public static JsonObjectBuilder window(
+      JsonObjectBuilder json, String name, List<JsonObject> entries, ListOptions bounds) {
+    int total = entries.size();
+    int from = Math.min(bounds.from(), total);
+    int to = Math.max(from, bounds.to(total));
+    JsonArrayBuilder array = Json.createArrayBuilder();
+    entries.subList(from, to).forEach(array::add);
+    json.add(name, array);
+    if (bounds.bounded() || to < total) {
+      json.add("total", total); // NON-NLS
+      json.add("truncated", to < total); // NON-NLS
+      if (to < total) {
+        json.add("next", to); // NON-NLS
+      }
+    }
+    return json;
+  }
 
   /**
    * @throws jakarta.json.JsonException if the content is not a JSON object

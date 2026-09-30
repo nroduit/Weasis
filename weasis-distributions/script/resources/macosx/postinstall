@@ -1,0 +1,11 @@
+#!/bin/sh
+# jpackage PKG post-install script: puts weasis-cli on the PATH through /usr/local/bin, the way the
+# weasis:// scheme is registered by Info.plist. The link targets the notarized launcher inside the
+# bundle, so it follows every update of the application.
+set -e
+CLI_TARGET="/Applications/Weasis.app/Contents/MacOS/weasis-cli"
+if [ -x "$CLI_TARGET" ]; then
+    mkdir -p /usr/local/bin
+    ln -sf "$CLI_TARGET" /usr/local/bin/weasis-cli
+fi
+exit 0

@@ -16,7 +16,7 @@ The workflow is triggered manually (`workflow_dispatch`). Its `platforms` input 
 | Job | Runs on | Produces |
 |-----|---------|----------|
 | `setup` | `ubuntu-latest` | the `jpackage` and Linux build matrices, from the `platforms` input |
-| `build` | `ubuntu-latest` | `weasis-native.zip`, the shared payload (Maven build, JDK 26 Temurin) |
+| `build` | `ubuntu-latest` | `weasis-native.zip`, the shared payload (Maven build, JDK 27) |
 | `jpackage` | macOS and Windows runners | `.pkg` (macOS x86-64 and aarch64), `.msi` (Windows x86-64) |
 | `linux-multiarch` | `ubuntu-latest` + Docker (Buildx, QEMU) | `.deb` and `.rpm` for x86-64 and aarch64 |
 
@@ -67,13 +67,18 @@ their supported OS versions follow those binaries, not the runner image.
 
 | Platform | Constraint |
 |----------|------------|
-| **All** | JDK 26 Temurin; the `--add-modules` list is OS-specific (Windows adds `jdk.crypto.mscapi`) |
+| **All** | JDK 27 (`JDK_VERSION` in the workflow): Temurin when published, otherwise the OpenJDK GA build of jdk.java.net with pinned checksums, which has no macOS x86-64 build; the `--add-modules` list is OS-specific (Windows adds `jdk.crypto.mscapi`). JDK 27 is required for the AOT class-linking tier of the application and `weasis-cli` caches (JDK-8373392) |
 | **Linux** | `.deb`/`.rpm` are built in a **single** jpackage step from `--input`. The two-step path (`--app-image` then `--type deb`) loses the launcher icons on JDK 26+ |
 | **Linux/Docker** | `JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork`: the default process spawn mechanism is unreliable under QEMU |
 | **macOS** | Native libraries inside JARs are signed (`--options runtime --timestamp`) before jpackage repacks them; `--mac-sign` is used at the app-image stage only, **never** at the `pkg` stage, which would break notarization |
 | **Windows** | WiX 4+ is required by jpackage on JDK 26+; per-architecture `--win-upgrade-uuid`; the MSI is built from the app-image |
 
-## 4. Launch options
+`script/launch-options.sh` is the single source of truth for `JDK_MODULES`, `customOptions` (per-OS,
+e.g. the splash screen and Linux-only `-Dsun.awt.disablegrab=true`) and `commonOptions` (identical
+everywhere): `--enable-native-access=ALL-UNNAMED`, `-XX:MaxRAMPercentage=25`,
+`-XX:+UseStringDeduplication`, `-Dweasis.launch.type=NATIVE`,
+`-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider`,
+`-Djavax.accessibility.screen_magnifier_present=false`.
 
 `weasis-distributions/script/launch-options.sh` is the single source of truth for the JDK modules and
 the launcher `--java-options` (per-OS options and options common to all platforms). The workflow
@@ -129,3 +134,25 @@ See `weasis-launcher/docs/Launcher-Overview.md` (“Launch Pipeline”) for the 
 | `weasis-distributions/script/launch-options.sh` | JDK modules and launcher options |
 | `weasis-distributions/docker/Dockerfile` | `weasis/builder` image for the Linux packages |
 | `weasis-distributions/script/resources/<platform>/` | icons, installer resources, Dicomizer launcher properties |
+
+## 7. Common-library split and the AOT cache
+
+Before jpackage runs, every `bundle/*.jar.xz` is inspected: jars **without** a `Plugin-Id`
+manifest header (or `plugin.properties` `plugin.id`) are common libraries — they are
+decompressed into `common-lib/` inside the `--input` tree and jpackage automatically adds
+them to the application classpath in the generated `.cfg`. pf4j plugins must remain
+`.jar.xz` in `bundle/` to stay **off** the classpath — the split step fails hard if a plain
+jar remains there, so **`-P compressXZ` is required** when building `weasis-distributions`
+for native packaging (CI always uses it).
+
+The classpath placement is what makes the common libraries reliably eligible for the JDK AOT
+cache. Two related constraints on the jpackage runtime:
+
+- `--jlink-options "--strip-debug --no-man-pages --no-header-files --generate-cds-archive"`
+  replaces jpackage's defaults **on purpose**: the default set includes
+  `--strip-native-commands`, but `bin/java` must remain because the AOT assembly phase
+  (`-XX:AOTCacheOutput`) spawns `<java.home>/bin/java` at JVM exit.
+- `--generate-cds-archive` ships a base CDS archive (`lib/server/classes.jsa`) that speeds up
+  the first (untrained) launch and the AOT stage-1 relauncher.
+
+See `weasis-launcher/docs/Launcher-Overview.md` (“Launch Pipeline”) for the runtime side.

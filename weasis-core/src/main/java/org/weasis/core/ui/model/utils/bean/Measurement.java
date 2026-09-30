@@ -15,8 +15,15 @@ import java.util.Objects;
  * A value a graphic can compute. The {@code key} is the stable identity used by preferences,
  * profiles and commands; the {@code name} is the localized label; the {@code id} only survives for
  * preferences written before keys existed.
+ *
+ * <p>Whether a measurement is computed at all is a preference of the user, which is right for the
+ * interface and wrong for a caller of the commands: the same command would answer with different
+ * values on two machines. {@link #computingAll} lifts the preference for the work it runs.
  */
 public class Measurement {
+
+  /** Bound while every measurement must be computed, whatever the preferences say. */
+  private static final ScopedValue<Boolean> COMPUTE_ALL = ScopedValue.newInstance();
 
   private final String key;
   private final String name;
@@ -96,8 +103,9 @@ public class Measurement {
     return id;
   }
 
+  /** Whether this measurement is computed: always inside {@link #computingAll}. */
   public Boolean getComputed() {
-    return computed;
+    return COMPUTE_ALL.isBound() || computed;
   }
 
   public void setComputed(Boolean computed) {
@@ -118,6 +126,14 @@ public class Measurement {
 
   public Boolean getQuickComputing() {
     return quickComputing;
+  }
+
+  /**
+   * Runs {@code op} with every measurement computed, whatever the user asked to see on screen. The
+   * scope covers the calling thread only, so the interface keeps showing what its preferences say.
+   */
+  public static <T, X extends Throwable> T computingAll(ScopedValue.CallableOp<T, X> op) throws X {
+    return ScopedValue.where(COMPUTE_ALL, Boolean.TRUE).call(op);
   }
 
   /** True when the given preference token names this measurement, by key or by legacy id. */

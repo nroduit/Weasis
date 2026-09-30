@@ -13,7 +13,6 @@ import com.formdev.flatlaf.util.SystemInfo;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -40,8 +39,6 @@ import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.CommandExtension;
-import org.weasis.core.api.command.Option;
-import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -96,6 +93,7 @@ import org.weasis.dicom.codec.utils.SplittingModalityRules;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.Rule;
 import org.weasis.dicom.codec.utils.SplittingRules;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
+import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.explorer.imp.DicomDirLoader;
 import org.weasis.dicom.explorer.imp.DicomZipMediaIO;
 import org.weasis.dicom.explorer.main.SeriesPane;
@@ -127,47 +125,6 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
 
   public static final String NAME = "DICOM";
   public static final String PREFERENCE_NODE = "dicom.model";
-  private static final String GET_USAGE =
-      """
-        Load DICOM files remotely or locally
-        Usage: dicom:get ([-l PATH]... [-w URI]... [-r URI]... [-p] [-i DATA]... [-z URI]...)
-        PATH is either a directory(recursive) or a file
-          -l --local=PATH   open DICOMs from local disk
-          -r --remote=URI   open DICOMs from an URI
-          -w --wado=URI     open DICOMs from an XML manifest
-          -z --zip=URI      open DICOM ZIP from an URI
-          -p --portable     open DICOMs from configured directories at the same level of the executable
-          -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)
-          -? --help         show help""";
-
-  private static final String RS_USAGE =
-      """
-        Load DICOM files from DICOMweb API (QIDO/WADO-RS)
-        Usage: dicom:rs -u URL -r QUERYPARAMS... [-H HEADER]... [--query-header HEADER]... [--retrieve-header HEADER]... [--query-ext EXT] [--retrieve-ext EXT] [--accept-ext EXT]
-          -u --url=URL               URL of the DICOMweb service
-          -r --request=QUERYPARAMS   Query params of the URL, see weasis-pacs-connector
-          -H --header=HEADER         Pass custom header(s) to all the requests
-          --query-header=HEADER      Pass custom header(s) to the query requests (QIDO)
-          --retrieve-header=HEADER   Pass custom header(s) to the retrieve requests (WADO)
-          --query-ext=EXT            Additional parameters for Query URL (QIDO)
-          --retrieve-ext=EXT         Additional parameters for Retrieve URL (WADO)
-          --accept-ext=EXT           Additional parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*
-          --auth-uid=UID             UID of the Weasis authentication method
-          --oidc-iss=UID             Issuer Identifier for OpenID Connect Authentication Request
-          --oidc-login=UID           Identifier the End-User might use to log in (OpenID Connect)
-          --show-whole-study         when downloading a series, show all the other series (ready for download) from the same study
-          -? --help                  show help""";
-
-  private static final String CLOSE_USAGE =
-      """
-        Close DICOM files
-        Usage: dicom:close  (-a | ([-y UID]... [-s UID]...))
-          -a --all           close all the patients
-          -p --patient=ID    close a patient from its patient ID
-          -y --study=UID     close a study, UID is Study Instance UID
-          -s --series=UID    close a series, UID is Series Instance UID
-          -? --help          show help""";
-
   public static final TreeModelNode patient =
       new TreeModelNode(
           1,
@@ -221,29 +178,8 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
   }
 
   @Override
-  public void execute(String commandName, String[] args) throws Exception {
-    switch (commandName) {
-      case "get":
-        get(args);
-        break;
-      case "rs":
-        rs(args);
-        break;
-      case "close":
-        close(args);
-        break;
-      default:
-        throw new IllegalArgumentException("Unknown command: " + commandName);
-    }
-  }
-
-  @Override
-  public String getHelp() {
-    return String.join("\n", GET_USAGE)
-        + "\n\n"
-        + String.join("\n", RS_USAGE)
-        + "\n\n"
-        + String.join("\n", CLOSE_USAGE);
+  public Object getCommandModel() {
+    return new DicomModelCommands(this);
   }
 
   @Override
@@ -1297,68 +1233,65 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
     return true;
   }
 
-  public void get(String[] argv) throws IOException {
-    final Option opt = Options.compile(GET_USAGE).parse(argv);
-    final List<String> largs = opt.getList("local"); // NON-NLS
-    final List<String> rargs = opt.getList("remote"); // NON-NLS
-    final List<String> zargs = opt.getList("zip");
-    final List<String> iargs = opt.getList("iwado"); // NON-NLS
-    final List<String> wargs = opt.getList("wado"); // NON-NLS
+  /** Loads the given sources; every list may be empty. */
+  /**
+   * One source a load command accepted, with the task that brings it in. The task is {@code null}
+   * when the source was read on the spot, and the kind is the vocabulary of the load verbs.
+   */
+  public record QueuedLoad(String kind, String source, ExplorerTask<?, ?> task) {}
 
-    if (opt.isSet("help") // NON-NLS
-        || (largs.isEmpty()
-            && rargs.isEmpty()
-            && iargs.isEmpty()
-            && wargs.isEmpty()
-            && zargs.isEmpty()
-            && !opt.isSet("portable"))) { // NON-NLS
-      opt.usage();
-      return;
-    }
-
-    GuiExecutor.execute(
-        () -> {
-          firePropertyChange(
-              new ObservableEvent(
-                  ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
-          getCommand(opt, largs, rargs, iargs, wargs, zargs);
-        });
-  }
-
-  private void getCommand(
-      Option opt,
+  List<QueuedLoad> getCommand(
       List<String> largs,
       List<String> rargs,
       List<String> iargs,
       List<String> wargs,
-      List<String> zargs) {
+      List<String> zargs,
+      boolean portable) {
+    GuiExecutor.invokeAndRethrow(
+        () ->
+            firePropertyChange(
+                new ObservableEvent(
+                    ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this)));
+    List<QueuedLoad> queued = new ArrayList<>();
     // start importing local dicom series list
-    if (opt.isSet("local")) { // NON-NLS
+    if (!largs.isEmpty()) {
       File[] files = new File[largs.size()];
       for (int i = 0; i < files.length; i++) {
         files[i] = new File(largs.get(i));
       }
       OpeningViewer openingViewer = OpeningViewer.ALL_PATIENTS;
-      LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this, openingViewer));
+      queued.add(
+          queue(
+              "path",
+              String.join(", ", largs), // NON-NLS
+              new LoadLocalDicom(files, true, DicomModel.this, openingViewer)));
     }
 
-    if (opt.isSet("remote")) { // NON-NLS
-      LOADING_EXECUTOR.execute(
-          new LoadRemoteDicomURL(rargs.toArray(new String[0]), DicomModel.this));
+    if (!rargs.isEmpty()) {
+      queued.add(
+          queue(
+              "url",
+              String.join(", ", rargs), // NON-NLS
+              new LoadRemoteDicomURL(rargs.toArray(new String[0]), DicomModel.this)));
     }
 
     // build WADO series list to download
-    if (opt.isSet("wado")) { // NON-NLS
-      LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(wargs, DicomModel.this));
+    if (!wargs.isEmpty()) {
+      queued.add(
+          queue(
+              "manifest",
+              String.join(", ", wargs), // NON-NLS
+              new LoadRemoteDicomManifest(wargs, DicomModel.this)));
     }
 
-    if (opt.isSet("zip")) {
+    if (!zargs.isEmpty()) {
       for (String zip : zargs) {
         DicomZipMediaIO.loadDicomZip(zip, DicomModel.this);
+        queued.add(new QueuedLoad("zip", zip, null)); // NON-NLS
       }
     }
 
-    if (opt.isSet("iwado")) { // NON-NLS
+    if (!iargs.isEmpty()) {
       List<String> xmlFiles = new ArrayList<>(iargs.size());
       for (String iarg : iargs) {
         try {
@@ -1373,13 +1306,16 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
           LOGGER.info("ungzip manifest", e);
         }
       }
-      LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(xmlFiles, DicomModel.this));
+      queued.add(
+          queue(
+              "manifest-gzip",
+              String.join(", ", xmlFiles), // NON-NLS
+              new LoadRemoteDicomManifest(xmlFiles, DicomModel.this)));
     }
 
     // Get DICOM folder (by default DICOM, dicom, IHE_PDI, ihe_pdi) at the same level at the Weasis
     // executable file
-    if (opt.isSet("portable")) { // NON-NLS
-
+    if (portable) {
       String prop = System.getProperty("weasis.portable.dicom.directory");
       String baseDir = System.getProperty("weasis.portable.dir");
 
@@ -1412,137 +1348,50 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
                   dcmDirFile, DicomModel.this, DicomManager.getInstance().isPortableDirCache());
           loadSeries = dirImport.readDicomDir();
         }
-        if (loadSeries != null && !loadSeries.isEmpty()) {
-          LOADING_EXECUTOR.execute(
-              new LoadDicomDir(loadSeries, DicomModel.this, OpeningViewer.ALL_PATIENTS));
-        } else {
-          LOADING_EXECUTOR.execute(
-              new LoadLocalDicom(files, true, DicomModel.this, OpeningViewer.ALL_PATIENTS));
-        }
+        ExplorerTask<?, ?> task =
+            loadSeries != null && !loadSeries.isEmpty()
+                ? new LoadDicomDir(loadSeries, DicomModel.this, OpeningViewer.ALL_PATIENTS)
+                : new LoadLocalDicom(files, true, DicomModel.this, OpeningViewer.ALL_PATIENTS);
+        queued.add(queue("portable", baseDir, task)); // NON-NLS
       }
     }
+    return queued;
   }
 
-  public void rs(String[] argv) throws IOException {
-    final Option opt = Options.compile(RS_USAGE).parse(argv);
-    final String rsUrl = opt.get("url"); // NON-NLS
-    final List<String> pargs = opt.getList("request"); // NON-NLS
+  /** Starts a loading task and describes it for the caller. */
+  private static QueuedLoad queue(String kind, String source, ExplorerTask<?, ?> task) {
+    LOADING_EXECUTOR.execute(task);
+    return new QueuedLoad(kind, source, task);
+  }
 
-    if (opt.isSet("help") || rsUrl.isEmpty() || (pargs.isEmpty())) { // NON-NLS
-      opt.usage();
-      return;
-    }
-
-    Properties props = new Properties();
-    props.setProperty(RsQueryParams.P_DICOMWEB_URL, rsUrl);
-    String queryExt = opt.get("query-ext"); // NON-NLS
-    if (StringUtil.hasText(queryExt)) {
-      props.setProperty(RsQueryParams.P_QUERY_EXT, queryExt);
-    }
-    String retrieveExt = opt.get("retrieve-ext"); // NON-NLS
-    if (StringUtil.hasText(retrieveExt)) {
-      props.setProperty(RsQueryParams.P_RETRIEVE_EXT, retrieveExt);
-    }
-
-    String acceptExt = opt.get("accept-ext"); // NON-NLS
-    if (!StringUtil.hasText(acceptExt)) {
-      acceptExt = "transfer-syntax=*"; // NON-NLS
-    }
-    props.setProperty(RsQueryParams.P_ACCEPT_EXT, acceptExt);
-
-    if (opt.isSet("show-whole-study")) { // NON-NLS
-      props.setProperty(RsQueryParams.P_SHOW_WHOLE_STUDY, Boolean.TRUE.toString());
-    }
-
-    String authUID = opt.get("auth-uid"); // NON-NLS
-    if (StringUtil.hasText(authUID)) {
-      props.setProperty(RsQueryParams.P_AUTH_UID, authUID);
-    }
-    String oidcIssuer = opt.get("oidc-iss"); // NON-NLS
-    if (StringUtil.hasText(oidcIssuer)) {
-      props.setProperty(RsQueryParams.P_OIDC_ISSUER, oidcIssuer);
-    }
-    String oidcLogin = opt.get("oidc-login"); // NON-NLS
-    if (StringUtil.hasText(oidcLogin)) {
-      props.setProperty(RsQueryParams.P_OIDC_USER, oidcLogin);
-    }
-
-    GuiExecutor.execute(
+  /** Queries a DICOMweb service; headers already include the ones common to both requests. */
+  List<QueuedLoad> rsCommand(
+      Properties props,
+      List<String> requests,
+      List<String> queryHeaders,
+      List<String> retrieveHeaders) {
+    return GuiExecutor.invokeAndRethrow(
         () -> {
           firePropertyChange(
               new ObservableEvent(
                   ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
-          for (String query : pargs) {
-            List<String> common = opt.getList("header"); // NON-NLS
-            List<String> q = opt.getList("query-header"); // NON-NLS
-            q.addAll(common);
-            List<String> r = opt.getList("retrieve-header"); // NON-NLS
-            r.addAll(common);
+          List<QueuedLoad> queued = new ArrayList<>();
+          for (String query : requests) {
             RsQueryParams rsquery =
                 new RsQueryParams(
                     DicomModel.this,
                     props,
                     RsQueryParams.getQueryMap(query),
-                    RsQueryParams.getHeaders(q),
-                    RsQueryParams.getHeaders(r));
-            LOADING_EXECUTOR.execute(rsquery);
+                    RsQueryParams.getHeaders(queryHeaders),
+                    RsQueryParams.getHeaders(retrieveHeaders));
+            queued.add(queue("dicomweb", query, rsquery)); // NON-NLS
           }
+          return queued;
         });
   }
 
-  public void close(String[] argv) throws IOException {
-    final Option opt = Options.compile(CLOSE_USAGE).parse(argv);
-    final List<String> pargs = opt.getList("patient"); // NON-NLS
-    final List<String> yargs = opt.getList("study"); // NON-NLS
-    final List<String> sargs = opt.getList("series"); // NON-NLS
-
-    if (opt.isSet("help") // NON-NLS
-        || (pargs.isEmpty()
-            && yargs.isEmpty()
-            && sargs.isEmpty()
-            && !opt.isSet("all"))) { // NON-NLS
-      opt.usage();
-      return;
-    }
-
-    GuiExecutor.execute(
-        () -> {
-          firePropertyChange(
-              new ObservableEvent(
-                  ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
-          closeCommand(opt, pargs, yargs, sargs);
-        });
-  }
-
-  private void closeCommand(
-      Option opt, List<String> pargs, List<String> yargs, List<String> sargs) {
-    if (opt.isSet("all")) { // NON-NLS
-      for (MediaSeriesGroup patientGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
-        removePatient(patientGroup);
-      }
-    } else {
-      if (opt.isSet("patient")) { // NON-NLS
-        for (MediaSeriesGroup patientGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
-          String patientID = TagD.getTagValue(patientGroup, Tag.PatientID, String.class);
-          if (pargs.contains(patientID)) {
-            removePatient(patientGroup);
-          }
-        }
-      }
-      if (opt.isSet("study")) { // NON-NLS
-        for (String studyUID : yargs) {
-          removeStudy(getStudyNode(studyUID));
-        }
-      }
-      if (opt.isSet("series")) { // NON-NLS
-        for (String seriesUID : sargs) {
-          findSeriesToRemove(seriesUID);
-        }
-      }
-    }
-  }
-
-  private void findSeriesToRemove(String seriesUID) {
+  /** Removes a series and the split series of the same acquisition; {@code dicom:close} uses it. */
+  public void removeSeriesByUid(String seriesUID) {
     for (MediaSeriesGroup ptGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
       for (MediaSeriesGroup stGroup : model.getSuccessors(ptGroup)) {
         // Remove all the split series

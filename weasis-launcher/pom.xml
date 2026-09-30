@@ -129,6 +129,13 @@
                     <exclude>META-INF/MANIFEST.MF</exclude>
                   </excludes>
                 </filter>
+                <filter>
+                  <artifact>info.picocli:picocli</artifact>
+                  <excludes>
+                    <exclude>**/module-info.class</exclude>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
               </filters>
             </configuration>
           </execution>
@@ -157,6 +164,11 @@
     <dependency>
       <groupId>org.semver4j</groupId>
       <artifactId>semver4j</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

@@ -168,12 +168,16 @@ public class ViewerPluginBuilder {
    *
    * @param file the file to open
    * @param options typed open options
+   * @return the series that was opened, or {@code null} when the file has no reader
    */
-  public static void openInDefaultViewer(Path file, ViewerOpenOptions options) {
+  public static MediaSeries<MediaElement> openInDefaultViewer(
+      Path file, ViewerOpenOptions options) {
     MediaReader<MediaElement> reader = MediaFactory.getMedia(file);
-    if (reader != null) {
-      MediaSeries<MediaElement> s = MediaFactory.buildMediaSeriesWithDefaultModel(reader);
-      openInDefaultViewer(s, DefaultDataModel, options);
+    if (reader == null) {
+      return null;
     }
+    MediaSeries<MediaElement> s = MediaFactory.buildMediaSeriesWithDefaultModel(reader);
+    openInDefaultViewer(s, DefaultDataModel, options);
+    return s;
   }
 }

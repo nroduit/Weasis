@@ -41,6 +41,7 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.GraphicsInfo;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.editor.PromptPolicy;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerOpenOptions;
@@ -141,6 +142,7 @@ public class View3DFactory implements SeriesViewerFactory {
           ImageViewerPlugin.getLayoutModel(options, getDefaultMigLayoutModel(), layoutAction);
       View3DContainer instance =
           new View3DContainer(layout.model(), layout.uid(), getUIName(), getIcon(), null);
+      instance.setPromptPolicy(options == null ? PromptPolicy.ASK : options.promptPolicy());
       ImageViewerPlugin.registerInDataExplorerModel(model, instance);
       return instance;
     }

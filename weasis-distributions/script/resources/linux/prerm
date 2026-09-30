@@ -32,6 +32,11 @@ if command_exists desktop_uninstall_default_mime_handler; then
 else
     echo "Warning: 'desktop_uninstall_default_mime_handler' not found. Skipping MIME handler uninstallation." >&2
 fi
+
+# remove the weasis-cli symlink created at install time
+if [ -L /usr/bin/weasis-cli ]; then
+    rm -f /usr/bin/weasis-cli
+fi
     ;;
 
     failed-upgrade)

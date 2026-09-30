@@ -15,7 +15,10 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.prefs.Preferences;
 import javax.swing.Action;
 import javax.swing.JComponent;
@@ -45,6 +48,8 @@ import org.weasis.core.api.util.ResourceMonitor;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
+import org.weasis.core.ui.editor.OpenTracker;
+import org.weasis.core.ui.editor.PromptPolicy;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
@@ -177,6 +182,7 @@ public class MprContainer extends DicomViewerPlugin
 
   private Thread process;
   private FusionState inheritedFusion;
+  private final OpenTracker build = new OpenTracker();
 
   public MprContainer() {
     this(VIEWS_1x1, null);
@@ -281,7 +287,33 @@ public class MprContainer extends DicomViewerPlugin
       final Thread t = process;
       process = null;
       t.interrupt();
+      build.fail(new CancellationException("MPR build stopped"));
     }
+  }
+
+  /** How the build settles its questions; {@link PromptPolicy#ASK} shows the dialogs. */
+  public void setPromptPolicy(PromptPolicy policy) {
+    build.setPromptPolicy(policy);
+  }
+
+  public PromptPolicy getPromptPolicy() {
+    return build.promptPolicy();
+  }
+
+  /** Records a question raised by the build, whether it was asked or settled by the policy. */
+  public void addBuildWarning(String message) {
+    build.addWarning(message);
+  }
+
+  @Override
+  public CompletableFuture<Void> whenReady() {
+    return build.whenReady();
+  }
+
+  @Override
+  public Map<String, Object> openReport() {
+    Volume<?, ?> volume = mprController == null ? null : mprController.getVolume();
+    return build.report(volume == null ? null : !volume.isBasic());
   }
 
   @Override
@@ -513,6 +545,7 @@ public class MprContainer extends DicomViewerPlugin
   @Override
   public void addSeries(MediaSeries<DicomImageElement> sequence) {
     stopCurrentProcess();
+    CompletableFuture<Void> done = build.begin();
     AxesControl control = mprController.getAxesControl();
     control.resetListeners();
     control.reset();
@@ -548,23 +581,7 @@ public class MprContainer extends DicomViewerPlugin
                 MPRGenerator.createMissingSeries(MprContainer.this, view);
 
                 // Following actions need to be executed in EDT thread
-                GuiExecutor.execute(
-                    () -> {
-                      eventManager
-                          .getAction(ActionW.SYNCH)
-                          .ifPresent(c -> c.setSelectedItem(MprContainer.defaultMpr));
-
-                      // Force to propagate the default preset
-                      eventManager
-                          .getAction(ActionW.PRESET)
-                          .ifPresent(
-                              c -> {
-                                c.setSelectedItemWithoutTriggerAction(null);
-                                c.setSelectedItem(c.getFirstItem());
-                              });
-
-                      applyInheritedFusion();
-                    });
+                GuiExecutor.execute(() -> finishBuild(done));
               } catch (final OutOfMemoryError e) {
                 // OutOfMemoryError is an Error, not an Exception: caught explicitly so an
                 // out-of-memory MPR build fails gracefully instead of killing the build thread
@@ -572,6 +589,7 @@ public class MprContainer extends DicomViewerPlugin
                 // recover before the message dialog is shown.
                 ResourceMonitor.getInstance().recordOutOfMemory();
                 LOGGER.error("Out of memory while building MPR views", e);
+                done.completeExceptionally(e);
                 GuiExecutor.execute(
                     () ->
                         showErrorMessage(
@@ -579,8 +597,9 @@ public class MprContainer extends DicomViewerPlugin
                             view,
                             Messages.getString("MPRContainer.out_of_memory")));
                 CvUtil.runGarbageCollectorAndWait(50);
-              } catch (final Exception e) {
+              } catch (final Throwable e) { // NOSONAR any failure must settle whenReady()
                 LOGGER.error("Build MPR", e);
+                done.completeExceptionally(e);
                 // Following actions need to be executed in EDT thread
                 GuiExecutor.execute(
                     () -> showErrorMessage(cellManager.getAllViewCanvases(), view, e.getMessage()));
@@ -589,10 +608,33 @@ public class MprContainer extends DicomViewerPlugin
           };
       process.start();
     } else {
-      showErrorMessage(
-          cellManager.getAllViewCanvases(),
-          null,
-          Messages.getString("MPRContainer.mesg_missing_3d"));
+      String message = Messages.getString("MPRContainer.mesg_missing_3d");
+      done.completeExceptionally(new IllegalStateException(message));
+      showErrorMessage(cellManager.getAllViewCanvases(), null, message);
+    }
+  }
+
+  /** On the EDT once the volume exists: default synch and preset, inherited fusion, then ready. */
+  private void finishBuild(CompletableFuture<Void> done) {
+    try {
+      eventManager
+          .getAction(ActionW.SYNCH)
+          .ifPresent(c -> c.setSelectedItem(MprContainer.defaultMpr));
+
+      // Force to propagate the default preset
+      eventManager
+          .getAction(ActionW.PRESET)
+          .ifPresent(
+              c -> {
+                c.setSelectedItemWithoutTriggerAction(null);
+                c.setSelectedItem(c.getFirstItem());
+              });
+
+      applyInheritedFusion();
+      done.complete(null);
+    } catch (RuntimeException e) {
+      LOGGER.error("Finish MPR build", e);
+      done.completeExceptionally(e);
     }
   }
 

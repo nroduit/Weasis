@@ -73,16 +73,12 @@ public final class AotCache {
     }
     Optional<String> command = nativeCommand();
     if (command.isEmpty()) {
+      LOGGER.warn("Not started by the native launcher, skipping AOT relaunch");
       return false;
     }
     try {
       Path cache = cacheFile();
-      // Quoted tokens and ${...} sequences in JAVA_TOOL_OPTIONS break the jpackage native
-      // launcher, so the path must be passed unquoted and free of such characters.
-      if (cache
-          .toString()
-          .chars()
-          .anyMatch(c -> Character.isWhitespace(c) || c == '$' || c == '"')) {
+      if (!hasSafePath(cache)) {
         LOGGER.warn(
             "AOT cache path contains unsupported characters, skipping AOT relaunch: {}", cache);
         return false;
@@ -127,7 +123,7 @@ public final class AotCache {
   }
 
   /** True when this JVM was started with {@code -XX:AOTCache=} (not {@code -XX:AOTCacheOutput}). */
-  private static boolean hasAotCacheFlag() {
+  static boolean hasAotCacheFlag() {
     return ManagementFactory.getRuntimeMXBean().getInputArguments().stream()
         .anyMatch(arg -> arg.startsWith("-XX:AOTCache="));
   }
@@ -209,7 +205,7 @@ public final class AotCache {
     return cache.resolveSibling(base + ".disabled"); // NON-NLS
   }
 
-  private static void markAotDisabled(Path marker) {
+  static void markAotDisabled(Path marker) {
     try {
       Files.writeString(marker, ""); // NON-NLS
     } catch (Exception e) {
@@ -245,19 +241,30 @@ public final class AotCache {
         && !System.getProperty("os.name", "").toLowerCase().startsWith("mac"); // NON-NLS
   }
 
-  /** Resolves the native launcher executable of the current process (a jpackage runtime). */
-  private static Optional<String> nativeCommand() {
-    Optional<String> command = ProcessHandle.current().info().command();
-    if (command.isEmpty()) {
-      LOGGER.warn("Cannot resolve the native launcher command, skipping AOT relaunch");
-      return Optional.empty();
-    }
-    String name = Path.of(command.get()).getFileName().toString();
-    if (name.equals("java") || name.equals("java.exe")) { // NON-NLS
-      LOGGER.warn("Process started by a plain java command, skipping AOT relaunch");
-      return Optional.empty();
-    }
-    return command;
+  /**
+   * The native launcher executable of the current process (a jpackage runtime); empty when the
+   * process was started by a plain {@code java} command.
+   */
+  static Optional<String> nativeCommand() {
+    return ProcessHandle.current()
+        .info()
+        .command()
+        .filter(
+            command -> {
+              String name = Path.of(command).getFileName().toString();
+              return !name.equals("java") && !name.equals("java.exe"); // NON-NLS
+            });
+  }
+
+  /**
+   * Quoted tokens and {@code ${...}} sequences in {@code JAVA_TOOL_OPTIONS} break the jpackage
+   * native launcher, so a cache path is passed unquoted and must be free of such characters.
+   */
+  static boolean hasSafePath(Path cache) {
+    return cache
+        .toString()
+        .chars()
+        .noneMatch(c -> Character.isWhitespace(c) || c == '$' || c == '"');
   }
 
   /**
@@ -265,6 +272,14 @@ public final class AotCache {
    * application or runtime update always trains a fresh cache.
    */
   static Path cacheFile() {
+    return cacheFile("weasis", ""); // NON-NLS
+  }
+
+  /**
+   * Cache file of a launcher: {@code <cache>/aot/<subdir>/<prefix>-<version>-<runtime>.aot}, so
+   * each launcher trains and prunes its own caches.
+   */
+  static Path cacheFile(String prefix, String subdir) {
     String version = System.getProperty("jpackage.app-version", "unknown"); // NON-NLS
     long runtimeMtime = 0;
     try {
@@ -272,10 +287,10 @@ public final class AotCache {
     } catch (Exception e) {
       LOGGER.warn("Cannot read the runtime image timestamp", e);
     }
-    String name = "weasis-%s-%s.aot".formatted(version, Long.toHexString(runtimeMtime)); // NON-NLS
-    return PlatformDirectories.get(PlatformDirectories.BaseDir.CACHE)
-        .resolve("aot") // NON-NLS
-        .resolve(name);
+    String name =
+        "%s-%s-%s.aot".formatted(prefix, version, Long.toHexString(runtimeMtime)); // NON-NLS
+    Path dir = PlatformDirectories.get(PlatformDirectories.BaseDir.CACHE).resolve("aot"); // NON-NLS
+    return (subdir.isEmpty() ? dir : dir.resolve(subdir)).resolve(name);
   }
 
   static void pruneOtherCaches(Path aotDir, Path keep) {
@@ -295,17 +310,23 @@ public final class AotCache {
   /** Spawns the native launcher with the given JAVA_TOOL_OPTIONS and waits for it. */
   private static int spawnStage2(String command, String[] args, String toolOptions)
       throws Exception {
+    ProcessBuilder pb = childLauncher(command, List.of(args), toolOptions);
+    pb.inheritIO();
+    return pb.start().waitFor();
+  }
+
+  /** A child of the native launcher {@code command} that gets {@code toolOptions} appended. */
+  static ProcessBuilder childLauncher(String command, List<String> args, String toolOptions) {
     List<String> cmd = new ArrayList<>();
     cmd.add(command);
-    cmd.addAll(List.of(args));
+    cmd.addAll(args);
     ProcessBuilder pb = new ProcessBuilder(cmd);
     // The Linux jpackage launcher exports _JPACKAGE_LAUNCHER to detect a self-execve; a child
     // launcher inheriting it skips its .cfg ("Not building JVM arguments from cfg file") and
     // dies on the java usage screen, so it must not leak into the re-executed process.
     pb.environment().remove("_JPACKAGE_LAUNCHER");
     pb.environment().merge("JAVA_TOOL_OPTIONS", toolOptions, (old, opts) -> old + " " + opts);
-    pb.inheritIO();
-    return pb.start().waitFor();
+    return pb;
   }
 
   /**
@@ -323,11 +344,15 @@ public final class AotCache {
     if (Files.exists(cache)) {
       return "-D%s=2 -D%s=%d -XX:AOTCache=%s".formatted(STAGE_PROP, PARENT_START_PROP, t0, cache);
     }
+    return "-D%s=2 -D%s=%d %s".formatted(STAGE_PROP, PARENT_START_PROP, t0, trainingOptions(cache));
+  }
+
+  /** The {@code JAVA_TOOL_OPTIONS} that train {@code cache}, with the class-linking tier gate. */
+  static String trainingOptions(Path cache) {
     boolean linked =
         useClassLinking(Runtime.version().feature(), System.getProperty(CLASSLINKING_PROP));
     String linking = linked ? "" : " -XX:-AOTClassLinking";
-    return "-D%s=2 -D%s=%d -XX:AOTCacheOutput=%s%s"
-        .formatted(STAGE_PROP, PARENT_START_PROP, t0, cache, linking);
+    return "-XX:AOTCacheOutput=%s%s".formatted(cache, linking);
   }
 
   /**

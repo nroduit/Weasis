@@ -1,0 +1,21 @@
+# lesion-check.weasis — one call instead of eight: open a series, measure it, check the numbers.
+# Run it with: weasis-cli --script lesion-check.weasis --set series=<series-uid> --set out=/tmp/weasis
+#
+# Every step is the command a caller would have sent on its own: same masking, same policies.
+# $name keeps the body of a step, ${name.path} reads inside it, @expect turns the script into a test.
+
+$open = dicom:open --series ${series} --wait
+$state = view2d:window-level --view ${open.target.view} --window 1600 --level -550
+view2d:scroll --view ${open.target.view} --image 26
+
+$line = view2d:measure --view ${open.target.view} --type line --points 316,272,332,288
+@expect ${line.measurements[key=length].unit} == mm
+@expect ${line.measurements[key=length].value} > 0
+
+$region = view2d:stats --view ${open.target.view} --rect 310,266,30,30
+@expect ${region.statistics[key=stats.mean].unit} == [hnsf'U]
+
+$shot = view2d:capture --view ${open.target.view} --out ${out}/lesion.png --force
+@expect ${shot.target.image} == 26
+
+view2d:clear-ai --view ${open.target.view}

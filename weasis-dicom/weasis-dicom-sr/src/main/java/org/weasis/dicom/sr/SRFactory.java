@@ -36,6 +36,11 @@ public class SRFactory implements SeriesViewerFactory {
   }
 
   @Override
+  public String getViewerTypeId() {
+    return "sr"; // NON-NLS
+  }
+
+  @Override
   public String getUIName() {
     return NAME;
   }

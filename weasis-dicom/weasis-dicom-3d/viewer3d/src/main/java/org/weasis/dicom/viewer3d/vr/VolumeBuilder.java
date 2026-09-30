@@ -198,6 +198,7 @@ public final class VolumeBuilder {
             Error.gluErrorString(error));
         volumeBuilder.hasError = true;
         volumeBuilder.stop();
+        volTexture.notifyLoadFailed();
       }
     }
 
@@ -210,6 +211,7 @@ public final class VolumeBuilder {
         volumeBuilder.hasError = true;
         volumeBuilder.stop();
         volumeBuilder.volTexture.markLoadFinished();
+        volumeBuilder.volTexture.notifyLoadFailed();
         if (EventManager.getInstance().getSelectedViewPane() instanceof View3d view3d) {
           view3d.setProgressBar(null);
           GuiExecutor.execute(view3d::repaint);

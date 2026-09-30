@@ -11,6 +11,7 @@ package org.weasis.core.ui.editor;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import javax.swing.Action;
 import org.pf4j.ExtensionPoint;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -27,6 +28,18 @@ public interface SeriesViewerFactory extends GUIEntry, ExtensionPoint {
    * @param model the data explorer model for property-change registration (may be {@code null})
    */
   SeriesViewer<?> createSeriesViewer(ViewerOpenOptions options, DataExplorerModel model);
+
+  /**
+   * Stable, non-localized id of the viewer type ({@code 2d}, {@code mpr}, {@code 3d}, …): the
+   * spelling commands and snapshots use, where {@link #getUIName()} is the localized label.
+   */
+  default String getViewerTypeId() {
+    String name = getClass().getSimpleName();
+    if (name.endsWith("Factory")) {
+      name = name.substring(0, name.length() - "Factory".length());
+    }
+    return name.toLowerCase(Locale.ROOT);
+  }
 
   boolean canReadMimeType(String mimeType);
 

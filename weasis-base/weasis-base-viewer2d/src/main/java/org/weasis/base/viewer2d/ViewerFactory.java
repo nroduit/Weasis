@@ -76,6 +76,11 @@ public class ViewerFactory implements SeriesViewerFactory {
   }
 
   @Override
+  public String getViewerTypeId() {
+    return "image"; // NON-NLS
+  }
+
+  @Override
   public String getUIName() {
     return NAME;
   }

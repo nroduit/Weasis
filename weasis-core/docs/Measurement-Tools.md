@@ -14,7 +14,7 @@ commands.
 `GraphicRegistry` holds the tools and is the single source for the toolbar dropdowns, the panel
 grids, the preference pages, the XML binding and the commands. It is populated by
 `GraphicToolProvider`s: `BuiltinGraphicTools` registers the core palette first, then each
-provider published as an OSGi service adds its own tools. The registry notifies listeners on every
+provider published as a pf4j extension adds its own tools. The registry notifies listeners on every
 change so open viewers rebuild their palettes. A tool is hidden by setting its hide property to
 `false` (`weasis.measure.<name>` and `weasis.draw.<name>` for the built-in tools,
 `weasis.tool.<key>` otherwise).
@@ -81,6 +81,18 @@ user asks for one. Thousands are never grouped. A `MeasureItem` always keeps the
 which is what copies and exports read. `MeasureTables` gives every table of measured values (the
 Draw & Measure panel, the histogram and segmentation statistics) that rendering and the copy
 menu.
+
+Outside the interface nothing is optional either: whether a measurement is computed is a
+preference of the user, so `Measurement.computingAll` lifts it for the thread that computes, which
+is what the commands do — the interface keeps showing what its preferences say, a caller always
+gets every value.
+
+Outside the interface nothing is localized: `MeasurementVocabulary` gives the English name of a
+measurement and the UCUM code of what its kind holds — the display unit for a length or a
+coordinate, its square for an area, `deg` for an angle, `{pixel}` for a count of pixels, and the
+image value unit for a pixel value or a pixel statistic (`[hnsf'U]` for Hounsfield, `g/mL` for a
+standardized uptake value, an annotation such as `{counts}` for a term the standard does not
+define). This is what the commands return, as `{key, name, value, unit}`.
 
 ## Patient space
 

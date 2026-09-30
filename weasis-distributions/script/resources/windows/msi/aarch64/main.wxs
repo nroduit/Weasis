@@ -84,6 +84,10 @@
 		          </RegistryKey>
 		        </RegistryKey>
        </Component>
+        <Component Id="CliPathEnvironment" Guid="6F3C2B9E-4D1A-4E7B-9C2F-7A5D1E8B3C42">
+            <!-- weasis-cli on the machine PATH, like the weasis:// registration above -->
+            <Environment Id="WeasisCliPath" Name="PATH" Value="[INSTALLDIR]" Part="last" Action="set" System="yes" Permanent="no"/>
+        </Component>
   </DirectoryRef>
 
     <Feature Id="DefaultFeature" Title="!(loc.MainFeatureTitle)" Level="1">
@@ -92,6 +96,7 @@
       <ComponentGroupRef Id="FileAssociations"/>
       <ComponentGroupRef Id="FragmentOsCondition"/>
       <ComponentRef Id="URIHandlerRegistry" />
+      <ComponentRef Id="CliPathEnvironment" />
     </Feature>
 
     <CustomAction Id="JpSetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[INSTALLDIR]" />

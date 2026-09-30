@@ -34,6 +34,7 @@
     <xz.version>1.12</xz.version>
 
     <pf4j.version>3.15.0</pf4j.version>
+    <picocli.version>4.7.7</picocli.version>
     <semver4j.version>6.0.0</semver4j.version>
     <slf4j.version>2.0.18</slf4j.version>
     <logback.version>1.6.1</logback.version>
@@ -389,6 +390,12 @@
         <scope>import</scope>
       </dependency>
 
+      <!-- Command model of the launcher and of every plugin command namespace -->
+      <dependency>
+        <groupId>info.picocli</groupId>
+        <artifactId>picocli</artifactId>
+        <version>${picocli.version}</version>
+      </dependency>
       <!-- pf4j pulls java-semver, superseded by semver4j (see WeasisVersionManager) -->
       <dependency>
         <groupId>org.pf4j</groupId>
@@ -497,6 +504,11 @@
     <dependency>
       <groupId>org.semver4j</groupId>
       <artifactId>semver4j</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.util.StringUtil;
 
@@ -169,6 +170,16 @@ public record IdentityMask(TagPolicy policy, Pseudonymizer pseudonymizer, int da
 
   public static void removeChangeListener(Runnable listener) {
     LISTENERS.remove(listener);
+  }
+
+  /**
+   * Calls a command task: a remote origin (the command bridge) is masked with the AI request
+   * profile whatever the session state, other origins keep the session behaviour.
+   */
+  public static <T> T callForCommand(ScopedValue.CallableOp<T, RuntimeException> task) {
+    return CommandContext.current().isRemote()
+        ? forProfile(MaskingProfile.aiRequest()).callMasked(task)
+        : task.call();
   }
 
   /** Runs {@code task} with this mask bound to the current thread. */

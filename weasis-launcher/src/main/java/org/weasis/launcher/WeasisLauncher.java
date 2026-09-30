@@ -73,6 +73,7 @@ import org.semver4j.Semver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.CommandManager;
+import org.weasis.core.api.command.CommandOrigin;
 import org.weasis.launcher.LookAndFeels.ReadableLookAndFeelInfo;
 import org.weasis.plugin.WeasisPluginManager;
 import org.weasis.pref.ConfigData;
@@ -101,6 +102,7 @@ public class WeasisLauncher {
   protected final ConfigData configData;
 
   private final List<String> pendingCommands = new ArrayList<>();
+  private volatile CommandManager commandManager;
 
   public WeasisLauncher(ConfigData configData) {
     this.configData = Objects.requireNonNull(configData);
@@ -192,7 +194,7 @@ public class WeasisLauncher {
         LOGGER.info("Logs can be read in {}", logActivation);
       }
 
-      CommandManager commandManager = new CommandManager(configData.getPluginManager());
+      CommandManager commandManager = commandManager();
       executeCommands(commandManager, configData.getArguments());
 
       // Log plugin states
@@ -209,11 +211,14 @@ public class WeasisLauncher {
       List<String> deferred;
       synchronized (pendingCommands) {
         frameworkLoaded = true;
+        // Keep the manager built above: commandManager() only caches once the framework is loaded,
+        // so without this every remote command would build a second one.
+        this.commandManager = commandManager;
         deferred = List.copyOf(pendingCommands);
         pendingCommands.clear();
       }
       if (!deferred.isEmpty()) {
-        executeCommands(commandManager, deferred);
+        executeCommands(commandManager, deferred, CommandOrigin.URI);
       }
 
       showMessage(mainFrame, serverProp);
@@ -293,7 +298,7 @@ Starting PF4J Plugins...
         return;
       }
     }
-    executeCommands(commandManager, commandList);
+    executeCommands(commandManager, commandList, CommandOrigin.URI);
   }
 
   /**
@@ -302,15 +307,32 @@ Starting PF4J Plugins...
    * @param commands list of command strings
    */
   public void executeCommands(CommandManager commandManager, List<String> commands) {
+    executeCommands(commandManager, commands, CommandOrigin.LAUNCH_ARGS);
+  }
+
+  public void executeCommands(
+      CommandManager commandManager, List<String> commands, CommandOrigin origin) {
     if (commandManager == null || commands == null || commands.isEmpty()) {
       return;
     }
 
     try {
-      commandManager.executeCommands(commands);
+      commandManager.executeCommands(commands, origin);
     } catch (Exception e) {
       LOGGER.error("Error executing commands", e);
     }
+  }
+
+  /** The command manager, cached once the plugin framework is loaded. */
+  protected CommandManager commandManager() {
+    CommandManager manager = commandManager;
+    if (manager == null) {
+      manager = new CommandManager(configData.getPluginManager());
+      if (frameworkLoaded) {
+        commandManager = manager;
+      }
+    }
+    return manager;
   }
 
   private static void resetPluginCache() {
@@ -982,8 +1004,7 @@ Starting PF4J Plugins...
     int index = Utils.getWeasisProtocolIndex(uri);
     if (index < 0) {
       uri = "dicom:get -r \"" + uri + "\""; // NON-NLS
-      CommandManager commandManager = new CommandManager(instance.configData.getPluginManager());
-      instance.executeCommandsWhenLoaded(commandManager, List.of(uri));
+      instance.executeCommandsWhenLoaded(instance.commandManager(), List.of(uri));
     } else {
       boolean sameInstance = System.currentTimeMillis() - time < 3000;
       String[] args = getArgsForURI(uri);
@@ -1028,8 +1049,7 @@ Starting PF4J Plugins...
             .map(f -> "dicom:get -l \"" + f.getPath() + "\"") // NON-NLS
             .toList();
     LOGGER.info("Get open file event from OS. Files: {}", files);
-    CommandManager commandManager = new CommandManager(instance.configData.getPluginManager());
-    instance.executeCommandsWhenLoaded(commandManager, files);
+    instance.executeCommandsWhenLoaded(instance.commandManager(), files);
   }
 
   protected void shutdownHook() {

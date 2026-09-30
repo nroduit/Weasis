@@ -283,8 +283,10 @@ fi
 declare -a signArgs=()
 if [ "$machine" = "windows" ] ; then
   DICOMIZER_CONFIG="Dicomizer=$RES\dicomizer-launcher.properties"
+  CLI_CONFIG="weasis-cli=$RES\weasis-cli-launcher.properties"
 else
   DICOMIZER_CONFIG="Dicomizer=$RES/dicomizer-launcher.properties"
+  CLI_CONFIG="weasis-cli=$RES/weasis-cli-launcher.properties"
   if [ "$machine" = "macosx" ] ; then
     if [[ -n "$CERTIFICATE" ]] ; then
       signArgs=("--mac-package-identifier" "$IDENTIFIER" "--mac-signing-key-user-name" "$CERTIFICATE" "--mac-sign")
@@ -308,7 +310,7 @@ if [ "$machine" != "linux" ] || [ "$PACKAGE" = "NO" ] ; then
   $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
   --jlink-options "$JLINK_OPTIONS" \
   --main-jar weasis-launcher.jar --main-class org.weasis.launcher.Bootstrap --add-modules "$JDK_MODULES" \
-  --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
+  --add-launcher "${DICOMIZER_CONFIG}" --add-launcher "${CLI_CONFIG}" --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
   "${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 fi
 
@@ -341,7 +343,7 @@ if [ "$PACKAGE" = "YES" ] ; then
       $JPKGCMD --type "$installerType" --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
       --jlink-options "$JLINK_OPTIONS" \
       --main-jar weasis-launcher.jar --main-class org.weasis.launcher.Bootstrap --add-modules "$JDK_MODULES" \
-      --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES" \
+      --add-launcher "${DICOMIZER_CONFIG}" --add-launcher "${CLI_CONFIG}" --resource-dir "$RES" \
       --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \
       --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "${curPath}/file-associations.properties" \
       --linux-app-release "$REVISON_INC" --linux-package-name "weasis" \

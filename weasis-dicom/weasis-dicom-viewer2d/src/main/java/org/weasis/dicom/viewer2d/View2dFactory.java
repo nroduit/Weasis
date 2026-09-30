@@ -75,6 +75,11 @@ public class View2dFactory implements SeriesViewerFactory {
   }
 
   @Override
+  public String getViewerTypeId() {
+    return "2d"; // NON-NLS
+  }
+
+  @Override
   public String getUIName() {
     return NAME;
   }

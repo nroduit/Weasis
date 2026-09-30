@@ -72,6 +72,11 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
   }
 
   @Override
+  public String getViewerTypeId() {
+    return "system-app"; // NON-NLS
+  }
+
+  @Override
   public String getUIName() {
     return NAME;
   }

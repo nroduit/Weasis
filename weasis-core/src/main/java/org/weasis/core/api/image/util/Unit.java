@@ -23,23 +23,30 @@ import org.weasis.core.Messages;
 public enum Unit {
 
   // === Special Units ===
-  PIXEL(-5, "Unit.pix", "Unit.pix_s", 1.0, UnitSystem.DIGITAL),
+  PIXEL(-5, "Unit.pix", "Unit.pix_s", 1.0, UnitSystem.DIGITAL, "{pixel}", "{pixel2}"),
 
   // === Metric Units (SI) ===
-  NANOMETER(-2, "Unit.nano", "Unit.nano_S", 1.0E-09, UnitSystem.METRIC),
-  MICROMETER(-1, "Unit.micro", "Unit.micro_S", 1.0E-06, UnitSystem.METRIC),
-  MILLIMETER(0, "Unit.milli", "Unit.milli_s", 1.0E-03, UnitSystem.METRIC),
-  CENTIMETER(1, "Unit.cent", "Unit.cent_s", 1.0E-02, UnitSystem.METRIC),
-  METER(2, "Unit.meter", "Unit.meter_s", 1.0, UnitSystem.METRIC),
-  KILOMETER(3, "Unit.kilo", "Unit.kilo_s", 1.0E+03, UnitSystem.METRIC),
+  NANOMETER(-2, "Unit.nano", "Unit.nano_S", 1.0E-09, UnitSystem.METRIC, "nm", "nm2"),
+  MICROMETER(-1, "Unit.micro", "Unit.micro_S", 1.0E-06, UnitSystem.METRIC, "um", "um2"),
+  MILLIMETER(0, "Unit.milli", "Unit.milli_s", 1.0E-03, UnitSystem.METRIC, "mm", "mm2"),
+  CENTIMETER(1, "Unit.cent", "Unit.cent_s", 1.0E-02, UnitSystem.METRIC, "cm", "cm2"),
+  METER(2, "Unit.meter", "Unit.meter_s", 1.0, UnitSystem.METRIC, "m", "m2"),
+  KILOMETER(3, "Unit.kilo", "Unit.kilo_s", 1.0E+03, UnitSystem.METRIC, "km", "km2"),
 
   // === Imperial Units ===
-  MICROINCH(9, "Unit.minch", "Unit.minch_s", 2.54E-08, UnitSystem.IMPERIAL),
-  MILLIINCH(10, "Unit.mil_inch", "Unit.mil", 2.54E-05, UnitSystem.IMPERIAL),
-  INCH(11, "Unit.inch", "Unit.inch_s", 2.54E-02, UnitSystem.IMPERIAL),
-  FEET(12, "Unit.feet", "Unit.feet_s", 3.048E-01, UnitSystem.IMPERIAL),
-  YARD(13, "Unit.yard", "Unit.yard_s", 9.144E-01, UnitSystem.IMPERIAL),
-  MILE(14, "Unit.mile", "Unit.mile_s", 1.609344E+03, UnitSystem.IMPERIAL);
+  MICROINCH(
+      9,
+      "Unit.minch",
+      "Unit.minch_s",
+      2.54E-08,
+      UnitSystem.IMPERIAL,
+      "10*-6.[in_i]",
+      "10*-12.[in_i]2"),
+  MILLIINCH(10, "Unit.mil_inch", "Unit.mil", 2.54E-05, UnitSystem.IMPERIAL, "[mil_i]", "[mil_i]2"),
+  INCH(11, "Unit.inch", "Unit.inch_s", 2.54E-02, UnitSystem.IMPERIAL, "[in_i]", "[in_i]2"),
+  FEET(12, "Unit.feet", "Unit.feet_s", 3.048E-01, UnitSystem.IMPERIAL, "[ft_i]", "[ft_i]2"),
+  YARD(13, "Unit.yard", "Unit.yard_s", 9.144E-01, UnitSystem.IMPERIAL, "[yd_i]", "[yd_i]2"),
+  MILE(14, "Unit.mile", "Unit.mile_s", 1.609344E+03, UnitSystem.IMPERIAL, "[mi_i]", "[mi_i]2");
 
   private static final Map<Integer, Unit> ID_TO_UNIT =
       Arrays.stream(values()).collect(Collectors.toMap(Unit::getId, u -> u));
@@ -53,18 +60,24 @@ public enum Unit {
   private final String abbreviation;
   private final double factorToMeters;
   private final UnitSystem system;
+  private final String ucum;
+  private final String ucumArea;
 
   Unit(
       int id,
       String fullNameKey,
       String abbreviationKey,
       double factorToMeters,
-      UnitSystem system) {
+      UnitSystem system,
+      String ucum,
+      String ucumArea) {
     this.id = id;
     this.fullName = Messages.getString(fullNameKey);
     this.abbreviation = Messages.getString(abbreviationKey);
     this.factorToMeters = factorToMeters;
     this.system = system;
+    this.ucum = ucum;
+    this.ucumArea = ucumArea;
   }
 
   public int getId() {
@@ -85,6 +98,19 @@ public enum Unit {
 
   public UnitSystem getSystem() {
     return system;
+  }
+
+  /**
+   * Case-sensitive UCUM code of this unit, for machine-readable output; a pixel has no physical
+   * unit and is written as the UCUM annotation {@code {pixel}}.
+   */
+  public String getUcum() {
+    return ucum;
+  }
+
+  /** UCUM code of an area measured in this unit. */
+  public String getUcumArea() {
+    return ucumArea;
   }
 
   @Override

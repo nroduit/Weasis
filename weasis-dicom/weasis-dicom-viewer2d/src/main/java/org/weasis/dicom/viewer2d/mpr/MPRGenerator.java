@@ -16,6 +16,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.ui.editor.PromptPolicy;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
@@ -53,39 +54,51 @@ public class MPRGenerator {
     stack.generate(context);
   }
 
+  /**
+   * Settles a rectification question by the container's {@link PromptPolicy}: asks the user under
+   * {@code ASK}, else records the question as a warning and takes the policy's answer. A refusal
+   * throws so the caller falls back to a basic volume.
+   */
   public static void confirmMessage(BuildContext context, final String message) {
-    GuiExecutor.invokeAndWait(
-        () -> {
-          int usrChoice =
-              JOptionPane.showConfirmDialog(
-                  WinUtil.getValidComponent(context.getMainView()),
-                  buildMessagePanel(message),
-                  MprFactory.NAME,
-                  JOptionPane.YES_NO_OPTION,
-                  JOptionPane.QUESTION_MESSAGE);
-          context.setSkipRectification(usrChoice != JOptionPane.YES_OPTION);
-        });
-    if (context.isSkipRectification()) {
+    MprContainer container = context.getMprContainer();
+    container.addBuildWarning(message);
+    boolean rectify =
+        decideRectification(context.getMainView(), container.getPromptPolicy(), message);
+    context.setSkipRectification(!rectify);
+    if (!rectify) {
       throw new IllegalStateException(message);
     }
   }
 
-  public static void confirmMessage(Component parent, final String message) {
-    boolean[] skipRectification = {false};
-    GuiExecutor.invokeAndWait(
-        () -> {
-          int usrChoice =
-              JOptionPane.showConfirmDialog(
-                  WinUtil.getValidComponent(parent),
-                  buildMessagePanel(message),
-                  MprFactory.NAME,
-                  JOptionPane.YES_NO_OPTION,
-                  JOptionPane.QUESTION_MESSAGE);
-          skipRectification[0] = (usrChoice != JOptionPane.YES_OPTION);
-        });
-    if (skipRectification[0]) {
+  /** Same decision for a build without {@link BuildContext}, e.g. the 3D volume texture. */
+  public static void confirmMessage(Component parent, PromptPolicy policy, final String message) {
+    if (!decideRectification(parent, policy, message)) {
       throw new IllegalStateException(message);
     }
+  }
+
+  private static boolean decideRectification(
+      Component parent, PromptPolicy policy, String message) {
+    return switch (policy == null ? PromptPolicy.ASK : policy) {
+      case ACCEPT -> true;
+      case DECLINE -> false;
+      case ASK -> askRectification(parent, message);
+    };
+  }
+
+  private static boolean askRectification(Component parent, String message) {
+    boolean[] accepted = {false};
+    GuiExecutor.invokeAndWait(
+        () ->
+            accepted[0] =
+                JOptionPane.showConfirmDialog(
+                        WinUtil.getValidComponent(parent),
+                        buildMessagePanel(message),
+                        MprFactory.NAME,
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE)
+                    == JOptionPane.YES_OPTION);
+    return accepted[0];
   }
 
   private static JPanel buildMessagePanel(String message) {

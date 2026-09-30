@@ -1,0 +1,3335 @@
+{
+  "apiVersion": "2.0",
+  "protocolVersion": 1,
+  "applicationVersion": "development",
+  "exitCodes": {
+    "0": "ok",
+    "1": "command error",
+    "2": "usage error",
+    "3": "no running instance",
+    "4": "timeout",
+    "5": "connection error",
+    "6": "not permitted remotely"
+  },
+  "namespaces": [
+    {
+      "name": "acquire",
+      "description": "Image acquisition (Dicomizer): patient context.",
+      "verbs": [
+        {
+          "name": "patient",
+          "description": "Loads the patient context of the acquisition and returns the context it set, masked for a remote caller.",
+          "usage": "acquire:patient [-h] [--json] (--url=<remote-url> | --xml=<text> | --xml-gzip-urlsafe=<base64> | --xml-gzip=<base64>)",
+          "needs": [
+            "network-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--url"
+              ],
+              "label": "<remote-url>",
+              "type": "remote-url",
+              "arity": "1",
+              "required": true,
+              "description": "URL of an XML file holding the DICOM tags.",
+              "needs": [
+                "network-read"
+              ],
+              "since": "5.0",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--xml"
+              ],
+              "label": "<text>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "XML text (UTF-8) holding the DICOM tags.",
+              "since": "5.0",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--xml-gzip-urlsafe"
+              ],
+              "label": "<base64>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "XML encoded as GZIP then URL-safe Base64.",
+              "since": "5.0",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--xml-gzip"
+              ],
+              "label": "<base64>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "XML encoded as GZIP then Base64.",
+              "since": "5.0",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dicom",
+      "description": "The DICOM explorer: loading, listing, opening and closing studies, and reading attributes.",
+      "verbs": [
+        {
+          "name": "info",
+          "description": "Technical description of a series: modality, body part, image count, geometry and pixel spacing. Identifiers follow the identity policy.",
+          "since": "5.0",
+          "usage": "dicom:info [-h] [--json] (--series=<series-uid> | --view=<view-id>)",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": true,
+              "description": "Series Instance UID (or series id) from 'dicom:list'.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "Viewer id from 'workspace:list'; its selected pane gives the series.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "description": "Patients, studies and series loaded in the explorer, as JSON. Identifiers follow the identity policy; UIDs are the handles for the other verbs.",
+          "since": "5.0",
+          "usage": "dicom:list [-h] [--json] [--after=<n>] [--limit=<n>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--limit"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "At most this many entries (default: all of them).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--after"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Skip the first n entries, as the previous answer's 'next' says.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "load",
+          "description": "Loads DICOM files from local paths, URLs, manifests, ZIP archives or the portable directories, and returns what was queued and how far the loading went.",
+          "usage": "dicom:load [-h] [--json] [--portable] [--wait[=<wait-level>]] [--timeout=<seconds>] [--manifest=<remote-url>]... [--manifest-gzip=<data>]... [--path=<input-path>]... [--url=<remote-url>]... [--zip=<remote-url>]...",
+          "needs": [
+            "file-read",
+            "network-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--path"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "A DICOM file or a directory (recursive).",
+              "needs": [
+                "file-read"
+              ],
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--url"
+              ],
+              "label": "<remote-url>",
+              "type": "remote-url",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "A DICOM file URL.",
+              "needs": [
+                "network-read"
+              ],
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--manifest"
+              ],
+              "label": "<remote-url>",
+              "type": "remote-url",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "An XML manifest (WADO).",
+              "needs": [
+                "network-read"
+              ],
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--zip"
+              ],
+              "label": "<remote-url>",
+              "type": "remote-url",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "A ZIP archive of DICOM files.",
+              "needs": [
+                "network-read"
+              ]
+            },
+            {
+              "names": [
+                "--manifest-gzip"
+              ],
+              "label": "<data>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "An XML manifest encoded as GZIP then Base64.",
+              "needs": [
+                "network-read"
+              ],
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--portable"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "The DICOM directories configured next to the executable.",
+              "needs": [
+                "file-read"
+              ]
+            },
+            {
+              "names": [
+                "--wait"
+              ],
+              "label": "<wait-level>",
+              "type": "enum",
+              "values": [
+                "none",
+                "first-series",
+                "all"
+              ],
+              "arity": "0..1",
+              "required": false,
+              "default": "none",
+              "description": "Answer when the loading reaches this point: none, first-series or all (default: none, or all when the option carries no value).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--timeout"
+              ],
+              "label": "<seconds>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "600",
+              "description": "Give up waiting after this long (default: 600).",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "load-dicomweb",
+          "description": "Loads DICOM studies through a DICOMweb service (QIDO/WADO-RS) and returns what was queued and how far the loading went.",
+          "usage": "dicom:load-dicomweb [-h] [--json] [--show-whole-study] [--wait[=<wait-level>]] [--accept-ext=<ext>] [--auth-uid=<auth-uid>] [--oidc-issuer=<issuer>] [--oidc-user=<login>] [--query-ext=<ext>] [--retrieve-ext=<ext>] [--timeout=<seconds>] [--url=<remote-url>] [-H=<header>]... [--query-header=<header>]... [--request=<query>]... [--retrieve-header=<header>]...",
+          "needs": [
+            "network-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--url"
+              ],
+              "label": "<remote-url>",
+              "type": "remote-url",
+              "arity": "1",
+              "required": false,
+              "description": "URL of the DICOMweb service.",
+              "needs": [
+                "network-read"
+              ]
+            },
+            {
+              "names": [
+                "--request"
+              ],
+              "label": "<query>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "Query parameters of the URL, see weasis-pacs-connector."
+            },
+            {
+              "names": [
+                "-H",
+                "--header"
+              ],
+              "label": "<header>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "Custom header for every request."
+            },
+            {
+              "names": [
+                "--query-header"
+              ],
+              "label": "<header>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "Custom header for the query requests (QIDO)."
+            },
+            {
+              "names": [
+                "--retrieve-header"
+              ],
+              "label": "<header>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "Custom header for the retrieve requests (WADO)."
+            },
+            {
+              "names": [
+                "--query-ext"
+              ],
+              "label": "<ext>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Additional query URL parameters (QIDO)."
+            },
+            {
+              "names": [
+                "--retrieve-ext"
+              ],
+              "label": "<ext>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Additional retrieve URL parameters (WADO)."
+            },
+            {
+              "names": [
+                "--accept-ext"
+              ],
+              "label": "<ext>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "transfer-syntax=*",
+              "description": "Parameters of the multipart/related Accept header (default: transfer-syntax=*)."
+            },
+            {
+              "names": [
+                "--auth-uid"
+              ],
+              "label": "<auth-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "UID of the Weasis authentication method."
+            },
+            {
+              "names": [
+                "--oidc-issuer"
+              ],
+              "label": "<issuer>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Issuer identifier of the OpenID Connect authentication request.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--oidc-user"
+              ],
+              "label": "<login>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Login hint of the end user (OpenID Connect).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--show-whole-study"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "When downloading a series, list the other series of the study, ready for download."
+            },
+            {
+              "names": [
+                "--wait"
+              ],
+              "label": "<wait-level>",
+              "type": "enum",
+              "values": [
+                "none",
+                "first-series",
+                "all"
+              ],
+              "arity": "0..1",
+              "required": false,
+              "default": "none",
+              "description": "Answer when the loading reaches this point: none, first-series or all (default: none, or all when the option carries no value).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--timeout"
+              ],
+              "label": "<seconds>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "600",
+              "description": "Give up waiting after this long (default: 600).",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "open",
+          "description": "Opens a series: in the view given by --view, and in its pane given by --pane, in a new view of the type given by --viewer-type, or in the default viewer of its type. Returns the view id and what the viewer decided while opening (e.g. 'rectified', 'warnings'); the client option -y answers its questions instead of showing them.",
+          "since": "5.0",
+          "usage": "dicom:open [-h] [--json] [--wait[=<wait-level>]] [--pane=<pane-index>] --series=<series-uid> [--view=<view-id> | --viewer-type=<viewer-type>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": true,
+              "description": "Series Instance UID (or series id) from 'dicom:list'."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "Viewer id from 'workspace:list' that receives the series.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--viewer-type"
+              ],
+              "label": "<viewer-type>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Opens a new view of this type, by id from 'dicom:info' (e.g. 'mpr'), or by the name the interface shows.",
+              "since": "5.0",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane of --view that receives the series, from 1 (default: the selected one).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--wait"
+              ],
+              "label": "<wait-level>",
+              "type": "enum",
+              "values": [
+                "none",
+                "first-series",
+                "all"
+              ],
+              "arity": "0..1",
+              "required": false,
+              "default": "none",
+              "description": "Answer once the viewer has finished building its content, e.g. the MPR volume: none or all, since a viewer builds in one step (default: none, or all when the option carries no value)."
+            }
+          ]
+        },
+        {
+          "name": "tag",
+          "description": "Value of a DICOM attribute of an image of the series, by keyword or (gggg,eeee). Identity attributes follow the identity policy; private tags are not exposed.",
+          "since": "5.0",
+          "usage": "dicom:tag [-h] [--json] [--image=<image-index>] [--tag=<dicom-keyword>] (--series=<series-uid> | --view=<view-id>)",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": true,
+              "description": "Series Instance UID (or series id) from 'dicom:list'.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "Viewer id from 'workspace:list'; its selected pane gives the series.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--tag"
+              ],
+              "label": "<dicom-keyword>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "DICOM keyword (e.g. SliceLocation) or hexadecimal tag (gggg,eeee).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--image"
+              ],
+              "label": "<image-index>",
+              "type": "image-index",
+              "arity": "1",
+              "required": false,
+              "default": "1",
+              "description": "Image index in the series, from 1 (default: 1)."
+            }
+          ]
+        },
+        {
+          "name": "unload",
+          "description": "Takes patients, studies or series out of the explorer and returns what was unloaded. Every handle is resolved first: an unknown one unloads nothing. A patient is named by the identifier 'dicom:list' returned, which is the masked one under a masking policy.",
+          "usage": "dicom:unload [-h] [--all] [--json] [--patient=<patient-handle>]... [--series=<series-uid>]... [--study=<study-uid>]...",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--all"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Unload every patient."
+            },
+            {
+              "names": [
+                "--patient"
+              ],
+              "label": "<patient-handle>",
+              "type": "patient-handle",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "Patient identifier to unload, as 'dicom:list' returns it."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "Study Instance UID to unload."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "Series Instance UID, or series id, to unload."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "image",
+      "description": "Loading and closing of plain images (non-DICOM) in the default viewer.",
+      "verbs": [
+        {
+          "name": "compare",
+          "description": "Compares two image files pixel by pixel and returns how far apart they are: the number of pixels that differ, their share, and the largest and mean channel difference.",
+          "since": "5.0",
+          "usage": "image:compare [-h] [--json] --a=<input-path> --b=<input-path> [--tolerance=<n>]",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--a"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": true,
+              "description": "First image.",
+              "needs": [
+                "file-read"
+              ],
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--b"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": true,
+              "description": "Second image.",
+              "needs": [
+                "file-read"
+              ],
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--tolerance"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "0",
+              "description": "Channel difference below which two pixels count as equal, 0 to 255 (default: 0).",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "description": "The groups and series of images opened in the default viewer, as JSON.",
+          "since": "5.0",
+          "usage": "image:list [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "load",
+          "description": "Opens images from files or URLs and returns the series it opened.",
+          "usage": "image:load [-h] [--json] [--file=<input-path>]... [--url=<remote-url>]...",
+          "needs": [
+            "file-read",
+            "network-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--file"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "Image file to open.",
+              "needs": [
+                "file-read"
+              ]
+            },
+            {
+              "names": [
+                "--url"
+              ],
+              "label": "<remote-url>",
+              "type": "remote-url",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "Image URL to download and open.",
+              "needs": [
+                "network-read"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "unload",
+          "description": "Closes groups or images and returns what was closed; an unknown handle closes nothing.",
+          "usage": "image:unload [-h] [--all] [--json] [--group=<group>]... [--series=<series>]...",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--all"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Close every group."
+            },
+            {
+              "names": [
+                "--group"
+              ],
+              "label": "<group>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "Group to close, as 'image:load' returns it."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "Series or image to close, as 'image:load' returns it."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "redact",
+      "description": "Regions burned over the pixels of a view, and the device library they can come from.",
+      "verbs": [
+        {
+          "name": "add",
+          "description": "Hides an area of the selected view.",
+          "since": "5.0",
+          "usage": "redact:add [-h] [--json] [--pane=<pane-index>] [--scope=<scope>] [--view=<view-id>] (--rect=<image-rect> | --ellipse=<image-rect> | --polygon=<image-polygon>)",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--rect"
+              ],
+              "label": "<image-rect>",
+              "type": "image-rect",
+              "arity": "1",
+              "required": true,
+              "description": "Axis-aligned rectangle, in image pixels.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--ellipse"
+              ],
+              "label": "<image-rect>",
+              "type": "image-rect",
+              "arity": "1",
+              "required": true,
+              "description": "Ellipse inscribed in this rectangle.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--polygon"
+              ],
+              "label": "<image-polygon>",
+              "type": "image-polygon",
+              "arity": "1",
+              "required": true,
+              "description": "Closed outline as x,y pairs (three at least).",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--scope"
+              ],
+              "label": "<scope>",
+              "type": "enum",
+              "values": [
+                "IMAGE",
+                "SERIES"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "IMAGE",
+              "description": "Where it applies: IMAGE, SERIES."
+            }
+          ]
+        },
+        {
+          "name": "apply",
+          "description": "Hides the regions of a device entry on the selected view, all of them: a chosen entry is applied as it was drawn, where 'match' proposes only what the profile in force does not keep.",
+          "since": "5.0",
+          "usage": "redact:apply [-h] [--json] --entry=<entry-id> [--pane=<pane-index>] [--scope=<scope>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--entry"
+              ],
+              "label": "<entry-id>",
+              "type": "entry-id",
+              "arity": "1",
+              "required": true,
+              "description": "Device entry from 'redact:library'."
+            },
+            {
+              "names": [
+                "--scope"
+              ],
+              "label": "<scope>",
+              "type": "enum",
+              "values": [
+                "IMAGE",
+                "SERIES"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "IMAGE",
+              "description": "Where it applies: IMAGE, SERIES."
+            }
+          ]
+        },
+        {
+          "name": "clear",
+          "description": "Removes the regions of the selected image or series.",
+          "since": "5.0",
+          "usage": "redact:clear [-h] [--json] [--pane=<pane-index>] [--scope=<scope>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--scope"
+              ],
+              "label": "<scope>",
+              "type": "enum",
+              "values": [
+                "IMAGE",
+                "SERIES"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "IMAGE",
+              "description": "Where it applies: IMAGE, SERIES."
+            }
+          ]
+        },
+        {
+          "name": "delete",
+          "description": "Removes a device entry from the user library.",
+          "since": "5.0",
+          "usage": "redact:delete [-h] [--json] --entry=<entry-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--entry"
+              ],
+              "label": "<entry-id>",
+              "type": "entry-id",
+              "arity": "1",
+              "required": true,
+              "description": "Device entry from 'redact:library'."
+            }
+          ]
+        },
+        {
+          "name": "export",
+          "description": "Writes the device library to a file.",
+          "since": "5.0",
+          "usage": "redact:export [-h] [--complete] [--force] [--json] [--karnak] [--masking-profile=<masking-profile-id>] --out=<output-path>",
+          "needs": [
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": true,
+              "description": "File to write.",
+              "needs": [
+                "file-write"
+              ]
+            },
+            {
+              "names": [
+                "--force"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Replace the file when it exists and was not written by this session.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--karnak"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Write the masks block of a Karnak profile."
+            },
+            {
+              "names": [
+                "--complete"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Write a whole Karnak profile, not only its masks block."
+            },
+            {
+              "names": [
+                "--masking-profile"
+              ],
+              "label": "<masking-profile-id>",
+              "type": "masking-profile-id",
+              "arity": "1",
+              "required": false,
+              "description": "Masking profile of a Karnak export (default: the session one).",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "import",
+          "description": "Adds the device entries of a file to the user library.",
+          "since": "5.0",
+          "usage": "redact:import [-h] [--json] [--karnak] --file=<input-path>",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--file"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": true,
+              "description": "Document to read.",
+              "needs": [
+                "file-read"
+              ]
+            },
+            {
+              "names": [
+                "--karnak"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Read the masks block of a Karnak profile."
+            }
+          ]
+        },
+        {
+          "name": "library",
+          "description": "The device entries of the masking document.",
+          "since": "5.0",
+          "usage": "redact:library [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "description": "The regions hidden on the selected view.",
+          "since": "5.0",
+          "usage": "redact:list [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            }
+          ]
+        },
+        {
+          "name": "match",
+          "description": "The device entries that fit the selected view, and why the others do not.",
+          "since": "5.0",
+          "usage": "redact:match [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            }
+          ]
+        },
+        {
+          "name": "save",
+          "description": "Saves the regions of the selected view as a device entry of the library.",
+          "since": "5.0",
+          "usage": "redact:save [-h] [--json] [--entry=<entry-id>] [--name=<name>] [--pane=<pane-index>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--name"
+              ],
+              "label": "<name>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Name of the entry (default: the station name of the series)."
+            },
+            {
+              "names": [
+                "--entry"
+              ],
+              "label": "<entry-id>",
+              "type": "entry-id",
+              "arity": "1",
+              "required": false,
+              "description": "Entry to replace (default: a new one)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "script",
+      "description": "Runs a list of commands from a file, with variables and expectations.",
+      "verbs": [
+        {
+          "name": "check",
+          "description": "Parses every step against the command models without running anything, and answers what would fail.",
+          "since": "5.0",
+          "usage": "script:check [-h] [--json] --file=<input-path>",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--file"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": true,
+              "description": "The script to read, one command per line.",
+              "needs": [
+                "file-read"
+              ],
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "pause",
+          "description": "Waits, to pace a demonstration inside a script.",
+          "since": "5.0",
+          "usage": "script:pause [-h] [--json] --seconds=<s>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--seconds"
+              ],
+              "label": "<s>",
+              "type": "number",
+              "arity": "1",
+              "required": true,
+              "default": "0.0",
+              "description": "How long to wait.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "run",
+          "description": "Runs every command of the file and answers one JSON object per step, then a summary.",
+          "since": "5.0",
+          "usage": "script:run [-h] [--brief] [--json] [--keep-going] [--delay=<ms>] --file=<input-path> [--from=<n>] [--report=<output-path>] [--timeout=<s>] [--to=<n>] [--set=<name=value>]...",
+          "needs": [
+            "file-read",
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--file"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": true,
+              "description": "The script to read, one command per line.",
+              "needs": [
+                "file-read"
+              ],
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--set"
+              ],
+              "label": "<name=value>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "{}",
+              "description": "A parameter the script reads as null.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--keep-going"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Run the remaining steps after a failing one.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--delay"
+              ],
+              "label": "<ms>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "0",
+              "description": "Wait this long between steps (default: 0).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--from"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "1",
+              "description": "First step to run, counting from 1.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--to"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Last step to run (default: the last one).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--timeout"
+              ],
+              "label": "<s>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "0",
+              "description": "Give up after this long, 0 to wait as long as it takes.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--brief"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Leave the body of each step out of the answer.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--report"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": false,
+              "description": "Write a JUnit XML report of the run to this file.",
+              "needs": [
+                "file-write"
+              ],
+              "since": "5.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "view2d",
+      "description": "Display of a 2D DICOM view: zoom, window/level, pan, scrolling, grid, mouse action, and the agent verbs capture, stats and measure. Every verb works on the pane given by --view and --pane, the selected one by default, and returns its display state.",
+      "verbs": [
+        {
+          "name": "annotate",
+          "description": "Adds a text annotation on the AI layer of a pane: with --at it points at that place with an arrow, with --label-at alone it is a caption, text where you put it and nothing else drawn.",
+          "since": "5.0",
+          "usage": "view2d:annotate [-h] [--canvas] [--json] [--at=<image-point>] [--label-at=<image-point>] [--pane=<pane-index>] --text=<text> [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--at"
+              ],
+              "label": "<image-point>",
+              "type": "image-point",
+              "arity": "1",
+              "required": false,
+              "description": "Place the annotation points at; without it the text stands alone."
+            },
+            {
+              "names": [
+                "--text"
+              ],
+              "label": "<text>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Text to show."
+            },
+            {
+              "names": [
+                "--label-at"
+              ],
+              "label": "<image-point>",
+              "type": "image-point",
+              "arity": "1",
+              "required": false,
+              "description": "Position of the text itself (default: above and right of --at)."
+            },
+            {
+              "names": [
+                "--canvas"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Coordinates are canvas pixels (as in a capture) instead of image pixels."
+            }
+          ]
+        },
+        {
+          "name": "capture",
+          "description": "Renders a view as displayed (window/level, annotations, identity masking) into a PNG or JPEG file and returns how image pixels map to the capture.",
+          "since": "5.0",
+          "usage": "view2d:capture [-h] [--force] [--json] [--crop=<canvas-rect>] [--max-pixels=<n>] --out=<output-path> [--pane=<pane-index>] [--view=<view-id>]",
+          "needs": [
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": true,
+              "description": "File to write; the extension selects PNG or JPEG (.jpg).",
+              "needs": [
+                "file-write"
+              ]
+            },
+            {
+              "names": [
+                "--force"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Replace the file when it exists and was not written by this session.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--crop"
+              ],
+              "label": "<canvas-rect>",
+              "type": "canvas-rect",
+              "arity": "1",
+              "required": false,
+              "description": "Crop to this region of the canvas before scaling.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--max-pixels"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "2000000",
+              "description": "Downscale so the file has at most this many pixels (default: 2000000)."
+            }
+          ]
+        },
+        {
+          "name": "clear-ai",
+          "description": "Removes every graphic drawn by the agent in the view.",
+          "since": "5.0",
+          "usage": "view2d:clear-ai [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            }
+          ]
+        },
+        {
+          "name": "flip",
+          "description": "Mirrors the image of a pane and returns its display state; with no argument the state is returned unchanged. A vertical flip is the horizontal one turned by 180°, the form DICOM presentation states use.",
+          "since": "5.0",
+          "usage": "view2d:flip [-h] [--json] [--axis=<flip-axis>] [--pane=<pane-index>] [--view=<view-id>] [on|off]",
+          "parameters": [
+            {
+              "label": "on|off",
+              "type": "enum",
+              "arity": "0..1",
+              "description": "on, off.",
+              "values": [
+                "on",
+                "off"
+              ]
+            }
+          ],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--axis"
+              ],
+              "label": "<flip-axis>",
+              "type": "enum",
+              "values": [
+                "horizontal",
+                "vertical"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "horizontal",
+              "description": "horizontal or vertical (default: horizontal).",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "graphics",
+          "description": "Lists the graphics of the view: id, type, layer, vertices and measurements, so measured values come from the viewer rather than from a picture.",
+          "since": "5.0",
+          "usage": "view2d:graphics [-h] [--json] [--no-measurements] [--after=<n>] [--layer=<layer-name>] [--limit=<n>] [--pane=<pane-index>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--layer"
+              ],
+              "label": "<layer-name>",
+              "type": "layer-name",
+              "arity": "1",
+              "required": false,
+              "description": "Only the graphics of this layer name, e.g. AI."
+            },
+            {
+              "names": [
+                "--no-measurements"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Skip the measurement values."
+            },
+            {
+              "names": [
+                "--limit"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "At most this many entries (default: all of them).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--after"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Skip the first n entries, as the previous answer's 'next' says.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "grid",
+          "description": "Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.",
+          "usage": "view2d:grid [-h] [--json] [--view=<view-id>] [--best-for=<n> | --panes=<n> | --grid=<grid-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--best-for"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Returns the best grid for this number of panes without applying it.",
+              "since": "5.0",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--panes"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Applies the best grid for this number of panes.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--grid"
+              ],
+              "label": "<grid-id>",
+              "type": "grid-id",
+              "arity": "1",
+              "required": true,
+              "description": "Applies this grid, by id from the bare verb.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            }
+          ]
+        },
+        {
+          "name": "measure",
+          "description": "Draws a measurement on the AI layer of the view and returns its values, in the spatial unit of the viewer (mm when the image is calibrated).",
+          "since": "5.0",
+          "usage": "view2d:measure [-h] [--canvas] [--json] [--pane=<pane-index>] --points=<image-polygon> --type=<type> [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--type"
+              ],
+              "label": "<type>",
+              "type": "enum",
+              "values": [
+                "LINE",
+                "POLYLINE",
+                "RECTANGLE",
+                "ELLIPSE",
+                "CIRCLE",
+                "POLYGON",
+                "ANGLE"
+              ],
+              "arity": "1",
+              "required": true,
+              "description": "LINE, POLYLINE, RECTANGLE, ELLIPSE, CIRCLE, POLYGON, ANGLE."
+            },
+            {
+              "names": [
+                "--points"
+              ],
+              "label": "<image-polygon>",
+              "type": "image-polygon",
+              "arity": "1",
+              "required": true,
+              "description": "Vertices as x,y pairs; rectangle and ellipse take two opposite corners."
+            },
+            {
+              "names": [
+                "--canvas"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Coordinates are canvas pixels (as in a capture) instead of image pixels."
+            }
+          ]
+        },
+        {
+          "name": "mouse-action",
+          "description": "Binds an action to a mouse button and returns the bindings; with no action the current ones are returned unchanged.",
+          "usage": "view2d:mouse-action [-h] [--json] [--action=<mouse-action-type>] [--button=<mouse-button>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--button"
+              ],
+              "label": "<mouse-button>",
+              "type": "enum",
+              "values": [
+                "left",
+                "middle",
+                "right",
+                "wheel"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "left",
+              "description": "left, middle, right or wheel (default: left).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--action"
+              ],
+              "label": "<mouse-action-type>",
+              "type": "enum",
+              "values": [
+                "sequence",
+                "window-level",
+                "zoom",
+                "pan",
+                "rotation",
+                "crosshair",
+                "measure",
+                "draw",
+                "context-menu",
+                "none"
+              ],
+              "arity": "1",
+              "required": false,
+              "description": "sequence, window-level, zoom, pan, rotation, crosshair, measure, draw, context-menu or none.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "pan",
+          "description": "Moves the image inside a pane by an offset in canvas pixels and returns its display state; with no argument the state is returned unchanged.",
+          "usage": "view2d:pan [-h] [--json] [--dx=<canvas-pixels>] [--dy=<canvas-pixels>] [--pane=<pane-index>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--dx"
+              ],
+              "label": "<canvas-pixels>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Horizontal offset, positive to the right.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--dy"
+              ],
+              "label": "<canvas-pixels>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Vertical offset, positive downwards.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "preset",
+          "description": "Applies a window/level preset to a pane and returns its display state, or lists the presets of its image when none is given. The presets belong to the image, so the pane given by --view and --pane is selected first.",
+          "since": "5.0",
+          "usage": "view2d:preset [-h] [--json] [--pane=<pane-index>] [--preset=<preset-id>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--preset"
+              ],
+              "label": "<preset-id>",
+              "type": "preset-id",
+              "arity": "1",
+              "required": false,
+              "description": "Preset id, or its name as the viewer shows it.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "reset",
+          "description": "Puts the display of a pane back as the image opened, whole or tool by tool, and returns its state; with no argument the state is returned unchanged.",
+          "usage": "view2d:reset [-h] [--all] [--json] [--pane=<pane-index>] [--view=<view-id>] [--tool=<reset-tool>]...",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--all"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Reset everything to the original display."
+            },
+            {
+              "names": [
+                "--tool"
+              ],
+              "label": "<reset-tool>",
+              "type": "enum",
+              "values": [
+                "window-level",
+                "zoom",
+                "pan",
+                "rotation"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "window-level, zoom, pan or rotation; repeat it for several.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "rotate",
+          "description": "Turns the image of a pane clockwise and returns its display state; with no argument the state is returned unchanged.",
+          "since": "5.0",
+          "usage": "view2d:rotate [-h] [--json] [--by=<degrees>] [--degrees=<degrees>] [--pane=<pane-index>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--degrees"
+              ],
+              "label": "<degrees>",
+              "type": "degrees",
+              "arity": "1",
+              "required": false,
+              "description": "Absolute angle, clockwise; any integer, reduced to 0-359."
+            },
+            {
+              "names": [
+                "--by"
+              ],
+              "label": "<degrees>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Turns by this many degrees, negative counter-clockwise.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "scroll",
+          "description": "Moves through the images of the series a pane shows; with no argument the current position is returned unchanged.",
+          "usage": "view2d:scroll [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<images> | --image=<image-index>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--by"
+              ],
+              "label": "<images>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Moves by this many images, negative towards the first one.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--image"
+              ],
+              "label": "<image-index>",
+              "type": "image-index",
+              "arity": "1",
+              "required": true,
+              "description": "Image to show, from 1.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            }
+          ]
+        },
+        {
+          "name": "stats",
+          "description": "Pixel statistics of a region (min, max, mean, median, standard deviation, ...) in the image value unit, e.g. HU, plus the region geometry in the spatial unit.",
+          "since": "5.0",
+          "usage": "view2d:stats [-h] [--canvas] [--json] [--pane=<pane-index>] [--view=<view-id>] (--rect=<image-rect> | --ellipse=<image-rect> | --polygon=<image-polygon> | --graphic=<graphic-id>)",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--rect"
+              ],
+              "label": "<image-rect>",
+              "type": "image-rect",
+              "arity": "1",
+              "required": true,
+              "description": "Axis-aligned rectangle, in image pixels unless --canvas is given.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--ellipse"
+              ],
+              "label": "<image-rect>",
+              "type": "image-rect",
+              "arity": "1",
+              "required": true,
+              "description": "Ellipse inscribed in this rectangle.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--polygon"
+              ],
+              "label": "<image-polygon>",
+              "type": "image-polygon",
+              "arity": "1",
+              "required": true,
+              "description": "Polygon vertices as x,y pairs (three at least).",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--graphic"
+              ],
+              "label": "<graphic-id>",
+              "type": "graphic-id",
+              "arity": "1",
+              "required": true,
+              "description": "Id of an existing area graphic of the view, from 'graphics'.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--canvas"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Coordinates are canvas pixels (as in a capture) instead of image pixels."
+            }
+          ]
+        },
+        {
+          "name": "sync",
+          "description": "Sets how the panes of a viewer follow each other and returns its state: none turns the synchronization off, another mode turns it on; with no argument the state is returned unchanged.",
+          "usage": "view2d:sync [-h] [--json] [--mode=<sync-mode>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--mode"
+              ],
+              "label": "<sync-mode>",
+              "type": "enum",
+              "values": [
+                "none",
+                "stack",
+                "tile"
+              ],
+              "arity": "1",
+              "required": false,
+              "description": "none, stack or tile, among the modes the viewer offers.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "window-level",
+          "description": "Window and level of a pane: absolute with --window and --level, relative with --window-by and --level-by in slider steps (range 4096). With no argument the state is returned unchanged.",
+          "usage": "view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-index>] [--view=<view-id>] [--window-by=<steps>] [--window=<window-width> --level=<window-center>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--window"
+              ],
+              "label": "<window-width>",
+              "type": "window-width",
+              "arity": "1",
+              "required": true,
+              "description": "Width of the window, in the unit of the pixels.",
+              "since": "5.0",
+              "group": {
+                "exclusive": false,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--level"
+              ],
+              "label": "<window-center>",
+              "type": "window-center",
+              "arity": "1",
+              "required": true,
+              "description": "Centre of the window, in the unit of the pixels.",
+              "since": "5.0",
+              "group": {
+                "exclusive": false,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--window-by"
+              ],
+              "label": "<steps>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Widens the window by this many slider steps, negative to narrow it.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--level-by"
+              ],
+              "label": "<steps>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Raises the level by this many slider steps, negative to lower it.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "zoom",
+          "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--set"
+              ],
+              "label": "<magnification>",
+              "type": "magnification",
+              "arity": "1",
+              "required": true,
+              "description": "Magnification, 1 being one image pixel per canvas pixel.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--fit"
+              ],
+              "label": "<zoom-fit>",
+              "type": "enum",
+              "values": [
+                "default",
+                "real-size",
+                "best-fit"
+              ],
+              "arity": "1",
+              "required": true,
+              "description": "default, real-size or best-fit.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--by"
+              ],
+              "label": "<steps>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "view3d",
+      "description": "Volume rendering: the capabilities of the renderer on this machine.",
+      "since": "5.0",
+      "verbs": [
+        {
+          "name": "info",
+          "description": "Reports whether volume rendering is available here, the binding and the context it runs on, the graphics adapter and the limits that decide the rendering path.",
+          "since": "5.0",
+          "usage": "view3d:info [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "weasis",
+      "description": "The application itself: version, installation and the main window.",
+      "verbs": [
+        {
+          "name": "info",
+          "description": "Version and installation details, the version being one of the keys. The 4.x option -v still answers with the version alone.",
+          "usage": "weasis:info [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "minimize",
+          "description": "Minimizes the main window and returns its state.",
+          "since": "5.0",
+          "usage": "weasis:minimize [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "quit",
+          "description": "Shuts Weasis down and returns once the reply is written; a remote caller confirms with -y, and the instance may forbid it.",
+          "since": "5.0",
+          "usage": "weasis:quit [-h] [--json]",
+          "needs": [
+            "shutdown"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "description": "Brings the main window to the front and returns its state.",
+          "since": "5.0",
+          "usage": "weasis:show [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "workspace",
+      "description": "Layout of the viewer workspace: windows, tab groups and views. View ids come from 'workspace:list'; verbs that change the layout return the new state with --json.",
+      "since": "5.0",
+      "verbs": [
+        {
+          "name": "close",
+          "description": "Closes a view (fails when the view is not closable).",
+          "usage": "workspace:close [-h] [--json] --view=<view-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "View id from 'workspace:list'."
+            }
+          ]
+        },
+        {
+          "name": "detach",
+          "description": "Floats a view in its own window.",
+          "usage": "workspace:detach [-h] [--json] [--bounds=<screen-rect>] --view=<view-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "View id from 'workspace:list'."
+            },
+            {
+              "names": [
+                "--bounds"
+              ],
+              "label": "<screen-rect>",
+              "type": "screen-rect",
+              "arity": "1",
+              "required": false,
+              "description": "Screen bounds of the new window, as x,y,width,height."
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "description": "Windows, tab groups and views as JSON.",
+          "usage": "workspace:list [-h] [--json] [--after=<n>] [--limit=<n>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--limit"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "At most this many entries (default: all of them).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--after"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Skip the first n entries, as the previous answer's 'next' says.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "load",
+          "description": "Restores a layout captured by 'workspace:save'.",
+          "usage": "workspace:load [-h] [--json] --file=<input-path>",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--file"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": true,
+              "description": "Snapshot file to restore.",
+              "needs": [
+                "file-read"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "maximize",
+          "description": "Shows a view alone in its window.",
+          "usage": "workspace:maximize [-h] [--json] --view=<view-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "View id from 'workspace:list'."
+            }
+          ]
+        },
+        {
+          "name": "save",
+          "description": "Captures the layout as JSON, inline or to a file.",
+          "usage": "workspace:save [-h] [--force] [--json] [--out=<output-path>]",
+          "needs": [
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": false,
+              "description": "Write the snapshot to this file and report its path.",
+              "needs": [
+                "file-write"
+              ]
+            },
+            {
+              "names": [
+                "--force"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Replace the file when it exists and was not written by this session.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "select",
+          "description": "Brings a view to the front of its tab group.",
+          "usage": "workspace:select [-h] [--json] --view=<view-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "View id from 'workspace:list'."
+            }
+          ]
+        },
+        {
+          "name": "split",
+          "description": "Places a view next to another view in a new split.",
+          "usage": "workspace:split [-h] [--json] --anchor=<view-id> [--ratio=<split-ratio>] --side=<side> --view=<view-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "View id from 'workspace:list'."
+            },
+            {
+              "names": [
+                "--anchor"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "View whose group is split."
+            },
+            {
+              "names": [
+                "--side"
+              ],
+              "label": "<side>",
+              "type": "enum",
+              "values": [
+                "TOP",
+                "BOTTOM",
+                "LEFT",
+                "RIGHT"
+              ],
+              "arity": "1",
+              "required": true,
+              "description": "Side of the anchor for the new group: TOP, BOTTOM, LEFT, RIGHT."
+            },
+            {
+              "names": [
+                "--ratio"
+              ],
+              "label": "<split-ratio>",
+              "type": "split-ratio",
+              "arity": "1",
+              "required": false,
+              "default": "0.5",
+              "description": "Share of the space given to the anchor (default: 0.5)."
+            }
+          ]
+        },
+        {
+          "name": "stack",
+          "description": "Moves a view into the tab group of another view.",
+          "usage": "workspace:stack [-h] [--json] --anchor=<view-id> --view=<view-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "View id from 'workspace:list'."
+            },
+            {
+              "names": [
+                "--anchor"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "View whose tab group receives the view."
+            }
+          ]
+        },
+        {
+          "name": "unmaximize",
+          "description": "Ends the maximized state of a view.",
+          "usage": "workspace:unmaximize [-h] [--json] --view=<view-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "View id from 'workspace:list'."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
