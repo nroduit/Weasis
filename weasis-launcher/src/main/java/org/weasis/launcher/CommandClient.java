@@ -225,6 +225,12 @@ public final class CommandClient implements Callable<Integer> {
       command = run;
     }
     if (command.isEmpty()) {
+      if (launch) {
+        // --launch alone only makes sure an instance is running
+        Optional<SingletonFiles.Instance> running = resolveInstance();
+        running.ifPresent(i -> out.println("Weasis is running (instance " + i.id() + ")"));
+        return running.isPresent() ? CommandResult.OK : CommandResult.NO_INSTANCE;
+      }
       err.println("Missing command. Try: weasis-cli help");
       return CommandResult.USAGE;
     }

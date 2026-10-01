@@ -18,6 +18,10 @@
 # behaviour such as AOT class linking (JDK 27) depends on. The AOT cache itself stays off here: it is
 # only trained from a jpackage launcher, never from a plain java command.
 #   WEASIS_JDK=/path/to/jdk-27 ./weasis-cli.sh info
+#
+# To call weasis-cli plainly before an installer has registered it, link this file from a directory
+# of the PATH (the macOS package later links /usr/local/bin/weasis-cli to the bundled launcher):
+#   ln -s "$PWD/weasis-distributions/script/weasis-cli.sh" ~/.local/bin/weasis-cli
 
 # Path of this file, so that the repository root is still known once the function is sourced.
 if [ -n "$BASH_VERSION" ]; then
@@ -27,7 +31,10 @@ elif [ -n "$ZSH_VERSION" ]; then
 else
   weasis_cli_self="$0"
 fi
-WEASIS_CLI_HOME="$(cd "$(dirname "$weasis_cli_self")/../.." && pwd)"
+# Called through a link on the PATH, the repository is found from the target of the link.
+weasis_cli_file="$(readlink -f "$weasis_cli_self" 2>/dev/null || echo "$weasis_cli_self")"
+WEASIS_CLI_HOME="$(cd "$(dirname "$weasis_cli_file")/../.." && pwd)"
+unset weasis_cli_file
 
 weasis-cli() {
   local jar java_cmd jdk_home target app_version
