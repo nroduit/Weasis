@@ -11,6 +11,7 @@ package org.weasis.core.ui.pref;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -97,7 +98,8 @@ class ToolCheckList extends JPanel {
     bind(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), () -> toggle(list.getSelectedIndex()));
     bind(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.ALT_DOWN_MASK), () -> move(-1));
     bind(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.ALT_DOWN_MASK), () -> move(1));
-    list.setDragEnabled(true);
+    // Dragging needs a display: JList refuses it when headless (CI tests)
+    list.setDragEnabled(!GraphicsEnvironment.isHeadless());
     list.setDropMode(DropMode.INSERT);
     list.setTransferHandler(new ReorderHandler());
 
