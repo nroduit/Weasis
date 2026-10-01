@@ -43,6 +43,8 @@ public class OverlayOp extends AbstractOp {
 
   public OverlayOp(OverlayOp op) {
     super(op);
+    // Not shared: the cached mask is released by the operation that built it
+    this.overlayMask = null;
   }
 
   @Override

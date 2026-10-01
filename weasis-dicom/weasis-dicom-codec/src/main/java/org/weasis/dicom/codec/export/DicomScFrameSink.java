@@ -163,7 +163,9 @@ public class DicomScFrameSink implements FrameSink {
     this.frameDurations.clear();
     this.rawBytes = 0;
     this.encodedBytes = 0;
-    this.payload = Files.createTempFile("weasis-sc", ".raw"); // NON-NLS
+    // In the app cache, not the shared system temp: the frames may carry patient identity
+    this.payload =
+        Files.createTempFile(AppProperties.FILE_CACHE_DIR, "weasis-sc", ".raw"); // NON-NLS
     this.payloadOut = new BufferedOutputStream(Files.newOutputStream(payload));
   }
 

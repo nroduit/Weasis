@@ -145,8 +145,8 @@ public final class EdgeSnapper {
 
   static Rectangle windowAround(Point center, int width, int height) {
     int half = WINDOW / 2;
-    int x = Math.clamp(center.x - half, 0, Math.max(0, width - WINDOW));
-    int y = Math.clamp(center.y - half, 0, Math.max(0, height - WINDOW));
+    int x = Math.clamp((long) center.x - half, 0, Math.max(0, width - WINDOW));
+    int y = Math.clamp((long) center.y - half, 0, Math.max(0, height - WINDOW));
     return new Rectangle(x, y, Math.min(WINDOW, width), Math.min(WINDOW, height));
   }
 

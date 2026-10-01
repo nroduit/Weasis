@@ -14,6 +14,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -58,6 +59,23 @@ public final class IntensityProfile {
         distance += positions.get(i - 1).distance(positions.get(i));
       }
       return distance;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return o instanceof Samples(double[] v, var p)
+          && Arrays.equals(values, v)
+          && positions.equals(p);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * Arrays.hashCode(values) + positions.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "Samples[values=" + Arrays.toString(values) + ", positions=" + positions + "]";
     }
   }
 

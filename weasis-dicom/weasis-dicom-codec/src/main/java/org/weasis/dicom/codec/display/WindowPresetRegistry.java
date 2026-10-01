@@ -353,7 +353,10 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
 
   static ImageKey imageKey(DicomImageAdapter adapter, AnatomicRegion anatomy) {
     ImageDescriptor desc = adapter.getImageDescriptor();
-    String modality = desc == null ? null : desc.getModality();
+    if (desc == null) {
+      return null;
+    }
+    String modality = desc.getModality();
     if (!StringUtil.hasText(modality)) {
       return null;
     }

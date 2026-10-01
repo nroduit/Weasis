@@ -81,7 +81,7 @@ public class CardiothoracicRatioGraphic extends AbstractDragGraphic {
     super(POINTS_NUMBER);
   }
 
-  public CardiothoracicRatioGraphic(CardiothoracicRatioGraphic graphic) {
+  public CardiothoracicRatioGraphic(CardiothoracicRatioGraphic graphic) { // NOSONAR prepareShape()
     super(graphic);
   }
 

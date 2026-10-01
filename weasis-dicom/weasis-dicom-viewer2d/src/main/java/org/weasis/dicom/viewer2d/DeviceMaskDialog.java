@@ -229,7 +229,7 @@ final class DeviceMaskDialog {
 
   private static String slug(String text) {
     String slug = text.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
-    slug = slug.replaceAll("^-+|-+$", "");
+    slug = slug.replaceAll("(?:^-+)|(?:-+$)", "");
     return slug.isEmpty() ? "mask" : slug; // NON-NLS
   }
 }

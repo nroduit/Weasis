@@ -206,11 +206,10 @@ public class ObliqueRectangleGraphic extends AbstractDragGraphicArea {
     if (a == null || cursor == null) {
       return;
     }
-    Point2D b = new Point2D.Double(cursor.getX(), a.getY());
-    Point2D c = GeomUtil.getMidPoint(a, b);
-    setHandlePoint(1, b);
-    setHandlePoint(2, c);
-    setHandlePoint(3, new Point2D.Double(c.getX(), cursor.getY()));
+    double midX = (a.getX() + cursor.getX()) / 2.0;
+    setHandlePoint(1, new Point2D.Double(cursor.getX(), a.getY()));
+    setHandlePoint(2, new Point2D.Double(midX, a.getY()));
+    setHandlePoint(3, new Point2D.Double(midX, cursor.getY()));
   }
 
   @Override

@@ -319,8 +319,9 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
       filling = false;
     }
     enableEditor(editable);
-    readOnlyLabel.setVisible(profile != null && !editable && !registry.isLocked());
-    if (readOnlyLabel.isVisible()) {
+    boolean readOnly = profile != null && !editable && !registry.isLocked();
+    readOnlyLabel.setVisible(readOnly);
+    if (readOnly) {
       readOnlyLabel.setText(
           Messages.getString("MaskingPrefView.readonly")
               .formatted(originName(registry.origin(profile.id()))));
@@ -483,7 +484,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
 
   static String slug(String text) {
     String slug = text.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
-    slug = slug.replaceAll("^-+|-+$", "");
+    slug = slug.replaceAll("(?:^-+)|(?:-+$)", "");
     return slug.isEmpty() ? "profile" : slug; // NON-NLS
   }
 

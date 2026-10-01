@@ -73,7 +73,7 @@ public class BidirectionalGraphic extends AbstractDragGraphic {
     super(POINTS_NUMBER);
   }
 
-  public BidirectionalGraphic(BidirectionalGraphic graphic) {
+  public BidirectionalGraphic(BidirectionalGraphic graphic) { // NOSONAR see prepareShape()
     super(graphic);
   }
 
@@ -182,6 +182,9 @@ public class BidirectionalGraphic extends AbstractDragGraphic {
    * the given signed half-lengths on opposite sides, each at least {@link #MIN_HALF_LENGTH}.
    */
   private void placeShortAxis(Point2D crossing, double halfC, double halfD) {
+    if (crossing == null) {
+      return;
+    }
     double length = ptA.distance(ptB);
     double t =
         ((crossing.getX() - ptA.getX()) * (ptB.getX() - ptA.getX())

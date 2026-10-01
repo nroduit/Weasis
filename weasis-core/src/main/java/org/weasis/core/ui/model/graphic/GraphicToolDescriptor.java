@@ -49,7 +49,7 @@ public record GraphicToolDescriptor(
   /** Vertices below which a variable-point graphic is no longer a shape. */
   public static final int DEFAULT_MIN_POINTS = 2;
 
-  private static final Pattern KEY = Pattern.compile("[a-z0-9]+([.-][a-z0-9]+)*");
+  private static final Pattern KEY = Pattern.compile("[a-z0-9]++(?:[.-][a-z0-9]++)*+");
 
   public GraphicToolDescriptor {
     Objects.requireNonNull(key, "key");
