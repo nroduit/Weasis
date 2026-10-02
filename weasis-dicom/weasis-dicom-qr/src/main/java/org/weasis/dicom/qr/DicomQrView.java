@@ -14,7 +14,6 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -51,14 +50,11 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamWriter;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.util.DicomObjectUtil;
 import org.dcm4che3.net.Status;
 import org.dcm4che3.net.service.QueryRetrieveLevel;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -76,7 +72,6 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
-import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.pref.PreferenceDialog;
@@ -84,7 +79,6 @@ import org.weasis.core.ui.tp.raven.datetime.DatePicker;
 import org.weasis.core.ui.tp.raven.datetime.event.DateSelectionListener;
 import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
 import org.weasis.core.util.FileUtil;
-import org.weasis.core.util.StreamUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
@@ -980,34 +974,13 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     saveTemplates(templateComboBox);
   }
 
+  /** Saves the templates of the combo box, the two built-in ones left out. */
   public void saveTemplates(JComboBox<? extends SearchParameters> comboBox) {
-    XMLStreamWriter writer = null;
-    XMLOutputFactory factory = XMLOutputFactory.newInstance();
-    final BundleContext context = AppProperties.getBundleContext(this.getClass());
-    try {
-      writer =
-          factory.createXMLStreamWriter(
-              new FileOutputStream(
-                  BundlePreferences.getFileInDataFolder(context, SearchParameters.FILENAME)
-                      .toFile()),
-              "UTF-8"); // NON-NLS
-
-      writer.writeStartDocument("UTF-8", "1.0"); // NON-NLS
-      writer.writeStartElement(SearchParameters.T_NODES);
-      for (int i = 2; i < comboBox.getItemCount(); i++) {
-        SearchParameters node = comboBox.getItemAt(i);
-        writer.writeStartElement(SearchParameters.T_NODE);
-        node.saveSearchParameters(writer);
-        writer.writeEndElement();
-      }
-      writer.writeEndElement();
-      writer.writeEndDocument();
-      writer.flush();
-    } catch (Exception e) {
-      LOGGER.error("Error on writing DICOM node file", e);
-    } finally {
-      StreamUtil.safeClose(writer);
+    List<SearchParameters> templates = new ArrayList<>();
+    for (int i = 2; i < comboBox.getItemCount(); i++) {
+      templates.add(comboBox.getItemAt(i));
     }
+    SearchParameters.saveSearchParameters(templates);
   }
 
   protected void updateChanges() {}

@@ -16,6 +16,7 @@ import org.osgi.framework.Constants;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.util.LegacyConverters;
 import org.weasis.core.util.PropertiesUtil;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.explorer.DicomModel;
@@ -23,6 +24,7 @@ import org.weasis.dicom.explorer.LocalPersistence;
 import org.weasis.dicom.explorer.UISegmentationVolumeBuildExecutor;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
+import org.weasis.dicom.explorer.pref.node.AuthenticationPersistence;
 import org.weasis.dicom.explorer.wado.DicomManager;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
@@ -37,6 +39,7 @@ public class Activator implements BundleActivator {
     PropertiesUtil.loadProperties(
         BundlePreferences.getFileInDataFolder(context, "import-export.properties"),
         LocalPersistence.getProperties());
+    LegacyConverters.register(AuthenticationPersistence.CONVERSION);
 
     AbstractDicomNode.registerLegacyConversions();
 

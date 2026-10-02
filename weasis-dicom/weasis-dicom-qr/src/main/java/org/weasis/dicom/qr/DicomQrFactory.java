@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.util.LegacyConverters;
 import org.weasis.core.util.PropertiesUtil;
 import org.weasis.dicom.explorer.imp.DicomImportFactory;
 import org.weasis.dicom.explorer.imp.ImportDicom;
@@ -43,6 +44,7 @@ public class DicomQrFactory implements DicomImportFactory {
   @Activate
   protected void activate(ComponentContext context) {
     LOGGER.info("DICOM Q/R is activated");
+    LegacyConverters.register(SearchParameters.CONVERSION);
     PropertiesUtil.loadProperties(
         BundlePreferences.getFileInDataFolder(context.getBundleContext(), "import.properties"),
         DicomQrView.getPersistence());
