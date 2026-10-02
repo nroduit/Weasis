@@ -973,7 +973,10 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
   private static final List<Set<ColorMapRegistry.Origin>> SOURCE_FILTERS =
       List.of(
           EnumSet.allOf(ColorMapRegistry.Origin.class),
-          EnumSet.of(ColorMapRegistry.Origin.BUNDLED, ColorMapRegistry.Origin.CONTRIBUTED),
+          EnumSet.of(
+              ColorMapRegistry.Origin.BUNDLED,
+              ColorMapRegistry.Origin.CONTRIBUTED,
+              ColorMapRegistry.Origin.SITE),
           EnumSet.of(ColorMapRegistry.Origin.IMPORTED),
           EnumSet.of(ColorMapRegistry.Origin.USER));
 

@@ -12,8 +12,6 @@ package org.weasis.core.api.media.data;
 import jakarta.json.JsonException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -33,13 +31,13 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MaskingModel.TagRule;
-import org.weasis.core.util.StringUtil;
 
 /**
  * The masking model in force, merged from the bundled document, documents contributed by other
- * bundles (the DICOM tag classification), the site document given by {@value #CONFIG_PROPERTY} and
- * the user document {@value #USER_FILE} in the preference directory. A later document overrides an
- * earlier one for the same tag or profile id; a locked site document excludes the user document.
+ * bundles (the DICOM tag classification), the site document {@value #SITE_FILE} of the resources
+ * package (see {@code SiteDocuments}) and the user document {@value #USER_FILE} in the preference
+ * directory. A later document overrides an earlier one for the same tag or profile id; a locked
+ * site document excludes the user document.
  *
  * <p>A profile that keeps direct identifiers, or a session or AI profile id that does not exist, is
  * refused with an error and the earlier definition stays, so a configuration mistake never turns
@@ -52,11 +50,8 @@ public final class MaskingModelRegistry {
   public static final String BUILTIN_RESOURCE = "/identityMasking.json"; // NON-NLS
   public static final String USER_FILE = "identityMasking.json"; // NON-NLS
 
-  /** Launcher preference holding the path or URL of the site document. */
-  public static final String CONFIG_PROPERTY = "weasis.masking.config"; // NON-NLS
-
-  private static final int CONNECT_TIMEOUT_MS = 5_000;
-  private static final int READ_TIMEOUT_MS = 10_000;
+  /** File name of the site document in the {@code config} folder of the resources package. */
+  public static final String SITE_FILE = "identityMasking.json"; // NON-NLS
 
   /** Used only when no document defines a usable profile. */
   private static final MaskingProfile FALLBACK =
@@ -98,7 +93,7 @@ public final class MaskingModelRegistry {
   private final List<MaskingModel> contributed = new CopyOnWriteArrayList<>();
   private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
   private final Set<TagW> classifiedInternal = new HashSet<>();
-  private String siteLocation;
+  private Path siteFile;
   private Path userFile;
   private Consumer<Path> remoteStore;
   private MaskingModel site = MaskingModel.EMPTY;
@@ -148,19 +143,19 @@ public final class MaskingModelRegistry {
   /**
    * Sets the site and user documents and reloads.
    *
-   * @param siteLocation file path or URL of the site document, or null
+   * @param siteFile the site document, or null
    * @param userFile the user document, or null
    */
-  public void configure(String siteLocation, Path userFile) {
-    configure(siteLocation, userFile, null);
+  public void configure(Path siteFile, Path userFile) {
+    configure(siteFile, userFile, null);
   }
 
   /**
    * @param remoteStore called with the user document after it is written, to mirror it remotely
    */
-  public void configure(String siteLocation, Path userFile, Consumer<Path> remoteStore) {
+  public void configure(Path siteFile, Path userFile, Consumer<Path> remoteStore) {
     synchronized (this) {
-      this.siteLocation = StringUtil.hasText(siteLocation) ? siteLocation.trim() : null;
+      this.siteFile = siteFile;
       this.userFile = userFile;
       this.remoteStore = remoteStore;
       this.site = MaskingModel.EMPTY;
@@ -182,14 +177,12 @@ public final class MaskingModelRegistry {
    * cannot be read leaves the previous one in place.
    */
   public void reload() {
-    String location;
     synchronized (this) {
-      location = siteLocation;
-    }
-    MaskingModel fetched = location == null ? MaskingModel.EMPTY : loadSite(location);
-    synchronized (this) {
-      if (fetched != null && Objects.equals(location, siteLocation)) {
-        site = fetched;
+      if (siteFile != null) {
+        MaskingModel fetched = loadSite(siteFile);
+        if (fetched != null) {
+          site = fetched;
+        }
       }
       readUser();
     }
@@ -281,9 +274,14 @@ public final class MaskingModelRegistry {
     return userFile;
   }
 
-  /** Path or URL of the site document, or null when the host set none. */
+  /** The site document, or null when the package ships none. */
+  public synchronized Path siteFile() {
+    return siteFile;
+  }
+
+  /** Path of the site document as text, for messages; null when there is none. */
   public synchronized String siteLocation() {
-    return siteLocation;
+    return siteFile == null ? null : siteFile.toString();
   }
 
   /** The user document, empty when there is none. */
@@ -306,7 +304,7 @@ public final class MaskingModelRegistry {
       }
     }
     if (isLocked()) {
-      throw new IllegalStateException("The masking configuration is locked by " + siteLocation);
+      throw new IllegalStateException("The masking configuration is locked by " + siteLocation());
     }
     synchronized (this) {
       user = model;
@@ -426,10 +424,11 @@ public final class MaskingModelRegistry {
     MergeState state = new MergeState();
     state.add(bundled, "bundled", Origin.BUILT_IN); // NON-NLS
     contributed.forEach(m -> state.add(m, "contributed", Origin.CONTRIBUTED)); // NON-NLS
-    state.add(site, siteLocation, Origin.SITE);
+    String siteName = siteFile == null ? null : siteFile.toString();
+    state.add(site, siteName, Origin.SITE);
     boolean locked = site.locked();
     if (locked) {
-      LOGGER.info("Masking configuration locked by {}, user file ignored", siteLocation);
+      LOGGER.info("Masking configuration locked by {}, user file ignored", siteName);
     } else {
       state.add(user, userFile == null ? null : userFile.toString(), Origin.USER);
     }
@@ -510,19 +509,11 @@ public final class MaskingModelRegistry {
     return profiles.getOrDefault(defaultId, fallback);
   }
 
-  private static MaskingModel loadSite(String location) {
+  private static MaskingModel loadSite(Path file) {
     try {
-      if (location.contains("://") || location.startsWith("file:")) { // NON-NLS
-        URLConnection connection = URI.create(location).toURL().openConnection();
-        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-        connection.setReadTimeout(READ_TIMEOUT_MS);
-        try (InputStream in = connection.getInputStream()) {
-          return MaskingModel.read(in);
-        }
-      }
-      return MaskingModel.read(Path.of(location));
+      return MaskingModel.read(file);
     } catch (IOException | JsonException | IllegalArgumentException e) {
-      LOGGER.error("Cannot read the site masking configuration: {}", location, e);
+      LOGGER.error("Cannot read the site masking configuration: {}", file, e);
       return null;
     }
   }

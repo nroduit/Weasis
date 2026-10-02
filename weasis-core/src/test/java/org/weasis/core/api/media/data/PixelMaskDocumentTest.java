@@ -133,7 +133,7 @@ class PixelMaskDocumentTest {
             """);
     Path userFile = dir.resolve("identityMasking.json");
     MaskingModelRegistry registry = new MaskingModelRegistry(MaskingModelRegistry.loadBuiltIn());
-    registry.configure(site.toString(), userFile);
+    registry.configure(site, userFile);
 
     Origin fromSite = registry.maskOrigin("us-banner");
     registry.saveUserMask(mask("us-banner", false));

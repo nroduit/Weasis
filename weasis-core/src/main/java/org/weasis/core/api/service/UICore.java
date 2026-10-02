@@ -63,6 +63,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.net.URLParameters;
+import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -82,6 +83,10 @@ public final class UICore {
   public static final String CONFIRM_DELETE_MEASUREMENT = "weasis.confirm.delete.measurement";
   public static final String LINUX_WINDOWS_DECORATION = "weasis.linux.windows.decoration";
   public static final String USE_SYSTEM_FILE_CHOOSER = "weasis.use.system.file.chooser";
+
+  /** Whether the user documents are mirrored to the remote preference service. */
+  public static final String P_SYNC_DOCUMENTS = "weasis.pref.sync.documents"; // NON-NLS
+
   private static final Logger LOGGER = LoggerFactory.getLogger(UICore.class);
   private final ToolBarContainer toolbarContainer;
   private final List<Launcher> dicomLaunchers;
@@ -236,13 +241,19 @@ public final class UICore {
   }
 
   /**
-   * Stores a file remotely to the preference service URL when it is configured. Does nothing if no
-   * remote pref URL is set or the session conditions prevent remote storage.
+   * Stores a user document (window presets, color maps, masking, measurement profiles) to the
+   * preference service URL when it is configured. Does nothing when no remote pref URL is set, when
+   * the session conditions prevent remote storage, or while {@value #P_SYNC_DOCUMENTS} is off (its
+   * default until the service stores and returns such documents).
    *
    * @param filePath the local file to upload
-   * @param contentType the MIME type of the content (e.g. {@code "application/json"})
+   * @param contentType the MIME type of the content, {@link JsonUtil#CONTENT_TYPE} for a document
    */
   public void storeRemotePref(Path filePath, String contentType) {
+    if (!systemPreferences.getBooleanProperty(P_SYNC_DOCUMENTS, false)) {
+      LOGGER.debug("{} is off, {} is kept local", P_SYNC_DOCUMENTS, filePath);
+      return;
+    }
     String remotePrefURL = getPrefServiceUrl();
     if (remotePrefURL != null) {
       try {

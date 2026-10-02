@@ -311,6 +311,14 @@
       "category": "LAUNCH"
     },
     {
+      "code": "weasis.pref.sync.documents",
+      "value": "false",
+      "description": "Mirror the user documents (window presets, color maps, masking, measurement profiles) to the remote preference service. Keep it off until the service stores and returns such documents",
+      "type": "F",
+      "javaType": "BOOLEAN",
+      "category": "LAUNCH"
+    },
+    {
       "code": "flatlaf.uiScale",
       "value": null,
       "description": "Specifies a custom scale factor used to scale the user interface. Allowed values: e.g. 1.5, 1.5x, 150% or 144dpi (96dpi is 100%)",

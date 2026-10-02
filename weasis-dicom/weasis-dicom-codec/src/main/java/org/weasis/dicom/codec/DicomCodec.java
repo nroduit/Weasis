@@ -30,8 +30,9 @@ import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.PixelReviewAdvisor;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.codec.display.WindowPresetJson;
 import org.weasis.dicom.codec.display.WindowPresetRegistry;
 import org.weasis.imageio.codec.ImageioUtil;
 
@@ -141,11 +142,11 @@ public class DicomCodec implements Codec<DicomImageElement> {
     String prefDir = preferences.getProperty("weasis.pref.dir"); // NON-NLS
     WindowPresetRegistry registry = WindowPresetRegistry.getInstance();
     registry.configure(
-        preferences.getProperty(WindowPresetRegistry.CONFIG_PROPERTY),
+        SiteDocuments.find(WindowPresetRegistry.SITE_FILE).orElse(null),
         StringUtil.hasText(prefDir)
             ? Path.of(prefDir).resolve(WindowPresetRegistry.USER_FILE)
             : null,
-        path -> GuiUtils.getUICore().storeRemotePref(path, WindowPresetJson.CONTENT_TYPE));
+        path -> GuiUtils.getUICore().storeRemotePref(path, JsonUtil.CONTENT_TYPE));
     PresetWindowLevel.setModalityPresetProvider(registry);
   }
 

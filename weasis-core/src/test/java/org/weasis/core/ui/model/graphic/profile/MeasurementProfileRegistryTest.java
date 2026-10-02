@@ -43,7 +43,7 @@ class MeasurementProfileRegistryTest {
     MeasurementProfileRegistry registry =
         new MeasurementProfileRegistry(
             List.of(profile("default", "Default"), profile("ct", "Built-in CT", "CT")), // NON-NLS
-            site.toString(),
+            site,
             user);
     assertAll(
         () -> assertEquals("My CT", registry.profile("ct").orElseThrow().name()),
@@ -67,7 +67,7 @@ class MeasurementProfileRegistryTest {
             List.of(
                 profile("default", "Default"), // NON-NLS
                 profile("cross-sectional", "Cross-sectional", "CT", "MR", "PT")), // NON-NLS
-            site.toString(),
+            site,
             user);
     registry.saveUser(profile("my-ct", "My CT", "CT")); // NON-NLS
     registry.saveUser(profile("my-ct-2", "My second CT", "CT")); // NON-NLS
@@ -133,22 +133,13 @@ class MeasurementProfileRegistryTest {
   }
 
   @Test
-  void a_windows_path_is_not_taken_for_a_url() {
-    assertAll(
-        () -> assertTrue(MeasurementProfileRegistry.isUrl("https://pacs.example/profiles.json")),
-        () -> assertTrue(MeasurementProfileRegistry.isUrl("file:///opt/weasis/profiles.json")),
-        () -> assertFalse(MeasurementProfileRegistry.isUrl("C:\\Weasis\\profiles.json")),
-        () -> assertFalse(MeasurementProfileRegistry.isUrl("/opt/weasis/profiles.json")));
-  }
-
-  @Test
   void saving_a_user_profile_does_not_read_the_site_document_again(@TempDir Path dir)
       throws IOException {
     Path site = dir.resolve("site.json"); // NON-NLS
     MeasurementProfileJson.write(site, List.of(profile("site-ct", "Site CT", "CT"))); // NON-NLS
     MeasurementProfileRegistry registry =
         new MeasurementProfileRegistry(
-            List.of(profile("default", "Default")), site.toString(), dir.resolve("user.json"));
+            List.of(profile("default", "Default")), site, dir.resolve("user.json"));
     Files.delete(site);
     registry.saveUser(profile("mine", "Mine", "US")); // NON-NLS
     assertAll(

@@ -44,6 +44,9 @@ import org.weasis.core.util.StringUtil;
  */
 public final class JsonUtil {
 
+  /** MIME type of the JSON documents Weasis writes and exchanges with the preference service. */
+  public static final String CONTENT_TYPE = "application/json;charset=UTF-8"; // NON-NLS
+
   private static final JsonWriterFactory PRETTY_WRITER =
       Json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, Boolean.TRUE));
 

@@ -220,4 +220,63 @@ class ColorMapRegistryTest {
     var absent = new ColorMapRegistry(dir.resolve("nope.json"), null);
     assertEquals(registry.maps().size(), absent.maps().size());
   }
+
+  @Test
+  void site_maps_override_built_in_ones_and_yield_to_user_maps() throws Exception {
+    Path site = dir.resolve("config").resolve(ColorMapRegistry.SITE_FILE);
+    Files.createDirectories(site.getParent());
+    ColorMap sitePet =
+        ColorMap.builder("Site PET")
+            .id("weasis.pet-suv")
+            .modalities("PT")
+            .domain(ColorMapDomain.absolute("SUVbw", 0, 8))
+            .stop(0, Color.BLACK)
+            .stop(8, Color.RED)
+            .build();
+    ColorMap siteOnly =
+        ColorMap.builder("Site only")
+            .id("site.only")
+            .stop(0, Color.BLACK)
+            .stop(1, Color.WHITE)
+            .build();
+    ColorMapJson.write(site, List.of(sitePet, siteOnly), List.of());
+
+    ColorMapRegistry withSite = new ColorMapRegistry(site, userFile, null);
+    ColorMap pet = withSite.findById("weasis.pet-suv").orElseThrow();
+    ColorMap only = withSite.findById("site.only").orElseThrow();
+    assertAll(
+        () -> assertEquals("Site PET", pet.name()),
+        () -> assertEquals(Origin.SITE, withSite.origin(pet)),
+        () -> assertEquals(Origin.SITE, withSite.origin(only)),
+        () -> assertTrue(withSite.builtInMaps().contains(only), "site maps are read-only"),
+        () -> assertFalse(withSite.isUserMap(pet)),
+        () ->
+            assertEquals(
+                1,
+                withSite.maps().stream().filter(m -> m.id().equals("weasis.pet-suv")).count(),
+                "the built-in is shadowed by the site map"));
+
+    ColorMap mine =
+        ColorMap.builder("My PET")
+            .id("weasis.pet-suv")
+            .modalities("PT")
+            .domain(ColorMapDomain.absolute("SUVbw", 0, 5))
+            .stop(0, Color.BLACK)
+            .stop(5, Color.YELLOW)
+            .build();
+    withSite.saveUserMap(mine);
+    assertAll(
+        () ->
+            assertEquals(
+                Origin.USER, withSite.origin(withSite.findById("weasis.pet-suv").orElseThrow())),
+        () ->
+            assertEquals(
+                List.of(mine), withSite.userMaps(), "the user document holds user entries only"));
+    withSite.deleteUserMap("weasis.pet-suv");
+    assertEquals(Origin.SITE, withSite.origin(withSite.findById("weasis.pet-suv").orElseThrow()));
+
+    Path absent = dir.resolve("config").resolve("missing.json");
+    assertEquals(
+        registry.maps().size(), new ColorMapRegistry(absent, null, null).maps().size(), "no site");
+  }
 }

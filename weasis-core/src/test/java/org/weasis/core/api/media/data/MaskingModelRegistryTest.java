@@ -68,7 +68,7 @@ class MaskingModelRegistryTest {
               "sessionProfile": "demo" }
             """);
     MaskingModelRegistry registry = bundled();
-    registry.configure(site.toString(), null);
+    registry.configure(site, null);
     assertAll(
         () -> assertEquals("demo", registry.sessionProfile().id()),
         () -> assertEquals(4, registry.exportProfiles().size()),
@@ -88,7 +88,7 @@ class MaskingModelRegistryTest {
               "sessionProfile": "missing" }
             """);
     MaskingModelRegistry registry = bundled();
-    registry.configure(site.toString(), null);
+    registry.configure(site, null);
     assertAll(
         () -> assertEquals("display", registry.sessionProfile().id()),
         () -> assertTrue(registry.sessionProfile().hidesDirectIdentifiers()));
@@ -102,9 +102,9 @@ class MaskingModelRegistryTest {
     Path open = write("open.json", "{ \"locked\": false }");
 
     MaskingModelRegistry registry = bundled();
-    registry.configure(locked.toString(), user);
+    registry.configure(locked, user);
     String lockedSession = registry.sessionProfile().id();
-    registry.configure(open.toString(), user);
+    registry.configure(open, user);
 
     assertAll(
         () -> assertEquals("display", lockedSession),
@@ -117,7 +117,7 @@ class MaskingModelRegistryTest {
     MaskingModelRegistry registry = bundled();
     int[] calls = {0};
     registry.addListener(() -> calls[0]++);
-    registry.configure(dir.resolve("absent.json").toString(), dir.resolve("absent-user.json"));
+    registry.configure(dir.resolve("absent.json"), dir.resolve("absent-user.json"));
     assertAll(
         () -> assertEquals("display", registry.sessionProfile().id()),
         () -> assertEquals(1, calls[0]));

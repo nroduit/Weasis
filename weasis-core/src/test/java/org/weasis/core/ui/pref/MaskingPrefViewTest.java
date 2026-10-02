@@ -43,7 +43,7 @@ class MaskingPrefViewTest {
     MaskingModelRegistry registry = new MaskingModelRegistry(MaskingModelRegistry.loadBuiltIn());
     Path site =
         siteDocument == null ? null : Files.writeString(dir.resolve("site.json"), siteDocument);
-    registry.configure(site == null ? null : site.toString(), userFile());
+    registry.configure(site, userFile());
     return registry;
   }
 

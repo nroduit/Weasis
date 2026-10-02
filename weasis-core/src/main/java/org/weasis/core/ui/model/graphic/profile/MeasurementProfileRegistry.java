@@ -11,8 +11,6 @@ package org.weasis.core.ui.model.graphic.profile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -25,18 +23,22 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.util.StringUtil;
 
 /**
- * The tool profiles: the bundled document, then an optional site document, then the user's own,
- * merged by id (later documents override). Holds which profile is active: an explicit choice, or
- * the automatic one for the modality of the selected series.
+ * The tool profiles: the bundled document, then the site document {@value #SITE_FILE} of the
+ * resources package when there is one, then the user's own, merged by id (later documents
+ * override). The user document is mirrored to the remote preference store when saved. Holds which
+ * profile is active: an explicit choice, or the automatic one for the modality of the selected
+ * series.
  */
 public final class MeasurementProfileRegistry {
   private static final Logger LOGGER = LoggerFactory.getLogger(MeasurementProfileRegistry.class);
@@ -44,8 +46,8 @@ public final class MeasurementProfileRegistry {
   public static final String BUILTIN_RESOURCE = "/measurementProfiles.json"; // NON-NLS
   public static final String USER_FILE = "measurementProfiles.json"; // NON-NLS
 
-  /** Launcher preference holding the path or URL of the site document. */
-  public static final String CONFIG_PROPERTY = "weasis.measure.profiles.config"; // NON-NLS
+  /** File name of the site document in the {@code config} folder of the resources package. */
+  public static final String SITE_FILE = "measurementProfiles.json"; // NON-NLS
 
   /** Local persistence key of the explicit choice; absent or empty means automatic. */
   public static final String SELECTION_KEY = "weasis.measure.profile"; // NON-NLS
@@ -53,9 +55,10 @@ public final class MeasurementProfileRegistry {
   private static volatile MeasurementProfileRegistry instance; // NOSONAR double-checked locking
 
   private final List<MeasurementProfile> builtIn;
-  private final String siteLocation;
+  private final Path siteFile;
   private final Path userFile;
   private final WProperties selectionStore;
+  private final Consumer<Path> remoteStore;
   private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
   // site, merged and siteIds are copy-on-write: unmodifiable snapshots replaced as a whole
@@ -66,31 +69,35 @@ public final class MeasurementProfileRegistry {
   private String selectedId;
   private String modality;
 
+  /**
+   * @param siteFile the site document, or null
+   * @param userFile the user document, or null to keep user profiles in memory only
+   */
   public MeasurementProfileRegistry(
-      List<MeasurementProfile> builtIn, String siteLocation, Path userFile) {
-    this(builtIn, siteLocation, userFile, null);
+      List<MeasurementProfile> builtIn, Path siteFile, Path userFile) {
+    this(builtIn, siteFile, userFile, null, null);
   }
 
+  /**
+   * @param selectionStore where the explicit choice is kept, or null
+   * @param remoteStore called with the user file after it is written, to mirror it remotely
+   */
   MeasurementProfileRegistry(
       List<MeasurementProfile> builtIn,
-      String siteLocation,
+      Path siteFile,
       Path userFile,
-      WProperties selectionStore) {
+      WProperties selectionStore,
+      Consumer<Path> remoteStore) {
     this.builtIn = builtIn.stream().map(p -> p.withBuiltIn(true)).toList();
-    this.siteLocation = StringUtil.hasText(siteLocation) ? siteLocation.trim() : null;
+    this.siteFile = siteFile;
     this.userFile = userFile;
     this.selectionStore = selectionStore;
+    this.remoteStore = remoteStore;
     if (selectionStore != null) {
       String stored = selectionStore.getProperty(SELECTION_KEY);
       selectedId = StringUtil.hasText(stored) ? stored : null;
     }
-    if (this.siteLocation != null && isUrl(this.siteLocation)) {
-      // A remote document must not hold up the caller, often the UI thread building a tool
-      reloadUser();
-      Thread.ofVirtual().name("measurement-profiles-site").start(this::reload); // NON-NLS
-    } else {
-      reload();
-    }
+    reload();
   }
 
   public static MeasurementProfileRegistry getInstance() {
@@ -122,12 +129,13 @@ public final class MeasurementProfileRegistry {
       Path file = StringUtil.hasText(prefDir) ? Path.of(prefDir).resolve(USER_FILE) : null;
       return new MeasurementProfileRegistry(
           loadBuiltIn(),
-          preferences.getProperty(CONFIG_PROPERTY),
+          SiteDocuments.find(SITE_FILE).orElse(null),
           file,
-          core.getLocalPersistence());
+          core.getLocalPersistence(),
+          path -> core.storeRemotePref(path, JsonUtil.CONTENT_TYPE));
     } catch (RuntimeException | LinkageError e) {
       LOGGER.debug("No UI core, profiles kept in memory", e);
-      return new MeasurementProfileRegistry(loadBuiltIn(), null, null, null);
+      return new MeasurementProfileRegistry(loadBuiltIn(), null, null, null, null);
     }
   }
 
@@ -140,10 +148,7 @@ public final class MeasurementProfileRegistry {
     }
   }
 
-  /**
-   * Re-reads the site and user documents and merges them over the bundled one. The site document
-   * may be remote: do not call from the UI thread.
-   */
+  /** Re-reads the site and user documents and merges them over the bundled one. */
   public void reload() {
     site = List.copyOf(readSite());
     reloadUser();
@@ -194,29 +199,15 @@ public final class MeasurementProfileRegistry {
   }
 
   private List<MeasurementProfile> readSite() {
-    if (siteLocation == null) {
+    if (siteFile == null) {
       return List.of();
     }
     try {
-      if (!isUrl(siteLocation)) {
-        return MeasurementProfileJson.read(Path.of(siteLocation));
-      }
-      URLConnection connection = URI.create(siteLocation).toURL().openConnection();
-      connection.setConnectTimeout(NetworkUtil.getUrlConnectTimeoutMillis());
-      connection.setReadTimeout(NetworkUtil.getUrlInactivityTimeoutMillis());
-      try (InputStream in = connection.getInputStream()) {
-        return MeasurementProfileJson.read(in);
-      }
+      return MeasurementProfileJson.read(siteFile);
     } catch (IOException | RuntimeException e) {
-      LOGGER.warn("Cannot read the site measurement profiles: {}", siteLocation, e);
+      LOGGER.warn("Cannot read the site measurement profiles: {}", siteFile, e);
       return List.of();
     }
-  }
-
-  /** True for a URL: its scheme has two characters or more, unlike a Windows drive letter. */
-  static boolean isUrl(String location) {
-    int colon = location.indexOf(':');
-    return colon > 1 && location.substring(0, colon).matches("[A-Za-z][A-Za-z0-9+.-]*"); // NON-NLS
   }
 
   private List<MeasurementProfile> readUser() {
@@ -274,6 +265,9 @@ public final class MeasurementProfileRegistry {
     }
     try {
       MeasurementProfileJson.write(userFile, new ArrayList<>(user.values()));
+      if (remoteStore != null) {
+        remoteStore.accept(userFile);
+      }
     } catch (IOException e) {
       LOGGER.error("Cannot save the user measurement profiles: {}", userFile, e);
     }

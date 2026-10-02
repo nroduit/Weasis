@@ -53,8 +53,6 @@ import org.weasis.opencv.op.lut.colormap.Rgba;
  */
 public final class ColorMapJson {
 
-  public static final String CONTENT_TYPE = "application/json;charset=UTF-8"; // NON-NLS
-
   private static final String TRANSPARENT = "transparent"; // NON-NLS
   private static final String NAME = "name"; // NON-NLS
   private static final String TYPE = "type"; // NON-NLS

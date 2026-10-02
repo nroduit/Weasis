@@ -39,7 +39,6 @@ import org.weasis.core.ui.model.utils.MeasureFormat;
 public final class MeasurementProfileJson {
 
   public static final int VERSION = 1;
-  public static final String CONTENT_TYPE = "application/json"; // NON-NLS
   private static final String AUTO_DECIMALS = "auto"; // NON-NLS
 
   private MeasurementProfileJson() {}

@@ -144,6 +144,7 @@ import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.LogoIcon;
+import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.ExternalDisplay;
 import org.weasis.core.ui.editor.MediaFactory;
@@ -1199,16 +1200,17 @@ public class WeasisWin {
     return pane;
   }
 
-  /** Loads the site ({@value MaskingModelRegistry#CONFIG_PROPERTY}) and user masking documents. */
+  /** Loads the site and user masking documents; the user one is mirrored remotely when saved. */
   private static void configureMaskingModel() {
-    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
-    String prefDir = preferences.getProperty("weasis.pref.dir"); // NON-NLS
+    UICore core = GuiUtils.getUICore();
+    String prefDir = core.getSystemPreferences().getProperty("weasis.pref.dir"); // NON-NLS
     MaskingModelRegistry.getInstance()
         .configure(
-            preferences.getProperty(MaskingModelRegistry.CONFIG_PROPERTY),
+            SiteDocuments.find(MaskingModelRegistry.SITE_FILE).orElse(null),
             StringUtil.hasText(prefDir)
                 ? Path.of(prefDir).resolve(MaskingModelRegistry.USER_FILE)
-                : null);
+                : null,
+            path -> core.storeRemotePref(path, JsonUtil.CONTENT_TYPE));
   }
 
   /** Keeps the menu item and the window title in line with session masking, whoever changed it. */

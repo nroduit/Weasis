@@ -130,7 +130,7 @@ class WindowPresetRegistryTest {
     AtomicInteger notified = new AtomicInteger();
     registry.addListener(notified::incrementAndGet);
 
-    registry.configure(site.toString(), user);
+    registry.configure(site, user);
 
     List<PresetWindowLevel> ct = registry.getPresets(image("CT", 12), null);
     PresetWindowLevel lung = ct.get(6);
@@ -340,7 +340,7 @@ class WindowPresetRegistryTest {
         [{"id": "site.ct.liver", "name": "Liver", "modality": ["CT"], "window": 150, "level": 60}]
         """);
     WindowPresetRegistry registry = new WindowPresetRegistry(WindowPresetRegistry.loadBuiltIn());
-    registry.configure(site.toString(), dir.resolve(WindowPresetRegistry.USER_FILE));
+    registry.configure(site, dir.resolve(WindowPresetRegistry.USER_FILE));
     Files.delete(site);
 
     registry.saveUser(userPreset("user.ct.sinus", null));
@@ -368,13 +368,6 @@ class WindowPresetRegistryTest {
         () -> assertEquals("user.ct.lung", fromJson.get(6).id()),
         () -> assertEquals(1500.0, fromJson.get(6).window()),
         () -> assertThrows(IOException.class, () -> WindowPresetRegistry.readImport(dir)));
-  }
-
-  @Test
-  void detectsUrlsButNotWindowsDrives() {
-    assertTrue(WindowPresetRegistry.isUrl("https://host/presets.json"));
-    assertFalse(WindowPresetRegistry.isUrl("C://presets.json"));
-    assertFalse(WindowPresetRegistry.isUrl("/opt/weasis/presets.json"));
   }
 
   private static WindowPresetRegistry registryOf(String json) {

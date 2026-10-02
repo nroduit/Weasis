@@ -400,11 +400,12 @@ public class Preset extends TextureData {
   // ── catalog ──
 
   private static final Query CUSTOM_VOLUME_MAPS =
-      new Query(null, true, EnumSet.of(Origin.USER, Origin.IMPORTED), null, null, false);
+      new Query(
+          null, true, EnumSet.of(Origin.USER, Origin.SITE, Origin.IMPORTED), null, null, false);
 
   /**
-   * Built-in presets and the user's volume maps of the registry, one per id (a user map saved under
-   * a built-in id replaces it), sorted by modality.
+   * Built-in presets and the site, imported and user volume maps of the registry, one per id (a map
+   * saved under a built-in id replaces it), sorted by modality.
    */
   public static List<Preset> getAllPresets() {
     Map<String, Preset> byId = new LinkedHashMap<>();

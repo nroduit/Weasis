@@ -49,8 +49,6 @@ public final class WindowPresetJson {
 
   public static final int SCHEMA_VERSION = 1;
 
-  public static final String CONTENT_TYPE = "application/json;charset=UTF-8"; // NON-NLS
-
   private static final String SCHEMA = "schema"; // NON-NLS
   private static final String PRESETS = "presets"; // NON-NLS
   private static final String ID = "id"; // NON-NLS

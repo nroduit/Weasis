@@ -135,7 +135,7 @@ class MaskingModelRegistryWriteTest {
             """);
     MaskingModel.read(site).write(userFile()); // a user document that must stay ignored
     MaskingModelRegistry registry = new MaskingModelRegistry(MaskingModelRegistry.loadBuiltIn());
-    registry.configure(site.toString(), userFile());
+    registry.configure(site, userFile());
 
     assertAll(
         () -> assertTrue(registry.isLocked()),

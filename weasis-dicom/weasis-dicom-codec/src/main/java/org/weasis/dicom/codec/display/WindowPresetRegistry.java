@@ -11,8 +11,6 @@ package org.weasis.dicom.codec.display;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -42,8 +40,9 @@ import org.weasis.opencv.op.lut.WlPresentation;
 
 /**
  * The window/level presets offered after the presets of the image, merged by id from the bundled
- * document, the site document given by {@value #CONFIG_PROPERTY} and the user document {@value
- * #USER_FILE}; a later document overrides an earlier one.
+ * document, the site document {@value #SITE_FILE} of the resources package (see {@code
+ * SiteDocuments}) and the user document {@value #USER_FILE}; a later document overrides an earlier
+ * one.
  *
  * <p>Each image gets the presets whose modality and conditions it meets, those preferred for its
  * anatomy (resolved region: code and region groups) first, each group in document order. Percent
@@ -59,8 +58,8 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
   public static final String BUILTIN_RESOURCE = "/windowPresets.json"; // NON-NLS
   public static final String USER_FILE = "customWindowPresets.json"; // NON-NLS
 
-  /** Launcher preference holding the path or URL of the site document. */
-  public static final String CONFIG_PROPERTY = "weasis.wl.presets.config"; // NON-NLS
+  /** File name of the site document in the {@code config} folder of the resources package. */
+  public static final String SITE_FILE = "windowPresets.json"; // NON-NLS
 
   /** Where a merged preset comes from; a later layer overrides an earlier one. */
   public enum Origin {
@@ -72,9 +71,6 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
   private static final int LAYER_BUILT_IN = Origin.BUILT_IN.ordinal();
   private static final int LAYER_SITE = Origin.SITE.ordinal();
   private static final int LAYER_USER = Origin.USER.ordinal();
-
-  private static final int CONNECT_TIMEOUT_MS = 5_000;
-  private static final int READ_TIMEOUT_MS = 10_000;
 
   private static volatile WindowPresetRegistry instance; // NOSONAR double-checked locking
 
@@ -102,7 +98,7 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
   private List<WindowPreset> site = List.of();
   // Set when the user file exists but cannot be read: it is kept aside before being rewritten
   private boolean userUnreadable;
-  private String siteLocation;
+  private Path siteFile;
   private Path userFile;
   private Consumer<Path> remoteStore;
   private volatile Merged merged; // NOSONAR immutable snapshot
@@ -144,53 +140,37 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
   }
 
   /**
-   * Sets the documents and reloads. A site URL is fetched in the background, after the user
-   * document is in place.
+   * Sets the documents and reloads.
    *
-   * @param siteLocation file path or URL of the site document, or null
+   * @param siteFile the site document, or null
    * @param userFile the user document, or null
    */
-  public void configure(String siteLocation, Path userFile) {
-    configure(siteLocation, userFile, null);
+  public void configure(Path siteFile, Path userFile) {
+    configure(siteFile, userFile, null);
   }
 
   /**
    * @param remoteStore called with the user file after it is written, to mirror it remotely
    */
-  public void configure(String siteLocation, Path userFile, Consumer<Path> remoteStore) {
-    String site = StringUtil.hasText(siteLocation) ? siteLocation.trim() : null;
+  public void configure(Path siteFile, Path userFile, Consumer<Path> remoteStore) {
     synchronized (this) {
-      this.siteLocation = site;
+      this.siteFile = siteFile;
       this.userFile = userFile;
       this.remoteStore = remoteStore;
       this.site = List.of();
       user.clear();
     }
-    if (site != null && isUrl(site)) {
-      synchronized (this) {
-        readUser();
-      }
-      apply(merge());
-      Thread.ofVirtual().name("window-presets-site").start(this::reload); // NON-NLS
-    } else {
-      reload();
-    }
+    reload();
   }
 
   /**
-   * Re-reads every document, merges and notifies the listeners. The site document is fetched
-   * outside the lock; when it cannot be read, the previous site presets are kept.
+   * Re-reads every document, merges and notifies the listeners. When the site document cannot be
+   * read, the previous site presets are kept.
    */
   public void reload() {
-    String location;
     synchronized (this) {
-      location = siteLocation;
-    }
-    Optional<List<WindowPreset>> fetched =
-        location == null ? Optional.of(List.of()) : loadSite(location);
-    synchronized (this) {
-      if (Objects.equals(location, siteLocation)) {
-        fetched.ifPresent(p -> site = p);
+      if (siteFile != null) {
+        loadSite(siteFile).ifPresent(p -> site = p);
       }
       readUser();
     }
@@ -493,19 +473,11 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
     }
   }
 
-  private static Optional<List<WindowPreset>> loadSite(String location) {
+  private static Optional<List<WindowPreset>> loadSite(Path file) {
     try {
-      if (isUrl(location)) {
-        URLConnection connection = URI.create(location).toURL().openConnection();
-        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-        connection.setReadTimeout(READ_TIMEOUT_MS);
-        try (InputStream in = connection.getInputStream()) {
-          return Optional.of(WindowPresetJson.read(in));
-        }
-      }
-      return Optional.of(WindowPresetJson.read(Path.of(location)));
+      return Optional.of(WindowPresetJson.read(file));
     } catch (IOException | RuntimeException e) {
-      LOGGER.error("Cannot read the site window presets: {}", location, e);
+      LOGGER.error("Cannot read the site window presets: {}", file, e);
       return Optional.empty();
     }
   }
@@ -524,11 +496,5 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
       userUnreadable = true;
       LOGGER.error("Cannot read the user window presets: {}", userFile, e);
     }
-  }
-
-  /** True for a URL: its scheme has two characters or more, unlike a Windows drive letter. */
-  static boolean isUrl(String location) {
-    int colon = location.indexOf(':');
-    return colon > 1 && location.startsWith("://", colon);
   }
 }

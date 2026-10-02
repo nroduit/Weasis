@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -29,6 +30,8 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.service.UICore;
+import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
@@ -36,10 +39,12 @@ import org.weasis.opencv.op.lut.colormap.ColorMapCompiler;
 
 /**
  * The color maps available to the viewers, each with its {@link Origin}: the built-in maps of this
- * bundle, maps contributed by other bundles, maps imported during the session, and the user's own
- * maps kept in {@value #USER_FILE} under the preference directory and mirrored to the remote
- * preference store. A user map shadows any other map with the same id. The same file keeps the ids
- * of the user's favorite maps, which menus show at their root. Menus and lists read through {@link
+ * bundle, maps contributed by other bundles, the maps of the site document {@value #SITE_FILE} in
+ * the resources package (see {@code SiteDocuments}), maps imported during the session, and the
+ * user's own maps kept in {@value #USER_FILE} under the preference directory and mirrored to the
+ * remote preference store. A user map shadows any other map with the same id, and a site map
+ * shadows a built-in, contributed or imported one. The same file keeps the ids of the user's
+ * favorite maps, which menus show at their root. Menus and lists read through {@link
  * #query(Query)}; {@link #revision()} and listeners tell them when to rebuild.
  */
 public final class ColorMapRegistry {
@@ -48,12 +53,17 @@ public final class ColorMapRegistry {
 
   public static final String BUILTIN_RESOURCE = "/colormaps.json"; // NON-NLS
   public static final String USER_FILE = "customColorMaps.json"; // NON-NLS
+
+  /** File name of the site document in the {@code config} folder of the resources package. */
+  public static final String SITE_FILE = "colormaps.json"; // NON-NLS
+
   private static final String PREF_DIR_PROPERTY = "weasis.pref.dir"; // NON-NLS
 
   /** Where a map comes from; a registry fact, not a property of the map. */
   public enum Origin {
     BUNDLED,
     CONTRIBUTED,
+    SITE,
     IMPORTED,
     USER
   }
@@ -121,6 +131,7 @@ public final class ColorMapRegistry {
 
   private static volatile ColorMapRegistry instance; // NOSONAR double-checked locking
 
+  private final Path siteFile;
   private final Path userFile;
   private final Consumer<Path> remoteStore;
   private final Map<ColorMap, ByteLut> compiled = new ConcurrentHashMap<>();
@@ -128,6 +139,7 @@ public final class ColorMapRegistry {
   private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
   private final List<ColorMap> bundled = new ArrayList<>();
   private final List<ColorMap> contributed = new ArrayList<>();
+  private final List<ColorMap> site = new ArrayList<>();
   private final List<ColorMap> imported = new ArrayList<>();
   private final Map<String, ColorMap> userMaps = new LinkedHashMap<>();
   private final Set<String> favorites = new LinkedHashSet<>();
@@ -138,6 +150,14 @@ public final class ColorMapRegistry {
    * @param remoteStore called with the user file after each save, or null
    */
   public ColorMapRegistry(Path userFile, Consumer<Path> remoteStore) {
+    this(null, userFile, remoteStore);
+  }
+
+  /**
+   * @param siteFile the site document, or null when the site ships none
+   */
+  public ColorMapRegistry(Path siteFile, Path userFile, Consumer<Path> remoteStore) {
+    this.siteFile = siteFile;
     this.userFile = userFile;
     this.remoteStore = remoteStore;
     reload();
@@ -169,13 +189,17 @@ public final class ColorMapRegistry {
     String prefDir = core.getSystemPreferences().getProperty(PREF_DIR_PROPERTY);
     Path userFile = StringUtil.hasText(prefDir) ? Path.of(prefDir).resolve(USER_FILE) : null;
     return new ColorMapRegistry(
-        userFile, path -> core.storeRemotePref(path, ColorMapJson.CONTENT_TYPE));
+        SiteDocuments.find(SITE_FILE).orElse(null),
+        userFile,
+        path -> core.storeRemotePref(path, JsonUtil.CONTENT_TYPE));
   }
 
-  /** Reloads the bundled and user maps; contributed and imported maps stay. */
+  /** Reloads the bundled, site and user maps; contributed and imported maps stay. */
   public synchronized void reload() {
     bundled.clear();
     bundled.addAll(loadBuiltIn());
+    site.clear();
+    site.addAll(loadSite());
     ColorMapJson.Document user = loadUser();
     userMaps.clear();
     user.maps().forEach(map -> userMaps.put(map.id(), map));
@@ -189,6 +213,18 @@ public final class ColorMapRegistry {
       return in == null ? List.of() : ColorMapJson.readAll(in);
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read built-in color maps", e);
+      return List.of();
+    }
+  }
+
+  private List<ColorMap> loadSite() {
+    if (siteFile == null) {
+      return List.of();
+    }
+    try {
+      return ColorMapJson.readAll(siteFile);
+    } catch (IOException | RuntimeException e) {
+      LOGGER.error("Cannot read the site color maps: {}", siteFile, e);
       return List.of();
     }
   }
@@ -301,23 +337,31 @@ public final class ColorMapRegistry {
 
   private synchronized List<Map.Entry<ColorMap, Origin>> entries() {
     var all = new ArrayList<Map.Entry<ColorMap, Origin>>();
+    Set<String> shadowed = new HashSet<>(userMaps.keySet());
     userMaps.values().forEach(m -> all.add(Map.entry(m, Origin.USER)));
-    addUnshadowed(all, bundled, Origin.BUNDLED);
-    addUnshadowed(all, contributed, Origin.CONTRIBUTED);
-    addUnshadowed(all, imported, Origin.IMPORTED);
+    addUnshadowed(all, shadowed, site, Origin.SITE);
+    addUnshadowed(all, shadowed, bundled, Origin.BUNDLED);
+    addUnshadowed(all, shadowed, contributed, Origin.CONTRIBUTED);
+    addUnshadowed(all, shadowed, imported, Origin.IMPORTED);
     return all;
   }
 
-  private void addUnshadowed(
-      List<Map.Entry<ColorMap, Origin>> all, List<ColorMap> maps, Origin origin) {
+  // A map of an earlier layer hides the same id in the later ones; its id joins the shadowed set
+  private static void addUnshadowed(
+      List<Map.Entry<ColorMap, Origin>> all,
+      Set<String> shadowed,
+      List<ColorMap> maps,
+      Origin origin) {
     for (ColorMap map : maps) {
-      if (!userMaps.containsKey(map.id())) {
+      if (shadowed.add(map.id())) {
         all.add(Map.entry(map, origin));
       }
     }
   }
 
-  /** Every visible and hidden map, user maps first, then bundled, contributed and imported. */
+  /**
+   * Every visible and hidden map: user maps first, then site, bundled, contributed and imported.
+   */
   public List<ColorMap> maps() {
     return entries().stream().map(Map.Entry::getKey).toList();
   }
@@ -423,9 +467,12 @@ public final class ColorMapRegistry {
     return List.copyOf(userMaps.values());
   }
 
+  /** The read-only maps: bundled, contributed and the site's. */
   public synchronized List<ColorMap> builtInMaps() {
     return query(
-        Query.ALL.withOrigins(EnumSet.of(Origin.BUNDLED, Origin.CONTRIBUTED)).withHidden(true));
+        Query.ALL
+            .withOrigins(EnumSet.of(Origin.BUNDLED, Origin.CONTRIBUTED, Origin.SITE))
+            .withHidden(true));
   }
 
   public ByteLut byteLut(ColorMap map) {
