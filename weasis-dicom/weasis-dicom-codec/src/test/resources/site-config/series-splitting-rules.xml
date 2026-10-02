@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The example documented in the shipped series-splitting-rules.xml, uncommented, plus a
+  modality extending an earlier one of the file with nested condition groups -->
+<modalities>
+  <modality name="DEFAULT">
+    <splittingTags>
+      <ImageType />
+      <SOPClassUID />
+      <ContrastBolusAgent />
+    </splittingTags>
+    <multiframeSplittingTags>
+      <ImageType />
+      <SOPInstanceUID />
+      <FrameType />
+      <StackID />
+    </multiframeSplittingTags>
+  </modality>
+
+  <modality name="CT" extend="DEFAULT">
+    <splittingTags>
+      <ConvolutionKernel />
+      <GantryDetectorTilt />
+      <ImageOrientationPlane>
+        <conditions type="allOf">
+          <condition tag="ImageType" type="notContainsIgnoreCase">PROJECTION</condition>
+        </conditions>
+      </ImageOrientationPlane>
+    </splittingTags>
+  </modality>
+
+  <modality name="PT" extend="DEFAULT">
+    <splittingTags>
+      <ConvolutionKernel />
+      <GantryDetectorTilt />
+    </splittingTags>
+  </modality>
+
+  <modality name="MR" extend="DEFAULT">
+    <splittingTags>
+      <ScanningSequence />
+      <SequenceVariant />
+      <ScanOptions />
+      <RepetitionTime />
+      <EchoTime />
+      <FlipAngle />
+      <ImageOrientationPlane>
+        <conditions type="allOf">
+          <condition tag="ImageType" type="notContainsIgnoreCase">PROJECTION</condition>
+        </conditions>
+      </ImageOrientationPlane>
+    </splittingTags>
+  </modality>
+
+  <modality name="XA" extend="CT">
+    <splittingTags>
+      <PhotometricInterpretation>
+        <conditions type="anyOf">
+          <condition tag="Modality" type="equals">XA\RF</condition>
+          <conditions type="allOf">
+            <condition tag="ImageType" type="containsIgnoreCase">BIPLANE</condition>
+            <condition tag="Manufacturer" type="notEquals">ACME</condition>
+          </conditions>
+        </conditions>
+      </PhotometricInterpretation>
+    </splittingTags>
+    <multiframeSplittingTags>
+      <FrameLaterality />
+    </multiframeSplittingTags>
+  </modality>
+</modalities>

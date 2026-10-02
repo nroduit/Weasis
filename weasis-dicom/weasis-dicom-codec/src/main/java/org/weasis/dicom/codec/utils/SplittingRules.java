@@ -9,43 +9,82 @@
  */
 package org.weasis.dicom.codec.utils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import jakarta.json.JsonObject;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.LayeredEntries;
+import org.weasis.core.api.util.LayeredEntries.Layer;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.util.StreamUtil;
-import org.weasis.core.util.StringUtil;
+import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.And;
-import org.weasis.dicom.codec.utils.SplittingModalityRules.CompositeCondition;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.Condition;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.Condition.Type;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.DefaultCondition;
-import org.weasis.dicom.codec.utils.SplittingModalityRules.Or;
 
+/**
+ * The rules splitting a series into sub-series, by modality. The built-in defaults of the code are
+ * replaced, modality by modality, by the site document {@value #SITE_FILE} of the resources package
+ * (see {@link SplittingRulesJson}), or until 5.2 by the legacy {@code series-splitting-rules.xml}
+ * of the package root when the site ships no JSON.
+ */
 public class SplittingRules {
   private static final Logger LOGGER = LoggerFactory.getLogger(SplittingRules.class);
 
+  /** The site document, in the {@code config} folder of the resources package. */
+  public static final String SITE_FILE = "seriesSplittingRules.json"; // NON-NLS
+
+  /** The name of the array of entries in the site document. */
+  public static final String ENTRIES = SplittingRulesJson.ENTRIES;
+
   private final Map<Modality, SplittingModalityRules> rules;
 
+  /** The rules of the resources package of the running Weasis. */
   public SplittingRules() {
-    rules = new EnumMap<>(Modality.class);
-    initDefault();
-    readSplittingRulesFromResources();
+    this(
+        SiteDocuments.find(SITE_FILE).orElse(null),
+        ResourceUtil.getResource(DicomResource.SERIES_SPITTING_RULES).toPath());
   }
 
-  private void initDefault() {
+  /**
+   * The rules of another resources package: {@code config/seriesSplittingRules.json} under {@code
+   * root} when it exists, else {@code series-splitting-rules.xml} in {@code root}.
+   */
+  SplittingRules(Path root) {
+    this(
+        root.resolve(SiteDocuments.FOLDER).resolve(SITE_FILE),
+        root.resolve(DicomResource.SERIES_SPITTING_RULES.getPath()));
+  }
+
+  private SplittingRules(Path json, Path xml) {
+    List<SplittingModalityRules> builtIn = builtIn();
+    SplittingRulesJson.Document site = loadSite(json, xml);
+    LayeredEntries.Merged<SplittingModalityRules> merged =
+        LayeredEntries.merge(
+            List.of(
+                Layer.of(Origin.BUILT_IN, builtIn, Set.of()),
+                Layer.of(Origin.SITE, site.entries(), site.locked())),
+            r -> r.getModality().name(),
+            SplittingRulesJson.WHAT);
+    rules = new EnumMap<>(Modality.class);
+    merged.entries().forEach(r -> rules.put(r.getModality(), r));
+  }
+
+  /** The defaults of the code: a fresh copy, the rules being mutable. */
+  public static List<SplittingModalityRules> builtIn() {
     SplittingModalityRules defRules = new SplittingModalityRules(Modality.DEFAULT);
 
     defRules.addSingleFrameTags(Tag.ImageType, null);
@@ -55,7 +94,6 @@ public class SplittingRules {
     defRules.addMultiFrameTags(Tag.SOPInstanceUID, null);
     defRules.addMultiFrameTags(Tag.FrameType, null);
     defRules.addMultiFrameTags(Tag.StackID, null);
-    rules.put(defRules.getModality(), defRules);
 
     SplittingModalityRules ctRules = new SplittingModalityRules(Modality.CT, defRules);
     ctRules.addSingleFrameTags(Tag.ConvolutionKernel, null);
@@ -66,12 +104,10 @@ public class SplittingRules {
         new DefaultCondition(
             TagD.get(Tag.ImageType), Condition.Type.notContainsIgnoreCase, "PROJECTION"));
     ctRules.addSingleFrameTags(TagW.ImageOrientationPlane, allOf);
-    rules.put(ctRules.getModality(), ctRules);
 
     SplittingModalityRules ptRules = new SplittingModalityRules(Modality.PT, defRules);
     ptRules.addSingleFrameTags(Tag.ConvolutionKernel, null);
     ptRules.addSingleFrameTags(Tag.GantryDetectorTilt, null);
-    rules.put(ptRules.getModality(), ptRules);
 
     SplittingModalityRules mrRules = new SplittingModalityRules(Modality.MR, defRules);
     mrRules.addSingleFrameTags(Tag.ScanningSequence, null);
@@ -82,185 +118,45 @@ public class SplittingRules {
     mrRules.addSingleFrameTags(Tag.FlipAngle, null);
     // Reuse the condition for ImageOrientationPlane
     mrRules.addSingleFrameTags(TagW.ImageOrientationPlane, allOf);
-    rules.put(mrRules.getModality(), mrRules);
+
+    return List.of(defRules, ctRules, ptRules, mrRules);
   }
 
-  private void readSplittingRulesFromResources() {
-    XMLStreamReader xmler = null;
-    InputStream stream = null;
-    try {
-      File file = ResourceUtil.getResource(DicomResource.SERIES_SPITTING_RULES);
-      if (!file.canRead()) {
-        return;
-      }
-      XMLInputFactory factory = XMLInputFactory.newInstance();
-      // disable external entities for security
-      factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
-      factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-      stream = new FileInputStream(file);
-      xmler = factory.createXMLStreamReader(stream);
-
-      int eventType;
-      while (xmler.hasNext()) {
-        eventType = xmler.next();
-        if (eventType == XMLStreamConstants.START_ELEMENT) {
-          String key = xmler.getName().getLocalPart();
-          if ("modalities".equals(key)) { // NON-NLS
-            readModalities(xmler);
-          }
-        }
-      }
-    } catch (Exception e) {
-      LOGGER.error("Cannot read series-splitting-rules.xml! ", e);
-    } finally {
-      StreamUtil.safeClose(xmler);
-      StreamUtil.safeClose(stream);
-    }
+  /** The built-in defaults of the code, as the base of an {@code extends} in a site document. */
+  public static Function<String, Optional<JsonObject>> builtInBases() {
+    List<SplittingModalityRules> builtIn = builtIn();
+    return id ->
+        builtIn.stream()
+            .filter(r -> r.getModality().name().equals(id))
+            .findFirst()
+            .map(SplittingRulesJson::toJson);
   }
 
-  private void readModalities(XMLStreamReader xmler) throws XMLStreamException {
-    while (xmler.hasNext()) {
-      int eventType = xmler.next();
-      if (eventType == XMLStreamConstants.START_ELEMENT) {
-        String key = xmler.getName().getLocalPart();
-        if ("modality".equals(key) && xmler.getAttributeCount() >= 1) { // NON-NLS
-          String name = xmler.getAttributeValue(null, "name"); // NON-NLS
-          Modality m = getModality(name);
-          if (m != null) {
-            try {
-              String extend = xmler.getAttributeValue(null, "extend"); // NON-NLS
-              SplittingModalityRules splitRules =
-                  new SplittingModalityRules(m, getSplittingModalityRules(extend));
-              readModality(splitRules, xmler);
-              rules.put(m, splitRules);
-            } catch (Exception e) {
-              LOGGER.error("Modality {} cannot be read from series-splitting-rules.xml", name, e);
-            }
-          }
-        }
+  // The JSON site document first, else the legacy XML, else nothing: the built-in only
+  private static SplittingRulesJson.Document loadSite(Path json, Path xml) {
+    if (json != null && Files.isRegularFile(json)) {
+      try {
+        SplittingRulesJson.Document site = SplittingRulesJson.read(json, builtInBases());
+        LOGGER.debug("Splitting rules read from the site document {}", json);
+        return site;
+      } catch (IOException | RuntimeException e) {
+        LOGGER.error("Cannot read the site splitting rules: {}", json, e);
+        return SplittingRulesJson.Document.EMPTY;
       }
     }
-  }
-
-  private static void readModality(SplittingModalityRules data, XMLStreamReader xmler)
-      throws XMLStreamException {
-    int eventType;
-    boolean state = true;
-    while (xmler.hasNext() && state) {
-      eventType = xmler.next();
-      switch (eventType) {
-        case XMLStreamConstants.START_ELEMENT:
-          String element = xmler.getName().getLocalPart();
-          if ("splittingTags".equals(element)) {
-            readTags(data, xmler, false, element);
-          } else if ("multiframeSplittingTags".equals(element)) {
-            readTags(data, xmler, true, element);
-          }
-          break;
-        case XMLStreamConstants.END_ELEMENT:
-          if ("modality".equals(xmler.getName().getLocalPart())) { // NON-NLS
-            state = false;
-          }
-          break;
-        default:
-          break;
+    if (xml != null && Files.isRegularFile(xml)) {
+      try {
+        SplittingRulesJson.Document site =
+            SplittingRulesJson.parse(SplittingRulesJson.convert(xml), builtInBases());
+        LOGGER.debug("Splitting rules read from the legacy document {}", xml);
+        return site;
+      } catch (IOException | RuntimeException e) {
+        LOGGER.error("Cannot read series-splitting-rules.xml: {}", xml, e);
+        return SplittingRulesJson.Document.EMPTY;
       }
     }
-  }
-
-  private static void readTags(
-      SplittingModalityRules data, XMLStreamReader xmler, boolean multiframe, String endElement)
-      throws XMLStreamException {
-    int eventType;
-    boolean state = true;
-    while (xmler.hasNext() && state) {
-      eventType = xmler.next();
-      switch (eventType) {
-        case XMLStreamConstants.START_ELEMENT:
-          TagW tag = getTag(xmler.getName().getLocalPart());
-          if (tag != null) {
-            Condition condition = readCondition(data, xmler, tag.getKeyword());
-            if (multiframe) {
-              data.addMultiFrameTags(tag, condition);
-            } else {
-              data.addSingleFrameTags(tag, condition);
-            }
-          }
-          break;
-        case XMLStreamConstants.END_ELEMENT:
-          if (endElement.equals(xmler.getName().getLocalPart())) {
-            state = false;
-          }
-          break;
-        default:
-          break;
-      }
-    }
-  }
-
-  private static Condition readCondition(
-      SplittingModalityRules data, XMLStreamReader xmler, String endElement)
-      throws XMLStreamException {
-
-    CompositeCondition conditions = null;
-    CompositeCondition lastConditions = null;
-    TagW tag = null;
-    Condition.Type type = null;
-    String value = null;
-
-    int eventType;
-    boolean state = true;
-    while (xmler.hasNext() && state) {
-      eventType = xmler.next();
-      switch (eventType) {
-        case XMLStreamConstants.CHARACTERS:
-          value = xmler.getText();
-          break;
-        case XMLStreamConstants.START_ELEMENT:
-          if ("condition".equals(xmler.getName().getLocalPart())) { // NON-NLS
-            tag = getTag(xmler.getAttributeValue(null, "tag")); // NON-NLS
-            type = getConditionType(xmler.getAttributeValue(null, "type")); // NON-NLS
-          } else if ("conditions".equals(xmler.getName().getLocalPart())) { // NON-NLS
-            String t = xmler.getAttributeValue(null, "type");
-            lastConditions = "anyOf".equals(t) ? new Or() : new And();
-            if (conditions == null) {
-              // Root condition
-              conditions = lastConditions;
-            } else {
-              conditions.addChild(lastConditions);
-            }
-          }
-          break;
-        case XMLStreamConstants.END_ELEMENT:
-          if ("condition".equals(xmler.getName().getLocalPart())) { // NON-NLS
-            if (tag == null || type == null || value == null) {
-              LOGGER.error("Cannot read condition: {} {} {}", tag, type, value);
-            }
-            if (lastConditions != null) {
-              lastConditions.addChild(new DefaultCondition(tag, type, value));
-            }
-            tag = null;
-            type = null;
-            value = null;
-          } else if (endElement.equals(xmler.getName().getLocalPart())) {
-            state = false;
-          }
-          break;
-        default:
-          break;
-      }
-    }
-    return conditions;
-  }
-
-  private SplittingModalityRules getSplittingModalityRules(String extend) {
-    if (StringUtil.hasText(extend)) {
-      SplittingModalityRules val = rules.get(getModality(extend));
-      if (val == null) {
-        LOGGER.error("Modality {} doesn't exist! Cannot inherit the rules.", extend);
-      }
-    }
-    return null;
+    LOGGER.debug("Splitting rules: no site document, the built-in defaults only");
+    return SplittingRulesJson.Document.EMPTY;
   }
 
   public SplittingModalityRules getSplittingModalityRules(Modality key, Modality defaultKey) {
@@ -271,7 +167,7 @@ public class SplittingRules {
     return val;
   }
 
-  private static Type getConditionType(String type) {
+  static Type getConditionType(String type) {
     try {
       return Condition.Type.valueOf(type);
     } catch (Exception e) {
@@ -280,20 +176,12 @@ public class SplittingRules {
     return null;
   }
 
-  private static Modality getModality(String name) {
+  static Modality getModality(String name) {
     try {
       return Modality.valueOf(name);
     } catch (Exception e) {
       LOGGER.error("Modality reference of {} is missing", name, e);
     }
     return null;
-  }
-
-  private static TagW getTag(String tagKey) {
-    TagW tag = TagW.get(tagKey);
-    if (tag == null) {
-      LOGGER.error("Cannot find a tag with the keyword {}", tagKey);
-    }
-    return tag;
   }
 }

@@ -1,0 +1,181 @@
+{
+    "comment": "The built-in series splitting rules of Weasis, as a starting point: rename this file to seriesSplittingRules.json to activate it, this example is not read",
+    "schema": 1,
+    "updated": "2026-10-04T17:31:36.297944424Z",
+    "modalities": [
+        {
+            "id": "DEFAULT",
+            "splittingTags": [
+                {
+                    "tag": "ImageType"
+                },
+                {
+                    "tag": "SOPClassUID"
+                },
+                {
+                    "tag": "ContrastBolusAgent"
+                }
+            ],
+            "multiframeSplittingTags": [
+                {
+                    "tag": "ImageType"
+                },
+                {
+                    "tag": "SOPInstanceUID"
+                },
+                {
+                    "tag": "FrameType"
+                },
+                {
+                    "tag": "StackID"
+                }
+            ]
+        },
+        {
+            "id": "CT",
+            "splittingTags": [
+                {
+                    "tag": "ImageType"
+                },
+                {
+                    "tag": "SOPClassUID"
+                },
+                {
+                    "tag": "ContrastBolusAgent"
+                },
+                {
+                    "tag": "ConvolutionKernel"
+                },
+                {
+                    "tag": "GantryDetectorTilt"
+                },
+                {
+                    "tag": "ImageOrientationPlane",
+                    "condition": {
+                        "allOf": [
+                            {
+                                "tag": "ImageType",
+                                "operator": "contains",
+                                "negate": true,
+                                "ignoreCase": true,
+                                "values": [
+                                    "PROJECTION"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "multiframeSplittingTags": [
+                {
+                    "tag": "ImageType"
+                },
+                {
+                    "tag": "SOPInstanceUID"
+                },
+                {
+                    "tag": "FrameType"
+                },
+                {
+                    "tag": "StackID"
+                }
+            ]
+        },
+        {
+            "id": "PT",
+            "splittingTags": [
+                {
+                    "tag": "ImageType"
+                },
+                {
+                    "tag": "SOPClassUID"
+                },
+                {
+                    "tag": "ContrastBolusAgent"
+                },
+                {
+                    "tag": "ConvolutionKernel"
+                },
+                {
+                    "tag": "GantryDetectorTilt"
+                }
+            ],
+            "multiframeSplittingTags": [
+                {
+                    "tag": "ImageType"
+                },
+                {
+                    "tag": "SOPInstanceUID"
+                },
+                {
+                    "tag": "FrameType"
+                },
+                {
+                    "tag": "StackID"
+                }
+            ]
+        },
+        {
+            "id": "MR",
+            "splittingTags": [
+                {
+                    "tag": "ImageType"
+                },
+                {
+                    "tag": "SOPClassUID"
+                },
+                {
+                    "tag": "ContrastBolusAgent"
+                },
+                {
+                    "tag": "ScanningSequence"
+                },
+                {
+                    "tag": "SequenceVariant"
+                },
+                {
+                    "tag": "ScanOptions"
+                },
+                {
+                    "tag": "RepetitionTime"
+                },
+                {
+                    "tag": "EchoTime"
+                },
+                {
+                    "tag": "FlipAngle"
+                },
+                {
+                    "tag": "ImageOrientationPlane",
+                    "condition": {
+                        "allOf": [
+                            {
+                                "tag": "ImageType",
+                                "operator": "contains",
+                                "negate": true,
+                                "ignoreCase": true,
+                                "values": [
+                                    "PROJECTION"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "multiframeSplittingTags": [
+                {
+                    "tag": "ImageType"
+                },
+                {
+                    "tag": "SOPInstanceUID"
+                },
+                {
+                    "tag": "FrameType"
+                },
+                {
+                    "tag": "StackID"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configuration of the attribute list which are displayed in a DICOM view. The "DEFAULT" modality configuration will be 
+	applied on all the modalities without configuration (or unknown) -->
+<modalities>
+  <!-- <modality> attributes: name is a mandatory attribute, extend is optional. -->
+  <!-- the "extend" attribute allows to inherit the values of a previous declared modality (must be declared before in the
+    xml file) -->
+
+  <!-- <corner> attributes: name is a mandatory attribute. The possible values are: TOP_LEFT, TOP_RIGHT and BOTTOM_RIGHT -->
+
+  <!-- <p> attributes: index is a mandatory attribute (gives the position of the attribute from top to bottom), format is
+    optional -->
+  <!-- format associated to the DICOM attribute:
+    $V => the value which can be inserted into a text
+    $V:l$25$ => the value is limited to 25 characters followed by "..."
+    $V:f$#,##0.##$ => java pattern to display decimal number -->
+  <!-- The value of <p> is the name of variable of DICOM Attributes (see http://dicom.nema.org/medical/dicom/current/output/chtml/part06/chapter_6.html)
+    or available in the class TagW (see https://github.com/nroduit/Weasis/blob/master/weasis-core/weasis-core-api/src/main/java/org/weasis/core/api/media/data/TagW.java),
+    it can contain several values separated by a comma to display a value when the previous one is not available or null -->
+
+  <!-- Uncomment to override the default configuration which is already defined in Weasis source code  -->
+  <!--
+  <modality name="DEFAULT">
+    <corner name="TOP_LEFT">
+      <p index="1">PatientName</p>
+      <p index="2">PatientBirthDate</p>
+      <p index="3" format="ID: $V">PatientID</p>
+      <p index="4" format="Sex: $V">PatientSex</p>
+    </corner>
+    <corner name="TOP_RIGHT">
+      <p index="1">InstitutionName</p>
+      <p index="2" format="$V:l$25$">StudyDescription</p>
+      <p index="3" format="Study ID: $V">StudyID</p>
+      <p index="4" format="Ac. Nb: $V">AccessionNumber</p>
+      <p index="5" format="Acq.: $V">AcquisitionDate,ContentDate,SeriesDate,StudyDate</p>
+      <p index="6" format="Acq.: $V">AcquisitionTime,ContentTime,SeriesDate,StudyDate</p>
+    </corner>
+    <corner name="BOTTOM_RIGHT">
+      <p index="2" format="Series Nb: $V">SeriesNumber</p>
+      <p index="3" format="Laterality: $V">ImageLaterality</p>
+      <p index="4" format="$V:l$25$">ContrastBolusAgent</p>
+      <p index="5" format="$V:l$25$">SeriesDescription</p>
+      <p index="6" format="Thickness: $V:f$#,##0.##$ mm">SliceThickness</p>
+      <p index="7" format="Location: $V:f$#,##0.##$ mm">SliceLocation</p>
+    </corner>
+  </modality>
+   -->
+
+  <modality name="OT" extend="DEFAULT">
+    <corner name="BOTTOM_RIGHT">
+      <p index="6" format="$V:l$25$">ImageComments</p>
+    </corner>
+  </modality>
+  <modality name="XC" extend="DEFAULT">
+    <corner name="BOTTOM_RIGHT">
+      <p index="4" format="$V:l$25$">AnatomicRegion,BodyPartExamined</p>
+      <p index="6" format="$V:l$25$">ImageComments</p>
+    </corner>
+  </modality>
+  <modality name="DMS" extend="DEFAULT">
+    <corner name="BOTTOM_RIGHT">
+      <p index="4" format="$V:l$25$">AnatomicRegion,BodyPartExamined</p>
+      <p index="6" format="$V:l$25$">ImageComments</p>
+    </corner>
+  </modality>
+  <modality name="ES" extend="DEFAULT">
+    <corner name="BOTTOM_RIGHT">
+      <p index="4" format="$V:l$25$">AnatomicRegion,BodyPartExamined</p>
+      <p index="6" format="$V:l$25$">ImageComments</p>
+    </corner>
+  </modality>
+  <modality name="GM" extend="DEFAULT">
+    <corner name="BOTTOM_RIGHT">
+      <p index="4" format="$V:l$25$">AnatomicRegion,BodyPartExamined</p>
+      <p index="6" format="$V:l$25$">ImageComments</p>
+    </corner>
+  </modality>
+  <modality name="SM" extend="DEFAULT">
+    <corner name="BOTTOM_RIGHT">
+      <p index="4" format="$V:l$25$">AnatomicRegion,BodyPartExamined</p>
+      <p index="6" format="$V:l$25$">ImageComments</p>
+    </corner>
+  </modality>
+  <modality name="MG" extend="DEFAULT">
+    <corner name="BOTTOM_RIGHT">
+      <p index="7" format="Position: $V:l$25$">ViewPosition</p>
+    </corner>
+  </modality>
+</modalities>

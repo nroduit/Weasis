@@ -9,38 +9,54 @@
  */
 package org.weasis.dicom.codec.display;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.ArrayList;
+import jakarta.json.JsonObject;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+import java.util.function.Function;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagView;
-import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.XmlAttributeSource;
+import org.weasis.core.api.util.LayeredEntries;
+import org.weasis.core.api.util.LayeredEntries.Layer;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.util.StreamUtil;
-import org.weasis.core.util.StringUtil;
+import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomResource;
 
+/**
+ * The annotations overlay of each modality: which DICOM attributes are written in the corners of a
+ * view, and how. The built-in default of the code is replaced, modality by modality, by the site
+ * document {@value #SITE_FILE} of the resources package (see {@link ModalityViewJson}), or until
+ * 5.2 by the legacy {@code attributes-view.xml} of the package root when the site ships no JSON.
+ * Read once at class load, and again by {@link #reload()} when the site package is refreshed.
+ */
 public class ModalityView {
   private static final Logger LOGGER = LoggerFactory.getLogger(ModalityView.class);
 
-  static final Map<Modality, ModalityInfoData> MODALITY_VIEW_MAP = new EnumMap<>(Modality.class);
+  /** The site document, in the {@code config} folder of the resources package. */
+  public static final String SITE_FILE = "attributesView.json"; // NON-NLS
+
+  /** The name of the array of entries in the site document. */
+  public static final String ENTRIES = ModalityViewJson.ENTRIES;
+
+  /** Replaced as a whole by {@link #reload}: a reader never sees a half-filled map. */
+  static volatile Map<Modality, ModalityInfoData> MODALITY_VIEW_MAP = Map.of(); // NOSONAR
 
   public static final ModalityInfoData DEFAULT_MODALITY_VIEW =
       new ModalityInfoData(Modality.DEFAULT, null);
+
+  private static final List<ModalityInfoData> BUILT_IN = List.of(DEFAULT_MODALITY_VIEW);
 
   static {
     // Format associated to DICOM field:
@@ -111,16 +127,16 @@ public class ModalityView {
      * Spacing Between Slices (0018,0088), if present, else a value derived from successive values of Image Position
      * (Patient) (0020,0032) perpendicular to the Image Orientation (Patient) (0020,0037)
      */
-    MODALITY_VIEW_MAP.put(Modality.DEFAULT, DEFAULT_MODALITY_VIEW);
-    readTagDisplayByModality();
+    reload();
   }
 
   private ModalityView() {}
 
   public static ModalityInfoData getModlatityInfos(Modality mod) {
-    ModalityInfoData mdata = MODALITY_VIEW_MAP.get(mod);
+    Map<Modality, ModalityInfoData> map = MODALITY_VIEW_MAP;
+    ModalityInfoData mdata = map.get(mod);
     if (mdata == null) {
-      mdata = MODALITY_VIEW_MAP.get(Modality.DEFAULT);
+      mdata = map.get(Modality.DEFAULT);
     }
     if (mdata == null) {
       mdata = DEFAULT_MODALITY_VIEW;
@@ -132,7 +148,77 @@ public class ModalityView {
     return MODALITY_VIEW_MAP.entrySet();
   }
 
-  private static Modality getModality(String name) {
+  /** The built-in defaults of the code, as the base of an {@code extends} in a site document. */
+  public static Function<String, Optional<JsonObject>> builtInBases() {
+    return id -> {
+      Modality modality = getModality(id);
+      return BUILT_IN.stream()
+          .filter(data -> data.getModality() == modality)
+          .findFirst()
+          .map(ModalityViewJson::toJson);
+    };
+  }
+
+  /** Re-reads the site document, or the legacy XML, of the resources package. */
+  public static void reload() {
+    reload(
+        SiteDocuments.find(SITE_FILE).orElse(null),
+        ResourceUtil.getResource(DicomResource.ATTRIBUTES_VIEW).toPath());
+  }
+
+  /**
+   * Re-reads from another resources package: {@code config/attributesView.json} under {@code root}
+   * when it exists, else {@code attributes-view.xml} in {@code root}.
+   */
+  static void reload(Path root) {
+    reload(
+        root.resolve(SiteDocuments.FOLDER).resolve(SITE_FILE),
+        root.resolve(DicomResource.ATTRIBUTES_VIEW.getPath()));
+  }
+
+  private static synchronized void reload(Path json, Path xml) {
+    ModalityViewJson.Document site = loadSite(json, xml);
+    LayeredEntries.Merged<ModalityInfoData> merged =
+        LayeredEntries.merge(
+            List.of(
+                Layer.of(Origin.BUILT_IN, BUILT_IN, Set.of()),
+                Layer.of(Origin.SITE, site.entries(), site.locked())),
+            data -> data.getModality().name(),
+            ModalityViewJson.WHAT);
+    Map<Modality, ModalityInfoData> map = new EnumMap<>(Modality.class);
+    merged.entries().forEach(data -> map.put(data.getModality(), data));
+    MODALITY_VIEW_MAP = Collections.unmodifiableMap(map);
+  }
+
+  // The JSON site document first, else the legacy XML, else nothing: the built-in only
+  private static ModalityViewJson.Document loadSite(Path json, Path xml) {
+    if (json != null && Files.isRegularFile(json)) {
+      try {
+        ModalityViewJson.Document site = ModalityViewJson.read(json, builtInBases());
+        LOGGER.debug("Attributes view read from the site document {}", json);
+        return site;
+      } catch (IOException | RuntimeException e) {
+        LOGGER.error("Cannot read the site attributes view: {}", json, e);
+        return ModalityViewJson.Document.EMPTY;
+      }
+    }
+    if (xml != null && Files.isRegularFile(xml)) {
+      try {
+        ModalityViewJson.Document site =
+            ModalityViewJson.parse(ModalityViewJson.convert(xml), builtInBases());
+        LOGGER.debug("Attributes view read from the legacy document {}", xml);
+        return site;
+      } catch (IOException | RuntimeException e) {
+        LOGGER.error("Cannot read attributes-view.xml: {}", xml, e);
+        return ModalityViewJson.Document.EMPTY;
+      }
+    }
+    LOGGER.debug("Attributes view: no site document, the built-in default only");
+    return ModalityViewJson.Document.EMPTY;
+  }
+
+  /** The modality of that name, with the retired names mapped to their successor. */
+  static Modality getModality(String name) {
     try {
       return Modality.valueOf(name);
     } catch (Exception e) {
@@ -152,150 +238,11 @@ public class ModalityView {
     return null;
   }
 
-  private static CornerDisplay getCornerDisplay(String name) {
+  static CornerDisplay getCornerDisplay(String name) {
     try {
       return CornerDisplay.valueOf(name);
     } catch (Exception e) {
       LOGGER.error("CornerDisplay reference of {} doesn't exist", name, e);
-    }
-    return null;
-  }
-
-  private static TagView getTagView(String name, String format) {
-    if (name != null) {
-      String[] vals = name.split(",");
-      ArrayList<TagW> list = new ArrayList<>(vals.length);
-      for (String s : vals) {
-        TagW t = TagW.get(s);
-        if (t == null) {
-          LOGGER.warn("Cannot find tag \"{}\"", s);
-        } else {
-          list.add(t);
-        }
-      }
-      if (!list.isEmpty()) {
-        return new TagView(format, list.toArray(new TagW[0]));
-      }
-    }
-    return null;
-  }
-
-  private static void readTagDisplayByModality() {
-    XMLStreamReader xmler = null;
-    try {
-      File file = ResourceUtil.getResource(DicomResource.ATTRIBUTES_VIEW);
-      if (!file.canRead()) {
-        return;
-      }
-      XMLInputFactory factory = XMLInputFactory.newInstance();
-      // disable external entities for security
-      factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
-      factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-      xmler = factory.createXMLStreamReader(new FileInputStream(file));
-
-      while (xmler.hasNext()) {
-        if (xmler.next() == XMLStreamConstants.START_ELEMENT) {
-          String key = xmler.getName().getLocalPart();
-          if ("modalities".equals(key)) { // NON-NLS
-            readModalities(xmler);
-          }
-        }
-      }
-    } catch (Exception e) {
-      LOGGER.error("Cannot read attributes-view.xml! ", e);
-    } finally {
-      StreamUtil.safeClose(xmler);
-    }
-  }
-
-  private static void readModalities(XMLStreamReader xmler) throws XMLStreamException {
-    while (xmler.hasNext()) {
-      if (xmler.next() == XMLStreamConstants.START_ELEMENT) {
-        String key = xmler.getName().getLocalPart();
-        if ("modality".equals(key) && xmler.getAttributeCount() >= 1) { // NON-NLS
-          String name = xmler.getAttributeValue(null, "name"); // NON-NLS
-          Modality m = getModality(name);
-          if (m != null) {
-            try {
-              String extend = xmler.getAttributeValue(null, "extend"); // NON-NLS
-              ModalityInfoData data = new ModalityInfoData(m, getModality(extend));
-              readModality(data, xmler);
-              MODALITY_VIEW_MAP.put(m, data);
-            } catch (Exception e) {
-              LOGGER.error("Modality {} cannot be read from attributes-view.xml", name, e);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private static void readModality(ModalityInfoData data, XMLStreamReader xmler)
-      throws XMLStreamException {
-    boolean state = true;
-    while (xmler.hasNext() && state) {
-      switch (xmler.next()) {
-        case XMLStreamConstants.START_ELEMENT:
-          if ("corner".equals(xmler.getName().getLocalPart()) // NON-NLS
-              && xmler.getAttributeCount() >= 1) {
-            String name = xmler.getAttributeValue(null, "name"); // NON-NLS
-            CornerDisplay corner = getCornerDisplay(name);
-            if (corner != null) {
-              readCorner(data, corner, xmler);
-            }
-          }
-          break;
-        case XMLStreamConstants.END_ELEMENT:
-          if ("modality".equals(xmler.getName().getLocalPart())) { // NON-NLS
-            state = false;
-          }
-          break;
-        default:
-          break;
-      }
-    }
-  }
-
-  private static void readCorner(ModalityInfoData data, CornerDisplay corner, XMLStreamReader xmler)
-      throws XMLStreamException {
-
-    TagView[] disElements = data.getCornerInfo(corner).getInfos();
-
-    boolean state = true;
-    int index = -1;
-    String format = null;
-    while (xmler.hasNext() && state) {
-      switch (xmler.next()) {
-        case XMLStreamConstants.CHARACTERS:
-          if (index > 0 && index <= 7) {
-            disElements[index - 1] = getTag(xmler.getText(), format);
-            index = -1; // Reset current index and format
-            format = null;
-          }
-          break;
-        case XMLStreamConstants.START_ELEMENT:
-          if ("p".equals(xmler.getName().getLocalPart()) // NON-NLS
-              && xmler.getAttributeCount() >= 1) {
-            index =
-                TagUtil.getIntegerTagAttribute(
-                    new XmlAttributeSource(xmler), "index", -1); // NON-NLS
-            format = xmler.getAttributeValue(null, "format"); // NON-NLS
-          }
-          break;
-        case XMLStreamConstants.END_ELEMENT:
-          if ("corner".equals(xmler.getName().getLocalPart())) { // NON-NLS
-            state = false;
-          }
-          break;
-        default:
-          break;
-      }
-    }
-  }
-
-  private static TagView getTag(String name, String format) {
-    if (StringUtil.hasText(name)) {
-      return getTagView(name, format);
     }
     return null;
   }
