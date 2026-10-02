@@ -95,7 +95,7 @@ public enum EnvironmentMap {
    * RGB spherical-harmonic coefficients of the irradiance divided by π, so a uniform white sky
    * yields 1.
    */
-  public record Baked(List<float[]> levels, float[] irradianceSh) {
+  public record Baked(List<float[]> levels, float[] irradianceSh) { // NOSONAR never compared
     public int width(int level) {
       return BASE_WIDTH >> level;
     }

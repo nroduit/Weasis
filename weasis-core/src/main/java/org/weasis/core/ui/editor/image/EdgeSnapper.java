@@ -145,8 +145,8 @@ public final class EdgeSnapper {
 
   static Rectangle windowAround(Point center, int width, int height) {
     int half = WINDOW / 2;
-    int x = Math.clamp(center.x - half, 0, Math.max(0, width - WINDOW));
-    int y = Math.clamp(center.y - half, 0, Math.max(0, height - WINDOW));
+    int x = Math.clamp((long) center.x - half, 0, Math.max(0, width - WINDOW));
+    int y = Math.clamp((long) center.y - half, 0, Math.max(0, height - WINDOW));
     return new Rectangle(x, y, Math.min(WINDOW, width), Math.min(WINDOW, height));
   }
 
@@ -164,8 +164,12 @@ public final class EdgeSnapper {
     return normalized;
   }
 
-  /** Edge terms of the window; each is a cost in [0, 1], low on an edge. */
-  record Features(int w, int h, float[] gradient, float[] laplace, float[] gx, float[] gy) {
+  /**
+   * Edge terms of the window; each is a cost in [0, 1], low on an edge. Never compared or hashed,
+   * so the arrays keep identity equality.
+   */
+  record Features( // NOSONAR
+      int w, int h, float[] gradient, float[] laplace, float[] gx, float[] gy) {
 
     static Features of(float[] gray, int w, int h) {
       float[] gx = new float[w * h];

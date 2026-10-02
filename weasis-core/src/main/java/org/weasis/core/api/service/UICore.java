@@ -98,7 +98,7 @@ public final class UICore {
   private final SidePanel leftSidePanel;
   private final SidePanel rightSidePanel;
   private final MiniStrip miniStrip;
-  private volatile ViewerPlugin<?> selectedPlugin;
+  private volatile ViewerPlugin<?> selectedPlugin; // NOSONAR reference swapped whole
 
   /** The graphic tool providers registered per plugin, to unregister them when it stops. */
   private final Map<String, List<GraphicToolProvider>> graphicToolProviders =

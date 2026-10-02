@@ -71,7 +71,7 @@ public class XmlSerializer {
    * Context of the presentation model and of every tool type of the registry. Dropped when the
    * registry changes (a plugin started or stopped) and rebuilt on the next use.
    */
-  private static volatile JAXBContext presentationContext;
+  private static volatile JAXBContext presentationContext; // NOSONAR thread-safe, lazy cache
 
   static {
     GraphicRegistry.getInstance().addListener(() -> presentationContext = null);

@@ -60,7 +60,7 @@ public class DisplayProfileSelector extends JComboBox<DisplayProfileSelector.Mod
   }
 
   private static volatile Mode lastMode = Mode.AS_DISPLAYED;
-  private static volatile DisplayProfile lastCustom;
+  private static volatile DisplayProfile lastCustom; // NOSONAR value swapped whole
 
   private final Supplier<ViewCanvas<?>> reference;
   private final JButton editButton = new JButton(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));

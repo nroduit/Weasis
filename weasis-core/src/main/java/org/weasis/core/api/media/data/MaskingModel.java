@@ -84,7 +84,7 @@ public record MaskingModel(
       new MaskingModel(List.of(), List.of(), List.of(), null, null, false);
 
   private static final Pattern HEX_TAG =
-      Pattern.compile("\\(?\\s*([0-9A-Fa-f]{4})\\s*,?\\s*([0-9A-Fa-f]{4})\\s*\\)?");
+      Pattern.compile("\\(?\\s*([0-9A-Fa-f]{4})\\s*(?:,\\s*)?([0-9A-Fa-f]{4})\\s*\\)?");
 
   public MaskingModel {
     tags = List.copyOf(tags);
@@ -293,7 +293,7 @@ public record MaskingModel(
       return null;
     }
     String text = tag.trim();
-    String creator = StringUtil.hasText(privateCreator) ? privateCreator.trim() : null;
+    String creator = StringUtil.hasText(privateCreator) ? privateCreator.trim() : null; // NOSONAR
     int at = text.lastIndexOf('@');
     if (at > 0 && creator == null) {
       creator = text.substring(at + 1).trim();

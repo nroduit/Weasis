@@ -22,6 +22,8 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
@@ -53,13 +55,7 @@ public class MprAxis {
     }
     int sliceSize = rawIO.getVolume().getSliceSize();
     int index = (int) (mprView.mprController.getAxesControl().getCenterAlongAxis(mprView));
-    int sliceIndex;
-    if (axisDirection.isInvertedDirection()) {
-      sliceIndex = sliceSize - index;
-    } else {
-      sliceIndex = index;
-    }
-    return sliceIndex;
+    return isNeuroScrollOrder() ? sliceSize - 1 - index : index;
   }
 
   public void setSliceIndex(int sliceIndex) {
@@ -67,13 +63,19 @@ public class MprAxis {
       return;
     }
     int sliceSize = rawIO.getVolume().getSliceSize();
-    int index;
-    if (axisDirection.isInvertedDirection()) {
-      index = sliceSize - sliceIndex;
-    } else {
-      index = sliceIndex;
-    }
+    int index = isNeuroScrollOrder() ? sliceSize - 1 - sliceIndex : sliceIndex;
     mprView.mprController.getAxesControl().setCenterAlongAxis(mprView, index);
+  }
+
+  /**
+   * The volume axes follow the radiology reading order (head to feet, anterior to posterior, right
+   * to left), so the slice index is the volume depth. The neuroimaging order reverses it (feet to
+   * head, posterior to anterior, left to right).
+   */
+  private static boolean isNeuroScrollOrder() {
+    return EventManager.getInstance()
+        .getOptions()
+        .getBooleanProperty(View2d.P_MPR_SCROLL_NEURO, false);
   }
 
   public AxisDirection getAxisDirection() {

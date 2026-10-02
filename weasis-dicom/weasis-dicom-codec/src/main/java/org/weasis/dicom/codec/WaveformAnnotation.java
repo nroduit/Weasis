@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.codec;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -49,5 +50,42 @@ public record WaveformAnnotation(
       }
     }
     return false;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o instanceof WaveformAnnotation other
+        && Objects.equals(label, other.label)
+        && temporalRangeType.equals(other.temporalRangeType)
+        && Arrays.equals(samplePositions, other.samplePositions)
+        && Arrays.equals(timeOffsets, other.timeOffsets)
+        && Arrays.equals(dateTimes, other.dateTimes)
+        && Arrays.equals(channels, other.channels);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hash(label, temporalRangeType);
+    result = 31 * result + Arrays.hashCode(samplePositions);
+    result = 31 * result + Arrays.hashCode(timeOffsets);
+    result = 31 * result + Arrays.hashCode(dateTimes);
+    return 31 * result + Arrays.hashCode(channels);
+  }
+
+  @Override
+  public String toString() {
+    return "WaveformAnnotation[label=" // NON-NLS
+        + label
+        + ", temporalRangeType=" // NON-NLS
+        + temporalRangeType
+        + ", samplePositions=" // NON-NLS
+        + Arrays.toString(samplePositions)
+        + ", timeOffsets=" // NON-NLS
+        + Arrays.toString(timeOffsets)
+        + ", dateTimes=" // NON-NLS
+        + Arrays.toString(dateTimes)
+        + ", channels=" // NON-NLS
+        + Arrays.toString(channels)
+        + "]";
   }
 }

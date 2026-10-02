@@ -26,10 +26,12 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprFactory;
+import org.weasis.dicom.viewer2d.mpr.MprView;
 
 public class MprPrefView extends AbstractItemDialogPage {
 
   private final JComboBox<String> comboBox3DCursorMode;
+  private final JComboBox<String> comboBoxScrollDirection;
   private final JSpinner spinnerCrossGapSize;
   private final JComboBox<MigLayoutModel> comboBoxLayouts =
       new JComboBox<>(MprContainer.LAYOUT_LIST.toArray(new MigLayoutModel[0]));
@@ -37,6 +39,11 @@ public class MprPrefView extends AbstractItemDialogPage {
   public MprPrefView() {
     super(Messages.getString("MPRFactory.title"), 507);
     this.comboBox3DCursorMode = new JComboBox<>();
+    this.comboBoxScrollDirection =
+        new JComboBox<>(
+            new String[] {
+              Messages.getString("mpr.scroll.radiology"), Messages.getString("mpr.scroll.neuro")
+            });
     this.spinnerCrossGapSize = new JSpinner(new SpinnerNumberModel(40, 0, 60, 1));
     GuiUtils.setSpinnerWidth(spinnerCrossGapSize, 3);
     initGUI();
@@ -95,6 +102,19 @@ public class MprPrefView extends AbstractItemDialogPage {
             comboBoxLayouts));
     add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
 
+    JLabel labelScroll = new JLabel(Messages.getString("mpr.scroll.direction") + StringUtil.COLON);
+    boolean neuro = eventManager.getOptions().getBooleanProperty(View2d.P_MPR_SCROLL_NEURO, false);
+    comboBoxScrollDirection.setSelectedIndex(neuro ? 1 : 0);
+    add(
+        GuiUtils.getFlowLayoutPanel(
+            FlowLayout.LEADING,
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR,
+            GuiUtils.boxHorizontalStrut(shiftX),
+            labelScroll,
+            comboBoxScrollDirection));
+    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
+
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "mpr"); // NON-NLS
@@ -109,12 +129,19 @@ public class MprPrefView extends AbstractItemDialogPage {
 
   @Override
   public void closeAdditionalWindow() {
-    WProperties properties = EventManager.getInstance().getOptions();
+    EventManager eventManager = EventManager.getInstance();
+    WProperties properties = eventManager.getOptions();
 
     int mode = comboBox3DCursorMode.getSelectedIndex();
     properties.putIntProperty(View2d.P_CROSSHAIR_MODE, mode);
     int gapSize = (int) spinnerCrossGapSize.getValue();
     properties.putIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, gapSize);
+    properties.putBooleanProperty(
+        View2d.P_MPR_SCROLL_NEURO, comboBoxScrollDirection.getSelectedIndex() == 1);
+    // The scroll direction changes the slice index of the MPR views: refresh the slider position
+    if (eventManager.getSelectedViewPane() instanceof MprView view) {
+      eventManager.updateComponentsListener(view);
+    }
     MigLayoutModel layout = (MigLayoutModel) comboBoxLayouts.getSelectedItem();
     if (layout != null) {
       GuiUtils.getUICore().getSystemPreferences().put(MprFactory.P_DEFAULT_LAYOUT, layout.getId());
@@ -135,6 +162,9 @@ public class MprPrefView extends AbstractItemDialogPage {
     properties.resetProperty(View2d.P_CROSSHAIR_CENTER_GAP, "40");
     int gapSize = properties.getIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, 40);
     spinnerCrossGapSize.setValue(gapSize);
+    properties.resetProperty(View2d.P_MPR_SCROLL_NEURO, Boolean.FALSE.toString());
+    comboBoxScrollDirection.setSelectedIndex(
+        properties.getBooleanProperty(View2d.P_MPR_SCROLL_NEURO, false) ? 1 : 0);
     GuiUtils.getUICore()
         .getSystemPreferences()
         .put(MprFactory.P_DEFAULT_LAYOUT, MprContainer.view1.getId());

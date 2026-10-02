@@ -26,7 +26,7 @@ public final class ValueHistogram {
   public static final int FULL_RANGE_BINS = 4096;
 
   /** Bin counts over {@code [min, max]}. */
-  public record Bins(double[] counts, double min, double max) {
+  public record Bins(double[] counts, double min, double max) { // NOSONAR never compared
     public double total() {
       double sum = 0;
       for (double c : counts) {

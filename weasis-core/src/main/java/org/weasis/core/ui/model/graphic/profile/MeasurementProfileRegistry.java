@@ -16,6 +16,7 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,7 +50,7 @@ public final class MeasurementProfileRegistry {
   /** Local persistence key of the explicit choice; absent or empty means automatic. */
   public static final String SELECTION_KEY = "weasis.measure.profile"; // NON-NLS
 
-  private static volatile MeasurementProfileRegistry instance;
+  private static volatile MeasurementProfileRegistry instance; // NOSONAR double-checked locking
 
   private final List<MeasurementProfile> builtIn;
   private final String siteLocation;
@@ -57,10 +58,11 @@ public final class MeasurementProfileRegistry {
   private final WProperties selectionStore;
   private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
-  private volatile List<MeasurementProfile> site = List.of();
-  private volatile Map<String, MeasurementProfile> merged = Map.of();
+  // site, merged and siteIds are copy-on-write: unmodifiable snapshots replaced as a whole
+  private volatile List<MeasurementProfile> site = List.of(); // NOSONAR immutable snapshot
+  private volatile Map<String, MeasurementProfile> merged = Map.of(); // NOSONAR immutable snapshot
   private final Map<String, MeasurementProfile> user = new LinkedHashMap<>();
-  private volatile Set<String> siteIds = Set.of();
+  private volatile Set<String> siteIds = Set.of(); // NOSONAR immutable snapshot
   private String selectedId;
   private String modality;
 
@@ -143,7 +145,7 @@ public final class MeasurementProfileRegistry {
    * may be remote: do not call from the UI thread.
    */
   public void reload() {
-    site = readSite();
+    site = List.copyOf(readSite());
     reloadUser();
   }
 
@@ -187,8 +189,8 @@ public final class MeasurementProfileRegistry {
               null,
               true)); // NON-NLS
     }
-    merged = result;
-    siteIds = fromSite;
+    merged = Collections.unmodifiableMap(result);
+    siteIds = Set.copyOf(fromSite);
   }
 
   private List<MeasurementProfile> readSite() {

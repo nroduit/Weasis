@@ -57,7 +57,7 @@ final class SrgbInputProfile {
     return Holder.DATA.clone();
   }
 
-  private record Tag(String signature, byte[] data) {}
+  private record Tag(String signature, byte[] data) {} // NOSONAR never compared
 
   private static byte[] build() {
     byte[] curve = parametricCurve();

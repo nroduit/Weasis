@@ -199,7 +199,7 @@ public abstract class AbstractDragGraphic extends AbstractGraphic implements Dra
   @Override
   public Integer moveAndResizeOnDrawing(
       Integer handlePointIndex, Double deltaX, Double deltaY, MouseEventDouble mouseEvent) {
-    int index = handlePointIndex == null ? UNDEFINED : handlePointIndex;
+    int index = Objects.requireNonNullElse(handlePointIndex, UNDEFINED);
     if (index == UNDEFINED) {
       pts.stream()
           .filter(Objects::nonNull)

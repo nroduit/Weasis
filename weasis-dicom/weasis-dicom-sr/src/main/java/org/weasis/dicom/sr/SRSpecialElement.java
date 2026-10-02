@@ -47,10 +47,10 @@ public class SRSpecialElement extends DicomSpecialElement
       Set<String> frameOfReferenceUIDs,
       List<SRImageReference> waveformReferences) {}
 
-  private volatile OverlayIndex index;
+  private volatile OverlayIndex index; // NOSONAR immutable, double-checked
 
   /** Node ids of the items to emphasize, set when the user clicks a region in the report. */
-  private volatile Set<String> highlightedNodes = Set.of();
+  private volatile Set<String> highlightedNodes = Set.of(); // NOSONAR immutable snapshot
 
   public SRSpecialElement(DicomMediaIO mediaIO) {
     super(mediaIO);

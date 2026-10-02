@@ -149,9 +149,9 @@ public class CircleGraphic extends AbstractDragGraphicArea {
   @Override
   public void buildShape(MouseEventDouble mouseEvent) {
     AdvancedShape newShape = null;
+    Point2D center = getCenter();
     double radius = getRadius();
-    if (radius > 0) {
-      Point2D center = getCenter();
+    if (center != null && radius > 0) {
       newShape = new AdvancedShape(this, 2);
       newShape.addShape(
           new Ellipse2D.Double(

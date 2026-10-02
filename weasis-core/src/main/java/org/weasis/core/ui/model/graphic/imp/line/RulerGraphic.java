@@ -53,7 +53,7 @@ public class RulerGraphic extends LineGraphic {
     super();
   }
 
-  public RulerGraphic(RulerGraphic graphic) {
+  public RulerGraphic(RulerGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

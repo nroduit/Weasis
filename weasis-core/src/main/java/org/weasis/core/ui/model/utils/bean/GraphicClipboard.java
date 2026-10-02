@@ -61,7 +61,7 @@ public class GraphicClipboard {
    *     {@link #copy(List)}.
    */
   @Deprecated(since = "4.8.0", forRemoval = true)
-  public void setGraphics(List<Graphic> graphics) {
+  public void setGraphics(List<Graphic> graphics) { // NOSONAR copy() locks
     copy(graphics);
   }
 
