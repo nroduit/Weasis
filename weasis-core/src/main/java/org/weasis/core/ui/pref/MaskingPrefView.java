@@ -62,10 +62,10 @@ import org.weasis.core.api.media.data.AnonymizationAction;
 import org.weasis.core.api.media.data.MaskingModel;
 import org.weasis.core.api.media.data.MaskingModel.TagRule;
 import org.weasis.core.api.media.data.MaskingModelRegistry;
-import org.weasis.core.api.media.data.MaskingModelRegistry.Origin;
 import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.media.data.PixelMask;
 import org.weasis.core.api.media.data.TagCategory;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.util.StringUtil;
 
 /**
@@ -269,7 +269,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   /** The merged profiles, overridden and extended by the edited user document. */
   private List<MaskingProfile> profiles() {
     Map<String, MaskingProfile> byId = new LinkedHashMap<>();
-    registry.profiles().forEach(p -> byId.put(p.id(), p));
+    registry.profiles().entries().forEach(p -> byId.put(p.id(), p));
     pending.profiles().forEach(p -> byId.put(p.id(), p));
     return List.copyOf(byId.values());
   }
@@ -323,10 +323,21 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
     readOnlyLabel.setVisible(readOnly);
     if (readOnly) {
       readOnlyLabel.setText(
-          Messages.getString("MaskingPrefView.readonly")
-              .formatted(originName(registry.origin(profile.id()))));
+          registry.profiles().isLocked(profile.id())
+              ? Messages.getString("MaskingPrefView.lockedEntry")
+              : Messages.getString("MaskingPrefView.readonly")
+                  .formatted(registry.profiles().origin(profile.id()).displayName()));
     }
     deleteItem.setEnabled(editable);
+    // A user profile over a site or built-in id: deleting it resets the profile to that definition
+    deleteItem.setText(
+        profile == null
+            ? Messages.getString("MaskingPrefView.delete")
+            : registry
+                .profiles()
+                .below(profile.id())
+                .map(o -> Messages.getString("MaskingPrefView.reset").formatted(o.displayName()))
+                .orElse(Messages.getString("MaskingPrefView.delete")));
   }
 
   private void show(MaskingProfile profile) {
@@ -502,7 +513,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
             new DefaultCellEditor(new JComboBox<>(CATEGORIES.toArray(TagCategory[]::new))));
     tagTable.setDefaultRenderer(
         TagCategory.class, cellRenderer(v -> categoryName((TagCategory) v)));
-    tagTable.setDefaultRenderer(Origin.class, cellRenderer(v -> originName((Origin) v)));
+    tagTable.setDefaultRenderer(Origin.class, cellRenderer(v -> ((Origin) v).displayName()));
     tagTable
         .getSelectionModel()
         .addListSelectionListener(e -> removeTagButton.setEnabled(selectedUserRow() != null));
@@ -536,10 +547,10 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
 
   private void fillTags() {
     Map<String, TagRow> byKey = new TreeMap<>();
-    for (TagRule rule : registry.tagRules()) {
+    for (TagRule rule : registry.tags().entries()) {
       byKey.put(
           rule.key(),
-          new TagRow(rule.key(), rule.category(), registry.tagOrigin(rule.key()), false));
+          new TagRow(rule.key(), rule.category(), registry.tags().origin(rule.key()), false));
     }
     for (TagRule rule : pending.tags()) {
       byKey.put(rule.key(), new TagRow(rule.key(), rule.category(), Origin.USER, true));
@@ -727,10 +738,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
 
   static String actionName(AnonymizationAction action) {
     return Messages.getString("MaskingPrefView.action." + action.name());
-  }
-
-  private static String originName(Origin origin) {
-    return Messages.getString("MaskingPrefView.origin." + origin.name());
   }
 
   private JLabel label(String key, JComponent field) {

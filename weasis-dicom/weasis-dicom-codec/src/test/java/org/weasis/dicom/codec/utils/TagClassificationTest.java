@@ -127,7 +127,7 @@ class TagClassificationTest {
   @Test
   @DisplayName("every bundled DICOM rule names a known tag")
   void bundledRulesResolve() {
-    MaskingModelRegistry.getInstance().tagRules().stream()
+    MaskingModelRegistry.getInstance().tags().entries().stream()
         .filter(rule -> !rule.isInternal())
         .forEach(rule -> assertNotNull(TagD.get(rule.keyword()), rule.key()));
   }
@@ -136,7 +136,7 @@ class TagClassificationTest {
   @DisplayName("a configuration can classify more tags, including private ones")
   void configurationAddsTags() {
     MaskingModelRegistry registry = MaskingModelRegistry.getInstance();
-    List<TagRule> rules = new ArrayList<>(registry.tagRules());
+    List<TagRule> rules = new ArrayList<>(registry.tags().entries());
     rules.add(new TagRule(MaskingModel.normalizeKey("(0008,1070)", null), TagCategory.DIRECT_ID));
     rules.add(
         new TagRule(MaskingModel.normalizeKey("(0009,1010)", "ACME_SITE"), TagCategory.DIRECT_ID));
@@ -153,7 +153,7 @@ class TagClassificationTest {
                   AnonymizationAction.PSEUDONYMIZE, MaskingProfile.display().actionFor(privateTag)),
           () -> assertEquals(TagCategory.DIRECT_ID, categoryOf(Tag.PatientName)));
     } finally {
-      DicomMediaUtils.applyClassification(registry.tagRules());
+      DicomMediaUtils.applyClassification(registry.tags().entries());
     }
     assertEquals(
         TagCategory.OTHER,

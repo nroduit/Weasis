@@ -247,6 +247,7 @@ public class WeasisWin {
         });
     rootPaneContainer = jFrame;
     configureMaskingModel();
+    SiteDocuments.onReload(MaskingModelRegistry.SITE_FILE, WeasisWin::configureMaskingModel);
 
     if (GuiUtils.getUICore()
         .getSystemPreferences()

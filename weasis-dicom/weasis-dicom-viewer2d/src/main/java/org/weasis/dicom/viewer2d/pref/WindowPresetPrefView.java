@@ -45,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.display.WindowPreset;
@@ -52,7 +53,6 @@ import org.weasis.dicom.codec.display.WindowPreset.Domain;
 import org.weasis.dicom.codec.display.WindowPreset.DomainKind;
 import org.weasis.dicom.codec.display.WindowPreset.When;
 import org.weasis.dicom.codec.display.WindowPresetRegistry;
-import org.weasis.dicom.codec.display.WindowPresetRegistry.Origin;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.opencv.op.lut.LutShape;
 
@@ -352,12 +352,14 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
             ? Messages.getString("WindowPresetPrefView.all")
             : String.join(", ", new TreeSet<>(preset.modalities()));
     String text = preset.name() + " \u2014 " + modalities; // NON-NLS
-    return origin == Origin.USER ? text : text + " (" + originName(origin) + ")";
-  }
-
-  private static String originName(Origin origin) {
-    return Messages.getString(
-        "WindowPresetPrefView.origin." + origin.name().toLowerCase(Locale.ROOT));
+    if (origin == Origin.USER) {
+      return text;
+    }
+    String suffix = origin.displayName();
+    if (preset.locked()) {
+      suffix += ", " + Origin.lockedName();
+    }
+    return text + " (" + suffix + ")";
   }
 
   /** The preset with its pending edits. */
@@ -399,11 +401,24 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
     enableEditor(editable);
     readOnlyLabel.setVisible(preset != null && !editable);
     if (preset != null && !editable) {
+      String key =
+          registry.isLocked(preset.id())
+              ? "WindowPresetPrefView.locked"
+              : "WindowPresetPrefView.readonly";
       readOnlyLabel.setText(
-          Messages.getString("WindowPresetPrefView.readonly")
-              .formatted(originName(registry.origin(preset.id()))));
+          Messages.getString(key).formatted(registry.origin(preset.id()).displayName()));
     }
     deleteItem.setEnabled(editable);
+    // A user preset over a site or built-in id: deleting it resets the preset to that definition
+    deleteItem.setText(
+        preset == null
+            ? Messages.getString("WindowPresetPrefView.delete")
+            : registry
+                .below(preset.id())
+                .map(
+                    o ->
+                        Messages.getString("WindowPresetPrefView.reset").formatted(o.displayName()))
+                .orElse(Messages.getString("WindowPresetPrefView.delete")));
     validateEditor();
   }
 

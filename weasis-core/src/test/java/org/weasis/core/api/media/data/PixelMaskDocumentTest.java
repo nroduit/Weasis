@@ -26,9 +26,9 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.weasis.core.api.media.data.MaskingModelRegistry.Origin;
 import org.weasis.core.api.media.data.PixelMask.DeviceKey;
 import org.weasis.core.api.media.data.PixelMask.Reference;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 
 @DisplayName("Pixel masks in the masking document")
 class PixelMaskDocumentTest {
@@ -135,17 +135,18 @@ class PixelMaskDocumentTest {
     MaskingModelRegistry registry = new MaskingModelRegistry(MaskingModelRegistry.loadBuiltIn());
     registry.configure(site, userFile);
 
-    Origin fromSite = registry.maskOrigin("us-banner");
+    Origin fromSite = registry.masks().origin("us-banner");
     registry.saveUserMask(mask("us-banner", false));
 
     assertAll(
         () -> assertEquals(Origin.SITE, fromSite),
-        () -> assertEquals(Origin.USER, registry.maskOrigin("us-banner")),
+        () -> assertEquals(Origin.USER, registry.masks().origin("us-banner")),
         () -> assertFalse(registry.pixelMask("us-banner").orElseThrow().enabled()),
         () -> assertEquals(1, MaskingModel.read(userFile).masks().size()),
         () -> assertTrue(registry.deleteUserMask("us-banner")),
         () ->
-            assertEquals(Origin.SITE, registry.maskOrigin("us-banner"), "the site entry is back"));
+            assertEquals(
+                Origin.SITE, registry.masks().origin("us-banner"), "the site entry is back"));
   }
 
   @Test

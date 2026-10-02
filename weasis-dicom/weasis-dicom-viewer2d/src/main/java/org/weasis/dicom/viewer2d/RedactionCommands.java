@@ -180,7 +180,7 @@ public class RedactionCommands {
   private static JsonObject libraryList() {
     MaskingModelRegistry registry = MaskingModelRegistry.getInstance();
     JsonArrayBuilder entries = Json.createArrayBuilder();
-    for (PixelMask mask : registry.pixelMasks()) {
+    for (PixelMask mask : registry.masks().entries()) {
       entries.add(describe(mask, registry));
     }
     return Json.createObjectBuilder()
@@ -322,7 +322,12 @@ public class RedactionCommands {
                 : registry.sessionProfile();
         List<KarnakMasks.Loss> losses = new ArrayList<>();
         KarnakMasks.write(
-            file, registry.pixelMasks(), profile, KarnakMasks.BLACK, opt.isSet("complete"), losses);
+            file,
+            registry.masks().entries(),
+            profile,
+            KarnakMasks.BLACK,
+            opt.isSet("complete"),
+            losses);
         JsonArrayBuilder lost = Json.createArrayBuilder();
         losses.forEach(
             loss ->
@@ -372,7 +377,7 @@ public class RedactionCommands {
             .add("name", mask.name()) // NON-NLS
             .add("regions", mask.regions().size()) // NON-NLS
             .add("enabled", mask.enabled()) // NON-NLS
-            .add("origin", registry.maskOrigin(mask.id()).name()); // NON-NLS
+            .add("origin", registry.masks().origin(mask.id()).name()); // NON-NLS
     JsonUtil.addIfPresent(entry, "modality", mask.match().modality()); // NON-NLS
     JsonUtil.addIfPresent(entry, "stationName", mask.match().stationName()); // NON-NLS
     entry.add(

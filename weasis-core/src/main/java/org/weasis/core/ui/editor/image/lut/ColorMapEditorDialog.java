@@ -75,6 +75,7 @@ import org.weasis.core.api.gui.util.CollapsiblePanel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.lut.ColorMapRegistry;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.util.StringUtil;
@@ -970,15 +971,12 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
 
   // ───────────────────── view refresh ─────────────────────
 
-  private static final List<Set<ColorMapRegistry.Origin>> SOURCE_FILTERS =
+  private static final List<Set<Origin>> SOURCE_FILTERS =
       List.of(
-          EnumSet.allOf(ColorMapRegistry.Origin.class),
-          EnumSet.of(
-              ColorMapRegistry.Origin.BUNDLED,
-              ColorMapRegistry.Origin.CONTRIBUTED,
-              ColorMapRegistry.Origin.SITE),
-          EnumSet.of(ColorMapRegistry.Origin.IMPORTED),
-          EnumSet.of(ColorMapRegistry.Origin.USER));
+          EnumSet.allOf(Origin.class),
+          EnumSet.of(Origin.BUILT_IN, Origin.CONTRIBUTED, Origin.SITE),
+          EnumSet.of(Origin.IMPORTED),
+          EnumSet.of(Origin.USER));
 
   private void reloadList() {
     updating = true;
@@ -1083,16 +1081,27 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
       undoButton.setEnabled(!undo.isEmpty());
       redoButton.setEnabled(!redo.isEmpty());
       deleteButton.setEnabled(registry.isUserMap(current));
+      // A user map over a site or bundled id: deleting it resets the map to that definition
+      deleteButton.setText(
+          Messages.getString(
+              registry.below(current.id()).isPresent()
+                  ? "ColorMapEditor.reset"
+                  : "ColorMapEditor.delete"));
       // Picked values are physical: they only make sense on a map anchored to physical values.
       pickButton.setEnabled(host.canPickValue() && !d.isRelative());
-      ColorMapRegistry.Origin origin = registry.origin(current);
+      Origin origin = registry.origin(current);
       favoriteCheck.setEnabled(registry.findById(current.id()).isPresent());
       favoriteCheck.setSelected(registry.isFavorite(current));
       setTitle(
           Messages.getString("ColorMapEditor.title")
               + " - "
               + current.name()
-              + (origin == null ? "" : " [" + origin.name().toLowerCase(Locale.ROOT) + "]"));
+              + (origin == null
+                  ? ""
+                  : " ["
+                      + origin.displayName()
+                      + (registry.isLocked(current) ? ", " + Origin.lockedName() : "")
+                      + "]"));
       statusLabel.setText(visibleFraction());
     } finally {
       updating = false;

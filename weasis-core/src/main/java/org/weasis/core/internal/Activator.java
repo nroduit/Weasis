@@ -42,6 +42,7 @@ import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.ConfigCommands;
 import org.weasis.core.api.util.ResourceMonitor;
 import org.weasis.core.ui.editor.FileModel;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -212,6 +213,11 @@ public class Activator implements BundleActivator, ServiceListener {
     dict.put(CommandProcessor.COMMAND_SCOPE, "image");
     dict.put(CommandProcessor.COMMAND_FUNCTION, AbstractFileModel.functions.toArray(new String[0]));
     context.registerService(FileModel.class.getName(), ViewerPluginBuilder.DefaultDataModel, dict);
+
+    Dictionary<String, Object> config = new Hashtable<>();
+    config.put(CommandProcessor.COMMAND_SCOPE, "config"); // NON-NLS
+    config.put(CommandProcessor.COMMAND_FUNCTION, ConfigCommands.functions.toArray(new String[0]));
+    context.registerService(ConfigCommands.class.getName(), new ConfigCommands(), config);
   }
 
   private static void initLoggerAndAudit(WProperties properties) {

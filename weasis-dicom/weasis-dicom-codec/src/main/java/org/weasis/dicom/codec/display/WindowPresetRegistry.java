@@ -34,7 +34,9 @@ import org.dcm4che3.img.stream.ImageDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.LayeredEntries;
+import org.weasis.core.api.util.LayeredEntries.Layer;
 import org.weasis.core.api.util.LayeredEntries.Merged;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.ref.AnatomicItem;
 import org.weasis.dicom.ref.AnatomicRegion;
@@ -62,15 +64,6 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
 
   /** File name of the site document in the {@code config} folder of the resources package. */
   public static final String SITE_FILE = "windowPresets.json"; // NON-NLS
-
-  /** Where a merged preset comes from; a later layer overrides an earlier one. */
-  public enum Origin {
-    BUILT_IN,
-    SITE,
-    USER
-  }
-
-  private static final int LAYER_BUILT_IN = Origin.BUILT_IN.ordinal();
 
   private static volatile WindowPresetRegistry instance; // NOSONAR double-checked locking
 
@@ -193,12 +186,20 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
 
   /** Where the merged preset of that id comes from. */
   public Origin origin(String id) {
-    return Origin.values()[merged.layerOf(id)];
+    return merged.origin(id);
   }
 
   /** Whether the site locked that id: the user document may not replace or hide it. */
   public boolean isLocked(String id) {
     return merged.isLocked(id);
+  }
+
+  /**
+   * The origin a user preset of that id hides, when the site or the bundled document defines the
+   * same id: deleting the user preset then resets it to that definition.
+   */
+  public Optional<Origin> below(String id) {
+    return merged.below(id);
   }
 
   /** The user presets, in document order. */
@@ -370,9 +371,9 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
     }
     // Stable: the presets of the body part move up, the others keep their order
     offered.sort(Comparator.comparing(p -> !p.when().prefers(anatomy)));
-    WindowPreset defaultPreset = selectDefault(offered, current.layers(), key);
+    WindowPreset defaultPreset = selectDefault(offered, current, key);
 
-    Map<Integer, WindowPreset> keyOwners = keyOwners(offered, current.layers(), key);
+    Map<Integer, WindowPreset> keyOwners = keyOwners(offered, current, key);
     List<Entry> entries = new ArrayList<>(offered.size());
     for (WindowPreset preset : offered) {
       int keyCode = keyOwners.get(preset.keyCode()) == preset ? preset.keyCode() : 0;
@@ -390,7 +391,7 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
 
   /** The preset that gets each key, by {@link LayeredEntries#pick}. */
   private static Map<Integer, WindowPreset> keyOwners(
-      List<WindowPreset> offered, Map<String, Integer> layers, ImageKey key) {
+      List<WindowPreset> offered, Merged<WindowPreset> merged, ImageKey key) {
     Map<Integer, List<WindowPreset>> byKey = new LinkedHashMap<>();
     for (WindowPreset preset : offered) {
       if (preset.keyCode() != 0) {
@@ -402,7 +403,7 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
         (keyCode, candidates) ->
             LayeredEntries.pick(
                     candidates,
-                    p -> layer(layers, p),
+                    p -> merged.layerOf(p.id()),
                     WindowPreset::id,
                     "Window preset key " + candidates.getFirst().key(),
                     key.modality())
@@ -410,17 +411,13 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
     return owners;
   }
 
-  private static int layer(Map<String, Integer> layers, WindowPreset preset) {
-    return layers.getOrDefault(preset.id(), LAYER_BUILT_IN);
-  }
-
   /** The flagged preset of the latest layer; the first one when a layer flags several. */
   private static WindowPreset selectDefault(
-      List<WindowPreset> offered, Map<String, Integer> layers, ImageKey key) {
+      List<WindowPreset> offered, Merged<WindowPreset> merged, ImageKey key) {
     List<WindowPreset> flagged = offered.stream().filter(WindowPreset::defaultPreset).toList();
     return LayeredEntries.pick(
             flagged,
-            p -> layer(layers, p),
+            p -> merged.layerOf(p.id()),
             WindowPreset::id,
             "Default window preset",
             key.modality())
@@ -436,7 +433,11 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
   // In memory only: the documents are read by reload()
   private synchronized Merged<WindowPreset> merge() {
     return LayeredEntries.merge(
-        List.of(builtIn, site, List.copyOf(user.values())), "Window preset"); // NON-NLS
+        List.of(
+            Layer.of(Origin.BUILT_IN, builtIn),
+            Layer.of(Origin.SITE, site),
+            Layer.of(Origin.USER, List.copyOf(user.values()))),
+        "Window preset"); // NON-NLS
   }
 
   private static Optional<List<WindowPreset>> loadSite(Path file) {

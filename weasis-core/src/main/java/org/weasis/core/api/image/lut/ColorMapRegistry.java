@@ -15,8 +15,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -32,6 +32,9 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LayeredEntries;
+import org.weasis.core.api.util.LayeredEntries.Layer;
+import org.weasis.core.api.util.LayeredEntries.Merged;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.op.lut.ByteLut;
@@ -43,12 +46,12 @@ import org.weasis.opencv.op.lut.colormap.ColorMapCompiler;
  * bundle, maps contributed by other bundles, the maps of the site document {@value #SITE_FILE} in
  * the resources package (see {@code SiteDocuments}), maps imported during the session, and the
  * user's own maps kept in {@value #USER_FILE} under the preference directory and mirrored to the
- * remote preference store. A user map shadows any other map with the same id, and a site map
- * shadows a built-in, contributed or imported one; a site map flagged {@code locked} cannot be
- * shadowed by a user map (the user map is ignored and reported), by the rules of {@link
- * LayeredEntries}. The same file keeps the ids of the user's favorite maps, which menus show at
- * their root. Menus and lists read through {@link #query(Query)}; {@link #revision()} and listeners
- * tell them when to rebuild.
+ * remote preference store. Maps of the same id shadow each other by the rules of {@link
+ * LayeredEntries}: the user map wins, then the site's, then a contributed, a built-in and an
+ * imported one; a site map flagged {@code locked} cannot be shadowed by a user map (the user map is
+ * ignored and reported). The same file keeps the ids of the user's favorite maps, which menus show
+ * at their root. Menus and lists read through {@link #query(Query)}; {@link #revision()} and
+ * listeners tell them when to rebuild.
  */
 public final class ColorMapRegistry {
 
@@ -61,15 +64,6 @@ public final class ColorMapRegistry {
   public static final String SITE_FILE = "colormaps.json"; // NON-NLS
 
   private static final String PREF_DIR_PROPERTY = "weasis.pref.dir"; // NON-NLS
-
-  /** Where a map comes from; a registry fact, not a property of the map. */
-  public enum Origin {
-    BUNDLED,
-    CONTRIBUTED,
-    SITE,
-    IMPORTED,
-    USER
-  }
 
   /**
    * A filter over the registry. Null members do not filter. {@code volume} selects volume rendering
@@ -134,7 +128,7 @@ public final class ColorMapRegistry {
 
   private static volatile ColorMapRegistry instance; // NOSONAR double-checked locking
 
-  private final Path siteFile;
+  private volatile Path siteFile; // NOSONAR replaced as a whole by reloadFrom
   private final Path userFile;
   private final Consumer<Path> remoteStore;
   private final Map<ColorMap, ByteLut> compiled = new ConcurrentHashMap<>();
@@ -148,6 +142,7 @@ public final class ColorMapRegistry {
   private final Map<String, ColorMap> userMaps = new LinkedHashMap<>();
   private final Set<String> favorites = new LinkedHashSet<>();
   private int revision;
+  private volatile Merged<ColorMap> merged = Merged.empty(); // NOSONAR immutable snapshot
 
   /**
    * @param userFile the user's JSON file, or null to keep user maps in memory only
@@ -192,10 +187,20 @@ public final class ColorMapRegistry {
     UICore core = UICore.getInstance();
     String prefDir = core.getSystemPreferences().getProperty(PREF_DIR_PROPERTY);
     Path userFile = StringUtil.hasText(prefDir) ? Path.of(prefDir).resolve(USER_FILE) : null;
-    return new ColorMapRegistry(
-        SiteDocuments.find(SITE_FILE).orElse(null),
-        userFile,
-        path -> core.storeRemotePref(path, JsonUtil.CONTENT_TYPE));
+    ColorMapRegistry registry =
+        new ColorMapRegistry(
+            SiteDocuments.find(SITE_FILE).orElse(null),
+            userFile,
+            path -> core.storeRemotePref(path, JsonUtil.CONTENT_TYPE));
+    SiteDocuments.onReload(
+        SITE_FILE, () -> registry.reloadFrom(SiteDocuments.find(SITE_FILE).orElse(null)));
+    return registry;
+  }
+
+  /** Reloads with another site document, or none. */
+  public void reloadFrom(Path siteFile) {
+    this.siteFile = siteFile;
+    reload();
   }
 
   /** Reloads the bundled, site and user maps; contributed and imported maps stay. */
@@ -249,6 +254,7 @@ public final class ColorMapRegistry {
   }
 
   private void changed() {
+    merged = merge();
     revision++;
     compiled.clear();
     queries.clear();
@@ -349,43 +355,28 @@ public final class ColorMapRegistry {
 
   // ── lookup ──
 
-  private synchronized List<Map.Entry<ColorMap, Origin>> entries() {
-    var all = new ArrayList<Map.Entry<ColorMap, Origin>>();
-    Set<String> shadowed = new HashSet<>();
-    for (ColorMap map : userMaps.values()) {
-      // A user map of a locked id stays in the file but never applies, see LayeredEntries
-      if (siteLocked.contains(map.id())) {
-        LOGGER.debug("Color map '{}' is locked by the site, the user map is ignored", map.id());
-      } else {
-        shadowed.add(map.id());
-        all.add(Map.entry(map, Origin.USER));
-      }
-    }
-    addUnshadowed(all, shadowed, site, Origin.SITE);
-    addUnshadowed(all, shadowed, bundled, Origin.BUNDLED);
-    addUnshadowed(all, shadowed, contributed, Origin.CONTRIBUTED);
-    addUnshadowed(all, shadowed, imported, Origin.IMPORTED);
-    return all;
-  }
-
-  // A map of an earlier layer hides the same id in the later ones; its id joins the shadowed set
-  private static void addUnshadowed(
-      List<Map.Entry<ColorMap, Origin>> all,
-      Set<String> shadowed,
-      List<ColorMap> maps,
-      Origin origin) {
-    for (ColorMap map : maps) {
-      if (shadowed.add(map.id())) {
-        all.add(Map.entry(map, origin));
-      }
-    }
+  // Lists keep the precedence order, user maps first, then site, plugin, bundled and imported
+  private Merged<ColorMap> merge() {
+    Merged<ColorMap> result =
+        LayeredEntries.merge(
+            List.of(
+                Layer.of(Origin.IMPORTED, imported, Set.of()),
+                Layer.of(Origin.BUILT_IN, bundled, Set.of()),
+                Layer.of(Origin.CONTRIBUTED, contributed, Set.of()),
+                Layer.of(Origin.SITE, site, siteLocked),
+                Layer.of(Origin.USER, List.copyOf(userMaps.values()), Set.of())),
+            ColorMap::id,
+            "Color map"); // NON-NLS
+    List<ColorMap> byPrecedence = new ArrayList<>(result.entries());
+    byPrecedence.sort(Comparator.comparing((ColorMap m) -> result.origin(m.id())).reversed());
+    return result.withEntries(byPrecedence);
   }
 
   /**
    * Every visible and hidden map: user maps first, then site, bundled, contributed and imported.
    */
   public List<ColorMap> maps() {
-    return entries().stream().map(Map.Entry::getKey).toList();
+    return merged.entries();
   }
 
   /** The maps matching the query, cached until the registry changes. */
@@ -394,22 +385,22 @@ public final class ColorMapRegistry {
     if (cached != null) {
       return cached;
     }
-    // Computed outside computeIfAbsent: entries() takes the registry monitor, which changed()
+    // Computed outside computeIfAbsent: snapshot() takes the registry monitor, which changed()
     // holds while clearing the cache, so a bin lock must never wait for it.
     Snapshot snapshot = snapshot();
+    Merged<ColorMap> current = snapshot.merged();
     List<ColorMap> result =
-        snapshot.entries().stream()
-            .filter(e -> query.matches(e.getKey(), e.getValue()))
-            .map(Map.Entry::getKey)
+        current.entries().stream()
+            .filter(map -> query.matches(map, current.origin(map.id())))
             .toList();
     cache(query, result, snapshot.revision());
     return result;
   }
 
-  private record Snapshot(List<Map.Entry<ColorMap, Origin>> entries, int revision) {}
+  private record Snapshot(Merged<ColorMap> merged, int revision) {}
 
   private synchronized Snapshot snapshot() {
-    return new Snapshot(entries(), revision);
+    return new Snapshot(merged, revision);
   }
 
   private synchronized void cache(Query query, List<ColorMap> result, int revision) {
@@ -433,11 +424,10 @@ public final class ColorMapRegistry {
     return maps().stream().map(ColorMap::category).filter(StringUtil::hasText).distinct().toList();
   }
 
-  public synchronized Optional<ColorMap> findById(String id) {
-    if (id == null) {
-      return Optional.empty();
-    }
-    return entries().stream().map(Map.Entry::getKey).filter(m -> m.id().equals(id)).findFirst();
+  public Optional<ColorMap> findById(String id) {
+    return id == null
+        ? Optional.empty()
+        : merged.entries().stream().filter(m -> m.id().equals(id)).findFirst();
   }
 
   /** The first map with that display name, user maps first. */
@@ -476,30 +466,27 @@ public final class ColorMapRegistry {
         flagged, this::layerOf, ColorMap::id, "Default color map", modality); // NON-NLS
   }
 
-  // The precedence of the layers, highest first: user, site, then the read-only ones
   private int layerOf(ColorMap map) {
-    Origin origin = origin(map);
-    return switch (origin) {
-      case USER -> 4;
-      case SITE -> 3;
-      case BUNDLED -> 2;
-      case CONTRIBUTED -> 1;
-      case IMPORTED -> 0;
-      case null -> 0;
-    };
+    return merged.layerOf(map.id());
   }
 
   /** Whether the site locked that map: the user document may not replace or hide it. */
-  public synchronized boolean isLocked(ColorMap map) {
-    return map != null && siteLocked.contains(map.id());
+  public boolean isLocked(ColorMap map) {
+    return map != null && merged.isLocked(map.id());
   }
 
-  public synchronized Origin origin(ColorMap map) {
-    return entries().stream()
-        .filter(e -> e.getKey().equals(map))
-        .map(Map.Entry::getValue)
-        .findFirst()
-        .orElse(null);
+  /**
+   * The origin a user map of that id hides, when the site or a bundle defines the same id: deleting
+   * the user map then resets the map to that definition.
+   */
+  public Optional<Origin> below(String id) {
+    return merged.below(id);
+  }
+
+  /** Where the merged map comes from; null for a map the registry does not hold. */
+  public Origin origin(ColorMap map) {
+    Merged<ColorMap> current = merged;
+    return map != null && current.entries().contains(map) ? current.origin(map.id()) : null;
   }
 
   public synchronized boolean isUserMap(ColorMap map) {
@@ -514,7 +501,7 @@ public final class ColorMapRegistry {
   public synchronized List<ColorMap> builtInMaps() {
     return query(
         Query.ALL
-            .withOrigins(EnumSet.of(Origin.BUNDLED, Origin.CONTRIBUTED, Origin.SITE))
+            .withOrigins(EnumSet.of(Origin.BUILT_IN, Origin.CONTRIBUTED, Origin.SITE))
             .withHidden(true));
   }
 

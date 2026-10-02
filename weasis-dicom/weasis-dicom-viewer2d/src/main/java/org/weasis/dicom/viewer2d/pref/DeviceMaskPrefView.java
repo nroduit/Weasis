@@ -44,6 +44,7 @@ import org.weasis.core.api.media.data.MaskingModelRegistry;
 import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.media.data.PixelMask;
 import org.weasis.core.api.media.data.PixelMask.Reference;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -115,7 +116,7 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
   }
 
   private void fill() {
-    tableModel.setMasks(registry.pixelMasks());
+    tableModel.setMasks(registry.masks().entries());
     boolean locked = registry.isLocked();
     lockedLabel.setVisible(locked);
     if (locked) {
@@ -158,7 +159,7 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
   private boolean editable(PixelMask mask) {
     return mask != null
         && !registry.isLocked()
-        && registry.maskOrigin(mask.id()) == MaskingModelRegistry.Origin.USER;
+        && registry.masks().origin(mask.id()) == Origin.USER;
   }
 
   private void showSelected() {
@@ -166,6 +167,11 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
     preview.setMask(mask);
     renameButton.setEnabled(editable(mask));
     deleteButton.setEnabled(editable(mask));
+    // A user mask over a site or built-in id: deleting it resets the mask to that definition
+    deleteButton.setText(
+        mask != null && registry.masks().below(mask.id()).isPresent()
+            ? Messages.getString("DeviceMaskPrefView.reset")
+            : Messages.getString("DeviceMaskPrefView.delete"));
   }
 
   private void rename() {
@@ -309,7 +315,8 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
       if (karnak) {
         MaskingProfile profile = registry.sessionProfile();
         List<KarnakMasks.Loss> losses = new ArrayList<>();
-        KarnakMasks.write(file, registry.pixelMasks(), profile, KarnakMasks.BLACK, true, losses);
+        KarnakMasks.write(
+            file, registry.masks().entries(), profile, KarnakMasks.BLACK, true, losses);
         showLosses(profile, losses);
       } else {
         registry.userModel().write(file);
@@ -461,7 +468,9 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
         case 0 -> mask.name();
         case 1 -> device(mask);
         case 2 -> mask.regions().size();
-        case 3 -> registry.maskOrigin(mask.id()).name().toLowerCase(Locale.ROOT);
+        case 3 ->
+            registry.masks().origin(mask.id()).displayName()
+                + (registry.masks().isLocked(mask.id()) ? " (" + Origin.lockedName() + ")" : "");
         default -> mask.enabled();
       };
     }

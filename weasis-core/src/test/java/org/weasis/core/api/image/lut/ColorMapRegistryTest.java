@@ -28,8 +28,8 @@ import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.weasis.core.api.image.lut.ColorMapRegistry.Origin;
 import org.weasis.core.api.image.lut.ColorMapRegistry.Query;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
 import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
@@ -55,7 +55,7 @@ class ColorMapRegistryTest {
     assertAll(
         () -> assertTrue(registry.maps().size() >= 20),
         () -> assertEquals("PET SUV", pet.name()),
-        () -> assertEquals(Origin.BUNDLED, registry.origin(pet)),
+        () -> assertEquals(Origin.BUILT_IN, registry.origin(pet)),
         () -> assertEquals("Clinical", pet.category()),
         () ->
             assertTrue(

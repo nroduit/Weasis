@@ -35,6 +35,7 @@ import org.dcm4che3.img.stream.ImageDescriptor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.opencv.core.Core.MinMaxLocResult;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.dicom.ref.AnatomicRegion;
 import org.weasis.dicom.ref.BodyPart;
 
@@ -285,8 +286,8 @@ class WindowPresetRegistryTest {
         () -> assertTrue(Files.isRegularFile(user)),
         () -> assertEquals(List.of(user), mirrored),
         () -> assertEquals(List.of(liver), registry.userPresets()),
-        () -> assertEquals(WindowPresetRegistry.Origin.USER, registry.origin("user.ct.liver")),
-        () -> assertEquals(WindowPresetRegistry.Origin.BUILT_IN, registry.origin("weasis.ct.lung")),
+        () -> assertEquals(Origin.USER, registry.origin("user.ct.liver")),
+        () -> assertEquals(Origin.BUILT_IN, registry.origin("weasis.ct.lung")),
         () ->
             assertEquals(
                 "user.ct.liver",
@@ -347,7 +348,7 @@ class WindowPresetRegistryTest {
     registry.reload();
 
     assertAll(
-        () -> assertEquals(WindowPresetRegistry.Origin.SITE, registry.origin("site.ct.liver")),
+        () -> assertEquals(Origin.SITE, registry.origin("site.ct.liver")),
         () -> assertEquals(14, registry.presets().size(), "unreadable site keeps the last one"));
   }
 
@@ -439,7 +440,7 @@ class WindowPresetRegistryTest {
     assertAll(
         () -> assertEquals("Site lung", lung.name()),
         () -> assertFalse(lung.hidden(), "the user cannot hide a locked preset"),
-        () -> assertEquals(WindowPresetRegistry.Origin.SITE, registry.origin("weasis.ct.lung")),
+        () -> assertEquals(Origin.SITE, registry.origin("weasis.ct.lung")),
         () -> assertTrue(registry.isLocked("weasis.ct.lung")),
         () -> assertEquals("My liver", liver.name()),
         () -> assertFalse(registry.isLocked("site.ct.liver")),

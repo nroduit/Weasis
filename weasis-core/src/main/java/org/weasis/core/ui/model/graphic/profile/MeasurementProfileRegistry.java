@@ -28,7 +28,9 @@ import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LayeredEntries;
+import org.weasis.core.api.util.LayeredEntries.Layer;
 import org.weasis.core.api.util.LayeredEntries.Merged;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.util.StringUtil;
 
@@ -54,7 +56,7 @@ public final class MeasurementProfileRegistry {
   private static volatile MeasurementProfileRegistry instance; // NOSONAR double-checked locking
 
   private final List<MeasurementProfile> builtIn;
-  private final Path siteFile;
+  private volatile Path siteFile; // NOSONAR replaced as a whole by reloadFrom
   private final Path userFile;
   private final WProperties selectionStore;
   private final Consumer<Path> remoteStore;
@@ -125,12 +127,16 @@ public final class MeasurementProfileRegistry {
       WProperties preferences = core.getSystemPreferences();
       String prefDir = preferences.getProperty("weasis.pref.dir"); // NON-NLS
       Path file = StringUtil.hasText(prefDir) ? Path.of(prefDir).resolve(USER_FILE) : null;
-      return new MeasurementProfileRegistry(
-          loadBuiltIn(),
-          SiteDocuments.find(SITE_FILE).orElse(null),
-          file,
-          core.getLocalPersistence(),
-          path -> core.storeRemotePref(path, JsonUtil.CONTENT_TYPE));
+      MeasurementProfileRegistry registry =
+          new MeasurementProfileRegistry(
+              loadBuiltIn(),
+              SiteDocuments.find(SITE_FILE).orElse(null),
+              file,
+              core.getLocalPersistence(),
+              path -> core.storeRemotePref(path, JsonUtil.CONTENT_TYPE));
+      SiteDocuments.onReload(
+          SITE_FILE, () -> registry.reloadFrom(SiteDocuments.find(SITE_FILE).orElse(null)));
+      return registry;
     } catch (RuntimeException | LinkageError e) {
       LOGGER.debug("No UI core, profiles kept in memory", e);
       return new MeasurementProfileRegistry(loadBuiltIn(), null, null, null, null);
@@ -144,6 +150,12 @@ public final class MeasurementProfileRegistry {
       LOGGER.error("Cannot read the built-in measurement profiles", e);
       return List.of();
     }
+  }
+
+  /** Reloads with another site document, or none. */
+  public void reloadFrom(Path siteFile) {
+    this.siteFile = siteFile;
+    reload();
   }
 
   /** Re-reads the site and user documents and merges them over the bundled one. */
@@ -175,7 +187,12 @@ public final class MeasurementProfileRegistry {
       userLayer = List.copyOf(user.values());
     }
     Merged<MeasurementProfile> result =
-        LayeredEntries.merge(List.of(builtIn, siteLayer, userLayer), "Measurement profile");
+        LayeredEntries.merge(
+            List.of(
+                Layer.of(Origin.BUILT_IN, builtIn),
+                Layer.of(Origin.SITE, siteLayer),
+                Layer.of(Origin.USER, userLayer)),
+            "Measurement profile");
     if (result.entries().stream().noneMatch(MeasurementProfile::isDefault)) {
       List<MeasurementProfile> withDefault = new ArrayList<>(result.entries());
       withDefault.add(
@@ -188,7 +205,7 @@ public final class MeasurementProfileRegistry {
               null,
               null,
               true)); // NON-NLS
-      result = new Merged<>(List.copyOf(withDefault), result.layers(), result.locked());
+      result = result.withEntries(withDefault);
     }
     merged = result;
   }
@@ -232,6 +249,19 @@ public final class MeasurementProfileRegistry {
   /** Whether the site locked that id: the user document may not replace it. */
   public boolean isLocked(String id) {
     return merged.isLocked(id);
+  }
+
+  /** Which document the merged profile of that id comes from. */
+  public Origin origin(String id) {
+    return merged.origin(id);
+  }
+
+  /**
+   * The origin a user profile of that id hides, when the site or the bundled document defines the
+   * same id: deleting the user profile then resets it to that definition.
+   */
+  public Optional<Origin> below(String id) {
+    return merged.below(id);
   }
 
   public List<MeasurementProfile> userProfiles() {

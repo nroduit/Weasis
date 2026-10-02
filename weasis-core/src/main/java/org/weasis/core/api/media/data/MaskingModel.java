@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.api.util.LayeredEntries;
 import org.weasis.core.util.StringUtil;
 
 /**
@@ -113,11 +114,16 @@ public record MaskingModel(
    *
    * @param key normalized tag key, see {@link #normalizeKey(String, String)}
    */
-  public record TagRule(String key, TagCategory category) {
+  public record TagRule(String key, TagCategory category) implements LayeredEntries.Entry {
 
     public TagRule {
       Objects.requireNonNull(key);
       Objects.requireNonNull(category);
+    }
+
+    @Override
+    public String id() {
+      return key;
     }
 
     public boolean isInternal() {

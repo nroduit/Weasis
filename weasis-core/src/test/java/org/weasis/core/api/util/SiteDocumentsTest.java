@@ -54,4 +54,25 @@ class SiteDocumentsTest {
   void the_folder_is_config_under_the_resources_path() {
     assertEquals(SiteDocuments.FOLDER, SiteDocuments.folder().getFileName().toString());
   }
+
+  @Test
+  void reload_runs_every_hook_once_per_key_and_survives_a_failing_one() {
+    java.util.List<String> calls = new java.util.ArrayList<>();
+    SiteDocuments.onReload("test.a", () -> calls.add("a1")); // NON-NLS
+    SiteDocuments.onReload("test.a", () -> calls.add("a2")); // replaces the first // NON-NLS
+    SiteDocuments.onReload(
+        "test.failing", // NON-NLS
+        () -> {
+          throw new IllegalStateException("boom");
+        });
+    SiteDocuments.onReload("test.b", () -> calls.add("b")); // NON-NLS
+
+    SiteDocuments.reloadAll();
+
+    assertAll(
+        () -> assertEquals(java.util.List.of("a2", "b"), calls),
+        () ->
+            assertTrue(
+                SiteDocuments.reloadHooks().containsAll(java.util.List.of("test.a", "test.b"))));
+  }
 }

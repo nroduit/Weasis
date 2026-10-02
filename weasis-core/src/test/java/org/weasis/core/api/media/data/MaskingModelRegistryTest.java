@@ -21,6 +21,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 
 @DisplayName("MaskingModelRegistry")
 class MaskingModelRegistryTest {
@@ -43,7 +44,7 @@ class MaskingModelRegistryTest {
         () ->
             assertEquals(
                 List.of("display", "teaching", "publication", "ai-request"),
-                registry.profiles().stream().map(MaskingProfile::id).toList()),
+                registry.profiles().entries().stream().map(MaskingProfile::id).toList()),
         () -> assertEquals("display", registry.sessionProfile().id()),
         () -> assertEquals("ai-request", registry.aiProfile().id()),
         () ->
@@ -52,7 +53,7 @@ class MaskingModelRegistryTest {
                 registry.exportProfiles().stream().map(MaskingProfile::id).toList()),
         () ->
             assertTrue(
-                registry.tagRules().stream()
+                registry.tags().entries().stream()
                     .anyMatch(r -> r.key().equals("weasis:PatientPseudoUID"))));
   }
 
@@ -75,7 +76,7 @@ class MaskingModelRegistryTest {
         () -> assertEquals(4, registry.exportProfiles().size()),
         () ->
             assertTrue(
-                registry.tagRules().stream().anyMatch(r -> r.key().equals("OperatorsName"))));
+                registry.tags().entries().stream().anyMatch(r -> r.key().equals("OperatorsName"))));
   }
 
   @Test
@@ -151,11 +152,11 @@ class MaskingModelRegistryTest {
     registry.configure(site, user);
     assertAll(
         () -> assertEquals("Site teaching", registry.profile("teaching").orElseThrow().name()),
-        () -> assertEquals(MaskingModelRegistry.Origin.SITE, registry.origin("teaching")),
-        () -> assertTrue(registry.isProfileLocked("teaching")),
-        () -> assertFalse(registry.isProfileLocked("display")),
+        () -> assertEquals(Origin.SITE, registry.profiles().origin("teaching")),
+        () -> assertTrue(registry.profiles().isLocked("teaching")),
+        () -> assertFalse(registry.profiles().isLocked("display")),
         () -> assertEquals("Site mask", registry.pixelMask("us-1").orElseThrow().name()),
-        () -> assertTrue(registry.isMaskLocked("us-1")),
+        () -> assertTrue(registry.masks().isLocked("us-1")),
         () -> assertFalse(registry.isLocked(), "the document itself is not locked"));
   }
 }

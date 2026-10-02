@@ -76,9 +76,9 @@ public final class PixelMaskMatcher {
 
     Comparator<PixelMask> order =
         Comparator.comparingInt((PixelMask m) -> m.match().specificity())
-            .thenComparing(m -> registry.maskOrigin(m.id()).ordinal())
+            .thenComparing(m -> registry.masks().origin(m.id()).ordinal())
             .reversed();
-    return registry.pixelMasks().stream()
+    return registry.masks().entries().stream()
         .sorted(order)
         .map(
             mask ->

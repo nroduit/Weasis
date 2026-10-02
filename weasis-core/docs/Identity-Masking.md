@@ -80,8 +80,8 @@ A mask is in force in one of two ways, and `IdentityMask.active()` returns which
 
 ## Configuration
 
-The model is data, merged by `MaskingModelRegistry` from several JSON documents, a later one
-overriding an earlier one for the same tag or profile id:
+The model is data, merged by `MaskingModelRegistry` from several JSON documents by the rules of
+`LayeredEntries`, a later one overriding an earlier one for the same tag, profile or mask id:
 
 1. the bundled `identityMasking.json` of weasis-core (profiles, Weasis-internal tags);
 2. documents contributed by other bundles, such as the DICOM tag classification of the DICOM codec

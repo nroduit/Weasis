@@ -132,6 +132,7 @@ public class DicomCodec implements Codec<DicomImageElement> {
     }
 
     configureWindowPresets();
+    SiteDocuments.onReload(WindowPresetRegistry.SITE_FILE, DicomCodec::configureWindowPresets);
     // Only the codec can tell whether pixels may carry identity: the dialogs of the core ask it
     PixelReviewAdvisor.install(Redaction::requiresReview);
   }

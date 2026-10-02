@@ -30,6 +30,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.util.StringUtil;
 
 public class PreferenceDialog extends AbstractWizardDialog {
@@ -42,9 +43,11 @@ public class PreferenceDialog extends AbstractWizardDialog {
   protected final JButton jButtonHelp = new JButton();
   protected final JButton restoreButton = new JButton(Messages.getString("restore.values"));
   protected final JButton applyButton = new JButton(Messages.getString("LabelPrefView.apply"));
+  protected final JButton reloadSiteButton =
+      new JButton(Messages.getString("PreferenceDialog.reload.site"));
   protected final JPanel bottomPrefPanel =
       GuiUtils.getFlowLayoutPanel(
-          FlowLayout.TRAILING, 10, 7, jButtonHelp, restoreButton, applyButton);
+          FlowLayout.TRAILING, 10, 7, reloadSiteButton, jButtonHelp, restoreButton, applyButton);
 
   public PreferenceDialog(Window parentWin) {
     super(
@@ -57,6 +60,8 @@ public class PreferenceDialog extends AbstractWizardDialog {
 
     jButtonHelp.putClientProperty("JButton.buttonType", "help");
     jButtonHelp.setToolTipText(Messages.getString("online.documentation"));
+    reloadSiteButton.setToolTipText(Messages.getString("PreferenceDialog.reload.site.tip"));
+    reloadSiteButton.addActionListener(e -> SiteDocuments.reloadAll());
     applyButton.addActionListener(
         e -> {
           if (currentPage != null) currentPage.closeAdditionalWindow();

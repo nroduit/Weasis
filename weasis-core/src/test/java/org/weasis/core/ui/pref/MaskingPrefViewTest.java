@@ -29,6 +29,7 @@ import org.weasis.core.api.media.data.MaskingModelRegistry;
 import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.media.data.PixelMask;
 import org.weasis.core.api.media.data.TagCategory;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 
 @DisplayName("MaskingPrefView")
 class MaskingPrefViewTest {
@@ -85,7 +86,7 @@ class MaskingPrefViewTest {
                 AnonymizationAction.PSEUDONYMIZE,
                 saved.actionFor(TagCategory.DIRECT_ID),
                 "the clone keeps what its source hides"),
-        () -> assertEquals(MaskingModelRegistry.Origin.USER, registry.origin(clone.id())),
+        () -> assertEquals(Origin.USER, registry.profiles().origin(clone.id())),
         () -> assertTrue(Files.isRegularFile(userFile())));
   }
 
@@ -102,10 +103,10 @@ class MaskingPrefViewTest {
 
     assertAll(
         () -> assertEquals(before + 1, view.tagRowCount()),
-        () -> assertEquals(MaskingModelRegistry.Origin.USER, registry.tagOrigin("00101040")),
+        () -> assertEquals(Origin.USER, registry.tags().origin("00101040")),
         () ->
             assertTrue(
-                registry.tagRules().stream()
+                registry.tags().entries().stream()
                     .anyMatch(
                         r -> r.key().equals("00101040") && r.category() == TagCategory.DIRECT_ID)));
   }

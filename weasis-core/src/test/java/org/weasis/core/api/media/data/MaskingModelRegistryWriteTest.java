@@ -26,7 +26,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.weasis.core.api.media.data.MaskingModel.TagRule;
-import org.weasis.core.api.media.data.MaskingModelRegistry.Origin;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 
 @DisplayName("MaskingModelRegistry user document")
 class MaskingModelRegistryWriteTest {
@@ -62,8 +62,8 @@ class MaskingModelRegistryWriteTest {
         () -> assertTrue(Files.isRegularFile(userFile())),
         () -> assertEquals(1, reloads.get()),
         () -> assertTrue(registry.profile("user-demo").isPresent()),
-        () -> assertEquals(Origin.USER, registry.origin("user-demo")),
-        () -> assertEquals(Origin.BUILT_IN, registry.origin("display")),
+        () -> assertEquals(Origin.USER, registry.profiles().origin("user-demo")),
+        () -> assertEquals(Origin.BUILT_IN, registry.profiles().origin("display")),
         () -> assertEquals(List.of("user-demo"), ids(registry.userModel())),
         () -> assertEquals(List.of("user-demo"), ids(MaskingModel.read(userFile()))));
   }
@@ -89,7 +89,7 @@ class MaskingModelRegistryWriteTest {
                     .profile(MaskingProfile.DISPLAY_ID)
                     .orElseThrow()
                     .actionFor(TagCategory.DIRECT_ID)),
-        () -> assertEquals(Origin.BUILT_IN, registry.origin(MaskingProfile.DISPLAY_ID)));
+        () -> assertEquals(Origin.BUILT_IN, registry.profiles().origin(MaskingProfile.DISPLAY_ID)));
   }
 
   @Test
@@ -100,13 +100,13 @@ class MaskingModelRegistryWriteTest {
     String key = "00101040";
 
     assertAll(
-        () -> assertEquals(Origin.USER, registry.tagOrigin(key)),
+        () -> assertEquals(Origin.USER, registry.tags().origin(key)),
         () ->
             assertTrue(
-                registry.tagRules().stream()
+                registry.tags().entries().stream()
                     .anyMatch(r -> r.key().equals(key) && r.category() == TagCategory.DIRECT_ID)),
         () -> assertTrue(registry.deleteUserTag(key)),
-        () -> assertFalse(registry.tagRules().stream().anyMatch(r -> r.key().equals(key))),
+        () -> assertFalse(registry.tags().entries().stream().anyMatch(r -> r.key().equals(key))),
         () -> assertThrows(IllegalArgumentException.class, () -> registry.saveUserTag("", null)));
   }
 
@@ -139,7 +139,7 @@ class MaskingModelRegistryWriteTest {
 
     assertAll(
         () -> assertTrue(registry.isLocked()),
-        () -> assertEquals(Origin.SITE, registry.origin("site-demo")),
+        () -> assertEquals(Origin.SITE, registry.profiles().origin("site-demo")),
         () ->
             assertThrows(
                 IllegalStateException.class,
