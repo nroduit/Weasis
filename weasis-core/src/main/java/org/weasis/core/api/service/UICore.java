@@ -66,6 +66,7 @@ import org.weasis.core.api.net.URLParameters;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -175,6 +176,9 @@ public final class UICore {
 
     this.dicomLaunchers = Launcher.loadLaunchers(Launcher.Type.DICOM);
     this.otherLaunchers = Launcher.loadLaunchers(Launcher.Type.OTHER);
+    for (Launcher.Type type : Launcher.Type.values()) {
+      SiteDocuments.onReload(type.getFilename(), () -> Launcher.reload(type));
+    }
   }
 
   private static ConfigData retrieveconfigData() {

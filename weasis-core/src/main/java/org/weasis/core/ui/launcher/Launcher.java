@@ -16,7 +16,6 @@ import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonException;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
-import jakarta.json.JsonValue;
 import java.awt.Window;
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,6 +27,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.swing.Action;
 import javax.swing.Icon;
@@ -48,9 +48,16 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.EntryIds;
+import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.api.util.LayeredEntries;
+import org.weasis.core.api.util.LayeredEntries.Layer;
+import org.weasis.core.api.util.LayeredEntries.Origin;
+import org.weasis.core.api.util.ListDocument;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -58,9 +65,27 @@ import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.core.util.StringUtil;
 
-public class Launcher {
+/**
+ * An external launcher: a URI or an application started from the viewer. The launchers of a type
+ * come from two documents merged by id (see {@link LayeredEntries}): the site document {@code
+ * config/<file>} of the resources package, read from the package root when the site still ships it
+ * there, then the user's own document of the data folder. Both hold the {@link ListDocument}
+ * envelope or a bare array, and an entry without an {@code id} gets one derived from its name,
+ * {@code site.launcher.<name>} or {@code user.launcher.<name>}, so that a user entry can replace a
+ * site one by id, {@code extends} it, or hide it.
+ */
+public class Launcher implements LayeredEntries.Entry {
   private static final Logger LOGGER = LoggerFactory.getLogger(Launcher.class);
 
+  /** The name of the array of entries in the document envelope. */
+  public static final String ENTRIES = "launchers"; // NON-NLS
+
+  private static final String ID_KEY = JsonExtends.ID;
+  private static final String HIDDEN_KEY = "hidden"; // NON-NLS
+  private static final String LOCKED_KEY = JsonExtends.LOCKED;
+  private static final String NAME_KEY = "name"; // NON-NLS
+  private static final String KIND = "launcher"; // NON-NLS
+  private static final String WHAT = "Launcher"; // NON-NLS
   private static final String LAUNCH_TYPE = "launchType"; // NON-NLS
   private static final String URI_TYPE = "URI"; // NON-NLS
   private static final String APPLICATION_TYPE = "Application"; // NON-NLS
@@ -105,14 +130,59 @@ public class Launcher {
     }
   }
 
+  private String id;
   private String name;
   private String iconPath;
   private boolean enable;
   private boolean button;
+  private boolean hidden;
+  private boolean locked;
 
   private boolean local = true;
 
   private Configuration configuration;
+
+  /** The id of the entry in its document, null for a launcher not saved yet. */
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  @Override
+  public String id() {
+    return id;
+  }
+
+  /** Kept out of the lists and the toolbars; still replaces the same id of the site document. */
+  public boolean isHidden() {
+    return hidden;
+  }
+
+  public void setHidden(boolean hidden) {
+    this.hidden = hidden;
+  }
+
+  @Override
+  public boolean hidden() {
+    return hidden;
+  }
+
+  /** A site launcher the user document may not replace or hide. */
+  public boolean isLocked() {
+    return locked;
+  }
+
+  public void setLocked(boolean locked) {
+    this.locked = locked;
+  }
+
+  @Override
+  public boolean locked() {
+    return locked;
+  }
 
   public String getName() {
     return name;
@@ -555,10 +625,17 @@ public class Launcher {
 
   JsonObject toJson() {
     JsonObjectBuilder builder = Json.createObjectBuilder();
-    JsonUtil.addIfPresent(builder, "name", name); // NON-NLS
+    JsonUtil.addIfPresent(builder, ID_KEY, id);
+    JsonUtil.addIfPresent(builder, NAME_KEY, name);
     JsonUtil.addIfPresent(builder, "iconPath", iconPath); // NON-NLS
     builder.add("enable", enable); // NON-NLS
     builder.add("button", button); // NON-NLS
+    if (hidden) {
+      builder.add(HIDDEN_KEY, true);
+    }
+    if (locked) {
+      builder.add(LOCKED_KEY, true);
+    }
     if (configuration != null) {
       builder.add("configuration", configuration.toJson()); // NON-NLS
     }
@@ -567,7 +644,10 @@ public class Launcher {
 
   static Launcher fromJson(JsonObject json) {
     Launcher launcher = new Launcher();
-    launcher.setName(json.getString("name", null)); // NON-NLS
+    launcher.setId(json.getString(ID_KEY, null));
+    launcher.setName(json.getString(NAME_KEY, null));
+    launcher.setHidden(json.getBoolean(HIDDEN_KEY, false));
+    launcher.setLocked(json.getBoolean(LOCKED_KEY, false));
     launcher.setIconPath(json.getString("iconPath", null)); // NON-NLS
     launcher.setEnable(json.getBoolean("enable", false)); // NON-NLS
     launcher.setButton(json.getBoolean("button", false)); // NON-NLS
@@ -671,14 +751,45 @@ public class Launcher {
     List<Launcher> list = getLaunchers(type);
     final BundleContext context = AppProperties.getBundleContext(Launcher.class);
     try {
-      Path file = BundlePreferences.getFileInDataFolder(context, type.getFilename());
-      JsonArrayBuilder builder = Json.createArrayBuilder();
-      list.forEach(launcher -> builder.add(launcher.toJson()));
-      JsonUtil.write(file, builder.build());
+      writeUserDocument(BundlePreferences.getFileInDataFolder(context, type.getFilename()), list);
     } catch (IOException e) {
       LOGGER.error("Cannot save the launcher configuration", e);
     }
+    notifyToolbars();
+  }
 
+  /**
+   * Writes the user's launchers of the list in the document envelope; the site ones are left to
+   * their document. A launcher without an id gets one derived from its name, kept from then on.
+   */
+  static void writeUserDocument(Path file, List<Launcher> launchers) throws IOException {
+    Set<String> used = new HashSet<>();
+    launchers.stream().map(Launcher::getId).filter(StringUtil::hasText).forEach(used::add);
+    List<JsonObject> objects = new ArrayList<>();
+    for (Launcher launcher : launchers) {
+      if (!launcher.isLocal()) {
+        continue;
+      }
+      if (!StringUtil.hasText(launcher.getId())) {
+        String derived = EntryIds.derived(EntryIds.USER_PREFIX, KIND, launcher.getName());
+        launcher.setId(EntryIds.unique(derived, used));
+        used.add(launcher.getId());
+      }
+      objects.add(launcher.toJson());
+    }
+    ListDocument.write(file, ENTRIES, objects);
+  }
+
+  /** Re-reads both documents of the type into its live list, and refreshes the toolbars. */
+  public static void reload(Type type) {
+    List<Launcher> list = getLaunchers(type);
+    List<Launcher> loaded = loadLaunchers(type);
+    list.clear();
+    list.addAll(loaded);
+    notifyToolbars();
+  }
+
+  private static void notifyToolbars() {
     List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
     if (viewerPlugins != null && !viewerPlugins.isEmpty()) {
       Set<SeriesViewerUI> uiSet =
@@ -728,7 +839,7 @@ public class Launcher {
     }
 
     for (Launcher launcher : launchers) {
-      if (launcher.isEnable() && launcher.getConfiguration().isValid()) {
+      if (launcher.isEnable() && !launcher.isHidden() && launcher.getConfiguration().isValid()) {
         String name = launcher.getName();
         Icon icon = launcher.getResizeIcon(16, 16);
         actions.add(new DefaultAction(name, icon, _ -> launcher.execute(eventManager)));
@@ -747,39 +858,112 @@ public class Launcher {
     }
   }
 
+  /** Fills the combo box with the launchers of the type, the hidden ones left out. */
   public static void loadLaunchers(JComboBox<Launcher> comboBox, Type type) {
-    if (type == Type.DICOM) {
-      for (Launcher node : GuiUtils.getUICore().getDicomLaunchers()) {
-        comboBox.addItem(node);
-      }
-    } else if (type == Type.OTHER) {
-      for (Launcher node : GuiUtils.getUICore().getOtherLaunchers()) {
+    for (Launcher node : getLaunchers(type)) {
+      if (!node.isHidden()) {
         comboBox.addItem(node);
       }
     }
   }
 
+  /**
+   * The launchers of the type: the site document merged by id with the user document of the data
+   * folder, in a mutable list.
+   */
   public static List<Launcher> loadLaunchers(Type type) {
-    List<Launcher> list = new ArrayList<>();
-    loadLaunchers(list, ResourceUtil.getResource(type.getFilename()).toPath(), false);
     final BundleContext context = AppProperties.getBundleContext(Launcher.class);
-    loadLaunchers(list, BundlePreferences.getFileInDataFolder(context, type.getFilename()), true);
-    return list;
+    return loadLaunchers(
+        siteDocument(type), BundlePreferences.getFileInDataFolder(context, type.getFilename()));
   }
 
-  private static void loadLaunchers(List<Launcher> list, Path resource, boolean local) {
-    if (Files.isReadable(resource)) {
-      try {
-        for (JsonValue value : JsonUtil.readArray(resource)) {
-          if (value instanceof JsonObject json) {
-            Launcher node = fromJson(json);
-            node.setLocal(local);
-            list.add(node);
-          }
-        }
-      } catch (IOException | JsonException e) {
-        LOGGER.error("Cannot load the launcher configuration", e);
+  /**
+   * The site document of the type: {@code config/<file>} of the resources package when the site
+   * ships it there, else the file of the same name in the package root, where it was before 4.8.
+   */
+  static Path siteDocument(Type type) {
+    String name = type.getFilename();
+    return SiteDocuments.find(name)
+        .orElseGet(
+            () -> {
+              Path legacy = ResourceUtil.getResource(name).toPath();
+              LOGGER.debug(
+                  "No site document {} under {}: reading {}", name, SiteDocuments.FOLDER, legacy);
+              return legacy;
+            });
+  }
+
+  /**
+   * Merges the two documents: a user launcher with the id of a site one replaces it unless the site
+   * locked it; a hidden one stays in the list so that a save keeps it, the views skip it.
+   */
+  static List<Launcher> loadLaunchers(Path siteFile, Path userFile) {
+    List<JsonObject> siteEntries = entries(siteFile, EntryIds.SITE_PREFIX, JsonExtends.NO_BASE);
+    Map<String, JsonObject> siteById = new HashMap<>();
+    siteEntries.forEach(entry -> siteById.putIfAbsent(entry.getString(ID_KEY), entry));
+    List<JsonObject> userEntries =
+        entries(userFile, EntryIds.USER_PREFIX, id -> Optional.ofNullable(siteById.get(id)));
+    LayeredEntries.Merged<Launcher> merged =
+        LayeredEntries.merge(
+            List.of(
+                Layer.of(Origin.SITE, parse(siteEntries, false)),
+                Layer.of(Origin.USER, parse(userEntries, true))),
+            WHAT);
+    return new ArrayList<>(merged.entries());
+  }
+
+  /** The entries of one document, their {@code extends} resolved and every one given an id. */
+  private static List<JsonObject> entries(
+      Path file, String prefix, Function<String, Optional<JsonObject>> lowerBase) {
+    if (file == null || !Files.isReadable(file)) {
+      return List.of();
+    }
+    List<JsonObject> raw;
+    try {
+      raw = ListDocument.read(file, ENTRIES).entries();
+    } catch (IOException e) {
+      LOGGER.error("Cannot load the launcher configuration {}", file, e);
+      return List.of();
+    }
+    return withIds(JsonExtends.resolve(raw, lowerBase, WHAT), prefix);
+  }
+
+  /**
+   * The entries with an id each: one without gets {@code <prefix>launcher.<name>}, made unique
+   * within the document, so that the same document always yields the same ids.
+   */
+  static List<JsonObject> withIds(List<JsonObject> entries, String prefix) {
+    Set<String> used = new HashSet<>();
+    for (JsonObject entry : entries) {
+      String id = entry.getString(ID_KEY, null);
+      if (StringUtil.hasText(id)) {
+        used.add(id);
       }
     }
+    List<JsonObject> result = new ArrayList<>(entries.size());
+    for (JsonObject entry : entries) {
+      if (!StringUtil.hasText(entry.getString(ID_KEY, null))) {
+        String derived = EntryIds.derived(prefix, KIND, entry.getString(NAME_KEY, null));
+        String id = EntryIds.unique(derived, used);
+        used.add(id);
+        entry = Json.createObjectBuilder(entry).add(ID_KEY, id).build();
+      }
+      result.add(entry);
+    }
+    return List.copyOf(result);
+  }
+
+  private static List<Launcher> parse(List<JsonObject> entries, boolean local) {
+    List<Launcher> list = new ArrayList<>(entries.size());
+    for (JsonObject json : entries) {
+      try {
+        Launcher node = fromJson(json);
+        node.setLocal(local);
+        list.add(node);
+      } catch (JsonException | ClassCastException e) {
+        LOGGER.error("Invalid launcher {}", json.getString(ID_KEY, "?"), e);
+      }
+    }
+    return list;
   }
 }
