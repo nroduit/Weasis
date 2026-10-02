@@ -49,7 +49,6 @@ public class ComputeTexture extends TextureData {
     gl.glTexParameteri(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_MIN_FILTER, Gl.GL_NEAREST);
     gl.glTexImage2D(
         Gl.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, MemorySegment.NULL);
-    gl.glBindImageTexture(0, getId(), 0, false, 0, Gl.GL_WRITE_ONLY, internalFormat);
 
     // Force to render next time
     this.width = 1;
@@ -100,6 +99,9 @@ public class ComputeTexture extends TextureData {
       gl.glTexImage2D(
           Gl.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, MemorySegment.NULL);
     }
+    // Image unit 0 is state of the context all the views share, so it is bound before each pass
+    // instead of once at init, otherwise every view would write into the last one initialized.
+    gl.glBindImageTexture(0, getId(), 0, false, 0, Gl.GL_WRITE_ONLY, internalFormat);
 
     int workSizeX = Math.max(localSize, nextPowerOfTwo(width));
     int workSizeY = Math.max(localSize, nextPowerOfTwo(height));
