@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
@@ -278,5 +279,36 @@ class ColorMapRegistryTest {
     Path absent = dir.resolve("config").resolve("missing.json");
     assertEquals(
         registry.maps().size(), new ColorMapRegistry(absent, null, null).maps().size(), "no site");
+  }
+
+  @Test
+  void a_locked_site_map_refuses_the_user_map() throws Exception {
+    Path site = dir.resolve("config").resolve(ColorMapRegistry.SITE_FILE);
+    Files.createDirectories(site.getParent());
+    Files.writeString(
+        site,
+        """
+        {"schema": 1, "maps": [
+          {"id": "weasis.pet-suv", "name": "Site PET", "locked": true,
+           "stops": [{"pos": 0, "color": "#000000"}, {"pos": 1, "color": "#ff0000"}]}
+        ]}
+        """);
+    ColorMap mine =
+        ColorMap.builder("My PET")
+            .id("weasis.pet-suv")
+            .stop(0, Color.BLACK)
+            .stop(1, Color.YELLOW)
+            .build();
+    Files.createDirectories(userFile.getParent());
+    ColorMapJson.write(userFile, List.of(mine), List.of());
+
+    ColorMapRegistry withSite = new ColorMapRegistry(site, userFile, null);
+    ColorMap pet = withSite.findById("weasis.pet-suv").orElseThrow();
+    assertAll(
+        () -> assertEquals("Site PET", pet.name(), "the user map of a locked id is ignored"),
+        () -> assertEquals(Origin.SITE, withSite.origin(pet)),
+        () -> assertTrue(withSite.isLocked(pet)),
+        () -> assertEquals(List.of(mine), withSite.userMaps(), "but stays in the user file"),
+        () -> assertThrows(IllegalStateException.class, () -> withSite.saveUserMap(mine)));
   }
 }

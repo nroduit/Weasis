@@ -214,6 +214,9 @@ public record MaskingModel(
     if (profile.offerInExport()) {
       entry.add("offerInExport", true); // NON-NLS
     }
+    if (profile.locked()) {
+      entry.add("locked", true); // NON-NLS
+    }
     return entry.build();
   }
 
@@ -244,6 +247,9 @@ public record MaskingModel(
     }
     if (!mask.enabled()) {
       entry.add("enabled", false); // NON-NLS
+    }
+    if (mask.locked()) {
+      entry.add("locked", true); // NON-NLS
     }
     return entry.build();
   }
@@ -390,7 +396,8 @@ public record MaskingModel(
             actions,
             tagActions,
             JsonUtil.getBoolean(entry, "shiftsDates", false), // NON-NLS
-            JsonUtil.getBoolean(entry, "offerInExport", false))); // NON-NLS
+            JsonUtil.getBoolean(entry, "offerInExport", false), // NON-NLS
+            JsonUtil.getBoolean(entry, "locked", false))); // NON-NLS
   }
 
   private static void readMask(JsonObject entry, List<PixelMask> masks) {
@@ -423,7 +430,8 @@ public record MaskingModel(
                   JsonUtil.getInt(reference, "rows", 0)), // NON-NLS
               regions,
               JsonUtil.getStringList(entry, "profiles"), // NON-NLS
-              JsonUtil.getBoolean(entry, "enabled", true))); // NON-NLS
+              JsonUtil.getBoolean(entry, "enabled", true), // NON-NLS
+              JsonUtil.getBoolean(entry, "locked", false))); // NON-NLS
     } catch (IllegalArgumentException e) {
       LOGGER.warn("Skipping invalid pixel mask {}: {}", id, e.getMessage());
     }

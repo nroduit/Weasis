@@ -12,6 +12,7 @@ package org.weasis.core.ui.model.graphic.profile;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -152,5 +153,44 @@ class MeasurementProfileRegistryTest {
     MeasurementProfileRegistry registry =
         new MeasurementProfileRegistry(List.of(profile("ct", "CT", "CT")), null, null);
     assertTrue(registry.profile(MeasurementProfile.DEFAULT_ID).isPresent());
+  }
+
+  @Test
+  void a_locked_site_profile_ignores_the_user_one_and_a_hidden_profile_leaves_the_lists(
+      @TempDir Path dir) throws IOException {
+    Path site = dir.resolve("site.json"); // NON-NLS
+    Path user = dir.resolve("user.json"); // NON-NLS
+    MeasurementProfile lockedCt =
+        new MeasurementProfile(
+            "ct", "Site CT", List.of("CT"), null, null, null, null, false, false, true); // NON-NLS
+    MeasurementProfile hiddenUs =
+        new MeasurementProfile(
+            "us",
+            "Hidden US",
+            List.of("US"),
+            null,
+            null,
+            null,
+            null,
+            false,
+            true,
+            false); // NON-NLS
+    MeasurementProfileJson.write(site, List.of(lockedCt, hiddenUs));
+    MeasurementProfileJson.write(user, List.of(profile("ct", "My CT", "CT"))); // NON-NLS
+    MeasurementProfileRegistry registry =
+        new MeasurementProfileRegistry(
+            List.of(profile("default", "Default"), profile("us", "Built-in US", "US")), // NON-NLS
+            site,
+            user);
+    assertAll(
+        () -> assertEquals("Site CT", registry.profile("ct").orElseThrow().name()),
+        () -> assertTrue(registry.isLocked("ct")),
+        () ->
+            assertThrows(
+                IllegalStateException.class, () -> registry.saveUser(profile("ct", "X", "CT"))),
+        () -> assertTrue(registry.profiles().stream().noneMatch(p -> p.id().equals("us"))),
+        () -> assertTrue(registry.profile("us").orElseThrow().hidden()),
+        () -> assertTrue(registry.matching("US").isEmpty(), "a hidden profile is never picked"),
+        () -> assertEquals("Site CT", registry.matching("CT").orElseThrow().name()));
   }
 }

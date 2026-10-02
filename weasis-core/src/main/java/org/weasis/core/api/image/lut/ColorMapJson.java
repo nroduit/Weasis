@@ -25,10 +25,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import org.weasis.core.api.util.JsonUtil;
@@ -92,14 +95,22 @@ public final class ColorMapJson {
   private static final String CATEGORY = "category"; // NON-NLS
   private static final String TAGS = "tags"; // NON-NLS
   private static final String HIDDEN = "hidden"; // NON-NLS
+  private static final String LOCKED = "locked"; // NON-NLS
   private static final String FAVORITES = "favorites"; // NON-NLS
 
   /** Schema written by this version; a document without one is the pre-schema form. */
   public static final int SCHEMA_VERSION = 1;
 
-  /** A whole document: its maps and the ids it flags as favorites. */
-  public record Document(List<ColorMap> maps, List<String> favorites) {
-    public static final Document EMPTY = new Document(List.of(), List.of());
+  /**
+   * A whole document: its maps, the ids it flags as favorites and the ids it flags as locked (a
+   * site document only: the user document may not replace or hide those maps).
+   */
+  public record Document(List<ColorMap> maps, List<String> favorites, Set<String> locked) {
+    public static final Document EMPTY = new Document(List.of(), List.of(), Set.of());
+
+    public Document(List<ColorMap> maps, List<String> favorites) {
+      this(maps, favorites, Set.of());
+    }
   }
 
   private ColorMapJson() {}
@@ -212,9 +223,10 @@ public final class ColorMapJson {
     try (JsonReader reader = Json.createReader(in)) {
       JsonStructure structure = reader.read();
       return switch (structure) {
-        case JsonArray array -> new Document(maps(array), List.of());
+        case JsonArray array -> document(array, List.of());
         case JsonObject object when object.containsKey(MAPS) -> readEnvelope(object);
-        case JsonObject object -> new Document(List.of(fromJson(object)), List.of());
+        case JsonObject object ->
+            document(Json.createArrayBuilder().add(object).build(), List.of());
         default -> Document.EMPTY;
       };
     }
@@ -226,12 +238,25 @@ public final class ColorMapJson {
       throw new IllegalArgumentException(
           "Color map schema %d is newer than the supported %d".formatted(schema, SCHEMA_VERSION));
     }
-    List<ColorMap> maps = envelope.get(MAPS) instanceof JsonArray array ? maps(array) : List.of();
-    return new Document(maps, JsonUtil.getStringList(envelope, FAVORITES));
+    JsonArray maps = envelope.get(MAPS) instanceof JsonArray array ? array : null;
+    return document(maps, JsonUtil.getStringList(envelope, FAVORITES));
   }
 
-  private static List<ColorMap> maps(JsonArray array) {
-    return JsonUtil.objects(array).stream().map(ColorMapJson::fromJson).toList();
+  // The locked flag is a fact of the document, not of the map: it is collected beside the maps
+  private static Document document(JsonArray array, List<String> favorites) {
+    if (array == null) {
+      return new Document(List.of(), favorites, Set.of());
+    }
+    List<ColorMap> maps = new ArrayList<>();
+    Set<String> locked = new LinkedHashSet<>();
+    for (JsonObject object : JsonUtil.objects(array)) {
+      ColorMap map = fromJson(object);
+      maps.add(map);
+      if (JsonUtil.getBoolean(object, LOCKED, false)) {
+        locked.add(map.id());
+      }
+    }
+    return new Document(List.copyOf(maps), favorites, Set.copyOf(locked));
   }
 
   /** The envelope of the given maps, at the current schema. */

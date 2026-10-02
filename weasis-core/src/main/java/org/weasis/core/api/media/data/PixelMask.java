@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
+import org.weasis.core.api.util.LayeredEntries;
 import org.weasis.core.util.StringUtil;
 
 /**
@@ -28,6 +29,7 @@ import org.weasis.core.util.StringUtil;
  * @param regions regions, in document order
  * @param profiles ids of the profiles this applies to, empty for all of them
  * @param enabled whether the entry is used
+ * @param locked set by a site document: the user document may not replace this entry
  */
 public record PixelMask(
     String id,
@@ -36,7 +38,21 @@ public record PixelMask(
     Reference reference,
     List<MaskRegion> regions,
     List<String> profiles,
-    boolean enabled) {
+    boolean enabled,
+    boolean locked)
+    implements LayeredEntries.Entry {
+
+  /** An entry that is not locked. */
+  public PixelMask(
+      String id,
+      String name,
+      DeviceKey match,
+      Reference reference,
+      List<MaskRegion> regions,
+      List<String> profiles,
+      boolean enabled) {
+    this(id, name, match, reference, regions, profiles, enabled, false);
+  }
 
   /** Size of the frame the regions were normalized against. */
   public record Reference(int columns, int rows) {
@@ -133,10 +149,10 @@ public record PixelMask(
   }
 
   public PixelMask withRegions(List<MaskRegion> regions) {
-    return new PixelMask(id, name, match, reference, regions, profiles, enabled);
+    return new PixelMask(id, name, match, reference, regions, profiles, enabled, locked);
   }
 
   public PixelMask withEnabled(boolean enabled) {
-    return new PixelMask(id, name, match, reference, regions, profiles, enabled);
+    return new PixelMask(id, name, match, reference, regions, profiles, enabled, locked);
   }
 }

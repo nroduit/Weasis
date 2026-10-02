@@ -105,7 +105,9 @@ public final class MeasurementProfileJson {
         defaults,
         labels,
         o.containsKey("statistics") ? strings(o.get("statistics")) : null, // NON-NLS
-        false);
+        false,
+        o.getBoolean("hidden", false), // NON-NLS
+        o.getBoolean("locked", false)); // NON-NLS
   }
 
   private static List<String> strings(JsonValue value) {
@@ -185,6 +187,12 @@ public final class MeasurementProfileJson {
     }
     if (p.statistics() != null) {
       b.add("statistics", array(p.statistics())); // NON-NLS
+    }
+    if (p.hidden()) {
+      b.add("hidden", true); // NON-NLS
+    }
+    if (p.locked()) {
+      b.add("locked", true); // NON-NLS
     }
     return b.build();
   }

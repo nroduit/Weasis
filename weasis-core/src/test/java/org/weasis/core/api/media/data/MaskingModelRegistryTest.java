@@ -11,6 +11,7 @@ package org.weasis.core.api.media.data;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -121,5 +122,40 @@ class MaskingModelRegistryTest {
     assertAll(
         () -> assertEquals("display", registry.sessionProfile().id()),
         () -> assertEquals(1, calls[0]));
+  }
+
+  @Test
+  @DisplayName("a locked site profile or mask ignores the user definition")
+  void lockedEntriesIgnoreUser() throws IOException {
+    Path site =
+        write(
+            "site.json",
+            """
+            { "profiles": [ { "id": "teaching", "name": "Site teaching", "locked": true,
+                  "actions": { "DIRECT_ID": "PSEUDONYMIZE", "DATE": "SHIFT" } } ],
+              "masks": [ { "id": "us-1", "name": "Site mask", "locked": true,
+                  "reference": { "columns": 100, "rows": 100 },
+                  "regions": [ { "type": "RECT", "x": 0, "y": 0, "w": 0.5, "h": 0.1 } ] } ] }
+            """);
+    Path user =
+        write(
+            "user.json",
+            """
+            { "profiles": [ { "id": "teaching", "name": "My teaching",
+                  "actions": { "DIRECT_ID": "PSEUDONYMIZE" } } ],
+              "masks": [ { "id": "us-1", "name": "My mask",
+                  "reference": { "columns": 100, "rows": 100 },
+                  "regions": [ { "type": "RECT", "x": 0, "y": 0, "w": 0.9, "h": 0.9 } ] } ] }
+            """);
+    MaskingModelRegistry registry = bundled();
+    registry.configure(site, user);
+    assertAll(
+        () -> assertEquals("Site teaching", registry.profile("teaching").orElseThrow().name()),
+        () -> assertEquals(MaskingModelRegistry.Origin.SITE, registry.origin("teaching")),
+        () -> assertTrue(registry.isProfileLocked("teaching")),
+        () -> assertFalse(registry.isProfileLocked("display")),
+        () -> assertEquals("Site mask", registry.pixelMask("us-1").orElseThrow().name()),
+        () -> assertTrue(registry.isMaskLocked("us-1")),
+        () -> assertFalse(registry.isLocked(), "the document itself is not locked"));
   }
 }

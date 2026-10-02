@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.api.util.LayeredEntries;
 import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.op.lut.ByteLut;
@@ -43,9 +44,11 @@ import org.weasis.opencv.op.lut.colormap.ColorMapCompiler;
  * the resources package (see {@code SiteDocuments}), maps imported during the session, and the
  * user's own maps kept in {@value #USER_FILE} under the preference directory and mirrored to the
  * remote preference store. A user map shadows any other map with the same id, and a site map
- * shadows a built-in, contributed or imported one. The same file keeps the ids of the user's
- * favorite maps, which menus show at their root. Menus and lists read through {@link
- * #query(Query)}; {@link #revision()} and listeners tell them when to rebuild.
+ * shadows a built-in, contributed or imported one; a site map flagged {@code locked} cannot be
+ * shadowed by a user map (the user map is ignored and reported), by the rules of {@link
+ * LayeredEntries}. The same file keeps the ids of the user's favorite maps, which menus show at
+ * their root. Menus and lists read through {@link #query(Query)}; {@link #revision()} and listeners
+ * tell them when to rebuild.
  */
 public final class ColorMapRegistry {
 
@@ -140,6 +143,7 @@ public final class ColorMapRegistry {
   private final List<ColorMap> bundled = new ArrayList<>();
   private final List<ColorMap> contributed = new ArrayList<>();
   private final List<ColorMap> site = new ArrayList<>();
+  private final Set<String> siteLocked = new LinkedHashSet<>();
   private final List<ColorMap> imported = new ArrayList<>();
   private final Map<String, ColorMap> userMaps = new LinkedHashMap<>();
   private final Set<String> favorites = new LinkedHashSet<>();
@@ -199,7 +203,10 @@ public final class ColorMapRegistry {
     bundled.clear();
     bundled.addAll(loadBuiltIn());
     site.clear();
-    site.addAll(loadSite());
+    siteLocked.clear();
+    ColorMapJson.Document siteDocument = loadSite();
+    site.addAll(siteDocument.maps());
+    siteLocked.addAll(siteDocument.locked());
     ColorMapJson.Document user = loadUser();
     userMaps.clear();
     user.maps().forEach(map -> userMaps.put(map.id(), map));
@@ -217,15 +224,15 @@ public final class ColorMapRegistry {
     }
   }
 
-  private List<ColorMap> loadSite() {
+  private ColorMapJson.Document loadSite() {
     if (siteFile == null) {
-      return List.of();
+      return ColorMapJson.Document.EMPTY;
     }
     try {
-      return ColorMapJson.readAll(siteFile);
+      return ColorMapJson.readDocument(siteFile);
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read the site color maps: {}", siteFile, e);
-      return List.of();
+      return ColorMapJson.Document.EMPTY;
     }
   }
 
@@ -287,8 +294,15 @@ public final class ColorMapRegistry {
     return true;
   }
 
-  /** Adds or replaces the user map of that id, writes the user file and mirrors it remotely. */
+  /**
+   * Adds or replaces the user map of that id, writes the user file and mirrors it remotely.
+   *
+   * @throws IllegalStateException when the site locked that id
+   */
   public synchronized void saveUserMap(ColorMap map) throws IOException {
+    if (siteLocked.contains(map.id())) {
+      throw new IllegalStateException("Color map '%s' is locked by the site".formatted(map.id()));
+    }
     userMaps.put(map.id(), map);
     persistUserMaps();
     changed();
@@ -337,8 +351,16 @@ public final class ColorMapRegistry {
 
   private synchronized List<Map.Entry<ColorMap, Origin>> entries() {
     var all = new ArrayList<Map.Entry<ColorMap, Origin>>();
-    Set<String> shadowed = new HashSet<>(userMaps.keySet());
-    userMaps.values().forEach(m -> all.add(Map.entry(m, Origin.USER)));
+    Set<String> shadowed = new HashSet<>();
+    for (ColorMap map : userMaps.values()) {
+      // A user map of a locked id stays in the file but never applies, see LayeredEntries
+      if (siteLocked.contains(map.id())) {
+        LOGGER.debug("Color map '{}' is locked by the site, the user map is ignored", map.id());
+      } else {
+        shadowed.add(map.id());
+        all.add(Map.entry(map, Origin.USER));
+      }
+    }
     addUnshadowed(all, shadowed, site, Origin.SITE);
     addUnshadowed(all, shadowed, bundled, Origin.BUNDLED);
     addUnshadowed(all, shadowed, contributed, Origin.CONTRIBUTED);
@@ -446,9 +468,30 @@ public final class ColorMapRegistry {
     if (modality == null) {
       return Optional.empty();
     }
-    return query(Query.forModality(modality, volume).withHidden(true)).stream()
-        .filter(map -> map.defaultForModality() && map.modalities().contains(modality))
-        .findFirst();
+    List<ColorMap> flagged =
+        query(Query.forModality(modality, volume).withHidden(true)).stream()
+            .filter(map -> map.defaultForModality() && map.modalities().contains(modality))
+            .toList();
+    return LayeredEntries.pick(
+        flagged, this::layerOf, ColorMap::id, "Default color map", modality); // NON-NLS
+  }
+
+  // The precedence of the layers, highest first: user, site, then the read-only ones
+  private int layerOf(ColorMap map) {
+    Origin origin = origin(map);
+    return switch (origin) {
+      case USER -> 4;
+      case SITE -> 3;
+      case BUNDLED -> 2;
+      case CONTRIBUTED -> 1;
+      case IMPORTED -> 0;
+      case null -> 0;
+    };
+  }
+
+  /** Whether the site locked that map: the user document may not replace or hide it. */
+  public synchronized boolean isLocked(ColorMap map) {
+    return map != null && siteLocked.contains(map.id());
   }
 
   public synchronized Origin origin(ColorMap map) {

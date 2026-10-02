@@ -412,4 +412,38 @@ class WindowPresetRegistryTest {
         .thenReturn(bodyPart == null ? null : new AnatomicRegion(bodyPart));
     return adapter;
   }
+
+  @Test
+  void aLockedSitePresetIgnoresTheUserOverride(@TempDir Path dir) throws IOException {
+    Path site = dir.resolve("site.json");
+    Files.writeString(
+        site,
+        """
+        [{"id": "weasis.ct.lung", "name": "Site lung", "modality": ["CT"], "window": 1600,
+          "level": -600, "locked": true},
+         {"id": "site.ct.liver", "name": "Liver", "modality": ["CT"], "window": 150, "level": 60}]
+        """);
+    Path user = dir.resolve(WindowPresetRegistry.USER_FILE);
+    Files.writeString(
+        user,
+        """
+        [{"id": "weasis.ct.lung", "name": "My lung", "modality": ["CT"], "window": 1500,
+          "level": -500, "hidden": true},
+         {"id": "site.ct.liver", "name": "My liver", "modality": ["CT"], "window": 180, "level": 70}]
+        """);
+    WindowPresetRegistry registry = new WindowPresetRegistry(WindowPresetRegistry.loadBuiltIn());
+    registry.configure(site, user);
+
+    WindowPreset lung = registry.find("weasis.ct.lung").orElseThrow();
+    WindowPreset liver = registry.find("site.ct.liver").orElseThrow();
+    assertAll(
+        () -> assertEquals("Site lung", lung.name()),
+        () -> assertFalse(lung.hidden(), "the user cannot hide a locked preset"),
+        () -> assertEquals(WindowPresetRegistry.Origin.SITE, registry.origin("weasis.ct.lung")),
+        () -> assertTrue(registry.isLocked("weasis.ct.lung")),
+        () -> assertEquals("My liver", liver.name()),
+        () -> assertFalse(registry.isLocked("site.ct.liver")),
+        () -> assertFalse(lung.withId("user.ct.lung").locked(), "a copy is not locked"),
+        () -> assertEquals(2, registry.userPresets().size(), "the user file is kept as written"));
+  }
 }

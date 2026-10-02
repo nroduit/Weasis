@@ -14,14 +14,11 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
@@ -30,15 +27,17 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.api.util.LayeredEntries;
+import org.weasis.core.api.util.LayeredEntries.Merged;
 import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.util.StringUtil;
 
 /**
  * The tool profiles: the bundled document, then the site document {@value #SITE_FILE} of the
- * resources package when there is one, then the user's own, merged by id (later documents
- * override). The user document is mirrored to the remote preference store when saved. Holds which
- * profile is active: an explicit choice, or the automatic one for the modality of the selected
- * series.
+ * resources package when there is one, then the user's own, merged by id by the rules of {@link
+ * LayeredEntries}: later documents override, unless the site locked the id. The user document is
+ * mirrored to the remote preference store when saved. Holds which profile is active: an explicit
+ * choice, or the automatic one for the modality of the selected series.
  */
 public final class MeasurementProfileRegistry {
   private static final Logger LOGGER = LoggerFactory.getLogger(MeasurementProfileRegistry.class);
@@ -63,9 +62,8 @@ public final class MeasurementProfileRegistry {
 
   // site, merged and siteIds are copy-on-write: unmodifiable snapshots replaced as a whole
   private volatile List<MeasurementProfile> site = List.of(); // NOSONAR immutable snapshot
-  private volatile Map<String, MeasurementProfile> merged = Map.of(); // NOSONAR immutable snapshot
+  private volatile Merged<MeasurementProfile> merged = Merged.empty(); // NOSONAR immutable snapshot
   private final Map<String, MeasurementProfile> user = new LinkedHashMap<>();
-  private volatile Set<String> siteIds = Set.of(); // NOSONAR immutable snapshot
   private String selectedId;
   private String modality;
 
@@ -171,19 +169,16 @@ public final class MeasurementProfileRegistry {
   }
 
   private void mergeDocuments() {
-    Map<String, MeasurementProfile> result = new LinkedHashMap<>();
-    builtIn.forEach(p -> result.put(p.id(), p));
-    Set<String> fromSite = new HashSet<>();
-    for (MeasurementProfile p : site) {
-      result.put(p.id(), p.withBuiltIn(true));
-      fromSite.add(p.id());
-    }
+    List<MeasurementProfile> siteLayer = site.stream().map(p -> p.withBuiltIn(true)).toList();
+    List<MeasurementProfile> userLayer;
     synchronized (user) {
-      result.putAll(user);
+      userLayer = List.copyOf(user.values());
     }
-    if (!result.containsKey(MeasurementProfile.DEFAULT_ID)) {
-      result.put(
-          MeasurementProfile.DEFAULT_ID,
+    Merged<MeasurementProfile> result =
+        LayeredEntries.merge(List.of(builtIn, siteLayer, userLayer), "Measurement profile");
+    if (result.entries().stream().noneMatch(MeasurementProfile::isDefault)) {
+      List<MeasurementProfile> withDefault = new ArrayList<>(result.entries());
+      withDefault.add(
           new MeasurementProfile(
               MeasurementProfile.DEFAULT_ID,
               "Default",
@@ -193,9 +188,9 @@ public final class MeasurementProfileRegistry {
               null,
               null,
               true)); // NON-NLS
+      result = new Merged<>(List.copyOf(withDefault), result.layers(), result.locked());
     }
-    merged = Collections.unmodifiableMap(result);
-    siteIds = Set.copyOf(fromSite);
+    merged = result;
   }
 
   private List<MeasurementProfile> readSite() {
@@ -222,12 +217,21 @@ public final class MeasurementProfileRegistry {
     }
   }
 
+  /** The merged profiles in document order, hidden ones left out. */
   public List<MeasurementProfile> profiles() {
-    return List.copyOf(merged.values());
+    return merged.entries().stream().filter(p -> !p.hidden()).toList();
   }
 
+  /** The merged profile of that id, hidden or not. */
   public Optional<MeasurementProfile> profile(String id) {
-    return Optional.ofNullable(id == null ? null : merged.get(id));
+    return id == null
+        ? Optional.empty()
+        : merged.entries().stream().filter(p -> p.id().equals(id)).findFirst();
+  }
+
+  /** Whether the site locked that id: the user document may not replace it. */
+  public boolean isLocked(String id) {
+    return merged.isLocked(id);
   }
 
   public List<MeasurementProfile> userProfiles() {
@@ -236,9 +240,17 @@ public final class MeasurementProfileRegistry {
     }
   }
 
-  /** Adds or replaces a user profile (a built-in id can be overridden) and persists. */
+  /**
+   * Adds or replaces a user profile (a built-in id can be overridden) and persists.
+   *
+   * @throws IllegalStateException when the site locked that id
+   */
   public void saveUser(MeasurementProfile profile) {
     Objects.requireNonNull(profile);
+    if (isLocked(profile.id())) {
+      throw new IllegalStateException(
+          "Measurement profile '%s' is locked by the site".formatted(profile.id()));
+    }
     synchronized (user) {
       user.put(profile.id(), profile.withBuiltIn(false));
       persistUser();
@@ -292,7 +304,7 @@ public final class MeasurementProfileRegistry {
 
   /** Explicit choice, or {@code null} for automatic. */
   public void select(String id) {
-    String value = id == null || !merged.containsKey(id) ? null : id;
+    String value = id == null || profile(id).isEmpty() ? null : id;
     if (!Objects.equals(selectedId, value)) {
       selectedId = value;
       if (selectionStore != null) {
@@ -328,27 +340,30 @@ public final class MeasurementProfileRegistry {
   /** The explicit profile, else the first matching the modality, else the default one. */
   public MeasurementProfile active() {
     if (selectedId != null) {
-      MeasurementProfile p = merged.get(selectedId);
-      if (p != null) {
-        return p;
+      Optional<MeasurementProfile> p = profile(selectedId);
+      if (p.isPresent()) {
+        return p.get();
       }
     }
-    return matching(modality).orElseGet(() -> merged.get(MeasurementProfile.DEFAULT_ID));
+    return matching(modality).orElseGet(() -> profile(MeasurementProfile.DEFAULT_ID).orElse(null));
   }
 
   /**
-   * The profile of the automatic mode for a modality. When several profiles name it, the user's own
-   * come first, then the site's, then the bundled ones: a profile made for a modality is meant to
-   * replace the one shipped for it. Within one origin the first of the document wins.
+   * The profile of the automatic mode for a modality, by {@link LayeredEntries#pick}: when several
+   * profiles name it, the user's own come first, then the site's, then the bundled ones — a profile
+   * made for a modality is meant to replace the one shipped for it. Within one document the first
+   * wins; the others are reported.
    */
   public Optional<MeasurementProfile> matching(String modality) {
+    Merged<MeasurementProfile> current = merged;
     List<MeasurementProfile> candidates =
-        merged.values().stream().filter(p -> p.matches(modality)).toList();
-    return candidates.stream()
-        .filter(p -> !p.builtIn())
-        .findFirst()
-        .or(() -> candidates.stream().filter(p -> siteIds.contains(p.id())).findFirst())
-        .or(() -> candidates.stream().findFirst());
+        current.entries().stream().filter(p -> !p.hidden() && p.matches(modality)).toList();
+    return LayeredEntries.pick(
+        candidates,
+        p -> current.layerOf(p.id()),
+        MeasurementProfile::id,
+        "Measurement profile",
+        modality);
   }
 
   public void addListener(Runnable listener) {

@@ -36,8 +36,9 @@ import org.weasis.core.api.media.data.MaskingModel.TagRule;
  * The masking model in force, merged from the bundled document, documents contributed by other
  * bundles (the DICOM tag classification), the site document {@value #SITE_FILE} of the resources
  * package (see {@code SiteDocuments}) and the user document {@value #USER_FILE} in the preference
- * directory. A later document overrides an earlier one for the same tag or profile id; a locked
- * site document excludes the user document.
+ * directory. A later document overrides an earlier one for the same tag or profile id, unless the
+ * site locked that profile or mask (see {@code LayeredEntries}); a locked site document excludes
+ * the user document altogether.
  *
  * <p>A profile that keeps direct identifiers, or a session or AI profile id that does not exist, is
  * refused with an error and the earlier definition stays, so a configuration mistake never turns
@@ -87,6 +88,8 @@ public final class MaskingModelRegistry {
       Map<String, Origin> tagLayers,
       Map<String, Origin> profileLayers,
       Map<String, Origin> maskLayers,
+      Set<String> lockedProfiles,
+      Set<String> lockedMasks,
       boolean locked) {}
 
   private final MaskingModel bundled;
@@ -269,6 +272,16 @@ public final class MaskingModelRegistry {
     return merged.locked();
   }
 
+  /** Whether the site locked that profile: the user document may not replace it. */
+  public boolean isProfileLocked(String id) {
+    return merged.lockedProfiles().contains(id);
+  }
+
+  /** Whether the site locked that pixel mask: the user document may not replace it. */
+  public boolean isMaskLocked(String id) {
+    return merged.lockedMasks().contains(id);
+  }
+
   /** Where the user document is written, or null when the host set none. */
   public synchronized Path userFile() {
     return userFile;
@@ -443,6 +456,8 @@ public final class MaskingModelRegistry {
     private final Map<String, Origin> tagLayers = new LinkedHashMap<>();
     private final Map<String, Origin> profileLayers = new LinkedHashMap<>();
     private final Map<String, Origin> maskLayers = new LinkedHashMap<>();
+    private final Set<String> lockedProfiles = new HashSet<>();
+    private final Set<String> lockedMasks = new HashSet<>();
     private String sessionId = MaskingProfile.DISPLAY_ID;
     private String aiId = MaskingProfile.AI_REQUEST_ID;
 
@@ -460,9 +475,17 @@ public final class MaskingModelRegistry {
         }
       }
       for (MaskingProfile profile : model.profiles()) {
-        if (profile.hidesDirectIdentifiers()) {
+        if (lockedProfiles.contains(profile.id())) {
+          LOGGER.warn(
+              "Masking profile '{}' is locked by the site, its definition from {} is ignored",
+              profile.id(),
+              origin);
+        } else if (profile.hidesDirectIdentifiers()) {
           profiles.put(profile.id(), profile);
           profileLayers.put(profile.id(), layer);
+          if (profile.locked() && layer == Origin.SITE) {
+            lockedProfiles.add(profile.id());
+          }
         } else {
           LOGGER.error(
               "Masking profile '{}' from {} keeps direct identifiers and is refused",
@@ -471,8 +494,18 @@ public final class MaskingModelRegistry {
         }
       }
       for (PixelMask mask : model.masks()) {
+        if (lockedMasks.contains(mask.id())) {
+          LOGGER.warn(
+              "Pixel mask '{}' is locked by the site, its definition from {} is ignored",
+              mask.id(),
+              origin);
+          continue;
+        }
         masks.put(mask.id(), mask);
         maskLayers.put(mask.id(), layer);
+        if (mask.locked() && layer == Origin.SITE) {
+          lockedMasks.add(mask.id());
+        }
       }
       if (model.sessionProfile() != null) {
         sessionId = model.sessionProfile();
@@ -495,6 +528,8 @@ public final class MaskingModelRegistry {
           Map.copyOf(tagLayers),
           Map.copyOf(profileLayers),
           Map.copyOf(maskLayers),
+          Set.copyOf(lockedProfiles),
+          Set.copyOf(lockedMasks),
           locked);
     }
   }

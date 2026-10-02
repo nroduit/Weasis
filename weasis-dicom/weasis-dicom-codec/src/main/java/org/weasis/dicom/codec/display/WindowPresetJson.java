@@ -71,6 +71,7 @@ public final class WindowPresetJson {
   private static final String BODY_PART = "bodyPart"; // NON-NLS
   private static final String PREFER_BODY_PART = "preferBodyPart"; // NON-NLS
   private static final String DEFAULT = "default"; // NON-NLS
+  private static final String LOCKED = "locked"; // NON-NLS
 
   private WindowPresetJson() {}
 
@@ -92,7 +93,8 @@ public final class WindowPresetJson {
         shapeFromJson(id, json.getString(SHAPE, null)),
         keyFromJson(id, json.getString(KEY, null)),
         whenFromJson(id, json.get(WHEN)),
-        JsonUtil.getBoolean(json, DEFAULT, false));
+        JsonUtil.getBoolean(json, DEFAULT, false),
+        JsonUtil.getBoolean(json, LOCKED, false));
   }
 
   public static JsonObject toJson(WindowPreset preset) {
@@ -141,6 +143,9 @@ public final class WindowPresetJson {
     }
     if (preset.defaultPreset()) {
       b.add(DEFAULT, true);
+    }
+    if (preset.locked()) {
+      b.add(LOCKED, true);
     }
     return b.build();
   }
