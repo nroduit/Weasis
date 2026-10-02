@@ -26,6 +26,7 @@ import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.net.auth.AuthMethod;
+import org.weasis.core.api.util.EntryIds;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
@@ -166,6 +167,9 @@ public class DicomWebNodeDialog extends JDialog {
     dicomNode.setUrl(validUrl);
     dicomNode.setUsageType(usageType);
     dicomNode.setAuthMethodUid(((AuthMethod) comboBoxAuth.getSelectedItem()).getUid());
+    if (!StringUtil.hasText(dicomNode.getId())) {
+      dicomNode.setId(dicomNode.deriveId(EntryIds.USER_PREFIX));
+    }
     nodesComboBox.repaint();
 
     AbstractDicomNode.saveDicomNodes(nodesComboBox, AbstractDicomNode.Type.WEB);

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nodes>
+  <node description="Hospital DICOMweb" type="WEB" usageType="BOTH" tsuid="NONE" url="https://dicomweb.example.org/dicomweb"
+    webtype="DICOMWEB" auth="NO_AUTH" headers="QXV0aG9yaXphdGlvbjpCZWFyZXIgYWJjClgtQXBpLUtleTprMQ=="></node>
+  <node description="Legacy WADO" type="WEB" usageType="RETRIEVE" tsuid="NONE" url="https://wado.example.org/wado"
+    webtype="WADO" auth="NO_AUTH" headers=""></node>
+</nodes>

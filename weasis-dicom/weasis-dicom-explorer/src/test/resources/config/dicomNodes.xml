@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nodes>
+  <node description="Main PACS" type="DICOM" usageType="BOTH" tsuid="NONE" aeTitle="PACS_AE"
+    hostname="pacs.example.org" port="11112"></node>
+  <node description="Teaching archive" type="DICOM" usageType="RETRIEVE" tsuid="EXPLICIT_VR_LE" aeTitle="TEACH"
+    hostname="teach.example.org" port="4242"></node>
+  <node description="Main PACS (copy)" type="DICOM" usageType="STORAGE" tsuid="NONE" aeTitle="PACS_AE"
+    hostname="pacs.example.org" port="11112"></node>
+</nodes>

@@ -22,6 +22,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LocalPersistence;
 import org.weasis.dicom.explorer.UISegmentationVolumeBuildExecutor;
 import org.weasis.dicom.explorer.main.DicomExplorer;
+import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.wado.DicomManager;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
@@ -36,6 +37,8 @@ public class Activator implements BundleActivator {
     PropertiesUtil.loadProperties(
         BundlePreferences.getFileInDataFolder(context, "import-export.properties"),
         LocalPersistence.getProperties());
+
+    AbstractDicomNode.registerLegacyConversions();
 
     // Surface canonical segmentation volume builds in the explorer's bottom loading panel,
     // so the user can monitor and cancel long-running SEG volume builds.

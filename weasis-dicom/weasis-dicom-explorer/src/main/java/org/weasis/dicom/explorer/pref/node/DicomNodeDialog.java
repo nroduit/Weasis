@@ -25,6 +25,7 @@ import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.util.EntryIds;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
@@ -181,6 +182,7 @@ public class DicomNodeDialog extends JDialog {
       } else {
         dicomNode = new DefaultDicomNode(desc, aeTitle, hostname, port.intValue(), usageType);
       }
+      dicomNode.setId(dicomNode.deriveId(EntryIds.USER_PREFIX));
       nodesComboBox.addItem(dicomNode);
     } else {
       dicomNode.setDescription(desc);

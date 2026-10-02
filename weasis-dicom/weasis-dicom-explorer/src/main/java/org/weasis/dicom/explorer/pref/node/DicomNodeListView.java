@@ -9,10 +9,14 @@
  */
 package org.weasis.dicom.explorer.pref.node;
 
+import java.awt.Component;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JList;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.pref.LauncherPrefView;
 import org.weasis.dicom.explorer.Messages;
 
@@ -20,6 +24,8 @@ public class DicomNodeListView extends AbstractItemDialogPage {
 
   public DicomNodeListView() {
     super(Messages.getString("DicomNodeListView.node_list"), 605);
+    getProperties()
+        .setProperty(AbstractItemDialogPage.KEY_SCOPE, AbstractItemDialogPage.SCOPE_USER);
     initGUI();
   }
 
@@ -34,6 +40,16 @@ public class DicomNodeListView extends AbstractItemDialogPage {
 
   private void buildPanel(AbstractDicomNode.Type nodeType) {
     final JComboBox<AbstractDicomNode> nodeComboBox = new JComboBox<>();
+    nodeComboBox.setRenderer(
+        new DefaultListCellRenderer() {
+          @Override
+          public Component getListCellRendererComponent(
+              JList<?> list, Object value, int index, boolean selected, boolean focus) {
+            super.getListCellRendererComponent(list, value, index, selected, focus);
+            setText(value instanceof AbstractDicomNode node ? displayName(node) : "");
+            return this;
+          }
+        });
     AbstractDicomNode.loadDicomNodes(nodeComboBox, nodeType);
     AbstractDicomNode.addTooltipToComboList(nodeComboBox);
     GuiUtils.setPreferredWidth(nodeComboBox, 270, 150);
@@ -45,11 +61,35 @@ public class DicomNodeListView extends AbstractItemDialogPage {
     addNodeButton.addActionListener(
         e -> AbstractDicomNode.addNodeActionPerformed(nodeComboBox, nodeType));
 
+    // Only the user's own nodes can be changed: the site ones are read-only
+    Runnable enableActions =
+        () -> {
+          boolean local =
+              nodeComboBox.getSelectedItem() instanceof AbstractDicomNode node && node.isLocal();
+          editButton.setEnabled(local);
+          deleteButton.setEnabled(local);
+        };
+    nodeComboBox.addActionListener(e -> enableActions.run());
+    enableActions.run();
+
     add(
         LauncherPrefView.buildItem(
             nodeType.toString(), nodeComboBox, editButton, deleteButton, addNodeButton));
 
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
+  }
+
+  /** The description with where the node comes from, and whether the site locked it. */
+  static String displayName(AbstractDicomNode node) {
+    String description = String.valueOf(node.getDescription());
+    if (node.isLocal()) {
+      return description;
+    }
+    String suffix = Origin.SITE.displayName();
+    if (node.isLocked()) {
+      suffix += ", " + Origin.lockedName();
+    }
+    return description + " (" + suffix + ")";
   }
 
   @Override
