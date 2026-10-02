@@ -27,10 +27,9 @@ import java.util.stream.IntStream;
  * blocks whose bound is zero, instead of stepping through empty space at the bound of the densest
  * voxel of the volume.
  *
- * <p>Filled slice by slice on the loading thread from the staging buffers, then uploaded once as a
- * two-channel float 3D texture on unit {@value #TEXTURE_UNIT} the first time a path-traced frame
- * needs it. A volume whose upload was cut short never completes, and the tracer keeps its global
- * bound.
+ * <p>Filled slice by slice on the loading thread from the staging buffers, then uploaded once on
+ * the shared context as a two-channel float 3D texture on unit {@value #TEXTURE_UNIT}. A volume
+ * whose upload was cut short never completes, and the tracer keeps its global bound.
  */
 public final class MajorantGrid {
 
@@ -51,7 +50,7 @@ public final class MajorantGrid {
 
   private volatile boolean complete;
   private boolean supported = true;
-  private int id;
+  private volatile int id;
 
   MajorantGrid(int volumeWidth, int volumeHeight, int volumeDepth) {
     this.volumeWidth = volumeWidth;
@@ -199,33 +198,48 @@ public final class MajorantGrid {
     return new float[] {range[i], range[i + 1]};
   }
 
-  /** Uploads the grid on first use and binds it on its unit. Only valid once complete. */
+  /** Whether the complete grid has been uploaded, so a view can bind it. */
+  public boolean isUploaded() {
+    return complete && id > 0;
+  }
+
+  /**
+   * Uploads the complete grid. Must run on the shared context: the texture is sampled by every view
+   * of the volume and must not die with one of them.
+   */
+  void upload(GL2ES2 gl) {
+    if (!complete || id > 0) {
+      return;
+    }
+    IntBuffer buf = IntBuffer.allocate(1);
+    gl.glGenTextures(1, buf);
+    int texture = buf.get(0);
+    gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, texture);
+    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
+    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
+    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES2.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE);
+    gl.glTexImage3D(
+        GL2ES2.GL_TEXTURE_3D,
+        0,
+        GL.GL_RG32F,
+        width,
+        height,
+        depth,
+        0,
+        GL2ES2.GL_RG,
+        GL.GL_FLOAT,
+        Buffers.newDirectFloatBuffer(range).rewind());
+    gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, 0);
+    gl.glFinish();
+    id = texture;
+  }
+
+  /** Binds the grid on its unit. Only valid once uploaded. */
   public void render(GL2ES2 gl) {
     gl.glActiveTexture(GL.GL_TEXTURE0 + TEXTURE_UNIT);
-    if (id <= 0) {
-      IntBuffer buf = IntBuffer.allocate(1);
-      gl.glGenTextures(1, buf);
-      id = buf.get(0);
-      gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, id);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-      gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES2.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE);
-      gl.glTexImage3D(
-          GL2ES2.GL_TEXTURE_3D,
-          0,
-          GL.GL_RG32F,
-          width,
-          height,
-          depth,
-          0,
-          GL2ES2.GL_RG,
-          GL.GL_FLOAT,
-          Buffers.newDirectFloatBuffer(range).rewind());
-    } else {
-      gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, id);
-    }
+    gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, id);
     gl.glActiveTexture(GL.GL_TEXTURE0);
   }
 

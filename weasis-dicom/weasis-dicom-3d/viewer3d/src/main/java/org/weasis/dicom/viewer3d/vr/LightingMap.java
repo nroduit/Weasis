@@ -13,6 +13,10 @@ import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
 
+/**
+ * Lighting lookup table of a {@link Preset}. The GL texture name is owned by the preset, one per
+ * context, so this class never generates or deletes names itself.
+ */
 public class LightingMap extends TextureData {
 
   final float[] map;
@@ -22,15 +26,25 @@ public class LightingMap extends TextureData {
     map = new float[width * 4];
   }
 
-  @Override
-  public void init(GL2ES2 gl) {
-    super.init(gl);
+  /** Sets the sampling parameters of {@code textureId} on unit 2 and uploads the map. */
+  void init(GL2ES2 gl, int textureId) {
     gl.glActiveTexture(GL.GL_TEXTURE2);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, getId());
+    gl.glBindTexture(GL.GL_TEXTURE_2D, textureId);
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
+    upload(gl);
+  }
+
+  /** Binds {@code textureId} on unit 2 and uploads the map. */
+  void update(GL2ES2 gl, int textureId) {
+    gl.glActiveTexture(GL.GL_TEXTURE2);
+    gl.glBindTexture(GL.GL_TEXTURE_2D, textureId);
+    upload(gl);
+  }
+
+  private void upload(GL2ES2 gl) {
     gl.glTexImage2D(
         GL.GL_TEXTURE_2D,
         0,
@@ -44,28 +58,13 @@ public class LightingMap extends TextureData {
   }
 
   @Override
-  public void render(GL2ES2 gl) {
-    update(gl);
+  public void init(GL2ES2 gl) {
+    throw new UnsupportedOperationException("The texture name is owned by the preset");
   }
 
-  void update(GL2ES2 gl) {
-    if (gl != null) {
-      if (getId() <= 0) {
-        init(gl);
-      }
-      gl.glActiveTexture(GL.GL_TEXTURE2);
-      gl.glBindTexture(GL.GL_TEXTURE_2D, getId());
-      gl.glTexImage2D(
-          GL.GL_TEXTURE_2D,
-          0,
-          internalFormat,
-          width,
-          height,
-          0,
-          format,
-          type,
-          Buffers.newDirectFloatBuffer(map).rewind());
-    }
+  @Override
+  public void render(GL2ES2 gl) {
+    // Uploaded by Preset.render(GL2ES2, boolean) with the texture name of the current context.
   }
 
   public void setAmbient(int index, float value) {

@@ -314,7 +314,9 @@ public final class VolumeBuilder {
           "Loading 3D texture time: {} ms",
           Duration.between(timeStarted, Instant.now()).toMillis());
       if (!volumeBuilder.hasError) {
-        volTexture.getMajorantGrid().complete();
+        MajorantGrid grid = volTexture.getMajorantGrid();
+        grid.complete();
+        OpenglUtils.runOnDefaultContext(grid::upload);
       }
       volumeBuilder.completed = true;
       MemoryManager.getInstance().unregister(volumeBuilder.stagingConsumer);

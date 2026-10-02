@@ -54,11 +54,11 @@ public class VolumeTexture extends TextureData {
   }
 
   private void update(GL2ES2 gl) {
-    if (gl == null || !requiredBuilding) {
+    // The storage is created by VolumeBuilder on the shared context, never here: a texture created
+    // on the context of a view dies with it. Bound on every frame, as each view has its own context
+    // and binding state.
+    if (gl == null || getId() <= 0) {
       return;
-    }
-    if (getId() <= 0) {
-      init(gl);
     }
     gl.glActiveTexture(GL.GL_TEXTURE0);
     gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, getId());

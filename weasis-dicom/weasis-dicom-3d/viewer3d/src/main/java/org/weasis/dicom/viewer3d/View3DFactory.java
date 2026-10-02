@@ -11,7 +11,6 @@ package org.weasis.dicom.viewer3d;
 
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.Threading;
 import java.awt.Component;
@@ -148,10 +147,7 @@ public class View3DFactory implements SeriesViewerFactory {
     }
     if (view3dContainer.volumeBuilder != null) {
       try {
-        GL4 gl4 = OpenglUtils.getGL4();
-        if (gl4 != null) {
-          view3dContainer.volumeBuilder.getVolTexture().destroy(gl4);
-        }
+        OpenglUtils.runOnDefaultContext(view3dContainer.volumeBuilder.getVolTexture()::destroy);
       } catch (Exception e) {
         LOGGER.error("Closing viewer", e);
       }

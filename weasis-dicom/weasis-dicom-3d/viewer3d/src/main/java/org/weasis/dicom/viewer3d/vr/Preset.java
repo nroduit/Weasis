@@ -12,6 +12,8 @@ package org.weasis.dicom.viewer3d.vr;
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GLContext;
+import com.jogamp.opengl.GLException;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -23,8 +25,11 @@ import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -86,12 +91,26 @@ public class Preset extends TextureData {
   private byte[] invertColors;
   private final LightingMap lightingMap;
   private boolean requiredBuilding;
-  private int id2;
   private byte[] alphaRange;
-  private int alphaRangeId;
 
   /** Unit of the {@link AlphaRangeTable} texture the path tracer bounds its extinction with. */
   public static final int ALPHA_RANGE_UNIT = 10;
+
+  // Indexes of the texture names a preset holds in a context.
+  private static final int COLOR = 0;
+  private static final int INVERSE_COLOR = 1;
+  private static final int LIGHTING = 2;
+  private static final int ALPHA_RANGE = 3;
+
+  /**
+   * Texture names of each preset, per context. JOGL opens a separate X11 connection, hence a
+   * separate driver screen, for every offscreen drawable: a name created on the context of one
+   * {@link View3d} is unusable (a crash on Mesa) once that view is gone, although all the contexts
+   * are in one share group. Each context therefore gets its own textures, released in {@link
+   * #destroyAll(GL2ES2)} while it is still current. Presets are keyed by identity, a preset derived
+   * for a volume being equal to its source.
+   */
+  private static final Map<GLContext, Map<Preset, int[]>> GL_NAMES = new HashMap<>();
 
   private Preset(ColorMap map, boolean custom) {
     this(map, custom, false);
@@ -485,19 +504,52 @@ public class Preset extends TextureData {
   }
 
   public void init(GL2ES2 gl, boolean inverse) {
-    super.init(gl);
-    if (inverse && id2 <= 0) {
-      IntBuffer intBuffer = IntBuffer.allocate(1);
-      gl.glGenTextures(1, intBuffer);
-      id2 = intBuffer.get(0);
+    int[] names = namesInCurrentContext();
+    if (names[COLOR] <= 0) {
+      names[COLOR] = genTexture(gl);
+    }
+    if (inverse && names[INVERSE_COLOR] <= 0) {
+      names[INVERSE_COLOR] = genTexture(gl);
+    }
+    if (names[LIGHTING] <= 0) {
+      names[LIGHTING] = genTexture(gl);
     }
     initColors(this, inverse);
     gl.glActiveTexture(GL.GL_TEXTURE1);
-    gl.glBindTexture(GL.GL_TEXTURE_2D, inverse ? id2 : getId());
+    gl.glBindTexture(GL.GL_TEXTURE_2D, names[inverse ? INVERSE_COLOR : COLOR]);
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
+    uploadColors(gl, inverse);
+    lightingMap.init(gl, names[LIGHTING]);
+  }
+
+  @Override
+  public void render(GL2ES2 gl) {
+    render(gl, false);
+  }
+
+  void render(GL2ES2 gl, boolean inverse) {
+    if (gl == null) {
+      return;
+    }
+    int[] names = namesInCurrentContext();
+    if (requiredBuilding
+        || names[COLOR] <= 0
+        || names[LIGHTING] <= 0
+        || (inverse && (invertColors == null || names[INVERSE_COLOR] <= 0))) {
+      this.requiredBuilding = false;
+      init(gl, inverse);
+    }
+    gl.glActiveTexture(GL.GL_TEXTURE1);
+    gl.glBindTexture(GL.GL_TEXTURE_2D, names[inverse ? INVERSE_COLOR : COLOR]);
+    uploadColors(gl, inverse);
+    lightingMap.update(gl, names[LIGHTING]);
+    bindAlphaRange(gl, names);
+  }
+
+  private void uploadColors(GL2ES2 gl, boolean inverse) {
     gl.glTexImage2D(
         GL.GL_TEXTURE_2D,
         0,
@@ -508,48 +560,14 @@ public class Preset extends TextureData {
         format,
         type,
         Buffers.newDirectByteBuffer(inverse ? invertColors : colors).rewind());
-    lightingMap.init(gl);
-  }
-
-  @Override
-  public void render(GL2ES2 gl) {
-    render(gl, false);
-  }
-
-  void render(GL2ES2 gl, boolean inverse) {
-    if (gl != null) {
-      if (requiredBuilding) {
-        this.requiredBuilding = false;
-        if (getId() <= 0 || (inverse && (invertColors == null || id2 <= 0))) {
-          init(gl, inverse);
-        }
-      }
-      // Bound on every frame: the texture outlives the GL context of a closed view.
-      gl.glActiveTexture(GL.GL_TEXTURE1);
-      gl.glBindTexture(GL.GL_TEXTURE_2D, inverse ? id2 : getId());
-      gl.glTexImage2D(
-          GL.GL_TEXTURE_2D,
-          0,
-          internalFormat,
-          width,
-          height,
-          0,
-          format,
-          type,
-          Buffers.newDirectByteBuffer(inverse ? invertColors : colors).rewind());
-      lightingMap.update(gl);
-      bindAlphaRange(gl);
-    }
   }
 
   // The alpha of the map does not change with the inverse, so the table is uploaded once.
-  private void bindAlphaRange(GL2ES2 gl) {
+  private void bindAlphaRange(GL2ES2 gl, int[] names) {
     gl.glActiveTexture(GL.GL_TEXTURE0 + ALPHA_RANGE_UNIT);
-    if (alphaRangeId <= 0) {
-      IntBuffer buf = IntBuffer.allocate(1);
-      gl.glGenTextures(1, buf);
-      alphaRangeId = buf.get(0);
-      gl.glBindTexture(GL.GL_TEXTURE_2D, alphaRangeId);
+    if (names[ALPHA_RANGE] <= 0) {
+      names[ALPHA_RANGE] = genTexture(gl);
+      gl.glBindTexture(GL.GL_TEXTURE_2D, names[ALPHA_RANGE]);
       gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
       gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
       gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
@@ -565,21 +583,68 @@ public class Preset extends TextureData {
           GL.GL_UNSIGNED_BYTE,
           Buffers.newDirectByteBuffer(getAlphaRangeTable()).rewind());
     } else {
-      gl.glBindTexture(GL.GL_TEXTURE_2D, alphaRangeId);
+      gl.glBindTexture(GL.GL_TEXTURE_2D, names[ALPHA_RANGE]);
     }
     gl.glActiveTexture(GL.GL_TEXTURE0);
   }
 
+  /** Releases the textures of this preset in the current context, if it has any. */
   @Override
   public void destroy(GL2ES2 gl) {
-    super.destroy(gl);
-    if (id2 != 0) {
-      gl.glDeleteTextures(1, new int[] {id2}, 0);
-      id2 = 0;
+    GLContext ctx = GLContext.getCurrent();
+    if (ctx == null) {
+      return;
     }
-    if (alphaRangeId != 0) {
-      gl.glDeleteTextures(1, new int[] {alphaRangeId}, 0);
-      alphaRangeId = 0;
+    int[] names;
+    synchronized (GL_NAMES) {
+      Map<Preset, int[]> presets = GL_NAMES.get(ctx);
+      names = presets == null ? null : presets.remove(this);
+    }
+    deleteTextures(gl, names);
+  }
+
+  /**
+   * Releases the textures of every preset in the current context; for the {@code dispose()} of a
+   * drawable, while its context is still current.
+   */
+  public static void destroyAll(GL2ES2 gl) {
+    GLContext ctx = GLContext.getCurrent();
+    if (ctx == null) {
+      return;
+    }
+    Map<Preset, int[]> presets;
+    synchronized (GL_NAMES) {
+      presets = GL_NAMES.remove(ctx);
+    }
+    if (presets != null) {
+      presets.values().forEach(names -> deleteTextures(gl, names));
+    }
+  }
+
+  private int[] namesInCurrentContext() {
+    GLContext ctx = GLContext.getCurrent();
+    if (ctx == null) {
+      throw new GLException("No OpenGL context is current on this thread");
+    }
+    synchronized (GL_NAMES) {
+      return GL_NAMES
+          .computeIfAbsent(ctx, c -> new IdentityHashMap<>())
+          .computeIfAbsent(this, p -> new int[4]);
+    }
+  }
+
+  private static int genTexture(GL2ES2 gl) {
+    IntBuffer buf = IntBuffer.allocate(1);
+    gl.glGenTextures(1, buf);
+    return buf.get(0);
+  }
+
+  private static void deleteTextures(GL2ES2 gl, int[] names) {
+    if (names != null) {
+      int[] valid = Arrays.stream(names).filter(n -> n > 0).toArray();
+      if (valid.length > 0) {
+        gl.glDeleteTextures(valid.length, valid, 0);
+      }
     }
   }
 

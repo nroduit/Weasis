@@ -12,6 +12,7 @@ package org.weasis.dicom.viewer3d.vr;
 import com.jogamp.nativewindow.AbstractGraphicsDevice;
 import com.jogamp.nativewindow.NativeWindowFactory;
 import com.jogamp.opengl.*;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,5 +136,43 @@ public class OpenglUtils {
    */
   public static GL2ES2 getGL() {
     return getDefaultGlContext().getGL().getGL2ES2();
+  }
+
+  /**
+   * Runs {@code task} with the shared context current on this thread, then restores the context
+   * that was current before. Every GL call on an object of the shared context made outside a
+   * drawable callback must go through here: with no current context the driver silently ignores it.
+   * Does nothing when the shared context cannot be made current.
+   */
+  public static void runOnDefaultContext(Consumer<GL2ES2> task) {
+    GLContext ctx;
+    try {
+      ctx = getDefaultGlContext();
+    } catch (IllegalArgumentException e) {
+      return;
+    }
+    GLContext previous = GLContext.getCurrent();
+    if (previous == ctx) {
+      task.accept(ctx.getGL().getGL2ES2());
+      return;
+    }
+    if (previous != null) {
+      previous.release();
+    }
+    try {
+      if (ctx.makeCurrent() == GLContext.CONTEXT_NOT_CURRENT) {
+        LOGGER.warn("Cannot make the shared OpenGL context current");
+        return;
+      }
+      try {
+        task.accept(ctx.getGL().getGL2ES2());
+      } finally {
+        ctx.release();
+      }
+    } finally {
+      if (previous != null) {
+        previous.makeCurrent();
+      }
+    }
   }
 }

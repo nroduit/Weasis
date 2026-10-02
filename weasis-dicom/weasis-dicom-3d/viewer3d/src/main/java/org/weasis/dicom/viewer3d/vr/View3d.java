@@ -428,30 +428,15 @@ public class View3d extends VolumeCanvas
       GuiUtils.getUICore().closeSeries(volTexture.getSeries());
     }
     accumulationTimer.stop();
-    GL2ES2 gl = OpenglUtils.getGL();
-    if (gl != null) {
-      program.destroy(gl);
-      tracerProgram.destroy(gl);
-      tracerReady = false;
-      quadProgram.destroy(gl);
-      denoiseProgram.destroy(gl);
-      texture.destroy(gl);
-      accumulation.destroy(gl);
-      majorantMap.dispose(gl);
-      environmentTextures.values().forEach(t -> t.destroy(gl));
-      environmentTextures.clear();
-      destroyRetiredPresets(gl);
-      if (renderedPreset != null && renderedPreset.isPreview()) {
-        renderedPreset.destroy(gl);
-      }
-      SegVolumeTexture svt = segVolumeTexture;
-      if (svt != null) {
-        // destroy() releases the SegVolumeTexture's retain on the SegmentationVolume.
-        // If no other consumer (e.g. MprController) is still holding the volume the CPU
-        // buffers are freed inside release(); otherwise they stay alive for the MPR overlay.
-        svt.destroy(gl);
-        segVolumeTexture = null;
-      }
+    // The objects created on the context of this view are released by dispose(GLAutoDrawable).
+    // The segmentation texture belongs to the shared context.
+    SegVolumeTexture svt = segVolumeTexture;
+    if (svt != null) {
+      segVolumeTexture = null;
+      // destroy() releases the SegVolumeTexture's retain on the SegmentationVolume.
+      // If no other consumer (e.g. MprController) is still holding the volume the CPU
+      // buffers are freed inside release(); otherwise they stay alive for the MPR overlay.
+      OpenglUtils.runOnDefaultContext(svt::destroy);
     }
     super.disposeView();
   }
@@ -869,9 +854,7 @@ public class View3d extends VolumeCanvas
 
     final IntBuffer intBuffer = IntBuffer.allocate(1);
     texture.init(gl);
-    if (volTexture != null) {
-      volTexture.init(gl);
-    }
+    // volTexture is created and filled by VolumeBuilder on the shared context, see VolumeTexture.
     if (renderedPreset != null) {
       renderedPreset.init(gl, renderingLayer.isInvertLut());
     }
@@ -1184,7 +1167,7 @@ public class View3d extends VolumeCanvas
     }
     tracedSamples = Math.max(1, Math.min(samplesPerFrame, PATH_TRACING_FRAMES - frameIndex));
     MajorantGrid grid = volTexture.getMajorantGrid();
-    majorantGridReady = grid.isComplete() && renderedPreset != null && isMajorantGridEnabled();
+    majorantGridReady = grid.isUploaded() && renderedPreset != null && isMajorantGridEnabled();
     if (!tracerReady) {
       tracerProgram.shareAllUniforms(gl, program);
       tracerReady = true;
@@ -1530,12 +1513,35 @@ public class View3d extends VolumeCanvas
     camera.resetTransformation();
   }
 
+  /**
+   * Releases everything created on the context of this view, which JOGL keeps current here; the
+   * panel may be shown again, init() then recreating it. The volume and segmentation textures
+   * belong to the shared context and are left alone.
+   */
   public void dispose(GLAutoDrawable drawable) {
-    // GL4 gl2 = drawable.getGL().getGL4();
-    // FIXME destroy when release of cache
-    //    if (volTexture != null) {
-    //      volTexture.destroy(gl2);
-    //    }
+    GL2ES2 gl = drawable.getGL().getGL2ES2();
+    program.destroy(gl);
+    tracerProgram.destroy(gl);
+    tracerReady = false;
+    tracerPrelinkStarted = false;
+    quadProgram.destroy(gl);
+    denoiseProgram.destroy(gl);
+    texture.destroy(gl);
+    accumulation.destroy(gl);
+    majorantMap.dispose(gl);
+    environmentTextures.values().forEach(t -> t.destroy(gl));
+    environmentTextures.clear();
+    if (segPlaceholderTextureId > 0) {
+      gl.glDeleteTextures(2, new int[] {segPlaceholderTextureId, segPlaceholderColorId}, 0);
+      segPlaceholderTextureId = 0;
+      segPlaceholderColorId = 0;
+    }
+    if (vertexBuffer > 0) {
+      gl.glDeleteBuffers(1, new int[] {vertexBuffer}, 0);
+      vertexBuffer = 0;
+    }
+    retiredPresets.clear();
+    Preset.destroyAll(gl);
   }
 
   public void updateSegmentation() {
@@ -1760,10 +1766,7 @@ public class View3d extends VolumeCanvas
       int generation, SegVolumeTexture newSvt, List<RenderedSeg> rendered) {
     if (generation != segBuildGeneration.get()) {
       // Superseded while uploading — discard the freshly-built texture.
-      GL2ES2 gl = OpenglUtils.getGL();
-      if (gl != null) {
-        newSvt.destroy(gl);
-      }
+      OpenglUtils.runOnDefaultContext(newSvt::destroy);
       return;
     }
     this.renderedSegs = rendered;
@@ -1775,10 +1778,7 @@ public class View3d extends VolumeCanvas
     SegVolumeTexture old = this.segVolumeTexture;
     this.segVolumeTexture = newSvt;
     if (old != null) {
-      GL2ES2 gl = OpenglUtils.getGL();
-      if (gl != null) {
-        old.destroy(gl);
-      }
+      OpenglUtils.runOnDefaultContext(old::destroy);
       // Do NOT free the underlying SegmentationVolume here: it is now owned by the
       // SegSpecialElement's per-image-volume cache (see SegSpecialElement.alignedVolumes) and
       // may still be in use by the MPR overlay or by a re-upload of this very texture.
@@ -1960,10 +1960,7 @@ public class View3d extends VolumeCanvas
     SegVolumeTexture svt = segVolumeTexture;
     if (svt != null) {
       segVolumeTexture = null;
-      GL2ES2 gl = OpenglUtils.getGL();
-      if (gl != null) {
-        svt.destroy(gl);
-      }
+      OpenglUtils.runOnDefaultContext(svt::destroy);
       // The underlying SegmentationVolume is owned by the SegSpecialElement's per-image-volume
       // cache; only the GL texture is released here.
     }
