@@ -164,8 +164,12 @@ public final class EdgeSnapper {
     return normalized;
   }
 
-  /** Edge terms of the window; each is a cost in [0, 1], low on an edge. */
-  record Features(int w, int h, float[] gradient, float[] laplace, float[] gx, float[] gy) {
+  /**
+   * Edge terms of the window; each is a cost in [0, 1], low on an edge. Never compared or hashed,
+   * so the arrays keep identity equality.
+   */
+  record Features( // NOSONAR
+      int w, int h, float[] gradient, float[] laplace, float[] gx, float[] gy) {
 
     static Features of(float[] gray, int w, int h) {
       float[] gx = new float[w * h];

@@ -2000,8 +2000,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     Object[] oldHints = GuiUtils.setRenderingHints(g2d, true, true, false);
     Path2D cross = new Path2D.Double();
     for (int[] d : new int[][] {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
-      cross.moveTo(p.x + d[0] * PROBE_GAP, p.y + d[1] * PROBE_GAP);
-      cross.lineTo(p.x + d[0] * PROBE_ARM, p.y + d[1] * PROBE_ARM);
+      cross.moveTo(p.getX() + d[0] * PROBE_GAP, p.getY() + d[1] * PROBE_GAP);
+      cross.lineTo(p.getX() + d[0] * PROBE_ARM, p.getY() + d[1] * PROBE_ARM);
     }
     BasicStroke line = new BasicStroke(1.5f);
     GraphicOutline.draw(g2d, cross, line);

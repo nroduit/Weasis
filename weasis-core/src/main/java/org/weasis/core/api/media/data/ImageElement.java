@@ -368,7 +368,7 @@ public class ImageElement extends MediaElement {
     if (image == null || source == null) {
       return null;
     }
-    double maxOut = (1 << Math.clamp(bits, 9, 16)) - 1;
+    double maxOut = (1 << Math.clamp(bits, 9, 16)) - 1.0;
     double low = level - window / 2.0;
     double high = level + window / 2.0;
     double range = Math.max(high - low, 1.0);

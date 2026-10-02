@@ -85,7 +85,7 @@ public record MeasurementProfile(
   public static String idFromName(String name) {
     String id =
         name == null ? "" : name.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
-    id = id.replaceAll("(?:^-+)|(?:-+$)", "");
+    id = id.replaceAll("(?:^-)|(?:-$)", "");
     return id.isEmpty() ? "profile" : id; // NON-NLS
   }
 

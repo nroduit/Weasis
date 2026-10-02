@@ -119,7 +119,7 @@ public final class ColorMapRegistry {
     }
   }
 
-  private static volatile ColorMapRegistry instance;
+  private static volatile ColorMapRegistry instance; // NOSONAR double-checked locking
 
   private final Path userFile;
   private final Consumer<Path> remoteStore;

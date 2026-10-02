@@ -160,6 +160,9 @@ public class BidirectionalGraphic extends AbstractDragGraphic {
   private void moveShortAxisEnd(int movedIndex, int otherIndex) {
     Point2D cursor = getHandlePoint(movedIndex);
     Point2D other = getHandlePoint(otherIndex);
+    if (cursor == null || other == null) {
+      return;
+    }
     double otherSide = sideOf(other);
     double cursorSide = sideOf(cursor);
     double movedHalf =

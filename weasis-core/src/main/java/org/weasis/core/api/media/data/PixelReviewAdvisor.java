@@ -35,7 +35,7 @@ public interface PixelReviewAdvisor {
 
   /** Holds the installed advisor; an interface cannot have a mutable field. */
   final class Holder {
-    private static volatile PixelReviewAdvisor current;
+    private static volatile PixelReviewAdvisor current; // NOSONAR reference swapped whole
 
     private Holder() {}
   }

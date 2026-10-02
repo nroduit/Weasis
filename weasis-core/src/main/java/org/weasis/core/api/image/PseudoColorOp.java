@@ -56,6 +56,9 @@ public final class PseudoColorOp extends AbstractOp {
 
   public PseudoColorOp(PseudoColorOp op) {
     super(op);
+    // Not shared: each operation compiles its own table on first use
+    this.wideKey = null;
+    this.wideTable = null;
   }
 
   @Override

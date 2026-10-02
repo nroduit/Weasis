@@ -76,7 +76,7 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
   private static final int CONNECT_TIMEOUT_MS = 5_000;
   private static final int READ_TIMEOUT_MS = 10_000;
 
-  private static volatile WindowPresetRegistry instance;
+  private static volatile WindowPresetRegistry instance; // NOSONAR double-checked locking
 
   /** Merged presets in menu order, with the layer that supplied each id. */
   private record Merged(List<WindowPreset> presets, Map<String, Integer> layers) {}
@@ -105,7 +105,7 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
   private String siteLocation;
   private Path userFile;
   private Consumer<Path> remoteStore;
-  private volatile Merged merged;
+  private volatile Merged merged; // NOSONAR immutable snapshot
 
   public WindowPresetRegistry(List<WindowPreset> builtIn) {
     this.builtIn = builtIn == null ? List.of() : List.copyOf(builtIn);

@@ -42,7 +42,7 @@ import org.weasis.core.ui.model.imp.XmlGraphicModel;
 public class XmlSerializer {
   private static final Logger LOGGER = LoggerFactory.getLogger(XmlSerializer.class);
 
-  private static volatile JAXBContext presentationContext;
+  private static volatile JAXBContext presentationContext; // NOSONAR thread-safe, lazy cache
 
   static {
     GraphicRegistry.getInstance().addListener(() -> presentationContext = null);

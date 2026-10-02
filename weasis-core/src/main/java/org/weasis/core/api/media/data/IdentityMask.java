@@ -264,7 +264,7 @@ public record IdentityMask(TagPolicy policy, Pseudonymizer pseudonymizer, int da
 
     private static byte[] newSalt() {
       byte[] salt = new byte[16];
-      new SecureRandom().nextBytes(salt);
+      new SecureRandom().nextBytes(salt); // NOSONAR called once per run
       return salt;
     }
 

@@ -1112,12 +1112,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   private static void toggleCrossCenter(MprView mprView, boolean allViews) {
     boolean showCenter = MprView.getViewProperty(mprView, MprView.SHOW_CROSS_CENTER);
-    mprView.showCrossCenter(!showCenter, allViews);
+    mprView.showCrossCenter(!showCenter, allViews); // NOSONAR mprView is never null
   }
 
   private static void toggleCrossLines(MprView mprView, boolean allViews) {
     boolean hidden = MprView.getViewProperty(mprView, MprView.HIDE_CROSSLINES);
-    mprView.showCrossLines(hidden, allViews);
+    mprView.showCrossLines(hidden, allViews); // NOSONAR mprView is never null
   }
 
   private static void cycleMipType(MprView mprView) {

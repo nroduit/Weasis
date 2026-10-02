@@ -73,7 +73,7 @@ public final class MaskingModelRegistry {
           false,
           true);
 
-  private static volatile MaskingModelRegistry instance;
+  private static volatile MaskingModelRegistry instance; // NOSONAR double-checked locking
 
   /** Which document a merged profile or tag rule comes from. */
   public enum Origin {
@@ -104,7 +104,7 @@ public final class MaskingModelRegistry {
   private MaskingModel site = MaskingModel.EMPTY;
   private MaskingModel user = MaskingModel.EMPTY;
   private boolean userUnreadable;
-  private volatile Merged merged;
+  private volatile Merged merged; // NOSONAR immutable snapshot
 
   public MaskingModelRegistry(MaskingModel bundled) {
     this.bundled = bundled == null ? MaskingModel.EMPTY : bundled;

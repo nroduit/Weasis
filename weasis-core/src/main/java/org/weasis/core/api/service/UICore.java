@@ -94,7 +94,7 @@ public final class UICore {
   private final CControl dockingControl;
   private final CContentArea baseArea;
   private final CWorkingArea mainArea;
-  private volatile ViewerPlugin<?> selectedPlugin;
+  private volatile ViewerPlugin<?> selectedPlugin; // NOSONAR reference swapped whole
 
   private final List<Codec<MediaElement>> codecPlugins;
   private final WProperties systemPreferences;

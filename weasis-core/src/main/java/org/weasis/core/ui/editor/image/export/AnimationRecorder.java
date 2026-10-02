@@ -65,7 +65,7 @@ public class AnimationRecorder {
 
   private FrameDeduplicator frames;
   private volatile boolean sinkFull;
-  private volatile IOException failure;
+  private volatile IOException failure; // NOSONAR set once, then read
   private long startTime;
   private boolean stopped;
 

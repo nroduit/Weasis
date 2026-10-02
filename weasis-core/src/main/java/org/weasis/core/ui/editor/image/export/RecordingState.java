@@ -20,7 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public final class RecordingState {
 
   private static final List<Runnable> LISTENERS = new CopyOnWriteArrayList<>();
-  private static volatile AnimationRecorder active;
+  private static volatile AnimationRecorder active; // NOSONAR reference swapped whole
 
   private RecordingState() {}
 
