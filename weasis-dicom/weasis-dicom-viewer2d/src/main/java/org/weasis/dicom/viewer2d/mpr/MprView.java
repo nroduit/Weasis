@@ -183,8 +183,8 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     super.initActionWState();
     actionsInView.put("weasis.contextmenu.close", false);
     /*
-     * Get the radiologist way to see stack (means in axial, the first image is from feet and last image is in the
-     * head direction) This option may not be changed. Sorting stack must be disabled from menu in UI.
+     * The volume requires an anatomical sorting. This option may not be changed. Sorting stack must be
+     * disabled from menu in UI. The scroll direction is defined by View2d.P_MPR_SCROLL_NEURO.
      */
     actionsInView.put(ActionW.SORT_STACK.cmd(), SortSeriesStack.slicePosition);
     actionsInView.put(LayerType.CROSSLINES.name(), true);

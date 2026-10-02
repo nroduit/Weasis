@@ -34,7 +34,6 @@ public class AxisDirection {
   private final Color xColor;
   private final Color yColor;
   private final Color zColor;
-  private final boolean invertedDirection;
 
   public AxisDirection(Plane plane) {
     this.color =
@@ -52,7 +51,6 @@ public class AxisDirection {
 
     switch (plane) {
       case AXIAL -> {
-        this.invertedDirection = true;
         xColor = Biped.R.getColor();
         yColor = Biped.A.getColor();
         zColor = Biped.H.getColor();
@@ -61,7 +59,6 @@ public class AxisDirection {
         axisZ = new Vector3d(0, 0, -1);
       }
       case CORONAL -> {
-        this.invertedDirection = false;
         xColor = Biped.R.getColor();
         yColor = Biped.H.getColor();
         zColor = Biped.A.getColor();
@@ -70,7 +67,6 @@ public class AxisDirection {
         axisZ = new Vector3d(0, 1, 0);
       }
       case SAGITTAL -> {
-        this.invertedDirection = false;
         xColor = Biped.A.getColor();
         yColor = Biped.H.getColor();
         zColor = Biped.R.getColor();
@@ -121,10 +117,6 @@ public class AxisDirection {
 
   public Vector3d getAxisZ() {
     return axisZ;
-  }
-
-  public boolean isInvertedDirection() {
-    return invertedDirection;
   }
 
   public void drawAxes(Graphics2D g2d, MprView mprView) {

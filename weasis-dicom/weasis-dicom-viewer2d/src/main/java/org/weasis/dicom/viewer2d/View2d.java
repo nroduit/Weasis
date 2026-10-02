@@ -140,6 +140,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   public static final String P_CROSSHAIR_CENTER_GAP = "mpr.crosshair.center.gap";
   public static final String P_CROSSHAIR_MODE = "mpr.crosshair.mode";
+  public static final String P_MPR_SCROLL_NEURO = "mpr.scroll.neuro";
   private final Dimension oldSize;
   private final ContextMenuHandler contextMenuHandler;
   private volatile BufferedImage segOverlayImage; // NOSONAR visibility reference
