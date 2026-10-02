@@ -21,6 +21,17 @@ import org.weasis.core.api.gui.Insertable;
 
 public abstract class AbstractItemDialogPage extends JPanel implements PageItem, Insertable {
 
+  /**
+   * Page property saying what its settings belong to: {@link #SCOPE_USER} (they follow the user
+   * profile), {@link #SCOPE_MACHINE} (this workstation only) or {@link #SCOPE_SITE} (set by the
+   * site). The preference dialog shows it under the page.
+   */
+  public static final String KEY_SCOPE = "scope"; // NON-NLS
+
+  public static final String SCOPE_USER = "user"; // NON-NLS
+  public static final String SCOPE_MACHINE = "machine"; // NON-NLS
+  public static final String SCOPE_SITE = "site"; // NON-NLS
+
   private final String title;
   private final List<PageItem> subPageList = new ArrayList<>();
   private int pagePosition;

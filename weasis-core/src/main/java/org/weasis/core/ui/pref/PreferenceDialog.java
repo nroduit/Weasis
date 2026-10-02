@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import org.osgi.framework.BundleContext;
@@ -48,6 +49,9 @@ public class PreferenceDialog extends AbstractWizardDialog {
   protected final JPanel bottomPrefPanel =
       GuiUtils.getFlowLayoutPanel(
           FlowLayout.TRAILING, 10, 7, reloadSiteButton, jButtonHelp, restoreButton, applyButton);
+  protected final JLabel scopeLabel = new JLabel();
+  protected final JPanel scopePanel =
+      GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 10, 0, scopeLabel);
 
   public PreferenceDialog(Window parentWin) {
     super(
@@ -57,6 +61,8 @@ public class PreferenceDialog extends AbstractWizardDialog {
         new Dimension(620, 460));
 
     jPanelBottom.add(bottomPrefPanel, 0);
+    jPanelBottom.add(scopePanel, 0);
+    scopeLabel.setEnabled(false);
 
     jButtonHelp.putClientProperty("JButton.buttonType", "help");
     jButtonHelp.setToolTipText(Messages.getString("online.documentation"));
@@ -153,10 +159,31 @@ public class PreferenceDialog extends AbstractWizardDialog {
         jButtonHelp.removeActionListener(al);
       }
       jButtonHelp.setVisible(StringUtil.hasText(helpKey));
+      String scope = page.getProperty(AbstractItemDialogPage.KEY_SCOPE);
+      scopePanel.setVisible(StringUtil.hasText(scope));
+      if (StringUtil.hasText(scope)) {
+        scopeLabel.setText(scopeText(scope, false));
+        scopeLabel.setToolTipText(scopeText(scope, true));
+      }
       if (jButtonHelp.isVisible()) {
         jButtonHelp.addActionListener(GuiUtils.createHelpActionListener(jButtonHelp, helpKey));
       }
     }
+  }
+
+  /** The label, or its tooltip, of a page scope; an unknown value reads as the user scope. */
+  private static String scopeText(String scope, boolean tip) {
+    return switch (scope) {
+      case AbstractItemDialogPage.SCOPE_MACHINE ->
+          Messages.getString(
+              tip ? "PreferenceDialog.scope.machine.tip" : "PreferenceDialog.scope.machine");
+      case AbstractItemDialogPage.SCOPE_SITE ->
+          Messages.getString(
+              tip ? "PreferenceDialog.scope.site.tip" : "PreferenceDialog.scope.site");
+      default ->
+          Messages.getString(
+              tip ? "PreferenceDialog.scope.user.tip" : "PreferenceDialog.scope.user");
+    };
   }
 
   @Override

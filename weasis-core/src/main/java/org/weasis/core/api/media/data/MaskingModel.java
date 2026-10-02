@@ -30,12 +30,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LayeredEntries;
 import org.weasis.core.util.StringUtil;
@@ -196,7 +199,7 @@ public record MaskingModel(
         .build();
   }
 
-  private static JsonObject toJson(MaskingProfile profile) {
+  public static JsonObject toJson(MaskingProfile profile) {
     JsonObjectBuilder entry =
         Json.createObjectBuilder()
             .add("id", profile.id()) // NON-NLS
@@ -226,7 +229,7 @@ public record MaskingModel(
     return entry.build();
   }
 
-  private static JsonObject toJson(PixelMask mask) {
+  public static JsonObject toJson(PixelMask mask) {
     JsonObjectBuilder entry =
         Json.createObjectBuilder()
             .add("id", mask.id()) // NON-NLS
@@ -326,8 +329,20 @@ public record MaskingModel(
   }
 
   public static MaskingModel read(Path path) throws IOException {
+    return read(path, JsonExtends.NO_BASE, JsonExtends.NO_BASE);
+  }
+
+  /**
+   * @param profileBase the profile of that id in the lower layers, as JSON, for an {@code extends}
+   * @param maskBase the pixel mask of that id in the lower layers, as JSON
+   */
+  public static MaskingModel read(
+      Path path,
+      Function<String, Optional<JsonObject>> profileBase,
+      Function<String, Optional<JsonObject>> maskBase)
+      throws IOException {
     try (InputStream in = Files.newInputStream(path)) {
-      return read(in);
+      return read(in, profileBase, maskBase);
     } catch (JsonException | IllegalArgumentException e) {
       throw new IOException("Invalid masking configuration: " + path, e);
     }
@@ -338,6 +353,13 @@ public record MaskingModel(
    * @throws JsonException when the content is not a JSON object
    */
   public static MaskingModel read(InputStream in) {
+    return read(in, JsonExtends.NO_BASE, JsonExtends.NO_BASE);
+  }
+
+  public static MaskingModel read(
+      InputStream in,
+      Function<String, Optional<JsonObject>> profileBase,
+      Function<String, Optional<JsonObject>> maskBase) {
     JsonObject root;
     try (JsonReader reader = Json.createReader(in)) {
       root = reader.readObject();
@@ -352,11 +374,15 @@ public record MaskingModel(
       readTag(entry, tags);
     }
     List<MaskingProfile> profiles = new ArrayList<>();
-    for (JsonObject entry : JsonUtil.objects(array(root, "profiles"))) { // NON-NLS
+    for (JsonObject entry :
+        JsonExtends.resolve(
+            JsonUtil.objects(array(root, "profiles")), profileBase, "Masking profile")) { // NON-NLS
       readProfile(entry, profiles);
     }
     List<PixelMask> masks = new ArrayList<>();
-    for (JsonObject entry : JsonUtil.objects(array(root, "masks"))) { // NON-NLS
+    for (JsonObject entry :
+        JsonExtends.resolve(
+            JsonUtil.objects(array(root, "masks")), maskBase, "Pixel mask")) { // NON-NLS
       readMask(entry, masks);
     }
     return new MaskingModel(

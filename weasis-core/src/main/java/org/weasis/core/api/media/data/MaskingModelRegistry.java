@@ -10,12 +10,14 @@
 package org.weasis.core.api.media.data;
 
 import jakarta.json.JsonException;
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
@@ -476,22 +478,55 @@ public final class MaskingModelRegistry {
     return find(profiles, defaultId).orElse(fallback);
   }
 
-  private static MaskingModel loadSite(Path file) {
+  private MaskingModel loadSite(Path file) {
+    List<MaskingModel> lower = lowerLayers(false);
     try {
-      return MaskingModel.read(file);
+      return MaskingModel.read(file, profileBases(lower), maskBases(lower));
     } catch (IOException | JsonException | IllegalArgumentException e) {
       LOGGER.error("Cannot read the site masking configuration: {}", file, e);
       return null;
     }
   }
 
-  private static MaskingModel loadUser(Path file) {
+  private MaskingModel loadUser(Path file) {
+    List<MaskingModel> lower = lowerLayers(true);
     try {
-      return MaskingModel.read(file);
+      return MaskingModel.read(file, profileBases(lower), maskBases(lower));
     } catch (IOException e) {
       LOGGER.error("Cannot read the user masking configuration: {}", file, e);
       return null;
     }
+  }
+
+  // The documents below the one being read, most specific first, for an extends
+  private List<MaskingModel> lowerLayers(boolean withSite) {
+    List<MaskingModel> lower = new ArrayList<>();
+    if (withSite) {
+      lower.add(site);
+    }
+    List<MaskingModel> plugins = new ArrayList<>(contributed);
+    Collections.reverse(plugins);
+    lower.addAll(plugins);
+    lower.add(bundled);
+    return lower;
+  }
+
+  private static Function<String, Optional<JsonObject>> profileBases(List<MaskingModel> layers) {
+    return id ->
+        layers.stream()
+            .flatMap(m -> m.profiles().stream())
+            .filter(p -> p.id().equals(id))
+            .findFirst()
+            .map(MaskingModel::toJson);
+  }
+
+  private static Function<String, Optional<JsonObject>> maskBases(List<MaskingModel> layers) {
+    return id ->
+        layers.stream()
+            .flatMap(m -> m.masks().stream())
+            .filter(m -> m.id().equals(id))
+            .findFirst()
+            .map(MaskingModel::toJson);
   }
 
   /** Classifies the Weasis-internal tags; DICOM tags are classified by the DICOM codec. */

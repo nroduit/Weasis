@@ -23,6 +23,8 @@ public class LauncherPrefView extends AbstractItemDialogPage {
 
   public LauncherPrefView() {
     super(PAGE_NAME, 120);
+    getProperties()
+        .setProperty(AbstractItemDialogPage.KEY_SCOPE, AbstractItemDialogPage.SCOPE_MACHINE);
     initGUI();
   }
 

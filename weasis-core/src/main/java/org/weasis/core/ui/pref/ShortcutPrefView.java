@@ -74,6 +74,8 @@ public class ShortcutPrefView extends AbstractItemDialogPage {
 
   public ShortcutPrefView() {
     super(TITLE, 105);
+    getProperties()
+        .setProperty(AbstractItemDialogPage.KEY_SCOPE, AbstractItemDialogPage.SCOPE_USER);
 
     getProperties().put(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().put(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());

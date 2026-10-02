@@ -78,6 +78,8 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
 
   DeviceMaskPrefView(MaskingModelRegistry registry) {
     super(Messages.getString("DeviceMaskPrefView.title"), 506);
+    getProperties()
+        .setProperty(AbstractItemDialogPage.KEY_SCOPE, AbstractItemDialogPage.SCOPE_USER);
     this.registry = registry;
     jbInit();
     fill();

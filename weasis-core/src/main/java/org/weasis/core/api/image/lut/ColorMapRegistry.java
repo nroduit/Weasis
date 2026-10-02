@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.image.lut;
 
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -27,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.service.UICore;
@@ -234,11 +236,21 @@ public final class ColorMapRegistry {
       return ColorMapJson.Document.EMPTY;
     }
     try {
-      return ColorMapJson.readDocument(siteFile);
+      return ColorMapJson.readDocument(siteFile, bases(List.of(contributed, bundled)));
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read the site color maps: {}", siteFile, e);
       return ColorMapJson.Document.EMPTY;
     }
+  }
+
+  // The maps of the lower layers, as JSON, so a document can extend one of them
+  private static Function<String, Optional<JsonObject>> bases(List<List<ColorMap>> layers) {
+    return id ->
+        layers.stream()
+            .flatMap(List::stream)
+            .filter(m -> m.id().equals(id))
+            .findFirst()
+            .map(ColorMapJson::toJson);
   }
 
   private ColorMapJson.Document loadUser() {
@@ -246,7 +258,7 @@ public final class ColorMapRegistry {
       return ColorMapJson.Document.EMPTY;
     }
     try {
-      return ColorMapJson.readDocument(userFile);
+      return ColorMapJson.readDocument(userFile, bases(List.of(site, contributed, bundled)));
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read user color maps: {}", userFile, e);
       return ColorMapJson.Document.EMPTY;

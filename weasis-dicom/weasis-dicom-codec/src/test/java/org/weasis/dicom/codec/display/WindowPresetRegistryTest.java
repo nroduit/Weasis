@@ -447,4 +447,42 @@ class WindowPresetRegistryTest {
         () -> assertFalse(lung.withId("user.ct.lung").locked(), "a copy is not locked"),
         () -> assertEquals(2, registry.userPresets().size(), "the user file is kept as written"));
   }
+
+  @Test
+  void aPresetCanExtendOneOfALowerLayer(@TempDir Path dir) throws IOException {
+    Path site = dir.resolve("site.json");
+    Files.writeString(
+        site,
+        """
+        [{"id": "site.ct.lung-wide", "extends": "weasis.ct.lung", "name": "Wide lung",
+          "window": 2000, "locked": true}]
+        """);
+    Path user = dir.resolve(WindowPresetRegistry.USER_FILE);
+    Files.writeString(
+        user,
+        """
+        [{"id": "user.ct.lung-mine", "extends": "site.ct.lung-wide", "level": -700},
+         {"id": "user.ct.orphan", "extends": "nowhere", "name": "Orphan"}]
+        """);
+    WindowPresetRegistry registry = new WindowPresetRegistry(WindowPresetRegistry.loadBuiltIn());
+    registry.configure(site, user);
+
+    WindowPreset builtIn = registry.find("weasis.ct.lung").orElseThrow();
+    WindowPreset wide = registry.find("site.ct.lung-wide").orElseThrow();
+    WindowPreset mine = registry.find("user.ct.lung-mine").orElseThrow();
+    assertAll(
+        () -> assertEquals("Wide lung", wide.name()),
+        () -> assertEquals(2000.0, wide.window()),
+        () -> assertEquals(builtIn.level(), wide.level(), "inherited from the built-in"),
+        () -> assertEquals(builtIn.modalities(), wide.modalities()),
+        () -> assertTrue(registry.isLocked("site.ct.lung-wide")),
+        () -> assertEquals("Wide lung", mine.name(), "inherited through the site preset"),
+        () -> assertEquals(2000.0, mine.window()),
+        () -> assertEquals(-700.0, mine.level()),
+        () -> assertFalse(mine.locked(), "a lock is never inherited"),
+        () ->
+            assertTrue(
+                registry.find("user.ct.orphan").isEmpty(), "a missing base skips the preset"),
+        () -> assertEquals(1, registry.userPresets().size()));
+  }
 }

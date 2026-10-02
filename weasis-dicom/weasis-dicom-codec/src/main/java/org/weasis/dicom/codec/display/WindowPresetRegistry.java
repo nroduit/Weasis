@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.codec.display;
 
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import org.dcm4che3.img.DicomImageAdapter;
 import org.dcm4che3.img.lut.ModalityLutModule;
 import org.dcm4che3.img.lut.ModalityPresetProvider;
@@ -440,9 +442,24 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
         "Window preset"); // NON-NLS
   }
 
-  private static Optional<List<WindowPreset>> loadSite(Path file) {
+  // The presets of the lower layers, as JSON, so a document can extend one of them
+  @SafeVarargs
+  private static Function<String, Optional<JsonObject>> bases(List<WindowPreset>... layers) {
+    return id -> {
+      for (List<WindowPreset> layer : layers) {
+        for (WindowPreset preset : layer) {
+          if (preset.id().equals(id)) {
+            return Optional.of(WindowPresetJson.toJson(preset));
+          }
+        }
+      }
+      return Optional.empty();
+    };
+  }
+
+  private Optional<List<WindowPreset>> loadSite(Path file) {
     try {
-      return Optional.of(WindowPresetJson.read(file));
+      return Optional.of(WindowPresetJson.read(file, bases(builtIn)));
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read the site window presets: {}", file, e);
       return Optional.empty();
@@ -456,7 +473,7 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
       return;
     }
     try {
-      List<WindowPreset> presets = WindowPresetJson.read(userFile);
+      List<WindowPreset> presets = WindowPresetJson.read(userFile, bases(site, builtIn));
       user.clear();
       presets.forEach(p -> user.put(p.id(), p));
     } catch (IOException | RuntimeException e) {

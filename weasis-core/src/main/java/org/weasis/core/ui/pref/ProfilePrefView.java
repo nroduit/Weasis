@@ -120,6 +120,8 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
 
   ProfilePrefView(MeasurementProfileRegistry registry, GraphicRegistry graphics) {
     super(Messages.getString("ProfilePrefView.title"), 704);
+    getProperties()
+        .setProperty(AbstractItemDialogPage.KEY_SCOPE, AbstractItemDialogPage.SCOPE_USER);
     this.registry = registry;
     this.graphics = graphics;
     jbInit();

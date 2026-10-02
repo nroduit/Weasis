@@ -118,6 +118,8 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
 
   WindowPresetPrefView(WindowPresetRegistry registry) {
     super(Messages.getString("WindowPresetPrefView.title"), 502);
+    getProperties()
+        .setProperty(AbstractItemDialogPage.KEY_SCOPE, AbstractItemDialogPage.SCOPE_USER);
     this.registry = registry;
     jbInit();
     fillPresets(null);

@@ -119,6 +119,8 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
 
   MaskingPrefView(MaskingModelRegistry registry) {
     super(Messages.getString("MaskingPrefView.title"), 112);
+    getProperties()
+        .setProperty(AbstractItemDialogPage.KEY_SCOPE, AbstractItemDialogPage.SCOPE_USER);
     this.registry = registry;
     this.pending = registry.userModel();
     jbInit();

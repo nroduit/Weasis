@@ -31,9 +31,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
+import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
 import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
@@ -220,36 +223,47 @@ public final class ColorMapJson {
   }
 
   public static Document readDocument(InputStream in) {
+    return readDocument(in, JsonExtends.NO_BASE);
+  }
+
+  /**
+   * @param lowerBase the map of that id in the lower layers, as JSON, for an {@code extends}
+   */
+  public static Document readDocument(
+      InputStream in, Function<String, Optional<JsonObject>> lowerBase) {
     try (JsonReader reader = Json.createReader(in)) {
       JsonStructure structure = reader.read();
       return switch (structure) {
-        case JsonArray array -> document(array, List.of());
-        case JsonObject object when object.containsKey(MAPS) -> readEnvelope(object);
+        case JsonArray array -> document(array, List.of(), lowerBase);
+        case JsonObject object when object.containsKey(MAPS) -> readEnvelope(object, lowerBase);
         case JsonObject object ->
-            document(Json.createArrayBuilder().add(object).build(), List.of());
+            document(Json.createArrayBuilder().add(object).build(), List.of(), lowerBase);
         default -> Document.EMPTY;
       };
     }
   }
 
-  private static Document readEnvelope(JsonObject envelope) {
+  private static Document readEnvelope(
+      JsonObject envelope, Function<String, Optional<JsonObject>> lowerBase) {
     int schema = JsonUtil.getInt(envelope, SCHEMA, SCHEMA_VERSION);
     if (schema > SCHEMA_VERSION) {
       throw new IllegalArgumentException(
           "Color map schema %d is newer than the supported %d".formatted(schema, SCHEMA_VERSION));
     }
     JsonArray maps = envelope.get(MAPS) instanceof JsonArray array ? array : null;
-    return document(maps, JsonUtil.getStringList(envelope, FAVORITES));
+    return document(maps, JsonUtil.getStringList(envelope, FAVORITES), lowerBase);
   }
 
   // The locked flag is a fact of the document, not of the map: it is collected beside the maps
-  private static Document document(JsonArray array, List<String> favorites) {
+  private static Document document(
+      JsonArray array, List<String> favorites, Function<String, Optional<JsonObject>> lowerBase) {
     if (array == null) {
       return new Document(List.of(), favorites, Set.of());
     }
     List<ColorMap> maps = new ArrayList<>();
     Set<String> locked = new LinkedHashSet<>();
-    for (JsonObject object : JsonUtil.objects(array)) {
+    for (JsonObject object :
+        JsonExtends.resolve(JsonUtil.objects(array), lowerBase, "Color map")) { // NON-NLS
       ColorMap map = fromJson(object);
       maps.add(map);
       if (JsonUtil.getBoolean(object, LOCKED, false)) {
@@ -282,8 +296,13 @@ public final class ColorMapJson {
   }
 
   public static Document readDocument(Path path) throws IOException {
+    return readDocument(path, JsonExtends.NO_BASE);
+  }
+
+  public static Document readDocument(Path path, Function<String, Optional<JsonObject>> lowerBase)
+      throws IOException {
     try (InputStream in = Files.newInputStream(path)) {
-      return readDocument(in);
+      return readDocument(in, lowerBase);
     } catch (JsonException e) {
       throw new IOException("Invalid color map file: " + path, e);
     }

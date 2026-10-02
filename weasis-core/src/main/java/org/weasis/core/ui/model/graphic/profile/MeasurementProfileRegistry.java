@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.model.graphic.profile;
 
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -21,6 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -215,11 +217,22 @@ public final class MeasurementProfileRegistry {
       return List.of();
     }
     try {
-      return MeasurementProfileJson.read(siteFile);
+      return MeasurementProfileJson.read(siteFile, bases(List.of(builtIn)));
     } catch (IOException | RuntimeException e) {
       LOGGER.warn("Cannot read the site measurement profiles: {}", siteFile, e);
       return List.of();
     }
+  }
+
+  // The profiles of the lower layers, as JSON, so a document can extend one of them
+  private static Function<String, Optional<JsonObject>> bases(
+      List<List<MeasurementProfile>> layers) {
+    return id ->
+        layers.stream()
+            .flatMap(List::stream)
+            .filter(p -> p.id().equals(id))
+            .findFirst()
+            .map(MeasurementProfileJson::toJson);
   }
 
   private List<MeasurementProfile> readUser() {
@@ -227,7 +240,7 @@ public final class MeasurementProfileRegistry {
       return List.of();
     }
     try {
-      return MeasurementProfileJson.read(userFile);
+      return MeasurementProfileJson.read(userFile, bases(List.of(site, builtIn)));
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read the user measurement profiles: {}", userFile, e);
       return List.of();
