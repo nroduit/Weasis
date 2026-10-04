@@ -13,6 +13,7 @@ import java.awt.Component;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -75,6 +76,12 @@ public class DicomNodeListView extends AbstractItemDialogPage {
     add(
         LauncherPrefView.buildItem(
             nodeType.toString(), nodeComboBox, editButton, deleteButton, addNodeButton));
+    if (nodeType == AbstractDicomNode.Type.DICOM_CALLING) {
+      // A calling node names this workstation (AE title, listener port): it never roams
+      JLabel scope = new JLabel(Messages.getString("DicomNodeListView.calling_scope"));
+      scope.setEnabled(false);
+      add(GuiUtils.getFlowLayoutPanel(scope));
+    }
 
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
   }
