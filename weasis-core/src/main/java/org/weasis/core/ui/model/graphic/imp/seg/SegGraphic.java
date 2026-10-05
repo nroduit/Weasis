@@ -10,12 +10,17 @@
 package org.weasis.core.ui.model.graphic.imp.seg;
 
 import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Objects;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -38,6 +43,11 @@ public class SegGraphic extends AbstractGraphic implements GraphicArea {
   private Rectangle2D outlineBounds;
 
   private boolean highlighted;
+  private transient BufferedImage cachedBinaryImage;
+  private transient int cachedColor;
+  private transient float cachedOpacity;
+  private transient boolean cachedFilled;
+  private transient boolean cachedHighlighted;
 
   public SegGraphic(Shape path) {
     this(path, null);
@@ -157,6 +167,15 @@ public class SegGraphic extends AbstractGraphic implements GraphicArea {
    * @param tolerance the half-width, in image coordinates, of the square tested around the point
    */
   public boolean isOnOutline(Point2D p, double tolerance) {
+    if (contour != null && contour.getBinaryMask() != null && getFilled()) {
+      int x = (int) Math.floor(p.getX() + 0.5);
+      int y = (int) Math.floor(p.getY() + 0.5);
+      return x >= 0
+          && x < contour.getBinaryWidth()
+          && y >= 0
+          && y < contour.getBinaryHeight()
+          && contour.getBinaryMask()[y * contour.getBinaryWidth() + x] != 0;
+    }
     if (shape == null || outlineBounds == null || !isInBounds(p, tolerance)) {
       return false;
     }
@@ -168,6 +187,59 @@ public class SegGraphic extends AbstractGraphic implements GraphicArea {
     }
     // The box straddles the outline when it intersects the shape without being fully inside it
     return getFilled() || !shape.contains(box);
+  }
+
+  @Override
+  public Rectangle getRepaintBounds(AffineTransform transform) {
+    return contour != null && contour.getBinaryBounds() != null
+        ? getRepaintBounds(contour.getBinaryBounds(), transform)
+        : super.getRepaintBounds(transform);
+  }
+
+  @Override
+  public void paint(Graphics2D g2d, AffineTransform transform) {
+    if (contour == null || contour.getBinaryMask() == null) {
+      super.paint(g2d, transform);
+      return;
+    }
+    Color color = getColorPaint() instanceof Color c ? c : Color.RED;
+    float opacity = getFillOpacity();
+    boolean filled = getFilled();
+    if (cachedBinaryImage == null
+        || cachedColor != color.getRGB()
+        || cachedOpacity != opacity
+        || cachedFilled != filled
+        || cachedHighlighted != highlighted) {
+      cachedBinaryImage =
+          BinaryMaskOverlay.colorize(
+              contour.getBinaryMask(),
+              contour.getBinaryWidth(),
+              contour.getBinaryHeight(),
+              color,
+              opacity,
+              filled,
+              highlighted);
+      cachedColor = color.getRGB();
+      cachedOpacity = opacity;
+      cachedFilled = filled;
+      cachedHighlighted = highlighted;
+    }
+    AffineTransform imageTransform =
+        transform == null ? new AffineTransform() : new AffineTransform(transform);
+    // DICOM pixel coordinates denote centres; BufferedImage coordinates denote pixel edges.
+    imageTransform.translate(-0.5, -0.5);
+    RenderingHints oldHints = g2d.getRenderingHints();
+    g2d.setRenderingHint(
+        RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+    try {
+      g2d.drawImage(cachedBinaryImage, imageTransform, null);
+    } finally {
+      g2d.setRenderingHints(oldHints);
+    }
+    if (getSelected()) {
+      paintHandles(g2d, transform);
+    }
+    paintLabel(g2d, transform);
   }
 
   private boolean isInBounds(Point2D p, double tolerance) {

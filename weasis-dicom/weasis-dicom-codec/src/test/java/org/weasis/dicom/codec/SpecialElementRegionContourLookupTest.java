@@ -92,6 +92,33 @@ class SpecialElementRegionContourLookupTest {
   }
 
   @Test
+  void inPlaneIppOffsetUsesTheVolumeResliceInsteadOfDirectContours() {
+    Region region = new Region(positionMap(POSITION), mock(SegmentationVolume.class));
+    region.referenceNormal = new Vector3d(0, 0, 1);
+    region.maskImagePosition = new Vector3d(2, 0, POSITION);
+
+    assertNotNull(region.getContours(orientedImage(POSITION)));
+    assertTrue(
+        region.volumeRequested, "an in-plane IPP offset requires nearest-neighbour reslicing");
+  }
+
+  @Test
+  void selectedFrameOriginIsCheckedRatherThanTheFirstFrameOrigin() {
+    LazyContourLoader first = Set::<SegContour>of;
+    LazyContourLoader selected = Set::<SegContour>of;
+    NavigableMap<Double, Set<LazyContourLoader>> map = new TreeMap<>();
+    map.put(10.0, Set.of(first));
+    map.put(20.0, Set.of(selected));
+    Region region = new Region(map, mock(SegmentationVolume.class));
+    region.referenceNormal = new Vector3d(0, 0, 1);
+    region.maskImagePosition = new Vector3d(0, 0, 10);
+    region.frameOrigins = Map.of(first, region.maskImagePosition, selected, new Vector3d(2, 0, 20));
+
+    assertNotNull(region.getContours(orientedImage(20)));
+    assertTrue(region.volumeRequested, "the selected frame's shifted grid must be resliced");
+  }
+
+  @Test
   void nearestPicksOneFrameWhereToleranceSpansSeveral() {
     // An overlapping reconstruction: 0.6 mm slices 0.3 mm apart, so the tolerance reaches both
     // neighbours even though the grids match 1:1. The volume reslice samples the middle plane
@@ -153,6 +180,8 @@ class SpecialElementRegionContourLookupTest {
     private final NavigableMap<Double, Set<LazyContourLoader>> positionMap;
     private final SegmentationVolume volume;
     private Vector3d referenceNormal;
+    private Vector3d maskImagePosition;
+    private Map<LazyContourLoader, Vector3d> frameOrigins;
     private boolean volumeRequested;
 
     Region(NavigableMap<Double, Set<LazyContourLoader>> positionMap, SegmentationVolume volume) {
@@ -169,6 +198,21 @@ class SpecialElementRegionContourLookupTest {
     @Override
     public Vector3d getReferenceNormal() {
       return referenceNormal;
+    }
+
+    @Override
+    public Vector3d getMaskRowDirection() {
+      return new Vector3d(1, 0, 0);
+    }
+
+    @Override
+    public Vector3d getMaskColumnDirection() {
+      return new Vector3d(0, 1, 0);
+    }
+
+    @Override
+    public Vector3d getMaskImagePosition(LazyContourLoader loader) {
+      return frameOrigins == null ? maskImagePosition : frameOrigins.get(loader);
     }
 
     @Override

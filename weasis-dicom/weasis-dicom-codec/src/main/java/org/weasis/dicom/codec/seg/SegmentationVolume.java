@@ -1260,27 +1260,35 @@ public final class SegmentationVolume {
     if (imgOrigin == null || rowDir == null || colDir == null || width <= 0 || height <= 0) {
       return Collections.emptyMap();
     }
-    // Compute an oversampling factor so every output pixel covers at most one SEG voxel along
-    // each in-plane axis. Without this, an MR pixel that spans several SEG voxels samples only
-    // one of them with nearest-neighbor, turning a continuous structure into a dotted column /
-    // row pattern that findContours then traces as thin parallel stripes. Capped at 4×.
-    double minSegSpacing = Math.min(pixelSpacing.x, Math.min(pixelSpacing.y, pixelSpacing.z));
-    int factorU = Math.max(1, (int) Math.ceil(colSpacing / minSegSpacing));
-    int factorV = Math.max(1, (int) Math.ceil(rowSpacing / minSegSpacing));
-    int factor = Math.clamp(Math.max(factorU, factorV), 1, 4);
+    return buildContours(
+        sampleImagePlaneRaster(imgOrigin, rowDir, colDir, colSpacing, rowSpacing, width, height),
+        width,
+        height);
+  }
 
+  // Package-private so the exact nearest-neighbour sampler can be tested without native OpenCV.
+  int[] sampleImagePlaneRaster(
+      Vector3d imgOrigin,
+      Vector3d rowDir,
+      Vector3d colDir,
+      double colSpacing,
+      double rowSpacing,
+      int width,
+      int height) {
+    if (imgOrigin == null || rowDir == null || colDir == null || width <= 0 || height <= 0) {
+      return null;
+    }
     // A segmentation usually covers a small part of the displayed field of view, and a study may
     // hold dozens of them: sampling the whole image for each one — including the ones the plane
     // misses entirely — dominates every slice change. Restrict the sweep to the pixels that can
     // actually land inside this volume.
     PlaneBox box = planeBounds(imgOrigin, rowDir, colDir, colSpacing, rowSpacing, width, height);
     if (box == null) {
-      return Collections.emptyMap();
+      return null;
     }
     int[] raster =
-        sampleImagePlane(
-            imgOrigin, rowDir, colDir, colSpacing, rowSpacing, width, height, factor, box);
-    return buildContours(raster, width, height);
+        sampleImagePlane(imgOrigin, rowDir, colDir, colSpacing, rowSpacing, width, height, box);
+    return raster;
   }
 
   /** Inclusive pixel bounds of the image-plane region that can sample this volume. */
@@ -1423,7 +1431,6 @@ public final class SegmentationVolume {
       double rowSpacing,
       int width,
       int height,
-      int oversample,
       PlaneBox box) {
     int[] raster = new int[width * height];
 
@@ -1439,51 +1446,22 @@ public final class SegmentationVolume {
     double rowStepY = colDir.y * rowSpacing;
     double rowStepZ = colDir.z * rowSpacing;
 
-    int n = Math.max(1, oversample);
-    double[] subOffsets = new double[n];
-    for (int i = 0; i < n; i++) {
-      subOffsets[i] = (i + 0.5) / n - 0.5;
-    }
-
     for (int v = box.v0(); v <= box.v1(); v++) {
       int rowBase = v * width;
       for (int u = box.u0(); u <= box.u1(); u++) {
-        int combined = 0;
-        for (int sv = 0; sv < n; sv++) {
-          double vv = v + subOffsets[sv];
-          double oxV = imgOrigin.x + vv * rowStepX;
-          double oyV = imgOrigin.y + vv * rowStepY;
-          double ozV = imgOrigin.z + vv * rowStepZ;
-          for (int su = 0; su < n; su++) {
-            double uu = u + subOffsets[su];
-            double dx = oxV + uu * colStepX - volumeOrigin.x;
-            double dy = oyV + uu * colStepY - volumeOrigin.y;
-            double dz = ozV + uu * colStepZ - volumeOrigin.z;
-
-            int vx =
-                (int)
-                    Math.round(
-                        (dx * volumeAxisX.x + dy * volumeAxisX.y + dz * volumeAxisX.z) * invSx);
-            int vy =
-                (int)
-                    Math.round(
-                        (dx * volumeAxisY.x + dy * volumeAxisY.y + dz * volumeAxisY.z) * invSy);
-            int vz =
-                (int)
-                    Math.round(
-                        (dx * volumeAxisZ.x + dy * volumeAxisZ.y + dz * volumeAxisZ.z) * invSz);
-
-            int id = getStorageId(vx, vy, vz);
-            if (id != 0) {
-              // Compose sub-samples by union of their segment lists; allocates a fresh
-              // combination ID on demand so every observed (sub-)voxel state is preserved.
-              combined = idForUnion(combined, id);
-            }
-          }
-        }
-        if (combined != 0) {
-          raster[rowBase + u] = combined;
-        }
+        double dx = imgOrigin.x + v * rowStepX + u * colStepX - volumeOrigin.x;
+        double dy = imgOrigin.y + v * rowStepY + u * colStepY - volumeOrigin.y;
+        double dz = imgOrigin.z + v * rowStepZ + u * colStepZ - volumeOrigin.z;
+        int vx =
+            (int)
+                Math.round((dx * volumeAxisX.x + dy * volumeAxisX.y + dz * volumeAxisX.z) * invSx);
+        int vy =
+            (int)
+                Math.round((dx * volumeAxisY.x + dy * volumeAxisY.y + dz * volumeAxisY.z) * invSy);
+        int vz =
+            (int)
+                Math.round((dx * volumeAxisZ.x + dy * volumeAxisZ.y + dz * volumeAxisZ.z) * invSz);
+        raster[rowBase + u] = getStorageId(vx, vy, vz);
       }
     }
     return raster;
@@ -1586,8 +1564,9 @@ public final class SegmentationVolume {
       try {
         binaryMask.toMat().put(0, 0, maskData);
         List<Segment> segmentList = Region.buildSegmentList(binaryMask);
-        if (!segmentList.isEmpty()) {
+        if (pixelCount > 0) {
           SegContour contour = new SegContour(String.valueOf(segNum), segmentList, pixelCount);
+          contour.setBinaryMask(maskData, width, height);
           contour.setAttributes(attrs);
           result.computeIfAbsent(segNum, _ -> new ArrayList<>()).add(contour);
         } else if (LOGGER.isDebugEnabled()) {

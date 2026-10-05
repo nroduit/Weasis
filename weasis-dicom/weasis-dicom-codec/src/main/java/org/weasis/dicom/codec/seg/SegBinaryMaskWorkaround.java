@@ -10,7 +10,6 @@
 package org.weasis.dicom.codec.seg;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.opencv.core.CvType;
@@ -43,10 +42,6 @@ public final class SegBinaryMaskWorkaround {
 
   /** SOP UIDs we have already logged once, so the warn line does not flood. */
   private static final java.util.Set<String> WARNED = ConcurrentHashMap.newKeySet();
-
-  /** Cache: SOP UID → {@code true} once we have observed the OpenCV bug for this SEG. */
-  private static final java.util.Map<String, AtomicBoolean> NEEDS_WORKAROUND =
-      new ConcurrentHashMap<>();
 
   private SegBinaryMaskWorkaround() {}
 
@@ -101,25 +96,34 @@ public final class SegBinaryMaskWorkaround {
           "BINARY SEG with width % 8 != 0 but Pixel Data is not a contiguous byte array — workaround skipped");
       return null;
     }
-    long framePixels = (long) width * height;
-    long firstBit = framePixels * frameIndex;
-    long lastBit = firstBit + framePixels; // exclusive
-    long totalBitsAvailable = (long) pixelData.length * 8;
-    if (lastBit > totalBitsAvailable) {
+    byte[] unpacked = unpackFrame(pixelData, frameIndex, width, height);
+    if (unpacked == null) {
       logOnce(
-          dicom,
-          "BINARY SEG Pixel Data truncated (need "
-              + lastBit
-              + " bits, have "
-              + totalBitsAvailable
-              + ") — workaround skipped for frame "
-              + frameIndex);
+          dicom, "BINARY SEG Pixel Data truncated — workaround skipped for frame " + frameIndex);
       return null;
     }
 
     ImageCV out = new ImageCV(height, width, CvType.CV_8UC1);
     Mat mat = out.toMat();
-    byte[] row = new byte[width];
+    mat.put(0, 0, unpacked);
+    logOnce(dicom, "Re-decoded BINARY SEG with width=" + width + " (workaround active)");
+    return out;
+  }
+
+  static byte[] unpackFrame(byte[] pixelData, int frameIndex, int width, int height) {
+    if (pixelData == null || frameIndex < 0 || width <= 0 || height <= 0) {
+      return null;
+    }
+    long framePixels = (long) width * height;
+    if (framePixels > Integer.MAX_VALUE) {
+      return null;
+    }
+    long firstBit = framePixels * frameIndex;
+    long lastBit = firstBit + framePixels;
+    if (lastBit > (long) pixelData.length * 8) {
+      return null;
+    }
+    byte[] unpacked = new byte[(int) framePixels];
     long bit = firstBit;
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++, bit++) {
@@ -127,17 +131,14 @@ public final class SegBinaryMaskWorkaround {
         // byte, continuously across rows and frames (no per-row/per-frame padding).
         int b = pixelData[(int) (bit >> 3)] & 0xFF;
         int v = (b >> ((int) (bit & 7))) & 1;
-        row[x] = v == 0 ? (byte) 0 : (byte) 255;
+        unpacked[y * width + x] = v == 0 ? (byte) 0 : (byte) 255;
       }
-      mat.put(y, 0, row);
     }
-    logOnce(dicom, "Re-decoded BINARY SEG with width=" + width + " (workaround active)");
-    return out;
+    return unpacked;
   }
 
   private static void logOnce(Attributes dicom, String message) {
     String key = dicom.getString(Tag.SOPInstanceUID, "<no-uid>");
-    NEEDS_WORKAROUND.computeIfAbsent(key, _ -> new AtomicBoolean(false));
     if (WARNED.add(key)) {
       LOGGER.info("SEG {}: {}", key, message);
     }

@@ -11,6 +11,7 @@ package org.weasis.core.ui.model.graphic.imp.seg;
 
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.List;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.opencv.data.PlanarImage;
@@ -19,6 +20,10 @@ import org.weasis.opencv.seg.Segment;
 
 public class SegContour extends Region {
   private PlanarImage fractionalMask;
+  private byte[] binaryMask;
+  private int binaryWidth;
+  private int binaryHeight;
+  private Rectangle2D binaryBounds;
 
   public SegContour(String id, List<Segment> segmentList) {
     super(id, segmentList);
@@ -61,15 +66,61 @@ public class SegContour extends Region {
     return fractionalMask != null;
   }
 
+  /** Retains the exact discrete mask for rendering; contours remain available for interaction. */
+  public void setBinaryMask(byte[] mask, int width, int height) {
+    if (mask == null || width <= 0 || height <= 0 || mask.length != (long) width * height) {
+      throw new IllegalArgumentException("Invalid binary mask dimensions");
+    }
+    this.binaryMask = mask.clone();
+    this.binaryWidth = width;
+    this.binaryHeight = height;
+    int minX = width;
+    int minY = height;
+    int maxX = -1;
+    int maxY = -1;
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        if (mask[y * width + x] != 0) {
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
+      }
+    }
+    binaryBounds =
+        maxX < 0
+            ? null
+            : new Rectangle2D.Double(minX - 0.5, minY - 0.5, maxX - minX + 1, maxY - minY + 1);
+  }
+
+  byte[] getBinaryMask() {
+    return binaryMask;
+  }
+
+  int getBinaryWidth() {
+    return binaryWidth;
+  }
+
+  int getBinaryHeight() {
+    return binaryHeight;
+  }
+
+  Rectangle2D getBinaryBounds() {
+    return binaryBounds;
+  }
+
   public SegGraphic getSegGraphic() {
-    if (segmentList.isEmpty() || !attributes.isVisible()) {
+    if ((segmentList.isEmpty() && binaryBounds == null) || !attributes.isVisible()) {
       return null;
     }
     Path2D path = buildPath();
-    if (path == null) {
+    if (path == null && binaryMask == null) {
       return null;
     }
-    var graphic = new SegGraphic(path);
+    var graphic =
+        new SegGraphic(
+            path == null ? new Rectangle2D.Double(-0.5, -0.5, binaryWidth, binaryHeight) : path);
     graphic.setContour(this);
     graphic.setFilled(attributes.isFilled());
     graphic.setLineThickness(attributes.getLineThickness());

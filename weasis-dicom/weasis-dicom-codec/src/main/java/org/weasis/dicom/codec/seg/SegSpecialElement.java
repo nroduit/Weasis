@@ -14,6 +14,7 @@ import java.awt.EventQueue;
 import java.lang.ref.SoftReference;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -118,6 +119,7 @@ public class SegSpecialElement extends HiddenSpecialElement
 
   private final Map<String, Map<String, Set<LazyContourLoader>>> refMap = new HashMap<>();
   private final Map<Integer, LazyContourLoader> roiMap = new HashMap<>();
+  private final Map<LazyContourLoader, Vector3d> frameOrigins = new IdentityHashMap<>();
   private final TreeMap<Double, Set<LazyContourLoader>> positionMap = new TreeMap<>();
   private final Map<Integer, SegRegion<DicomImageElement>> segAttributes = new HashMap<>();
 
@@ -249,6 +251,7 @@ public class SegSpecialElement extends HiddenSpecialElement
   /** Releases all data built by {@link #initContours} and the cached segmentation volume. */
   public void disposeContours() {
     roiMap.clear();
+    frameOrigins.clear();
     positionMap.clear();
     segAttributes.clear();
     referenceNormal = null;
@@ -355,6 +358,11 @@ public class SegSpecialElement extends HiddenSpecialElement
       return ps;
     }
     return DicomUtils.getDoubleArrayFromDicomElement(dicom, Tag.PixelSpacing, null);
+  }
+
+  @Override
+  public Vector3d getMaskImagePosition(LazyContourLoader loader) {
+    return frameOrigins.get(loader);
   }
 
   @Override
@@ -672,6 +680,7 @@ public class SegSpecialElement extends HiddenSpecialElement
    */
   private void unloadAfterAbort(DicomSeries series) {
     roiMap.clear();
+    frameOrigins.clear();
     refMap.clear();
     positionMap.clear();
     segAttributes.clear();
@@ -1064,6 +1073,10 @@ public class SegSpecialElement extends HiddenSpecialElement
       LazyContourLoader loader = roiMap.get(index);
       if (loader == null) {
         continue;
+      }
+      double[] frameIpp = findSegIpp(frame, sharedFG);
+      if (frameIpp != null && frameIpp.length == 3) {
+        frameOrigins.put(loader, new Vector3d(frameIpp));
       }
       // Strategy: prioritize spatial metadata matching over SOP UID-based matching.
       // Correctly handles AI-generated SEGs that resample images (empty Derivation Image

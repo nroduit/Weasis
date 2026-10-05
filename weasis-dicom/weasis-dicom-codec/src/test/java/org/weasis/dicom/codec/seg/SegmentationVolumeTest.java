@@ -53,6 +53,33 @@ class SegmentationVolumeTest {
   }
 
   @Test
+  void imagePlaneResliceSamplesOneNearestVoxelInsteadOfUnioningNeighbours() {
+    SegmentationVolume volume = newVolume();
+    volume.addLabel(1, 0, 1, 1);
+    volume.addLabel(2, 0, 1, 2);
+    int[] raster =
+        volume.sampleImagePlaneRaster(
+            new Vector3d(0, 0, 1), new Vector3d(1, 0, 0), new Vector3d(0, 1, 0), 2, 1, 3, 2);
+    assertEquals(6, raster.length);
+    for (int i = 0; i < raster.length; i++) {
+      assertEquals(i == 1 ? 2 : 0, raster[i], "pixel " + i);
+    }
+  }
+
+  @Test
+  void imagePlaneBetweenTwoMaskSlicesDoesNotUnionThem() {
+    SegmentationVolume volume = newVolume();
+    volume.addLabel(2, 2, 0, 1);
+    volume.addLabel(4, 2, 2, 1);
+    int[] raster =
+        volume.sampleImagePlaneRaster(
+            new Vector3d(0, 0, 1), new Vector3d(1, 0, 0), new Vector3d(0, 1, 0), 1, 1, SIZE, SIZE);
+    for (int i = 0; i < raster.length; i++) {
+      assertEquals(0, raster[i], "pixel " + i);
+    }
+  }
+
+  @Test
   void getSegmentNumberResolvesTheRegion() {
     SegmentationVolume volume = newVolume();
     assertAll(
