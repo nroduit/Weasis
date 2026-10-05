@@ -138,6 +138,11 @@ public interface SpecialElementRegion {
     return null;
   }
 
+  /** Position of a selected mask frame, or {@code null} when unavailable. */
+  default Vector3d getMaskImagePosition(LazyContourLoader loader) {
+    return null;
+  }
+
   /** SEG mask width (Columns), or {@code 0} when unknown. */
   default int getMaskWidth() {
     return 0;
@@ -329,7 +334,12 @@ public interface SpecialElementRegion {
         } else {
           loader = map.get(sopInstanceUID);
         }
-        return loader;
+        if (loader != null
+            && isInPlaneGridCompatible(img)
+            && selectedFrameOriginsCompatible(img, loader)) {
+          return loader;
+        }
+        return null;
       }
     }
     return null;
@@ -411,14 +421,20 @@ public interface SpecialElementRegion {
           if (isFractionalSeg()) {
             // No canonical volume represents a fractional SEG, so nothing constrains this path to
             // a single frame: keep the whole slab so every alpha mask inside it contributes.
-            return PositionMatch.of(findByTolerance(positionMap, key, tol));
+            Set<LazyContourLoader> selected = findByTolerance(positionMap, key, tol);
+            return selectedFrameOriginsCompatible(img, selected)
+                ? PositionMatch.of(selected)
+                : PositionMatch.NOT_APPLICABLE;
           }
           // Everywhere else this stands in for the volume reslice (see getContours), which samples
           // the single nearest voxel plane. Returning the whole slab instead unions several SEG
           // frames into one image slice and draws a visibly thicker overlay than MPR and the 3D
           // view show for the same segmentation — an overlapping reconstruction (0.6 mm slices
           // 0.3 mm apart) widens the tolerance to the neighbours even when the grids match 1:1.
-          return PositionMatch.of(findNearest(positionMap, key, tol));
+          Set<LazyContourLoader> selected = findNearest(positionMap, key, tol);
+          return selectedFrameOriginsCompatible(img, selected)
+              ? PositionMatch.of(selected)
+              : PositionMatch.NOT_APPLICABLE;
         }
       }
     }
@@ -478,16 +494,20 @@ public interface SpecialElementRegion {
     if (imgRow == null || imgCol == null) {
       return true;
     }
-    // Require strictly identical (sign included) row/col directions.
-    if (segRow.dot(imgRow) < ORIENTATION_COSINE_STRICT) return false;
-    if (segCol.dot(imgCol) < ORIENTATION_COSINE_STRICT) return false;
+    if (segRow.dot(imgRow) < ORIENTATION_COSINE_STRICT
+        || segCol.dot(imgCol) < ORIENTATION_COSINE_STRICT) {
+      return false;
+    }
 
     double[] segPs = getMaskPixelSpacing();
     double[] imgPs = TagD.getTagValue(img, Tag.PixelSpacing, double[].class);
     if (segPs != null && imgPs != null && segPs.length >= 2 && imgPs.length >= 2) {
-      if (Math.abs(segPs[0] - imgPs[0]) > 1e-3) return false;
-      if (Math.abs(segPs[1] - imgPs[1]) > 1e-3) return false;
+      if (Math.abs(segPs[0] - imgPs[0]) > 1e-3 || Math.abs(segPs[1] - imgPs[1]) > 1e-3) {
+        return false;
+      }
     }
+
+    // The selected frame's in-plane origin is checked after slice selection below.
 
     // Mask dimensions must match the displayed image to ensure (mx, my) ≡ (u, v). Read from the
     // header, never by decoding: this runs on the paint path for every segmentation of every
@@ -497,8 +517,34 @@ public interface SpecialElementRegion {
     Integer imgH = TagD.getTagValue(img, Tag.Rows, Integer.class);
     int segW = getMaskWidth();
     int segH = getMaskHeight();
-    if (segW > 0 && imgW != null && imgW != segW) return false;
-    return segH <= 0 || imgH == null || imgH == segH;
+    return (segW <= 0 || imgW == null || imgW == segW)
+        && (segH <= 0 || imgH == null || imgH == segH);
+  }
+
+  private boolean selectedFrameOriginsCompatible(
+      DicomImageElement img, Set<LazyContourLoader> selected) {
+    if (selected == null || selected.isEmpty()) {
+      return true;
+    }
+    double[] imgIpp = TagD.getTagValue(img, Tag.ImagePositionPatient, double[].class);
+    Vector3d segRow = getMaskRowDirection();
+    Vector3d segCol = getMaskColumnDirection();
+    if (imgIpp == null || imgIpp.length != 3 || segRow == null || segCol == null) {
+      return true;
+    }
+    for (LazyContourLoader loader : selected) {
+      Vector3d segIpp = getMaskImagePosition(loader);
+      if (segIpp == null) {
+        continue;
+      }
+      Vector3d delta = new Vector3d(imgIpp).sub(segIpp);
+      double rowOffset = delta.dot(segRow);
+      double colOffset = delta.dot(segCol);
+      if (Math.abs(rowOffset) > 1e-3 || Math.abs(colOffset) > 1e-3) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

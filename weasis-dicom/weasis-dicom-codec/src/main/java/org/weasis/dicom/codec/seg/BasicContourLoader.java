@@ -61,7 +61,34 @@ public final class BasicContourLoader extends CachedContourLoader {
         }
       }
     }
-    return MaskFrames.withImage(binaryMask, Set.of(), this::buildContours);
+    return MaskFrames.withImage(
+        binaryMask,
+        Set.of(),
+        image -> {
+          // Keep the direct 2D path on the same declared Columns×Rows grid as the canonical
+          // volume path. Some non-square 1-bit SEGs are delivered by the native reader with
+          // swapped dimensions; vectorising that raw image makes 2D disagree with MPR and 3D.
+          // normalize() only transposes an exactly-swapped raster; it never resamples or smooths
+          // the discrete label mask.
+          Attributes segDicom = segDicomObject();
+          PlanarImage normalized =
+              SegMaskOrientation.normalize(
+                  image,
+                  segDicom == null ? 0 : segDicom.getInt(Tag.Columns, 0),
+                  segDicom == null ? 0 : segDicom.getInt(Tag.Rows, 0),
+                  segDicom == null ? null : segDicom.getString(Tag.SOPInstanceUID));
+          if (normalized == null) {
+            return Set.of();
+          }
+          boolean owned = normalized != image;
+          try {
+            return buildContours(normalized);
+          } finally {
+            if (owned) {
+              ImageConversion.releasePlanarImage(normalized);
+            }
+          }
+        });
   }
 
   /** SEG's top-level DICOM dataset (shared by every frame), or {@code null} when unavailable. */
@@ -75,6 +102,9 @@ public final class BasicContourLoader extends CachedContourLoader {
     List<Segment> segmentList = Region.buildSegmentList(binary);
     int pixelCount = Core.countNonZero(mat);
     SegContour contour = new SegContour(String.valueOf(id), segmentList, pixelCount);
+    byte[] pixels = new byte[binary.width() * binary.height()];
+    mat.get(0, 0, pixels);
+    contour.setBinaryMask(pixels, binary.width(), binary.height());
     region.addPixels(contour);
     contour.setAttributes(region);
     return Set.of(contour);
