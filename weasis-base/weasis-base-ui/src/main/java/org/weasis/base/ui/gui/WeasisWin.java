@@ -32,6 +32,7 @@ import bibliothek.gui.dock.station.screen.BoundaryRestriction;
 import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
 import bibliothek.gui.dock.util.DockUtilities;
+import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.util.SystemInfo;
 import jakarta.json.JsonException;
@@ -40,6 +41,7 @@ import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dialog;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
@@ -89,6 +91,7 @@ import javax.swing.Box;
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -98,6 +101,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRootPane;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
@@ -249,10 +253,12 @@ public class WeasisWin {
     configureMaskingModel();
     SiteDocuments.onReload(MaskingModelRegistry.SITE_FILE, WeasisWin::configureMaskingModel);
 
+    boolean indicatorsInMenuBar = false;
     if (GuiUtils.getUICore()
         .getSystemPreferences()
         .getBooleanProperty("weasis.menu.menubar", true)) {
       rootPaneContainer.getRootPane().setJMenuBar(createMenuBar());
+      indicatorsInMenuBar = !isScreenMenuBar();
     }
     setSelectedPlugin(null);
 
@@ -300,7 +306,10 @@ public class WeasisWin {
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(null);
-    rootPaneContainer.getContentPane().add(scrollPane, BorderLayout.NORTH);
+    rootPaneContainer
+        .getContentPane()
+        .add(
+            indicatorsInMenuBar ? scrollPane : createNorthPanel(scrollPane), BorderLayout.NORTH);
 
     rootPaneContainer.setGlassPane(AppProperties.glassPane);
 
@@ -916,12 +925,53 @@ public class WeasisWin {
         });
     helpMenuItem.add(aboutMenuItem);
     menuBar.add(helpMenuItem);
-    menuBar.add(Box.createHorizontalGlue());
-    menuBar.add(
-        new CaptureButton(
-            () -> selectedPlugin == null ? List.of() : selectedPlugin.getExportActions()));
-    menuBar.add(new MaskingIndicator());
+    if (!isScreenMenuBar()) {
+      menuBar.add(Box.createHorizontalGlue());
+      createIndicators().forEach(menuBar::add);
+    }
     return menuBar;
+  }
+
+  /**
+   * Places the indicators when the menu bar cannot hold them: in the title bar when FlatLaf can
+   * draw there (macOS full window content), otherwise at the end of the toolbar row.
+   */
+  private JComponent createNorthPanel(JComponent toolbarRow) {
+    JPanel indicators = new JPanel(new FlowLayout(FlowLayout.TRAILING, 5, 2));
+    createIndicators().forEach(indicators::add);
+    JPanel northPanel = new JPanel(new BorderLayout());
+    if (SystemInfo.isMacFullWindowContentSupported) {
+      // The content extends under the transparent title bar, which keeps the window title and
+      // buttons; the placeholder reserves the room of the buttons
+      JRootPane rootPane = rootPaneContainer.getRootPane();
+      rootPane.putClientProperty("apple.awt.fullWindowContent", true); // NON-NLS
+      rootPane.putClientProperty("apple.awt.transparentTitleBar", true); // NON-NLS
+      JPanel buttonsPlaceholder = new JPanel();
+      buttonsPlaceholder.putClientProperty(
+          FlatClientProperties.FULL_WINDOW_CONTENT_BUTTONS_PLACEHOLDER,
+          "mac zeroInFullScreen"); // NON-NLS
+      JPanel titleBar = new JPanel(new BorderLayout());
+      titleBar.add(buttonsPlaceholder, BorderLayout.WEST);
+      titleBar.add(indicators, BorderLayout.EAST);
+      northPanel.add(titleBar, BorderLayout.NORTH);
+      northPanel.add(toolbarRow, BorderLayout.CENTER);
+    } else {
+      northPanel.add(toolbarRow, BorderLayout.CENTER);
+      northPanel.add(indicators, BorderLayout.EAST);
+    }
+    return northPanel;
+  }
+
+  /** The macOS screen menu bar shows only menus: other components are dropped. */
+  private static boolean isScreenMenuBar() {
+    return SystemInfo.isMacOS && Boolean.getBoolean("apple.laf.useScreenMenuBar"); // NON-NLS
+  }
+
+  private List<JComponent> createIndicators() {
+    return List.of(
+        new CaptureButton(
+            () -> selectedPlugin == null ? List.of() : selectedPlugin.getExportActions()),
+        new MaskingIndicator());
   }
 
   private Release getRelease(String body) {
