@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
@@ -27,8 +28,8 @@ import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.weasis.core.api.image.lut.ColorMapRegistry.Origin;
 import org.weasis.core.api.image.lut.ColorMapRegistry.Query;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
 import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
@@ -54,7 +55,7 @@ class ColorMapRegistryTest {
     assertAll(
         () -> assertTrue(registry.maps().size() >= 20),
         () -> assertEquals("PET SUV", pet.name()),
-        () -> assertEquals(Origin.BUNDLED, registry.origin(pet)),
+        () -> assertEquals(Origin.BUILT_IN, registry.origin(pet)),
         () -> assertEquals("Clinical", pet.category()),
         () ->
             assertTrue(
@@ -219,5 +220,95 @@ class ColorMapRegistryTest {
   void missing_user_file_is_tolerated() {
     var absent = new ColorMapRegistry(dir.resolve("nope.json"), null);
     assertEquals(registry.maps().size(), absent.maps().size());
+  }
+
+  @Test
+  void site_maps_override_built_in_ones_and_yield_to_user_maps() throws Exception {
+    Path site = dir.resolve("config").resolve(ColorMapRegistry.SITE_FILE);
+    Files.createDirectories(site.getParent());
+    ColorMap sitePet =
+        ColorMap.builder("Site PET")
+            .id("weasis.pet-suv")
+            .modalities("PT")
+            .domain(ColorMapDomain.absolute("SUVbw", 0, 8))
+            .stop(0, Color.BLACK)
+            .stop(8, Color.RED)
+            .build();
+    ColorMap siteOnly =
+        ColorMap.builder("Site only")
+            .id("site.only")
+            .stop(0, Color.BLACK)
+            .stop(1, Color.WHITE)
+            .build();
+    ColorMapJson.write(site, List.of(sitePet, siteOnly), List.of());
+
+    ColorMapRegistry withSite = new ColorMapRegistry(site, userFile, null);
+    ColorMap pet = withSite.findById("weasis.pet-suv").orElseThrow();
+    ColorMap only = withSite.findById("site.only").orElseThrow();
+    assertAll(
+        () -> assertEquals("Site PET", pet.name()),
+        () -> assertEquals(Origin.SITE, withSite.origin(pet)),
+        () -> assertEquals(Origin.SITE, withSite.origin(only)),
+        () -> assertTrue(withSite.builtInMaps().contains(only), "site maps are read-only"),
+        () -> assertFalse(withSite.isUserMap(pet)),
+        () ->
+            assertEquals(
+                1,
+                withSite.maps().stream().filter(m -> m.id().equals("weasis.pet-suv")).count(),
+                "the built-in is shadowed by the site map"));
+
+    ColorMap mine =
+        ColorMap.builder("My PET")
+            .id("weasis.pet-suv")
+            .modalities("PT")
+            .domain(ColorMapDomain.absolute("SUVbw", 0, 5))
+            .stop(0, Color.BLACK)
+            .stop(5, Color.YELLOW)
+            .build();
+    withSite.saveUserMap(mine);
+    assertAll(
+        () ->
+            assertEquals(
+                Origin.USER, withSite.origin(withSite.findById("weasis.pet-suv").orElseThrow())),
+        () ->
+            assertEquals(
+                List.of(mine), withSite.userMaps(), "the user document holds user entries only"));
+    withSite.deleteUserMap("weasis.pet-suv");
+    assertEquals(Origin.SITE, withSite.origin(withSite.findById("weasis.pet-suv").orElseThrow()));
+
+    Path absent = dir.resolve("config").resolve("missing.json");
+    assertEquals(
+        registry.maps().size(), new ColorMapRegistry(absent, null, null).maps().size(), "no site");
+  }
+
+  @Test
+  void a_locked_site_map_refuses_the_user_map() throws Exception {
+    Path site = dir.resolve("config").resolve(ColorMapRegistry.SITE_FILE);
+    Files.createDirectories(site.getParent());
+    Files.writeString(
+        site,
+        """
+        {"schema": 1, "maps": [
+          {"id": "weasis.pet-suv", "name": "Site PET", "locked": true,
+           "stops": [{"pos": 0, "color": "#000000"}, {"pos": 1, "color": "#ff0000"}]}
+        ]}
+        """);
+    ColorMap mine =
+        ColorMap.builder("My PET")
+            .id("weasis.pet-suv")
+            .stop(0, Color.BLACK)
+            .stop(1, Color.YELLOW)
+            .build();
+    Files.createDirectories(userFile.getParent());
+    ColorMapJson.write(userFile, List.of(mine), List.of());
+
+    ColorMapRegistry withSite = new ColorMapRegistry(site, userFile, null);
+    ColorMap pet = withSite.findById("weasis.pet-suv").orElseThrow();
+    assertAll(
+        () -> assertEquals("Site PET", pet.name(), "the user map of a locked id is ignored"),
+        () -> assertEquals(Origin.SITE, withSite.origin(pet)),
+        () -> assertTrue(withSite.isLocked(pet)),
+        () -> assertEquals(List.of(mine), withSite.userMaps(), "but stays in the user file"),
+        () -> assertThrows(IllegalStateException.class, () -> withSite.saveUserMap(mine)));
   }
 }

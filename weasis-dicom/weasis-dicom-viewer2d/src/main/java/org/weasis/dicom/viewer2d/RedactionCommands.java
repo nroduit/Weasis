@@ -322,7 +322,7 @@ public class RedactionCommands implements CommandExtension {
     protected void run() {
       MaskingModelRegistry registry = MaskingModelRegistry.getInstance();
       JsonArrayBuilder entries = Json.createArrayBuilder();
-      for (PixelMask mask : registry.pixelMasks()) {
+      for (PixelMask mask : registry.masks().entries()) {
         entries.add(describe(mask, registry));
       }
       print(
@@ -534,7 +534,12 @@ public class RedactionCommands implements CommandExtension {
       MaskingProfile maskingProfile = requireProfile(registry);
       List<KarnakMasks.Loss> losses = new ArrayList<>();
       KarnakMasks.write(
-          file.value(), registry.pixelMasks(), maskingProfile, KarnakMasks.BLACK, complete, losses);
+          file.value(),
+          registry.masks().entries(),
+          maskingProfile,
+          KarnakMasks.BLACK,
+          complete,
+          losses);
       JsonArrayBuilder lost = Json.createArrayBuilder();
       losses.forEach(
           loss ->
@@ -565,7 +570,9 @@ public class RedactionCommands implements CommandExtension {
                       "No masking profile with the id '"
                           + profile
                           + "'. Profiles: "
-                          + registry.profiles().stream().map(MaskingProfile::id).toList()));
+                          + registry.profiles().entries().stream()
+                              .map(MaskingProfile::id)
+                              .toList()));
     }
 
     /** Names the file that was written, as every verb that writes one does, and registers it. */
@@ -656,7 +663,7 @@ public class RedactionCommands implements CommandExtension {
             .add("name", mask.name()) // NON-NLS
             .add("regionCount", mask.regions().size()) // NON-NLS
             .add("enabled", mask.enabled()) // NON-NLS
-            .add("source", SemanticType.valueOf(registry.maskOrigin(mask.id()))); // NON-NLS
+            .add("source", SemanticType.valueOf(registry.masks().origin(mask.id()))); // NON-NLS
     JsonUtil.addIfPresent(entry, "modality", mask.match().modality()); // NON-NLS
     JsonUtil.addIfPresent(entry, "stationName", mask.match().stationName()); // NON-NLS
     entry.add(

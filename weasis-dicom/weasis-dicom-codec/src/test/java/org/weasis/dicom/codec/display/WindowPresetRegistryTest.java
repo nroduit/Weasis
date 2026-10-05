@@ -35,6 +35,7 @@ import org.dcm4che3.img.stream.ImageDescriptor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.opencv.core.Core.MinMaxLocResult;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.dicom.ref.AnatomicRegion;
 import org.weasis.dicom.ref.BodyPart;
 
@@ -130,7 +131,7 @@ class WindowPresetRegistryTest {
     AtomicInteger notified = new AtomicInteger();
     registry.addListener(notified::incrementAndGet);
 
-    registry.configure(site.toString(), user);
+    registry.configure(site, user);
 
     List<PresetWindowLevel> ct = registry.getPresets(image("CT", 12), null);
     PresetWindowLevel lung = ct.get(6);
@@ -285,8 +286,8 @@ class WindowPresetRegistryTest {
         () -> assertTrue(Files.isRegularFile(user)),
         () -> assertEquals(List.of(user), mirrored),
         () -> assertEquals(List.of(liver), registry.userPresets()),
-        () -> assertEquals(WindowPresetRegistry.Origin.USER, registry.origin("user.ct.liver")),
-        () -> assertEquals(WindowPresetRegistry.Origin.BUILT_IN, registry.origin("weasis.ct.lung")),
+        () -> assertEquals(Origin.USER, registry.origin("user.ct.liver")),
+        () -> assertEquals(Origin.BUILT_IN, registry.origin("weasis.ct.lung")),
         () ->
             assertEquals(
                 "user.ct.liver",
@@ -340,14 +341,14 @@ class WindowPresetRegistryTest {
         [{"id": "site.ct.liver", "name": "Liver", "modality": ["CT"], "window": 150, "level": 60}]
         """);
     WindowPresetRegistry registry = new WindowPresetRegistry(WindowPresetRegistry.loadBuiltIn());
-    registry.configure(site.toString(), dir.resolve(WindowPresetRegistry.USER_FILE));
+    registry.configure(site, dir.resolve(WindowPresetRegistry.USER_FILE));
     Files.delete(site);
 
     registry.saveUser(userPreset("user.ct.sinus", null));
     registry.reload();
 
     assertAll(
-        () -> assertEquals(WindowPresetRegistry.Origin.SITE, registry.origin("site.ct.liver")),
+        () -> assertEquals(Origin.SITE, registry.origin("site.ct.liver")),
         () -> assertEquals(14, registry.presets().size(), "unreadable site keeps the last one"));
   }
 
@@ -368,13 +369,6 @@ class WindowPresetRegistryTest {
         () -> assertEquals("user.ct.lung", fromJson.get(6).id()),
         () -> assertEquals(1500.0, fromJson.get(6).window()),
         () -> assertThrows(IOException.class, () -> WindowPresetRegistry.readImport(dir)));
-  }
-
-  @Test
-  void detectsUrlsButNotWindowsDrives() {
-    assertTrue(WindowPresetRegistry.isUrl("https://host/presets.json"));
-    assertFalse(WindowPresetRegistry.isUrl("C://presets.json"));
-    assertFalse(WindowPresetRegistry.isUrl("/opt/weasis/presets.json"));
   }
 
   private static WindowPresetRegistry registryOf(String json) {
@@ -418,5 +412,77 @@ class WindowPresetRegistryTest {
     when(descriptor.getAnatomicRegion())
         .thenReturn(bodyPart == null ? null : new AnatomicRegion(bodyPart));
     return adapter;
+  }
+
+  @Test
+  void aLockedSitePresetIgnoresTheUserOverride(@TempDir Path dir) throws IOException {
+    Path site = dir.resolve("site.json");
+    Files.writeString(
+        site,
+        """
+        [{"id": "weasis.ct.lung", "name": "Site lung", "modality": ["CT"], "window": 1600,
+          "level": -600, "locked": true},
+         {"id": "site.ct.liver", "name": "Liver", "modality": ["CT"], "window": 150, "level": 60}]
+        """);
+    Path user = dir.resolve(WindowPresetRegistry.USER_FILE);
+    Files.writeString(
+        user,
+        """
+        [{"id": "weasis.ct.lung", "name": "My lung", "modality": ["CT"], "window": 1500,
+          "level": -500, "hidden": true},
+         {"id": "site.ct.liver", "name": "My liver", "modality": ["CT"], "window": 180, "level": 70}]
+        """);
+    WindowPresetRegistry registry = new WindowPresetRegistry(WindowPresetRegistry.loadBuiltIn());
+    registry.configure(site, user);
+
+    WindowPreset lung = registry.find("weasis.ct.lung").orElseThrow();
+    WindowPreset liver = registry.find("site.ct.liver").orElseThrow();
+    assertAll(
+        () -> assertEquals("Site lung", lung.name()),
+        () -> assertFalse(lung.hidden(), "the user cannot hide a locked preset"),
+        () -> assertEquals(Origin.SITE, registry.origin("weasis.ct.lung")),
+        () -> assertTrue(registry.isLocked("weasis.ct.lung")),
+        () -> assertEquals("My liver", liver.name()),
+        () -> assertFalse(registry.isLocked("site.ct.liver")),
+        () -> assertFalse(lung.withId("user.ct.lung").locked(), "a copy is not locked"),
+        () -> assertEquals(2, registry.userPresets().size(), "the user file is kept as written"));
+  }
+
+  @Test
+  void aPresetCanExtendOneOfALowerLayer(@TempDir Path dir) throws IOException {
+    Path site = dir.resolve("site.json");
+    Files.writeString(
+        site,
+        """
+        [{"id": "site.ct.lung-wide", "extends": "weasis.ct.lung", "name": "Wide lung",
+          "window": 2000, "locked": true}]
+        """);
+    Path user = dir.resolve(WindowPresetRegistry.USER_FILE);
+    Files.writeString(
+        user,
+        """
+        [{"id": "user.ct.lung-mine", "extends": "site.ct.lung-wide", "level": -700},
+         {"id": "user.ct.orphan", "extends": "nowhere", "name": "Orphan"}]
+        """);
+    WindowPresetRegistry registry = new WindowPresetRegistry(WindowPresetRegistry.loadBuiltIn());
+    registry.configure(site, user);
+
+    WindowPreset builtIn = registry.find("weasis.ct.lung").orElseThrow();
+    WindowPreset wide = registry.find("site.ct.lung-wide").orElseThrow();
+    WindowPreset mine = registry.find("user.ct.lung-mine").orElseThrow();
+    assertAll(
+        () -> assertEquals("Wide lung", wide.name()),
+        () -> assertEquals(2000.0, wide.window()),
+        () -> assertEquals(builtIn.level(), wide.level(), "inherited from the built-in"),
+        () -> assertEquals(builtIn.modalities(), wide.modalities()),
+        () -> assertTrue(registry.isLocked("site.ct.lung-wide")),
+        () -> assertEquals("Wide lung", mine.name(), "inherited through the site preset"),
+        () -> assertEquals(2000.0, mine.window()),
+        () -> assertEquals(-700.0, mine.level()),
+        () -> assertFalse(mine.locked(), "a lock is never inherited"),
+        () ->
+            assertTrue(
+                registry.find("user.ct.orphan").isEmpty(), "a missing base skips the preset"),
+        () -> assertEquals(1, registry.userPresets().size()));
   }
 }

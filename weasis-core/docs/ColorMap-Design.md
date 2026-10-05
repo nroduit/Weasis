@@ -60,12 +60,13 @@ migrated once by `LegacyVolumePresets`.
 
 ## Registry
 
-`ColorMapRegistry` holds maps from four origins: bundled, contributed (another bundle, via
-`addBuiltIn`), imported during the session (`addImported`, e.g. a DICOM palette met while
-loading) and user. A user map shadows any map with the same id. `query(Query)` is the single
-filter (modality, volume, origins, category, text, hidden); `revision()` and listeners let menus
-rebuild only when something changed. `findByDicomUid` resolves palettes referenced by
-presentation states.
+`ColorMapRegistry` holds maps from five origins, merged by id with `LayeredEntries`: imported
+during the session (`addImported`, e.g. a DICOM palette met while loading), bundled, contributed
+(another bundle, via `addBuiltIn`), site and user. A later origin shadows the same id of an earlier
+one, so a user map wins over every other map, and a site map flagged `locked` cannot be shadowed.
+`query(Query)` is the single filter (modality, volume, origins, category, text, hidden);
+`revision()` and listeners let menus rebuild only when something changed. `findByDicomUid`
+resolves palettes referenced by presentation states.
 
 The registry also keeps the user's **favorites**: a set of map ids, not a property of the maps,
 stored in the user file next to the user maps (`setFavorite`, `isFavorite`). The 2D LUT menu

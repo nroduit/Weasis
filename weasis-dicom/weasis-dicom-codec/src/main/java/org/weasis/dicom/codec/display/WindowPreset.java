@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.dcm4che3.img.lut.PresetWindowLevel;
+import org.weasis.core.api.util.LayeredEntries;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.ref.AnatomicRegion;
 import org.weasis.dicom.ref.AnatomySelector;
@@ -32,6 +33,7 @@ import org.weasis.opencv.op.lut.LutShape;
  *     extensions; an extension cannot be written into a DICOM object such as a presentation state
  * @param key shortcut digit, {@code 3} to {@code 9}; null for none
  * @param defaultPreset the default for an image that carries no window/level and no VOI LUT
+ * @param locked set by a site document: the user document may not replace or hide this preset
  */
 public record WindowPreset(
     String id,
@@ -46,7 +48,41 @@ public record WindowPreset(
     LutShape shape,
     Character key,
     When when,
-    boolean defaultPreset) {
+    boolean defaultPreset,
+    boolean locked)
+    implements LayeredEntries.Entry {
+
+  /** A preset that is not locked. */
+  public WindowPreset(
+      String id,
+      String name,
+      Set<String> modalities,
+      String category,
+      List<String> tags,
+      boolean hidden,
+      double window,
+      double level,
+      Domain domain,
+      LutShape shape,
+      Character key,
+      When when,
+      boolean defaultPreset) {
+    this(
+        id,
+        name,
+        modalities,
+        category,
+        tags,
+        hidden,
+        window,
+        level,
+        domain,
+        shape,
+        key,
+        when,
+        defaultPreset,
+        false);
+  }
 
   public enum DomainKind {
     /** Window and level in modality values (Hounsfield units for CT). */
@@ -161,7 +197,7 @@ public record WindowPreset(
     when = Objects.requireNonNullElse(when, When.DEFAULT);
   }
 
-  /** The same preset with another id. */
+  /** The same preset with another id, not locked: a copy belongs to whoever makes it. */
   public WindowPreset withId(String newId) {
     return new WindowPreset(
         newId,

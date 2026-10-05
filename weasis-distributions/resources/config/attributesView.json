@@ -1,0 +1,361 @@
+{
+    "schema": 1,
+    "updated": "2026-10-04T17:31:36.231463321Z",
+    "modalities": [
+        {
+            "id": "OT",
+            "extends": "DEFAULT",
+            "bottomRight": [
+                {
+                    "line": 2,
+                    "tags": [
+                        "SeriesNumber"
+                    ],
+                    "format": "Series Nb: $V"
+                },
+                {
+                    "line": 3,
+                    "tags": [
+                        "FrameLaterality",
+                        "ImageLaterality",
+                        "Laterality"
+                    ],
+                    "format": "Laterality: $V"
+                },
+                {
+                    "line": 4,
+                    "tags": [
+                        "ContrastBolusAgent"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 5,
+                    "tags": [
+                        "SeriesDescription"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 6,
+                    "tags": [
+                        "ImageComments"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 7,
+                    "tags": [
+                        "SliceLocation"
+                    ],
+                    "format": "Location: $V:f$#,##0.##$ mm"
+                }
+            ]
+        },
+        {
+            "id": "XC",
+            "extends": "DEFAULT",
+            "bottomRight": [
+                {
+                    "line": 2,
+                    "tags": [
+                        "SeriesNumber"
+                    ],
+                    "format": "Series Nb: $V"
+                },
+                {
+                    "line": 3,
+                    "tags": [
+                        "FrameLaterality",
+                        "ImageLaterality",
+                        "Laterality"
+                    ],
+                    "format": "Laterality: $V"
+                },
+                {
+                    "line": 4,
+                    "tags": [
+                        "AnatomicRegion",
+                        "BodyPartExamined"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 5,
+                    "tags": [
+                        "SeriesDescription"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 6,
+                    "tags": [
+                        "ImageComments"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 7,
+                    "tags": [
+                        "SliceLocation"
+                    ],
+                    "format": "Location: $V:f$#,##0.##$ mm"
+                }
+            ]
+        },
+        {
+            "id": "DMS",
+            "extends": "DEFAULT",
+            "bottomRight": [
+                {
+                    "line": 2,
+                    "tags": [
+                        "SeriesNumber"
+                    ],
+                    "format": "Series Nb: $V"
+                },
+                {
+                    "line": 3,
+                    "tags": [
+                        "FrameLaterality",
+                        "ImageLaterality",
+                        "Laterality"
+                    ],
+                    "format": "Laterality: $V"
+                },
+                {
+                    "line": 4,
+                    "tags": [
+                        "AnatomicRegion",
+                        "BodyPartExamined"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 5,
+                    "tags": [
+                        "SeriesDescription"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 6,
+                    "tags": [
+                        "ImageComments"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 7,
+                    "tags": [
+                        "SliceLocation"
+                    ],
+                    "format": "Location: $V:f$#,##0.##$ mm"
+                }
+            ]
+        },
+        {
+            "id": "ES",
+            "extends": "DEFAULT",
+            "bottomRight": [
+                {
+                    "line": 2,
+                    "tags": [
+                        "SeriesNumber"
+                    ],
+                    "format": "Series Nb: $V"
+                },
+                {
+                    "line": 3,
+                    "tags": [
+                        "FrameLaterality",
+                        "ImageLaterality",
+                        "Laterality"
+                    ],
+                    "format": "Laterality: $V"
+                },
+                {
+                    "line": 4,
+                    "tags": [
+                        "AnatomicRegion",
+                        "BodyPartExamined"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 5,
+                    "tags": [
+                        "SeriesDescription"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 6,
+                    "tags": [
+                        "ImageComments"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 7,
+                    "tags": [
+                        "SliceLocation"
+                    ],
+                    "format": "Location: $V:f$#,##0.##$ mm"
+                }
+            ]
+        },
+        {
+            "id": "GM",
+            "extends": "DEFAULT",
+            "bottomRight": [
+                {
+                    "line": 2,
+                    "tags": [
+                        "SeriesNumber"
+                    ],
+                    "format": "Series Nb: $V"
+                },
+                {
+                    "line": 3,
+                    "tags": [
+                        "FrameLaterality",
+                        "ImageLaterality",
+                        "Laterality"
+                    ],
+                    "format": "Laterality: $V"
+                },
+                {
+                    "line": 4,
+                    "tags": [
+                        "AnatomicRegion",
+                        "BodyPartExamined"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 5,
+                    "tags": [
+                        "SeriesDescription"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 6,
+                    "tags": [
+                        "ImageComments"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 7,
+                    "tags": [
+                        "SliceLocation"
+                    ],
+                    "format": "Location: $V:f$#,##0.##$ mm"
+                }
+            ]
+        },
+        {
+            "id": "SM",
+            "extends": "DEFAULT",
+            "bottomRight": [
+                {
+                    "line": 2,
+                    "tags": [
+                        "SeriesNumber"
+                    ],
+                    "format": "Series Nb: $V"
+                },
+                {
+                    "line": 3,
+                    "tags": [
+                        "FrameLaterality",
+                        "ImageLaterality",
+                        "Laterality"
+                    ],
+                    "format": "Laterality: $V"
+                },
+                {
+                    "line": 4,
+                    "tags": [
+                        "AnatomicRegion",
+                        "BodyPartExamined"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 5,
+                    "tags": [
+                        "SeriesDescription"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 6,
+                    "tags": [
+                        "ImageComments"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 7,
+                    "tags": [
+                        "SliceLocation"
+                    ],
+                    "format": "Location: $V:f$#,##0.##$ mm"
+                }
+            ]
+        },
+        {
+            "id": "MG",
+            "extends": "DEFAULT",
+            "bottomRight": [
+                {
+                    "line": 2,
+                    "tags": [
+                        "SeriesNumber"
+                    ],
+                    "format": "Series Nb: $V"
+                },
+                {
+                    "line": 3,
+                    "tags": [
+                        "FrameLaterality",
+                        "ImageLaterality",
+                        "Laterality"
+                    ],
+                    "format": "Laterality: $V"
+                },
+                {
+                    "line": 4,
+                    "tags": [
+                        "ContrastBolusAgent"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 5,
+                    "tags": [
+                        "SeriesDescription"
+                    ],
+                    "format": "$V:l$25$"
+                },
+                {
+                    "line": 6,
+                    "tags": [
+                        "SliceThickness"
+                    ],
+                    "format": "Thickness: $V:f$#,##0.##$ mm"
+                },
+                {
+                    "line": 7,
+                    "tags": [
+                        "ViewPosition"
+                    ],
+                    "format": "Position: $V:l$25$"
+                }
+            ]
+        }
+    ]
+}

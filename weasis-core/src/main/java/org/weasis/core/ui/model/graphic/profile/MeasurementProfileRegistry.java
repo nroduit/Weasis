@@ -9,34 +9,39 @@
  */
 package org.weasis.core.ui.model.graphic.profile;
 
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.api.util.LayeredEntries;
+import org.weasis.core.api.util.LayeredEntries.Layer;
+import org.weasis.core.api.util.LayeredEntries.Merged;
+import org.weasis.core.api.util.LayeredEntries.Origin;
+import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.util.StringUtil;
 
 /**
- * The tool profiles: the bundled document, then an optional site document, then the user's own,
- * merged by id (later documents override). Holds which profile is active: an explicit choice, or
- * the automatic one for the modality of the selected series.
+ * The tool profiles: the bundled document, then the site document {@value #SITE_FILE} of the
+ * resources package when there is one, then the user's own, merged by id by the rules of {@link
+ * LayeredEntries}: later documents override, unless the site locked the id. The user document is
+ * mirrored to the remote preference store when saved. Holds which profile is active: an explicit
+ * choice, or the automatic one for the modality of the selected series.
  */
 public final class MeasurementProfileRegistry {
   private static final Logger LOGGER = LoggerFactory.getLogger(MeasurementProfileRegistry.class);
@@ -44,8 +49,8 @@ public final class MeasurementProfileRegistry {
   public static final String BUILTIN_RESOURCE = "/measurementProfiles.json"; // NON-NLS
   public static final String USER_FILE = "measurementProfiles.json"; // NON-NLS
 
-  /** Launcher preference holding the path or URL of the site document. */
-  public static final String CONFIG_PROPERTY = "weasis.measure.profiles.config"; // NON-NLS
+  /** File name of the site document in the {@code config} folder of the resources package. */
+  public static final String SITE_FILE = "measurementProfiles.json"; // NON-NLS
 
   /** Local persistence key of the explicit choice; absent or empty means automatic. */
   public static final String SELECTION_KEY = "weasis.measure.profile"; // NON-NLS
@@ -53,44 +58,48 @@ public final class MeasurementProfileRegistry {
   private static volatile MeasurementProfileRegistry instance; // NOSONAR double-checked locking
 
   private final List<MeasurementProfile> builtIn;
-  private final String siteLocation;
+  private volatile Path siteFile; // NOSONAR replaced as a whole by reloadFrom
   private final Path userFile;
   private final WProperties selectionStore;
+  private final Consumer<Path> remoteStore;
   private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
   // site, merged and siteIds are copy-on-write: unmodifiable snapshots replaced as a whole
   private volatile List<MeasurementProfile> site = List.of(); // NOSONAR immutable snapshot
-  private volatile Map<String, MeasurementProfile> merged = Map.of(); // NOSONAR immutable snapshot
+  private volatile Merged<MeasurementProfile> merged = Merged.empty(); // NOSONAR immutable snapshot
   private final Map<String, MeasurementProfile> user = new LinkedHashMap<>();
-  private volatile Set<String> siteIds = Set.of(); // NOSONAR immutable snapshot
   private String selectedId;
   private String modality;
 
+  /**
+   * @param siteFile the site document, or null
+   * @param userFile the user document, or null to keep user profiles in memory only
+   */
   public MeasurementProfileRegistry(
-      List<MeasurementProfile> builtIn, String siteLocation, Path userFile) {
-    this(builtIn, siteLocation, userFile, null);
+      List<MeasurementProfile> builtIn, Path siteFile, Path userFile) {
+    this(builtIn, siteFile, userFile, null, null);
   }
 
+  /**
+   * @param selectionStore where the explicit choice is kept, or null
+   * @param remoteStore called with the user file after it is written, to mirror it remotely
+   */
   MeasurementProfileRegistry(
       List<MeasurementProfile> builtIn,
-      String siteLocation,
+      Path siteFile,
       Path userFile,
-      WProperties selectionStore) {
+      WProperties selectionStore,
+      Consumer<Path> remoteStore) {
     this.builtIn = builtIn.stream().map(p -> p.withBuiltIn(true)).toList();
-    this.siteLocation = StringUtil.hasText(siteLocation) ? siteLocation.trim() : null;
+    this.siteFile = siteFile;
     this.userFile = userFile;
     this.selectionStore = selectionStore;
+    this.remoteStore = remoteStore;
     if (selectionStore != null) {
       String stored = selectionStore.getProperty(SELECTION_KEY);
       selectedId = StringUtil.hasText(stored) ? stored : null;
     }
-    if (this.siteLocation != null && isUrl(this.siteLocation)) {
-      // A remote document must not hold up the caller, often the UI thread building a tool
-      reloadUser();
-      Thread.ofVirtual().name("measurement-profiles-site").start(this::reload); // NON-NLS
-    } else {
-      reload();
-    }
+    reload();
   }
 
   public static MeasurementProfileRegistry getInstance() {
@@ -120,14 +129,19 @@ public final class MeasurementProfileRegistry {
       WProperties preferences = core.getSystemPreferences();
       String prefDir = preferences.getProperty("weasis.pref.dir"); // NON-NLS
       Path file = StringUtil.hasText(prefDir) ? Path.of(prefDir).resolve(USER_FILE) : null;
-      return new MeasurementProfileRegistry(
-          loadBuiltIn(),
-          preferences.getProperty(CONFIG_PROPERTY),
-          file,
-          core.getLocalPersistence());
+      MeasurementProfileRegistry registry =
+          new MeasurementProfileRegistry(
+              loadBuiltIn(),
+              SiteDocuments.find(SITE_FILE).orElse(null),
+              file,
+              core.getLocalPersistence(),
+              path -> core.storeRemotePref(path, JsonUtil.CONTENT_TYPE));
+      SiteDocuments.onReload(
+          SITE_FILE, () -> registry.reloadFrom(SiteDocuments.find(SITE_FILE).orElse(null)));
+      return registry;
     } catch (RuntimeException | LinkageError e) {
       LOGGER.debug("No UI core, profiles kept in memory", e);
-      return new MeasurementProfileRegistry(loadBuiltIn(), null, null, null);
+      return new MeasurementProfileRegistry(loadBuiltIn(), null, null, null, null);
     }
   }
 
@@ -140,10 +154,13 @@ public final class MeasurementProfileRegistry {
     }
   }
 
-  /**
-   * Re-reads the site and user documents and merges them over the bundled one. The site document
-   * may be remote: do not call from the UI thread.
-   */
+  /** Reloads with another site document, or none. */
+  public void reloadFrom(Path siteFile) {
+    this.siteFile = siteFile;
+    reload();
+  }
+
+  /** Re-reads the site and user documents and merges them over the bundled one. */
   public void reload() {
     site = List.copyOf(readSite());
     reloadUser();
@@ -166,19 +183,21 @@ public final class MeasurementProfileRegistry {
   }
 
   private void mergeDocuments() {
-    Map<String, MeasurementProfile> result = new LinkedHashMap<>();
-    builtIn.forEach(p -> result.put(p.id(), p));
-    Set<String> fromSite = new HashSet<>();
-    for (MeasurementProfile p : site) {
-      result.put(p.id(), p.withBuiltIn(true));
-      fromSite.add(p.id());
-    }
+    List<MeasurementProfile> siteLayer = site.stream().map(p -> p.withBuiltIn(true)).toList();
+    List<MeasurementProfile> userLayer;
     synchronized (user) {
-      result.putAll(user);
+      userLayer = List.copyOf(user.values());
     }
-    if (!result.containsKey(MeasurementProfile.DEFAULT_ID)) {
-      result.put(
-          MeasurementProfile.DEFAULT_ID,
+    Merged<MeasurementProfile> result =
+        LayeredEntries.merge(
+            List.of(
+                Layer.of(Origin.BUILT_IN, builtIn),
+                Layer.of(Origin.SITE, siteLayer),
+                Layer.of(Origin.USER, userLayer)),
+            "Measurement profile");
+    if (result.entries().stream().noneMatch(MeasurementProfile::isDefault)) {
+      List<MeasurementProfile> withDefault = new ArrayList<>(result.entries());
+      withDefault.add(
           new MeasurementProfile(
               MeasurementProfile.DEFAULT_ID,
               "Default",
@@ -188,35 +207,32 @@ public final class MeasurementProfileRegistry {
               null,
               null,
               true)); // NON-NLS
+      result = result.withEntries(withDefault);
     }
-    merged = Collections.unmodifiableMap(result);
-    siteIds = Set.copyOf(fromSite);
+    merged = result;
   }
 
   private List<MeasurementProfile> readSite() {
-    if (siteLocation == null) {
+    if (siteFile == null) {
       return List.of();
     }
     try {
-      if (!isUrl(siteLocation)) {
-        return MeasurementProfileJson.read(Path.of(siteLocation));
-      }
-      URLConnection connection = URI.create(siteLocation).toURL().openConnection();
-      connection.setConnectTimeout(NetworkUtil.getUrlConnectTimeoutMillis());
-      connection.setReadTimeout(NetworkUtil.getUrlInactivityTimeoutMillis());
-      try (InputStream in = connection.getInputStream()) {
-        return MeasurementProfileJson.read(in);
-      }
+      return MeasurementProfileJson.read(siteFile, bases(List.of(builtIn)));
     } catch (IOException | RuntimeException e) {
-      LOGGER.warn("Cannot read the site measurement profiles: {}", siteLocation, e);
+      LOGGER.warn("Cannot read the site measurement profiles: {}", siteFile, e);
       return List.of();
     }
   }
 
-  /** True for a URL: its scheme has two characters or more, unlike a Windows drive letter. */
-  static boolean isUrl(String location) {
-    int colon = location.indexOf(':');
-    return colon > 1 && location.substring(0, colon).matches("[A-Za-z][A-Za-z0-9+.-]*"); // NON-NLS
+  // The profiles of the lower layers, as JSON, so a document can extend one of them
+  private static Function<String, Optional<JsonObject>> bases(
+      List<List<MeasurementProfile>> layers) {
+    return id ->
+        layers.stream()
+            .flatMap(List::stream)
+            .filter(p -> p.id().equals(id))
+            .findFirst()
+            .map(MeasurementProfileJson::toJson);
   }
 
   private List<MeasurementProfile> readUser() {
@@ -224,19 +240,41 @@ public final class MeasurementProfileRegistry {
       return List.of();
     }
     try {
-      return MeasurementProfileJson.read(userFile);
+      return MeasurementProfileJson.read(userFile, bases(List.of(site, builtIn)));
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read the user measurement profiles: {}", userFile, e);
       return List.of();
     }
   }
 
+  /** The merged profiles in document order, hidden ones left out. */
   public List<MeasurementProfile> profiles() {
-    return List.copyOf(merged.values());
+    return merged.entries().stream().filter(p -> !p.hidden()).toList();
   }
 
+  /** The merged profile of that id, hidden or not. */
   public Optional<MeasurementProfile> profile(String id) {
-    return Optional.ofNullable(id == null ? null : merged.get(id));
+    return id == null
+        ? Optional.empty()
+        : merged.entries().stream().filter(p -> p.id().equals(id)).findFirst();
+  }
+
+  /** Whether the site locked that id: the user document may not replace it. */
+  public boolean isLocked(String id) {
+    return merged.isLocked(id);
+  }
+
+  /** Which document the merged profile of that id comes from. */
+  public Origin origin(String id) {
+    return merged.origin(id);
+  }
+
+  /**
+   * The origin a user profile of that id hides, when the site or the bundled document defines the
+   * same id: deleting the user profile then resets it to that definition.
+   */
+  public Optional<Origin> below(String id) {
+    return merged.below(id);
   }
 
   public List<MeasurementProfile> userProfiles() {
@@ -245,9 +283,17 @@ public final class MeasurementProfileRegistry {
     }
   }
 
-  /** Adds or replaces a user profile (a built-in id can be overridden) and persists. */
+  /**
+   * Adds or replaces a user profile (a built-in id can be overridden) and persists.
+   *
+   * @throws IllegalStateException when the site locked that id
+   */
   public void saveUser(MeasurementProfile profile) {
     Objects.requireNonNull(profile);
+    if (isLocked(profile.id())) {
+      throw new IllegalStateException(
+          "Measurement profile '%s' is locked by the site".formatted(profile.id()));
+    }
     synchronized (user) {
       user.put(profile.id(), profile.withBuiltIn(false));
       persistUser();
@@ -274,6 +320,9 @@ public final class MeasurementProfileRegistry {
     }
     try {
       MeasurementProfileJson.write(userFile, new ArrayList<>(user.values()));
+      if (remoteStore != null) {
+        remoteStore.accept(userFile);
+      }
     } catch (IOException e) {
       LOGGER.error("Cannot save the user measurement profiles: {}", userFile, e);
     }
@@ -298,7 +347,7 @@ public final class MeasurementProfileRegistry {
 
   /** Explicit choice, or {@code null} for automatic. */
   public void select(String id) {
-    String value = id == null || !merged.containsKey(id) ? null : id;
+    String value = id == null || profile(id).isEmpty() ? null : id;
     if (!Objects.equals(selectedId, value)) {
       selectedId = value;
       if (selectionStore != null) {
@@ -334,27 +383,30 @@ public final class MeasurementProfileRegistry {
   /** The explicit profile, else the first matching the modality, else the default one. */
   public MeasurementProfile active() {
     if (selectedId != null) {
-      MeasurementProfile p = merged.get(selectedId);
-      if (p != null) {
-        return p;
+      Optional<MeasurementProfile> p = profile(selectedId);
+      if (p.isPresent()) {
+        return p.get();
       }
     }
-    return matching(modality).orElseGet(() -> merged.get(MeasurementProfile.DEFAULT_ID));
+    return matching(modality).orElseGet(() -> profile(MeasurementProfile.DEFAULT_ID).orElse(null));
   }
 
   /**
-   * The profile of the automatic mode for a modality. When several profiles name it, the user's own
-   * come first, then the site's, then the bundled ones: a profile made for a modality is meant to
-   * replace the one shipped for it. Within one origin the first of the document wins.
+   * The profile of the automatic mode for a modality, by {@link LayeredEntries#pick}: when several
+   * profiles name it, the user's own come first, then the site's, then the bundled ones — a profile
+   * made for a modality is meant to replace the one shipped for it. Within one document the first
+   * wins; the others are reported.
    */
   public Optional<MeasurementProfile> matching(String modality) {
+    Merged<MeasurementProfile> current = merged;
     List<MeasurementProfile> candidates =
-        merged.values().stream().filter(p -> p.matches(modality)).toList();
-    return candidates.stream()
-        .filter(p -> !p.builtIn())
-        .findFirst()
-        .or(() -> candidates.stream().filter(p -> siteIds.contains(p.id())).findFirst())
-        .or(() -> candidates.stream().findFirst());
+        current.entries().stream().filter(p -> !p.hidden() && p.matches(modality)).toList();
+    return LayeredEntries.pick(
+        candidates,
+        p -> current.layerOf(p.id()),
+        MeasurementProfile::id,
+        "Measurement profile",
+        modality);
   }
 
   public void addListener(Runnable listener) {

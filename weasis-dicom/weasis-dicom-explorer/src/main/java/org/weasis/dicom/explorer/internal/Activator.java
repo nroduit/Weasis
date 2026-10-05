@@ -12,12 +12,15 @@ package org.weasis.dicom.explorer.internal;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.util.LegacyConverters;
 import org.weasis.core.util.PropertiesUtil;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LocalPersistence;
 import org.weasis.dicom.explorer.UISegmentationVolumeBuildExecutor;
 import org.weasis.dicom.explorer.main.DicomExplorer;
+import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
+import org.weasis.dicom.explorer.pref.node.AuthenticationPersistence;
 import org.weasis.dicom.explorer.wado.DicomManager;
 import org.weasis.plugin.PluginContext;
 import org.weasis.plugin.WeasisPlugin;
@@ -38,6 +41,9 @@ public class Activator extends WeasisPlugin {
     PropertiesUtil.loadProperties(
         BundlePreferences.getFileInDataFolder(getPluginId(), "import-export.properties"),
         LocalPersistence.getProperties());
+    LegacyConverters.register(AuthenticationPersistence.CONVERSION);
+
+    AbstractDicomNode.registerLegacyConversions();
 
     // Surface canonical segmentation volume builds in the explorer's bottom loading panel,
     // so the user can monitor and cancel long-running SEG volume builds.

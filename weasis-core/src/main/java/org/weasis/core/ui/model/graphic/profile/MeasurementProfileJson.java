@@ -31,7 +31,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.JsonExtends;
+import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.ui.model.graphic.profile.MeasurementProfile.Defaults;
 import org.weasis.core.ui.model.utils.MeasureFormat;
 
@@ -39,27 +43,38 @@ import org.weasis.core.ui.model.utils.MeasureFormat;
 public final class MeasurementProfileJson {
 
   public static final int VERSION = 1;
-  public static final String CONTENT_TYPE = "application/json"; // NON-NLS
   private static final String AUTO_DECIMALS = "auto"; // NON-NLS
 
   private MeasurementProfileJson() {}
 
   public static List<MeasurementProfile> read(Path path) throws IOException {
+    return read(path, JsonExtends.NO_BASE);
+  }
+
+  /**
+   * @param lowerBase the profile of that id in the lower layers, as JSON, for an {@code extends}
+   */
+  public static List<MeasurementProfile> read(
+      Path path, Function<String, Optional<JsonObject>> lowerBase) throws IOException {
     try (InputStream in = Files.newInputStream(path)) {
-      return read(in);
+      return read(in, lowerBase);
     }
   }
 
   public static List<MeasurementProfile> read(InputStream in) {
+    return read(in, JsonExtends.NO_BASE);
+  }
+
+  public static List<MeasurementProfile> read(
+      InputStream in, Function<String, Optional<JsonObject>> lowerBase) {
     try (JsonReader reader = Json.createReader(in)) {
       JsonObject root = reader.readObject();
       List<MeasurementProfile> profiles = new ArrayList<>();
       JsonArray array = root.getJsonArray("profiles"); // NON-NLS
       if (array != null) {
-        for (JsonValue value : array) {
-          if (value instanceof JsonObject object) {
-            profiles.add(readProfile(object));
-          }
+        for (JsonObject object :
+            JsonExtends.resolve(JsonUtil.objects(array), lowerBase, "Measurement profile")) {
+          profiles.add(readProfile(object));
         }
       }
       return profiles;
@@ -106,7 +121,9 @@ public final class MeasurementProfileJson {
         defaults,
         labels,
         o.containsKey("statistics") ? strings(o.get("statistics")) : null, // NON-NLS
-        false);
+        false,
+        o.getBoolean("hidden", false), // NON-NLS
+        o.getBoolean("locked", false)); // NON-NLS
   }
 
   private static List<String> strings(JsonValue value) {
@@ -145,7 +162,7 @@ public final class MeasurementProfileJson {
         .build();
   }
 
-  static JsonObject toJson(MeasurementProfile p) {
+  public static JsonObject toJson(MeasurementProfile p) {
     JsonObjectBuilder b =
         Json.createObjectBuilder().add("id", p.id()).add("name", p.name()); // NON-NLS
     b.add("modalities", array(p.modalities())); // NON-NLS
@@ -186,6 +203,12 @@ public final class MeasurementProfileJson {
     }
     if (p.statistics() != null) {
       b.add("statistics", array(p.statistics())); // NON-NLS
+    }
+    if (p.hidden()) {
+      b.add("hidden", true); // NON-NLS
+    }
+    if (p.locked()) {
+      b.add("locked", true); // NON-NLS
     }
     return b.build();
   }
