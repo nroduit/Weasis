@@ -18,11 +18,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.ShortcutManager;
+import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.model.graphic.imp.BuiltinGraphicTools;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -42,20 +44,26 @@ public final class GraphicRegistry {
 
   private static final class Holder {
     private static final GraphicRegistry INSTANCE =
-        new GraphicRegistry(GraphicRegistry::isHiddenBySystemPreferences);
+        new GraphicRegistry(
+            (Function<String, Boolean>) GraphicRegistry::isHiddenBySystemPreferences);
   }
 
   private record Entry(
       GraphicToolProvider provider, GraphicToolDescriptor descriptor, Graphic prototype) {}
 
-  private final Predicate<String> hiddenProperty;
+  // Hide rule of a property; null when it cannot be decided yet, so the answer is not cached
+  private final Function<String, Boolean> hiddenProperty;
   private final Map<String, Boolean> hidden = new ConcurrentHashMap<>();
   private final Map<String, Entry> entries = new LinkedHashMap<>();
   private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
   /** A registry with its own hide rule, for hosts without the UI core such as tests. */
   public GraphicRegistry(Predicate<String> hiddenProperty) {
-    this.hiddenProperty = Objects.requireNonNull(hiddenProperty);
+    this((Function<String, Boolean>) Objects.requireNonNull(hiddenProperty)::test);
+  }
+
+  private GraphicRegistry(Function<String, Boolean> hiddenProperty) {
+    this.hiddenProperty = hiddenProperty;
     register(new BuiltinGraphicTools());
   }
 
@@ -151,7 +159,8 @@ public final class GraphicRegistry {
   }
 
   private boolean isHidden(GraphicToolDescriptor descriptor) {
-    return hidden.computeIfAbsent(descriptor.hideProperty(), hiddenProperty::test);
+    Boolean value = hidden.computeIfAbsent(descriptor.hideProperty(), hiddenProperty);
+    return Boolean.TRUE.equals(value);
   }
 
   public Optional<Graphic> prototype(String key) {
@@ -230,9 +239,14 @@ public final class GraphicRegistry {
     listeners.forEach(Runnable::run);
   }
 
-  private static boolean isHiddenBySystemPreferences(String property) {
+  private static Boolean isHiddenBySystemPreferences(String property) {
     try {
-      WProperties p = GuiUtils.getUICore().getSystemPreferences();
+      UICore core = GuiUtils.getUICore();
+      if (core == null) {
+        // Called while the UI core is being built (its preferences read the tools): decide later
+        return null;
+      }
+      WProperties p = core.getSystemPreferences();
       String value = p.getProperty(property);
       String legacy = LEGACY_HIDE_PROPERTIES.get(property);
       if (value == null && legacy != null) {
