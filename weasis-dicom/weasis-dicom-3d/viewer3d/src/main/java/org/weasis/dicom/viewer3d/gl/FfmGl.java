@@ -203,16 +203,6 @@ public final class FfmGl implements Gl {
             JAVA_INT,
             JAVA_INT,
             ADDRESS);
-    static final MethodHandle BIND_IMAGE_TEXTURE =
-        voidCall(
-            "glBindImageTexture",
-            JAVA_INT,
-            JAVA_INT,
-            JAVA_INT,
-            JAVA_BYTE,
-            JAVA_INT,
-            JAVA_INT,
-            JAVA_INT);
     static final MethodHandle READ_PIXELS =
         voidCall(
             "glReadPixels", JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT, ADDRESS);

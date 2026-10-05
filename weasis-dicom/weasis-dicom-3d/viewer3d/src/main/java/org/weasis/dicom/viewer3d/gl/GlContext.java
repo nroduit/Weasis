@@ -70,7 +70,7 @@ public sealed interface GlContext permits CglContext, EglContext, JoglContext, W
           .warn(
               "No OpenGL context through {} ({}); falling back to {}",
               selected,
-              first.getMessage(),
+              describe(first),
               fallback);
       try {
         return create(fallback);
@@ -81,6 +81,17 @@ public sealed interface GlContext permits CglContext, EglContext, JoglContext, W
             : new GlException("No OpenGL context on this machine", first);
       }
     }
+  }
+
+  /** The failure and its root cause, which is what tells a missing entry point apart. */
+  private static String describe(Throwable failure) {
+    Throwable root = failure;
+    while (root.getCause() != null && root.getCause() != root) {
+      root = root.getCause();
+    }
+    return root == failure
+        ? String.valueOf(failure.getMessage())
+        : failure.getMessage() + ": " + root;
   }
 
   static GlContext create(GlBackend backend) {
