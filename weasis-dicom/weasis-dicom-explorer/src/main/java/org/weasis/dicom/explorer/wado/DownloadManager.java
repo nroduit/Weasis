@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -301,10 +302,11 @@ public class DownloadManager {
       InputStream stream = gzip ? new GZIPInputStream(pb) : pb;
 
       // A local, uncompressed manifest can be parsed in place without copying it to a temp file.
-      if (!gzip
-          && uri.toString().startsWith("file:") // NON-NLS
-          && (path.endsWith(".xml") || path.endsWith(".json"))) {
-        return Path.of(path);
+      if (!gzip) {
+        Optional<Path> localFile = ManifestFiles.localFile(uri);
+        if (localFile.isPresent()) {
+          return localFile.get();
+        }
       }
 
       Path tempFile =
