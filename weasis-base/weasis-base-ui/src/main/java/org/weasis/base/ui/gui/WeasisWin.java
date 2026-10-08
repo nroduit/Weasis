@@ -308,8 +308,7 @@ public class WeasisWin {
     scrollPane.setBorder(null);
     rootPaneContainer
         .getContentPane()
-        .add(
-            indicatorsInMenuBar ? scrollPane : createNorthPanel(scrollPane), BorderLayout.NORTH);
+        .add(indicatorsInMenuBar ? scrollPane : createNorthPanel(scrollPane), BorderLayout.NORTH);
 
     rootPaneContainer.setGlassPane(AppProperties.glassPane);
 

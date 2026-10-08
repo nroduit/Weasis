@@ -18,7 +18,9 @@ import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -299,8 +301,29 @@ public final class HttpUtils {
 
   private static void setIfPresent(HeaderSetter setter, String name, String value) {
     if (value != null) {
-      setter.set(name, value);
+      setter.set(name, encodeHeaderValue(value));
     }
+  }
+
+  /**
+   * Returns an ASCII-only header value. java.net.http rejects characters above U+00FF and sends
+   * Latin-1 ones as '?', so a non-ASCII value (e.g. an OS user name) is percent-encoded as UTF-8.
+   * Pure ASCII values are returned unchanged.
+   */
+  static String encodeHeaderValue(String value) {
+    if (value.chars().allMatch(c -> c < 0x80)) {
+      return value;
+    }
+    HexFormat hex = HexFormat.of().withUpperCase();
+    StringBuilder sb = new StringBuilder(value.length() * 3);
+    for (byte b : value.getBytes(StandardCharsets.UTF_8)) {
+      if (b > 0x20 && b < 0x7F && b != '%') {
+        sb.append((char) b);
+      } else {
+        sb.append('%').append(hex.toHexDigits(b));
+      }
+    }
+    return sb.toString();
   }
 
   @FunctionalInterface
