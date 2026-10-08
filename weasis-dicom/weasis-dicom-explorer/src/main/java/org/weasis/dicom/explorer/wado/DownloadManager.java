@@ -40,6 +40,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.NetworkUtil;
+import org.weasis.core.api.net.URIUtils;
 import org.weasis.core.api.net.URLParameters;
 import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.api.util.ThreadUtil;
@@ -304,7 +305,8 @@ public class DownloadManager {
       if (!gzip
           && uri.toString().startsWith("file:") // NON-NLS
           && (path.endsWith(".xml") || path.endsWith(".json"))) {
-        return Path.of(path);
+        // Not Path.of(uri.getPath()): "/C:/..." is not a valid Windows path (#940)
+        return URIUtils.toPath(uri);
       }
 
       Path tempFile =
