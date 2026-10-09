@@ -9,10 +9,9 @@
  */
 package org.weasis.dicom.codec.display;
 
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -28,6 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import org.dcm4che3.img.DicomImageAdapter;
 import org.dcm4che3.img.lut.ModalityLutModule;
 import org.dcm4che3.img.lut.ModalityPresetProvider;
@@ -35,6 +35,10 @@ import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.dcm4che3.img.stream.ImageDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.LayeredEntries;
+import org.weasis.core.api.util.LayeredEntries.Layer;
+import org.weasis.core.api.util.LayeredEntries.Merged;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.ref.AnatomicItem;
 import org.weasis.dicom.ref.AnatomicRegion;
@@ -42,8 +46,9 @@ import org.weasis.opencv.op.lut.WlPresentation;
 
 /**
  * The window/level presets offered after the presets of the image, merged by id from the bundled
- * document, the site document given by {@value #CONFIG_PROPERTY} and the user document {@value
- * #USER_FILE}; a later document overrides an earlier one.
+ * document, the site document {@value #SITE_FILE} of the resources package (see {@code
+ * SiteDocuments}) and the user document {@value #USER_FILE}, by the rules of {@link
+ * LayeredEntries}: a later document overrides an earlier one, unless the site locked the id.
  *
  * <p>Each image gets the presets whose modality and conditions it meets, those preferred for its
  * anatomy (resolved region: code and region groups) first, each group in document order. Percent
@@ -59,27 +64,10 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
   public static final String BUILTIN_RESOURCE = "/windowPresets.json"; // NON-NLS
   public static final String USER_FILE = "customWindowPresets.json"; // NON-NLS
 
-  /** Launcher preference holding the path or URL of the site document. */
-  public static final String CONFIG_PROPERTY = "weasis.wl.presets.config"; // NON-NLS
-
-  /** Where a merged preset comes from; a later layer overrides an earlier one. */
-  public enum Origin {
-    BUILT_IN,
-    SITE,
-    USER
-  }
-
-  private static final int LAYER_BUILT_IN = Origin.BUILT_IN.ordinal();
-  private static final int LAYER_SITE = Origin.SITE.ordinal();
-  private static final int LAYER_USER = Origin.USER.ordinal();
-
-  private static final int CONNECT_TIMEOUT_MS = 5_000;
-  private static final int READ_TIMEOUT_MS = 10_000;
+  /** File name of the site document in the {@code config} folder of the resources package. */
+  public static final String SITE_FILE = "windowPresets.json"; // NON-NLS
 
   private static volatile WindowPresetRegistry instance; // NOSONAR double-checked locking
-
-  /** Merged presets in menu order, with the layer that supplied each id. */
-  private record Merged(List<WindowPreset> presets, Map<String, Integer> layers) {}
 
   /** What the conditions of a preset look at. */
   /**
@@ -102,10 +90,10 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
   private List<WindowPreset> site = List.of();
   // Set when the user file exists but cannot be read: it is kept aside before being rewritten
   private boolean userUnreadable;
-  private String siteLocation;
+  private Path siteFile;
   private Path userFile;
   private Consumer<Path> remoteStore;
-  private volatile Merged merged; // NOSONAR immutable snapshot
+  private volatile Merged<WindowPreset> merged; // NOSONAR immutable snapshot
 
   public WindowPresetRegistry(List<WindowPreset> builtIn) {
     this.builtIn = builtIn == null ? List.of() : List.copyOf(builtIn);
@@ -144,53 +132,37 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
   }
 
   /**
-   * Sets the documents and reloads. A site URL is fetched in the background, after the user
-   * document is in place.
+   * Sets the documents and reloads.
    *
-   * @param siteLocation file path or URL of the site document, or null
+   * @param siteFile the site document, or null
    * @param userFile the user document, or null
    */
-  public void configure(String siteLocation, Path userFile) {
-    configure(siteLocation, userFile, null);
+  public void configure(Path siteFile, Path userFile) {
+    configure(siteFile, userFile, null);
   }
 
   /**
    * @param remoteStore called with the user file after it is written, to mirror it remotely
    */
-  public void configure(String siteLocation, Path userFile, Consumer<Path> remoteStore) {
-    String site = StringUtil.hasText(siteLocation) ? siteLocation.trim() : null;
+  public void configure(Path siteFile, Path userFile, Consumer<Path> remoteStore) {
     synchronized (this) {
-      this.siteLocation = site;
+      this.siteFile = siteFile;
       this.userFile = userFile;
       this.remoteStore = remoteStore;
       this.site = List.of();
       user.clear();
     }
-    if (site != null && isUrl(site)) {
-      synchronized (this) {
-        readUser();
-      }
-      apply(merge());
-      Thread.ofVirtual().name("window-presets-site").start(this::reload); // NON-NLS
-    } else {
-      reload();
-    }
+    reload();
   }
 
   /**
-   * Re-reads every document, merges and notifies the listeners. The site document is fetched
-   * outside the lock; when it cannot be read, the previous site presets are kept.
+   * Re-reads every document, merges and notifies the listeners. When the site document cannot be
+   * read, the previous site presets are kept.
    */
   public void reload() {
-    String location;
     synchronized (this) {
-      location = siteLocation;
-    }
-    Optional<List<WindowPreset>> fetched =
-        location == null ? Optional.of(List.of()) : loadSite(location);
-    synchronized (this) {
-      if (Objects.equals(location, siteLocation)) {
-        fetched.ifPresent(p -> site = p);
+      if (siteFile != null) {
+        loadSite(siteFile).ifPresent(p -> site = p);
       }
       readUser();
     }
@@ -207,16 +179,29 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
 
   /** Every merged preset, in menu order, hidden ones included. */
   public List<WindowPreset> presets() {
-    return merged.presets();
+    return merged.entries();
   }
 
   public Optional<WindowPreset> find(String id) {
-    return merged.presets().stream().filter(p -> p.id().equals(id)).findFirst();
+    return merged.entries().stream().filter(p -> p.id().equals(id)).findFirst();
   }
 
   /** Where the merged preset of that id comes from. */
   public Origin origin(String id) {
-    return Origin.values()[merged.layers().getOrDefault(id, LAYER_BUILT_IN)];
+    return merged.origin(id);
+  }
+
+  /** Whether the site locked that id: the user document may not replace or hide it. */
+  public boolean isLocked(String id) {
+    return merged.isLocked(id);
+  }
+
+  /**
+   * The origin a user preset of that id hides, when the site or the bundled document defines the
+   * same id: deleting the user preset then resets it to that definition.
+   */
+  public Optional<Origin> below(String id) {
+    return merged.below(id);
   }
 
   /** The user presets, in document order. */
@@ -377,9 +362,9 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
   }
 
   private List<Entry> build(ImageKey key, AnatomicRegion anatomy) {
-    Merged current = merged;
+    Merged<WindowPreset> current = merged;
     List<WindowPreset> offered = new ArrayList<>();
-    for (WindowPreset preset : current.presets()) {
+    for (WindowPreset preset : current.entries()) {
       if (!preset.hidden()
           && preset.appliesTo(key.modality())
           && preset.when().matches(key.bitsStored(), key.hasRescale(), anatomy)) {
@@ -388,9 +373,9 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
     }
     // Stable: the presets of the body part move up, the others keep their order
     offered.sort(Comparator.comparing(p -> !p.when().prefers(anatomy)));
-    WindowPreset defaultPreset = selectDefault(offered, current.layers(), key);
+    WindowPreset defaultPreset = selectDefault(offered, current, key);
 
-    Map<Integer, WindowPreset> keyOwners = keyOwners(offered, current.layers(), key);
+    Map<Integer, WindowPreset> keyOwners = keyOwners(offered, current, key);
     List<Entry> entries = new ArrayList<>(offered.size());
     for (WindowPreset preset : offered) {
       int keyCode = keyOwners.get(preset.keyCode()) == preset ? preset.keyCode() : 0;
@@ -406,106 +391,77 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
     return List.copyOf(entries);
   }
 
-  /**
-   * The preset that gets each key: the one of the latest layer, so a user key overrides a built-in
-   * one; the first one in menu order within a layer.
-   */
+  /** The preset that gets each key, by {@link LayeredEntries#pick}. */
   private static Map<Integer, WindowPreset> keyOwners(
-      List<WindowPreset> offered, Map<String, Integer> layers, ImageKey key) {
-    Map<Integer, WindowPreset> owners = new HashMap<>();
+      List<WindowPreset> offered, Merged<WindowPreset> merged, ImageKey key) {
+    Map<Integer, List<WindowPreset>> byKey = new LinkedHashMap<>();
     for (WindowPreset preset : offered) {
-      if (preset.keyCode() == 0) {
-        continue;
-      }
-      WindowPreset owner = owners.get(preset.keyCode());
-      WindowPreset ignored = preset;
-      if (owner == null || layer(layers, preset) > layer(layers, owner)) {
-        owners.put(preset.keyCode(), preset);
-        ignored = owner;
-      }
-      if (ignored != null) {
-        WindowPreset kept = owners.get(preset.keyCode());
-        // Expected when a user or site preset takes a built-in key, a mistake within one layer
-        boolean sameLayer = layer(layers, ignored) == layer(layers, kept);
-        String message = "Window preset '{}': key {} is used by '{}' for {}";
-        if (sameLayer) {
-          LOGGER.warn(message, ignored.id(), preset.key(), kept.id(), key.modality());
-        } else {
-          LOGGER.debug(message, ignored.id(), preset.key(), kept.id(), key.modality());
-        }
+      if (preset.keyCode() != 0) {
+        byKey.computeIfAbsent(preset.keyCode(), k -> new ArrayList<>()).add(preset);
       }
     }
+    Map<Integer, WindowPreset> owners = new HashMap<>();
+    byKey.forEach(
+        (keyCode, candidates) ->
+            LayeredEntries.pick(
+                    candidates,
+                    p -> merged.layerOf(p.id()),
+                    WindowPreset::id,
+                    "Window preset key " + candidates.getFirst().key(),
+                    key.modality())
+                .ifPresent(owner -> owners.put(keyCode, owner)));
     return owners;
-  }
-
-  private static int layer(Map<String, Integer> layers, WindowPreset preset) {
-    return layers.getOrDefault(preset.id(), LAYER_BUILT_IN);
   }
 
   /** The flagged preset of the latest layer; the first one when a layer flags several. */
   private static WindowPreset selectDefault(
-      List<WindowPreset> offered, Map<String, Integer> layers, ImageKey key) {
-    WindowPreset selected = null;
-    int selectedLayer = -1;
-    for (WindowPreset preset : offered) {
-      if (!preset.defaultPreset()) {
-        continue;
-      }
-      int layer = layer(layers, preset);
-      if (layer > selectedLayer) {
-        selected = preset;
-        selectedLayer = layer;
-      } else {
-        LOGGER.warn(
-            "Window preset '{}': another default is kept for {} ({})",
-            preset.id(),
-            key.modality(),
-            selected.id());
-      }
-    }
-    return selected;
+      List<WindowPreset> offered, Merged<WindowPreset> merged, ImageKey key) {
+    List<WindowPreset> flagged = offered.stream().filter(WindowPreset::defaultPreset).toList();
+    return LayeredEntries.pick(
+            flagged,
+            p -> merged.layerOf(p.id()),
+            WindowPreset::id,
+            "Default window preset",
+            key.modality())
+        .orElse(null);
   }
 
-  private void apply(Merged presets) {
+  private void apply(Merged<WindowPreset> presets) {
     merged = presets;
     byImage.clear();
     listeners.forEach(Runnable::run);
   }
 
   // In memory only: the documents are read by reload()
-  private synchronized Merged merge() {
-    Map<String, WindowPreset> byId = new LinkedHashMap<>();
-    Map<String, Integer> layers = new HashMap<>();
-    put(byId, layers, builtIn, LAYER_BUILT_IN);
-    put(byId, layers, site, LAYER_SITE);
-    put(byId, layers, List.copyOf(user.values()), LAYER_USER);
-    return new Merged(List.copyOf(byId.values()), Map.copyOf(layers));
+  private synchronized Merged<WindowPreset> merge() {
+    return LayeredEntries.merge(
+        List.of(
+            Layer.of(Origin.BUILT_IN, builtIn),
+            Layer.of(Origin.SITE, site),
+            Layer.of(Origin.USER, List.copyOf(user.values()))),
+        "Window preset"); // NON-NLS
   }
 
-  private static void put(
-      Map<String, WindowPreset> byId,
-      Map<String, Integer> layers,
-      List<WindowPreset> presets,
-      int layer) {
-    for (WindowPreset p : presets) {
-      byId.put(p.id(), p);
-      layers.put(p.id(), layer);
-    }
-  }
-
-  private static Optional<List<WindowPreset>> loadSite(String location) {
-    try {
-      if (isUrl(location)) {
-        URLConnection connection = URI.create(location).toURL().openConnection();
-        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-        connection.setReadTimeout(READ_TIMEOUT_MS);
-        try (InputStream in = connection.getInputStream()) {
-          return Optional.of(WindowPresetJson.read(in));
+  // The presets of the lower layers, as JSON, so a document can extend one of them
+  @SafeVarargs
+  private static Function<String, Optional<JsonObject>> bases(List<WindowPreset>... layers) {
+    return id -> {
+      for (List<WindowPreset> layer : layers) {
+        for (WindowPreset preset : layer) {
+          if (preset.id().equals(id)) {
+            return Optional.of(WindowPresetJson.toJson(preset));
+          }
         }
       }
-      return Optional.of(WindowPresetJson.read(Path.of(location)));
+      return Optional.empty();
+    };
+  }
+
+  private Optional<List<WindowPreset>> loadSite(Path file) {
+    try {
+      return Optional.of(WindowPresetJson.read(file, bases(builtIn)));
     } catch (IOException | RuntimeException e) {
-      LOGGER.error("Cannot read the site window presets: {}", location, e);
+      LOGGER.error("Cannot read the site window presets: {}", file, e);
       return Optional.empty();
     }
   }
@@ -517,18 +473,12 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
       return;
     }
     try {
-      List<WindowPreset> presets = WindowPresetJson.read(userFile);
+      List<WindowPreset> presets = WindowPresetJson.read(userFile, bases(site, builtIn));
       user.clear();
       presets.forEach(p -> user.put(p.id(), p));
     } catch (IOException | RuntimeException e) {
       userUnreadable = true;
       LOGGER.error("Cannot read the user window presets: {}", userFile, e);
     }
-  }
-
-  /** True for a URL: its scheme has two characters or more, unlike a Windows drive letter. */
-  static boolean isUrl(String location) {
-    int colon = location.indexOf(':');
-    return colon > 1 && location.startsWith("://", colon);
   }
 }

@@ -27,10 +27,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.display.WindowPreset.Domain;
@@ -48,8 +51,6 @@ public final class WindowPresetJson {
   private static final Logger LOGGER = LoggerFactory.getLogger(WindowPresetJson.class);
 
   public static final int SCHEMA_VERSION = 1;
-
-  public static final String CONTENT_TYPE = "application/json;charset=UTF-8"; // NON-NLS
 
   private static final String SCHEMA = "schema"; // NON-NLS
   private static final String PRESETS = "presets"; // NON-NLS
@@ -73,6 +74,7 @@ public final class WindowPresetJson {
   private static final String BODY_PART = "bodyPart"; // NON-NLS
   private static final String PREFER_BODY_PART = "preferBodyPart"; // NON-NLS
   private static final String DEFAULT = "default"; // NON-NLS
+  private static final String LOCKED = "locked"; // NON-NLS
 
   private WindowPresetJson() {}
 
@@ -94,7 +96,8 @@ public final class WindowPresetJson {
         shapeFromJson(id, json.getString(SHAPE, null)),
         keyFromJson(id, json.getString(KEY, null)),
         whenFromJson(id, json.get(WHEN)),
-        JsonUtil.getBoolean(json, DEFAULT, false));
+        JsonUtil.getBoolean(json, DEFAULT, false),
+        JsonUtil.getBoolean(json, LOCKED, false));
   }
 
   public static JsonObject toJson(WindowPreset preset) {
@@ -144,15 +147,26 @@ public final class WindowPresetJson {
     if (preset.defaultPreset()) {
       b.add(DEFAULT, true);
     }
+    if (preset.locked()) {
+      b.add(LOCKED, true);
+    }
     return b.build();
   }
 
-  /** Reads an envelope or a bare array of presets. */
+  /** Reads an envelope or a bare array of presets; an {@code extends} needs its base here. */
   public static List<WindowPreset> read(InputStream in) {
+    return read(in, JsonExtends.NO_BASE);
+  }
+
+  /**
+   * @param lowerBase the preset of that id in the lower layers, as JSON, for an {@code extends}
+   */
+  public static List<WindowPreset> read(
+      InputStream in, Function<String, Optional<JsonObject>> lowerBase) {
     try (JsonReader reader = Json.createReader(in)) {
       return switch (reader.read()) {
-        case JsonArray array -> presets(array);
-        case JsonObject envelope -> readEnvelope(envelope);
+        case JsonArray array -> presets(array, lowerBase);
+        case JsonObject envelope -> readEnvelope(envelope, lowerBase);
         default -> List.of();
       };
     }
@@ -162,8 +176,13 @@ public final class WindowPresetJson {
    * @throws IOException when the file cannot be read, is not JSON or has a newer schema
    */
   public static List<WindowPreset> read(Path path) throws IOException {
+    return read(path, JsonExtends.NO_BASE);
+  }
+
+  public static List<WindowPreset> read(Path path, Function<String, Optional<JsonObject>> lowerBase)
+      throws IOException {
     try (InputStream in = Files.newInputStream(path)) {
-      return read(in);
+      return read(in, lowerBase);
     } catch (JsonException | IllegalArgumentException e) {
       throw new IOException("Invalid window preset file: " + path, e);
     }
@@ -179,19 +198,22 @@ public final class WindowPresetJson {
     JsonUtil.write(path, toEnvelope(presets));
   }
 
-  private static List<WindowPreset> readEnvelope(JsonObject envelope) {
+  private static List<WindowPreset> readEnvelope(
+      JsonObject envelope, Function<String, Optional<JsonObject>> lowerBase) {
     int schema = JsonUtil.getInt(envelope, SCHEMA, SCHEMA_VERSION);
     if (schema > SCHEMA_VERSION) {
       throw new IllegalArgumentException(
           "Window preset schema %d is newer than the supported %d"
               .formatted(schema, SCHEMA_VERSION));
     }
-    return envelope.get(PRESETS) instanceof JsonArray array ? presets(array) : List.of();
+    return envelope.get(PRESETS) instanceof JsonArray array ? presets(array, lowerBase) : List.of();
   }
 
-  private static List<WindowPreset> presets(JsonArray array) {
+  private static List<WindowPreset> presets(
+      JsonArray array, Function<String, Optional<JsonObject>> lowerBase) {
     List<WindowPreset> presets = new ArrayList<>();
-    for (JsonObject json : JsonUtil.objects(array)) {
+    for (JsonObject json :
+        JsonExtends.resolve(JsonUtil.objects(array), lowerBase, "Window preset")) { // NON-NLS
       try {
         presets.add(fromJson(json));
       } catch (IllegalArgumentException e) {

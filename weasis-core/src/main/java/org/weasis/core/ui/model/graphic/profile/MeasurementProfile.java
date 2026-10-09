@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import org.weasis.core.api.util.LayeredEntries;
 
 /**
  * A named palette of tools with the defaults that go with it. {@code null} for {@code tools},
@@ -27,6 +28,8 @@ import java.util.Objects;
  * @param labels per tool key, the measurement keys shown on the image
  * @param statistics the pixel statistics computed, by measurement key, or {@code null}
  * @param builtIn true for a profile of the bundled document (read-only)
+ * @param hidden kept out of the lists; still replaces the same id of the earlier documents
+ * @param locked set by a site document: the user document may not replace this profile
  */
 public record MeasurementProfile(
     String id,
@@ -36,9 +39,25 @@ public record MeasurementProfile(
     Defaults defaults,
     Map<String, List<String>> labels,
     List<String> statistics,
-    boolean builtIn) {
+    boolean builtIn,
+    boolean hidden,
+    boolean locked)
+    implements LayeredEntries.Entry {
 
   public static final String DEFAULT_ID = "default"; // NON-NLS
+
+  /** A visible, unlocked profile. */
+  public MeasurementProfile(
+      String id,
+      String name,
+      List<String> modalities,
+      List<String> tools,
+      Defaults defaults,
+      Map<String, List<String>> labels,
+      List<String> statistics,
+      boolean builtIn) {
+    this(id, name, modalities, tools, defaults, labels, statistics, builtIn, false, false);
+  }
 
   /**
    * Defaults for new graphics; a {@code null} field keeps the current value.
@@ -73,7 +92,8 @@ public record MeasurementProfile(
   }
 
   public MeasurementProfile withBuiltIn(boolean value) {
-    return new MeasurementProfile(id, name, modalities, tools, defaults, labels, statistics, value);
+    return new MeasurementProfile(
+        id, name, modalities, tools, defaults, labels, statistics, value, hidden, locked);
   }
 
   public MeasurementProfile withIdAndName(String newId, String newName) {

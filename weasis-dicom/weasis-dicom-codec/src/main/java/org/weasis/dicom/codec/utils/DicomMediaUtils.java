@@ -106,10 +106,10 @@ public class DicomMediaUtils {
     MaskingModelRegistry registry = MaskingModelRegistry.getInstance();
     if (classificationSource != registry) {
       classificationSource = registry;
-      registry.addListener(() -> applyClassification(registry.tagRules()));
+      registry.addListener(() -> applyClassification(registry.tags().entries()));
       registry.contribute(loadMaskingModel());
     }
-    applyClassification(registry.tagRules());
+    applyClassification(registry.tags().entries());
   }
 
   private static MaskingModel loadMaskingModel() {

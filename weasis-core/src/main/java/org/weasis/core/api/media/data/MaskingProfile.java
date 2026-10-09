@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import org.weasis.core.api.util.LayeredEntries;
 
 /**
  * What to do with each {@link TagCategory}, for one use case. Profiles differ along the axes DICOM
@@ -28,6 +29,7 @@ import java.util.Objects;
  * @param tagActions action per normalized tag key, overriding the category of that tag
  * @param shiftsDates whether {@link TagCategory#DATE} uses the mask's date offset
  * @param offerInExport whether export dialogs offer this profile
+ * @param locked set by a site document: the user document may not replace this profile
  */
 public record MaskingProfile(
     String id,
@@ -36,8 +38,21 @@ public record MaskingProfile(
     Map<TagCategory, AnonymizationAction> actions,
     Map<String, AnonymizationAction> tagActions,
     boolean shiftsDates,
-    boolean offerInExport)
-    implements IdentityMask.TagPolicy {
+    boolean offerInExport,
+    boolean locked)
+    implements IdentityMask.TagPolicy, LayeredEntries.Entry {
+
+  /** A profile that is not locked. */
+  public MaskingProfile(
+      String id,
+      String name,
+      Map<String, String> labels,
+      Map<TagCategory, AnonymizationAction> actions,
+      Map<String, AnonymizationAction> tagActions,
+      boolean shiftsDates,
+      boolean offerInExport) {
+    this(id, name, labels, actions, tagActions, shiftsDates, offerInExport, false);
+  }
 
   public static final String DISPLAY_ID = "display"; // NON-NLS
   public static final String TEACHING_ID = "teaching"; // NON-NLS

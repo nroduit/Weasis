@@ -29,7 +29,7 @@ import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.image.lut.ColorMapRegistry;
-import org.weasis.core.api.image.lut.ColorMapRegistry.Origin;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
 

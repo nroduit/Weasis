@@ -9,11 +9,13 @@
  */
 package org.weasis.dicom.explorer.pref.node;
 
-import javax.xml.stream.XMLStreamException;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.XMLStreamWriter;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.XmlAttributeSource;
+import org.weasis.core.api.util.EntryIds;
+import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.param.DicomNode;
@@ -48,6 +50,12 @@ public class DefaultDicomNode extends AbstractDicomNode {
       </html>
       """
         .formatted(this, getType().toString(), aeTitle, hostname, port);
+  }
+
+  /** The key of the node in its document: {@code aeTitle@hostname:port}. */
+  @Override
+  public String deriveId(String prefix) {
+    return EntryIds.derived(prefix, ID_KIND, aeTitle + "@" + hostname + ":" + port); // NON-NLS
   }
 
   public String getAeTitle() {
@@ -100,13 +108,22 @@ public class DefaultDicomNode extends AbstractDicomNode {
   }
 
   @Override
-  public void saveDicomNode(XMLStreamWriter writer) throws XMLStreamException {
-    super.saveDicomNode(writer);
-    writer.writeAttribute(T_AETITLE, aeTitle);
-    writer.writeAttribute(T_HOST, hostname);
-    writer.writeAttribute(T_PORT, Integer.toString(port));
+  protected void writeJson(JsonObjectBuilder b, boolean userDocument) {
+    b.add(T_AETITLE, aeTitle);
+    JsonUtil.addIfPresent(b, T_HOST, hostname);
+    b.add(T_PORT, port);
+  }
 
-    // writer.writeAttribute("tlsOptions", StringUtil.getEmpty2NullObject(printer.getTlsOptions()));
+  static DefaultDicomNode fromJson(JsonObject json) {
+    DefaultDicomNode node =
+        new DefaultDicomNode(
+            json.getString(T_DESCRIPTION, null),
+            json.getString(T_AETITLE, null),
+            json.getString(T_HOST, null),
+            JsonUtil.getInt(json, T_PORT, 104),
+            usageType(json, UsageType.BOTH));
+    node.readJson(json);
+    return node;
   }
 
   public static DefaultDicomNode buildDicomNodeEx(XMLStreamReader xmler) {

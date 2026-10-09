@@ -10,19 +10,16 @@
 package org.weasis.core.api.media.data;
 
 import jakarta.json.JsonException;
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,16 +27,22 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MaskingModel.TagRule;
-import org.weasis.core.util.StringUtil;
+import org.weasis.core.api.util.LayeredEntries;
+import org.weasis.core.api.util.LayeredEntries.Layer;
+import org.weasis.core.api.util.LayeredEntries.Merged;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 
 /**
  * The masking model in force, merged from the bundled document, documents contributed by other
- * bundles (the DICOM tag classification), the site document given by {@value #CONFIG_PROPERTY} and
- * the user document {@value #USER_FILE} in the preference directory. A later document overrides an
- * earlier one for the same tag or profile id; a locked site document excludes the user document.
+ * bundles (the DICOM tag classification), the site document {@value #SITE_FILE} of the resources
+ * package (see {@code SiteDocuments}) and the user document {@value #USER_FILE} in the preference
+ * directory. A later document overrides an earlier one for the same tag or profile id, unless the
+ * site locked that profile or mask (see {@code LayeredEntries}); a locked site document excludes
+ * the user document altogether.
  *
  * <p>A profile that keeps direct identifiers, or a session or AI profile id that does not exist, is
  * refused with an error and the earlier definition stays, so a configuration mistake never turns
@@ -52,11 +55,8 @@ public final class MaskingModelRegistry {
   public static final String BUILTIN_RESOURCE = "/identityMasking.json"; // NON-NLS
   public static final String USER_FILE = "identityMasking.json"; // NON-NLS
 
-  /** Launcher preference holding the path or URL of the site document. */
-  public static final String CONFIG_PROPERTY = "weasis.masking.config"; // NON-NLS
-
-  private static final int CONNECT_TIMEOUT_MS = 5_000;
-  private static final int READ_TIMEOUT_MS = 10_000;
+  /** File name of the site document in the {@code config} folder of the resources package. */
+  public static final String SITE_FILE = "identityMasking.json"; // NON-NLS
 
   /** Used only when no document defines a usable profile. */
   private static final MaskingProfile FALLBACK =
@@ -75,36 +75,26 @@ public final class MaskingModelRegistry {
 
   private static volatile MaskingModelRegistry instance; // NOSONAR double-checked locking
 
-  /** Which document a merged profile or tag rule comes from. */
-  public enum Origin {
-    BUILT_IN,
-    CONTRIBUTED,
-    SITE,
-    USER
-  }
-
-  private record Merged(
-      Map<String, TagRule> tags,
-      Map<String, MaskingProfile> profiles,
-      Map<String, PixelMask> masks,
+  /** The merged documents: one layered result per kind of entry and the resolved profiles. */
+  private record Model(
+      Merged<TagRule> tags,
+      Merged<MaskingProfile> profiles,
+      Merged<PixelMask> masks,
       MaskingProfile session,
       MaskingProfile ai,
-      Map<String, Origin> tagLayers,
-      Map<String, Origin> profileLayers,
-      Map<String, Origin> maskLayers,
       boolean locked) {}
 
   private final MaskingModel bundled;
   private final List<MaskingModel> contributed = new CopyOnWriteArrayList<>();
   private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
   private final Set<TagW> classifiedInternal = new HashSet<>();
-  private String siteLocation;
+  private Path siteFile;
   private Path userFile;
   private Consumer<Path> remoteStore;
   private MaskingModel site = MaskingModel.EMPTY;
   private MaskingModel user = MaskingModel.EMPTY;
   private boolean userUnreadable;
-  private volatile Merged merged; // NOSONAR immutable snapshot
+  private volatile Model merged; // NOSONAR immutable snapshot
 
   public MaskingModelRegistry(MaskingModel bundled) {
     this.bundled = bundled == null ? MaskingModel.EMPTY : bundled;
@@ -148,19 +138,19 @@ public final class MaskingModelRegistry {
   /**
    * Sets the site and user documents and reloads.
    *
-   * @param siteLocation file path or URL of the site document, or null
+   * @param siteFile the site document, or null
    * @param userFile the user document, or null
    */
-  public void configure(String siteLocation, Path userFile) {
-    configure(siteLocation, userFile, null);
+  public void configure(Path siteFile, Path userFile) {
+    configure(siteFile, userFile, null);
   }
 
   /**
    * @param remoteStore called with the user document after it is written, to mirror it remotely
    */
-  public void configure(String siteLocation, Path userFile, Consumer<Path> remoteStore) {
+  public void configure(Path siteFile, Path userFile, Consumer<Path> remoteStore) {
     synchronized (this) {
-      this.siteLocation = StringUtil.hasText(siteLocation) ? siteLocation.trim() : null;
+      this.siteFile = siteFile;
       this.userFile = userFile;
       this.remoteStore = remoteStore;
       this.site = MaskingModel.EMPTY;
@@ -182,14 +172,12 @@ public final class MaskingModelRegistry {
    * cannot be read leaves the previous one in place.
    */
   public void reload() {
-    String location;
     synchronized (this) {
-      location = siteLocation;
-    }
-    MaskingModel fetched = location == null ? MaskingModel.EMPTY : loadSite(location);
-    synchronized (this) {
-      if (fetched != null && Objects.equals(location, siteLocation)) {
-        site = fetched;
+      if (siteFile != null) {
+        MaskingModel fetched = loadSite(siteFile);
+        if (fetched != null) {
+          site = fetched;
+        }
       }
       readUser();
     }
@@ -217,16 +205,18 @@ public final class MaskingModelRegistry {
     listeners.remove(listener);
   }
 
-  public Collection<TagRule> tagRules() {
-    return merged.tags().values();
+  /** The merged tag rules, with the document each comes from. */
+  public Merged<TagRule> tags() {
+    return merged.tags();
   }
 
-  public List<MaskingProfile> profiles() {
-    return List.copyOf(merged.profiles().values());
+  /** The merged profiles in document order, with their origin and what the site locked. */
+  public Merged<MaskingProfile> profiles() {
+    return merged.profiles();
   }
 
   public Optional<MaskingProfile> profile(String id) {
-    return Optional.ofNullable(merged.profiles().get(id));
+    return find(merged.profiles(), id);
   }
 
   /** The profile of that id, or the session profile when it does not exist. */
@@ -236,7 +226,7 @@ public final class MaskingModelRegistry {
 
   /** Profiles offered by export dialogs. */
   public List<MaskingProfile> exportProfiles() {
-    return merged.profiles().values().stream().filter(MaskingProfile::offerInExport).toList();
+    return merged.profiles().entries().stream().filter(MaskingProfile::offerInExport).toList();
   }
 
   public MaskingProfile sessionProfile() {
@@ -247,28 +237,13 @@ public final class MaskingModelRegistry {
     return merged.ai();
   }
 
-  /** Which document the merged profile of that id comes from. */
-  public Origin origin(String profileId) {
-    return merged.profileLayers().getOrDefault(profileId, Origin.BUILT_IN);
-  }
-
   /** Every merged pixel mask, in document order, disabled ones included. */
-  public List<PixelMask> pixelMasks() {
-    return List.copyOf(merged.masks().values());
+  public Merged<PixelMask> masks() {
+    return merged.masks();
   }
 
   public Optional<PixelMask> pixelMask(String id) {
-    return Optional.ofNullable(merged.masks().get(id));
-  }
-
-  /** Which document the merged pixel mask of that id comes from. */
-  public Origin maskOrigin(String id) {
-    return merged.maskLayers().getOrDefault(id, Origin.BUILT_IN);
-  }
-
-  /** Which document the merged rule of that normalized tag key comes from. */
-  public Origin tagOrigin(String key) {
-    return merged.tagLayers().getOrDefault(key, Origin.BUILT_IN);
+    return find(merged.masks(), id);
   }
 
   /** Whether the site document excludes the user document, making the model read-only. */
@@ -281,9 +256,14 @@ public final class MaskingModelRegistry {
     return userFile;
   }
 
-  /** Path or URL of the site document, or null when the host set none. */
+  /** The site document, or null when the package ships none. */
+  public synchronized Path siteFile() {
+    return siteFile;
+  }
+
+  /** Path of the site document as text, for messages; null when there is none. */
   public synchronized String siteLocation() {
-    return siteLocation;
+    return siteFile == null ? null : siteFile.toString();
   }
 
   /** The user document, empty when there is none. */
@@ -306,7 +286,7 @@ public final class MaskingModelRegistry {
       }
     }
     if (isLocked()) {
-      throw new IllegalStateException("The masking configuration is locked by " + siteLocation);
+      throw new IllegalStateException("The masking configuration is locked by " + siteLocation());
     }
     synchronized (this) {
       user = model;
@@ -422,124 +402,137 @@ public final class MaskingModelRegistry {
     }
   }
 
-  private synchronized Merged merge() {
-    MergeState state = new MergeState();
-    state.add(bundled, "bundled", Origin.BUILT_IN); // NON-NLS
-    contributed.forEach(m -> state.add(m, "contributed", Origin.CONTRIBUTED)); // NON-NLS
-    state.add(site, siteLocation, Origin.SITE);
+  private synchronized Model merge() {
+    List<Document> documents = new ArrayList<>();
+    documents.add(new Document(Origin.BUILT_IN, bundled));
+    contributed.forEach(m -> documents.add(new Document(Origin.CONTRIBUTED, m)));
+    documents.add(new Document(Origin.SITE, site));
     boolean locked = site.locked();
     if (locked) {
-      LOGGER.info("Masking configuration locked by {}, user file ignored", siteLocation);
+      LOGGER.info("Masking configuration locked by {}, user file ignored", siteFile);
     } else {
-      state.add(user, userFile == null ? null : userFile.toString(), Origin.USER);
+      documents.add(new Document(Origin.USER, user));
     }
-    return state.build(locked);
+    Merged<TagRule> tags =
+        LayeredEntries.merge(layers(documents, MaskingModel::tags), "Masking tag"); // NON-NLS
+    Merged<MaskingProfile> profiles =
+        LayeredEntries.merge(profileLayers(documents), "Masking profile"); // NON-NLS
+    Merged<PixelMask> masks =
+        LayeredEntries.merge(layers(documents, MaskingModel::masks), "Pixel mask"); // NON-NLS
+    String sessionId = MaskingProfile.DISPLAY_ID;
+    String aiId = MaskingProfile.AI_REQUEST_ID;
+    for (Document document : documents) {
+      if (document.model().sessionProfile() != null) {
+        sessionId = document.model().sessionProfile();
+      }
+      if (document.model().aiProfile() != null) {
+        aiId = document.model().aiProfile();
+      }
+    }
+    MaskingProfile first = profiles.entries().stream().findFirst().orElse(FALLBACK);
+    MaskingProfile session = resolve(profiles, sessionId, MaskingProfile.DISPLAY_ID, first);
+    MaskingProfile ai = resolve(profiles, aiId, MaskingProfile.AI_REQUEST_ID, session);
+    return new Model(tags, profiles, masks, session, ai, locked);
   }
 
-  /** The documents in order, a later one overriding an earlier one for the same key. */
-  private static final class MergeState {
-    private final Map<String, TagRule> tags = new LinkedHashMap<>();
-    private final Map<String, MaskingProfile> profiles = new LinkedHashMap<>();
-    private final Map<String, PixelMask> masks = new LinkedHashMap<>();
-    private final Map<String, Origin> tagLayers = new LinkedHashMap<>();
-    private final Map<String, Origin> profileLayers = new LinkedHashMap<>();
-    private final Map<String, Origin> maskLayers = new LinkedHashMap<>();
-    private String sessionId = MaskingProfile.DISPLAY_ID;
-    private String aiId = MaskingProfile.AI_REQUEST_ID;
+  private record Document(Origin origin, MaskingModel model) {}
 
-    void add(MaskingModel model, String origin, Origin layer) {
-      for (TagRule rule : model.tags()) {
-        TagRule previous = tags.put(rule.key(), rule);
-        tagLayers.put(rule.key(), layer);
-        if (previous != null && previous.category() != rule.category()) {
-          LOGGER.info(
-              "Masking category of {} changed from {} to {} by {}",
-              rule.key(),
-              previous.category(),
-              rule.category(),
-              origin);
-        }
-      }
-      for (MaskingProfile profile : model.profiles()) {
+  private static <T extends LayeredEntries.Entry> List<Layer<T>> layers(
+      List<Document> documents, Function<MaskingModel, List<T>> entries) {
+    return documents.stream().map(d -> Layer.of(d.origin(), entries.apply(d.model()))).toList();
+  }
+
+  // A profile that keeps direct identifiers is refused so that a document mistake never unmasks
+  private static List<Layer<MaskingProfile>> profileLayers(List<Document> documents) {
+    List<Layer<MaskingProfile>> layers = new ArrayList<>();
+    for (Document document : documents) {
+      List<MaskingProfile> accepted = new ArrayList<>();
+      for (MaskingProfile profile : document.model().profiles()) {
         if (profile.hidesDirectIdentifiers()) {
-          profiles.put(profile.id(), profile);
-          profileLayers.put(profile.id(), layer);
+          accepted.add(profile);
         } else {
           LOGGER.error(
-              "Masking profile '{}' from {} keeps direct identifiers and is refused",
+              "Masking profile '{}' of the {} document keeps direct identifiers and is refused",
               profile.id(),
-              origin);
+              document.origin());
         }
       }
-      for (PixelMask mask : model.masks()) {
-        masks.put(mask.id(), mask);
-        maskLayers.put(mask.id(), layer);
-      }
-      if (model.sessionProfile() != null) {
-        sessionId = model.sessionProfile();
-      }
-      if (model.aiProfile() != null) {
-        aiId = model.aiProfile();
-      }
+      layers.add(Layer.of(document.origin(), accepted));
     }
+    return layers;
+  }
 
-    Merged build(boolean locked) {
-      MaskingProfile first = profiles.values().stream().findFirst().orElse(FALLBACK);
-      MaskingProfile session = resolve(profiles, sessionId, MaskingProfile.DISPLAY_ID, first);
-      MaskingProfile ai = resolve(profiles, aiId, MaskingProfile.AI_REQUEST_ID, session);
-      return new Merged(
-          Collections.unmodifiableMap(tags),
-          Collections.unmodifiableMap(profiles),
-          Collections.unmodifiableMap(masks),
-          session,
-          ai,
-          Map.copyOf(tagLayers),
-          Map.copyOf(profileLayers),
-          Map.copyOf(maskLayers),
-          locked);
-    }
+  private static <T extends LayeredEntries.Entry> Optional<T> find(Merged<T> merged, String id) {
+    return id == null
+        ? Optional.empty()
+        : merged.entries().stream().filter(e -> e.id().equals(id)).findFirst();
   }
 
   private static MaskingProfile resolve(
-      Map<String, MaskingProfile> profiles, String id, String defaultId, MaskingProfile fallback) {
-    MaskingProfile profile = profiles.get(id);
-    if (profile != null) {
-      return profile;
+      Merged<MaskingProfile> profiles, String id, String defaultId, MaskingProfile fallback) {
+    Optional<MaskingProfile> profile = find(profiles, id);
+    if (profile.isPresent()) {
+      return profile.get();
     }
     LOGGER.error("Masking profile '{}' does not exist, using '{}'", id, defaultId);
-    return profiles.getOrDefault(defaultId, fallback);
+    return find(profiles, defaultId).orElse(fallback);
   }
 
-  private static MaskingModel loadSite(String location) {
+  private MaskingModel loadSite(Path file) {
+    List<MaskingModel> lower = lowerLayers(false);
     try {
-      if (location.contains("://") || location.startsWith("file:")) { // NON-NLS
-        URLConnection connection = URI.create(location).toURL().openConnection();
-        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-        connection.setReadTimeout(READ_TIMEOUT_MS);
-        try (InputStream in = connection.getInputStream()) {
-          return MaskingModel.read(in);
-        }
-      }
-      return MaskingModel.read(Path.of(location));
+      return MaskingModel.read(file, profileBases(lower), maskBases(lower));
     } catch (IOException | JsonException | IllegalArgumentException e) {
-      LOGGER.error("Cannot read the site masking configuration: {}", location, e);
+      LOGGER.error("Cannot read the site masking configuration: {}", file, e);
       return null;
     }
   }
 
-  private static MaskingModel loadUser(Path file) {
+  private MaskingModel loadUser(Path file) {
+    List<MaskingModel> lower = lowerLayers(true);
     try {
-      return MaskingModel.read(file);
+      return MaskingModel.read(file, profileBases(lower), maskBases(lower));
     } catch (IOException e) {
       LOGGER.error("Cannot read the user masking configuration: {}", file, e);
       return null;
     }
   }
 
+  // The documents below the one being read, most specific first, for an extends
+  private List<MaskingModel> lowerLayers(boolean withSite) {
+    List<MaskingModel> lower = new ArrayList<>();
+    if (withSite) {
+      lower.add(site);
+    }
+    List<MaskingModel> plugins = new ArrayList<>(contributed);
+    Collections.reverse(plugins);
+    lower.addAll(plugins);
+    lower.add(bundled);
+    return lower;
+  }
+
+  private static Function<String, Optional<JsonObject>> profileBases(List<MaskingModel> layers) {
+    return id ->
+        layers.stream()
+            .flatMap(m -> m.profiles().stream())
+            .filter(p -> p.id().equals(id))
+            .findFirst()
+            .map(MaskingModel::toJson);
+  }
+
+  private static Function<String, Optional<JsonObject>> maskBases(List<MaskingModel> layers) {
+    return id ->
+        layers.stream()
+            .flatMap(m -> m.masks().stream())
+            .filter(m -> m.id().equals(id))
+            .findFirst()
+            .map(MaskingModel::toJson);
+  }
+
   /** Classifies the Weasis-internal tags; DICOM tags are classified by the DICOM codec. */
   private synchronized void applyInternalTags() {
     Set<TagW> applied = new HashSet<>();
-    for (TagRule rule : tagRules()) {
+    for (TagRule rule : tags().entries()) {
       if (!rule.isInternal()) {
         continue;
       }

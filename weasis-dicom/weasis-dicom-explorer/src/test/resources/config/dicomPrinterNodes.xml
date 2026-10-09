@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nodes>
+  <node description="Radiology printer" type="PRINTER" usageType="STORAGE" tsuid="NONE" aeTitle="PRINT_SCP"
+    hostname="printer.example.org" port="104" mediumType="CLEAR FILM" priority="HIGH" filmDestination="PROCESSOR"
+    numberOfCopies="2" colorPrint="true" filmOrientation="LANDSCAPE" filmSizeId="IN14X17"
+    imageDisplayFormat="STANDARD\2,2" magnificationType="BILINEAR" smoothingType="SHARP" borderDensity="BLACK"
+    trim="YES" emptyDensity="WHITE" showingAnnotations="false" printOnlySelectedView="true" dpi="DPI_300"></node>
+</nodes>

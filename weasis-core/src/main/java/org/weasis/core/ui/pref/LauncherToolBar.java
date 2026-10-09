@@ -41,7 +41,10 @@ public class LauncherToolBar extends WtoolBar implements DynamicToolbar {
   private void addLaunchers(List<Launcher> launchers, ImageViewerEventManager<?> eventManager) {
     int size = ResourceUtil.TOOLBAR_ICON_SIZE;
     for (Launcher launcher : launchers) {
-      if (launcher.isEnable() && launcher.isButton() && launcher.getConfiguration().isValid()) {
+      if (launcher.isEnable()
+          && launcher.isButton()
+          && !launcher.isHidden()
+          && launcher.getConfiguration().isValid()) {
         Icon icon = launcher.getResizeIcon(size, size);
         DefaultAction action = new DefaultAction(null, icon, _ -> launcher.execute(eventManager));
         final JButton launcherButton = new JButton(action);

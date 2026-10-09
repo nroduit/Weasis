@@ -54,38 +54,44 @@ public abstract class WeasisPlugin extends Plugin {
     Files.createDirectories(nativeLibDir);
 
     // Get all native library resources from the natives directory in the JAR
-    List<Path> nativeLibs = getNativeLibraryPaths();
+    List<String> nativeLibs = getNativeLibraryResources();
 
-    for (Path libName : nativeLibs) {
-      extractAndLoadLibrary(libName, nativeLibDir, libraryLoader);
+    for (String resource : nativeLibs) {
+      extractAndLoadLibrary(resource, nativeLibDir, libraryLoader);
     }
   }
 
-  private List<Path> getNativeLibraryPaths() {
-    List<Path> nativeLibs = new ArrayList<>();
+  // Resource names always use '/', never the platform file separator.
+  private List<String> getNativeLibraryResources() {
+    List<String> nativeLibs = new ArrayList<>();
     PluginDescriptor descriptor = getPluginWrapper().getDescriptor();
     if (descriptor instanceof ManifestPluginDescriptor manifest) {
-      String folder = manifest.getNativeFolder();
+      String folder = manifest.getNativeFolder().replace('\\', '/');
       if (!folder.startsWith("/")) {
         folder = "/" + folder;
       }
-      String[] files = manifest.getNativeFiles().split(",");
-      for (String file : files) {
-        nativeLibs.add(Path.of(folder, file.trim()));
+      if (!folder.endsWith("/")) {
+        folder += "/";
+      }
+      for (String file : manifest.getNativeFiles().split(",")) {
+        if (!file.isBlank()) {
+          nativeLibs.add(folder + file.trim());
+        }
       }
     }
     return nativeLibs;
   }
 
-  private void extractAndLoadLibrary(Path libName, Path nativeLibDir, Consumer<Path> libraryLoader)
-      throws IOException {
-    try (InputStream is = getClass().getResourceAsStream(libName.toString())) {
+  private void extractAndLoadLibrary(
+      String resource, Path nativeLibDir, Consumer<Path> libraryLoader) throws IOException {
+    try (InputStream is = getClass().getResourceAsStream(resource)) {
       if (is == null) {
         throw new FileNotFoundException(
             "Native library %s is missing from the plugin %s"
-                .formatted(libName, getPluginWrapper().getPluginId()));
+                .formatted(resource, getPluginWrapper().getPluginId()));
       }
-      Path targetPath = nativeLibDir.resolve(libName.getFileName());
+      String fileName = resource.substring(resource.lastIndexOf('/') + 1);
+      Path targetPath = nativeLibDir.resolve(fileName);
       Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
       libraryLoader.accept(targetPath);
     }

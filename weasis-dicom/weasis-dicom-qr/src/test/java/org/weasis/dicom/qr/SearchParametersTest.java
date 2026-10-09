@@ -10,326 +10,379 @@
 package org.weasis.dicom.qr;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonString;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.XMLStreamWriter;
 import org.dcm4che3.data.Tag;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.weasis.core.api.util.EntryIds;
+import org.weasis.core.api.util.LayeredEntries.Merged;
+import org.weasis.core.api.util.LayeredEntries.Origin;
+import org.weasis.core.api.util.ListDocument;
 import org.weasis.dicom.param.DicomParam;
 import org.weasis.dicom.qr.DicomQrView.Period;
+import org.weasis.dicom.qr.SearchParameters.Documents;
 
 /**
- * Tests {@link SearchParameters} — the persistent representation of a saved DICOM Q/R search. The
- * XML written by {@code saveSearchParameters} is read back by {@code loadSearchParameters} from the
- * user-preferences directory, so a regression in the schema or escaping silently changes the
- * studies that the clinician retrieves the next time they reopen the saved template.
+ * Tests {@link SearchParameters}: the saved DICOM Q/R search templates, read from the site and user
+ * documents and written back as JSON for the user. A regression in the schema silently changes the
+ * studies the clinician retrieves the next time they reopen a saved template.
  */
+@DisplayNameGeneration(ReplaceUnderscores.class)
 class SearchParametersTest {
+
+  @TempDir Path dir;
+
+  private Path fixture(String target) throws IOException {
+    Path file = dir.resolve(target);
+    try (InputStream in = getClass().getResourceAsStream("/config/searchParameters.xml")) {
+      Files.createDirectories(file.getParent());
+      Files.copy(in, file);
+    }
+    return file;
+  }
+
+  private static SearchParameters template(String id, String name, boolean local) {
+    SearchParameters t = new SearchParameters(name);
+    t.setId(id);
+    t.setLocal(local);
+    t.getParameters().add(new DicomParam(Tag.PatientID, "MR-001"));
+    return t;
+  }
+
+  private static SearchParameters reload(SearchParameters original) {
+    return SearchParameters.fromJson(original.toJson(), true, new HashSet<>());
+  }
 
   // -- Constructor + setters --------------------------------------------------
 
   @Test
-  void constructor_setsName() {
-    SearchParameters sp = new SearchParameters("MyTemplate");
-
-    assertEquals("MyTemplate", sp.getName());
-  }
-
-  @Test
-  void setName_rejectsNullKeepsCurrent() {
+  void the_name_is_kept_unless_the_new_one_is_blank() {
     SearchParameters sp = new SearchParameters("MyTemplate");
 
     sp.setName(null);
-
-    assertEquals("MyTemplate", sp.getName(), "null name is rejected, current preserved");
-  }
-
-  @Test
-  void setName_rejectsEmptyKeepsCurrent() {
-    SearchParameters sp = new SearchParameters("MyTemplate");
-
     sp.setName("");
-
-    assertEquals("MyTemplate", sp.getName(), "empty name is rejected");
-  }
-
-  @Test
-  void setName_rejectsBlankKeepsCurrent() {
-    SearchParameters sp = new SearchParameters("MyTemplate");
-
     sp.setName("   ");
 
-    assertEquals("MyTemplate", sp.getName(), "blank-only name is rejected");
+    assertAll(
+        () -> assertEquals("MyTemplate", sp.getName()),
+        () -> assertEquals("MyTemplate", sp.toString()),
+        () -> assertTrue(sp.getParameters().isEmpty()),
+        () -> assertNull(sp.id(), "no id until saved"),
+        () -> assertTrue(sp.isLocal(), "a template of the session belongs to the user"));
   }
 
   @Test
-  void setPeriod_roundTrip() {
+  void the_period_may_be_cleared() {
     SearchParameters sp = new SearchParameters("MyTemplate");
-
     sp.setPeriod(Period.TODAY);
-
     assertEquals(Period.TODAY, sp.getPeriod());
-  }
-
-  @Test
-  void setPeriod_nullClearsValue() {
-    SearchParameters sp = new SearchParameters("MyTemplate");
-    sp.setPeriod(Period.TODAY);
 
     sp.setPeriod(null);
 
     assertNull(sp.getPeriod(), "null period is accepted (means no period filter)");
   }
 
-  @Test
-  void parameters_listIsInitiallyEmpty() {
-    assertTrue(new SearchParameters("MyTemplate").getParameters().isEmpty());
-  }
+  // -- JSON ------------------------------------------------------------------
 
   @Test
-  void parameters_listIsMutable() {
+  void the_json_carries_id_name_period_and_the_parameters_in_order() {
     SearchParameters sp = new SearchParameters("MyTemplate");
-    DicomParam p = new DicomParam(Tag.PatientID, "MR-001");
-
-    sp.getParameters().add(p);
-
-    assertEquals(1, sp.getParameters().size());
-    assertEquals(p, sp.getParameters().get(0));
-  }
-
-  @Test
-  void toString_returnsName() {
-    assertEquals("MyTemplate", new SearchParameters("MyTemplate").toString());
-  }
-
-  // -- saveSearchParameters: XML structure -----------------------------------
-
-  @Test
-  void save_writesNameAndPeriodAsAttributes() throws Exception {
-    SearchParameters sp = new SearchParameters("MyTemplate");
+    sp.setId("user.search.mytemplate");
     sp.setPeriod(Period.TODAY);
-
-    String xml = saveAsXmlString(sp);
-
-    assertAll(
-        () -> assertTrue(xml.contains("name=\"MyTemplate\""), xml),
-        () -> assertTrue(xml.contains("period=\"TODAY\""), xml));
-  }
-
-  @Test
-  void save_nullPeriodWritesEmptyString() throws Exception {
-    // The persisted XML must encode "no period" as empty, not omit the attribute, so load can
-    // discriminate "absent" from "present but blank".
-    SearchParameters sp = new SearchParameters("MyTemplate");
-
-    String xml = saveAsXmlString(sp);
-
-    assertTrue(xml.contains("period=\"\""), "null period -> period=\"\" attribute: " + xml);
-  }
-
-  @Test
-  void save_singleDicomParamWritesTagAndValueElements() throws Exception {
-    SearchParameters sp = new SearchParameters("MyTemplate");
     sp.getParameters().add(new DicomParam(Tag.PatientID, "MR-001"));
-
-    String xml = saveAsXmlString(sp);
-
-    assertAll(
-        () -> assertTrue(xml.contains("<dicomParam"), xml),
-        () ->
-            assertTrue(
-                xml.contains("tag=\"" + Tag.PatientID + "\""), "decimal tag attribute: " + xml),
-        () -> assertTrue(xml.contains("<values>"), xml),
-        () -> assertTrue(xml.contains("<value>MR-001</value>"), xml));
-  }
-
-  @Test
-  void save_multipleValuesProduceMultipleValueElements() throws Exception {
-    SearchParameters sp = new SearchParameters("MyTemplate");
     sp.getParameters().add(new DicomParam(Tag.ModalitiesInStudy, "CT", "MR", "US"));
-
-    String xml = saveAsXmlString(sp);
-
-    // Three separate <value> elements within a single <values> wrapper.
-    long valueElementCount =
-        xml.lines().flatMap(s -> Arrays.stream(s.split("<value>"))).count() - 1;
-    assertAll(
-        () -> assertTrue(xml.contains("<value>CT</value>"), xml),
-        () -> assertTrue(xml.contains("<value>MR</value>"), xml),
-        () -> assertTrue(xml.contains("<value>US</value>"), xml),
-        () -> assertEquals(3, valueElementCount, "exactly 3 <value> tokens"));
-  }
-
-  @Test
-  void save_parentSeqTagsAreCommaJoined() throws Exception {
-    SearchParameters sp = new SearchParameters("MyTemplate");
     int[] parentSeq = {Tag.RequestedProcedureCodeSequence, Tag.ScheduledProtocolCodeSequence};
     sp.getParameters().add(new DicomParam(parentSeq, Tag.CodeValue, "ABC"));
 
-    String xml = saveAsXmlString(sp);
-
-    assertTrue(
-        xml.contains("parentSeqTags=\"" + parentSeq[0] + "," + parentSeq[1] + "\""),
-        "parent sequence tags joined with comma: " + xml);
-  }
-
-  @Test
-  void save_emptyValuesArrayWritesEmptyValuesWrapper() throws Exception {
-    // Documented behaviour: zero-length values array writes an empty <values></values> wrapper.
-    // Loading this back yields a DicomParam with a zero-length values array, NOT a single
-    // empty string — matching save-side semantics.
-    SearchParameters sp = new SearchParameters("MyTemplate");
-    sp.getParameters().add(new DicomParam(Tag.SOPInstanceUID));
-
-    String xml = saveAsXmlString(sp);
+    JsonObject json = sp.toJson();
+    List<JsonObject> params =
+        json.getJsonArray(SearchParameters.PARAMS).getValuesAs(JsonObject.class);
 
     assertAll(
-        () -> assertTrue(xml.contains("<dicomParam"), xml),
-        () -> assertTrue(xml.contains("<values>"), "wrapper written even for empty array: " + xml),
+        () -> assertEquals("user.search.mytemplate", json.getString("id")),
+        () -> assertEquals("MyTemplate", json.getString("name")),
+        () -> assertEquals("TODAY", json.getString("period")),
+        () -> assertEquals(3, params.size()),
+        () -> assertEquals("PatientID", params.get(0).getString("tag")),
+        () -> assertEquals(List.of("MR-001"), strings(params.get(0), "values")),
+        () -> assertFalse(params.get(0).containsKey("parentSeqTags")),
+        () -> assertEquals(List.of("CT", "MR", "US"), strings(params.get(1), "values")),
+        () -> assertEquals("CodeValue", params.get(2).getString("tag")),
         () ->
-            assertTrue(!xml.contains("<value>"), "no nested <value> when array is empty: " + xml));
+            assertEquals(
+                List.of("RequestedProcedureCodeSequence", "ScheduledProtocolCodeSequence"),
+                strings(params.get(2), "parentSeqTags")),
+        () -> assertFalse(json.containsKey("hidden")),
+        () -> assertFalse(json.containsKey("locked")));
+  }
+
+  private static List<String> strings(JsonObject object, String name) {
+    return object.getJsonArray(name).getValuesAs(JsonString.class).stream()
+        .map(JsonString::getString)
+        .toList();
   }
 
   @Test
-  void save_multipleParamsAllPresentInOrder() throws Exception {
+  void a_null_period_is_absent_and_round_trips_to_null() {
     SearchParameters sp = new SearchParameters("MyTemplate");
     sp.getParameters().add(new DicomParam(Tag.PatientID, "MR-001"));
-    sp.getParameters().add(new DicomParam(Tag.Modality, "CT"));
 
-    String xml = saveAsXmlString(sp);
+    JsonObject json = sp.toJson();
+    SearchParameters reloaded = reload(sp);
 
-    int patientIdx = xml.indexOf("tag=\"" + Tag.PatientID + "\"");
-    int modalityIdx = xml.indexOf("tag=\"" + Tag.Modality + "\"");
     assertAll(
-        () -> assertTrue(patientIdx > 0, "PatientID present: " + xml),
-        () -> assertTrue(modalityIdx > 0, "Modality present: " + xml),
-        () -> assertTrue(patientIdx < modalityIdx, "insertion order preserved"));
-  }
-
-  // -- End-to-end round-trip (via reflection on the package-private parser) --
-
-  @Test
-  void roundTrip_singleParamWithSingleValuePreservesFields() throws Exception {
-    SearchParameters original = new SearchParameters("MyTemplate");
-    original.setPeriod(Period.TODAY);
-    original.getParameters().add(new DicomParam(Tag.PatientID, "MR-001"));
-
-    SearchParameters reloaded = saveAndReload(original);
-
-    assertNotNull(reloaded, "reload must produce a SearchParameters");
-    assertAll(
-        () -> assertEquals("MyTemplate", reloaded.getName()),
-        () -> assertEquals(Period.TODAY, reloaded.getPeriod()),
-        () -> assertEquals(1, reloaded.getParameters().size()));
-    DicomParam p = reloaded.getParameters().get(0);
-    assertAll(
-        () -> assertEquals(Tag.PatientID, p.getTag()),
-        () -> assertEquals(1, p.getValues().length),
-        () -> assertEquals("MR-001", p.getValues()[0]));
+        () -> assertFalse(json.containsKey("period"), json.toString()),
+        () -> assertNull(reloaded.getPeriod(), "null period round-trips to null, not TODAY"));
   }
 
   @Test
-  void roundTrip_multipleValuesPreservedInOrder() throws Exception {
-    SearchParameters original = new SearchParameters("MyTemplate");
-    original.getParameters().add(new DicomParam(Tag.ModalitiesInStudy, "CT", "MR", "US"));
-
-    SearchParameters reloaded = saveAndReload(original);
-
-    assertNotNull(reloaded);
-    DicomParam p = reloaded.getParameters().get(0);
-    assertEquals(Arrays.asList("CT", "MR", "US"), Arrays.asList(p.getValues()));
-  }
-
-  @Test
-  void roundTrip_parentSeqTagsPreserved() throws Exception {
+  void the_values_and_parent_sequence_tags_round_trip() {
     int[] parentSeq = {Tag.RequestedProcedureCodeSequence, Tag.ScheduledProtocolCodeSequence};
     SearchParameters original = new SearchParameters("MyTemplate");
+    original.setPeriod(Period.CUR_WEEK);
+    original.getParameters().add(new DicomParam(Tag.ModalitiesInStudy, "CT", "MR", "US"));
     original.getParameters().add(new DicomParam(parentSeq, Tag.CodeValue, "ABC"));
+    original.getParameters().add(new DicomParam(Tag.SOPInstanceUID));
+    original.getParameters().add(new DicomParam(Tag.StudyDate, (String[]) null));
 
-    SearchParameters reloaded = saveAndReload(original);
+    SearchParameters reloaded = reload(original);
+    List<DicomParam> p = reloaded.getParameters();
 
-    assertNotNull(reloaded);
-    DicomParam p = reloaded.getParameters().get(0);
     assertAll(
-        () -> assertEquals(Tag.CodeValue, p.getTag()),
-        () -> assertEquals(2, p.getParentSeqTags().length),
-        () -> assertEquals(parentSeq[0], p.getParentSeqTags()[0]),
-        () -> assertEquals(parentSeq[1], p.getParentSeqTags()[1]));
+        () -> assertEquals("MyTemplate", reloaded.getName()),
+        () -> assertEquals(Period.CUR_WEEK, reloaded.getPeriod()),
+        () -> assertEquals(4, p.size()),
+        () -> assertEquals(Tag.ModalitiesInStudy, p.get(0).getTag()),
+        () -> assertEquals(Arrays.asList("CT", "MR", "US"), Arrays.asList(p.get(0).getValues())),
+        () -> assertEquals(0, p.get(0).getParentSeqTags().length),
+        () -> assertEquals(Tag.CodeValue, p.get(1).getTag()),
+        () -> assertArrayEquals(parentSeq, p.get(1).getParentSeqTags()),
+        () -> assertEquals(0, p.get(2).getValues().length, "an empty array stays empty"),
+        () -> assertEquals(0, p.get(3).getValues().length, "none reads as empty, as before"));
   }
 
   @Test
-  void roundTrip_nullPeriodPreservedAsNull() throws Exception {
-    SearchParameters original = new SearchParameters("MyTemplate");
-    original.getParameters().add(new DicomParam(Tag.PatientID, "MR-001"));
+  void tags_are_read_as_keyword_hex_form_or_legacy_integer_and_unknown_keywords_skip_the_param() {
+    int privateTag = 0x00091010;
+    SearchParameters original = new SearchParameters("Tags");
+    original.getParameters().add(new DicomParam(Tag.PatientName, "DOE^JOHN"));
+    original.getParameters().add(new DicomParam(new int[] {privateTag}, Tag.CodeValue, "P"));
+    JsonObject written = original.toJson();
+    List<JsonObject> params = written.getJsonArray("params").getValuesAs(JsonObject.class);
 
-    SearchParameters reloaded = saveAndReload(original);
+    JsonObject legacy =
+        Json.createObjectBuilder()
+            .add("name", "Legacy")
+            .add(
+                "params",
+                Json.createArrayBuilder()
+                    .add(Json.createObjectBuilder().add("tag", Tag.PatientID))
+                    .add(
+                        Json.createObjectBuilder()
+                            .add("tag", Tag.CodeValue)
+                            .add("parentSeqTags", Json.createArrayBuilder().add(privateTag)))
+                    .add(Json.createObjectBuilder().add("tag", "NoSuchKeyword"))
+                    .add(
+                        Json.createObjectBuilder()
+                            .add("tag", "CodeValue")
+                            .add("parentSeqTags", Json.createArrayBuilder().add("NoSuchSequence")))
+                    .add(Json.createObjectBuilder().add("tag", "(0009,1010)")))
+            .build();
 
-    assertNotNull(reloaded);
-    assertNull(reloaded.getPeriod(), "null period round-trips to null, not to TODAY or ALL");
+    SearchParameters reloaded = SearchParameters.fromJson(written, true, new HashSet<>());
+    SearchParameters fromLegacy = SearchParameters.fromJson(legacy, true, new HashSet<>());
+
+    assertAll(
+        () -> assertEquals("PatientName", params.get(0).getString("tag")),
+        () -> assertEquals("CodeValue", params.get(1).getString("tag")),
+        () ->
+            assertEquals(
+                List.of("(0009,1010)"),
+                strings(params.get(1), "parentSeqTags"),
+                "a tag without keyword is written in hex form"),
+        () -> assertEquals(Tag.PatientName, reloaded.getParameters().get(0).getTag()),
+        () -> assertEquals(Tag.CodeValue, reloaded.getParameters().get(1).getTag()),
+        () ->
+            assertArrayEquals(
+                new int[] {privateTag}, reloaded.getParameters().get(1).getParentSeqTags()),
+        () -> assertEquals(3, fromLegacy.getParameters().size(), "unknown keywords are skipped"),
+        () -> assertEquals(Tag.PatientID, fromLegacy.getParameters().get(0).getTag()),
+        () ->
+            assertArrayEquals(
+                new int[] {privateTag}, fromLegacy.getParameters().get(1).getParentSeqTags()),
+        () -> assertEquals(privateTag, fromLegacy.getParameters().get(2).getTag()),
+        () -> assertEquals(-1, SearchParameters.tagOf("NoSuchKeyword")),
+        () -> assertEquals(Tag.StudyDate, SearchParameters.tagOf("(0008,0020)")),
+        () -> assertEquals("(0009,1010)", SearchParameters.tagName(privateTag)));
   }
 
-  // -- Helpers ---------------------------------------------------------------
+  @Test
+  void a_template_without_name_is_refused() {
+    JsonObject json = Json.createObjectBuilder().add("id", "user.search.x").build();
 
-  /**
-   * Serialise a single {@link SearchParameters} into a standalone XML document. Wraps it in a
-   * top-level &lt;searchParameters&gt; element since {@code saveSearchParameters} expects its
-   * caller to have already written the start element.
-   */
-  private static String saveAsXmlString(SearchParameters sp) throws Exception {
-    StringWriter sw = new StringWriter();
-    XMLStreamWriter writer = XMLOutputFactory.newInstance().createXMLStreamWriter(sw);
-    writer.writeStartDocument();
-    writer.writeStartElement(SearchParameters.T_NODE);
-    sp.saveSearchParameters(writer);
-    writer.writeEndElement();
-    writer.writeEndDocument();
-    writer.close();
-    return sw.toString();
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> SearchParameters.fromJson(json, true, new HashSet<>()));
   }
 
-  /**
-   * Round-trip a {@link SearchParameters} through save + parse, invoking the package-private XML
-   * loader via reflection. This pins the contract that the persisted schema is symmetric — a
-   * regression on either side would surface as round-trip drift.
-   */
-  private static SearchParameters saveAndReload(SearchParameters original) throws Exception {
-    String xml = saveAsXmlString(original);
+  // -- Legacy XML ------------------------------------------------------------
 
-    XMLInputFactory factory = XMLInputFactory.newInstance();
-    factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
-    factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-    XMLStreamReader reader = factory.createXMLStreamReader(new StringReader(xml));
+  @Test
+  void a_legacy_xml_converts_to_json_with_derived_ids_and_back_to_the_model() throws IOException {
+    Path xml = fixture("site/searchParameters.xml");
 
-    // Advance to the searchParameters START_ELEMENT — the parser expects the cursor positioned
-    // there.
-    while (reader.hasNext()) {
-      int evt = reader.next();
-      if (evt == XMLStreamConstants.START_ELEMENT
-          && SearchParameters.T_NODE.equals(reader.getName().getLocalPart())) {
-        break;
-      }
-    }
+    List<JsonObject> objects = SearchParameters.readLegacy(xml, EntryIds.SITE_PREFIX);
+    SearchParameters first = SearchParameters.fromJson(objects.get(0), false, new HashSet<>());
+    SearchParameters second = SearchParameters.fromJson(objects.get(1), false, new HashSet<>());
+    List<DicomParam> p1 = first.getParameters();
+    List<DicomParam> p2 = second.getParameters();
 
-    List<SearchParameters> result = new ArrayList<>();
-    Method m =
-        SearchParameters.class.getDeclaredMethod(
-            "readSearchParameters", XMLStreamReader.class, List.class);
-    m.setAccessible(true);
-    m.invoke(null, reader, result);
+    assertAll(
+        () -> assertEquals(2, objects.size()),
+        () -> assertEquals("site.search.ct-of-the-week", first.id()),
+        () -> assertEquals("CT of the week", first.getName()),
+        () -> assertEquals(Period.CUR_WEEK, first.getPeriod()),
+        () -> assertFalse(first.isLocal()),
+        () -> assertEquals(3, p1.size()),
+        () ->
+            assertEquals(
+                "PatientID",
+                objects.get(0).getJsonArray("params").getJsonObject(0).getString("tag"),
+                "the converter writes keywords"),
+        () -> assertEquals(Tag.PatientID, p1.get(0).getTag()),
+        () -> assertArrayEquals(new String[] {"MR-001"}, p1.get(0).getValues()),
+        () -> assertArrayEquals(new String[] {"CT", "MR"}, p1.get(1).getValues()),
+        () -> assertArrayEquals(new String[] {""}, p1.get(2).getValues()),
+        () -> assertEquals("site.search.procedure-code", second.id()),
+        () -> assertNull(second.getPeriod(), "an empty period attribute is none"),
+        () -> assertEquals(Tag.CodeValue, p2.get(0).getTag()),
+        () ->
+            assertArrayEquals(
+                new int[] {Tag.RequestedProcedureCodeSequence, Tag.ScheduledProtocolCodeSequence},
+                p2.get(0).getParentSeqTags()),
+        () -> assertEquals(0, p2.get(1).getValues().length),
+        () ->
+            assertFalse(
+                objects.get(1).getJsonArray("params").getJsonObject(1).containsKey("values")),
+        () ->
+            assertEquals(objects.get(0), first.toJson(), "the JSON round-trips through the model"),
+        () -> assertEquals(objects.get(1), second.toJson()));
+  }
 
-    return result.isEmpty() ? null : result.get(0);
+  @Test
+  void a_user_xml_is_migrated_once_and_kept() throws IOException {
+    Path userXml = fixture("user/searchParameters.xml");
+    Path userJson = userXml.resolveSibling(SearchParameters.FILENAME);
+    Documents docs = new Documents(null, null, userJson, userXml);
+
+    Merged<SearchParameters> merged = SearchParameters.load(docs);
+
+    assertAll(
+        () -> assertTrue(Files.isRegularFile(userXml), "the XML is kept"),
+        () -> assertTrue(Files.isRegularFile(userJson)),
+        () ->
+            assertEquals(
+                List.of("user.search.ct-of-the-week", "user.search.procedure-code"),
+                merged.entries().stream().map(SearchParameters::id).toList()),
+        () -> assertEquals(Origin.USER, merged.origin("user.search.ct-of-the-week")),
+        () -> assertTrue(merged.entries().getFirst().isLocal()));
+
+    Files.writeString(userXml, "<searchParametersList/>");
+    assertEquals(
+        2,
+        SearchParameters.load(docs).entries().size(),
+        "the XML is never read again while the JSON exists");
+  }
+
+  // -- Layers ----------------------------------------------------------------
+
+  @Test
+  void the_user_layer_overrides_hides_and_is_refused_by_a_locked_site_entry() throws IOException {
+    Path siteJson = dir.resolve("site/config/searchTemplates.json");
+    SearchParameters siteB = template("site.search.b", "Site B", false);
+    siteB.setLocked(true);
+    ListDocument.write(
+        siteJson,
+        SearchParameters.ENTRIES,
+        List.of(
+            template("site.search.a", "Site A", false).toJson(),
+            siteB.toJson(),
+            template("site.search.c", "Site C", false).toJson()));
+    Path userJson = dir.resolve("user/searchTemplates.json");
+    SearchParameters hiddenC = template("site.search.c", "Site C", true);
+    hiddenC.setHidden(true);
+    ListDocument.write(
+        userJson,
+        SearchParameters.ENTRIES,
+        List.of(
+            template("site.search.a", "My A", true).toJson(),
+            template("site.search.b", "My B", true).toJson(),
+            hiddenC.toJson(),
+            template("user.search.d", "Mine", true).toJson()));
+    Documents docs = new Documents(siteJson, null, userJson, null);
+
+    Merged<SearchParameters> merged = SearchParameters.load(docs);
+    List<SearchParameters> entries = merged.entries();
+
+    assertAll(
+        () ->
+            assertEquals(
+                List.of("site.search.a", "site.search.b", "site.search.c", "user.search.d"),
+                entries.stream().map(SearchParameters::id).toList()),
+        () -> assertEquals("My A", entries.get(0).getName()),
+        () -> assertTrue(entries.get(0).isLocal()),
+        () -> assertEquals(Origin.USER, merged.origin("site.search.a")),
+        () -> assertEquals("Site B", entries.get(1).getName(), "locked by the site"),
+        () -> assertFalse(entries.get(1).isLocal()),
+        () -> assertTrue(merged.isLocked("site.search.b")),
+        () -> assertTrue(entries.get(2).hidden()),
+        () -> assertEquals("Mine", entries.get(3).getName()),
+        () -> assertEquals(Origin.USER, merged.origin("user.search.d")));
+  }
+
+  @Test
+  void saving_writes_the_local_templates_only_and_gives_new_ones_a_user_id() throws IOException {
+    Path userJson = dir.resolve("user/searchTemplates.json");
+    SearchParameters site = template("site.search.a", "Site A", false);
+    SearchParameters fresh = new SearchParameters("CT today");
+    fresh.setPeriod(Period.TODAY);
+    SearchParameters twin = new SearchParameters("CT today");
+    SearchParameters kept = template("user.search.kept", "Kept", true);
+
+    SearchParameters.save(userJson, List.of(site, fresh, twin, kept));
+    List<JsonObject> written = ListDocument.read(userJson, SearchParameters.ENTRIES).entries();
+    List<SearchParameters> reloaded =
+        SearchParameters.load(new Documents(null, null, userJson, null)).entries();
+
+    assertAll(
+        () -> assertEquals("user.search.ct-today", fresh.id()),
+        () -> assertEquals("user.search.ct-today#2", twin.id(), "a twin name gets a unique id"),
+        () ->
+            assertEquals(
+                List.of("user.search.ct-today", "user.search.ct-today#2", "user.search.kept"),
+                written.stream().map(o -> o.getString("id")).toList()),
+        () -> assertEquals(Period.TODAY, reloaded.getFirst().getPeriod()),
+        () -> assertFalse(Files.exists(userJson.resolveSibling(SearchParameters.LEGACY_FILENAME))),
+        () ->
+            assertTrue(
+                Files.list(userJson.getParent()).noneMatch(p -> p.toString().endsWith(".tmp"))));
   }
 }

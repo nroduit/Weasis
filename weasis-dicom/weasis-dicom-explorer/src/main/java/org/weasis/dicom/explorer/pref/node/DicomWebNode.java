@@ -9,27 +9,41 @@
  */
 package org.weasis.dicom.explorer.pref.node;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
-import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.XMLStreamWriter;
 import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
+import org.weasis.core.api.service.SecretStore;
+import org.weasis.core.api.util.EntryIds;
+import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TransferSyntax;
 
 public class DicomWebNode extends AbstractDicomNode {
 
   public static final String T_URL = "url"; // NON-NLS
+
+  /** The legacy XML attribute of the service. */
   public static final String T_WEB_TYPE = "webtype"; // NON-NLS
+
+  /** The JSON member of the service. */
+  public static final String T_WEB_TYPE_JSON = "webType"; // NON-NLS
+
   public static final String T_HEADER = "headers"; // NON-NLS
+
+  /** The legacy XML attribute of the authentication method uid. */
   public static final String T_AUTH = "auth"; // NON-NLS
+
+  /** The JSON member of the authentication method uid; {@value #T_AUTH} is read as an alias. */
+  public static final String T_AUTH_METHOD = "authMethod"; // NON-NLS
 
   public enum WebType {
     DICOMWEB("DICOMweb (all RESTful services)"), // NON-NLS
@@ -72,6 +86,12 @@ public class DicomWebNode extends AbstractDicomNode {
     </html>
     """
         .formatted(this, webType.toString(), url);
+  }
+
+  /** The key of the node in its document: its URL. */
+  @Override
+  public String deriveId(String prefix) {
+    return EntryIds.derived(prefix, ID_KIND, url == null ? null : url.toString());
   }
 
   public String getAuthMethodUid() {
@@ -121,18 +141,47 @@ public class DicomWebNode extends AbstractDicomNode {
     }
   }
 
+  /**
+   * The header values are secrets: in the user document they are written empty and kept in the
+   * {@link SecretStore} under the node id, by header name. A site document carries them as is. The
+   * authentication method is referenced by its uid under {@code authMethod}.
+   */
   @Override
-  public void saveDicomNode(XMLStreamWriter writer) throws XMLStreamException {
-    super.saveDicomNode(writer);
-    writer.writeAttribute(T_URL, url.toString());
-    writer.writeAttribute(T_WEB_TYPE, StringUtil.getEmptyStringIfNullEnum(webType));
-    writer.writeAttribute(T_AUTH, authMethodUid);
-    String val =
-        headers.entrySet().stream()
-            .map(map -> map.getKey() + ":" + map.getValue())
-            .collect(Collectors.joining("\n"));
-    writer.writeAttribute(
-        T_HEADER, Base64.getEncoder().encodeToString(val.getBytes(StandardCharsets.UTF_8)));
+  protected void writeJson(JsonObjectBuilder b, boolean userDocument) {
+    if (url != null) {
+      b.add(T_URL, url.toString());
+    }
+    if (webType != null) {
+      b.add(T_WEB_TYPE_JSON, webType.name());
+    }
+    JsonUtil.addIfPresent(b, T_AUTH_METHOD, authMethodUid);
+    JsonObjectBuilder h = Json.createObjectBuilder();
+    headers.forEach((name, value) -> h.add(name, userDocument || value == null ? "" : value));
+    b.add(T_HEADER, h);
+  }
+
+  /** The usage of a DICOMweb node follows its service, see {@link #getUsageType(WebType)}. */
+  @Override
+  protected UsageType defaultUsageType() {
+    return getUsageType(webType);
+  }
+
+  @Override
+  protected void storeSecrets() {
+    if (StringUtil.hasText(getId())) {
+      SecretStore.getInstance().putAll(getId(), headers);
+    }
+  }
+
+  @Override
+  protected void loadSecrets() {
+    if (!StringUtil.hasText(getId())) {
+      return;
+    }
+    SecretStore store = SecretStore.getInstance();
+    headers.replaceAll(
+        (name, value) ->
+            StringUtil.hasText(value) ? value : store.get(getId(), name).orElse(value));
   }
 
   public static UsageType getUsageType(WebType webType) {
@@ -144,6 +193,24 @@ public class DicomWebNode extends AbstractDicomNode {
       }
       return UsageType.RETRIEVE;
     }
+  }
+
+  static DicomWebNode fromJson(JsonObject json) throws MalformedURLException {
+    WebType webType = WebType.valueOf(json.getString(T_WEB_TYPE_JSON, WebType.DICOMWEB.name()));
+    String url = json.getString(T_URL, null);
+    if (!StringUtil.hasText(url)) {
+      throw new MalformedURLException("Missing URL");
+    }
+    DicomWebNode node =
+        new DicomWebNode(
+            json.getString(T_DESCRIPTION, null),
+            webType,
+            new URL(url),
+            usageType(json, getUsageType(webType)));
+    node.readJson(json);
+    node.setAuthMethodUid(json.getString(T_AUTH_METHOD, json.getString(T_AUTH, null)));
+    JsonUtil.getStringMap(json, T_HEADER).forEach(node::addHeader);
+    return node;
   }
 
   public static DicomWebNode buildDicomWebNode(XMLStreamReader xmler) throws MalformedURLException {

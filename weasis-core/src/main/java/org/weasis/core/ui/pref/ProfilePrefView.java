@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicRegistry;
@@ -119,6 +120,8 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
 
   ProfilePrefView(MeasurementProfileRegistry registry, GraphicRegistry graphics) {
     super(Messages.getString("ProfilePrefView.title"), 704);
+    getProperties()
+        .setProperty(AbstractItemDialogPage.KEY_SCOPE, AbstractItemDialogPage.SCOPE_USER);
     this.registry = registry;
     this.graphics = graphics;
     jbInit();
@@ -150,7 +153,7 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
               JList<?> list, Object value, int index, boolean selected, boolean focus) {
             super.getListCellRendererComponent(list, value, index, selected, focus);
             if (value instanceof MeasurementProfile profile) {
-              setText(displayName(profile));
+              setText(displayName(profile, registry.origin(profile.id())));
             }
             return this;
           }
@@ -196,6 +199,18 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
     return profile.builtIn()
         ? profile.name() + " (" + Messages.getString("ProfilePrefView.builtin") + ")"
         : profile.name();
+  }
+
+  /** The name with where the profile comes from, and whether the site locked it. */
+  static String displayName(MeasurementProfile profile, Origin origin) {
+    if (origin == Origin.USER) {
+      return profile.name();
+    }
+    String suffix = origin.displayName();
+    if (profile.locked()) {
+      suffix += ", " + Origin.lockedName();
+    }
+    return profile.name() + " (" + suffix + ")";
   }
 
   // ---- Name and modalities -----------------------------------------------------------------
@@ -454,6 +469,14 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
     nameField.setEnabled(editable);
     modalitiesField.setEnabled(editable);
     deleteItem.setEnabled(editable);
+    // A user profile over a site or built-in id: deleting it resets the profile to that definition
+    deleteItem.setText(
+        edited == null
+            ? Messages.getString("ProfilePrefView.delete")
+            : registry
+                .below(edited.id())
+                .map(o -> Messages.getString("ProfilePrefView.reset").formatted(o.displayName()))
+                .orElse(Messages.getString("ProfilePrefView.delete")));
 
     allTools.setEnabled(editable);
     measureTools.setEnabled(editable && !allTools.isSelected());
@@ -651,7 +674,7 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
     if (answer == JOptionPane.YES_OPTION) {
       pending.remove(profile.id());
       registry.deleteUser(profile.id());
-      fillProfiles(null);
+      fillProfiles(profile.id());
     }
   }
 

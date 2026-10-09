@@ -11,6 +11,7 @@ package org.weasis.core.api.media.data;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -20,6 +21,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 
 @DisplayName("MaskingModelRegistry")
 class MaskingModelRegistryTest {
@@ -42,7 +44,7 @@ class MaskingModelRegistryTest {
         () ->
             assertEquals(
                 List.of("display", "teaching", "publication", "ai-request"),
-                registry.profiles().stream().map(MaskingProfile::id).toList()),
+                registry.profiles().entries().stream().map(MaskingProfile::id).toList()),
         () -> assertEquals("display", registry.sessionProfile().id()),
         () -> assertEquals("ai-request", registry.aiProfile().id()),
         () ->
@@ -51,7 +53,7 @@ class MaskingModelRegistryTest {
                 registry.exportProfiles().stream().map(MaskingProfile::id).toList()),
         () ->
             assertTrue(
-                registry.tagRules().stream()
+                registry.tags().entries().stream()
                     .anyMatch(r -> r.key().equals("weasis:PatientPseudoUID"))));
   }
 
@@ -68,13 +70,13 @@ class MaskingModelRegistryTest {
               "sessionProfile": "demo" }
             """);
     MaskingModelRegistry registry = bundled();
-    registry.configure(site.toString(), null);
+    registry.configure(site, null);
     assertAll(
         () -> assertEquals("demo", registry.sessionProfile().id()),
         () -> assertEquals(4, registry.exportProfiles().size()),
         () ->
             assertTrue(
-                registry.tagRules().stream().anyMatch(r -> r.key().equals("OperatorsName"))));
+                registry.tags().entries().stream().anyMatch(r -> r.key().equals("OperatorsName"))));
   }
 
   @Test
@@ -88,7 +90,7 @@ class MaskingModelRegistryTest {
               "sessionProfile": "missing" }
             """);
     MaskingModelRegistry registry = bundled();
-    registry.configure(site.toString(), null);
+    registry.configure(site, null);
     assertAll(
         () -> assertEquals("display", registry.sessionProfile().id()),
         () -> assertTrue(registry.sessionProfile().hidesDirectIdentifiers()));
@@ -102,9 +104,9 @@ class MaskingModelRegistryTest {
     Path open = write("open.json", "{ \"locked\": false }");
 
     MaskingModelRegistry registry = bundled();
-    registry.configure(locked.toString(), user);
+    registry.configure(locked, user);
     String lockedSession = registry.sessionProfile().id();
-    registry.configure(open.toString(), user);
+    registry.configure(open, user);
 
     assertAll(
         () -> assertEquals("display", lockedSession),
@@ -117,9 +119,44 @@ class MaskingModelRegistryTest {
     MaskingModelRegistry registry = bundled();
     int[] calls = {0};
     registry.addListener(() -> calls[0]++);
-    registry.configure(dir.resolve("absent.json").toString(), dir.resolve("absent-user.json"));
+    registry.configure(dir.resolve("absent.json"), dir.resolve("absent-user.json"));
     assertAll(
         () -> assertEquals("display", registry.sessionProfile().id()),
         () -> assertEquals(1, calls[0]));
+  }
+
+  @Test
+  @DisplayName("a locked site profile or mask ignores the user definition")
+  void lockedEntriesIgnoreUser() throws IOException {
+    Path site =
+        write(
+            "site.json",
+            """
+            { "profiles": [ { "id": "teaching", "name": "Site teaching", "locked": true,
+                  "actions": { "DIRECT_ID": "PSEUDONYMIZE", "DATE": "SHIFT" } } ],
+              "masks": [ { "id": "us-1", "name": "Site mask", "locked": true,
+                  "reference": { "columns": 100, "rows": 100 },
+                  "regions": [ { "type": "RECT", "x": 0, "y": 0, "w": 0.5, "h": 0.1 } ] } ] }
+            """);
+    Path user =
+        write(
+            "user.json",
+            """
+            { "profiles": [ { "id": "teaching", "name": "My teaching",
+                  "actions": { "DIRECT_ID": "PSEUDONYMIZE" } } ],
+              "masks": [ { "id": "us-1", "name": "My mask",
+                  "reference": { "columns": 100, "rows": 100 },
+                  "regions": [ { "type": "RECT", "x": 0, "y": 0, "w": 0.9, "h": 0.9 } ] } ] }
+            """);
+    MaskingModelRegistry registry = bundled();
+    registry.configure(site, user);
+    assertAll(
+        () -> assertEquals("Site teaching", registry.profile("teaching").orElseThrow().name()),
+        () -> assertEquals(Origin.SITE, registry.profiles().origin("teaching")),
+        () -> assertTrue(registry.profiles().isLocked("teaching")),
+        () -> assertFalse(registry.profiles().isLocked("display")),
+        () -> assertEquals("Site mask", registry.pixelMask("us-1").orElseThrow().name()),
+        () -> assertTrue(registry.masks().isLocked("us-1")),
+        () -> assertFalse(registry.isLocked(), "the document itself is not locked"));
   }
 }

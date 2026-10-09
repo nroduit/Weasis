@@ -22,12 +22,20 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.PixelReviewAdvisor;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.api.util.LegacyConverters;
+import org.weasis.core.api.util.LegacyConverters.Conversion;
+import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
 import org.weasis.dicom.codec.Redaction;
-import org.weasis.dicom.codec.display.WindowPresetJson;
+import org.weasis.dicom.codec.display.ModalityView;
+import org.weasis.dicom.codec.display.ModalityViewJson;
 import org.weasis.dicom.codec.display.WindowPresetRegistry;
+import org.weasis.dicom.codec.utils.DicomResource;
+import org.weasis.dicom.codec.utils.SplittingRules;
+import org.weasis.dicom.codec.utils.SplittingRulesJson;
 import org.weasis.imageio.codec.ImageioUtil;
 import org.weasis.plugin.WeasisPlugin;
 
@@ -67,6 +75,21 @@ public class Activator extends WeasisPlugin {
     }
 
     configureWindowPresets();
+    SiteDocuments.onReload(WindowPresetRegistry.SITE_FILE, Activator::configureWindowPresets);
+    SiteDocuments.onReload(ModalityView.SITE_FILE, ModalityView::reload);
+    // The site XML documents of the codec, for config:export
+    LegacyConverters.register(
+        new Conversion(
+            DicomResource.ATTRIBUTES_VIEW.getPath(),
+            ModalityView.SITE_FILE,
+            ModalityView.ENTRIES,
+            ModalityViewJson::convert));
+    LegacyConverters.register(
+        new Conversion(
+            DicomResource.SERIES_SPITTING_RULES.getPath(),
+            SplittingRules.SITE_FILE,
+            SplittingRules.ENTRIES,
+            SplittingRulesJson::convert));
     // Only the codec can tell whether pixels may carry identity: the dialogs of the core ask it
     PixelReviewAdvisor.install(Redaction::requiresReview);
 
@@ -93,11 +116,11 @@ public class Activator extends WeasisPlugin {
     String prefDir = preferences.getProperty("weasis.pref.dir"); // NON-NLS
     WindowPresetRegistry registry = WindowPresetRegistry.getInstance();
     registry.configure(
-        preferences.getProperty(WindowPresetRegistry.CONFIG_PROPERTY),
+        SiteDocuments.find(WindowPresetRegistry.SITE_FILE).orElse(null),
         StringUtil.hasText(prefDir)
             ? Path.of(prefDir).resolve(WindowPresetRegistry.USER_FILE)
             : null,
-        path -> GuiUtils.getUICore().storeRemotePref(path, WindowPresetJson.CONTENT_TYPE));
+        path -> GuiUtils.getUICore().storeRemotePref(path, JsonUtil.CONTENT_TYPE));
     PresetWindowLevel.setModalityPresetProvider(registry);
   }
 
