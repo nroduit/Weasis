@@ -122,15 +122,8 @@
     },
     {
       "code": "weasis.plugins.120",
-      "value": "${dollar}{weasis.codebase.url}/bundle/jogamp-${jogamp.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-dicom-viewer3d-${app.version}.jar${xz.ext}",
-      "description": "DICOM Viewer 3D and JOGL",
-      "type": "A",
-      "category": "PLUGIN_INSTALL"
-    },
-    {
-      "code": "weasis.plugins.121",
-      "value": "${dollar}{weasis.codebase.url}/bundle/jogamp-${native.library.spec}-${jogamp.version}.jar${xz.ext}",
-      "description": "JOGL native package",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-viewer3d-${app.version}.jar${xz.ext}",
+      "description": "DICOM Viewer 3D",
       "type": "A",
       "category": "PLUGIN_INSTALL"
     },

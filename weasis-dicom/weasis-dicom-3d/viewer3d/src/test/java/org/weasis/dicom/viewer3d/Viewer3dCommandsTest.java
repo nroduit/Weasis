@@ -102,7 +102,6 @@ class Viewer3dCommandsTest {
     JsonObject report = Viewer3dCommands.Info.json(false, null, null, null, false).build();
     assertAll(
         () -> assertEquals(false, report.getBoolean("available")),
-        () -> assertTrue(report.containsKey("backend")),
         () -> assertEquals(false, report.containsKey("renderer")),
         () ->
             assertTrue(

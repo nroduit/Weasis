@@ -33,10 +33,7 @@ import org.weasis.dicom.viewer3d.vr.RenderingType;
  * <p>Run on demand only, since a timing on a shared machine is not a build result:
  *
  * <pre>mvn -pl weasis-dicom/weasis-dicom-3d/viewer3d test -Dtest=BaselineTimingsTest \
- *   -Dweasis.3d.baseline.dir=/somewhere [-Dweasis.3d.backend=ffm]</pre>
- *
- * <p>The back-end measured is the one {@code weasis.3d.backend} selects, so the two can be compared
- * by running this twice.
+ *   -Dweasis.3d.baseline.dir=/somewhere</pre>
  */
 @Isolated("holds the process-wide OpenGL context")
 @EnabledIfSystemProperty(named = BaselineArtifacts.P_DIR, matches = ".+")
@@ -107,7 +104,7 @@ class BaselineTimingsTest {
         }
       }
     }
-    String file = "timings-" + GlBackend.selected().name().toLowerCase(Locale.ROOT) + ".md";
+    String file = "timings.md";
     BaselineArtifacts.directory()
         .ifPresent(dir -> BaselineArtifacts.writeText(dir, file, table(renderer, rows)));
   }

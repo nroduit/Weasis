@@ -38,8 +38,8 @@ public class Activator extends WeasisPlugin {
   @Override
   public void stop() {
     GuiUtils.getUICore().closeSeriesViewerType(View3DContainer.class);
-    // Must happen here rather than from a JVM shutdown hook: JOGL still needs to load classes to
-    // tear the context down, and the plugin class loaders are closed once plugins are unloaded.
+    // Must happen here rather than from a JVM shutdown hook: tearing the context down still loads
+    // classes, and the plugin class loaders are closed once plugins are unloaded.
     GlRuntime.shutdown();
   }
 

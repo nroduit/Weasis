@@ -69,8 +69,7 @@ public final class GlThread implements AutoCloseable {
     }
   }
 
-  // A core profile has no default vertex array object and every draw needs one bound; JOGL used
-  // to create it silently for its own drawables.
+  // A core profile has no default vertex array object and every draw needs one bound.
   private static GlContext createContext() {
     GlContext created = GlContext.create();
     Gl gl = created.gl();

@@ -10,7 +10,6 @@
 package org.weasis.dicom.viewer3d.gl;
 
 import com.formdev.flatlaf.util.SystemInfo;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.HardwareInfo;
 
 /**
@@ -18,7 +17,7 @@ import org.weasis.core.api.util.HardwareInfo;
  * implementation per platform binding; all of them are created, used and destroyed on the single
  * thread that owns them ({@link GlThread}).
  */
-public sealed interface GlContext permits CglContext, EglContext, JoglContext, WglContext {
+public sealed interface GlContext permits CglContext, EglContext, WglContext {
 
   /** Versions tried in turn; the first that a driver grants wins. */
   int[][] VERSIONS = {{4, 6}, {4, 5}, {4, 3}, {4, 1}, {3, 3}};
@@ -53,40 +52,11 @@ public sealed interface GlContext permits CglContext, EglContext, JoglContext, W
   }
 
   /**
-   * Creates the context of the selected back-end, and of the other one when that fails. Falling
-   * back rather than refusing is what keeps a machine the new binding cannot serve — a driver, a
-   * platform or a library it has never met — rendering as it did before. Which one actually
-   * answered is what the preference page and {@code view3d:info} report.
+   * Creates the context of this platform's binding.
    *
-   * @throws GlException when neither back-end has a context to offer
+   * @throws GlException when this machine has no context to offer
    */
   static GlContext create() {
-    GlBackend selected = GlBackend.selected();
-    try {
-      return create(selected);
-    } catch (RuntimeException | UnsatisfiedLinkError first) {
-      GlBackend fallback = selected.fallback();
-      LoggerFactory.getLogger(GlContext.class)
-          .warn(
-              "No OpenGL context through {} ({}); falling back to {}",
-              selected,
-              first.getMessage(),
-              fallback);
-      try {
-        return create(fallback);
-      } catch (RuntimeException | UnsatisfiedLinkError second) {
-        first.addSuppressed(second);
-        throw first instanceof GlException gl
-            ? gl
-            : new GlException("No OpenGL context on this machine", first);
-      }
-    }
-  }
-
-  static GlContext create(GlBackend backend) {
-    if (backend == GlBackend.JOGL) {
-      return JoglContext.create();
-    }
     if (SystemInfo.isLinux) {
       return EglContext.create();
     }
@@ -96,9 +66,7 @@ public sealed interface GlContext permits CglContext, EglContext, JoglContext, W
     if (SystemInfo.isMacOS) {
       return CglContext.create();
     }
-    throw new GlException(
-        "The FFM OpenGL back-end has no context implementation for "
-            + HardwareInfo.operatingSystem());
+    throw new GlException("No OpenGL context implementation for " + HardwareInfo.operatingSystem());
   }
 
   /** Binds the context to the calling thread. */
@@ -113,7 +81,7 @@ public sealed interface GlContext permits CglContext, EglContext, JoglContext, W
   /** Vendor, renderer and version, for the logs and the preference page. */
   String description();
 
-  /** How the context was obtained — {@code EGL}, {@code WGL}, {@code CGL} or {@code JOGL}. */
+  /** How the context was obtained — {@code EGL}, {@code WGL} or {@code CGL}. */
   String name();
 
   /** The binding driving this context, valid only while it is current. */

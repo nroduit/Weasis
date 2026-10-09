@@ -18,7 +18,6 @@ import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
@@ -68,56 +67,51 @@ class RenderTargetTest {
   };
 
   @Test
-  @DisplayName("The frame reaches the image the right way up, on every back-end")
+  @DisplayName("The frame reaches the image the right way up")
   void the_frame_reaches_the_image_the_right_way_up() {
-    List<GlBackend> backends = GlSession.available();
-    org.junit.jupiter.api.Assumptions.assumeFalse(backends.isEmpty(), "No OpenGL back-end here");
+    try (GlSession session = GlSession.openOrAbort()) {
+      Gl gl = session.gl();
+      RenderTarget target = new RenderTarget();
+      target.ensureSize(gl, 2, 2);
+      BufferedImage first = target.image();
 
-    for (GlBackend backend : backends) {
-      try (GlSession session = GlSession.openOrAbort(backend)) {
-        Gl gl = session.gl();
-        RenderTarget target = new RenderTarget();
-        target.ensureSize(gl, 2, 2);
-        BufferedImage first = target.image();
+      int texture = uploadSource(gl);
+      int buffer = uploadQuad(gl);
+      Program quad =
+          new Program(
+              "basic", ShaderManager.VERTEX_SHADER, ShaderManager.FRAGMENT_SHADER); // NON-NLS
+      quad.allocateUniform(gl, "compute", (g, loc) -> g.glUniform1i(loc, 0));
+      quad.allocateUniform(gl, "texScale", (g, loc) -> g.glUniform2f(loc, 1f, 1f));
 
-        int texture = uploadSource(gl);
-        int buffer = uploadQuad(gl);
-        Program quad =
-            new Program(
-                "basic", ShaderManager.VERTEX_SHADER, ShaderManager.FRAGMENT_SHADER); // NON-NLS
-        quad.allocateUniform(gl, "compute", (g, loc) -> g.glUniform1i(loc, 0));
-        quad.allocateUniform(gl, "texScale", (g, loc) -> g.glUniform2f(loc, 1f, 1f));
+      target.bind(gl);
+      quad.use(gl);
+      quad.setUniforms(gl);
+      gl.glActiveTexture(Gl.GL_TEXTURE0);
+      gl.glBindTexture(Gl.GL_TEXTURE_2D, texture);
+      gl.glEnableVertexAttribArray(0);
+      gl.glBindBuffer(Gl.GL_ARRAY_BUFFER, buffer);
+      gl.glVertexAttribPointer(0, 2, Gl.GL_FLOAT, false, 0, 0);
+      gl.glDrawArrays(Gl.GL_TRIANGLES, 0, QUAD.length / 2);
+      gl.glDisableVertexAttribArray(0);
+      target.unbind(gl);
+      target.read(gl);
 
-        target.bind(gl);
-        quad.use(gl);
-        quad.setUniforms(gl);
-        gl.glActiveTexture(Gl.GL_TEXTURE0);
-        gl.glBindTexture(Gl.GL_TEXTURE_2D, texture);
-        gl.glEnableVertexAttribArray(0);
-        gl.glBindBuffer(Gl.GL_ARRAY_BUFFER, buffer);
-        gl.glVertexAttribPointer(0, 2, Gl.GL_FLOAT, false, 0, 0);
-        gl.glDrawArrays(Gl.GL_TRIANGLES, 0, QUAD.length / 2);
-        gl.glDisableVertexAttribArray(0);
-        target.unbind(gl);
-        target.read(gl);
+      BufferedImage image = target.image();
+      assertNotNull(image, "a frame was read back");
+      assertNotSame(first, image, "the images swap");
+      assertAll(
+          "the source lands upright and unmirrored",
+          // The image starts at the top, which is the last row of the texture.
+          () -> assertEquals(BLUE, image.getRGB(0, 0), "top left"), // NON-NLS
+          () -> assertEquals(WHITE, image.getRGB(1, 0), "top right"), // NON-NLS
+          () -> assertEquals(RED, image.getRGB(0, 1), "bottom left"), // NON-NLS
+          () -> assertEquals(GREEN, image.getRGB(1, 1), "bottom right")); // NON-NLS
+      assertEquals(Gl.GL_NO_ERROR, gl.glGetError(), "a clean frame");
 
-        BufferedImage image = target.image();
-        assertNotNull(image, backend + ": a frame was read back");
-        assertNotSame(first, image, backend + ": the images swap");
-        assertAll(
-            backend + ": the source lands upright and unmirrored",
-            // The image starts at the top, which is the last row of the texture.
-            () -> assertEquals(BLUE, image.getRGB(0, 0), "top left"), // NON-NLS
-            () -> assertEquals(WHITE, image.getRGB(1, 0), "top right"), // NON-NLS
-            () -> assertEquals(RED, image.getRGB(0, 1), "bottom left"), // NON-NLS
-            () -> assertEquals(GREEN, image.getRGB(1, 1), "bottom right")); // NON-NLS
-        assertEquals(Gl.GL_NO_ERROR, gl.glGetError(), backend + ": a clean frame");
-
-        quad.destroy(gl);
-        gl.glDeleteTextures(texture);
-        gl.glDeleteBuffers(buffer);
-        target.destroy(gl);
-      }
+      quad.destroy(gl);
+      gl.glDeleteTextures(texture);
+      gl.glDeleteBuffers(buffer);
+      target.destroy(gl);
     }
   }
 

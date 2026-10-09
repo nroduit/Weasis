@@ -45,7 +45,6 @@
     <jaxb.osgi.version>4.0.9</jaxb.osgi.version>
     <xml.bind-api.version>4.0.5</xml.bind-api.version>
     <joml.version>1.10.9</joml.version>
-    <jogamp.version>2.6.0</jogamp.version>
     <jakarta.json.version>2.1.3</jakarta.json.version>
     <parsson.version>1.1.7</parsson.version>
     <zip4j.version>2.11.6</zip4j.version>
@@ -592,7 +591,7 @@
     </dependency>
 
     <!--
-      Bridge java.util.logging (used by libraries like JSVG/JOGL/dcm4che) to SLF4J so
+      Bridge java.util.logging (used by libraries like JSVG/dcm4che) to SLF4J so
       every test-time log line is filtered by the shared logback-test.xml. The bridge
       is installed by the JUL config file referenced from surefire's
       java.util.logging.config.file system property.

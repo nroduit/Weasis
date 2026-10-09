@@ -201,8 +201,6 @@ jobs:
           rm -f ${{ env.WEASIS_INPUT_BIN }}/*.jar.pack.gz
           # Remove unrelated weasis-opencv-core native packages
           find ${{ env.WEASIS_INPUT_BIN }}/bundle/weasis-opencv-core-* -type f ! -name "*-${{ matrix.wsystem }}-${{ matrix.warc }}-*" -exec rm -f {} \;
-          # Remove unrelated jogamp native packages
-          find ${{ env.WEASIS_INPUT_BIN }}/bundle/jogamp-* -type f ! -name "*-${{ matrix.wsystem }}-${{ matrix.warc }}-*" ! -name "jogamp-[0-9]*" -exec rm -f {} \;
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
 
       - name: Split common libraries out of bundle/ onto the application classpath

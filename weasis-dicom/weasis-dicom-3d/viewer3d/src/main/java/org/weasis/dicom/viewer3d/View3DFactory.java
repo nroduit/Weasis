@@ -74,19 +74,10 @@ public class View3DFactory implements SeriesViewerFactory {
    */
   public static final String P_FORCE_FBO = "weasis.3d.force.fbo"; // NON-NLS
 
-  private static final String JOGL_THREAD_CONFIG = "jogl.1thread";
-
   private static OpenGLInfo openGLInfo;
 
   public View3DFactory() {
     LOGGER.info("3D Viewer is activated");
-    String joglThreadConfig =
-        GuiUtils.getUICore().getSystemPreferences().getProperty(JOGL_THREAD_CONFIG);
-    if (StringUtil.hasText(joglThreadConfig)) {
-      System.setProperty(JOGL_THREAD_CONFIG, joglThreadConfig);
-      LOGGER.debug("Custom " + JOGL_THREAD_CONFIG + " value: {}", joglThreadConfig);
-    }
-
     WProperties prefs = GuiUtils.getUICore().getLocalPersistence();
     if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty("weasis.force.3d", false)) {
       prefs.putBooleanProperty(P_OPENGL_PREV_INIT, true);

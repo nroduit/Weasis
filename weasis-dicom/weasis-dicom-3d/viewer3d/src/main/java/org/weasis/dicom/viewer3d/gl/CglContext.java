@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  * never presents to a surface.
  *
  * <p>macOS stopped at OpenGL 4.1, so the compute path is never available here and the renderer
- * takes the FBO path, as it already did under JOGL.
+ * takes the FBO path.
  */
 public final class CglContext implements GlContext {
 

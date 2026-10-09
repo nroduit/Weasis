@@ -43,9 +43,9 @@ void main() {
     // Derive the viewport pixel resolution from screen-space derivatives of quadCoordinates
     // (which spans [-1, 1] across the framebuffer). 2 / |dFdx(quadCoordinates.x)| is the actual
     // number of fragments along X regardless of any DPI scaling the GL driver may apply between
-    // the FBO's logical size and gl_FragCoord's coordinate system. Notably on macOS Retina, JOGL
-    // appears to report gl_FragCoord in physical pixels even though the FBO is sized at logical
-    // resolution, so a uniform set to the FBO's logical dimensions misaligned the crosshair.
+    // the FBO's logical size and gl_FragCoord's coordinate system. A uniform set to the FBO's
+    // logical dimensions misaligned the crosshair on macOS Retina, where gl_FragCoord was reported
+    // in physical pixels.
     vec2 invStep = abs(vec2(dFdx(quadCoordinates.x), dFdy(quadCoordinates.y)));
     ivec2 viewportDims = ivec2(round(2.0 / max(invStep, vec2(1e-6))));
     ivec2 pixelCoords = ivec2(gl_FragCoord.xy);

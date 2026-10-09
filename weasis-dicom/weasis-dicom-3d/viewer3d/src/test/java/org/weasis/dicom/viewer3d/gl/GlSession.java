@@ -9,8 +9,6 @@
  */
 package org.weasis.dicom.viewer3d.gl;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.jupiter.api.Assumptions;
 
 /**
@@ -37,47 +35,25 @@ abstract sealed class GlSession implements AutoCloseable {
   @Override
   public abstract void close();
 
-  /** The back-ends this machine can actually run, in a stable order. */
-  static List<GlBackend> available() {
-    List<GlBackend> backends = new ArrayList<>();
-    for (GlBackend backend : GlBackend.values()) {
-      try (GlSession probe = open(backend)) {
-        backends.add(backend);
-      } catch (RuntimeException | UnsatisfiedLinkError e) {
-        // Not available here; the tests that need it are skipped.
-      }
-    }
-    return backends;
-  }
-
-  static GlSession openOrAbort(GlBackend backend) {
+  /** The context of this machine, or the calling test aborted when there is none. */
+  static GlSession openOrAbort() {
     try {
-      return open(backend);
+      return new Offscreen();
     } catch (RuntimeException | UnsatisfiedLinkError e) {
-      Assumptions.abort("No " + backend + " OpenGL context on this machine: " + e.getMessage());
+      Assumptions.abort("No OpenGL context on this machine: " + e.getMessage());
       throw new IllegalStateException(e); // unreachable
     }
   }
 
-  /** The back-end named by {@value GlBackend#P_BACKEND}, for the tests that measure one of them. */
-  static GlSession openOrAbort() {
-    return openOrAbort(GlBackend.selected());
-  }
-
-  private static GlSession open(GlBackend backend) {
-    return new Offscreen(backend);
-  }
-
   /**
-   * The context of one back-end, made current on the calling thread. The tests drive it directly
-   * rather than through {@link GlThread}, so that a failure points at the GL call and not at a task
-   * wrapper.
+   * The context, made current on the calling thread. The tests drive it directly rather than
+   * through {@link GlThread}, so that a failure points at the GL call and not at a task wrapper.
    */
   private static final class Offscreen extends GlSession {
     private final GlContext context;
 
-    Offscreen(GlBackend backend) {
-      this.context = GlContext.create(backend);
+    Offscreen() {
+      this.context = GlContext.create();
       // A core profile has no default vertex array object, as GlThread also arranges.
       Gl gl = context.gl();
       gl.glBindVertexArray(gl.glGenVertexArray());

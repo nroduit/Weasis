@@ -204,7 +204,6 @@ rm -f "$INPUT_DIR"/*.jar.pack.gz
 
 # Remove the unrelated native packages
 find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'"${ARC_OS}"'-*'  -exec rm -f {} \;
-find "$INPUT_DIR"/bundle/jogamp-* -type f ! -name '*-'"${ARC_OS}"'-*' ! -name 'jogamp-[0-9]*' -exec rm -f {} \;
 
 # Split non-plugin jars out of bundle/ into common-lib/. jpackage adds every plain jar found
 # under --input to the application classpath, so the common libraries become part of the system

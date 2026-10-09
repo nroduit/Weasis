@@ -32,14 +32,10 @@ it would deadlock the application.
 Java methods. Pixel and buffer payloads are native `MemorySegment`s, generators return the names
 they created, and queries return their value instead of writing through a pointer.
 
-Two implementations:
-
-| | |
-|---|---|
-| `FfmGl` | the driver called directly through the Foreign Function & Memory API. Entry points resolve on the first call, hence after a context is current, which is what Windows requires. The compute entry points are held apart, because a driver that stops at OpenGL 4.1 does not export them at all |
-| `JoglGl` | the same API on JOGL, kept for one release as the fallback |
-
-`GlBackend` chooses between them, from the `weasis.3d.backend` property.
+Its implementation, `FfmGl`, calls the driver directly through the Foreign Function & Memory API,
+so the viewer ships no native library of its own. Entry points resolve on the first call, hence
+after a context is current, which is what Windows requires. The compute entry points are held
+apart, because a driver that stops at OpenGL 4.1 does not export them at all.
 
 ## The context
 
@@ -50,12 +46,10 @@ Two implementations:
 | `EglContext` | Linux, through EGL. The session display first, kept only if its renderer is not a software rasteriser; otherwise the EGL devices, which is also what a machine with no display server has. Surfaceless when the driver offers it, on a 1 × 1 pbuffer otherwise |
 | `WglContext` | Windows. WGL cannot be asked for a core profile directly, so a legacy context is created on an invisible window only to resolve `wglCreateContextAttribsARB`, and deleted once the real one exists |
 | `CglContext` | macOS, through CGL, which — unlike the AppKit classes — has no main-thread constraint. No drawable is attached, which is all a framebuffer object needs. macOS stops at OpenGL 4.1 |
-| `JoglContext` | JOGL's own offscreen drawable, behind the same interface |
 
 Versions are tried in descending order and the first a driver grants wins; OpenGL 3.3 is the
-minimum the shaders compile against, and 4.3 is where the compute path becomes available. When the
-selected back-end has no context to offer, the other one is tried and the substitution is logged;
-the preference page and `view3d:info` report which one actually answered.
+minimum the shaders compile against, and 4.3 is where the compute path becomes available. The
+preference page and `view3d:info` report which context answered.
 
 ## How a frame reaches Swing
 
@@ -97,8 +91,8 @@ creation and a program can be linked without waiting: `Program.startLink` hands 
 and `Program.isReady` polls the completion status on later frames. The path-tracing program is
 linked this way as soon as a view has its shaders, and a view asked to path-trace shows its
 composite preview until the link completes. A driver may still finish the program on the thread
-that first uses it, a fraction of the full link; the JOGL binding and drivers without the extension
-link synchronously.
+that first uses it, a fraction of the full link; drivers without the extension link
+synchronously.
 
 ## What the tests hold
 
@@ -106,13 +100,10 @@ The renderer is exercised without Swing. `SyntheticVolume` is a phantom computed
 `ReferenceScene` renders it through the viewer's own programs, textures and render target, driven
 by fixed uniform values. On that basis:
 
-- every shader compiles and links, and every rendering type produces a frame, on each back-end the
-  machine offers;
-- the same scene rendered through both back-ends in one run must come out identical to the pixel,
-  which is the gate the port is held to;
-- both bindings are timed in the same run, and the newer one may not be slower;
+- every shader compiles and links, and every rendering type produces a frame, on each ray-casting
+  path the machine offers;
+- a frame reaches the image the right way up;
 - opening and closing a volume many times must leak no OpenGL object.
 
 A frame is only reproducible on the driver that rendered it, so nothing is compared against a
-stored image: the comparisons are always within one run on one machine. Tests that need a driver
-skip themselves when there is none.
+stored image. Tests that need a driver skip themselves when there is none.

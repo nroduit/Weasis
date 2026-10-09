@@ -11,12 +11,10 @@ package org.weasis.dicom.viewer3d;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObjectBuilder;
-import java.util.Locale;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.Since;
-import org.weasis.dicom.viewer3d.gl.GlBackend;
 import org.weasis.dicom.viewer3d.gl.GlRuntime;
 import org.weasis.dicom.viewer3d.gl.GlThread;
 import org.weasis.dicom.viewer3d.vr.RenderingLayer;
@@ -77,10 +75,7 @@ public class Viewer3dCommands implements CommandExtension {
     /** The report as the agents read it; pure, so its shape is pinned by a test. */
     static JsonObjectBuilder json(
         boolean available, String context, String description, OpenGLInfo info, boolean fboForced) {
-      JsonObjectBuilder object =
-          Json.createObjectBuilder()
-              .add("available", available)
-              .add("backend", GlBackend.selected().name().toLowerCase(Locale.ROOT));
+      JsonObjectBuilder object = Json.createObjectBuilder().add("available", available);
       if (context != null) {
         object.add("context", context);
       }
@@ -104,9 +99,6 @@ public class Viewer3dCommands implements CommandExtension {
     static String text(boolean available, String context, OpenGLInfo info, boolean fboForced) {
       StringBuilder out = new StringBuilder();
       out.append("available: ").append(available).append('\n'); // NON-NLS
-      out.append("backend: ") // NON-NLS
-          .append(GlBackend.selected().name().toLowerCase(Locale.ROOT))
-          .append('\n');
       if (context != null) {
         out.append("context: ").append(context).append('\n'); // NON-NLS
       }

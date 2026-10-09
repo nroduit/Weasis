@@ -3,9 +3,10 @@
 How the platform installers are produced by `.github/workflows/build-installer.yml`, and the
 binary-compatibility constraints that contributors must respect when changing the packaging.
 
-> TL;DR — `jpackage` only *assembles and packages* prebuilt binaries (Temurin JDK, OpenCV, JogAmp);
+> TL;DR — `jpackage` only *assembles and packages* prebuilt binaries (Temurin JDK, OpenCV);
 > it never compiles against the build host's libc. The **glibc floor of the Linux packages is
-> `GLIBC_2.17`**, fixed by the bundled natives, **independent of the build OS**.
+> `GLIBC_2.16` on x86-64 and `GLIBC_2.17` on aarch64**, fixed by the bundled natives,
+> **independent of the build OS**.
 
 ## 1. Build jobs
 
@@ -39,16 +40,17 @@ to control glibc compatibility.
 
 `jpackage` does not compile or link anything against the host libc: it copies the JDK launcher and
 runtime and the third-party native libraries, then calls `dpkg-deb` / `rpmbuild`. The glibc required at
-run time is therefore the highest symbol version referenced by those prebuilt binaries: JogAmp
-(`GLIBC_2.17`), OpenCV (`2.16`), the JDK launcher and runtime (`2.14`–`2.15`).
+run time is therefore the highest symbol version referenced by those prebuilt binaries: OpenCV
+(`2.16`), the JDK launcher and runtime (`2.14`–`2.15`). The 3D viewer adds no native library of its
+own: it calls the system OpenGL, EGL, WGL or CGL libraries through the Foreign Function & Memory API.
 
-`GLIBC_2.17` (December 2012) covers RHEL/CentOS 7, Ubuntu 14.04 and later. On aarch64 it is the
-floor by construction (glibc gained AArch64 support in 2.17).
+`GLIBC_2.16` (June 2012) covers RHEL/CentOS 7, Ubuntu 14.04 and later. On aarch64 the floor is
+`2.17` by construction (glibc gained AArch64 support in 2.17).
 
 Rules:
 - Do not add a native binary compiled on the build host: it would raise the floor to the host glibc.
 - Changing the Docker base image has **no effect** on the floor; lowering the floor requires rebuilding
-  JogAmp and OpenCV with an older toolchain.
+  OpenCV with an older toolchain.
 - The `.deb` declares `libstdc++6, libgcc1`; the `.rpm` declares none and lets `rpmbuild` derive
   `Requires` from the actual ELF symbol versions.
 

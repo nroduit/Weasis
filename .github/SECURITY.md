@@ -60,7 +60,7 @@ any public disclosure.
 
 This policy covers the Weasis application and its source code in this repository.
 Vulnerabilities in third-party dependencies (dcm4che / weasis-dicom-tools,
-OpenCV, pf4j, FlatLaf, JOGL, etc.) should be reported to the respective
+OpenCV, pf4j, FlatLaf, etc.) should be reported to the respective
 upstream projects; if a dependency issue affects Weasis, feel free to let us
 know so we can update.
 

@@ -207,7 +207,7 @@ final class ReferenceScene implements AutoCloseable {
 
     display.ensureSize(gl, width, height);
 
-    // A core profile has no default vertex array object; JOGL used to create one silently.
+    // A core profile has no default vertex array object.
     this.vertexArray = gl.glGenVertexArray();
     gl.glBindVertexArray(vertexArray);
     this.vertexBuffer = uploadQuad();

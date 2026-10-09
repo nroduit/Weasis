@@ -14,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -53,34 +52,29 @@ class GlLifetimeTest {
   @Test
   @DisplayName("Opening and closing a volume many times leaks no OpenGL object")
   void repeated_open_and_close_leaks_nothing() {
-    List<GlBackend> backends = GlSession.available();
-    Assumptions.assumeFalse(backends.isEmpty(), "No OpenGL back-end on this machine");
+    try (GlSession session = GlSession.openOrAbort()) {
+      Gl gl = session.gl();
+      RayCaster rayCaster = gl.isComputeCapable() ? RayCaster.COMPUTE : RayCaster.FBO;
+      List<Integer> firstName = new ArrayList<>();
 
-    for (GlBackend backend : backends) {
-      try (GlSession session = GlSession.openOrAbort(backend)) {
-        Gl gl = session.gl();
-        RayCaster rayCaster = gl.isComputeCapable() ? RayCaster.COMPUTE : RayCaster.FBO;
-        List<Integer> firstName = new ArrayList<>();
-
-        for (int cycle = 0; cycle < CYCLES; cycle++) {
-          try (ReferenceScene scene = new ReferenceScene(gl, rayCaster, SIZE, SIZE)) {
-            scene.render(ReferenceScene.frames().getFirst());
-          }
-          // Taken after the scene released everything: the lowest name the driver has free.
-          int[] probe = gl.glGenTextures(1);
-          firstName.add(probe[0]);
-          gl.glDeleteTextures(probe);
-          assertEquals(Gl.GL_NO_ERROR, gl.glGetError(), backend + ": cycle " + cycle);
+      for (int cycle = 0; cycle < CYCLES; cycle++) {
+        try (ReferenceScene scene = new ReferenceScene(gl, rayCaster, SIZE, SIZE)) {
+          scene.render(ReferenceScene.frames().getFirst());
         }
-
-        int first = firstName.getFirst();
-        int last = firstName.getLast();
-        assertTrue(
-            last <= first,
-            () ->
-                "%s: texture names grew from %d to %d over %d cycles, so objects were not released"
-                    .formatted(backend, first, last, CYCLES));
+        // Taken after the scene released everything: the lowest name the driver has free.
+        int[] probe = gl.glGenTextures(1);
+        firstName.add(probe[0]);
+        gl.glDeleteTextures(probe);
+        assertEquals(Gl.GL_NO_ERROR, gl.glGetError(), "cycle " + cycle);
       }
+
+      int first = firstName.getFirst();
+      int last = firstName.getLast();
+      assertTrue(
+          last <= first,
+          () ->
+              "texture names grew from %d to %d over %d cycles, so objects were not released"
+                  .formatted(first, last, CYCLES));
     }
   }
 }

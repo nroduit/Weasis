@@ -36,7 +36,7 @@
           <archive>
             <manifestEntries>
               <Plugin-Class>org.weasis.dicom.viewer3d.internal.Activator</Plugin-Class>
-              <Plugin-Dependencies>weasis-dicom-viewer2d,jogamp</Plugin-Dependencies>
+              <Plugin-Dependencies>weasis-dicom-viewer2d</Plugin-Dependencies>
             </manifestEntries>
           </archive>
         </configuration>
@@ -73,117 +73,6 @@
       <groupId>org.joml</groupId>
       <artifactId>joml</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.weasis.thirdparty.org.jogamp</groupId>
-      <artifactId>jogamp</artifactId>
-      <version>${jogamp.version}</version>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
 
-  <!--
-    The GL tests need the JOGL native libraries, which the application gets at run time from the
-    jogamp-native-* plugins instead. They are pulled in per OS here so that the tests that really
-    render can create a context. Removed together with JOGL.
-  -->
-  <profiles>
-    <profile>
-      <id>jogl-natives-linux-x86-64</id>
-      <activation>
-        <os>
-          <family>unix</family>
-          <arch>amd64</arch>
-        </os>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.jogamp.gluegen</groupId>
-          <artifactId>gluegen-rt</artifactId>
-          <version>${jogamp.version}</version>
-          <classifier>natives-linux-amd64</classifier>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.jogamp.jogl</groupId>
-          <artifactId>jogl-all</artifactId>
-          <version>${jogamp.version}</version>
-          <classifier>natives-linux-amd64</classifier>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>jogl-natives-linux-aarch64</id>
-      <activation>
-        <os>
-          <family>unix</family>
-          <arch>aarch64</arch>
-        </os>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.jogamp.gluegen</groupId>
-          <artifactId>gluegen-rt</artifactId>
-          <version>${jogamp.version}</version>
-          <classifier>natives-linux-aarch64</classifier>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.jogamp.jogl</groupId>
-          <artifactId>jogl-all</artifactId>
-          <version>${jogamp.version}</version>
-          <classifier>natives-linux-aarch64</classifier>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>jogl-natives-windows</id>
-      <activation>
-        <os>
-          <family>windows</family>
-        </os>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.jogamp.gluegen</groupId>
-          <artifactId>gluegen-rt</artifactId>
-          <version>${jogamp.version}</version>
-          <classifier>natives-windows-amd64</classifier>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.jogamp.jogl</groupId>
-          <artifactId>jogl-all</artifactId>
-          <version>${jogamp.version}</version>
-          <classifier>natives-windows-amd64</classifier>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>jogl-natives-macosx</id>
-      <activation>
-        <os>
-          <family>mac</family>
-        </os>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.jogamp.gluegen</groupId>
-          <artifactId>gluegen-rt</artifactId>
-          <version>${jogamp.version}</version>
-          <classifier>natives-macosx-universal</classifier>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.jogamp.jogl</groupId>
-          <artifactId>jogl-all</artifactId>
-          <version>${jogamp.version}</version>
-          <classifier>natives-macosx-universal</classifier>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
 </project>
