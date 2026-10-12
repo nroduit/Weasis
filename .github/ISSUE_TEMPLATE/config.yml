@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/nroduit/Weasis/security/advisories/new
+    about: Do not report security issues publicly. Use the private advisory form (preferred). See SECURITY.md.
   - name: Frequently Asked Questions (FAQs)
     url: https://nroduit.github.io/en/faq
     about: Frequently Asked Questions (FAQs) on Weasis
