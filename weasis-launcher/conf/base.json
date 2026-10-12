@@ -129,6 +129,13 @@
       "category": "FELIX_INSTALL"
     },
     {
+      "code": "felix.auto.start.50",
+      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-aiw/${app.version}/weasis-dicom-aiw-${app.version}.jar",
+      "description": "DICOM AI Workflow (UPS-RS Task Requestor)",
+      "type": "A",
+      "category": "FELIX_INSTALL"
+    },
+    {
       "code": "felix.auto.start.60",
       "value": "file:${maven.localRepository}/org/weasis/base/weasis-base-ui/${app.version}/weasis-base-ui-${app.version}.jar",
       "description": "Base user interface",

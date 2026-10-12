@@ -7,7 +7,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.dicom.explorer.ups;
+package org.weasis.dicom.aiw;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
