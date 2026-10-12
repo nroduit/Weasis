@@ -39,6 +39,13 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
+    <!-- The UPS-RS client (PS3.18 §11) lives with the DICOMweb services, not with the codec -->
+    <dependency>
+      <groupId>org.weasis</groupId>
+      <artifactId>weasis-dicom-tools</artifactId>
+      <version>${weasis-dicom-tools.version}</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>net.lingala.zip4j</groupId>
       <artifactId>zip4j</artifactId>
