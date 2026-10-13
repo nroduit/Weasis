@@ -11,11 +11,16 @@ package org.weasis.core.api.util;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
@@ -74,5 +79,54 @@ class SiteDocumentsTest {
         () ->
             assertTrue(
                 SiteDocuments.reloadHooks().containsAll(java.util.List.of("test.a", "test.b"))));
+  }
+
+  @Test
+  void a_folder_document_gathers_one_entry_per_file_on_top_of_the_file(@TempDir Path dir)
+      throws IOException {
+    SiteDocuments.declareFolder("test.protocols.json", "test-protocols", "protocols"); // NON-NLS
+    Path config = Files.createDirectories(dir.resolve(SiteDocuments.FOLDER));
+    Path folder = Files.createDirectories(config.resolve("test-protocols")); // NON-NLS
+    Files.writeString(
+        config.resolve("test.protocols.json"),
+        "{\"locked\":false,\"protocols\":[{\"id\":\"a\",\"name\":\"file\"},{\"id\":\"z\"}]}");
+    Files.writeString(folder.resolve("a.json"), "{\"id\":\"a\",\"name\":\"folder\"}");
+    Files.writeString(folder.resolve("ct-chest.json"), "{\"name\":\"no id\",\"version\":7}");
+    Files.writeString(
+        folder.resolve("group.json"),
+        "{\"kind\":\"weasis.document\",\"schema\":1,\"protocols\":[{\"id\":\"g1\"}]}");
+    Files.writeString(folder.resolve("future.json"), "{\"id\":\"f\",\"schema\":9}");
+    Files.writeString(folder.resolve("broken.json"), "{");
+    Files.writeString(folder.resolve("notes.txt"), "{}");
+
+    JsonObject doc = SiteDocuments.read(config, "test.protocols.json").orElseThrow();
+    Map<String, String> names = new LinkedHashMap<>();
+    doc.getJsonArray("protocols")
+        .getValuesAs(JsonObject.class)
+        .forEach(o -> names.put(o.getString("id"), o.getString("name", "")));
+
+    assertAll(
+        () -> assertEquals("test.protocols", doc.getString("id")),
+        () -> assertFalse(doc.getBoolean("locked")),
+        () -> assertEquals(Map.of("a", "folder", "z", "", "ct-chest", "no id", "g1", ""), names),
+        () -> assertEquals(List.of("a", "z", "ct-chest", "g1"), List.copyOf(names.keySet())),
+        () -> assertTrue(SiteDocuments.read(config, "other.json").isEmpty()),
+        () -> assertTrue(SiteDocuments.folderOf("test.protocols.json").isPresent()));
+  }
+
+  @Test
+  void a_folder_document_without_its_folder_is_the_file_or_nothing(@TempDir Path dir)
+      throws IOException {
+    SiteDocuments.declareFolder("test.alone.json", "test-alone", "items"); // NON-NLS
+    Path config = Files.createDirectories(dir.resolve(SiteDocuments.FOLDER));
+    assertTrue(SiteDocuments.read(config, "test.alone.json").isEmpty());
+    Files.writeString(config.resolve("test.alone.json"), "{\"items\":[{\"id\":\"x\"}]}");
+    assertEquals(
+        "x",
+        SiteDocuments.read(config, "test.alone.json")
+            .orElseThrow()
+            .getJsonArray("items")
+            .getJsonObject(0)
+            .getString("id"));
   }
 }

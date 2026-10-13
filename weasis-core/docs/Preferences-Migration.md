@@ -86,6 +86,35 @@ Every document is written atomically with the same header, then its body:
 `id` is the file name without `.json`; a reader refuses a `schema` newer than its own and reads
 the earlier `version` key of `measurementProfiles.json` as the schema.
 
+#### Hanging protocols and sessions
+
+`HangingProtocolDocuments` keeps two documents before the engine that uses them exists. Their
+entries are stored as JSON by `LayeredDocument`, which knows only `id`, `hidden`, `locked` and the
+layer, and merges built-in, site and user entries with `LayeredEntries`:
+
+| Document | Layers | Notes |
+|---|---|---|
+| `hp.protocols.json`, entries `protocols` | built-in (later), site, user | the site ships the folder `config/hanging-protocols/`, one protocol per file |
+| `hp.sessions.json`, entries `sessions` | user | private: never packaged, never mirrored |
+
+A site document can be a folder (`SiteDocuments.declareFolder(name, folder, entries)`): each
+`*.json` file in it is one entry, whose `id` defaults to the file name, or a document with an
+array of entries. `SiteDocuments.read(name)` merges the folder into one document, on top of a
+`config/<name>` file when there is one. A file it cannot read, or with a newer `schema`, is
+skipped and logged. Only `schema` is read from an entry file: an entry may have a `version` of
+its own.
+
+An entry lists the entries of other documents it uses, by id. The writer of the entry keeps the
+list up to date:
+
+```json
+{"id": "user.ct-chest", "references": {"windowPresets": ["user.lung"], "colormaps": ["hot"]}}
+```
+
+The registries tell `DocumentStore.registerIds(documentId, ids)` the ids they know. This covers
+window presets, color maps, measurement profiles, masking and protocols. Those ids are what the
+package checks references against.
+
 ### Settings packages
 
 `SettingsPackage` copies a layer into one zip, to restore it, to move to another workstation, or to
@@ -96,11 +125,24 @@ give a configuration to Viewer Hub:
 | `user` (default) | `settings/<group>.json`, `documents/<name>.json`, `launcher/weasis.properties` (the person's launch values, without the log files, the screen scale and the notices already shown) |
 | `user` + machine | the above and `machine/settings/…`, `machine/documents/…` (the same person on a new workstation) |
 | `machine` | `machine/settings/…`, `machine/documents/…` |
-| `site` | the user documents as `config/<name>.json`, the layout of the `config` folder of a resources package |
+| `site` | the user documents as `config/<name>.json`, the layout of the `config` folder of a resources package; a document shipped as a folder is split into `config/<folder>/<id>.json` |
 
 `manifest.json` gives `kind: "weasis.package"`, the schema, the creation instant, the source
 (user, profile, host, Weasis version), the layer, and every file with its id, schema, `updated` and
-SHA-256. Secrets are never packaged.
+SHA-256. Secrets and private documents (the sessions) are never packaged, and an import skips a
+private document.
+
+The manifest also lists every reference of the packaged entries. For each one it gives where the
+reference resolved when the package was written:
+
+- `package`: the entry is in the package;
+- `site`: in a site document;
+- `built-in`: known to a registry;
+- `missing`: the registry does not know it;
+- `unchecked`: no registry tells.
+
+`config:pack` returns the missing ones. An import warns about each reference found neither in the
+package nor on the target machine, without blocking the import.
 
 An import checks the manifest and the checksums, plans every file (entries or values added,
 replaced, unchanged, or skipped because the site locks them) and, unless it is a dry run, saves a
@@ -123,7 +165,8 @@ the secrets never leave the workstation; the launch values keep their own exchan
 (`text/x-java-properties`).
 
 - One module per file, `text/plain`, `module=<kind>/<id>@<schema>`: `settings/weasis-core@1`,
-  `documents/windowPresets@1`. The schema in the name keeps clients of another schema apart. The
+  `documents/windowPresets@1`. The schema in the name keeps clients of another schema apart. A
+  private document is neither sent nor taken from the service. The
   service has no listing, so the module `index@1` lists the modules written. A body is compact
   JSON with every non-ASCII character escaped: the service returns `text/plain` without a charset.
 - At start, before any plugin reads its settings, the index and its modules are read in parallel

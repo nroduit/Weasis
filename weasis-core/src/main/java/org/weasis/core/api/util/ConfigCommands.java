@@ -102,6 +102,12 @@ public class ConfigCommands implements CommandExtension {
         } catch (IOException e) {
           LOGGER.warn("Cannot list the site documents of {}", folder, e);
         }
+        // a document shipped as a folder, one entry per file
+        SiteDocuments.folders().stream()
+            .map(SiteDocuments.FolderDocument::folder)
+            .filter(f -> Files.isDirectory(folder.resolve(f)))
+            .sorted()
+            .forEach(f -> documents.add(f + "/"));
       }
       body.add("documents", documents); // NON-NLS
       JsonArrayBuilder layers = Json.createArrayBuilder();
@@ -271,11 +277,15 @@ public class ConfigCommands implements CommandExtension {
               ? out.toAbsolutePath()
               : Path.of(SettingsPackage.defaultName(which, env.source())).toAbsolutePath();
       var manifest = SettingsPackage.write(file, which, withMachine, env);
+      JsonArrayBuilder missing = Json.createArrayBuilder();
+      manifest.missing().forEach(m -> missing.add(m.from() + " → " + m.document() + "/" + m.id()));
       print(
           Json.createObjectBuilder()
               .add("out", file.toString()) // NON-NLS
               .add("layer", manifest.layer()) // NON-NLS
               .add("entries", manifest.entries().size()) // NON-NLS
+              .add("references", manifest.references().size()) // NON-NLS
+              .add("missingReferences", missing) // NON-NLS
               .build()
               .toString());
     }
@@ -370,13 +380,16 @@ public class ConfigCommands implements CommandExtension {
     }
     JsonArrayBuilder errors = Json.createArrayBuilder();
     plan.errors().forEach(errors::add);
+    JsonArrayBuilder warnings = Json.createArrayBuilder();
+    plan.warnings().forEach(warnings::add);
     JsonObjectBuilder body =
         Json.createObjectBuilder()
             .add("dryRun", dryRun) // NON-NLS
             .add("mode", replace ? "replace" : "merge") // NON-NLS
             .add("layer", plan.manifest().layer()) // NON-NLS
             .add("changes", changes) // NON-NLS
-            .add("errors", errors); // NON-NLS
+            .add("errors", errors) // NON-NLS
+            .add("warnings", warnings); // NON-NLS
     if (plan.backup() != null) {
       body.add("backup", plan.backup().toString()); // NON-NLS
     }

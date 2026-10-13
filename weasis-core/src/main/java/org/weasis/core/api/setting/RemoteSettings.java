@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.net.URLParameters;
+import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.ListDocument;
 
@@ -264,6 +265,9 @@ public final class RemoteSettings {
     if (module.startsWith(SETTINGS)) {
       return mergeSettings(id, remote);
     }
+    if (DocumentStore.isPrivate(id + ".json")) { // NON-NLS
+      return false;
+    }
     return mergeDocument(id, remote);
   }
 
@@ -423,7 +427,7 @@ public final class RemoteSettings {
     try (Stream<Path> list = Files.list(folder)) {
       for (Path file : list.filter(Files::isRegularFile).toList()) {
         String name = file.getFileName().toString();
-        if (!name.endsWith(".json")) { // NON-NLS
+        if (!name.endsWith(".json") || DocumentStore.isPrivate(name)) { // NON-NLS
           continue;
         }
         try {

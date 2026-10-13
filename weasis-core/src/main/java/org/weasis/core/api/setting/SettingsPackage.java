@@ -78,8 +78,15 @@ import org.weasis.core.api.util.SiteDocuments;
  * </pre>
  *
  * <p>Secrets are never in a package: they are kept apart ({@code auth-secrets.json}) and the
- * documents do not carry them. A site package is not imported: its {@code config} folder goes into
- * the resources package of the site.
+ * documents do not carry them. Nor are the private documents ({@link DocumentStore#declarePrivate},
+ * the reading sessions). A site package is not imported: its {@code config} folder goes into the
+ * resources package of the site, a document shipped as a folder ({@link
+ * SiteDocuments#declareFolder}) laid out one entry per file.
+ *
+ * <p>The manifest lists the references of the entries ({@link DocumentStore#REFERENCES}) with where
+ * each one resolves when the package is written: in the package, in the site documents, among the
+ * ids a registry knows (built-in), missing, or unchecked when no registry tells. An import warns
+ * about every reference that resolves neither in the package nor on this machine.
  *
  * <p>An import checks the manifest and the checksums, then plans every file: entries added,
  * replaced, unchanged, or skipped because the site locks them. Applying the plan first writes a
@@ -147,7 +154,8 @@ public final class SettingsPackage {
    *
    * @param launcher the launch values of the person ({@code weasis.properties}), own entries only
    * @param saveLauncher saves {@code launcher} after an import
-   * @param siteDocument the site document of a name, to know what the site locks
+   * @param siteDocument the site document of a name, to know what the site locks and holds
+   * @param knownIds the ids a registry knows for a document id, see {@link DocumentStore#knownIds}
    * @param lockedKeys the setting keys the site locks
    * @param source user, profile, host and weasis version, written in the manifest
    */
@@ -158,7 +166,8 @@ public final class SettingsPackage {
       Path machineDocuments,
       Properties launcher,
       Runnable saveLauncher,
-      Function<String, Optional<Path>> siteDocument,
+      Function<String, Optional<JsonObject>> siteDocument,
+      Function<String, Optional<Set<String>>> knownIds,
       Set<String> lockedKeys,
       Map<String, String> source) {}
 
@@ -177,7 +186,8 @@ public final class SettingsPackage {
         DocumentStore.folder(Scope.MACHINE),
         core.getSystemPreferences(),
         core::saveSystemPreferences,
-        SiteDocuments::find,
+        SiteDocuments::read,
+        DocumentStore::knownIds,
         Settings.lockedKeys(),
         source);
   }
@@ -199,8 +209,48 @@ public final class SettingsPackage {
   /** One file of a package, as listed in the manifest. */
   public record Entry(String path, String id, int schema, String updated, String sha256) {}
 
+  /** Where a reference resolves when the package is written. */
+  public enum Resolved {
+    PACKAGE,
+    SITE,
+    BUILT_IN,
+    MISSING,
+    UNCHECKED;
+
+    public String id() {
+      return name().toLowerCase(Locale.ROOT).replace('_', '-');
+    }
+
+    static Resolved of(String id) {
+      try {
+        return valueOf(id.toUpperCase(Locale.ROOT).replace('-', '_'));
+      } catch (IllegalArgumentException | NullPointerException e) {
+        return UNCHECKED;
+      }
+    }
+  }
+
+  /**
+   * A reference of an entry of the package to an entry of a document.
+   *
+   * @param from the path of the file in the package and the entry id, {@code path#id}
+   * @param document the document id referred to, such as {@code windowPresets}
+   * @param id the entry id referred to
+   */
+  public record Reference(String from, String document, String id, Resolved resolved) {}
+
   public record Manifest(
-      String layer, String created, Map<String, String> source, List<Entry> entries) {}
+      String layer,
+      String created,
+      Map<String, String> source,
+      List<Entry> entries,
+      List<Reference> references) {
+
+    /** The references the package does not resolve and that the source did not know either. */
+    public List<Reference> missing() {
+      return references.stream().filter(r -> r.resolved() == Resolved.MISSING).toList();
+    }
+  }
 
   /** What an import does to one file. */
   public record Change(
@@ -217,8 +267,17 @@ public final class SettingsPackage {
     }
   }
 
-  /** What an import does, or did. */
-  public record Plan(Manifest manifest, List<Change> changes, List<String> errors, Path backup) {}
+  /**
+   * What an import does, or did.
+   *
+   * @param warnings the references of the package that resolve neither in it nor here
+   */
+  public record Plan(
+      Manifest manifest,
+      List<Change> changes,
+      List<String> errors,
+      List<String> warnings,
+      Path backup) {}
 
   private SettingsPackage() {}
 
@@ -260,6 +319,7 @@ public final class SettingsPackage {
     }
     if (layer == Layer.SITE) {
       addFolder(files, CONFIG, env.userDocuments());
+      splitFolderDocuments(files);
     }
 
     List<Entry> entries = new ArrayList<>();
@@ -269,7 +329,8 @@ public final class SettingsPackage {
             layer.id(),
             Instant.now().truncatedTo(ChronoUnit.SECONDS).toString(),
             env.source(),
-            entries);
+            entries,
+            references(files, env));
 
     Path parent = zip.toAbsolutePath().getParent();
     if (parent != null) {
@@ -306,11 +367,199 @@ public final class SettingsPackage {
     try (Stream<Path> list = Files.list(folder)) {
       for (Path file : list.filter(Files::isRegularFile).toList()) {
         String name = file.getFileName().toString();
-        if (name.endsWith(".json")) { // NON-NLS
+        if (name.endsWith(".json") && !DocumentStore.isPrivate(name)) { // NON-NLS
           files.put(prefix + name, Files.readAllBytes(file));
         }
       }
     }
+  }
+
+  /**
+   * In a site package, a document the site ships as a folder becomes {@code config/<folder>/<id>
+   * .json}, one entry per file, as {@link SiteDocuments#read} expects it.
+   */
+  private static void splitFolderDocuments(Map<String, byte[]> files) {
+    for (String path : List.copyOf(files.keySet())) {
+      String name = path.substring(CONFIG.length());
+      Optional<SiteDocuments.FolderDocument> folder = SiteDocuments.folderOf(name);
+      if (folder.isEmpty()) {
+        continue;
+      }
+      JsonObject document;
+      try {
+        document = readObject(files.get(path));
+      } catch (JsonException | ClassCastException e) {
+        continue; // left as one file, which the site layer also reads
+      }
+      files.remove(path);
+      Set<String> used = new LinkedHashSet<>();
+      if (document.get(folder.get().entries()) instanceof JsonArray array) {
+        for (JsonObject entry : JsonUtil.objects(array)) {
+          String file = fileName(entry.getString(ListDocument.ID, "entry"), used); // NON-NLS
+          files.put(
+              CONFIG + folder.get().folder() + "/" + file,
+              entry.toString().getBytes(StandardCharsets.UTF_8));
+        }
+      }
+    }
+  }
+
+  /** A file name for an entry id, unique within {@code used}. */
+  static String fileName(String id, Set<String> used) {
+    String base = id.replaceAll("[^A-Za-z0-9._-]", "_"); // NON-NLS
+    String name = base + ".json"; // NON-NLS
+    for (int i = 2; !used.add(name.toLowerCase(Locale.ROOT)); i++) {
+      name = base + "-" + i + ".json"; // NON-NLS
+    }
+    return name;
+  }
+
+  // ---- References
+
+  /** The references of every document of the package, with where each one resolves. */
+  private static List<Reference> references(Map<String, byte[]> files, Environment env) {
+    Map<String, JsonObject> documents = new LinkedHashMap<>();
+    Map<String, Set<String>> packaged = new LinkedHashMap<>();
+    files.forEach(
+        (path, bytes) -> {
+          if (path.startsWith(SETTINGS)
+              || path.startsWith(MACHINE_SETTINGS)
+              || !path.endsWith(".json")) { // NON-NLS
+            return;
+          }
+          try {
+            JsonObject json = readObject(bytes);
+            documents.put(path, json);
+            Set<String> ids =
+                packaged.computeIfAbsent(documentOf(path, json), k -> new LinkedHashSet<>());
+            if (folderEntryOf(path).isPresent()) {
+              ids.add(json.getString(ListDocument.ID, ""));
+            } else {
+              ids.addAll(DocumentStore.entryIds(json));
+            }
+          } catch (JsonException | ClassCastException e) {
+            // a bare array: no references
+          }
+        });
+    List<Reference> refs = new ArrayList<>();
+    Map<String, Set<String>> siteIds = new LinkedHashMap<>();
+    documents.forEach(
+        (path, json) -> {
+          Map<String, Map<String, Set<String>>> byEntry =
+              folderEntryOf(path).isPresent()
+                  ? Map.of(json.getString(ListDocument.ID, ""), DocumentStore.referencesOf(json))
+                  : DocumentStore.references(json);
+          byEntry.forEach(
+              (entry, docs) ->
+                  docs.forEach(
+                      (doc, ids) -> {
+                        for (String id : ids) {
+                          Resolved resolved =
+                              packaged.getOrDefault(doc, Set.of()).contains(id)
+                                  ? Resolved.PACKAGE
+                                  : resolveHere(doc, id, env, siteIds, Resolved.MISSING);
+                          refs.add(new Reference(path + "#" + entry, doc, id, resolved));
+                        }
+                      }));
+        });
+    return refs;
+  }
+
+  /**
+   * The document id of a packaged file: its {@code id}, or for one entry of a folder document
+   * ({@code config/<folder>/<entry>.json}) the document of that folder.
+   */
+  private static String documentOf(String path, JsonObject json) {
+    Optional<String> folderDocument = folderEntryOf(path);
+    if (folderDocument.isPresent()) {
+      return folderDocument.get();
+    }
+    String name = path.substring(path.lastIndexOf('/') + 1);
+    return json.getString(ListDocument.ID, ListDocument.documentId(Path.of(name)));
+  }
+
+  /** The document id when the path is one entry of a folder document of a site package. */
+  private static Optional<String> folderEntryOf(String path) {
+    if (!path.startsWith(CONFIG)) {
+      return Optional.empty();
+    }
+    String rest = path.substring(CONFIG.length());
+    int slash = rest.indexOf('/');
+    if (slash < 0) {
+      return Optional.empty();
+    }
+    String folder = rest.substring(0, slash);
+    return SiteDocuments.folders().stream()
+        .filter(f -> f.folder().equals(folder))
+        .map(f -> ListDocument.documentId(Path.of(f.name())))
+        .findFirst();
+  }
+
+  /**
+   * Where a reference resolves outside the package: in the site document, among the known ids, or
+   * {@code otherwise} when a registry knows the document's ids and not this one.
+   */
+  private static Resolved resolveHere(
+      String doc,
+      String id,
+      Environment env,
+      Map<String, Set<String>> siteIds,
+      Resolved otherwise) {
+    Set<String> site =
+        siteIds.computeIfAbsent(
+            doc,
+            d ->
+                env.siteDocument()
+                    .apply(d + ".json") // NON-NLS
+                    .map(DocumentStore::entryIds)
+                    .orElse(Set.of()));
+    if (site.contains(id)) {
+      return Resolved.SITE;
+    }
+    Optional<Set<String>> known = env.knownIds().apply(doc);
+    if (known.isEmpty()) {
+      return Resolved.UNCHECKED;
+    }
+    return known.get().contains(id) ? Resolved.BUILT_IN : otherwise;
+  }
+
+  /** The references of the package that resolve neither in it nor on this machine. */
+  private static List<String> unresolved(Manifest manifest, Environment env) {
+    List<String> warnings = new ArrayList<>();
+    Map<String, Set<String>> siteIds = new LinkedHashMap<>();
+    Map<String, Set<String>> userIds = new LinkedHashMap<>();
+    for (Reference ref : manifest.references()) {
+      if (ref.resolved() == Resolved.PACKAGE) {
+        continue;
+      }
+      Set<String> user = userIds.computeIfAbsent(ref.document(), d -> currentUserIds(d, env));
+      if (user.contains(ref.id())) {
+        continue;
+      }
+      Resolved here = resolveHere(ref.document(), ref.id(), env, siteIds, Resolved.MISSING);
+      if (here == Resolved.MISSING
+          || (here == Resolved.UNCHECKED && ref.resolved() == Resolved.MISSING)) {
+        warnings.add(
+            "%s refers to %s '%s', which is not on this machine"
+                .formatted(ref.from(), ref.document(), ref.id()));
+      }
+    }
+    return warnings;
+  }
+
+  private static Set<String> currentUserIds(String doc, Environment env) {
+    Set<String> ids = new LinkedHashSet<>();
+    for (Path folder : new Path[] {env.userDocuments(), env.machineDocuments()}) {
+      Path file = folder == null ? null : folder.resolve(doc + ".json"); // NON-NLS
+      if (file != null && Files.isRegularFile(file)) {
+        try {
+          ids.addAll(DocumentStore.entryIds(readObject(Files.readAllBytes(file))));
+        } catch (IOException | JsonException | ClassCastException e) {
+          // unreadable: its ids are not counted
+        }
+      }
+    }
+    return ids;
   }
 
   private static byte[] launcherBytes(Properties launcher) throws IOException {
@@ -374,6 +623,15 @@ public final class SettingsPackage {
       JsonUtil.addIfPresent(o, "updated", e.updated()); // NON-NLS
       entries.add(o.add("sha256", e.sha256())); // NON-NLS
     }
+    JsonArrayBuilder references = Json.createArrayBuilder();
+    for (Reference ref : manifest.references()) {
+      references.add(
+          Json.createObjectBuilder()
+              .add("from", ref.from()) // NON-NLS
+              .add("document", ref.document()) // NON-NLS
+              .add("id", ref.id()) // NON-NLS
+              .add("resolved", ref.resolved().id())); // NON-NLS
+    }
     return Json.createObjectBuilder()
         .add("kind", KIND) // NON-NLS
         .add("schema", SCHEMA) // NON-NLS
@@ -381,6 +639,7 @@ public final class SettingsPackage {
         .add("layer", manifest.layer()) // NON-NLS
         .add("source", source) // NON-NLS
         .add("entries", entries) // NON-NLS
+        .add("references", references) // NON-NLS
         .build();
   }
 
@@ -432,6 +691,11 @@ public final class SettingsPackage {
 
     List<Change> changes = new ArrayList<>();
     for (Map.Entry<String, byte[]> file : verified.entrySet()) {
+      String name = file.getKey().substring(file.getKey().lastIndexOf('/') + 1);
+      if (DocumentStore.isPrivate(name)) {
+        errors.add(file.getKey() + ": a private document is not imported, file skipped");
+        continue;
+      }
       try {
         Change change = importFile(file.getKey(), file.getValue(), mode, !dryRun, env);
         if (change != null) {
@@ -456,7 +720,7 @@ public final class SettingsPackage {
       }
       LOGGER.info("Settings package {} imported ({}), backup {}", zip, mode, backup);
     }
-    return new Plan(manifest, changes, errors, backup);
+    return new Plan(manifest, changes, errors, unresolved(manifest, env), backup);
   }
 
   private static Change importFile(
@@ -729,12 +993,12 @@ public final class SettingsPackage {
   /** What a site document locks: the whole document, or entries by id. */
   record Locks(boolean document, Set<String> ids) {}
 
-  static Locks siteLocks(Optional<Path> siteDocument) {
+  static Locks siteLocks(Optional<JsonObject> siteDocument) {
     if (siteDocument.isEmpty()) {
       return new Locks(false, Set.of());
     }
     try {
-      JsonObject site = readObject(Files.readAllBytes(siteDocument.get()));
+      JsonObject site = siteDocument.get();
       Set<String> ids = new LinkedHashSet<>();
       for (Map.Entry<String, JsonValue> e : site.entrySet()) {
         if (e.getValue() instanceof JsonArray array) {
@@ -751,8 +1015,9 @@ public final class SettingsPackage {
       ids.addAll(JsonUtil.getStringList(site, "locked")); // NON-NLS
       boolean whole = site.get("locked") == JsonValue.TRUE; // NON-NLS
       return new Locks(whole, ids);
-    } catch (IOException | JsonException | ClassCastException e) {
-      LOGGER.debug("Cannot read the locks of {}", siteDocument.get(), e);
+    } catch (JsonException | ClassCastException e) {
+      LOGGER.debug(
+          "Cannot read the locks of {}", siteDocument.get().getString(ListDocument.ID, null), e);
       return new Locks(false, Set.of());
     }
   }
@@ -867,11 +1132,24 @@ public final class SettingsPackage {
                 o.getString("sha256", ""))); // NON-NLS
       }
     }
+    List<Reference> references = new ArrayList<>();
+    JsonArray refs = json.getJsonArray("references"); // NON-NLS
+    if (refs != null) {
+      for (JsonObject o : JsonUtil.objects(refs)) {
+        references.add(
+            new Reference(
+                o.getString("from", ""), // NON-NLS
+                o.getString("document", ""), // NON-NLS
+                o.getString("id", ""), // NON-NLS
+                Resolved.of(o.getString("resolved", null)))); // NON-NLS
+      }
+    }
     return new Manifest(
         json.getString("layer", Layer.USER.id()), // NON-NLS
         json.getString("created", null), // NON-NLS
         source,
-        entries);
+        entries,
+        references);
   }
 
   private static JsonObject readObject(byte[] bytes) {

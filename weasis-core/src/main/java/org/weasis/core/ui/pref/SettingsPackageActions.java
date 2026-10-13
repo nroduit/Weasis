@@ -85,6 +85,10 @@ final class SettingsPackageActions {
         message.append("\n\n").append(Messages.getString("PreferenceDialog.import.errors"));
         plan.errors().forEach(e -> message.append("\n- ").append(e));
       }
+      if (!plan.warnings().isEmpty()) {
+        message.append("\n\n").append(Messages.getString("PreferenceDialog.import.references"));
+        plan.warnings().forEach(w -> message.append("\n- ").append(w));
+      }
       Object[] options = {
         Messages.getString("PreferenceDialog.import.merge"),
         Messages.getString("PreferenceDialog.import.replace"),

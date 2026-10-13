@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -144,6 +145,9 @@ public final class MeasurementProfileRegistry {
               path -> core.storeRemotePref(path, JsonUtil.CONTENT_TYPE));
       SiteDocuments.onReload(
           SITE_FILE, () -> registry.reloadFrom(SiteDocuments.find(SITE_FILE).orElse(null)));
+      DocumentStore.registerIds(
+          MeasurementProfileJson.DOCUMENT_ID,
+          () -> Set.copyOf(getInstance().profiles().stream().map(MeasurementProfile::id).toList()));
       return registry;
     } catch (RuntimeException | LinkageError e) {
       LOGGER.debug("No UI core, profiles kept in memory", e);

@@ -29,17 +29,22 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.weasis.core.api.hp.HangingProtocolDocuments;
 import org.weasis.core.api.setting.SettingsPackage.Change;
 import org.weasis.core.api.setting.SettingsPackage.Environment;
 import org.weasis.core.api.setting.SettingsPackage.Layer;
 import org.weasis.core.api.setting.SettingsPackage.Mode;
 import org.weasis.core.api.setting.SettingsPackage.Plan;
+import org.weasis.core.api.setting.SettingsPackage.Reference;
+import org.weasis.core.api.setting.SettingsPackage.Resolved;
+import org.weasis.core.api.util.SiteDocuments;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
 class SettingsPackageTest {
@@ -56,6 +61,7 @@ class SettingsPackageTest {
     final Path site;
     final Properties launcher = new Properties();
     Set<String> locked = Set.of();
+    final Map<String, Set<String>> known = new java.util.HashMap<>();
 
     Install(Path root) throws IOException {
       this.root = root;
@@ -74,7 +80,8 @@ class SettingsPackageTest {
           machineDocs,
           launcher,
           () -> {},
-          name -> Optional.of(site.resolve(name)).filter(Files::isRegularFile),
+          name -> SiteDocuments.read(site, name),
+          doc -> Optional.ofNullable(known.get(doc)),
           locked,
           Map.of("user", "alice", "profile", "default")); // NON-NLS
     }
@@ -301,5 +308,169 @@ class SettingsPackageTest {
       }
     }
     return file;
+  }
+
+  // ---- Hanging protocols: references, private documents, site folder
+
+  private static final String PROTOCOLS = HangingProtocolDocuments.PROTOCOLS;
+
+  /** A protocol referring to window presets and a color map. */
+  private static String protocol(String id, String presets, String colormaps) {
+    return "{\"id\":\"%s\",\"name\":\"%s\",\"references\":{\"windowPresets\":[%s],\"colormaps\":[%s]}}"
+        .formatted(id, id, presets, colormaps);
+  }
+
+  private static Install withProtocols(Path dir) throws IOException {
+    HangingProtocolDocuments.declare();
+    Install a = source(dir);
+    Files.writeString(
+        a.userDocs.resolve(PROTOCOLS),
+        "{\"kind\":\"weasis.document\",\"id\":\"hp.protocols\",\"schema\":1,\"protocols\":["
+            + protocol("user.ct-chest", "\"user.lung\",\"site.mediastinum\"", "\"hot\"")
+            + ","
+            + protocol("user.mr-knee", "\"user.gone\"", "")
+            + "]}");
+    Files.writeString(a.site.resolve(PRESETS), presets("site.mediastinum", "350"));
+    a.known.put("colormaps", Set.of("hot", "jet")); // NON-NLS
+    a.known.put("windowPresets", Set.of("user.bone", "user.lung", "site.mediastinum")); // NON-NLS
+    Files.writeString(
+        a.userDocs.resolve(HangingProtocolDocuments.SESSIONS),
+        "{\"sessions\":[{\"id\":\"s1\",\"studyInstanceUID\":\"1.2.3\"}]}");
+    return a;
+  }
+
+  @Test
+  void the_manifest_tells_where_each_reference_of_a_protocol_resolves(@TempDir Path dir)
+      throws IOException {
+    Install a = withProtocols(dir);
+    var manifest = SettingsPackage.write(dir.resolve("u.zip"), Layer.USER, false, a.env());
+    Map<String, Resolved> byId = new TreeMap<>();
+    manifest.references().forEach(r -> byId.put(r.document() + "/" + r.id(), r.resolved()));
+    String from = "documents/" + PROTOCOLS + "#user.ct-chest";
+
+    assertAll(
+        () ->
+            assertEquals(
+                Map.of(
+                    "windowPresets/user.lung", Resolved.PACKAGE,
+                    "windowPresets/site.mediastinum", Resolved.SITE,
+                    "colormaps/hot", Resolved.BUILT_IN,
+                    "windowPresets/user.gone", Resolved.MISSING),
+                byId),
+        () -> assertEquals(from, manifest.references().getFirst().from()),
+        () ->
+            assertEquals(
+                List.of("user.gone"), manifest.missing().stream().map(Reference::id).toList()),
+        () ->
+            assertEquals(
+                manifest.references(),
+                SettingsPackage.readManifest(
+                        SettingsPackage.readZip(dir.resolve("u.zip")).get(SettingsPackage.MANIFEST))
+                    .references()));
+  }
+
+  @Test
+  void an_import_warns_about_references_this_machine_does_not_have(@TempDir Path dir)
+      throws IOException {
+    Install a = withProtocols(dir);
+    Path zip = dir.resolve("u.zip");
+    SettingsPackage.write(zip, Layer.USER, false, a.env());
+    Install b = new Install(dir.resolve("b"));
+    b.known.put("colormaps", Set.of("jet")); // NON-NLS
+    b.known.put("windowPresets", Set.of()); // NON-NLS
+
+    Plan plan = SettingsPackage.importPackage(zip, Mode.MERGE, true, b.env(), null);
+    assertEquals(
+        List.of(
+            "documents/hp.protocols.json#user.ct-chest refers to windowPresets 'site.mediastinum',"
+                + " which is not on this machine",
+            "documents/hp.protocols.json#user.ct-chest refers to colormaps 'hot', which is not on"
+                + " this machine",
+            "documents/hp.protocols.json#user.mr-knee refers to windowPresets 'user.gone', which is"
+                + " not on this machine"),
+        plan.warnings());
+  }
+
+  @Test
+  void the_sessions_never_leave_in_a_package(@TempDir Path dir) throws IOException {
+    Install a = withProtocols(dir);
+    Path zip = dir.resolve("u.zip");
+    SettingsPackage.write(zip, Layer.USER, true, a.env());
+    Map<String, byte[]> files = SettingsPackage.readZip(zip);
+
+    // a hand-made package carrying the sessions is not imported either
+    Path forged = dir.resolve("forged.zip");
+    byte[] sessions = Files.readAllBytes(a.userDocs.resolve(HangingProtocolDocuments.SESSIONS));
+    String manifest =
+        "{\"kind\":\"weasis.package\",\"schema\":1,\"layer\":\"user\",\"entries\":[{\"path\":"
+            + "\"documents/hp.sessions.json\",\"id\":\"hp.sessions\",\"schema\":1,\"sha256\":\""
+            + SettingsPackage.sha256(sessions)
+            + "\"}]}";
+    try (var out = new ZipOutputStream(Files.newOutputStream(forged))) {
+      out.putNextEntry(new ZipEntry(SettingsPackage.MANIFEST));
+      out.write(manifest.getBytes(StandardCharsets.UTF_8));
+      out.putNextEntry(new ZipEntry("documents/hp.sessions.json"));
+      out.write(sessions);
+    }
+    Install b = new Install(dir.resolve("b"));
+    Plan plan = SettingsPackage.importPackage(forged, Mode.MERGE, false, b.env(), null);
+
+    assertAll(
+        () -> assertTrue(files.containsKey("documents/" + PROTOCOLS)),
+        () -> assertTrue(files.keySet().stream().noneMatch(p -> p.contains("hp.sessions"))),
+        () -> assertTrue(plan.changes().isEmpty()),
+        () -> assertEquals(1, plan.errors().size()),
+        () -> assertFalse(Files.exists(b.userDocs.resolve(HangingProtocolDocuments.SESSIONS))));
+  }
+
+  @Test
+  void a_site_package_lays_the_protocols_out_one_per_file_as_the_site_reads_them(@TempDir Path dir)
+      throws IOException {
+    Install a = withProtocols(dir);
+    Path zip = dir.resolve("site.zip");
+    var manifest = SettingsPackage.write(zip, Layer.SITE, false, a.env());
+    Map<String, byte[]> files = SettingsPackage.readZip(zip);
+
+    Path config = Files.createDirectories(dir.resolve("unpacked/config"));
+    for (var f : files.entrySet()) {
+      if (f.getKey().startsWith("config/")) {
+        Path target = config.getParent().resolve(f.getKey());
+        Files.createDirectories(target.getParent());
+        Files.write(target, f.getValue());
+      }
+    }
+    JsonObject site = SiteDocuments.read(config, PROTOCOLS).orElseThrow();
+
+    assertAll(
+        () -> assertFalse(files.containsKey("config/" + PROTOCOLS)),
+        () -> assertTrue(files.containsKey("config/hanging-protocols/user.ct-chest.json")),
+        () -> assertTrue(files.containsKey("config/hanging-protocols/user.mr-knee.json")),
+        () ->
+            assertEquals(
+                List.of("user.ct-chest", "user.mr-knee"),
+                site.getJsonArray("protocols").getValuesAs(JsonObject.class).stream()
+                    .map(o -> o.getString("id"))
+                    .toList()),
+        () ->
+            assertEquals(
+                Resolved.PACKAGE,
+                manifest.references().stream()
+                    .filter(r -> r.id().equals("user.lung"))
+                    .findFirst()
+                    .orElseThrow()
+                    .resolved()),
+        () ->
+            assertEquals(
+                "config/hanging-protocols/user.ct-chest.json#user.ct-chest",
+                manifest.references().getFirst().from()));
+  }
+
+  @Test
+  void entry_file_names_are_safe_and_unique() {
+    Set<String> used = new java.util.HashSet<>();
+    assertAll(
+        () -> assertEquals("a_b.json", SettingsPackage.fileName("a/b", used)),
+        () -> assertEquals("a_b-2.json", SettingsPackage.fileName("a:b", used)),
+        () -> assertEquals("A_B-3.json", SettingsPackage.fileName("A?B", used)));
   }
 }

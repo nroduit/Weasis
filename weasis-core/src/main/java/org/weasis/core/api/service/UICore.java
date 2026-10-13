@@ -49,6 +49,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.ShortcutManager;
+import org.weasis.core.api.hp.HangingProtocolDocuments;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -173,6 +174,7 @@ public final class UICore {
                 "weasis.config.dir", AppProperties.WEASIS_PATH.toString())), // NON-NLS
         AppProperties.WEASIS_PATH.resolve("data")); // NON-NLS
     startRemoteSettings(prefDir);
+    HangingProtocolDocuments.configure();
     this.propsFile =
         new File(systemPreferences.getProperty("weasis.pref.dir"), "weasis.properties");
     if (!propsFile.canRead()) {

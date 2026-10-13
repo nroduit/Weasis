@@ -202,6 +202,9 @@ public final class ColorMapRegistry {
             path -> core.storeRemotePref(path, JsonUtil.CONTENT_TYPE));
     SiteDocuments.onReload(
         SITE_FILE, () -> registry.reloadFrom(SiteDocuments.find(SITE_FILE).orElse(null)));
+    DocumentStore.registerIds(
+        ColorMapJson.DOCUMENT_ID,
+        () -> Set.copyOf(getInstance().maps().stream().map(ColorMap::id).toList()));
     return registry;
   }
 

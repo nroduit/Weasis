@@ -9,14 +9,23 @@
  */
 package org.weasis.core.api.util;
 
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.setting.Scope;
@@ -39,6 +48,14 @@ import org.weasis.core.api.setting.Scope;
  *
  * <p>Every document asked for is declared here with its scope, which is what an export or a mirror
  * lists.
+ *
+ * <p>An entry of a document refers to entries of other documents by id, in a {@value #REFERENCES}
+ * object: {@code "references": {"windowPresets": ["user.lung"], "colormaps": ["hot"]}}, kept up to
+ * date by the writer of the entry. A registry tells here which ids it knows ({@link #registerIds}),
+ * so that an export can say which references the package resolves and which it does not.
+ *
+ * <p>A private document ({@link #declarePrivate}) holds patient or study identifiers: it is left
+ * out of the settings packages and of the mirror to the preference service.
  */
 public final class DocumentStore {
   private static final Logger LOGGER = LoggerFactory.getLogger(DocumentStore.class);
@@ -53,6 +70,12 @@ public final class DocumentStore {
   private static volatile Path userFolder;
   private static volatile Path machineFolder;
   private static final List<Runnable> USER_WRITTEN = new CopyOnWriteArrayList<>();
+
+  /** The object of an entry listing the entries of other documents it refers to, by id. */
+  public static final String REFERENCES = "references"; // NON-NLS
+
+  private static final Map<String, Supplier<Set<String>>> KNOWN_IDS = new ConcurrentHashMap<>();
+  private static final Set<String> PRIVATE = ConcurrentHashMap.newKeySet();
 
   private DocumentStore() {}
 
@@ -122,6 +145,86 @@ public final class DocumentStore {
     if (folder != null && file.toAbsolutePath().startsWith(folder.toAbsolutePath())) {
       USER_WRITTEN.forEach(Runnable::run);
     }
+  }
+
+  /**
+   * Declares the ids a registry knows for its document, in every layer (built-in, site, user).
+   *
+   * @param documentId the document id, such as {@code windowPresets}
+   */
+  public static void registerIds(String documentId, Supplier<Set<String>> ids) {
+    KNOWN_IDS.put(documentId, ids);
+  }
+
+  /** The ids known for that document, or empty when no registry declared them. */
+  public static Optional<Set<String>> knownIds(String documentId) {
+    Supplier<Set<String>> ids = KNOWN_IDS.get(documentId);
+    return ids == null ? Optional.empty() : Optional.of(Set.copyOf(ids.get()));
+  }
+
+  /**
+   * Declares a document that holds patient or study identifiers: never in a settings package nor
+   * sent to the preference service.
+   *
+   * @param name the file name, such as {@code hp.sessions.json}
+   */
+  public static void declarePrivate(String name) {
+    PRIVATE.add(name);
+  }
+
+  public static boolean isPrivate(String name) {
+    return PRIVATE.contains(name);
+  }
+
+  /**
+   * The references of the entries of a document: for each entry that has some, the document ids and
+   * the ids it refers to.
+   *
+   * @return entry id → document id → referred ids, in document order
+   */
+  public static Map<String, Map<String, Set<String>>> references(JsonObject document) {
+    Map<String, Map<String, Set<String>>> result = new LinkedHashMap<>();
+    for (JsonValue value : document.values()) {
+      if (value instanceof JsonArray array) {
+        for (JsonObject entry : JsonUtil.objects(array)) {
+          Map<String, Set<String>> refs = referencesOf(entry);
+          if (!refs.isEmpty()) {
+            result.put(entry.getString(ListDocument.ID, "#" + result.size()), refs);
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  /** The references of one entry: document id → referred ids. */
+  public static Map<String, Set<String>> referencesOf(JsonObject entry) {
+    Map<String, Set<String>> refs = new LinkedHashMap<>();
+    if (entry.get(REFERENCES) instanceof JsonObject object) {
+      for (String doc : object.keySet()) {
+        Set<String> ids = new LinkedHashSet<>(JsonUtil.getStringList(object, doc));
+        if (!ids.isEmpty()) {
+          refs.put(doc, ids);
+        }
+      }
+    }
+    return refs;
+  }
+
+  /** The ids of the entries of a document, in every array of it. */
+  public static Set<String> entryIds(JsonObject document) {
+    Set<String> ids = new LinkedHashSet<>();
+    for (JsonValue value : document.values()) {
+      if (value instanceof JsonArray array) {
+        for (JsonObject entry : JsonUtil.objects(array)) {
+          String id = entry.getString(ListDocument.ID, null);
+          if (id != null) {
+            ids.add(id);
+          }
+        }
+      }
+    }
+    return ids;
   }
 
   /** The documents asked for so far, sorted by scope then name. */

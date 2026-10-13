@@ -54,10 +54,12 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import javax.management.InstanceNotFoundException;
@@ -110,6 +112,7 @@ import org.weasis.core.api.gui.util.ShortcutTable;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.IdentityMask;
+import org.weasis.core.api.media.data.MaskingModel;
 import org.weasis.core.api.media.data.MaskingModelRegistry;
 import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.media.data.MediaElement;
@@ -1254,6 +1257,14 @@ public class WeasisWin {
                     ? Path.of(prefDir).resolve(MaskingModelRegistry.USER_FILE)
                     : null),
             path -> core.storeRemotePref(path, JsonUtil.CONTENT_TYPE));
+    DocumentStore.registerIds(
+        MaskingModel.DOCUMENT_ID,
+        () -> {
+          MaskingModelRegistry registry = MaskingModelRegistry.getInstance();
+          Set<String> ids = new HashSet<>(registry.profiles().origins().keySet());
+          ids.addAll(registry.masks().origins().keySet());
+          return ids;
+        });
   }
 
   /** Keeps the menu item and the window title in line with session masking, whoever changed it. */

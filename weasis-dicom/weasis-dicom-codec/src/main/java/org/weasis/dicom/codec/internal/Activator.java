@@ -11,6 +11,7 @@ package org.weasis.dicom.codec.internal;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import javax.imageio.spi.IIOServiceProvider;
 import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.img.DicomImageReaderSpi;
@@ -34,6 +35,8 @@ import org.weasis.dicom.codec.DicomSpecialElementFactory;
 import org.weasis.dicom.codec.Redaction;
 import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.display.ModalityViewJson;
+import org.weasis.dicom.codec.display.WindowPreset;
+import org.weasis.dicom.codec.display.WindowPresetJson;
 import org.weasis.dicom.codec.display.WindowPresetRegistry;
 import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.codec.utils.SplittingRules;
@@ -127,6 +130,13 @@ public class Activator extends WeasisPlugin {
                 : null),
         path -> GuiUtils.getUICore().storeRemotePref(path, JsonUtil.CONTENT_TYPE));
     PresetWindowLevel.setModalityPresetProvider(registry);
+    DocumentStore.registerIds(
+        WindowPresetJson.DOCUMENT_ID,
+        () ->
+            Set.copyOf(
+                WindowPresetRegistry.getInstance().presets().stream()
+                    .map(WindowPreset::id)
+                    .toList()));
   }
 
   @Override

@@ -28,6 +28,7 @@ import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.weasis.core.api.util.DocumentStore;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
 class RemoteSettingsTest {
@@ -241,5 +242,27 @@ class RemoteSettingsTest {
     again.configure(
         service, a.store, a.documents, dir.resolve("a").resolve(RemoteSettings.STATE_FILE));
     assertEquals(List.of(), again.push().pushed());
+  }
+
+  @Test
+  void a_private_document_is_neither_sent_nor_taken_from_the_service(@TempDir Path dir)
+      throws IOException {
+    DocumentStore.declarePrivate("hp.sessions.json"); // NON-NLS
+    Service service = new Service();
+    service.modules.put("documents/hp.sessions@1", "{\"sessions\":[{\"id\":\"r\"}]}");
+    service.modules.put("index@1", "{\"modules\":[\"documents/hp.sessions@1\"]}");
+    Station a = new Station(dir.resolve("a"), service);
+    Files.writeString(a.documents.resolve("hp.sessions.json"), "{\"sessions\":[{\"id\":\"s\"}]}");
+
+    RemoteSettings.Report pulled = a.remote.pull();
+    RemoteSettings.Report pushed = a.remote.push();
+    assertAll(
+        () -> assertEquals(List.of(), pulled.pulled()),
+        () -> assertTrue(pushed.pushed().stream().noneMatch(m -> m.contains("hp.sessions"))),
+        () ->
+            assertTrue(Files.readString(a.documents.resolve("hp.sessions.json")).contains("\"s\"")),
+        () ->
+            assertEquals(
+                "{\"sessions\":[{\"id\":\"r\"}]}", service.modules.get("documents/hp.sessions@1")));
   }
 }
