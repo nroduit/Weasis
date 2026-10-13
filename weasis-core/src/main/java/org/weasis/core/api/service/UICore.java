@@ -60,6 +60,7 @@ import org.weasis.core.api.setting.CoreSettings;
 import org.weasis.core.api.setting.SettingCatalog;
 import org.weasis.core.api.setting.SettingEnvironment;
 import org.weasis.core.api.setting.Settings;
+import org.weasis.core.api.setting.UserSettingsStore;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceMonitor;
@@ -150,6 +151,10 @@ public final class UICore {
     this.explorerPlugins = Collections.synchronizedList(new ArrayList<>());
     this.explorerPluginToolbars = Collections.synchronizedList(new ArrayList<>());
     readSystemPreferences();
+    String prefDir = systemPreferences.getProperty("weasis.pref.dir"); // NON-NLS
+    if (StringUtil.hasText(prefDir)) {
+      UserSettingsStore.getInstance().configure(Path.of(prefDir));
+    }
     this.propsFile =
         new File(systemPreferences.getProperty("weasis.pref.dir"), "weasis.properties");
     if (!propsFile.canRead()) {
@@ -238,9 +243,25 @@ public final class UICore {
       GraphicRegistry.getInstance()
           .addListener(() -> MeasureTool.viewSetting.applyLabelsOfNewTools(prefs));
       listenGraphicToolProviders();
+      flushSettingsWhenPluginsStop();
     } catch (Exception e) {
       LOGGER.error("Error starting Weasis core plugin", e);
     }
+  }
+
+  /**
+   * Saves the user settings once the last plugin has stopped: plugins write their settings while
+   * stopping, and the store's own shutdown hook may run before the launcher stops them.
+   */
+  private void flushSettingsWhenPluginsStop() {
+    WeasisPluginManager pluginManager = getPluginManager();
+    pluginManager.addPluginStateListener(
+        event -> {
+          if (event.getPluginState() == PluginState.STOPPED
+              && pluginManager.getStartedPlugins().isEmpty()) {
+            UserSettingsStore.getInstance().flushAll();
+          }
+        });
   }
 
   /**
@@ -291,6 +312,7 @@ public final class UICore {
       MeasureTool.viewSetting.savePreferences(prefs);
       ShortcutManager.getInstance().savePreferences(prefs);
       prefs.sync();
+      UserSettingsStore.getInstance().flushAll();
       ResourceMonitor.getInstance().shutdown();
 
       Path dataFolder = BundlePreferences.getDataFolder(AppProperties.CORE_PLUGIN_ID);
