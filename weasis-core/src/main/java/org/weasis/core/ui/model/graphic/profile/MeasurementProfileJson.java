@@ -36,13 +36,22 @@ import java.util.function.Function;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.api.util.ListDocument;
 import org.weasis.core.ui.model.graphic.profile.MeasurementProfile.Defaults;
 import org.weasis.core.ui.model.utils.MeasureFormat;
 
-/** The {@code measurementProfiles.json} document: {@code {"version": 1, "profiles": [...]}}. */
+/**
+ * The {@code measurementProfiles.json} document: the {@link ListDocument} header, then {@code
+ * "profiles": [...]}. An earlier document with {@code "version"} instead of {@code "schema"} is
+ * read the same way.
+ */
 public final class MeasurementProfileJson {
 
   public static final int VERSION = 1;
+
+  /** The id of the document, its file name without {@code .json}. */
+  public static final String DOCUMENT_ID = "measurementProfiles"; // NON-NLS
+
   private static final String AUTO_DECIMALS = "auto"; // NON-NLS
 
   private MeasurementProfileJson() {}
@@ -69,6 +78,7 @@ public final class MeasurementProfileJson {
       InputStream in, Function<String, Optional<JsonObject>> lowerBase) {
     try (JsonReader reader = Json.createReader(in)) {
       JsonObject root = reader.readObject();
+      ListDocument.checkSchema(root, VERSION, "measurement profiles"); // NON-NLS
       List<MeasurementProfile> profiles = new ArrayList<>();
       JsonArray array = root.getJsonArray("profiles"); // NON-NLS
       if (array != null) {
@@ -139,10 +149,7 @@ public final class MeasurementProfileJson {
   }
 
   public static void write(Path path, List<MeasurementProfile> profiles) throws IOException {
-    Files.createDirectories(path.toAbsolutePath().getParent());
-    try (Writer writer = Files.newBufferedWriter(path)) {
-      write(writer, profiles);
-    }
+    ListDocument.writeAtomic(path, toJson(profiles));
   }
 
   public static void write(Writer writer, List<MeasurementProfile> profiles) {
@@ -156,10 +163,7 @@ public final class MeasurementProfileJson {
   public static JsonObject toJson(List<MeasurementProfile> profiles) {
     JsonArrayBuilder array = Json.createArrayBuilder();
     profiles.forEach(p -> array.add(toJson(p)));
-    return Json.createObjectBuilder()
-        .add("version", VERSION) // NON-NLS
-        .add("profiles", array) // NON-NLS
-        .build();
+    return ListDocument.header(DOCUMENT_ID, VERSION).add("profiles", array).build(); // NON-NLS
   }
 
   public static JsonObject toJson(MeasurementProfile p) {

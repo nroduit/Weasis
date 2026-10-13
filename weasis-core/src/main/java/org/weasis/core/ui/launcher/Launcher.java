@@ -47,6 +47,8 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.setting.Scope;
+import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.EntryIds;
 import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
@@ -749,9 +751,7 @@ public class Launcher implements LayeredEntries.Entry {
   static void saveLaunchers(Type type) {
     List<Launcher> list = getLaunchers(type);
     try {
-      writeUserDocument(
-          BundlePreferences.getFileInDataFolder(AppProperties.CORE_PLUGIN_ID, type.getFilename()),
-          list);
+      writeUserDocument(userDocument(type), list);
     } catch (IOException e) {
       LOGGER.error("Cannot save the launcher configuration", e);
     }
@@ -872,8 +872,17 @@ public class Launcher implements LayeredEntries.Entry {
    * folder, in a mutable list.
    */
   public static List<Launcher> loadLaunchers(Type type) {
-    return loadLaunchers(
-        siteDocument(type),
+    return loadLaunchers(siteDocument(type), userDocument(type));
+  }
+
+  /**
+   * The launchers of this workstation: a machine document, since they name local executables and
+   * folders; copied once from the core data folder where earlier versions kept it.
+   */
+  static Path userDocument(Type type) {
+    return DocumentStore.locate(
+        Scope.MACHINE,
+        type.getFilename(),
         BundlePreferences.getFileInDataFolder(AppProperties.CORE_PLUGIN_ID, type.getFilename()));
   }
 

@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.PixelReviewAdvisor;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.setting.Scope;
+import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LegacyConverters;
 import org.weasis.core.api.util.LegacyConverters.Conversion;
@@ -117,9 +119,12 @@ public class Activator extends WeasisPlugin {
     WindowPresetRegistry registry = WindowPresetRegistry.getInstance();
     registry.configure(
         SiteDocuments.find(WindowPresetRegistry.SITE_FILE).orElse(null),
-        StringUtil.hasText(prefDir)
-            ? Path.of(prefDir).resolve(WindowPresetRegistry.USER_FILE)
-            : null,
+        DocumentStore.locate(
+            Scope.USER,
+            WindowPresetRegistry.SITE_FILE,
+            StringUtil.hasText(prefDir)
+                ? Path.of(prefDir).resolve(WindowPresetRegistry.USER_FILE)
+                : null),
         path -> GuiUtils.getUICore().storeRemotePref(path, JsonUtil.CONTENT_TYPE));
     PresetWindowLevel.setModalityPresetProvider(registry);
   }

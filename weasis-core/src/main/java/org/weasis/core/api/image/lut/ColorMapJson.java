@@ -38,6 +38,7 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.api.util.ListDocument;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
 import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
 import org.weasis.opencv.op.lut.colormap.ColorMapType;
@@ -92,7 +93,6 @@ public final class ColorMapJson {
   private static final String MAGNITUDE = "magnitude"; // NON-NLS
   private static final String FACTOR = "factor"; // NON-NLS
   private static final String METADATA = "metadata"; // NON-NLS
-  private static final String SCHEMA = "schema"; // NON-NLS
   private static final String MAPS = "maps"; // NON-NLS
   private static final String ID = "id"; // NON-NLS
   private static final String CATEGORY = "category"; // NON-NLS
@@ -103,6 +103,9 @@ public final class ColorMapJson {
 
   /** Schema written by this version; a document without one is the pre-schema form. */
   public static final int SCHEMA_VERSION = 1;
+
+  /** The id of the document, its file name without {@code .json}. */
+  public static final String DOCUMENT_ID = "colormaps"; // NON-NLS
 
   /**
    * A whole document: its maps, the ids it flags as favorites and the ids it flags as locked (a
@@ -245,11 +248,7 @@ public final class ColorMapJson {
 
   private static Document readEnvelope(
       JsonObject envelope, Function<String, Optional<JsonObject>> lowerBase) {
-    int schema = JsonUtil.getInt(envelope, SCHEMA, SCHEMA_VERSION);
-    if (schema > SCHEMA_VERSION) {
-      throw new IllegalArgumentException(
-          "Color map schema %d is newer than the supported %d".formatted(schema, SCHEMA_VERSION));
-    }
+    ListDocument.checkSchema(envelope, SCHEMA_VERSION, "color maps"); // NON-NLS
     JsonArray maps = envelope.get(MAPS) instanceof JsonArray array ? array : null;
     return document(maps, JsonUtil.getStringList(envelope, FAVORITES), lowerBase);
   }
@@ -282,7 +281,7 @@ public final class ColorMapJson {
   public static JsonObject toEnvelope(Collection<ColorMap> maps, Collection<String> favorites) {
     JsonArrayBuilder array = Json.createArrayBuilder();
     maps.forEach(map -> array.add(toJson(map)));
-    JsonObjectBuilder b = Json.createObjectBuilder().add(SCHEMA, SCHEMA_VERSION).add(MAPS, array);
+    JsonObjectBuilder b = ListDocument.header(DOCUMENT_ID, SCHEMA_VERSION).add(MAPS, array);
     if (!favorites.isEmpty()) {
       JsonArrayBuilder ids = Json.createArrayBuilder();
       favorites.forEach(ids::add);
@@ -314,7 +313,7 @@ public final class ColorMapJson {
 
   public static void write(Path path, Collection<ColorMap> maps, Collection<String> favorites)
       throws IOException {
-    JsonUtil.write(path, toEnvelope(maps, favorites));
+    ListDocument.writeAtomic(path, toEnvelope(maps, favorites));
   }
 
   private static JsonObject domainToJson(ColorMapDomain domain) {

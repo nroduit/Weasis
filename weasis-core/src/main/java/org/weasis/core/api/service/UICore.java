@@ -61,6 +61,7 @@ import org.weasis.core.api.setting.SettingCatalog;
 import org.weasis.core.api.setting.SettingEnvironment;
 import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.setting.SettingsFileStore;
+import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceMonitor;
@@ -154,6 +155,11 @@ public final class UICore {
     if (StringUtil.hasText(prefDir)) {
       SettingsFileStore.configureUser(Path.of(prefDir));
     }
+    DocumentStore.configure(
+        StringUtil.hasText(prefDir) ? Path.of(prefDir) : null,
+        Path.of(
+            systemPreferences.getProperty(
+                "weasis.config.dir", AppProperties.WEASIS_PATH.toString()))); // NON-NLS
     SettingsFileStore.configureMachine(
         Path.of(
             systemPreferences.getProperty(

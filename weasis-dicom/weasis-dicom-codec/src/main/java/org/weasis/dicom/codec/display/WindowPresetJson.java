@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.api.util.ListDocument;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.display.WindowPreset.Domain;
 import org.weasis.dicom.codec.display.WindowPreset.DomainKind;
@@ -52,7 +53,9 @@ public final class WindowPresetJson {
 
   public static final int SCHEMA_VERSION = 1;
 
-  private static final String SCHEMA = "schema"; // NON-NLS
+  /** The id of the document, its file name without {@code .json}. */
+  public static final String DOCUMENT_ID = "windowPresets"; // NON-NLS
+
   private static final String PRESETS = "presets"; // NON-NLS
   private static final String ID = "id"; // NON-NLS
   private static final String NAME = "name"; // NON-NLS
@@ -191,21 +194,16 @@ public final class WindowPresetJson {
   public static JsonObject toEnvelope(Collection<WindowPreset> presets) {
     JsonArrayBuilder array = Json.createArrayBuilder();
     presets.forEach(p -> array.add(toJson(p)));
-    return Json.createObjectBuilder().add(SCHEMA, SCHEMA_VERSION).add(PRESETS, array).build();
+    return ListDocument.header(DOCUMENT_ID, SCHEMA_VERSION).add(PRESETS, array).build();
   }
 
   public static void write(Path path, Collection<WindowPreset> presets) throws IOException {
-    JsonUtil.write(path, toEnvelope(presets));
+    ListDocument.writeAtomic(path, toEnvelope(presets));
   }
 
   private static List<WindowPreset> readEnvelope(
       JsonObject envelope, Function<String, Optional<JsonObject>> lowerBase) {
-    int schema = JsonUtil.getInt(envelope, SCHEMA, SCHEMA_VERSION);
-    if (schema > SCHEMA_VERSION) {
-      throw new IllegalArgumentException(
-          "Window preset schema %d is newer than the supported %d"
-              .formatted(schema, SCHEMA_VERSION));
-    }
+    ListDocument.checkSchema(envelope, SCHEMA_VERSION, "window presets"); // NON-NLS
     return envelope.get(PRESETS) instanceof JsonArray array ? presets(array, lowerBase) : List.of();
   }
 

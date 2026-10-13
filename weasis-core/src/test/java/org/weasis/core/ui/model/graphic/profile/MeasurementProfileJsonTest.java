@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
@@ -63,7 +64,15 @@ class MeasurementProfileJsonTest {
         () -> assertEquals(profile.labels(), back.labels()),
         () -> assertEquals(profile.statistics(), back.statistics()),
         () -> assertFalse(back.builtIn()),
-        () -> assertTrue(writer.toString().contains("\"version\": 1")));
+        () -> assertTrue(writer.toString().contains("\"schema\": 1")),
+        () -> assertTrue(writer.toString().contains("\"kind\": \"weasis.document\"")));
+  }
+
+  @Test
+  void a_document_of_a_newer_schema_is_refused() {
+    String json = "{\"schema\":2,\"profiles\":[]}"; // NON-NLS
+    ByteArrayInputStream in = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+    assertThrows(IllegalArgumentException.class, () -> MeasurementProfileJson.read(in));
   }
 
   private static Integer decimalsOf(String defaults) {

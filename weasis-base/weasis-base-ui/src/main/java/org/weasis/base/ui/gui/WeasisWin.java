@@ -121,7 +121,9 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.Scope;
 import org.weasis.core.api.setting.Settings;
+import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -1245,9 +1247,12 @@ public class WeasisWin {
     MaskingModelRegistry.getInstance()
         .configure(
             SiteDocuments.find(MaskingModelRegistry.SITE_FILE).orElse(null),
-            StringUtil.hasText(prefDir)
-                ? Path.of(prefDir).resolve(MaskingModelRegistry.USER_FILE)
-                : null,
+            DocumentStore.locate(
+                Scope.USER,
+                MaskingModelRegistry.SITE_FILE,
+                StringUtil.hasText(prefDir)
+                    ? Path.of(prefDir).resolve(MaskingModelRegistry.USER_FILE)
+                    : null),
             path -> core.storeRemotePref(path, JsonUtil.CONTENT_TYPE));
   }
 

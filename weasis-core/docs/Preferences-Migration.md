@@ -58,6 +58,34 @@ machine instance of the same store, `SettingsFileStore.machine()`, in
 - The launcher reads the proxy from `weasis-core.json` before any plugin starts, and from
   `persistence.properties` until that file exists.
 
+### Configuration documents
+
+The user and machine layers of the configuration documents (window presets, color maps,
+masking, measurement profiles, DICOM and DICOMweb nodes, printers, authentication methods, search
+templates, calling nodes, launchers) are kept by scope, under the same name as the site document
+they override:
+
+| Scope | Folder | Documents |
+|---|---|---|
+| user | `<prefDir>/documents/` | `windowPresets.json`, `colormaps.json`, `identityMasking.json`, `measurementProfiles.json`, `dicomNodes.json`, `dicomWebNodes.json`, `dicomPrinterNodes.json`, `authentication.json`, `searchTemplates.json` |
+| machine | `<config>/machine/documents/` | `dicomCallingNodes.json`, `dicomLaunchers.json`, `otherLaunchers.json` |
+
+A registry asks `DocumentStore.locate(scope, name, earlier...)` for its file; the first earlier
+file found (`customWindowPresets.json`, `customColorMaps.json` and the other files of the
+preference directory, or the JSON of a plugin data folder) is copied once and left in place, and
+the 4.x XML is still converted when neither exists. `DocumentStore.declared()` lists the documents
+asked for, with their scope, for `config:list` and for the export and the mirror to come.
+
+Every document is written atomically with the same header, then its body:
+
+```json
+{"kind": "weasis.document", "id": "dicomNodes", "schema": 1, "updated": "2026-10-13T09:40:00Z",
+ "nodes": [ ... ]}
+```
+
+`id` is the file name without `.json`; a reader refuses a `schema` newer than its own and reads
+the earlier `version` key of `measurementProfiles.json` as the schema.
+
 The files are not exchanged with the preferences service yet. New code declares typed settings
 on top of these nodes or of the other stores, see [Settings.md](Settings.md).
 

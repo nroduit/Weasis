@@ -71,7 +71,9 @@ public class ConfigCommands implements CommandExtension {
 
   @Command(
       name = "list",
-      description = "The config folder of the resources package and the documents it holds.")
+      description =
+          "The config folder of the resources package, the documents it holds, and the user and"
+              + " machine documents of this installation.")
   static class ListDocuments extends AbstractVerb {
     @Override
     protected void run() {
@@ -92,6 +94,16 @@ public class ConfigCommands implements CommandExtension {
         }
       }
       body.add("documents", documents); // NON-NLS
+      JsonArrayBuilder layers = Json.createArrayBuilder();
+      for (DocumentStore.Declared declared : DocumentStore.declared()) {
+        layers.add(
+            Json.createObjectBuilder()
+                .add("name", declared.name()) // NON-NLS
+                .add("scope", declared.scope().id()) // NON-NLS
+                .add("file", declared.file().toString()) // NON-NLS
+                .add("exists", Files.isRegularFile(declared.file()))); // NON-NLS
+      }
+      body.add("layers", layers); // NON-NLS
       JsonArrayBuilder registries = Json.createArrayBuilder();
       SiteDocuments.reloadHooks().forEach(registries::add);
       body.add("registries", registries); // NON-NLS

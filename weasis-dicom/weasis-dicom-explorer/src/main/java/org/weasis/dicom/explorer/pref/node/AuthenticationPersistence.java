@@ -41,6 +41,8 @@ import org.weasis.core.api.net.auth.DefaultAuthMethod;
 import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.SecretStore;
+import org.weasis.core.api.setting.Scope;
+import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.EntryIds;
 import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
@@ -263,7 +265,8 @@ public final class AuthenticationPersistence {
     return new Documents(
         SiteDocuments.find(FILENAME).orElse(null),
         ResourceUtil.getResource(LEGACY_FILENAME).toPath(),
-        BundlePreferences.getFileInDataFolder(plugInId, FILENAME),
+        DocumentStore.locate(
+            Scope.USER, FILENAME, BundlePreferences.getFileInDataFolder(plugInId, FILENAME)),
         BundlePreferences.getFileInDataFolder(plugInId, LEGACY_FILENAME));
   }
 

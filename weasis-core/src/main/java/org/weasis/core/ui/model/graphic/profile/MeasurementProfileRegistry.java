@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.setting.Scope;
+import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LayeredEntries;
 import org.weasis.core.api.util.LayeredEntries.Layer;
@@ -128,7 +130,11 @@ public final class MeasurementProfileRegistry {
       UICore core = GuiUtils.getUICore();
       WProperties preferences = core.getSystemPreferences();
       String prefDir = preferences.getProperty("weasis.pref.dir"); // NON-NLS
-      Path file = StringUtil.hasText(prefDir) ? Path.of(prefDir).resolve(USER_FILE) : null;
+      Path file =
+          DocumentStore.locate(
+              Scope.USER,
+              SITE_FILE,
+              StringUtil.hasText(prefDir) ? Path.of(prefDir).resolve(USER_FILE) : null);
       MeasurementProfileRegistry registry =
           new MeasurementProfileRegistry(
               loadBuiltIn(),

@@ -87,7 +87,8 @@ class MaskingModelWriterTest {
     String json = Files.readString(first);
 
     assertAll(
-        () -> assertEquals(json, Files.readString(second)),
+        // Two saves differ only by the instant they were made
+        () -> assertEquals(withoutUpdated(json), withoutUpdated(Files.readString(second))),
         () -> assertFalse(json.contains("DEVICE"), "an unset category is not written"),
         () -> assertTrue(json.contains("\"schema\""), "the schema version is written"),
         () ->
@@ -102,5 +103,9 @@ class MaskingModelWriterTest {
     Path file = dir.resolve("locked.json");
     new MaskingModel(List.of(), List.of(), null, null, true).write(file);
     assertTrue(MaskingModel.read(file).locked());
+  }
+
+  private static String withoutUpdated(String json) {
+    return json.replaceAll("\"updated\"\\s*:\\s*\"[^\"]*\"", ""); // NON-NLS
   }
 }

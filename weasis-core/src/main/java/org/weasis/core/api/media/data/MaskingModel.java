@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LayeredEntries;
+import org.weasis.core.api.util.ListDocument;
 import org.weasis.core.util.StringUtil;
 
 /**
@@ -80,6 +81,9 @@ public record MaskingModel(
   private static final Logger LOGGER = LoggerFactory.getLogger(MaskingModel.class);
 
   public static final int SCHEMA_VERSION = 1;
+
+  /** The id of the document, its file name without {@code .json}. */
+  public static final String DOCUMENT_ID = "identityMasking"; // NON-NLS
 
   /** Prefix of a Weasis-internal tag, resolved by keyword with {@link TagW#get(String)}. */
   public static final String INTERNAL_PREFIX = "weasis:"; // NON-NLS
@@ -162,12 +166,12 @@ public record MaskingModel(
 
   /** Writes the document where {@link #read(Path)} can read it back. */
   public void write(Path file) throws IOException {
-    JsonUtil.write(file, toJson());
+    ListDocument.writeAtomic(file, toJson());
   }
 
   /** The document as JSON, in the format {@link #read(InputStream)} accepts. */
   public JsonObject toJson() {
-    JsonObjectBuilder root = Json.createObjectBuilder().add("schema", SCHEMA_VERSION); // NON-NLS
+    JsonObjectBuilder root = ListDocument.header(DOCUMENT_ID, SCHEMA_VERSION);
     if (locked) {
       root.add("locked", true); // NON-NLS
     }

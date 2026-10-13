@@ -41,6 +41,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.setting.Scope;
+import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.EntryIds;
 import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
@@ -354,7 +356,8 @@ public class SearchParameters implements LayeredEntries.Entry {
     return new Documents(
         SiteDocuments.find(FILENAME).orElse(null),
         ResourceUtil.getResource(LEGACY_FILENAME).toPath(),
-        BundlePreferences.getFileInDataFolder(plugInId, FILENAME),
+        DocumentStore.locate(
+            Scope.USER, FILENAME, BundlePreferences.getFileInDataFolder(plugInId, FILENAME)),
         BundlePreferences.getFileInDataFolder(plugInId, LEGACY_FILENAME));
   }
 

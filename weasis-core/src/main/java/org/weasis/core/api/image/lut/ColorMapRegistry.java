@@ -32,6 +32,8 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.service.UICore;
+import org.weasis.core.api.setting.Scope;
+import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LayeredEntries;
 import org.weasis.core.api.util.LayeredEntries.Layer;
@@ -188,7 +190,11 @@ public final class ColorMapRegistry {
   private static ColorMapRegistry createDefault() {
     UICore core = UICore.getInstance();
     String prefDir = core.getSystemPreferences().getProperty(PREF_DIR_PROPERTY);
-    Path userFile = StringUtil.hasText(prefDir) ? Path.of(prefDir).resolve(USER_FILE) : null;
+    Path userFile =
+        DocumentStore.locate(
+            Scope.USER,
+            SITE_FILE,
+            StringUtil.hasText(prefDir) ? Path.of(prefDir).resolve(USER_FILE) : null);
     ColorMapRegistry registry =
         new ColorMapRegistry(
             SiteDocuments.find(SITE_FILE).orElse(null),

@@ -42,6 +42,8 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.SecretStore;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.setting.Scope;
+import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.EntryIds;
 import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
@@ -389,7 +391,10 @@ public abstract class AbstractDicomNode implements LayeredEntries.Entry {
     return new Documents(
         SiteDocuments.find(type.getJsonFilename()).orElse(null),
         ResourceUtil.getResource(type.getFilename()).toPath(),
-        BundlePreferences.getFileInDataFolder(plugInId, type.getJsonFilename()),
+        DocumentStore.locate(
+            type == Type.DICOM_CALLING ? Scope.MACHINE : Scope.USER,
+            type.getJsonFilename(),
+            BundlePreferences.getFileInDataFolder(plugInId, type.getJsonFilename())),
         BundlePreferences.getFileInDataFolder(plugInId, type.getFilename()));
   }
 
