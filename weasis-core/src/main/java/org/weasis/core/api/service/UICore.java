@@ -24,7 +24,6 @@ import java.lang.management.ManagementFactory;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,12 +56,13 @@ import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.net.URLParameters;
 import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.RemoteSettings;
+import org.weasis.core.api.setting.Scope;
 import org.weasis.core.api.setting.SettingCatalog;
 import org.weasis.core.api.setting.SettingEnvironment;
 import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.setting.SettingsFileStore;
 import org.weasis.core.api.util.DocumentStore;
-import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceMonitor;
 import org.weasis.core.api.util.ResourceUtil;
@@ -96,6 +96,13 @@ public final class UICore {
   public static final String USE_SYSTEM_FILE_CHOOSER = "weasis.use.system.file.chooser";
 
   /** Whether the user documents are mirrored to the remote preference service. */
+  /** Mirrors the user settings and documents to the preference service. */
+  public static final String P_SYNC = "weasis.pref.sync"; // NON-NLS
+
+  /**
+   * @deprecated the 4.8 name of {@link #P_SYNC}, still read
+   */
+  @Deprecated(since = "5.0")
   public static final String P_SYNC_DOCUMENTS = "weasis.pref.sync.documents"; // NON-NLS
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UICore.class);
@@ -165,6 +172,7 @@ public final class UICore {
             systemPreferences.getProperty(
                 "weasis.config.dir", AppProperties.WEASIS_PATH.toString())), // NON-NLS
         AppProperties.WEASIS_PATH.resolve("data")); // NON-NLS
+    startRemoteSettings(prefDir);
     this.propsFile =
         new File(systemPreferences.getProperty("weasis.pref.dir"), "weasis.properties");
     if (!propsFile.canRead()) {
@@ -268,6 +276,7 @@ public final class UICore {
               && pluginManager.getStartedPlugins().isEmpty()) {
             SettingsFileStore.user().flushAll();
             SettingsFileStore.machine().flushAll();
+            RemoteSettings.getInstance().push();
           }
         });
   }
@@ -325,6 +334,7 @@ public final class UICore {
 
       SettingsFileStore.machine().store(AppProperties.CORE_PLUGIN_ID, "", getLocalPersistence());
       SettingsFileStore.machine().flushAll();
+      RemoteSettings.getInstance().push();
     } catch (Exception e) {
       LOGGER.error("Error stopping Weasis core plugin", e);
     }
@@ -418,44 +428,43 @@ public final class UICore {
   }
 
   /**
-   * Stores a user document (window presets, color maps, masking, measurement profiles) to the
-   * preference service URL when it is configured. Does nothing when no remote pref URL is set, when
-   * the session conditions prevent remote storage, or while {@value #P_SYNC_DOCUMENTS} is off (its
-   * default until the service stores and returns such documents).
+   * Tells the mirror of the user layer that a document changed.
    *
-   * @param filePath the local file to upload
-   * @param contentType the MIME type of the content, {@link JsonUtil#CONTENT_TYPE} for a document
+   * @deprecated the documents are mirrored by {@link RemoteSettings}, which every user document
+   *     write already notifies; the arguments are ignored
    */
+  @Deprecated(since = "5.0")
   public void storeRemotePref(Path filePath, String contentType) {
-    if (!systemPreferences.getBooleanProperty(P_SYNC_DOCUMENTS, false)) {
-      LOGGER.debug("{} is off, {} is kept local", P_SYNC_DOCUMENTS, filePath);
+    RemoteSettings.getInstance().changed();
+  }
+
+  /**
+   * Turns on the mirror of the user settings and documents when {@value #P_SYNC} is on, a
+   * preference service is set and the session may store remotely, then merges what the service
+   * holds before any plugin reads its settings.
+   */
+  private void startRemoteSettings(String prefDir) {
+    boolean on =
+        systemPreferences.getBooleanProperty(
+            P_SYNC, systemPreferences.getBooleanProperty(P_SYNC_DOCUMENTS, false));
+    String url = getPrefServiceUrl();
+    if (!on
+        || !StringUtil.hasText(url)
+        || !StringUtil.hasText(prefDir)
+        || (isLocalSession() && !isStoreLocalSession())) {
+      LOGGER.debug("The user settings are not mirrored to a preference service");
       return;
     }
-    String remotePrefURL = getPrefServiceUrl();
-    if (remotePrefURL != null) {
-      try {
-        if (!isLocalSession() || isStoreLocalSession()) {
-          String sURL =
-              String.format(
-                  "%s?user=%s&profile=%s", // NON-NLS
-                  remotePrefURL,
-                  getUrlEncoding(AppProperties.WEASIS_USER),
-                  getUrlEncoding(AppProperties.WEASIS_PROFILE));
-          Map<String, String> map = new HashMap<>();
-          map.put("Content-Type", contentType); // NON-NLS
-          URLParameters urlParameters = new URLParameters(map, true);
-          ClosableURLConnection http = NetworkUtil.getUrlConnection(sURL, urlParameters);
-          try (OutputStream out = http.getOutputStream()) {
-            Files.copy(filePath, out);
-          }
-          if (http.urlConnection() instanceof HttpURLConnection httpURLConnection) {
-            NetworkUtil.readResponse(httpURLConnection, urlParameters.headers());
-          }
-        }
-      } catch (Exception e) {
-        LOGGER.error("Cannot store remote preference for user: {}", AppProperties.WEASIS_USER, e);
-      }
-    }
+    RemoteSettings remote = RemoteSettings.getInstance();
+    remote.configure(
+        new RemoteSettings.HttpTransport(
+            url, AppProperties.WEASIS_USER, AppProperties.WEASIS_PROFILE),
+        SettingsFileStore.user(),
+        DocumentStore.folder(Scope.USER),
+        Path.of(prefDir, RemoteSettings.STATE_FILE));
+    SettingsFileStore.user().onSaved(remote::changed);
+    DocumentStore.onUserDocumentWritten(remote::changed);
+    remote.pull();
   }
 
   public static String getUrlEncoding(String val) {

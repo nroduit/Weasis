@@ -113,7 +113,31 @@ Surfaces: **Export settings…** and **Import settings…** in the preference di
 `config:pack [--layer user|machine|site] [--with-machine] [--out <file>]` and
 `config:unpack --file <file> [--replace] [--dry-run]`.
 
-The files are not exchanged with the preferences service yet. New code declares typed settings
+### Mirror to the preference service
+
+With `weasis.pref.sync` on (the 4.8 name `weasis.pref.sync.documents` is still read), a
+preference service in `weasis.pref.url`, and a session allowed to store remotely
+(`weasis.pref.local.session`, `weasis.pref.store.local.session`), `RemoteSettings` mirrors the
+user layer — the settings groups and the user documents — to the service. The machine store and
+the secrets never leave the workstation; the launch values keep their own exchange
+(`text/x-java-properties`).
+
+- One module per file, `text/plain`, `module=<kind>/<id>@<schema>`: `settings/weasis-core@1`,
+  `documents/windowPresets@1`. The schema in the name keeps clients of another schema apart. The
+  service has no listing, so the module `index@1` lists the modules written. A body is compact
+  JSON with every non-ASCII character escaped: the service returns `text/plain` without a charset.
+- At start, before any plugin reads its settings, the index and its modules are read in parallel
+  within a deadline and merged into the local files: a settings group key by key, the newer file
+  (by `updated`) winning a key changed on both sides; a document entry by entry, the newer
+  document on top. Keys and entries present on one side only are kept, so a deletion can come
+  back from another workstation. When the service is unreachable the local files are used.
+- A change is sent about three seconds after it is saved, and at exit: every file whose content
+  differs from what the service last had (checksums in `<prefDir>/sync-state.json`), then the
+  index.
+- `config:sync [--pull]` does the same on demand; it needs the network capabilities of the command
+  policy.
+
+ New code declares typed settings
 on top of these nodes or of the other stores, see [Settings.md](Settings.md).
 
 ## Preference pages

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.setting.Scope;
@@ -51,6 +52,7 @@ public final class DocumentStore {
   private static final Map<String, Declared> DECLARED = new ConcurrentSkipListMap<>();
   private static volatile Path userFolder;
   private static volatile Path machineFolder;
+  private static final List<Runnable> USER_WRITTEN = new CopyOnWriteArrayList<>();
 
   private DocumentStore() {}
 
@@ -106,6 +108,19 @@ public final class DocumentStore {
         }
         return;
       }
+    }
+  }
+
+  /** Called after a document of the user folder has been written. */
+  public static void onUserDocumentWritten(Runnable listener) {
+    USER_WRITTEN.add(listener);
+  }
+
+  /** Told by every writer of a document; notifies when it is a user document. */
+  static void written(Path file) {
+    Path folder = userFolder;
+    if (folder != null && file.toAbsolutePath().startsWith(folder.toAbsolutePath())) {
+      USER_WRITTEN.forEach(Runnable::run);
     }
   }
 

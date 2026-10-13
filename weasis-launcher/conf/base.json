@@ -253,9 +253,9 @@
       "category": "LAUNCH"
     },
     {
-      "code": "weasis.pref.sync.documents",
+      "code": "weasis.pref.sync",
       "value": "false",
-      "description": "Mirror the user documents (window presets, color maps, masking, measurement profiles) to the remote preference service. Keep it off until the service stores and returns such documents",
+      "description": "Mirror the user settings and documents (window presets, color maps, masking, measurement profiles, DICOM nodes, search templates) to the preference service of weasis.pref.url, so that they follow the user to any workstation. The settings of the workstation and the secrets are never sent. Keep it off until the service authenticates its users. The 4.8 name weasis.pref.sync.documents is still read",
       "type": "F",
       "javaType": "BOOLEAN",
       "category": "LAUNCH"

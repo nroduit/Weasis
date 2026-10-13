@@ -619,21 +619,39 @@ public final class SettingsPackage {
     JsonObjectBuilder result =
         ListDocument.header(
             ListDocument.documentId(target), JsonUtil.getInt(incoming, ListDocument.SCHEMA, 1));
-    Set<String> keys = new LinkedHashSet<>();
-    if (current != null && mode == Mode.MERGE) {
-      keys.addAll(current.keySet());
-    }
-    keys.addAll(incoming.keySet());
-    keys.removeAll(HEADER);
-    for (String key : keys) {
-      JsonValue mine = current == null || mode == Mode.REPLACE ? null : current.get(key);
-      JsonValue theirs = incoming.get(key);
-      result.add(key, mergeValue(mine, theirs, locks.ids(), counts));
-    }
+    mergeBody(mode == Mode.MERGE ? current : null, incoming, locks.ids(), counts)
+        .forEach(result::add);
     if (apply && (counts[0] > 0 || counts[1] > 0 || current == null || mode == Mode.REPLACE)) {
       ListDocument.writeAtomic(target, result.build());
     }
     return new Change(path, target.toString(), counts[0], counts[1], counts[2], counts[3], null);
+  }
+
+  /**
+   * The body of {@code base} with {@code overlay} on top: lists of entries merged by {@code id}
+   * (the overlay's entry wins, an id in {@code lockedIds} keeps the base one), lists of plain
+   * values united, any other value taken from the overlay. The header keys are left out.
+   *
+   * @param base the document below, or null
+   * @param counts incremented: added, replaced, unchanged, skipped
+   */
+  static Map<String, JsonValue> mergeBody(
+      JsonObject base, JsonObject overlay, Set<String> lockedIds, int[] counts) {
+    Set<String> keys = new LinkedHashSet<>();
+    if (base != null) {
+      keys.addAll(base.keySet());
+    }
+    keys.addAll(overlay.keySet());
+    keys.removeAll(HEADER);
+    Map<String, JsonValue> body = new LinkedHashMap<>();
+    for (String key : keys) {
+      JsonValue merged =
+          mergeValue(base == null ? null : base.get(key), overlay.get(key), lockedIds, counts);
+      if (merged != null) {
+        body.put(key, merged);
+      }
+    }
+    return body;
   }
 
   private static JsonValue mergeValue(

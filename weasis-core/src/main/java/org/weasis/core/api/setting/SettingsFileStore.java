@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +98,7 @@ public final class SettingsFileStore {
   private final ScheduledExecutorService saver;
   private volatile Path folder;
   private volatile List<LegacySettings.Source> legacy = List.of();
+  private final List<Runnable> savedListeners = new CopyOnWriteArrayList<>();
 
   SettingsFileStore(long saveDelayMs) {
     this.saveDelayMs = saveDelayMs;
@@ -237,6 +239,11 @@ public final class SettingsFileStore {
     return root.node(GROUP_PARENT + "/" + id);
   }
 
+  /** Called after a group file has been written: the remote mirror follows the changes. */
+  public void onSaved(Runnable listener) {
+    savedListeners.add(listener);
+  }
+
   /** Saves every group changed since its last save. */
   public void flushAll() {
     groups.values().forEach(this::save);
@@ -287,6 +294,7 @@ public final class SettingsFileStore {
         Path tmp = dir.resolve(file.getFileName() + ".tmp"); // NON-NLS
         JsonUtil.write(tmp, json);
         move(tmp, file);
+        savedListeners.forEach(Runnable::run);
       } catch (IOException e) {
         LOGGER.error("Cannot save the settings of {} into {}", group.name, file, e);
         synchronized (group) {

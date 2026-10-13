@@ -29,6 +29,7 @@ import org.weasis.core.api.command.Needs;
 import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.service.UICore;
+import org.weasis.core.api.setting.RemoteSettings;
 import org.weasis.core.api.setting.SettingCatalog;
 import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.setting.Settings.Resolution;
@@ -59,7 +60,8 @@ import picocli.CommandLine.Parameters;
       ConfigCommands.Catalog.class,
       ConfigCommands.Setting.class,
       ConfigCommands.Pack.class,
-      ConfigCommands.Unpack.class
+      ConfigCommands.Unpack.class,
+      ConfigCommands.Sync.class
     })
 @Since("5.0")
 public class ConfigCommands implements CommandExtension {
@@ -319,6 +321,36 @@ public class ConfigCommands implements CommandExtension {
         SiteDocuments.reloadAll();
       }
       print(toJson(plan, dryRun, replace).toString());
+    }
+  }
+
+  /** Sends what changed to the preference service, after reading it first with {@code --pull}. */
+  @Command(
+      name = "sync",
+      description =
+          "Mirrors the user settings and documents with the preference service: sends what changed,"
+              + " and with --pull reads and merges the service's copy first.")
+  @Needs({Capability.NETWORK_READ, Capability.NETWORK_WRITE})
+  static class Sync extends AbstractVerb {
+    @Option(names = "--pull", description = "Read and merge the service's copy before sending.")
+    boolean pull;
+
+    @Override
+    protected void run() {
+      RemoteSettings remote = RemoteSettings.getInstance();
+      JsonObjectBuilder body = Json.createObjectBuilder().add("enabled", remote.isEnabled());
+      JsonArrayBuilder errors = Json.createArrayBuilder();
+      if (remote.isEnabled()) {
+        if (pull) {
+          RemoteSettings.Report pulled = remote.pull();
+          body.add("pulled", Json.createArrayBuilder(pulled.pulled())); // NON-NLS
+          pulled.errors().forEach(errors::add);
+        }
+        RemoteSettings.Report pushed = remote.push();
+        body.add("pushed", Json.createArrayBuilder(pushed.pushed())); // NON-NLS
+        pushed.errors().forEach(errors::add);
+      }
+      print(body.add("errors", errors).build().toString()); // NON-NLS
     }
   }
 

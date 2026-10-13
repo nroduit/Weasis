@@ -153,5 +153,6 @@ public final class ListDocument {
       Files.deleteIfExists(temp);
       throw e;
     }
+    DocumentStore.written(file);
   }
 }
