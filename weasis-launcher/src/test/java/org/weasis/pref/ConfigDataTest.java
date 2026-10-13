@@ -15,8 +15,13 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Properties;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class ConfigDataTest {
 
@@ -59,5 +64,31 @@ class ConfigDataTest {
                 "José Müller", configData.getProperty(ConfigData.P_WEASIS_USER)), // NON-NLS
         () -> assertEquals("17181", configData.getProperty("gosh.port")), // NON-NLS
         () -> assertEquals("127.0.0.1", configData.getProperty("https.proxyHost"))); // NON-NLS
+  }
+
+  @Test
+  void the_machine_settings_file_gives_the_values_of_weasis_core(@TempDir Path dir)
+      throws IOException {
+    Path file =
+        Files.writeString(
+            dir.resolve("weasis-core.json"), // NON-NLS
+            "{\"kind\":\"weasis.settings\",\"id\":\"weasis-core\",\"schema\":1," // NON-NLS
+                + "\"values\":{\"proxy.manual\":\"true\",\"proxy.http.host\":\"proxy\"}," // NON-NLS
+                + "\"nodes\":{\"x\":{\"values\":{\"a\":\"b\"}}}}"); // NON-NLS
+    Properties values = new Properties();
+    ConfigData.readMachineValues(file, values);
+
+    assertAll(
+        () -> assertEquals("true", values.getProperty("proxy.manual")), // NON-NLS
+        () -> assertEquals("proxy", values.getProperty("proxy.http.host")), // NON-NLS
+        () -> assertNull(values.getProperty("a")));
+  }
+
+  @Test
+  void an_unreadable_machine_settings_file_gives_nothing(@TempDir Path dir) throws IOException {
+    Path file = Files.writeString(dir.resolve("weasis-core.json"), "{ not json"); // NON-NLS
+    Properties values = new Properties();
+    ConfigData.readMachineValues(file, values);
+    assertTrue(values.isEmpty());
   }
 }

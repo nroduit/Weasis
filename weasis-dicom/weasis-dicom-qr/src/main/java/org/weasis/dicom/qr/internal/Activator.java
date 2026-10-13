@@ -11,9 +11,8 @@ package org.weasis.dicom.qr.internal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.setting.SettingsFileStore;
 import org.weasis.core.api.util.LegacyConverters;
-import org.weasis.core.util.PropertiesUtil;
 import org.weasis.dicom.qr.DicomQrView;
 import org.weasis.dicom.qr.SearchParameters;
 import org.weasis.plugin.PluginContext;
@@ -30,17 +29,14 @@ public class Activator extends WeasisPlugin {
   public void start() {
     LOGGER.info("DICOM Q/R is activated");
     LegacyConverters.register(SearchParameters.CONVERSION);
-    PropertiesUtil.loadProperties(
-        BundlePreferences.getFileInDataFolder(getPluginId(), "import.properties"),
-        DicomQrView.getPersistence());
+    SettingsFileStore.machine()
+        .load(getPluginId(), "import", DicomQrView.getPersistence()); // NON-NLS
   }
 
   @Override
   public void stop() {
     LOGGER.info("DICOM Q/R is deactivated");
-    PropertiesUtil.storeProperties(
-        BundlePreferences.getFileInDataFolder(getPluginId(), "import.properties"),
-        DicomQrView.getPersistence(),
-        null);
+    SettingsFileStore.machine()
+        .store(getPluginId(), "import", DicomQrView.getPersistence()); // NON-NLS
   }
 }

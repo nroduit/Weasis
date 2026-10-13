@@ -17,7 +17,7 @@ import java.util.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.setting.UserSettingsStore;
+import org.weasis.core.api.setting.SettingsFileStore;
 import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 
@@ -62,14 +62,14 @@ public class BundlePreferences {
 
   /**
    * The root node of a plugin's settings, {@code /org/weasis/<pluginId>}, for the current Weasis
-   * user and profile. The nodes are held by the {@link UserSettingsStore} and saved in the {@code
+   * user and profile. The nodes are held by the {@link SettingsFileStore} and saved in the {@code
    * settings} folder of the preference directory.
    *
    * @param pluginId the plugin id, or {@link AppProperties#CORE_PLUGIN_ID} for the core
    * @return the node, or null when {@code pluginId} is null
    */
   public static Preferences getDefaultPreferences(String pluginId) {
-    return pluginId == null ? null : UserSettingsStore.getInstance().group(pluginId);
+    return pluginId == null ? null : SettingsFileStore.user().group(pluginId);
   }
 
   public static void putStringPreferences(Preferences pref, String key, String value) {

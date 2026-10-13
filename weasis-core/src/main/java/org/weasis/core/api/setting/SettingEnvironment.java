@@ -35,7 +35,7 @@ public interface SettingEnvironment {
    * The environment of the running application.
    *
    * @param systemPreferences {@code weasis.properties}
-   * @param localPersistence {@code persistence.properties}
+   * @param localPersistence {@code UICore.getLocalPersistence()}, saved in the machine store
    * @param nodes the {@code java.util.prefs} root node of a group
    * @param launchConfiguration the values of {@code base.json} after the Viewer Hub overrides
    */

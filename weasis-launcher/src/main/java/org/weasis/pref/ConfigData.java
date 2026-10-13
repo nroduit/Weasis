@@ -11,11 +11,14 @@ package org.weasis.pref;
 
 import static java.util.stream.Collectors.*;
 
+import com.formdev.flatlaf.json.Json;
+import com.formdev.flatlaf.json.ParseException;
 import com.formdev.flatlaf.util.SystemInfo;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -507,17 +510,29 @@ public class ConfigData {
     }
   }
 
-  public void applyProxy(String dir) {
-    File file = new File(dir, "persistence.properties");
-    if (!file.canRead()) {
-      // Fix old name
-      File oldFile = new File(dir, "persitence.properties");
-      if (!oldFile.canRead() || !oldFile.renameTo(file)) {
-        return;
-      }
-    }
+  /**
+   * Applies the manual proxy of this workstation before anything is downloaded. The values are
+   * those of {@code weasis-core} in the machine settings store, or of the earlier {@code
+   * persistence.properties} until the store has been written once.
+   *
+   * @param machineFile {@code <config>/machine/settings/weasis-core.json}
+   * @param legacyDir the core data folder holding {@code persistence.properties}
+   */
+  public void applyProxy(Path machineFile, String legacyDir) {
     Properties p = new Properties();
-    FileUtil.loadProperties(file.toPath(), p);
+    if (Files.isRegularFile(machineFile)) {
+      readMachineValues(machineFile, p);
+    } else {
+      File file = new File(legacyDir, "persistence.properties");
+      if (!file.canRead()) {
+        // Fix old name
+        File oldFile = new File(legacyDir, "persitence.properties");
+        if (!oldFile.canRead() || !oldFile.renameTo(file)) {
+          return;
+        }
+      }
+      FileUtil.loadProperties(file.toPath(), p);
+    }
 
     boolean mproxy = Utils.emptyToFalse(p.getProperty("proxy.manual"));
 
@@ -549,6 +564,23 @@ public class ConfigData {
       if (Utils.hasText(val)) {
         applyProxyProperty("socksProxyPort", p.getProperty("proxy.socks.port"), mproxy); // NON-NLS
       }
+    }
+  }
+
+  /** The {@code values} of a settings file of the machine store, as written by weasis-core. */
+  static void readMachineValues(Path file, Properties target) {
+    try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+      if (Json.parse(reader) instanceof Map<?, ?> json
+          && json.get("values") instanceof Map<?, ?> values) { // NON-NLS
+        values.forEach(
+            (k, v) -> {
+              if (k instanceof String key && v instanceof String value) {
+                target.setProperty(key, value);
+              }
+            });
+      }
+    } catch (IOException | ParseException e) {
+      LOGGER.warn("Cannot read the machine settings {}", file, e);
     }
   }
 

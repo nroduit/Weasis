@@ -27,6 +27,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -40,9 +41,15 @@ import org.weasis.core.api.setting.SettingsNode.Data;
 import org.weasis.core.api.util.JsonUtil;
 
 /**
- * The user settings of the current Weasis user and profile: one JSON file per group in the {@code
- * settings} folder of the preference directory, exposed as {@code java.util.prefs} nodes so that
- * the code written against {@code BundlePreferences} keeps working unchanged.
+ * Settings stored as one JSON file per group, exposed as {@code java.util.prefs} nodes so that the
+ * code written against {@code BundlePreferences} keeps working unchanged. Two stores:
+ *
+ * <ul>
+ *   <li>{@link #user()}: the settings of the current Weasis user and profile, in the {@code
+ *       settings} folder of the preference directory;
+ *   <li>{@link #machine()}: the settings of this workstation (window geometry, last folders, proxy,
+ *       export options…), in {@code machine/settings} of the configuration directory; never sent.
+ * </ul>
  *
  * <pre>{@code
  * {"kind": "weasis.settings", "id": "weasis-core", "schema": 1, "updated": "…",
@@ -50,23 +57,25 @@ import org.weasis.core.api.util.JsonUtil;
  * }</pre>
  *
  * <p>A group is read when its node is first asked for. When it has no file yet, the values of the
- * same node in the JDK store (where earlier 5.0 builds kept them, shared by every user of the OS
- * account) are copied once; the JDK store is left as it was. A change is saved a short time after
- * it is made, on {@code flush()} / {@code sync()}, and at exit. A file that does not parse is set
- * aside as {@code .invalid}; a file of a newer schema is left untouched and its group is kept in
- * memory only.
+ * stores used before are copied once (see {@link #configureUser} and {@link #configureMachine});
+ * those stores are left as they were. A change is saved a short time after it is made, on {@code
+ * flush()} / {@code sync()}, and at exit. A file that does not parse is set aside as {@code
+ * .invalid}; a file of a newer schema is left untouched and its group is kept in memory only.
  *
  * <p>Nodes asked for before {@link #configure} are kept in memory and merged with their file once
  * the folder is known, the values set in memory winning.
  */
-public final class UserSettingsStore {
-  private static final Logger LOGGER = LoggerFactory.getLogger(UserSettingsStore.class);
+public final class SettingsFileStore {
+  private static final Logger LOGGER = LoggerFactory.getLogger(SettingsFileStore.class);
 
   public static final String KIND = "weasis.settings"; // NON-NLS
   public static final int SCHEMA = 1;
 
-  /** The folder of the preference directory holding the group files. */
+  /** The folder holding the group files, in the preference directory and in {@link #MACHINE}. */
   public static final String FOLDER = "settings"; // NON-NLS
+
+  /** The folder of the configuration directory holding the machine store. */
+  public static final String MACHINE = "machine"; // NON-NLS
 
   static final String GROUP_PARENT = "org/weasis"; // NON-NLS
 
@@ -79,7 +88,8 @@ public final class UserSettingsStore {
 
   private static final long SAVE_DELAY_MS = 2000;
 
-  private static final UserSettingsStore INSTANCE = createDefault();
+  private static final SettingsFileStore USER = createDefault("user"); // NON-NLS
+  private static final SettingsFileStore MACHINE_STORE = createDefault("machine"); // NON-NLS
 
   private final SettingsNode root;
   private final Map<String, Group> groups = new ConcurrentHashMap<>();
@@ -88,7 +98,7 @@ public final class UserSettingsStore {
   private volatile Path folder;
   private volatile List<LegacySettings.Source> legacy = List.of();
 
-  UserSettingsStore(long saveDelayMs) {
+  SettingsFileStore(long saveDelayMs) {
     this.saveDelayMs = saveDelayMs;
     this.root = new SettingsNode(this);
     this.saver =
@@ -100,25 +110,99 @@ public final class UserSettingsStore {
             });
   }
 
-  private static UserSettingsStore createDefault() {
-    UserSettingsStore store = new UserSettingsStore(SAVE_DELAY_MS);
-    Runtime.getRuntime().addShutdownHook(new Thread(store::flushAll, "settings-flush")); // NON-NLS
+  private static SettingsFileStore createDefault(String name) {
+    SettingsFileStore store = new SettingsFileStore(SAVE_DELAY_MS);
+    Runtime.getRuntime()
+        .addShutdownHook(new Thread(store::flushAll, "settings-flush-" + name)); // NON-NLS
     return store;
   }
 
-  public static UserSettingsStore getInstance() {
-    return INSTANCE;
+  /** The settings of the current Weasis user and profile. */
+  public static SettingsFileStore user() {
+    return USER;
+  }
+
+  /** The settings of this workstation. */
+  public static SettingsFileStore machine() {
+    return MACHINE_STORE;
   }
 
   /**
-   * Sets the folder of the group files, {@code <prefDir>/settings}, and reads the groups already
+   * Sets the folder of the user store, {@code <prefDir>/settings}, and reads the groups already
    * asked for. A group without a file is first filled from the stores used before: the JDK store of
    * the earlier 5.0 builds, then the 4.x files {@code <prefDir>/<module>.xml}.
    *
    * @param prefDir the preference directory of the current Weasis user and profile
    */
-  public void configure(Path prefDir) {
-    configure(prefDir.resolve(FOLDER), LegacySettings.of(prefDir));
+  public static void configureUser(Path prefDir) {
+    USER.configure(prefDir.resolve(FOLDER), LegacySettings.of(prefDir));
+  }
+
+  /**
+   * Sets the folder of the machine store, {@code <configDir>/machine/settings}. A group without a
+   * file is first filled from the {@code .properties} files of the plugin's data folder: {@code
+   * persistence.properties} as the values of {@code weasis-core}, every other file as the node
+   * named after it.
+   *
+   * @param configDir the configuration directory of the OS account
+   * @param dataDir the root of the plugin data folders, {@code <weasis.path>/data}
+   */
+  public static void configureMachine(Path configDir, Path dataDir) {
+    MACHINE_STORE.configure(
+        configDir.resolve(MACHINE).resolve(FOLDER), List.of(LegacySettings.ofDataFolder(dataDir)));
+  }
+
+  /**
+   * Copies the values of a node into {@code target}, keeping the entries of {@code target} that the
+   * node does not hold.
+   *
+   * @param path the node below the group, empty for the group itself
+   */
+  public void load(String group, String path, Properties target) {
+    Preferences node = node(group, path);
+    try {
+      for (String key : node.keys()) {
+        String value = node.get(key, null);
+        if (value != null) {
+          target.setProperty(key, value);
+        }
+      }
+    } catch (BackingStoreException e) {
+      LOGGER.error("Cannot read the settings {}/{}", group, path, e);
+    }
+  }
+
+  /**
+   * Makes the values of a node those of {@code source}: keys missing from {@code source} are
+   * removed, the others written when they changed.
+   *
+   * @param path the node below the group, empty for the group itself
+   */
+  public void store(String group, String path, Properties source) {
+    Preferences node = node(group, path);
+    try {
+      for (String key : node.keys()) {
+        if (!(source.get(key) instanceof String)) {
+          node.remove(key);
+        }
+      }
+    } catch (BackingStoreException e) {
+      LOGGER.error("Cannot read the settings {}/{}", group, path, e);
+    }
+    // The entries of source only: WProperties.getProperty falls back to system and site values
+    source.forEach(
+        (k, v) -> {
+          if (k instanceof String key && v instanceof String value) {
+            if (!value.equals(node.get(key, null))) {
+              node.put(key, value);
+            }
+          }
+        });
+  }
+
+  private Preferences node(String group, String path) {
+    Preferences node = group(group);
+    return path == null || path.isEmpty() ? node : node.node(path);
   }
 
   void configure(Path folder, List<LegacySettings.Source> legacy) {
@@ -327,7 +411,7 @@ public final class UserSettingsStore {
 
   private static boolean isEmpty(Data data) {
     return data.values.isEmpty()
-        && data.children.values().stream().allMatch(UserSettingsStore::isEmpty);
+        && data.children.values().stream().allMatch(SettingsFileStore::isEmpty);
   }
 
   /** The file of a group: its id with any character outside {@code [A-Za-z0-9._-]} replaced. */

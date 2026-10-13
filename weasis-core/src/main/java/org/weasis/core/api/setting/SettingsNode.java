@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 import java.util.prefs.AbstractPreferences;
 
 /**
- * A {@code java.util.prefs} node held in memory by the {@link UserSettingsStore}. The node tree
+ * A {@code java.util.prefs} node held in memory by the {@link SettingsFileStore}. The node tree
  * mirrors the JDK layout ({@code /org/weasis/<group>/…}); every node below a group belongs to that
  * group's file, and a change marks the file to be saved.
  */
@@ -27,19 +27,19 @@ final class SettingsNode extends AbstractPreferences {
     final Map<String, Data> children = new TreeMap<>();
   }
 
-  private final UserSettingsStore store;
-  private final UserSettingsStore.Group group;
+  private final SettingsFileStore store;
+  private final SettingsFileStore.Group group;
   private final Data data;
 
   /** The root of the tree. */
-  SettingsNode(UserSettingsStore store) {
+  SettingsNode(SettingsFileStore store) {
     super(null, "");
     this.store = store;
     this.group = null;
     this.data = new Data();
   }
 
-  private SettingsNode(SettingsNode parent, String name, UserSettingsStore.Group group, Data data) {
+  private SettingsNode(SettingsNode parent, String name, SettingsFileStore.Group group, Data data) {
     super(parent, name);
     this.store = parent.store;
     this.group = group;
@@ -93,7 +93,7 @@ final class SettingsNode extends AbstractPreferences {
   }
 
   /** The root node of a group, holding the data read from the group's file. */
-  SettingsNode groupRoot(String name, UserSettingsStore.Group group) {
+  SettingsNode groupRoot(String name, SettingsFileStore.Group group) {
     return new SettingsNode(this, name, group, group.data());
   }
 

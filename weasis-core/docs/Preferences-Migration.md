@@ -17,8 +17,8 @@ settings classes navigate to their child node and read or write typed values wit
 
 ## Loading and storing
 
-The nodes are not in the JDK store: they are `java.util.prefs` nodes held by the
-`UserSettingsStore`, one JSON file per plugin in the `settings` folder of the preference
+The nodes are not in the JDK store: they are `java.util.prefs` nodes held by the user
+instance of the `SettingsFileStore`, one JSON file per plugin in the `settings` folder of the preference
 directory, so they belong to the current Weasis user and profile:
 
 ```json
@@ -38,6 +38,25 @@ directory, so they belong to the current Weasis user and profile:
   later, on `flush()` / `sync()`, once the last plugin has stopped, and at exit.
 - A file that does not parse is renamed `.invalid` and the plugin starts from its defaults; a
   file of a newer `schema` is read but never overwritten.
+
+### Machine settings
+
+What belongs to the workstation rather than to the person — window geometry, last folders, panel
+sizes, proxy, OpenGL capabilities, the import and export options of the plugins — is kept by the
+machine instance of the same store, `SettingsFileStore.machine()`, in
+`<config>/machine/settings/<plugin>.json` of the OS account; it is never sent anywhere.
+
+- `UICore.getLocalPersistence()` is filled from the values of `weasis-core` at start and written
+  back on exit.
+- A plugin keeps its options in a node named after the earlier file:
+  `SettingsFileStore.machine().load(pluginId, "export", properties)` at start and `store(...)` at
+  stop (`import-export`, `import`, `export`, `publish`).
+- When a plugin has no file yet, the `.properties` files of its data folder are copied once:
+  `persistence.properties` as the values of `weasis-core` (then the 4.x `weasis-core-ui` ones),
+  any other file as the node named after it; the proxy credentials (`proxy.auth.*`) are dropped.
+  The `.properties` files are left in place.
+- The launcher reads the proxy from `weasis-core.json` before any plugin starts, and from
+  `persistence.properties` until that file exists.
 
 The files are not exchanged with the preferences service yet. New code declares typed settings
 on top of these nodes or of the other stores, see [Settings.md](Settings.md).

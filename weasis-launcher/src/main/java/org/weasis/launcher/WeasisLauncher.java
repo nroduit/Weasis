@@ -504,6 +504,7 @@ Starting PF4J Plugins...
 
     // If proxy configuration, activate it
     configData.applyProxy(
+        Path.of(configDir, "machine", "settings", "weasis-core.json"), // NON-NLS
         dir + File.separator + "data" + File.separator + "weasis-core"); // NON-NLS
 
     String bufDir =

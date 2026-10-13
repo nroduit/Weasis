@@ -182,6 +182,12 @@
             </additionalClasspathElements>
             <systemPropertyVariables>
               <java.util.logging.config.file>${maven.multiModuleProjectDirectory}/weasis-parent/src/test/resources/logging.properties</java.util.logging.config.file>
+              <!--
+                One root for every Weasis folder (configuration, data, cache, state) inside the
+                build directory: a test that starts UICore writes the user and machine settings
+                stores, which must never land in the developer's own folders.
+              -->
+              <weasis.path>${project.build.directory}/weasis-test-home</weasis.path>
             </systemPropertyVariables>
           </configuration>
         </plugin>

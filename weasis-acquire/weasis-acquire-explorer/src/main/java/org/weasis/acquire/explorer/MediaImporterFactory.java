@@ -9,7 +9,6 @@
  */
 package org.weasis.acquire.explorer;
 
-import java.nio.file.Path;
 import java.util.Map;
 import org.pf4j.Extension;
 import org.slf4j.Logger;
@@ -17,8 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.internal.Activator;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.util.PropertiesUtil;
+import org.weasis.core.api.setting.SettingsFileStore;
 import org.weasis.plugin.SingletonExtension;
 
 @Extension
@@ -47,9 +45,8 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
       explorer.saveLastPath();
       AcquireManager.getInstance().unRegisterDataExplorerView();
       String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
-      Path dataFolder = BundlePreferences.getDataFolder(plugInId);
-      PropertiesUtil.storeProperties(
-          dataFolder.resolve("publish.properties"), Activator.EXPORT_PERSISTENCE, null);
+      SettingsFileStore.machine()
+          .store(plugInId, "publish", Activator.EXPORT_PERSISTENCE); // NON-NLS
     }
     LOGGER.info("MediaImporterFactory stopped");
   }

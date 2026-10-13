@@ -20,7 +20,10 @@ public sealed interface Backing {
   /** {@code weasis.properties} of the preference directory, per Weasis user and profile. */
   Backing SYSTEM_PREFERENCES = new Named("system-preferences"); // NON-NLS
 
-  /** {@code persistence.properties} of the core data folder, local to the workstation. */
+  /**
+   * {@code UICore.getLocalPersistence()}: the values of {@code weasis-core} in the machine store,
+   * local to the workstation.
+   */
   Backing LOCAL_PERSISTENCE = new Named("local-persistence"); // NON-NLS
 
   /** No stored value: a site-only setting is read from the launch configuration. */

@@ -9,13 +9,11 @@
  */
 package org.weasis.acquire.explorer.internal;
 
-import java.nio.file.Path;
 import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.MediaImporterFactory;
-import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.util.PropertiesUtil;
+import org.weasis.core.api.setting.SettingsFileStore;
 import org.weasis.plugin.WeasisPlugin;
 
 public class Activator extends WeasisPlugin {
@@ -29,8 +27,7 @@ public class Activator extends WeasisPlugin {
 
   @Override
   public void start() {
-    Path dataFolder = BundlePreferences.getDataFolder(getPluginId());
-    PropertiesUtil.loadProperties(dataFolder.resolve("publish.properties"), EXPORT_PERSISTENCE);
+    SettingsFileStore.machine().load(getPluginId(), "publish", EXPORT_PERSISTENCE); // NON-NLS
     LOGGER.info("MediaImporterFactory started");
   }
 

@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.function.Function;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -28,10 +29,11 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.weasis.core.api.setting.SettingsNode.Data;
+import org.weasis.core.util.PropertiesUtil;
 import org.xml.sax.SAXException;
 
 /**
- * The stores that held a group's settings before the {@link UserSettingsStore}, read once when the
+ * The stores that held a group's settings before the {@link SettingsFileStore}, read once when the
  * group has no file yet. Nothing is written back to them.
  */
 final class LegacySettings {
@@ -40,6 +42,22 @@ final class LegacySettings {
   /** The 4.x modules whose settings went into a 5.0 group, the newest first. */
   private static final Map<String, List<String>> MODULES_4X =
       Map.of("weasis-core", List.of("weasis-core", "weasis-core-ui")); // NON-NLS
+
+  /** The data folders whose {@code .properties} went into a 5.0 group, the newest first. */
+  private static final Map<String, List<String>> DATA_FOLDERS_4X =
+      Map.of(
+          "weasis-core", List.of("weasis-core", "weasis-core-ui"), // NON-NLS
+          "weasis-dicom-isowriter",
+              List.of("weasis-dicom-isowriter", "weasis-isowriter")); // NON-NLS
+
+  /** The file of the core data folder holding its values; the second is a misspelling of 4.x. */
+  private static final List<String> CORE_FILES =
+      List.of("persistence.properties", "persitence.properties"); // NON-NLS
+
+  /** Keys not carried over: the proxy credentials, no longer persisted. */
+  private static final String DROPPED_PREFIX = "proxy.auth."; // NON-NLS
+
+  private static final String PROPERTIES = ".properties"; // NON-NLS
 
   /** One earlier store: copies what it holds for a group, true when it held anything. */
   @FunctionalInterface
@@ -72,8 +90,69 @@ final class LegacySettings {
    */
   static List<Source> of(Path prefDir) {
     return List.of(
-        Source.of("the JDK store", UserSettingsStore::jdkNode), // NON-NLS
+        Source.of("the JDK store", SettingsFileStore::jdkNode), // NON-NLS
         (group, into) -> copy4x(prefDir, group, into));
+  }
+
+  /**
+   * The source of the machine store: the {@code .properties} files of a plugin's data folder,
+   * {@code <dataDir>/<pluginId>}. In {@code weasis-core}, {@code persistence.properties} holds the
+   * values of the group; any other file becomes the node named after it ({@code
+   * import-export.properties} → {@code import-export}).
+   */
+  static Source ofDataFolder(Path dataDir) {
+    return (group, into) -> copyDataFolders(dataDir, group, into);
+  }
+
+  static boolean copyDataFolders(Path dataDir, String group, Data into) throws IOException {
+    boolean found = false;
+    for (String module : DATA_FOLDERS_4X.getOrDefault(group, List.of(group))) {
+      Path folder = dataDir.resolve(module);
+      if (!Files.isDirectory(folder)) {
+        continue;
+      }
+      List<Path> files;
+      try (var list = Files.list(folder)) {
+        files =
+            list.filter(f -> f.getFileName().toString().endsWith(PROPERTIES))
+                .filter(Files::isRegularFile)
+                .sorted(LegacySettings::coreFilesFirst)
+                .toList();
+      }
+      for (Path file : files) {
+        String name = file.getFileName().toString();
+        Data target =
+            CORE_FILES.contains(name)
+                ? into
+                : into.children.computeIfAbsent(
+                    name.substring(0, name.length() - PROPERTIES.length()), n -> new Data());
+        if (copyProperties(file, target)) {
+          found = true;
+          LOGGER.info("Settings of {} copied from {}", group, file);
+        }
+      }
+    }
+    return found;
+  }
+
+  private static int coreFilesFirst(Path a, Path b) {
+    int ia = CORE_FILES.indexOf(a.getFileName().toString());
+    int ib = CORE_FILES.indexOf(b.getFileName().toString());
+    ia = ia < 0 ? CORE_FILES.size() : ia;
+    ib = ib < 0 ? CORE_FILES.size() : ib;
+    return ia != ib ? Integer.compare(ia, ib) : a.compareTo(b);
+  }
+
+  private static boolean copyProperties(Path file, Data data) {
+    Properties properties = PropertiesUtil.loadProperties(file);
+    boolean found = false;
+    for (String key : properties.stringPropertyNames()) {
+      if (!key.startsWith(DROPPED_PREFIX)) {
+        data.values.putIfAbsent(key, properties.getProperty(key));
+        found = true;
+      }
+    }
+    return found;
   }
 
   /** Copies a node into data without replacing a value already there; true if any was found. */

@@ -60,7 +60,7 @@ import org.weasis.core.api.setting.CoreSettings;
 import org.weasis.core.api.setting.SettingCatalog;
 import org.weasis.core.api.setting.SettingEnvironment;
 import org.weasis.core.api.setting.Settings;
-import org.weasis.core.api.setting.UserSettingsStore;
+import org.weasis.core.api.setting.SettingsFileStore;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceMonitor;
@@ -81,7 +81,6 @@ import org.weasis.core.ui.model.graphic.profile.MeasurementProfiles;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.PropertiesUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.plugin.WeasisPluginManager;
@@ -153,8 +152,13 @@ public final class UICore {
     readSystemPreferences();
     String prefDir = systemPreferences.getProperty("weasis.pref.dir"); // NON-NLS
     if (StringUtil.hasText(prefDir)) {
-      UserSettingsStore.getInstance().configure(Path.of(prefDir));
+      SettingsFileStore.configureUser(Path.of(prefDir));
     }
+    SettingsFileStore.configureMachine(
+        Path.of(
+            systemPreferences.getProperty(
+                "weasis.config.dir", AppProperties.WEASIS_PATH.toString())), // NON-NLS
+        AppProperties.WEASIS_PATH.resolve("data")); // NON-NLS
     this.propsFile =
         new File(systemPreferences.getProperty("weasis.pref.dir"), "weasis.properties");
     if (!propsFile.canRead()) {
@@ -172,10 +176,7 @@ public final class UICore {
     String path = systemPreferences.getProperty("weasis.resources.path");
     ResourceUtil.setResourcePath(path);
 
-    Path dataFolder = BundlePreferences.getDataFolder(AppProperties.CORE_PLUGIN_ID);
-    if (dataFolder != null) {
-      PropertiesUtil.loadProperties(dataFolder.resolve("persistence.properties"), localPersistence);
-    }
+    SettingsFileStore.machine().load(AppProperties.CORE_PLUGIN_ID, "", localPersistence);
     Settings.install(
         SettingEnvironment.of(
             systemPreferences,
@@ -259,7 +260,8 @@ public final class UICore {
         event -> {
           if (event.getPluginState() == PluginState.STOPPED
               && pluginManager.getStartedPlugins().isEmpty()) {
-            UserSettingsStore.getInstance().flushAll();
+            SettingsFileStore.user().flushAll();
+            SettingsFileStore.machine().flushAll();
           }
         });
   }
@@ -312,13 +314,11 @@ public final class UICore {
       MeasureTool.viewSetting.savePreferences(prefs);
       ShortcutManager.getInstance().savePreferences(prefs);
       prefs.sync();
-      UserSettingsStore.getInstance().flushAll();
+      SettingsFileStore.user().flushAll();
       ResourceMonitor.getInstance().shutdown();
 
-      Path dataFolder = BundlePreferences.getDataFolder(AppProperties.CORE_PLUGIN_ID);
-      Path filePath = dataFolder.resolve("persistence.properties");
-      FileUtil.prepareToWriteFile(filePath);
-      PropertiesUtil.storeProperties(filePath, getLocalPersistence(), null);
+      SettingsFileStore.machine().store(AppProperties.CORE_PLUGIN_ID, "", getLocalPersistence());
+      SettingsFileStore.machine().flushAll();
     } catch (Exception e) {
       LOGGER.error("Error stopping Weasis core plugin", e);
     }

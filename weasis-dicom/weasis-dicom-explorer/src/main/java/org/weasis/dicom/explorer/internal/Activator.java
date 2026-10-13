@@ -11,9 +11,8 @@ package org.weasis.dicom.explorer.internal;
 
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.setting.SettingsFileStore;
 import org.weasis.core.api.util.LegacyConverters;
-import org.weasis.core.util.PropertiesUtil;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LocalPersistence;
@@ -38,9 +37,8 @@ public class Activator extends WeasisPlugin {
     DicomManager.getInstance()
         .setPortableDirCache(
             !((cache != null) && cache.equalsIgnoreCase(Boolean.FALSE.toString())));
-    PropertiesUtil.loadProperties(
-        BundlePreferences.getFileInDataFolder(getPluginId(), "import-export.properties"),
-        LocalPersistence.getProperties());
+    SettingsFileStore.machine()
+        .load(getPluginId(), "import-export", LocalPersistence.getProperties()); // NON-NLS
     LegacyConverters.register(AuthenticationPersistence.CONVERSION);
 
     AbstractDicomNode.registerLegacyConversions();
@@ -53,10 +51,8 @@ public class Activator extends WeasisPlugin {
   @Override
   public void stop() {
     SegSpecialElement.setVolumeBuildExecutor(null);
-    PropertiesUtil.storeProperties(
-        BundlePreferences.getFileInDataFolder(getPluginId(), "import-export.properties"),
-        LocalPersistence.getProperties(),
-        null);
+    SettingsFileStore.machine()
+        .store(getPluginId(), "import-export", LocalPersistence.getProperties()); // NON-NLS
 
     DicomModel.LOADING_EXECUTOR.shutdownNow();
     DataExplorerView explorer = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);

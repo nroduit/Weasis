@@ -12,8 +12,7 @@ package org.weasis.dicom.send.internal;
 import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.util.PropertiesUtil;
+import org.weasis.core.api.setting.SettingsFileStore;
 import org.weasis.plugin.WeasisPlugin;
 
 public class Activator extends WeasisPlugin {
@@ -28,17 +27,12 @@ public class Activator extends WeasisPlugin {
   @Override
   public void start() {
     LOGGER.info("DICOM Send is activated");
-    PropertiesUtil.loadProperties(
-        BundlePreferences.getFileInDataFolder(getPluginId(), "export.properties"),
-        EXPORT_PERSISTENCE);
+    SettingsFileStore.machine().load(getPluginId(), "export", EXPORT_PERSISTENCE); // NON-NLS
   }
 
   @Override
   public void stop() {
     LOGGER.info("DICOM Send is deactivated");
-    PropertiesUtil.storeProperties(
-        BundlePreferences.getFileInDataFolder(getPluginId(), "export.properties"),
-        EXPORT_PERSISTENCE,
-        null);
+    SettingsFileStore.machine().store(getPluginId(), "export", EXPORT_PERSISTENCE); // NON-NLS
   }
 }

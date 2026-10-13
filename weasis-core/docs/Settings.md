@@ -28,7 +28,7 @@ is read; `UICore` does it for `CoreSettings`.
 | key | identity in every store, in the catalog and in an export; reuse the existing key when migrating a call site |
 | type | `BOOLEAN`, `INTEGER`, `LONG`, `DOUBLE`, `STRING`, `COLOR`, `SettingType.of(MyEnum.class)`; the text form is the one the stores already hold |
 | scope | `USER` (follows the person), `MACHINE` (this workstation, never sent), `SITE` (administrator only, never written) |
-| backing | where the value is stored during the transition: `weasis.properties` (user default), `persistence.properties` (machine default) or a node of the group in the user settings store (`Backing.preferenceNode(path)`, the file `settings/<group>.json` of the preference directory, see [Preferences-Migration.md](Preferences-Migration.md)) |
+| backing | where the value is stored during the transition: `weasis.properties` (user default), `UICore.getLocalPersistence()`, saved in the machine store (machine default) or a node of the group in the user settings store (`Backing.preferenceNode(path)`, the file `settings/<group>.json` of the preference directory, see [Preferences-Migration.md](Preferences-Migration.md)) |
 | `notLockable()` | the site cannot lock it |
 | `secret()` | never exported, logged or shown; no default in the catalog |
 | `contextual()` | a hanging protocol or session may override it while active |
