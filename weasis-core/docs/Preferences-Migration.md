@@ -32,6 +32,10 @@ There are two layers:
 The remote exchange is opaque text: the server stores the payload keyed by user, profile and
 module without parsing it.
 
+Nothing calls `BundlePreferences.load` / `save` at present: the nodes live only in the JDK store
+of the OS account and are not exchanged with the preferences service. New code declares typed
+settings instead, see [Settings.md](Settings.md); the stores behind them are being unified.
+
 ## Preference pages
 
 Preference UI pages are pf4j extensions: a `PreferencesPageFactory` annotated with

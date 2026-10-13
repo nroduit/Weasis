@@ -19,8 +19,8 @@ import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
-import org.weasis.core.api.service.UICore;
-import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.Settings;
 
 public class GeneralSetting extends AbstractItemDialogPage {
   private static final Logger LOGGER = LoggerFactory.getLogger(GeneralSetting.class);
@@ -73,8 +73,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
   }
 
   protected void initialize() {
-    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
-    checkboxConfirmClosing.setSelected(preferences.getBooleanProperty(UICore.CONFIRM_CLOSE, false));
+    checkboxConfirmClosing.setSelected(Settings.get(CoreSettings.CONFIRM_CLOSING));
   }
 
   @Override
@@ -83,16 +82,12 @@ public class GeneralSetting extends AbstractItemDialogPage {
       subpage.closeAdditionalWindow();
     }
 
-    GuiUtils.getUICore()
-        .getSystemPreferences()
-        .putBooleanProperty(UICore.CONFIRM_CLOSE, checkboxConfirmClosing.isSelected());
+    Settings.set(CoreSettings.CONFIRM_CLOSING, checkboxConfirmClosing.isSelected());
   }
 
   @Override
   public void resetToDefaultValues() {
-    GuiUtils.getUICore()
-        .getSystemPreferences()
-        .resetProperty(UICore.CONFIRM_CLOSE, Boolean.FALSE.toString());
+    Settings.reset(CoreSettings.CONFIRM_CLOSING);
     initialize();
   }
 }

@@ -24,6 +24,8 @@ import javax.swing.SwingUtilities;
 import org.weasis.core.api.gui.FooterPanelProvider;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.UICore;
+import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.Settings;
 
 /**
  * Bottom-left footer: one toggle button per {@link FooterPanelProvider} (DICOM import, export, …)
@@ -32,7 +34,6 @@ import org.weasis.core.api.service.UICore;
  */
 public class ImportExportFooter extends JPanel {
 
-  private static final String HEIGHT_KEY = "weasis.footer.split.height";
   private static final int DEFAULT_HEIGHT = 350;
 
   private final JPanel panelHost = new JPanel(new BorderLayout());
@@ -94,9 +95,7 @@ public class ImportExportFooter extends JPanel {
     panelHost.setVisible(true);
     verticalSplit.setDividerSize(dividerSize);
     int height =
-        UICore.getInstance()
-            .getLocalPersistence()
-            .getIntProperty(HEIGHT_KEY, GuiUtils.getScaleLength(DEFAULT_HEIGHT));
+        Settings.get(CoreSettings.FOOTER_HEIGHT, () -> GuiUtils.getScaleLength(DEFAULT_HEIGHT));
     SwingUtilities.invokeLater(
         () ->
             verticalSplit.setDividerLocation(
@@ -110,9 +109,7 @@ public class ImportExportFooter extends JPanel {
   public void collapse() {
     if (currentProvider != null) {
       if (panelHost.getHeight() > 0) {
-        UICore.getInstance()
-            .getLocalPersistence()
-            .putIntProperty(HEIGHT_KEY, panelHost.getHeight());
+        Settings.set(CoreSettings.FOOTER_HEIGHT, panelHost.getHeight());
       }
       currentProvider.onCollapse(currentPanel);
       panelHost.removeAll();

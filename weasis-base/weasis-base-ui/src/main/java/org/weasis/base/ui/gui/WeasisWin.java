@@ -120,6 +120,8 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -332,9 +334,7 @@ public class WeasisWin {
   }
 
   public boolean canBeClosed() {
-    if (GuiUtils.getUICore()
-        .getSystemPreferences()
-        .getBooleanProperty(UICore.CONFIRM_CLOSE, false)) {
+    if (Settings.get(CoreSettings.CONFIRM_CLOSING)) {
       int option = JOptionPane.showConfirmDialog(frame, Messages.getString("WeasisWin.exit_mes"));
       return option == JOptionPane.YES_OPTION;
     } else {

@@ -25,25 +25,33 @@ import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.Capability;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.Needs;
+import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.service.UICore;
+import org.weasis.core.api.setting.SettingCatalog;
+import org.weasis.core.api.setting.Settings;
+import org.weasis.core.api.setting.Settings.Resolution;
 import org.weasis.core.api.util.LegacyConverters.Conversion;
 import org.weasis.core.util.StringUtil;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 /**
- * Command namespace {@code config}: the site configuration documents of the resources package.
- * Every verb prints a JSON body, so a script or an agent reads the result rather than the screen.
+ * Command namespace {@code config}: the site configuration documents of the resources package and
+ * the catalog of declared settings. Every verb prints a JSON body, so a script or an agent reads
+ * the result rather than the screen.
  */
 @Extension
 @Command(
     name = "config",
-    description = "Site configuration documents of the resources package.",
+    description = "Site configuration documents and declared settings.",
     subcommands = {
       ConfigCommands.ListDocuments.class,
       ConfigCommands.Reload.class,
-      ConfigCommands.Export.class
+      ConfigCommands.Export.class,
+      ConfigCommands.Catalog.class,
+      ConfigCommands.Setting.class
     })
 @Since("5.0")
 public class ConfigCommands implements CommandExtension {
@@ -145,6 +153,76 @@ public class ConfigCommands implements CommandExtension {
       }
       print(export(from, out, force).toString());
     }
+  }
+
+  /**
+   * The catalog of declared settings: key, group, type, default, scope, store and flags of each,
+   * for an administrator or Viewer Hub editing a site configuration.
+   */
+  @Command(name = "catalog", description = "The declared settings with their type and scope.")
+  static class Catalog extends AbstractVerb {
+    @Option(
+        names = "--out",
+        paramLabel = "<output-path>",
+        description = "File to write the catalog into instead of printing it.")
+    @Needs(Capability.FILE_WRITE)
+    OutputPath out;
+
+    @Override
+    protected void run() throws IOException {
+      JsonObject catalog = SettingCatalog.toJson();
+      if (out == null) {
+        print(catalog.toString());
+        return;
+      }
+      Path file = out.toAbsolutePath();
+      JsonUtil.write(file, catalog);
+      print(
+          Json.createObjectBuilder()
+              .add("out", file.toString()) // NON-NLS
+              .add("settings", catalog.getJsonArray("settings").size()) // NON-NLS
+              .build()
+              .toString());
+    }
+  }
+
+  /** The value in force of one declared setting and the layer it comes from. */
+  @Command(
+      name = "setting",
+      description =
+          "The value of a declared setting, where it comes from and whether it is locked.")
+  static class Setting extends AbstractVerb {
+    @Parameters(
+        paramLabel = "<key>",
+        description = "Key of the setting, as listed by config:catalog.")
+    String key;
+
+    @Override
+    protected void run() {
+      var setting =
+          SettingCatalog.find(key)
+              .orElseThrow(() -> invalid("No declared setting " + key + ", see config:catalog"));
+      print(describe(setting).toString());
+    }
+  }
+
+  static <T> JsonObject describe(org.weasis.core.api.setting.Setting<T> setting) {
+    Resolution<T> resolution = Settings.resolve(setting);
+    JsonObjectBuilder body =
+        Json.createObjectBuilder()
+            .add("key", setting.key()) // NON-NLS
+            .add("group", setting.group()) // NON-NLS
+            .add("scope", setting.scope().id()); // NON-NLS
+    if (setting.secret()) {
+      body.add("value", "***"); // NON-NLS
+    } else if (resolution.value() == null) {
+      body.addNull("value"); // NON-NLS
+    } else {
+      body.add("value", setting.type().format(resolution.value())); // NON-NLS
+    }
+    return body.add("origin", resolution.origin().id()) // NON-NLS
+        .add("locked", resolution.locked()) // NON-NLS
+        .build();
   }
 
   /**

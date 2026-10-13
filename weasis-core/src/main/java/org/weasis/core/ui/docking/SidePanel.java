@@ -30,7 +30,9 @@ import javax.swing.SwingUtilities;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
-import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.Setting;
+import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 
@@ -114,7 +116,7 @@ public class SidePanel extends JPanel {
         e -> {
           if (!applyingWidth && expanded != null && getWidth() > 0) {
             contentWidth = getWidth();
-            persistence().putIntProperty(widthKey(), contentWidth);
+            Settings.set(widthSetting(), contentWidth);
           }
         });
     applyWidth();
@@ -250,14 +252,10 @@ public class SidePanel extends JPanel {
     return icon != null ? icon : ResourceUtil.getIcon(ActionIcon.MORE_V);
   }
 
-  private WProperties persistence() {
-    return GuiUtils.getUICore().getLocalPersistence();
-  }
-
-  private String widthKey() {
+  private Setting<Integer> widthSetting() {
     return side == Side.LEFT
-        ? "weasis.sidepanel.left.width" // NON-NLS
-        : "weasis.sidepanel.right.width"; // NON-NLS
+        ? CoreSettings.SIDE_PANEL_LEFT_WIDTH
+        : CoreSettings.SIDE_PANEL_RIGHT_WIDTH;
   }
 
   /** Fallback content width when nothing is persisted: the widest hosted panel's width. */
@@ -274,7 +272,7 @@ public class SidePanel extends JPanel {
   private void applyWidth() {
     if (expanded != null && contentWidth <= 0) {
       // seed once: the user-set width survives viewer switches and sessions
-      contentWidth = persistence().getIntProperty(widthKey(), preferredContentWidth());
+      contentWidth = Settings.get(widthSetting(), this::preferredContentWidth);
     }
     int total = expanded != null ? contentWidth : 0;
     // constant minimum: a per-tool minimum would push the divider on viewer switches

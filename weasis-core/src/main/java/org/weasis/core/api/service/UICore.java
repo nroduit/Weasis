@@ -56,6 +56,10 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.net.URLParameters;
+import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.SettingCatalog;
+import org.weasis.core.api.setting.SettingEnvironment;
+import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceMonitor;
@@ -167,6 +171,13 @@ public final class UICore {
     if (dataFolder != null) {
       PropertiesUtil.loadProperties(dataFolder.resolve("persistence.properties"), localPersistence);
     }
+    Settings.install(
+        SettingEnvironment.of(
+            systemPreferences,
+            localPersistence,
+            BundlePreferences::getDefaultPreferences,
+            configData.getSystemProps()));
+    SettingCatalog.declare(CoreSettings.class);
 
     this.dicomLaunchers = Launcher.loadLaunchers(Launcher.Type.DICOM);
     this.otherLaunchers = Launcher.loadLaunchers(Launcher.Type.OTHER);
