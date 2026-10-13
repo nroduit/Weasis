@@ -120,6 +120,11 @@ public final class Settings {
         .orElseGet(() -> new Resolution<>(setting.defaultValue(), Origin.DEFAULT, locked));
   }
 
+  /** The keys the site locks, from {@value #LOCKED_PROPERTY}. */
+  public static Set<String> lockedKeys() {
+    return lockedKeys(environment.site(LOCKED_PROPERTY));
+  }
+
   /** Whether the site locks the setting to its own value. */
   public static boolean isLocked(Setting<?> setting) {
     return isLocked(environment, setting);

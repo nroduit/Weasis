@@ -86,6 +86,33 @@ Every document is written atomically with the same header, then its body:
 `id` is the file name without `.json`; a reader refuses a `schema` newer than its own and reads
 the earlier `version` key of `measurementProfiles.json` as the schema.
 
+### Settings packages
+
+`SettingsPackage` copies a layer into one zip, to restore it, to move to another workstation, or to
+give a configuration to Viewer Hub:
+
+| Layer | Content |
+|---|---|
+| `user` (default) | `settings/<group>.json`, `documents/<name>.json`, `launcher/weasis.properties` (the person's launch values, without the log files, the screen scale and the notices already shown) |
+| `user` + machine | the above and `machine/settings/…`, `machine/documents/…` (the same person on a new workstation) |
+| `machine` | `machine/settings/…`, `machine/documents/…` |
+| `site` | the user documents as `config/<name>.json`, the layout of the `config` folder of a resources package |
+
+`manifest.json` gives `kind: "weasis.package"`, the schema, the creation instant, the source
+(user, profile, host, Weasis version), the layer, and every file with its id, schema, `updated` and
+SHA-256. Secrets are never packaged.
+
+An import checks the manifest and the checksums, plans every file (entries or values added,
+replaced, unchanged, or skipped because the site locks them) and, unless it is a dry run, saves a
+backup package of the current settings in `<prefDir>/backups/` before applying: documents merged
+by entry id or replaced whole, settings groups merged by key or replaced whole, launch values
+always merged. A site package is not imported; its `config` folder goes into the resources
+package.
+
+Surfaces: **Export settings…** and **Import settings…** in the preference dialog, and the verbs
+`config:pack [--layer user|machine|site] [--with-machine] [--out <file>]` and
+`config:unpack --file <file> [--replace] [--dry-run]`.
+
 The files are not exchanged with the preferences service yet. New code declares typed settings
 on top of these nodes or of the other stores, see [Settings.md](Settings.md).
 

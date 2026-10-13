@@ -45,9 +45,21 @@ public class PreferenceDialog extends AbstractWizardDialog {
   protected final JButton applyButton = new JButton(Messages.getString("LabelPrefView.apply"));
   protected final JButton reloadSiteButton =
       new JButton(Messages.getString("PreferenceDialog.reload.site"));
+  protected final JButton exportButton =
+      new JButton(Messages.getString("PreferenceDialog.export.settings"));
+  protected final JButton importButton =
+      new JButton(Messages.getString("PreferenceDialog.import.settings"));
   protected final JPanel bottomPrefPanel =
       GuiUtils.getFlowLayoutPanel(
-          FlowLayout.TRAILING, 10, 7, reloadSiteButton, jButtonHelp, restoreButton, applyButton);
+          FlowLayout.TRAILING,
+          10,
+          7,
+          exportButton,
+          importButton,
+          reloadSiteButton,
+          jButtonHelp,
+          restoreButton,
+          applyButton);
   protected final JLabel scopeLabel = new JLabel();
   protected final JPanel scopePanel =
       GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 10, 0, scopeLabel);
@@ -67,6 +79,10 @@ public class PreferenceDialog extends AbstractWizardDialog {
     jButtonHelp.setToolTipText(Messages.getString("online.documentation"));
     reloadSiteButton.setToolTipText(Messages.getString("PreferenceDialog.reload.site.tip"));
     reloadSiteButton.addActionListener(e -> SiteDocuments.reloadAll());
+    exportButton.setToolTipText(Messages.getString("PreferenceDialog.export.settings.tip"));
+    exportButton.addActionListener(e -> SettingsPackageActions.exportSettings(this));
+    importButton.setToolTipText(Messages.getString("PreferenceDialog.import.settings.tip"));
+    importButton.addActionListener(e -> SettingsPackageActions.importSettings(this));
     applyButton.addActionListener(
         e -> {
           if (currentPage != null) currentPage.closeAdditionalWindow();

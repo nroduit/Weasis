@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.Capability;
 import org.weasis.core.api.command.CommandExtension;
+import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.Needs;
 import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.Since;
@@ -31,6 +32,11 @@ import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.setting.SettingCatalog;
 import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.setting.Settings.Resolution;
+import org.weasis.core.api.setting.SettingsPackage;
+import org.weasis.core.api.setting.SettingsPackage.Change;
+import org.weasis.core.api.setting.SettingsPackage.Layer;
+import org.weasis.core.api.setting.SettingsPackage.Mode;
+import org.weasis.core.api.setting.SettingsPackage.Plan;
 import org.weasis.core.api.util.LegacyConverters.Conversion;
 import org.weasis.core.util.StringUtil;
 import picocli.CommandLine.Command;
@@ -51,7 +57,9 @@ import picocli.CommandLine.Parameters;
       ConfigCommands.Reload.class,
       ConfigCommands.Export.class,
       ConfigCommands.Catalog.class,
-      ConfigCommands.Setting.class
+      ConfigCommands.Setting.class,
+      ConfigCommands.Pack.class,
+      ConfigCommands.Unpack.class
     })
 @Since("5.0")
 public class ConfigCommands implements CommandExtension {
@@ -216,6 +224,136 @@ public class ConfigCommands implements CommandExtension {
               .orElseThrow(() -> invalid("No declared setting " + key + ", see config:catalog"));
       print(describe(setting).toString());
     }
+  }
+
+  /**
+   * Writes a settings package: the user layer by default (settings, documents, launch values), the
+   * machine layer, or the user documents laid out as the config folder of a site package.
+   */
+  @Command(
+      name = "pack",
+      description =
+          "Writes the settings and documents of a layer into a package, to move them to another"
+              + " machine or to give them to Viewer Hub.")
+  @Needs(Capability.FILE_WRITE)
+  static class Pack extends AbstractVerb {
+    @Option(
+        names = "--layer",
+        paramLabel = "<layer>",
+        description =
+            "user (default), machine, or site (the config folder of a resources package).")
+    String layer = "user"; // NON-NLS
+
+    @Option(
+        names = "--with-machine",
+        description = "With a user package, also the settings and documents of this workstation.")
+    boolean withMachine;
+
+    @Option(
+        names = "--out",
+        paramLabel = "<output-path>",
+        description = "The package to write (default: a dated name in the current folder).")
+    OutputPath out;
+
+    @Override
+    protected void run() throws IOException {
+      Layer which;
+      try {
+        which = Layer.of(layer);
+      } catch (IllegalArgumentException e) {
+        throw invalid("--layer is user, machine or site, not " + layer);
+      }
+      SettingsPackage.Environment env = SettingsPackage.currentEnvironment();
+      Path file =
+          out != null
+              ? out.toAbsolutePath()
+              : Path.of(SettingsPackage.defaultName(which, env.source())).toAbsolutePath();
+      var manifest = SettingsPackage.write(file, which, withMachine, env);
+      print(
+          Json.createObjectBuilder()
+              .add("out", file.toString()) // NON-NLS
+              .add("layer", manifest.layer()) // NON-NLS
+              .add("entries", manifest.entries().size()) // NON-NLS
+              .build()
+              .toString());
+    }
+  }
+
+  /**
+   * Imports a settings package: the plan of every file, then, unless {@code --dry-run}, a backup of
+   * the current layer and the import, merged or replaced.
+   */
+  @Command(
+      name = "unpack",
+      description =
+          "Imports a settings package after a backup of the current settings; --dry-run shows what"
+              + " would change.")
+  @Needs(Capability.FILE_READ)
+  static class Unpack extends AbstractVerb {
+    @Option(
+        names = "--file",
+        paramLabel = "<input-path>",
+        required = true,
+        description = "The package to import.")
+    InputPath file;
+
+    @Option(
+        names = "--replace",
+        description =
+            "Replace each document and settings group of the package whole, instead of merging.")
+    boolean replace;
+
+    @Option(names = "--dry-run", description = "Show what would change, change nothing.")
+    boolean dryRun;
+
+    @Override
+    protected void run() throws IOException {
+      Plan plan =
+          SettingsPackage.importPackage(
+              file.value(),
+              replace ? Mode.REPLACE : Mode.MERGE,
+              dryRun,
+              SettingsPackage.currentEnvironment(),
+              SettingsPackage.backupFolder());
+      if (!dryRun) {
+        SiteDocuments.reloadAll();
+      }
+      print(toJson(plan, dryRun, replace).toString());
+    }
+  }
+
+  static JsonObject toJson(Plan plan, boolean dryRun, boolean replace) {
+    JsonArrayBuilder changes = Json.createArrayBuilder();
+    for (Change c : plan.changes()) {
+      JsonObjectBuilder o =
+          Json.createObjectBuilder()
+              .add("path", c.path()) // NON-NLS
+              .add("target", c.target()) // NON-NLS
+              .add("added", c.added()) // NON-NLS
+              .add("replaced", c.replaced()) // NON-NLS
+              .add("unchanged", c.unchanged()) // NON-NLS
+              .add("skipped", c.skipped()); // NON-NLS
+      JsonUtil.addIfPresent(o, "note", c.note()); // NON-NLS
+      changes.add(o);
+    }
+    JsonArrayBuilder errors = Json.createArrayBuilder();
+    plan.errors().forEach(errors::add);
+    JsonObjectBuilder body =
+        Json.createObjectBuilder()
+            .add("dryRun", dryRun) // NON-NLS
+            .add("mode", replace ? "replace" : "merge") // NON-NLS
+            .add("layer", plan.manifest().layer()) // NON-NLS
+            .add("changes", changes) // NON-NLS
+            .add("errors", errors); // NON-NLS
+    if (plan.backup() != null) {
+      body.add("backup", plan.backup().toString()); // NON-NLS
+    }
+    if (!dryRun) {
+      // The documents are reloaded; settings already applied by an open viewer take effect on the
+      // next start
+      body.add("restartAdvised", plan.changes().stream().anyMatch(Change::changes)); // NON-NLS
+    }
+    return body.build();
   }
 
   static <T> JsonObject describe(org.weasis.core.api.setting.Setting<T> setting) {
