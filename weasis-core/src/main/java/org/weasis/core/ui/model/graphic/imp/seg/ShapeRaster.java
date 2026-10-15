@@ -17,6 +17,7 @@ import java.awt.Shape;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.util.Arrays;
 
 /**
  * Binary mask of a shape in image pixel coordinates. Pixel centres have integer coordinates, as in
@@ -70,5 +71,23 @@ public record ShapeRaster(Rectangle bounds, byte[] mask) {
       }
     }
     return count;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o
+        || (o instanceof ShapeRaster other
+            && bounds.equals(other.bounds)
+            && Arrays.equals(mask, other.mask));
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * bounds.hashCode() + Arrays.hashCode(mask);
+  }
+
+  @Override
+  public String toString() {
+    return "ShapeRaster[bounds=" + bounds + ", pixels=" + countPixels() + "]";
   }
 }

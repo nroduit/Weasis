@@ -169,7 +169,10 @@ final class MaskContours {
           int corner = y * cw + x;
           // The first edge is still pending at the start corner: it closes the loop
           boolean atStart = corner == start;
-          int edges = atStart ? outEdges[corner] | (1 << startDir) : outEdges[corner];
+          int edges = outEdges[corner] & 0xFF;
+          if (atStart) {
+            edges |= 1 << startDir;
+          }
           int next = nextDirection(edges, dir);
           if (atStart && next == startDir) {
             if (dir == startDir) {
