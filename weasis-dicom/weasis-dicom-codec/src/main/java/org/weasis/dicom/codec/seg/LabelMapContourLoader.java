@@ -13,16 +13,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Scalar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.util.SoftHashMap;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.opencv.data.ImageCV;
+import org.weasis.dicom.codec.seg.LabelMapScanner.LabelFrame;
+import org.weasis.dicom.codec.seg.LabelMapScanner.LabelRegion;
 import org.weasis.opencv.seg.Segment;
 
 /**
@@ -30,8 +28,8 @@ import org.weasis.opencv.seg.Segment;
  * stores all segments of a slice in a single image where each pixel value equals the {@code
  * SegmentNumber} it belongs to (segments do not overlap, {@code SegmentsOverlap} is {@code NO}).
  *
- * <p>This loader splits the source frame into one binary mask per segment present in the frame and
- * returns one {@link SegContour} per segment.
+ * <p>This loader reads the frame once, then traces each segment present in the frame within its own
+ * bounding box and returns one {@link SegContour} per segment.
  */
 public final class LabelMapContourLoader extends CachedContourLoader {
   private static final Logger LOGGER = LoggerFactory.getLogger(LabelMapContourLoader.class);
@@ -61,14 +59,13 @@ public final class LabelMapContourLoader extends CachedContourLoader {
         Set.of(),
         image -> {
           try {
-            Mat src = image.toMat();
-            int[] labels = LabelMapScanner.sortedDistinctLabels(src, segments::containsKey);
-            if (labels.length == 0) {
+            LabelFrame labels = LabelMapScanner.scanRegions(image.toMat(), segments::containsKey);
+            if (labels == null || labels.regions().isEmpty()) {
               return Set.of();
             }
-            Set<SegContour> result = new LinkedHashSet<>(labels.length);
-            for (int label : labels) {
-              SegContour contour = buildLabelContour(src, label);
+            Set<SegContour> result = new LinkedHashSet<>(labels.regions().size());
+            for (LabelRegion labelRegion : labels.regions()) {
+              SegContour contour = buildLabelContour(labels, labelRegion);
               if (contour != null) {
                 result.add(contour);
               }
@@ -81,25 +78,17 @@ public final class LabelMapContourLoader extends CachedContourLoader {
         });
   }
 
-  private SegContour buildLabelContour(Mat src, int label) {
+  private SegContour buildLabelContour(LabelFrame labels, LabelRegion labelRegion) {
+    int label = labelRegion.label();
     SegRegion<?> region = segments.get(label);
     if (region == null) {
       return null;
     }
-    ImageCV binary = new ImageCV();
-    try {
-      Core.compare(src, new Scalar(label), binary, Core.CMP_EQ);
-      int pixelCount = Core.countNonZero(binary);
-      if (pixelCount == 0) {
-        return null;
-      }
-      List<Segment> segmentList = MaskContours.build(binary);
-      SegContour contour = new SegContour(label + "_" + id, segmentList, pixelCount);
-      region.addPixels(contour);
-      contour.setAttributes(region);
-      return contour;
-    } finally {
-      binary.release();
-    }
+    List<Segment> segmentList =
+        MaskContours.build((x, y) -> labels.labelAt(x, y) == label, labelRegion.bounds());
+    SegContour contour = new SegContour(label + "_" + id, segmentList, labelRegion.pixelCount());
+    region.addPixels(contour);
+    contour.setAttributes(region);
+    return contour;
   }
 }

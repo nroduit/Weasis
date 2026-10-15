@@ -9,17 +9,23 @@
  */
 package org.weasis.dicom.codec.seg;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
+import java.util.Random;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
+import org.weasis.core.ui.model.graphic.imp.seg.ShapeRaster;
 import org.weasis.opencv.seg.Segment;
 
 class MaskContoursTest {
@@ -74,5 +80,43 @@ class MaskContoursTest {
   @Test
   void emptyMaskHasNoContours() {
     assertTrue(MaskContours.build(new byte[6], 3, 2).isEmpty());
+  }
+
+  @Test
+  void onlyTheBoundsAreTraced() {
+    List<Segment> segments = MaskContours.build((_, _) -> true, new Rectangle(2, 3, 2, 1));
+    assertEquals(
+        List.of(
+            new Point2D.Double(1.5, 2.5),
+            new Point2D.Double(3.5, 2.5),
+            new Point2D.Double(3.5, 3.5),
+            new Point2D.Double(1.5, 3.5)),
+        segments.getFirst());
+  }
+
+  @ParameterizedTest
+  @ValueSource(doubles = {0.1, 0.3, 0.5, 0.7, 0.9})
+  void rasterizedOutlineGivesBackTheMask(double density) {
+    Random random = new Random(938);
+    int width = 37;
+    int height = 23;
+    Rectangle image = new Rectangle(width, height);
+    for (int run = 0; run < 20; run++) {
+      byte[] mask = new byte[width * height];
+      for (int i = 0; i < mask.length; i++) {
+        mask[i] = random.nextDouble() < density ? (byte) 255 : 0;
+      }
+      SegContour contour = new SegContour("test", MaskContours.build(mask, width, height));
+      contour.setAttributes(new SegRegion<>(1, "test", Color.RED));
+      // Same pixel selection as the statistics of a segmentation
+      ShapeRaster raster = ShapeRaster.of(contour.getSegGraphic().getShape(), image);
+
+      byte[] filled = new byte[mask.length];
+      Rectangle b = raster.bounds();
+      for (int y = 0; y < b.height; y++) {
+        System.arraycopy(raster.mask(), y * b.width, filled, (b.y + y) * width + b.x, b.width);
+      }
+      assertArrayEquals(mask, filled, "density " + density + ", run " + run);
+    }
   }
 }

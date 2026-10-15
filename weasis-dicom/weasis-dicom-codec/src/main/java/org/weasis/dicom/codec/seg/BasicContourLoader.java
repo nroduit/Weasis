@@ -71,8 +71,11 @@ public final class BasicContourLoader extends CachedContourLoader {
 
   private Set<SegContour> buildContours(PlanarImage binary) {
     Mat mat = binary.toMat();
-    List<Segment> segmentList = MaskContours.build(mat);
     int pixelCount = Core.countNonZero(mat);
+    if (pixelCount == 0) {
+      return Set.of();
+    }
+    List<Segment> segmentList = MaskContours.build(mat);
     SegContour contour = new SegContour(String.valueOf(id), segmentList, pixelCount);
     region.addPixels(contour);
     contour.setAttributes(region);
