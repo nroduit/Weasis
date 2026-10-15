@@ -63,6 +63,7 @@ slice and on every path.
 | `FusionCompatibility` | Decides which same-study series can be fused onto the base series |
 | `FusionMeasurableLayer` | Exposes PET values under a ROI drawn on the base image (SUV statistics) |
 | `FusionColorScale` / `FusionColorBar` | The window + LUT actually painted, and the on-view color bar that displays them |
+| `FusionWindowListener` / `FusionScaleDragHandler` | Scale maximum slider, and the color-bar drag that drives it |
 | `ByteLutAlpha` (weasis-core) | 4-channel ABGR LUT: color from a `ByteLut`, per-entry alpha ramp |
 | `DicomMediaUtils.computeSUVFactor` (weasis-dicom-codec) | Computes `TagW.SuvFactor` per PET image |
 
@@ -76,7 +77,9 @@ slice and on every path.
   `SUVbw = real_value × SuvFactor`.
 - **Display window.** `FusionWindow` is a series-wide record
   `(min, max, displayFactor, displayUnit)` holding **real values**. It is
-  derived from the data, not a user control. A provisional window
+  derived from the data (bottom 0, SUVbw when known, percent of the data
+  maximum when the series has no unit) or declared by an anchored color map;
+  the user can then move its top only (see §6). A provisional window
   (`fromSlice`) is computed on the EDT as soon as an overlay series is
   selected, then refined on the whole volume (`fromVolume`, using
   `FusionWindowEstimator`) so physiologic outliers saturate instead of
@@ -120,9 +123,17 @@ applied only at composite time.
 ## 6. Color bar and measurements
 
 - **Color bar.** `FusionColorBar`, painted by `InfoLayer` (`LayerItem.FUSION_LUT`),
-  is the only place the derived scale can be read. It is labelled in the
-  display unit (SUVbw when known). `FusionOp.getColorScale()` exposes the
-  exact window and LUT being painted, so the bar cannot drift from the rendering.
+  is where the scale is read. It is labelled in the display unit (SUVbw when
+  known). `FusionOp.getColorScale()` exposes the exact window and LUT being
+  painted, so the bar cannot drift from the rendering.
+- **Scale maximum.** `FusionWindowListener` (`FusionAction.WINDOW_TOP`, the
+  slider of the Fusion panel) moves the top of the window through
+  `FusionController.applyWindowTop`, bottom unchanged. `FusionScaleDragHandler`
+  (registered in `View2d.iniDefaultMouseListener`, after `FocusHandler`)
+  consumes a left press on the area where the bar was last painted (a view
+  client property) and drives the same slider, so the mouse action bound to
+  the button does not run. A window set by any other path refreshes the slider
+  via `EventManager.refreshFusionWindowControl`.
 - **Measurements.** An area measurement on the fused base image also reports
   overlay statistics through `FusionMeasurableLayer` (`FusionOp.getStatsLayer`).
   For coplanar series the ROI is mapped onto the native PET slice and
@@ -141,7 +152,9 @@ User selects overlay series (EventManager FusionAction.SERIES)
         ├─ FusionVolumeBuilder.build
         ├─ FusionWindow.fromVolume (robust max — scans voxels)
         └─ applyVolume: only to panes still showing that series
-                        (guards against series switches and out-of-order builds)
+                        (guards against series switches and out-of-order builds);
+                        the refined window replaces only the one shown when the
+                        build started, never one the user set meanwhile
 ```
 
 - Fusion is **per-view**; MPR is the exception — its three panes take every
