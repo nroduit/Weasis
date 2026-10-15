@@ -395,6 +395,16 @@ public class ImageTool extends PluginTool {
               JSliderW slider = a.createSlider(0, true);
               GuiUtils.setPreferredWidth(slider, 100);
               fusionPanel.add(slider);
+              fusionPanel.add(GuiUtils.boxVerticalStrut(gabY));
+            });
+
+    manager
+        .getAction(FusionAction.WINDOW_TOP)
+        .ifPresent(
+            a -> {
+              JSliderW slider = a.createSlider(0, true);
+              GuiUtils.setPreferredWidth(slider, 100);
+              fusionPanel.add(slider);
               fusionPanel.add(GuiUtils.boxVerticalStrut(5));
             });
     return fusionPanel;

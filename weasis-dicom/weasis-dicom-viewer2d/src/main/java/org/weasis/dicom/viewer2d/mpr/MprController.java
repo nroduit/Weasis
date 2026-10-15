@@ -621,6 +621,9 @@ public class MprController
 
   @Override
   public void mousePressed(MouseEvent e) {
+    if (e.isConsumed()) {
+      return;
+    }
     if (e.getSource() instanceof MprView view
         && !MprView.getViewProperty(view, MprView.HIDE_CROSSLINES)) {
       if (selectedAxis != null) {

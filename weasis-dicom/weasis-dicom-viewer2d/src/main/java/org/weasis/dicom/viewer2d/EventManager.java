@@ -118,6 +118,7 @@ import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
 import org.weasis.dicom.viewer2d.fusion.FusionOpacityListener;
 import org.weasis.dicom.viewer2d.fusion.FusionWindow;
+import org.weasis.dicom.viewer2d.fusion.FusionWindowListener;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprAxis;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
@@ -157,6 +158,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   private final ShortcutActions mprShortcuts = buildMprShortcuts();
   private final FusionOpacityListener fusionBaseOpacity;
   private final FusionOpacityListener fusionOverlayOpacity;
+  private final FusionWindowListener fusionWindowTop = new FusionWindowListener();
 
   /**
    * Return the single instance of this class. This method guarantees the singleton property of this
@@ -231,6 +233,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             "PT"); // NON-NLS
     setAction(fusionBaseOpacity);
     setAction(fusionOverlayOpacity);
+    setAction(fusionWindowTop);
 
     // The regions of the device library depend on the mask in force and on the document itself
     IdentityMask.addChangeListener(() -> GuiExecutor.execute(RedactionToolBar::refreshOpenViews));
@@ -857,8 +860,23 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     fusionOverlayOpacity.setSliderValue(
         toFusionPercent(disOp, FusionOp.P_OPACITY_OVERLAY, FusionOp.DEFAULT_OVERLAY_OPACITY),
         false);
+    syncFusionWindowTop(view2d);
 
     setFusionControlsEnabled(enabled);
+  }
+
+  /**
+   * Re-syncs the scale maximum slider with the selected view after its window was set elsewhere
+   * (series default, color map, refined volume measure).
+   */
+  public void refreshFusionWindowControl() {
+    syncFusionWindowTop(getSelectedViewPane());
+  }
+
+  private void syncFusionWindowTop(ViewCanvas<DicomImageElement> view) {
+    if (view != null) {
+      fusionWindowTop.sync(FusionController.windowOf(view), FusionController.windowTopLimit(view));
+    }
   }
 
   /** Re-syncs the fusion controls with the selected view (e.g. after MPR inherits fusion). */
@@ -874,12 +892,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         Math.round(disOp.getParamValue(FusionOp.OP_NAME, param, Double.class).orElse(def) * 100);
   }
 
-  /** Series/LUT/opacity controls are usable only while fusion is enabled. */
+  /** Series/LUT/opacity/scale controls are usable only while fusion is enabled. */
   private void setFusionControlsEnabled(boolean enabled) {
     getAction(FusionAction.SERIES).ifPresent(a -> a.enableAction(enabled));
     getAction(FusionAction.LUT).ifPresent(a -> a.enableAction(enabled));
     getAction(FusionAction.BASE_OPACITY).ifPresent(a -> a.enableAction(enabled));
     getAction(FusionAction.OVERLAY_OPACITY).ifPresent(a -> a.enableAction(enabled));
+    fusionWindowTop.enableAction(enabled);
   }
 
   // ---  End of Fusion actions ------------------------------------------------------------------
