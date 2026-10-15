@@ -29,6 +29,7 @@ import java.awt.dnd.DragSourceMotionListener;
 import java.awt.event.*;
 import java.io.File;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -400,7 +401,11 @@ public class SeriesThumbnail extends Thumbnail
         drawProgression(g2d, x, y, height, bar, inset, fontHeight);
       } else {
         String seriesUID = (String) series.getTagValue(TagW.get("SeriesInstanceUID"));
-        Set<ResourceIconPath> paths = drawIcons.apply(seriesUID);
+        Set<ResourceIconPath> paths =
+            mergeBadges(
+                drawIcons.apply(seriesUID),
+                GuiUtils.getUICore().getSeriesBadgeProviders(),
+                seriesUID);
         if (paths != null && !paths.isEmpty()) {
           double yPos = height;
           for (ResourceIconPath path : paths) {
@@ -492,5 +497,29 @@ public class SeriesThumbnail extends Thumbnail
         repaint();
       }
     }
+  }
+
+  /**
+   * The icons of a thumbnail: the special-element ones first, then what the registered {@link
+   * SeriesBadgeProvider}s add, in registration order and without duplicates. A failing provider is
+   * logged and skipped, so a plugin never blanks the thumbnails.
+   */
+  static Set<ResourceIconPath> mergeBadges(
+      Set<ResourceIconPath> base, Iterable<SeriesBadgeProvider> providers, String seriesUID) {
+    Set<ResourceIconPath> icons = new LinkedHashSet<>();
+    if (base != null) {
+      icons.addAll(base);
+    }
+    for (SeriesBadgeProvider provider : providers) {
+      try {
+        Set<ResourceIconPath> badges = provider.getBadges(seriesUID);
+        if (badges != null) {
+          icons.addAll(badges);
+        }
+      } catch (RuntimeException e) {
+        LOGGER.warn("Badge provider {} failed on series {}", provider, seriesUID, e);
+      }
+    }
+    return icons;
   }
 }

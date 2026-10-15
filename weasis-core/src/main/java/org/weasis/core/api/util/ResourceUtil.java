@@ -179,6 +179,10 @@ public class ResourceUtil {
 
   public enum OtherIcon implements ResourceIconPath {
     AUDIO("svg/other/audio.svg"), // NON-NLS
+    /** Thumbnail badge: an AI task (UPS workitem) of the study is SCHEDULED or IN PROGRESS. */
+    AI_TASK("svg/other/aiTask.svg"), // NON-NLS
+    /** Thumbnail badge: an AI task of the study is COMPLETED, its results are ready to open. */
+    AI_RESULT("svg/other/aiResult.svg"), // NON-NLS
     CALENDAR("svg/other/calendar.svg"), // NON-NLS
     CDROM("svg/other/cdrom.svg"), // NON-NLS
     CLOCK("svg/other/clock.svg"), // NON-NLS
