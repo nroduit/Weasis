@@ -49,6 +49,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
+import org.weasis.dicom.explorer.ExplorerMenuContributors;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
@@ -152,6 +153,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
     addRemovalMenuItems(popupMenu, selList);
     addSplitPhases(popupMenu, selList);
     addThumbnailMenuItems(popupMenu, selList);
+    ExplorerMenuContributors.addMenuItems(popupMenu, dicomModel, series, seriesList);
 
     popupMenu.show(e.getComponent(), e.getX() - 5, e.getY() - 5);
   }
