@@ -798,6 +798,7 @@ public class DicomExplorer extends PluginTool
       case ADD -> handleAddEvent(newVal);
       case REMOVE -> handleRemoveEvent(newVal);
       case UPDATE -> handleUpdateEvent(event);
+      case UPDATE_PARENT -> handleUpdateParentEvent(newVal);
       case REPLACE -> handleReplaceEvent(event);
       case LOADING_START -> showLoadingPanel(event);
       case LOADING_STOP, LOADING_CANCEL -> hideLoadingPanel(event);
@@ -851,6 +852,22 @@ public class DicomExplorer extends PluginTool
     Object newVal = event.getNewValue();
     if (newVal instanceof DicomSeries series) {
       updateSplitSeries(series);
+    }
+  }
+
+  /**
+   * Refreshes the series and study captions once the metadata of the first downloaded image has
+   * been applied (e.g. DICOMDIR or manifest without Series Description).
+   */
+  private void handleUpdateParentEvent(Object newVal) {
+    if (newVal instanceof DicomSeries series) {
+      if (!DicomModel.isHiddenModality(series)) {
+        paneManager.refreshSeriesPane(series);
+      }
+      StudyPane studyPane = paneManager.getStudyPane(paneManager.getStudyForSeries(series));
+      if (studyPane != null) {
+        GuiExecutor.execute(studyPane::updateText);
+      }
     }
   }
 

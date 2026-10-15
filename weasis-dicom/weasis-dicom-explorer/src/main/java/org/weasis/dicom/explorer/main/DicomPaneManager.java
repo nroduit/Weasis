@@ -277,7 +277,7 @@ public class DicomPaneManager {
   public void refreshSeriesPane(MediaSeriesGroup series) {
     SeriesPane seriesPane = getSeriesPane(series);
     if (seriesPane != null) {
-      SwingUtilities.invokeLater(seriesPane::updateText);
+      seriesPane.updateText();
     }
   }
 
