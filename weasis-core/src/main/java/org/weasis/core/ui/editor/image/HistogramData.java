@@ -177,7 +177,11 @@ public class HistogramData {
     Integer index = null;
     int dynamic = lut.getByteLut().lutTable()[0].length - 1;
 
-    int datatype = ImageConversion.convertToDataType(layer.getSourceRenderedImage().type());
+    PlanarImage source = layer.getSourceRenderedImage();
+    int datatype =
+        source == null
+            ? DataBuffer.TYPE_UNDEFINED
+            : ImageConversion.convertToDataType(source.type());
     if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
       if (voiLut != null) {
         int b = voiLut.getNumBands() <= bandIndex ? 0 : bandIndex;

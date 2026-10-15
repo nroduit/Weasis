@@ -215,7 +215,7 @@ public class ObliqueRectangleGraphic extends AbstractDragGraphicArea {
   @Override
   public void setResizeOrMoving(Boolean value) {
     super.setResizeOrMoving(value);
-    if (!Boolean.TRUE.equals(value)) {
+    if (!Boolean.TRUE.equals(value)) { // NOSONAR false positive: no dereference of a nullable
       axisAlignedCreation = false;
     }
   }

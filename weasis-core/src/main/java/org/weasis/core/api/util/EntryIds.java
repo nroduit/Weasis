@@ -40,10 +40,22 @@ public final class EntryIds {
         Arrays.stream(parts)
             .filter(Objects::nonNull)
             .map(p -> p.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-")) // NON-NLS
-            .map(p -> p.replaceAll("(^-+)|(-+$)", ""))
+            .map(EntryIds::trimDashes)
             .filter(p -> !p.isEmpty())
             .collect(Collectors.joining("-"));
     return joined.isEmpty() ? "entry" : joined; // NON-NLS
+  }
+
+  private static String trimDashes(String s) {
+    int begin = 0;
+    int end = s.length();
+    while (begin < end && s.charAt(begin) == '-') {
+      begin++;
+    }
+    while (end > begin && s.charAt(end - 1) == '-') {
+      end--;
+    }
+    return s.substring(begin, end);
   }
 
   /** {@code <prefix><kind>.<slug>}, for an entry derived from a legacy document. */

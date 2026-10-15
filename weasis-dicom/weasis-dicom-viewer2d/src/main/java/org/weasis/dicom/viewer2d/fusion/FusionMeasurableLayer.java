@@ -98,7 +98,7 @@ final class FusionMeasurableLayer implements MeasurableLayer {
     if (pixelValue == null) {
       return 0;
     }
-    if (valuesAreReal) {
+    if (valuesAreReal || refOverlay == null) {
       return pixelValue.doubleValue();
     }
     Number val = refOverlay.pixelToRealValue(pixelValue, null);
