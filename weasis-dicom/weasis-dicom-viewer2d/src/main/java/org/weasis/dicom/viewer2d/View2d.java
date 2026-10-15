@@ -21,6 +21,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -958,10 +959,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     BufferedImage overlay = segOverlayImage;
     if (overlay != null) {
       // Re-enter the image coordinate space (translate + affineTransform) to draw the overlay
-      // aligned with the source image pixels.
+      // aligned with the source image pixels. The image is rendered by OpenCV, whose pixel centres
+      // have integer coordinates: overlay pixel (x, y) must cover [x - 0.5, x + 0.5].
       java.awt.geom.Point2D p = getClipViewCoordinatesOffset();
+      AffineTransform overlayTransform = new AffineTransform(affineTransform);
+      overlayTransform.translate(-0.5, -0.5);
       g2d.translate(p.getX(), p.getY());
-      g2d.drawImage(overlay, affineTransform, null);
+      g2d.drawImage(overlay, overlayTransform, null);
       g2d.translate(-p.getX(), -p.getY());
     }
     drawLoadingMessages(g2d);

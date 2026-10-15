@@ -9,11 +9,13 @@
  */
 package org.weasis.dicom.codec.seg;
 
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -546,9 +548,8 @@ public final class SegmentationVolume {
 
   /**
    * Returns the storage ID whose segment list is the union of the segments behind {@code idA} and
-   * {@code idB}, allocating a fresh combination ID on demand. Used by the resliced-raster
-   * accumulation path so that oversampling can OR contributions from sub-pixels covering different
-   * IDs without losing per-segment information.
+   * {@code idB}, allocating a fresh combination ID on demand. Used when merging overlapping
+   * segmentations, so that a voxel covered by several of them keeps every segment.
    *
    * <p>Returns {@code idA} (the dominant ID) if the storage-ID space is exhausted.
    */
@@ -1234,7 +1235,8 @@ public final class SegmentationVolume {
   /**
    * Reslices the segmentation volume onto an arbitrary 2D image plane defined by its LPS origin,
    * row/column unit directions, pixel spacing and dimensions, and returns one {@link SegContour}
-   * map per visible segment. Samples once at each output pixel centre using nearest-neighbor.
+   * map per visible segment. Uses <b>nearest-neighbor</b> sampling, with a majority vote over
+   * sub-samples when the image pixels are larger than the SEG voxels.
    *
    * <p>Used by 2D overlays when a segmentation has to be displayed on an image whose orientation
    * does not match the segmentation's native plane (reformat, oblique series, MPR view).
@@ -1258,6 +1260,16 @@ public final class SegmentationVolume {
     if (imgOrigin == null || rowDir == null || colDir == null || width <= 0 || height <= 0) {
       return Collections.emptyMap();
     }
+    // When an output pixel spans several SEG voxels, a single nearest-neighbour sample picks one
+    // of them by its phase, turning a continuous structure into a dotted column / row pattern.
+    // Such pixels take the storage ID covering most of their sub-samples instead (capped at 4×4).
+    // A majority rather than a union: the union grows every structure by up to one pixel, and
+    // on a grid matching the SEG (factor 1) the single sample reproduces its frames 1:1.
+    double minSegSpacing = Math.min(pixelSpacing.x, Math.min(pixelSpacing.y, pixelSpacing.z));
+    int factorU = Math.max(1, (int) Math.ceil(colSpacing / minSegSpacing));
+    int factorV = Math.max(1, (int) Math.ceil(rowSpacing / minSegSpacing));
+    int factor = Math.clamp(Math.max(factorU, factorV), 1, 4);
+
     // A segmentation usually covers a small part of the displayed field of view, and a study may
     // hold dozens of them: sampling the whole image for each one — including the ones the plane
     // misses entirely — dominates every slice change. Restrict the sweep to the pixels that can
@@ -1267,7 +1279,8 @@ public final class SegmentationVolume {
       return Collections.emptyMap();
     }
     int[] raster =
-        sampleImagePlane(imgOrigin, rowDir, colDir, colSpacing, rowSpacing, width, height, box);
+        sampleImagePlane(
+            imgOrigin, rowDir, colDir, colSpacing, rowSpacing, width, height, factor, box);
     return buildContours(raster, width, height);
   }
 
@@ -1411,45 +1424,104 @@ public final class SegmentationVolume {
       double rowSpacing,
       int width,
       int height,
+      int oversample,
       PlaneBox box) {
     int[] raster = new int[width * height];
-
-    double invSx = 1.0 / pixelSpacing.x;
-    double invSy = 1.0 / pixelSpacing.y;
-    double invSz = 1.0 / pixelSpacing.z;
-
-    // Hoist per-step LPS deltas — these are constant across the entire plane sweep.
-    double colStepX = rowDir.x * colSpacing;
-    double colStepY = rowDir.y * colSpacing;
-    double colStepZ = rowDir.z * colSpacing;
-    double rowStepX = colDir.x * rowSpacing;
-    double rowStepY = colDir.y * rowSpacing;
-    double rowStepZ = colDir.z * rowSpacing;
+    PlaneSampler sampler = new PlaneSampler(imgOrigin, rowDir, colDir, colSpacing, rowSpacing);
+    int n = Math.max(1, oversample);
+    double[] subOffsets = new double[n];
+    for (int i = 0; i < n; i++) {
+      subOffsets[i] = (i + 0.5) / n - 0.5;
+    }
+    // Distinct storage IDs met by the sub-samples of one pixel and their votes (0 included)
+    int[] votedIds = new int[n * n];
+    int[] votes = new int[n * n];
 
     for (int v = box.v0(); v <= box.v1(); v++) {
       int rowBase = v * width;
-      double oxV = imgOrigin.x + v * rowStepX;
-      double oyV = imgOrigin.y + v * rowStepY;
-      double ozV = imgOrigin.z + v * rowStepZ;
       for (int u = box.u0(); u <= box.u1(); u++) {
-        double dx = oxV + u * colStepX - volumeOrigin.x;
-        double dy = oyV + u * colStepY - volumeOrigin.y;
-        double dz = ozV + u * colStepZ - volumeOrigin.z;
-
-        int vx =
-            (int)
-                Math.round((dx * volumeAxisX.x + dy * volumeAxisX.y + dz * volumeAxisX.z) * invSx);
-        int vy =
-            (int)
-                Math.round((dx * volumeAxisY.x + dy * volumeAxisY.y + dz * volumeAxisY.z) * invSy);
-        int vz =
-            (int)
-                Math.round((dx * volumeAxisZ.x + dy * volumeAxisZ.y + dz * volumeAxisZ.z) * invSz);
-
-        raster[rowBase + u] = getStorageId(vx, vy, vz);
+        int id;
+        if (n == 1) {
+          id = sampler.sample(u, v);
+        } else {
+          int distinct = 0;
+          for (int sv = 0; sv < n; sv++) {
+            for (int su = 0; su < n; su++) {
+              int sample = sampler.sample(u + subOffsets[su], v + subOffsets[sv]);
+              int k = 0;
+              while (k < distinct && votedIds[k] != sample) k++;
+              if (k == distinct) {
+                votedIds[distinct] = sample;
+                votes[distinct++] = 0;
+              }
+              votes[k]++;
+            }
+          }
+          id = majorityId(votedIds, votes, distinct, sampler, u, v);
+        }
+        if (id != 0) {
+          raster[rowBase + u] = id;
+        }
       }
     }
     return raster;
+  }
+
+  /**
+   * Most voted storage ID of an oversampled pixel. A tie is resolved by the sample at the pixel
+   * centre when it is one of the tied IDs, otherwise by the first tied ID met.
+   */
+  private static int majorityId(
+      int[] ids, int[] votes, int distinct, PlaneSampler sampler, int u, int v) {
+    int best = 0;
+    boolean tie = false;
+    for (int k = 1; k < distinct; k++) {
+      if (votes[k] > votes[best]) {
+        best = k;
+        tie = false;
+      } else if (votes[k] == votes[best]) {
+        tie = true;
+      }
+    }
+    if (!tie) {
+      return ids[best];
+    }
+    int centreId = sampler.sample(u, v);
+    for (int k = 0; k < distinct; k++) {
+      if (ids[k] == centreId && votes[k] == votes[best]) {
+        return centreId;
+      }
+    }
+    return ids[best];
+  }
+
+  /** Storage ID of the voxel nearest to an image-plane position given in pixels. */
+  private final class PlaneSampler {
+    private final Vector3d origin;
+    private final Vector3d stepU;
+    private final Vector3d stepV;
+
+    PlaneSampler(
+        Vector3d imgOrigin,
+        Vector3d rowDir,
+        Vector3d colDir,
+        double colSpacing,
+        double rowSpacing) {
+      origin = lpsToVoxel(imgOrigin, new Vector3d());
+      stepU =
+          lpsToVoxel(new Vector3d(rowDir).mul(colSpacing).add(imgOrigin), new Vector3d())
+              .sub(origin);
+      stepV =
+          lpsToVoxel(new Vector3d(colDir).mul(rowSpacing).add(imgOrigin), new Vector3d())
+              .sub(origin);
+    }
+
+    int sample(double u, double v) {
+      int vx = (int) Math.round(origin.x + u * stepU.x + v * stepV.x);
+      int vy = (int) Math.round(origin.y + u * stepU.y + v * stepV.y);
+      int vz = (int) Math.round(origin.z + u * stepU.z + v * stepV.z);
+      return getStorageId(vx, vy, vz);
+    }
   }
 
   /**
@@ -1479,9 +1551,10 @@ public final class SegmentationVolume {
   /**
    * Builds {@link SegContour} objects from a resliced storage-ID raster for overlay rendering. Each
    * non-zero raster value is a storage ID whose constituent segments are looked up in {@link
-   * #idToSegments}; one binary mask is allocated lazily per visible segment that actually appears
-   * in the raster. There is no fixed cap on the number of segments — only the total storage-ID
-   * count is bounded by {@value #MAX_SHORT_ID}.
+   * #idToSegments}. Every visible segment present in the raster is traced along the pixel edges
+   * directly from the raster, within its own bounding box, so no per-segment mask is allocated.
+   * There is no fixed cap on the number of segments — only the total storage-ID count is bounded by
+   * {@value #MAX_SHORT_ID}.
    */
   private Map<Integer, List<SegContour>> buildContours(int[] raster, int width, int height) {
     if (raster == null || raster.length == 0) {
@@ -1505,59 +1578,63 @@ public final class SegmentationVolume {
       return Collections.emptyMap();
     }
 
-    // Lazy per-segment outputs (allocated only for segments that appear in the raster).
-    Map<Integer, byte[]> segMask = new LinkedHashMap<>();
-    Map<Integer, int[]> segPixelCount = new LinkedHashMap<>();
+    // Single pass over the raster: pixel count and bounding box of every visible segment, and the
+    // set of storage IDs that carry it (an ID may stand for several overlapping segments).
+    int segCount = visibleSeg.length;
+    int[] pixelCount = new int[segCount];
+    int[] minX = new int[segCount];
+    int[] minY = new int[segCount];
+    int[] maxX = new int[segCount];
+    int[] maxY = new int[segCount];
+    BitSet[] idsOfSeg = new BitSet[segCount];
     int totalNonZero = 0;
-
-    // Single pass over the raster: for each non-zero ID, OR each constituent segment into its
-    // own per-segment mask (overlap is handled naturally because the same pixel can contribute
-    // to several segments).
-    for (int i = 0; i < raster.length; i++) {
-      int id = raster[i];
-      if (id == 0) continue;
-      List<Integer> segs = idToSegments.get(id);
-      if (segs == null) continue;
-      totalNonZero++;
-      for (int segNum : segs) {
-        if (segNum < 0 || segNum >= visibleSeg.length || !visibleSeg[segNum]) continue;
-        byte[] mask = segMask.get(segNum);
-        if (mask == null) {
-          mask = new byte[raster.length];
-          segMask.put(segNum, mask);
-          segPixelCount.put(segNum, new int[1]);
-        }
-        if (mask[i] == 0) {
-          mask[i] = (byte) 255;
-          segPixelCount.get(segNum)[0]++;
+    int lastId = 0;
+    List<Integer> lastSegs = null;
+    for (int y = 0; y < height; y++) {
+      int row = y * width;
+      for (int x = 0; x < width; x++) {
+        int id = raster[row + x];
+        if (id == 0) continue;
+        List<Integer> segs = id == lastId ? lastSegs : idToSegments.get(id);
+        lastId = id;
+        lastSegs = segs;
+        if (segs == null) continue;
+        totalNonZero++;
+        for (int segNum : segs) {
+          if (segNum < 0 || segNum >= segCount || !visibleSeg[segNum]) continue;
+          if (pixelCount[segNum]++ == 0) {
+            idsOfSeg[segNum] = new BitSet();
+            minX[segNum] = x;
+            minY[segNum] = y;
+          }
+          idsOfSeg[segNum].set(id);
+          minX[segNum] = Math.min(minX[segNum], x);
+          maxX[segNum] = Math.max(maxX[segNum], x);
+          maxY[segNum] = y;
         }
       }
-    }
-
-    if (segMask.isEmpty()) {
-      logBuildContoursDiagnostics();
-      return Collections.emptyMap();
     }
 
     Map<Integer, List<SegContour>> result = new LinkedHashMap<>();
-    for (Map.Entry<Integer, byte[]> entry : segMask.entrySet()) {
-      int segNum = entry.getKey();
-      byte[] maskData = entry.getValue();
-      int pixelCount = segPixelCount.get(segNum)[0];
-      RegionAttributes attrs = attrsBySeg[segNum];
-      List<Segment> segmentList = MaskContours.build(maskData, width, height);
-      if (!segmentList.isEmpty()) {
-        SegContour contour = new SegContour(String.valueOf(segNum), segmentList, pixelCount);
-        contour.setAttributes(attrs);
-        result.computeIfAbsent(segNum, _ -> new ArrayList<>()).add(contour);
-      } else if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug(
-            "buildContours: segment #{} '{}' had {} pixels in the resliced raster but"
-                + " MaskContours returned no contour",
-            segNum,
-            labelOf(segNum),
-            pixelCount);
-      }
+    for (int segNum = 0; segNum < segCount; segNum++) {
+      if (pixelCount[segNum] == 0) continue;
+      BitSet ids = idsOfSeg[segNum];
+      Rectangle bounds =
+          new Rectangle(
+              minX[segNum],
+              minY[segNum],
+              maxX[segNum] - minX[segNum] + 1,
+              maxY[segNum] - minY[segNum] + 1);
+      List<Segment> segmentList =
+          MaskContours.build((x, y) -> ids.get(raster[y * width + x]), bounds);
+      SegContour contour = new SegContour(String.valueOf(segNum), segmentList, pixelCount[segNum]);
+      contour.setAttributes(attrsBySeg[segNum]);
+      result.computeIfAbsent(segNum, _ -> new ArrayList<>()).add(contour);
+    }
+
+    if (result.isEmpty()) {
+      logBuildContoursDiagnostics();
+      return Collections.emptyMap();
     }
 
     if (LOGGER.isDebugEnabled()) {

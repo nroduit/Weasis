@@ -10,6 +10,7 @@
 package org.weasis.dicom.codec.seg;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,11 +22,13 @@ import java.awt.Shape;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
 import org.junit.jupiter.api.Test;
+import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.opencv.seg.RegionAttributes;
@@ -54,10 +57,15 @@ class SegmentationVolumeTest {
   }
 
   @Test
-  void imagePlaneSamplesOnlyTheCentreAndKeepsTrueOverlaps() {
+  void coarseImagePlaneKeepsTrueOverlapsWithoutDilation() {
     SegmentationVolume volume = newVolume();
-    volume.addLabel(4, 4, 2, 1);
-    volume.addLabel(4, 4, 2, 2);
+    // Overlapping segments covering the whole footprint of output pixel (1, 1)
+    for (int y = 3; y <= 6; y++) {
+      for (int x = 3; x <= 6; x++) {
+        volume.addLabel(x, y, 2, 1);
+        volume.addLabel(x, y, 2, 2);
+      }
+    }
     // Inside an output pixel's footprint, but away from its centre: must not dilate it.
     volume.addLabel(1, 0, 2, 1);
     var contours =
@@ -82,8 +90,8 @@ class SegmentationVolumeTest {
             new Vector3d(2, 2, 2),
             new Vector3d(1, 0, 1).normalize(),
             new Vector3d(0, 1, 0),
-            4,
-            4,
+            1,
+            1,
             1,
             1);
     assertEquals(1, contours.size());
@@ -347,5 +355,74 @@ class SegmentationVolumeTest {
       assertEquals(expected[i], buffer.get(i) & 0xFF, "voxel " + i);
     }
     assertFalse(volume.exportSliceInto(SIZE, buffer));
+  }
+
+  /** Pixels of a 8x8 plane covered by the filled contours of {@code segNum}. */
+  private static boolean[] coveredPixels(
+      Map<Integer, List<SegContour>> contours, int segNum, int width, int height) {
+    boolean[] covered = new boolean[width * height];
+    for (SegContour contour : contours.getOrDefault(segNum, List.of())) {
+      Shape shape = contour.getSegGraphic().getShape();
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          covered[y * width + x] |= shape.contains(x, y);
+        }
+      }
+    }
+    return covered;
+  }
+
+  private static Map<Integer, List<SegContour>> axialContours(
+      SegmentationVolume volume, double z, double spacing, int size) {
+    // The image origin is the centre of its first pixel, voxel centres are at integer positions
+    double origin = (spacing - 1) / 2;
+    return volume.getContoursForImagePlane(
+        new Vector3d(origin, origin, z),
+        new Vector3d(1, 0, 0),
+        new Vector3d(0, 1, 0),
+        spacing,
+        spacing,
+        size,
+        size);
+  }
+
+  @Test
+  void resliceOnTheSegGridCoversExactlyTheStampedVoxels() {
+    SegmentationVolume volume = newVolume();
+    int[][] liverVoxels = {{1, 1}, {4, 2}, {5, 2}, {5, 3}, {7, 7}};
+    for (int[] v : liverVoxels) {
+      volume.addLabel(v[0], v[1], 3, 1);
+    }
+    volume.addLabel(5, 3, 3, 2); // Overlaps the liver
+
+    Map<Integer, List<SegContour>> contours = axialContours(volume, 3, 1, SIZE);
+
+    boolean[] expected = new boolean[SIZE * SIZE];
+    for (int[] v : liverVoxels) {
+      expected[v[1] * SIZE + v[0]] = true;
+    }
+    boolean[] kidneyExpected = new boolean[SIZE * SIZE];
+    kidneyExpected[3 * SIZE + 5] = true;
+    assertAll(
+        () -> assertArrayEquals(expected, coveredPixels(contours, 1, SIZE, SIZE)),
+        () -> assertEquals(liverVoxels.length, contours.get(1).getFirst().getNumberOfPixels()),
+        () -> assertArrayEquals(kidneyExpected, coveredPixels(contours, 2, SIZE, SIZE)));
+  }
+
+  @Test
+  void coarserResliceKeepsTheMajorityOfEachPixel() {
+    SegmentationVolume volume = newVolume();
+    // Image pixel (0, 0) covers voxels x,y in [0, 1]: one voxel is not the majority
+    volume.addLabel(0, 0, 3, 1);
+    // Image pixel (2, 1) covers voxels x in [4, 5], y in [2, 3]: three voxels are
+    volume.addLabel(4, 2, 3, 1);
+    volume.addLabel(5, 2, 3, 1);
+    volume.addLabel(4, 3, 3, 1);
+
+    Map<Integer, List<SegContour>> contours = axialContours(volume, 3, 2, SIZE / 2);
+
+    boolean[] expected = new boolean[(SIZE / 2) * (SIZE / 2)];
+    expected[SIZE / 2 + 2] = true;
+    assertArrayEquals(expected, coveredPixels(contours, 1, SIZE / 2, SIZE / 2));
   }
 }

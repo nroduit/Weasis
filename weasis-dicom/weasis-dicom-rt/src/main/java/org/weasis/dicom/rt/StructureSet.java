@@ -11,7 +11,9 @@ package org.weasis.dicom.rt;
 
 import static org.weasis.dicom.codec.geometry.GeometryOfSlice.MIN_SPACING;
 
+import java.awt.Rectangle;
 import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -27,14 +29,9 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.util.DicomUtils;
 import org.joml.Vector3d;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
+import org.weasis.core.ui.model.graphic.imp.seg.ShapeRaster;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -43,10 +40,6 @@ import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.seg.LazyContourLoader;
-import org.weasis.opencv.data.ImageCV;
-import org.weasis.opencv.op.ImageAnalyzer;
-import org.weasis.opencv.op.ImageConversion;
-import org.weasis.opencv.seg.Region;
 import org.weasis.opencv.seg.RegionAttributes;
 import org.weasis.opencv.seg.Segment;
 
@@ -316,29 +309,22 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
     if (voxelSpacing.x < MIN_SPACING || voxelSpacing.y < MIN_SPACING) {
       return null;
     }
-    Path2D path = getPath2D(geometry, points, voxelSpacing);
-    if ("CLOSED_PLANAR".equals(contour.getString(Tag.ContourGeometricType))) { // NON-NLS
-      path.closePath();
-    }
-
-    Mat binary = Mat.zeros(img.getImage().size(), CvType.CV_8UC1);
-    try {
-      List<MatOfPoint> pts = ImageAnalyzer.transformShapeToContour(path, true);
-      Imgproc.fillPoly(binary, pts, new Scalar(255));
-      List<Segment> segmentList = Region.buildSegmentList(ImageCV.fromMat(binary));
-      int nbPixels = Core.countNonZero(binary);
-
-      StructContour segContour = new StructContour(String.valueOf(id), segmentList, nbPixels);
-      segContour.setPositionZ(points[2]);
-      segContour.setAttributes(region);
-      region.addPixels(segContour);
-      return segContour;
-    } finally {
-      ImageConversion.releasePlanarImage(ImageCV.fromMat(binary));
-    }
+    // The polygon is drawn as is: tracing it again from a filled mask would turn it into a pixel
+    // staircase and gain nothing in accuracy
+    Segment segment = toImageSegment(geometry, points, voxelSpacing);
+    StructContour segContour =
+        new StructContour(String.valueOf(id), List.of(segment), countPixels(img, segment));
+    segContour.setPositionZ(points[2]);
+    segContour.setAttributes(region);
+    region.addPixels(segContour);
+    return segContour;
   }
 
-  private static Path2D getPath2D(
+  /**
+   * Converts the contour points from patient coordinates (mm) to image pixel coordinates, where
+   * pixel centres have integer coordinates as in DICOM.
+   */
+  private static Segment toImageSegment(
       GeometryOfSlice geometry, double[] points, Vector3d voxelSpacing) {
     Vector3d tlhc = geometry.getTLHC();
     Vector3d row = geometry.getRow();
@@ -346,20 +332,37 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
     double invX = 1.0 / voxelSpacing.x;
     double invY = 1.0 / voxelSpacing.y;
 
-    Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO);
+    Segment segment = new Segment();
+    segment.ensureCapacity(points.length / 3);
     for (int i = 0; i < points.length; i += 3) {
       double dx = points[i] - tlhc.x;
       double dy = points[i + 1] - tlhc.y;
       double dz = points[i + 2] - tlhc.z;
       double x = (dx * row.x + dy * row.y + dz * row.z) * invX;
       double y = (dx * column.x + dy * column.y + dz * column.z) * invY;
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
+      segment.add(new Point2D.Double(x, y));
     }
-    return path;
+    return segment;
+  }
+
+  /** Number of image pixels whose centre lies inside the closed contour. */
+  private static int countPixels(DicomImageElement img, Segment segment) {
+    if (segment.size() < 3) {
+      return 0;
+    }
+    Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, segment.size() + 1);
+    Point2D first = segment.getFirst();
+    path.moveTo(first.getX(), first.getY());
+    for (int i = 1; i < segment.size(); i++) {
+      path.lineTo(segment.get(i).getX(), segment.get(i).getY());
+    }
+    path.closePath();
+    Integer width = TagD.getTagValue(img, Tag.Columns, Integer.class);
+    Integer height = TagD.getTagValue(img, Tag.Rows, Integer.class);
+    Rectangle clip =
+        width == null || height == null ? path.getBounds() : new Rectangle(0, 0, width, height);
+    ShapeRaster raster = ShapeRaster.of(path, clip);
+    return raster == null ? 0 : raster.countPixels();
   }
 
   private static SegMeasurableLayer<DicomImageElement> getMeasurableLayer(

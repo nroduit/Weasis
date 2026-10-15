@@ -43,6 +43,12 @@ public interface SpecialElementRegion {
   double POSITION_TOLERANCE_OBLIQUE = 2.5;
 
   /**
+   * In-plane offset, in pixels, from which a SEG frame origin no longer matches the image origin:
+   * below it, every image pixel has the frame pixel with the same indices as nearest voxel.
+   */
+  double MAX_FRAME_OFFSET = 0.49;
+
+  /**
    * Cosine threshold above which two unit normals are considered to describe the same plane (very
    * strict — sub-degree). Used to decide whether positionMap keys are directly comparable.
    */
@@ -135,6 +141,11 @@ public interface SpecialElementRegion {
 
   /** SEG mask DICOM PixelSpacing as {@code [rowSpacing, colSpacing]} in mm, or {@code null}. */
   default double[] getMaskPixelSpacing() {
+    return null;
+  }
+
+  /** Image Position (Patient) of the mask frame read by {@code loader}, or {@code null}. */
+  default Vector3d getMaskImagePosition(LazyContourLoader loader) {
     return null;
   }
 
@@ -411,14 +422,14 @@ public interface SpecialElementRegion {
           if (isFractionalSeg()) {
             // No canonical volume represents a fractional SEG, so nothing constrains this path to
             // a single frame: keep the whole slab so every alpha mask inside it contributes.
-            return PositionMatch.of(findByTolerance(positionMap, key, tol));
+            return alignedMatch(img, findByTolerance(positionMap, key, tol));
           }
           // Everywhere else this stands in for the volume reslice (see getContours), which samples
           // the single nearest voxel plane. Returning the whole slab instead unions several SEG
           // frames into one image slice and draws a visibly thicker overlay than MPR and the 3D
           // view show for the same segmentation — an overlapping reconstruction (0.6 mm slices
           // 0.3 mm apart) widens the tolerance to the neighbours even when the grids match 1:1.
-          return PositionMatch.of(findNearest(positionMap, key, tol));
+          return alignedMatch(img, findNearest(positionMap, key, tol));
         }
       }
     }
@@ -435,6 +446,42 @@ public interface SpecialElementRegion {
       return loaders == null ? PositionMatch.NOT_APPLICABLE : PositionMatch.of(loaders);
     }
     return PositionMatch.NOT_APPLICABLE;
+  }
+
+  /**
+   * Accepts the selected frames only when their in-plane origin lies within half a pixel of the
+   * image origin: the nearest voxel of every image pixel is then the frame pixel with the same
+   * indices, so the frame is exactly what a reslice would give. Otherwise the frame contours would
+   * be drawn shifted, and the lookup does not apply.
+   */
+  private PositionMatch alignedMatch(DicomImageElement img, Set<LazyContourLoader> selected) {
+    if (selected == null) {
+      return PositionMatch.of(null);
+    }
+    double[] imgIpp = TagD.getTagValue(img, Tag.ImagePositionPatient, double[].class);
+    Vector3d segRow = getMaskRowDirection();
+    Vector3d segCol = getMaskColumnDirection();
+    if (imgIpp == null || imgIpp.length != 3 || segRow == null || segCol == null) {
+      return PositionMatch.of(selected);
+    }
+    double[] ps = getMaskPixelSpacing();
+    if (ps == null || ps.length < 2 || ps[0] <= 0 || ps[1] <= 0) {
+      ps = TagD.getTagValue(img, Tag.PixelSpacing, double[].class);
+    }
+    // DICOM PixelSpacing = [row spacing (Y), column spacing (X)]
+    double colSpacing = ps != null && ps.length >= 2 && ps[1] > 0 ? ps[1] : 1.0;
+    double rowSpacing = ps != null && ps.length >= 2 && ps[0] > 0 ? ps[0] : 1.0;
+    for (LazyContourLoader loader : selected) {
+      Vector3d segIpp = getMaskImagePosition(loader);
+      if (segIpp != null) {
+        Vector3d delta = new Vector3d(imgIpp).sub(segIpp);
+        if (Math.abs(delta.dot(segRow)) / colSpacing >= MAX_FRAME_OFFSET
+            || Math.abs(delta.dot(segCol)) / rowSpacing >= MAX_FRAME_OFFSET) {
+          return PositionMatch.NOT_APPLICABLE;
+        }
+      }
+    }
+    return PositionMatch.of(selected);
   }
 
   /**
