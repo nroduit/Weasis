@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
+import java.awt.Shape;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.LinkedHashMap;
@@ -50,6 +51,44 @@ class SegmentationVolumeTest {
         new Vector3d(0, 1, 0),
         new Vector3d(0, 0, 1),
         attributes);
+  }
+
+  @Test
+  void imagePlaneSamplesOnlyTheCentreAndKeepsTrueOverlaps() {
+    SegmentationVolume volume = newVolume();
+    volume.addLabel(4, 4, 2, 1);
+    volume.addLabel(4, 4, 2, 2);
+    // Inside an output pixel's footprint, but away from its centre: must not dilate it.
+    volume.addLabel(1, 0, 2, 1);
+    var contours =
+        volume.getContoursForImagePlane(
+            new Vector3d(0, 0, 2), new Vector3d(1, 0, 0), new Vector3d(0, 1, 0), 4, 4, 2, 2);
+    for (int segment : new int[] {1, 2}) {
+      assertEquals(1, contours.get(segment).getFirst().getNumberOfPixels());
+      Shape shape = contours.get(segment).getFirst().getSegGraphic().getShape();
+      assertTrue(shape.contains(0.6, 0.6));
+      assertTrue(shape.contains(1.4, 1.4));
+      assertFalse(shape.contains(0, 0));
+    }
+  }
+
+  @Test
+  void obliqueImagePlaneDoesNotUnionNeighbouringSlices() {
+    SegmentationVolume volume = newVolume();
+    volume.addLabel(2, 2, 2, 1);
+    volume.addLabel(3, 2, 3, 2);
+    var contours =
+        volume.getContoursForImagePlane(
+            new Vector3d(2, 2, 2),
+            new Vector3d(1, 0, 1).normalize(),
+            new Vector3d(0, 1, 0),
+            4,
+            4,
+            1,
+            1);
+    assertEquals(1, contours.size());
+    assertTrue(contours.containsKey(1));
+    assertEquals(1, contours.get(1).getFirst().getNumberOfPixels());
   }
 
   @Test

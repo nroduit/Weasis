@@ -22,7 +22,6 @@ import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
-import org.weasis.opencv.seg.Region;
 import org.weasis.opencv.seg.Segment;
 
 /** Lazy contour loader for legacy BINARY DICOM SEG frames (one segment per frame). */
@@ -72,7 +71,7 @@ public final class BasicContourLoader extends CachedContourLoader {
 
   private Set<SegContour> buildContours(PlanarImage binary) {
     Mat mat = binary.toMat();
-    List<Segment> segmentList = Region.buildSegmentList(binary);
+    List<Segment> segmentList = MaskContours.build(mat);
     int pixelCount = Core.countNonZero(mat);
     SegContour contour = new SegContour(String.valueOf(id), segmentList, pixelCount);
     region.addPixels(contour);
