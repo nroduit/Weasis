@@ -23,7 +23,6 @@ import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.util.SoftHashMap;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.opencv.data.ImageCV;
-import org.weasis.opencv.seg.Region;
 import org.weasis.opencv.seg.Segment;
 
 /**
@@ -94,7 +93,7 @@ public final class LabelMapContourLoader extends CachedContourLoader {
       if (pixelCount == 0) {
         return null;
       }
-      List<Segment> segmentList = Region.buildSegmentList(binary);
+      List<Segment> segmentList = MaskContours.build(binary);
       SegContour contour = new SegContour(label + "_" + id, segmentList, pixelCount);
       region.addPixels(contour);
       contour.setAttributes(region);
