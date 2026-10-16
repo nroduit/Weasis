@@ -46,6 +46,7 @@ public class AffineTransformOp extends AbstractOp {
 
   private static final int MATRIX_ROWS = 2;
   private static final int MATRIX_COLS = 3;
+  private static final double SIZE_TOLERANCE = 1e-6;
 
   public AffineTransformOp() {
     setName(OP_NAME);
@@ -100,9 +101,15 @@ public class AffineTransformOp extends AbstractOp {
 
     var transformMatrix = createTransformMatrix(matrix);
     var interpolation = getInterpolationValue();
-    var outputSize = new Size(bounds.getWidth(), bounds.getHeight());
+    // Round up: OpenCV truncates the size and would drop the partial last column and row. The
+    // tolerance keeps a computed whole size (e.g. 512.0000001) from gaining an empty column.
+    var outputSize = new Size(ceilSize(bounds.getWidth()), ceilSize(bounds.getHeight()));
 
     return ImageTransformer.warpAffine(source.toMat(), transformMatrix, outputSize, interpolation);
+  }
+
+  static double ceilSize(double size) {
+    return Math.ceil(size - SIZE_TOLERANCE);
   }
 
   private Mat createTransformMatrix(List<Double> matrix) {
