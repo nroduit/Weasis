@@ -170,6 +170,11 @@ line naming the current spelling. Use the current one everywhere.
    what the protocol bar of the viewer does; `hp:explain [--cell <n>]` gives the rules, score and
    alternatives behind each cell; `hp:show --id <protocol-id>` prints a protocol as JSON and
    `hp:validate --file <file>` checks a protocol file for rule errors before trying it.
+   `hp:save --name <text> [--dry-run]` is *Save as protocol*: it derives a user protocol from
+   the display of the selected 2D viewer (per cell the smallest rule that singles its series
+   out among the study, plus preset, inversion, sort, tiling and synchronization), reports the
+   rules and which loaded studies it applies to, and stores it in the user layer unless
+   `--dry-run`; `hp:delete --id <protocol-id>` removes a user protocol.
    `hp:validate --corpus <dir> [--protocols <file>] [--expected <file>]` runs the matching over
    a folder of studies without any viewer and reports the counts per protocol, the protocol and
    first-step cells of each study and, with an expectations file, which studies hang as expected.

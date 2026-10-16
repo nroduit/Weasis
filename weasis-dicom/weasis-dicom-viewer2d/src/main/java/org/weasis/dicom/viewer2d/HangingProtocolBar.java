@@ -25,8 +25,10 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.ws.WorkspaceListener;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
 import org.weasis.dicom.explorer.hp.ActiveHanging;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier;
@@ -55,6 +57,7 @@ public class HangingProtocolBar extends WtoolBar {
   private final JButton previous = new JButton();
   private final JButton next = new JButton();
   private final JButton again = new JButton();
+  private final JButton save = new JButton();
   private boolean updating;
 
   public HangingProtocolBar(int index) {
@@ -87,6 +90,18 @@ public class HangingProtocolBar extends WtoolBar {
     again.setToolTipText(Messages.getString("HangingProtocolBar.again"));
     again.addActionListener(e -> act(current -> ActiveHanging.step(current, current.step())));
     add(again);
+
+    save.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.REDACT_SAVE));
+    save.setToolTipText(Messages.getString("HangingProtocolBar.save"));
+    save.addActionListener(
+        e -> {
+          ImageViewerPlugin<DicomImageElement> container =
+              EventManager.getInstance().getSelectedView2dContainer();
+          if (container != null) {
+            SaveProtocolDialog.open(container);
+          }
+        });
+    add(save);
 
     WorkspaceManager manager = GuiUtils.getUICore().getWorkspaceManager();
     if (manager != null) {
@@ -138,6 +153,8 @@ public class HangingProtocolBar extends WtoolBar {
         previous.setEnabled(false);
         next.setEnabled(false);
         again.setEnabled(false);
+        save.setEnabled(
+            viewer instanceof ImageViewerPlugin<?> image && image.supportsViewportPanes());
         return;
       }
       Applied applied = active.get();
@@ -168,6 +185,7 @@ public class HangingProtocolBar extends WtoolBar {
       previous.setEnabled(steps > 1);
       next.setEnabled(steps > 1);
       again.setEnabled(true);
+      save.setEnabled(true);
     } finally {
       updating = false;
     }

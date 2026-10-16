@@ -39,12 +39,15 @@ import org.weasis.core.api.command.ViewId;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.hp.HangingProtocolDocuments;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.editor.ViewerPlacement;
+import org.weasis.core.ui.editor.image.HangingLayout;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -54,6 +57,7 @@ import org.weasis.dicom.codec.hp.HangingEngine;
 import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
 import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
 import org.weasis.dicom.codec.hp.HangingPlan;
+import org.weasis.dicom.codec.hp.ProtocolDeriver;
 import org.weasis.dicom.codec.hp.ProtocolJson;
 import org.weasis.dicom.codec.hp.SeriesFeatureExtractor;
 import org.weasis.dicom.codec.hp.StudySeries;
@@ -82,6 +86,8 @@ import picocli.CommandLine.ParentCommand;
       HpCommands.Group.class,
       HpCommands.Explain.class,
       HpCommands.Show.class,
+      HpCommands.Save.class,
+      HpCommands.Delete.class,
       HpCommands.Features.class,
       HpCommands.Validate.class
     })
@@ -774,6 +780,207 @@ public class HpCommands implements CommandExtension {
                   candidate.document().id(),
                   candidate.document().protocol(),
                   candidate.document().weasis())
+              .toString());
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "save",
+      description =
+          "Save as protocol: derives a user protocol from the display of a 2D viewer, per cell "
+              + "the smallest set of feature selectors that singles its series out among the "
+              + "study and the presentation of the cell (preset, color map, inversion, sort, "
+              + "tiling, synchronization), and stores it in the user layer; --dry-run only "
+              + "returns the rules and which loaded studies the protocol would apply to.")
+  @Since("5.0")
+  static class Save extends Verb {
+    @Mixin HangingOptions target;
+
+    @Option(
+        names = "--name",
+        required = true,
+        paramLabel = "<text>",
+        description = "The protocol name; the id is derived from it unless --id.")
+    String name;
+
+    @Option(names = "--id", paramLabel = "<protocol-id>", description = "The entry id.")
+    String protocolId;
+
+    @Option(
+        names = "--dry-run",
+        description = "Derives and reports without storing; matches the loaded studies.")
+    boolean dryRun;
+
+    @Override
+    protected void run() {
+      String id = protocolId == null ? ProtocolDeriver.idOf(name) : protocolId;
+      JsonObject result =
+          GuiExecutor.invokeAndRethrow(
+              () ->
+                  IdentityMask.callForCommand(
+                      () -> {
+                        DicomModel model = parent.model();
+                        ImageViewerPlugin<?> viewer = viewerOf(target.viewId);
+                        HangingLayout layout = viewer.captureLayout();
+                        MediaSeriesGroup study = studyOf(model, layout);
+                        List<StudySeries> series = studySeries(model, study);
+                        ProtocolDeriver.Derivation derivation =
+                            ProtocolDeriver.derive(id, name, "SINGLE_USER", layout, series);
+                        JsonObject entry = ProtocolJson.toJson(derivation.document());
+                        JsonObjectBuilder json =
+                            Json.createObjectBuilder().add("protocol", id).add("name", name);
+                        JsonArrayBuilder cells = Json.createArrayBuilder();
+                        for (ProtocolDeriver.CellRule rule : derivation.rules()) {
+                          JsonArrayBuilder selectors = Json.createArrayBuilder();
+                          rule.selectors().forEach(s -> selectors.add(s.describe()));
+                          JsonArrayBuilder matching = Json.createArrayBuilder();
+                          rule.matching().forEach(matching::add);
+                          cells.add(
+                              Json.createObjectBuilder()
+                                  .add("cell", rule.cell() + 1) // NON-NLS
+                                  .add("series", rule.series()) // NON-NLS
+                                  .add("label", rule.label()) // NON-NLS
+                                  .add("unique", rule.unique()) // NON-NLS
+                                  .add("selectors", selectors) // NON-NLS
+                                  .add("matching", matching)); // NON-NLS
+                        }
+                        json.add("cells", cells); // NON-NLS
+                        Candidate candidate =
+                            new Candidate(derivation.document(), Origin.USER, true);
+                        json.add("dryRun", dryRun(model, candidate).toJson()); // NON-NLS
+                        if (!dryRun) {
+                          try {
+                            HangingProtocolDocuments.protocols().put(entry);
+                          } catch (IOException e) {
+                            throw new IllegalStateException(
+                                "Cannot store the protocol: " + e.getMessage(), e);
+                          }
+                        }
+                        return json.add("saved", !dryRun).add("entry", entry).build(); // NON-NLS
+                      }));
+      print(isJson() ? result.toString() : text(result));
+    }
+
+    /** The protocol matched against every loaded study. */
+    static ValidationReport dryRun(DicomModel model, Candidate candidate) {
+      List<ValidationReport.Input> inputs = new ArrayList<>();
+      for (MediaSeriesGroup patient : model.getChildren(MediaSeriesGroupNode.rootNode)) {
+        for (MediaSeriesGroup study : model.getChildren(patient)) {
+          String description =
+              TagD.getTagValue(study, Tag.StudyDescription, String.class); // NON-NLS
+          inputs.add(
+              new ValidationReport.Input(
+                  uidOf(study),
+                  description == null ? uidOf(study) : description,
+                  studySeries(model, study)));
+        }
+      }
+      return ValidationReport.run(List.of(candidate), inputs);
+    }
+
+    static String text(JsonObject json) {
+      StringBuilder out = new StringBuilder();
+      out.append(json.getBoolean("saved") ? "saved " : "derived ") // NON-NLS
+          .append(json.getString("protocol")) // NON-NLS
+          .append('\n');
+      for (JsonObject c : json.getJsonArray("cells").getValuesAs(JsonObject.class)) {
+        out.append("  cell ") // NON-NLS
+            .append(c.getInt("cell")) // NON-NLS
+            .append(' ')
+            .append(c.getString("label")) // NON-NLS
+            .append(c.getBoolean("unique") ? "" : " (not unique)") // NON-NLS
+            .append(": ")
+            .append(c.getJsonArray("selectors").getValuesAs(JsonValue::toString)) // NON-NLS
+            .append('\n');
+      }
+      JsonObject dry = json.getJsonObject("dryRun"); // NON-NLS
+      for (JsonObject s : dry.getJsonArray("studies").getValuesAs(JsonObject.class)) {
+        out.append("  ")
+            .append(s.getString("description", s.getString("study"))) // NON-NLS
+            .append(": ")
+            .append(s.containsKey("protocol") ? "applies" : "does not apply") // NON-NLS
+            .append('\n');
+      }
+      return out.toString().stripTrailing();
+    }
+  }
+
+  /** The 2D viewer asked for, else the selected one. */
+  static ImageViewerPlugin<?> viewerOf(ViewId viewId) {
+    ViewerPlugin<?> viewer;
+    if (viewId != null) {
+      viewer =
+          GuiUtils.getUICore()
+              .getWorkspaceManager()
+              .findView(viewId.value())
+              .filter(ViewerPlugin.class::isInstance)
+              .map(v -> (ViewerPlugin<?>) v)
+              .orElseThrow(
+                  () ->
+                      CommandFailure.unknownHandle(
+                          "Unknown viewer id: " + viewId, "workspace:list")); // NON-NLS
+    } else {
+      viewer =
+          GuiUtils.getUICore()
+              .getSelectedPlugin()
+              .orElseThrow(() -> new IllegalStateException("No viewer is selected"));
+    }
+    if (!(viewer instanceof ImageViewerPlugin<?> image) || !image.supportsViewportPanes()) {
+      throw new IllegalArgumentException("The viewer is not a 2D viewer");
+    }
+    return image;
+  }
+
+  /** The study of the first series a layout shows. */
+  static MediaSeriesGroup studyOf(DicomModel model, HangingLayout layout) {
+    for (HangingLayout.Cell cell : layout.cells()) {
+      String uid = cell.seriesId().orElse(null);
+      if (uid != null) {
+        MediaSeriesGroup study =
+            model.findSeries(uid).map(s -> model.getParent(s, DicomModel.study)).orElse(null);
+        if (study != null) {
+          return study;
+        }
+      }
+    }
+    throw new IllegalStateException("The viewer shows no series of a loaded study");
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "delete",
+      description =
+          "Deletes a protocol of the user layer, one saved with 'save'; a built-in or site "
+              + "protocol cannot be deleted, only disabled.")
+  @Since("5.0")
+  static class Delete extends Verb {
+    @Option(
+        names = "--id",
+        required = true,
+        paramLabel = "<protocol-id>",
+        description = "Protocol id from 'list'.")
+    String protocolId;
+
+    @Override
+    protected void run() {
+      boolean removed;
+      try {
+        removed = HangingProtocolDocuments.protocols().remove(protocolId);
+      } catch (IOException e) {
+        throw new IllegalStateException("Cannot store the protocols: " + e.getMessage(), e);
+      }
+      if (!removed) {
+        throw CommandFailure.unknownHandle(
+            "No user protocol with id " + protocolId, "hp:list"); // NON-NLS
+      }
+      print(
+          Json.createObjectBuilder()
+              .add("protocol", protocolId) // NON-NLS
+              .add("deleted", true) // NON-NLS
+              .build()
               .toString());
     }
   }

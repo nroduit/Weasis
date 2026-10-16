@@ -356,6 +356,17 @@ Needs: file read
 | --step | integer |  | The reading step to hang, from 1 (default: the first). |
 | --new-tab | boolean |  | Opens new viewers instead of re-hanging the one of the same patient. |
 
+### hp:delete (since 5.0)
+
+Deletes a protocol of the user layer, one saved with 'save'; a built-in or site protocol cannot be deleted, only disabled.
+
+Usage: `hp:delete [-h] [--json] --id=<protocol-id>`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --id | string |  | Protocol id from 'list'. |
+
 ### hp:explain (since 5.0)
 
 Why the cells of the active hanging show what they show: per cell the rules that selected the series, its score and the alternatives; the why of a hanging.
@@ -421,6 +432,20 @@ Needs: file read
 | --study | study-uid |  | Study Instance UID from 'dicom:list'. |
 | --protocol | string |  | Plans this protocol from 'list' even when another one scores better. |
 | --protocols | input-path |  | A JSON file of protocol entries matched instead of the layers, to try a draft. |
+
+### hp:save (since 5.0)
+
+Save as protocol: derives a user protocol from the display of a 2D viewer, per cell the smallest set of feature selectors that singles its series out among the study and the presentation of the cell (preset, color map, inversion, sort, tiling, synchronization), and stores it in the user layer; --dry-run only returns the rules and which loaded studies the protocol would apply to.
+
+Usage: `hp:save [-h] [--dry-run] [--json] [--id=<protocol-id>] --name=<text> [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --name | string |  | The protocol name; the id is derived from it unless --id. |
+| --id | string |  | The entry id. |
+| --dry-run | boolean |  | Derives and reports without storing; matches the loaded studies. |
 
 ### hp:sets (since 5.0)
 

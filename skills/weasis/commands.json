@@ -1349,6 +1349,35 @@
           ]
         },
         {
+          "name": "delete",
+          "description": "Deletes a protocol of the user layer, one saved with 'save'; a built-in or site protocol cannot be deleted, only disabled.",
+          "since": "5.0",
+          "usage": "hp:delete [-h] [--json] --id=<protocol-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--id"
+              ],
+              "label": "<protocol-id>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Protocol id from 'list'."
+            }
+          ]
+        },
+        {
           "name": "explain",
           "description": "Why the cells of the active hanging show what they show: per cell the rules that selected the series, its score and the alternatives; the why of a hanging.",
           "since": "5.0",
@@ -1572,6 +1601,65 @@
               "needs": [
                 "file-read"
               ]
+            }
+          ]
+        },
+        {
+          "name": "save",
+          "description": "Save as protocol: derives a user protocol from the display of a 2D viewer, per cell the smallest set of feature selectors that singles its series out among the study and the presentation of the cell (preset, color map, inversion, sort, tiling, synchronization), and stores it in the user layer; --dry-run only returns the rules and which loaded studies the protocol would apply to.",
+          "since": "5.0",
+          "usage": "hp:save [-h] [--dry-run] [--json] [--id=<protocol-id>] --name=<text> [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--name"
+              ],
+              "label": "<text>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "The protocol name; the id is derived from it unless --id."
+            },
+            {
+              "names": [
+                "--id"
+              ],
+              "label": "<protocol-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "The entry id."
+            },
+            {
+              "names": [
+                "--dry-run"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Derives and reports without storing; matches the loaded studies."
             }
           ]
         },
