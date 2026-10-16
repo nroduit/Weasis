@@ -29,7 +29,6 @@ import java.awt.image.DataBufferUShort;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.Executors;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
@@ -58,6 +57,7 @@ import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomPrintNode;
 import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
+import org.weasis.dicom.param.DeviceOpService;
 import org.weasis.opencv.data.PlanarImage;
 
 public class DicomPrint {
@@ -349,8 +349,6 @@ public class DicomPrint {
     device.addConnection(conn);
     device.addApplicationEntity(ae);
     ae.addConnection(conn);
-    device.setExecutor(Executors.newSingleThreadExecutor());
-    device.setScheduledExecutor(Executors.newSingleThreadScheduledExecutor());
 
     filmSessionAttrs.setInt(Tag.NumberOfCopies, VR.IS, printOptions.getNumOfCopies());
     filmSessionAttrs.setString(Tag.PrintPriority, VR.CS, printOptions.getPriority());
@@ -387,54 +385,63 @@ public class DicomPrint {
         new PresentationContext(1, printManagementSOPClass, UID.ImplicitVRLittleEndian));
     rq.setCallingAET(ae.getAETitle());
     rq.setCalledAET(remoteAE.getAETitle());
-    Association as = ae.connect(remoteConn, rq);
+
+    var service = new DeviceOpService(device);
+    service.start();
     try {
-      // See http://dicom.nema.org/medical/dicom/current/output/chtml/part02/sect_E.4.2.html
-      // Create a Basic Film Session
-      dimseRSPHandler(
-          as.ncreate(
-              printManagementSOPClass,
-              UID.BasicFilmSession,
-              filmSessionUID,
-              filmSessionAttrs,
-              UID.ImplicitVRLittleEndian));
-      // Create a Basic Film Box. We need to get the Image Box UID from the response
-      DimseRSP ncreateFilmBoxRSP =
-          as.ncreate(
-              printManagementSOPClass,
-              UID.BasicFilmBox,
-              filmBoxUID,
-              filmBoxAttrs,
-              UID.ImplicitVRLittleEndian);
-      dimseRSPHandler(ncreateFilmBoxRSP);
-      ncreateFilmBoxRSP.next();
-      Attributes imageBoxSequence =
-          ncreateFilmBoxRSP.getDataset().getNestedDataset(Tag.ReferencedImageBoxSequence);
-      // Send N-SET message with the Image Box
-      dimseRSPHandler(
-          as.nset(
-              printManagementSOPClass,
-              imageBoxSOPClass,
-              imageBoxSequence.getString(Tag.ReferencedSOPInstanceUID),
-              imageBoxAttrs,
-              UID.ImplicitVRLittleEndian));
-      // Send N-ACTION message with the print action
-      dimseRSPHandler(
-          as.naction(
-              printManagementSOPClass,
-              UID.BasicFilmBox,
-              filmBoxUID,
-              1,
-              null,
-              UID.ImplicitVRLittleEndian));
-      // The print action ends here. This will only delete the Film Box and Film Session
-      as.ndelete(printManagementSOPClass, UID.BasicFilmBox, filmBoxUID);
-      as.ndelete(printManagementSOPClass, UID.BasicFilmSession, filmSessionUID);
-    } finally {
-      if (as != null && as.isReadyForDataTransfer()) {
-        as.waitForOutstandingRSP();
-        as.release();
+      Association as = ae.connect(remoteConn, rq);
+      try {
+        // See http://dicom.nema.org/medical/dicom/current/output/chtml/part02/sect_E.4.2.html
+        // Create a Basic Film Session
+        dimseRSPHandler(
+            as.ncreate(
+                printManagementSOPClass,
+                UID.BasicFilmSession,
+                filmSessionUID,
+                filmSessionAttrs,
+                UID.ImplicitVRLittleEndian));
+        // Create a Basic Film Box. We need to get the Image Box UID from the response
+        DimseRSP ncreateFilmBoxRSP =
+            as.ncreate(
+                printManagementSOPClass,
+                UID.BasicFilmBox,
+                filmBoxUID,
+                filmBoxAttrs,
+                UID.ImplicitVRLittleEndian);
+        dimseRSPHandler(ncreateFilmBoxRSP);
+        ncreateFilmBoxRSP.next();
+        Attributes imageBoxSequence =
+            ncreateFilmBoxRSP.getDataset().getNestedDataset(Tag.ReferencedImageBoxSequence);
+        // Send N-SET message with the Image Box
+        dimseRSPHandler(
+            as.nset(
+                printManagementSOPClass,
+                imageBoxSOPClass,
+                imageBoxSequence.getString(Tag.ReferencedSOPInstanceUID),
+                imageBoxAttrs,
+                UID.ImplicitVRLittleEndian));
+        // Send N-ACTION message with the print action
+        dimseRSPHandler(
+            as.naction(
+                printManagementSOPClass,
+                UID.BasicFilmBox,
+                filmBoxUID,
+                1,
+                null,
+                UID.ImplicitVRLittleEndian));
+        // The print action ends here. This will only delete the Film Box and Film Session
+        as.ndelete(printManagementSOPClass, UID.BasicFilmBox, filmBoxUID);
+        as.ndelete(printManagementSOPClass, UID.BasicFilmSession, filmSessionUID);
+      } finally {
+        if (as.isReadyForDataTransfer()) {
+          as.waitForOutstandingRSP();
+          as.release();
+        }
+        // The association runs on the device executors: let it end before they are stopped
+        as.waitForSocketClose();
       }
+    } finally {
+      service.stop();
     }
   }
 
