@@ -111,15 +111,39 @@ public class PrGraphicUtil {
   }
 
   /**
+   * Maps DICOM DISPLAY units to PIXEL units. DISPLAY is a fraction of the Specified Displayed Area
+   * as shown, after Image Rotation (clockwise) and then Image Horizontal Flip (PS3.3 C.10.5.1.1 and
+   * C.10.6), so the spatial transformation is undone in the unit square before scaling to the area.
+   *
+   * @param displayedArea the Specified Displayed Area in PIXEL units, not limited to the image
+   * @param rotation the Image Rotation in degrees
+   * @param flip the Image Horizontal Flip
+   */
+  public static AffineTransform displayToPixel(
+      Rectangle2D displayedArea, int rotation, boolean flip) {
+    AffineTransform t =
+        AffineTransform.getTranslateInstance(displayedArea.getX(), displayedArea.getY());
+    t.scale(displayedArea.getWidth(), displayedArea.getHeight());
+    if (rotation != 0) {
+      t.rotate(Math.toRadians(-rotation), 0.5, 0.5);
+    }
+    if (flip) {
+      t.translate(1.0, 0.0);
+      t.scale(-1.0, 1.0);
+    }
+    return t;
+  }
+
+  /**
    * Builds a graphic from DICOM attributes.
    *
    * @param attributes DICOM graphic attributes
    * @param defaultColor Default color if none specified
    * @param labelVisible Whether labels should be visible
-   * @param width Image width for coordinate transformation
-   * @param height Image height for coordinate transformation
+   * @param width Width multiplying DISPLAY units when {@code inverse} is null
+   * @param height Height multiplying DISPLAY units when {@code inverse} is null
    * @param canBeEdited Whether the graphic can be edited
-   * @param inverse Inverse transformation matrix
+   * @param inverse DISPLAY to PIXEL units, see {@link #displayToPixel}, or null
    * @param dcmSR Whether this is for DICOM SR
    * @return Created graphic or null if creation failed
    * @throws InvalidShapeException If the shape cannot be created
@@ -224,7 +248,8 @@ public class PrGraphicUtil {
 
   private static double getRotationAngle(Attributes attributes) {
     Float angle = DicomUtils.getFloatFromDicomElement(attributes, Tag.RotationAngle, null);
-    return angle != null ? Math.toRadians(angle) : 0.0;
+    // DICOM turns counterclockwise for a positive angle; with y down, Java2D turns clockwise
+    return angle != null ? Math.toRadians(-angle) : 0.0;
   }
 
   private static Point2D getRotationPoint(Attributes attributes, BaseGraphicContext context) {
@@ -943,19 +968,15 @@ public class PrGraphicUtil {
     }
 
     public Point2D transformPoint(float x, float y) {
+      Point2D p = new Point2D.Double(x, y);
       if (isDisplay) {
-        x *= (float) width;
-        y *= (float) height;
+        if (inverse == null) {
+          p.setLocation(x * width, y * height);
+        } else {
+          inverse.transform(p, p);
+        }
       }
-
-      if (isDisplay && inverse != null) {
-        float[] src = {x, y};
-        float[] dst = new float[2];
-        inverse.transform(src, 0, dst, 0, 1);
-        return new Point2D.Double(pixelToModel(dst[0]), pixelToModel(dst[1]));
-      }
-
-      return new Point2D.Double(pixelToModel(x), pixelToModel(y));
+      return new Point2D.Double(pixelToModel(p.getX()), pixelToModel(p.getY()));
     }
 
     public void applyProperties(Graphic graphic, boolean filled) {

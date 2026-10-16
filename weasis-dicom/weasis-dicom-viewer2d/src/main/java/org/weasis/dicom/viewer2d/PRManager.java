@@ -508,35 +508,20 @@ public class PRManager {
     }
 
     public void process() {
-      int[] tlhc =
-          TagD.getTagValue(context.reader(), Tag.DisplayedAreaTopLeftHandCorner, int[].class);
-      int[] brhc =
-          TagD.getTagValue(context.reader(), Tag.DisplayedAreaBottomRightHandCorner, int[].class);
-
-      if (tlhc != null && tlhc.length == 2 && brhc != null && brhc.length == 2) {
-        Rectangle cropArea = calculateCropArea(tlhc, brhc);
+      Rectangle2D displayedArea = getSpecifiedDisplayedArea(context);
+      if (displayedArea != null) {
+        Rectangle cropArea = new Rectangle();
+        cropArea.setFrameFromDiagonal(
+            getDisplayLength(displayedArea.getMinX()),
+            getDisplayLength(displayedArea.getMinY()),
+            getDisplayLength(displayedArea.getMaxX()),
+            getDisplayLength(displayedArea.getMaxY()));
         applyCropArea(cropArea);
       }
     }
 
-    private Rectangle calculateCropArea(int[] tlhc, int[] brhc) {
-      // Adjust for systems that encode topLeft as 1,1 instead of 0,0
-      if (tlhc[0] == 1) tlhc[0] = 0;
-      if (tlhc[1] == 1) tlhc[1] = 0;
-      Rectangle area = new Rectangle();
-      double ratioX = context.img().getRescaleX();
-      double ratioY = context.img().getRescaleY();
-      area.setFrameFromDiagonal(
-          getDisplayLength(tlhc[0], ratioX),
-          getDisplayLength(tlhc[1], ratioY),
-          getDisplayLength(brhc[0], ratioX),
-          getDisplayLength(brhc[1], ratioY));
-
-      return area;
-    }
-
-    private static int getDisplayLength(int length, double ratio) {
-      return (int) Math.ceil(length * ratio - 0.5);
+    private static int getDisplayLength(double length) {
+      return (int) Math.ceil(length - 0.5);
     }
 
     private void applyCropArea(Rectangle area) {
@@ -636,34 +621,13 @@ public class PRManager {
           (Integer) actionsInView.getOrDefault(PresentationStateReader.TAG_PR_ROTATION, 0);
       boolean flip =
           (Boolean) actionsInView.getOrDefault(PresentationStateReader.TAG_PR_FLIP, false);
-      Rectangle area = (Rectangle) actionsInView.get(ActionW.CROP.cmd());
-      Rectangle2D modelArea = context.view().getViewModel().getModelArea();
-
-      double width = area != null ? area.getWidth() : modelArea.getWidth();
-      double height = area != null ? area.getHeight() : modelArea.getHeight();
-
-      AffineTransform inverse = createInverseTransform(rotation, flip, area);
-
-      return new TransformationContext(width, height, inverse);
-    }
-
-    private AffineTransform createInverseTransform(int rotation, boolean flip, Rectangle area) {
-      if (rotation == 0 && !flip) {
-        return null;
+      // DISPLAY units refer to the Specified Displayed Area, not to the part inside the image
+      Rectangle2D area = getSpecifiedDisplayedArea(context);
+      if (area == null) {
+        area = context.view().getViewModel().getModelArea();
       }
-
-      double offsetX = area != null ? area.getX() / area.getWidth() : 0.0;
-      double offsetY = area != null ? area.getY() / area.getHeight() : 0.0;
-
-      AffineTransform inverse = AffineTransform.getTranslateInstance(offsetX, offsetY);
-      if (flip) {
-        inverse.scale(-1.0, 1.0);
-        inverse.translate(-1.0, 0.0);
-      }
-      if (rotation != 0) {
-        inverse.rotate(Math.toRadians(rotation), 0.5, 0.5);
-      }
-      return inverse;
+      return new TransformationContext(
+          area.getWidth(), area.getHeight(), PrGraphicUtil.displayToPixel(area, rotation, flip));
     }
 
     private void processGraphicAnnotation(
@@ -753,7 +717,7 @@ public class PRManager {
                   transformContext.width(),
                   transformContext.height(),
                   true,
-                  transformContext.inverse(),
+                  transformContext.displayToPixel(),
                   false);
           if (graphic != null) {
             AbstractGraphicModel.addGraphicToModel(context.view(), layer, graphic);
@@ -836,9 +800,13 @@ public class PRManager {
         boolean isDisplay =
             DISPLAY_MODE.equalsIgnoreCase(textObject.getString(Tag.AnchorPointAnnotationUnits));
 
-        double x = PrGraphicUtil.pixelToModel(isDisplay ? anchor[0] * context.width() : anchor[0]);
-        double y = PrGraphicUtil.pixelToModel(isDisplay ? anchor[1] * context.height() : anchor[1]);
-        Point2D.Double anchorPoint = new Point2D.Double(x, y);
+        Point2D.Double anchorPoint = new Point2D.Double(anchor[0], anchor[1]);
+        if (isDisplay) {
+          context.displayToPixel().transform(anchorPoint, anchorPoint);
+        }
+        anchorPoint.setLocation(
+            PrGraphicUtil.pixelToModel(anchorPoint.getX()),
+            PrGraphicUtil.pixelToModel(anchorPoint.getY()));
 
         Rectangle2D boundingBox = extractBoundingBox();
         // Use the box center. This does not follow the DICOM standard.
@@ -882,39 +850,15 @@ public class PRManager {
           return null;
         }
 
-        // Ensure correct coordinate order
-        if (topLeft[0] > bottomRight[0]) {
-          float temp = topLeft[0];
-          topLeft[0] = bottomRight[0];
-          bottomRight[0] = temp;
-        }
-        if (topLeft[1] > bottomRight[1]) {
-          float temp = topLeft[1];
-          topLeft[1] = bottomRight[1];
-          bottomRight[1] = temp;
-        }
-        Rectangle2D rect =
-            new Rectangle2D.Double(
-                topLeft[0], topLeft[1], bottomRight[0] - topLeft[0], bottomRight[1] - topLeft[1]);
+        Point2D p1 = new Point2D.Double(topLeft[0], topLeft[1]);
+        Point2D p2 = new Point2D.Double(bottomRight[0], bottomRight[1]);
         if (isDisplay) {
-          rect.setRect(
-              rect.getX() * context.width(),
-              rect.getY() * context.height(),
-              rect.getWidth() * context.width(),
-              rect.getHeight() * context.height());
-
-          if (context.inverse() != null) {
-            float[] dstPt1 = new float[2];
-            float[] dstPt2 = new float[2];
-            context.inverse().transform(topLeft, 0, dstPt1, 0, 1);
-            context.inverse().transform(bottomRight, 0, dstPt2, 0, 1);
-            rect.setFrameFromDiagonal(
-                dstPt1[0] * context.width(),
-                dstPt1[1] * context.height(),
-                dstPt2[0] * context.width(),
-                dstPt2[1] * context.height());
-          }
+          // Rotation and flip may swap the corners: the diagonal below orders them
+          context.displayToPixel().transform(p1, p1);
+          context.displayToPixel().transform(p2, p2);
         }
+        Rectangle2D rect = new Rectangle2D.Double();
+        rect.setFrameFromDiagonal(p1, p2);
         rect.setRect(
             PrGraphicUtil.pixelToModel(rect.getX()),
             PrGraphicUtil.pixelToModel(rect.getY()),
@@ -1091,5 +1035,34 @@ public class PRManager {
 
   // ========== Records ==========
 
-  private record TransformationContext(double width, double height, AffineTransform inverse) {}
+  private record TransformationContext(
+      double width, double height, AffineTransform displayToPixel) {}
+
+  /**
+   * The Specified Displayed Area in PIXEL units (0\0 at the corner of the first pixel), in the
+   * resampled image when the pixels are not square. Its corners are the first and last displayed
+   * pixels from 1\1, swapped by the rotation (PS3.3 C.10.4), and may lie outside the image.
+   */
+  private static Rectangle2D getSpecifiedDisplayedArea(PresentationContext context) {
+    int[] tlhc =
+        TagD.getTagValue(context.reader(), Tag.DisplayedAreaTopLeftHandCorner, int[].class);
+    int[] brhc =
+        TagD.getTagValue(context.reader(), Tag.DisplayedAreaBottomRightHandCorner, int[].class);
+    return getSpecifiedDisplayedArea(
+        tlhc, brhc, context.img().getRescaleX(), context.img().getRescaleY());
+  }
+
+  static Rectangle2D getSpecifiedDisplayedArea(
+      int[] tlhc, int[] brhc, double ratioX, double ratioY) {
+    if (tlhc == null || tlhc.length != 2 || brhc == null || brhc.length != 2) {
+      return null;
+    }
+    Rectangle2D area = new Rectangle2D.Double();
+    area.setFrameFromDiagonal(
+        (Math.min(tlhc[0], brhc[0]) - 1) * ratioX,
+        (Math.min(tlhc[1], brhc[1]) - 1) * ratioY,
+        Math.max(tlhc[0], brhc[0]) * ratioX,
+        Math.max(tlhc[1], brhc[1]) * ratioY);
+    return area;
+  }
 }
