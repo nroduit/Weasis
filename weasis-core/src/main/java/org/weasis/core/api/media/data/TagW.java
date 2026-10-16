@@ -154,6 +154,10 @@ public class TagW {
   public static final TagW ReadFromDicomdir = new TagW("ReadFromDicomdir", TagType.BOOLEAN);
 
   public static final TagW WadoParameters = new TagW("WadoParameters", TagType.OBJECT);
+
+  /** The DICOMweb server a study was loaded from (explorer {@code DicomWebOrigin}). */
+  public static final TagW DicomWebOrigin = new TagW("DicomWebOrigin", TagType.OBJECT);
+
   public static final TagW WadoInstanceReferenceList =
       new TagW("WadoInstanceReferenceList", TagType.LIST);
   public static final TagW DicomSpecialElementList =

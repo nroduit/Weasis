@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Thumbnail badge: an AI task of the study is COMPLETED and its results are ready to open -->
+<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <rect width="16" height="16" fill="#f0f" opacity="0"/>
+ <g fill="#6e6e6e">
+  <path d="m8 2.2v3" fill="none" stroke="#6e6e6e" stroke-width="1.1"/>
+  <circle cx="8" cy="2" r="1.1"/>
+  <rect x="1" y="8" width="1.6" height="2.6" rx=".4"/>
+  <rect x="13.4" y="8" width="1.6" height="2.6" rx=".4"/>
+ </g>
+ <rect x="3.1" y="5.1" width="9.8" height="8.3" rx="1.6" fill="none" stroke="#6e6e6e" stroke-width="1.2"/>
+ <g fill="#389fd6">
+  <circle cx="6.1" cy="8.6" r="1.2"/>
+  <circle cx="9.9" cy="8.6" r="1.2"/>
+ </g>
+ <path d="m5.8 11.4h4.4" fill="none" stroke="#6e6e6e" stroke-width="1" stroke-linecap="round"/>
+ <circle cx="12.6" cy="3.4" r="3.1" fill="#59a869"/>
+ <path d="m10.9 3.5 1.2 1.2 2.2-2.4" fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
