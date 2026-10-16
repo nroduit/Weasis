@@ -97,6 +97,7 @@ import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
+import org.weasis.dicom.viewer2d.dockable.HangingWhyTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
 
 public class View2dContainer extends DicomViewerPlugin implements PropertyChangeListener {
@@ -369,6 +370,18 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           true)) {
         tool = new MeasureTool(eventManager);
         tools.add(tool);
+      }
+
+      if (InsertableUtil.getBooleanProperty(
+          preferences,
+          plugInId,
+          componentName,
+          InsertableUtil.getCName(HangingWhyTool.class),
+          key,
+          true)) {
+        tool = new HangingWhyTool();
+        tools.add(tool);
+        eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
       }
 
       InsertableUtil.sortInsertable(tools);

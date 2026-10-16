@@ -37,6 +37,7 @@ import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.image.HangingLayout;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewState;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.hp.HangingEngine;
 import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
@@ -129,6 +130,64 @@ public final class HangingPlanApplier {
     /** The 2D container of the hanging, the one a step change re-hangs. */
     public Optional<ViewerPlugin<?>> container() {
       return viewers.stream().filter(v -> TYPE_2D.equals(v.typeId())).findFirst();
+    }
+
+    /** The cells placed on a viewer, in the order of its layout positions. */
+    public List<CellPlan> cellsOn(ViewerPlugin<?> viewer) {
+      return placed.stream().filter(p -> p.viewer() == viewer).map(Placed::cell).toList();
+    }
+
+    /** The cell at a layout position of a viewer of this hanging. */
+    public Optional<CellPlan> cellAt(ViewerPlugin<?> viewer, int position) {
+      List<CellPlan> cells = cellsOn(viewer);
+      return position >= 0 && position < cells.size()
+          ? Optional.of(cells.get(position))
+          : Optional.empty();
+    }
+
+    /** This hanging with one cell of its step replaced, in the plan and in the placement. */
+    public Applied withCell(CellPlan replaced) {
+      Step old = stepPlan();
+      List<CellPlan> cells = new ArrayList<>();
+      for (CellPlan cell : old.cells()) {
+        cells.add(cell.cell() == replaced.cell() ? replaced : cell);
+      }
+      HangingLayout.Builder layout =
+          HangingLayout.builder().grid(old.layout().grid()).synch(old.layout().synch());
+      layout.select(old.layout().selected());
+      for (HangingLayout.Cell cell : old.layout().cells()) {
+        if (cell.position() == replaced.cell() && !cell.panes().isEmpty()) {
+          ViewState pane = cell.panes().getFirst();
+          layout.cell(
+              new HangingLayout.Cell(
+                  cell.position(),
+                  cell.tiling(),
+                  List.of(
+                      new ViewState(
+                          new ViewState.ViewData(replaced.series(), 0, null, null),
+                          pane.view(),
+                          pane.blend()))));
+        } else {
+          layout.cell(cell);
+        }
+      }
+      Step step = new Step(old.group(), old.label(), layout.build(), cells);
+      List<Step> steps = new ArrayList<>(plan.steps());
+      steps.set(this.step, step);
+      HangingPlan newPlan =
+          new HangingPlan(
+              plan.protocolId(),
+              plan.name(),
+              plan.level(),
+              plan.score(),
+              plan.reasons(),
+              steps,
+              plan.unresolved());
+      List<Placed> newPlaced = new ArrayList<>();
+      for (Placed p : placed) {
+        newPlaced.add(p.cell().cell() == replaced.cell() ? new Placed(replaced, p.viewer()) : p);
+      }
+      return new Applied(newPlan, this.step, viewers, newPlaced, warnings, context);
     }
 
     public Step stepPlan() {
@@ -261,6 +320,18 @@ public final class HangingPlanApplier {
   /** The hanging a viewer is part of, when a plan produced it. */
   public static Optional<Applied> activeOn(ViewerPlugin<?> viewer) {
     return Optional.ofNullable(ACTIVE.get(viewer));
+  }
+
+  /** Attaches a hanging to its viewers in place of the one they had, and tells the listeners. */
+  public static void replace(Applied applied) {
+    applied.viewers().forEach(v -> ACTIVE.put(v, applied));
+    for (Consumer<Applied> listener : LISTENERS) {
+      try {
+        listener.accept(applied);
+      } catch (RuntimeException e) {
+        LOGGER.warn("A hanging listener failed", e);
+      }
+    }
   }
 
   /**

@@ -1349,6 +1349,94 @@
           ]
         },
         {
+          "name": "correct",
+          "description": "Puts another series of the study in a cell of the active hanging: the cell is re-hung with it, the correction is recorded with the rule that would have produced the choice, and --apply writes that rule into the protocol when it is a user one.",
+          "since": "5.0",
+          "usage": "hp:correct [-h] [--apply] [--json] --cell=<cell> --series=<series-uid> [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--cell"
+              ],
+              "label": "<cell>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "The cell to correct, from 1."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Series Instance UID of the study, from 'dicom:list' or 'explain'."
+            },
+            {
+              "names": [
+                "--apply"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Writes the proposed rule into the protocol (user protocols only)."
+            }
+          ]
+        },
+        {
+          "name": "corrections",
+          "description": "The correction log: what users put in the cells instead of what the protocols chose, with the rule each correction proposes; which rules fail most.",
+          "since": "5.0",
+          "usage": "hp:corrections [-h] [--json] [--protocol=<protocol-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--protocol"
+              ],
+              "label": "<protocol-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Only the corrections of this protocol."
+            }
+          ]
+        },
+        {
           "name": "delete",
           "description": "Deletes a protocol of the user layer, one saved with 'save'; a built-in or site protocol cannot be deleted, only disabled.",
           "since": "5.0",
@@ -4124,7 +4212,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --set=<magnification> | --fit=<zoom-fit>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
           "parameters": [],
           "options": [
             {
@@ -4159,20 +4247,6 @@
             },
             {
               "names": [
-                "--by"
-              ],
-              "label": "<steps>",
-              "type": "integer",
-              "arity": "1",
-              "required": true,
-              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
                 "--set"
               ],
               "label": "<magnification>",
@@ -4199,6 +4273,20 @@
               "arity": "1",
               "required": true,
               "description": "default, real-size or best-fit.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--by"
+              ],
+              "label": "<steps>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"

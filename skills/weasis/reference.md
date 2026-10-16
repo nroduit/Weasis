@@ -356,6 +356,31 @@ Needs: file read
 | --step | integer |  | The reading step to hang, from 1 (default: the first). |
 | --new-tab | boolean |  | Opens new viewers instead of re-hanging the one of the same patient. |
 
+### hp:correct (since 5.0)
+
+Puts another series of the study in a cell of the active hanging: the cell is re-hung with it, the correction is recorded with the rule that would have produced the choice, and --apply writes that rule into the protocol when it is a user one.
+
+Usage: `hp:correct [-h] [--apply] [--json] --cell=<cell> --series=<series-uid> [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --cell | integer |  | The cell to correct, from 1. |
+| --series | string |  | Series Instance UID of the study, from 'dicom:list' or 'explain'. |
+| --apply | boolean |  | Writes the proposed rule into the protocol (user protocols only). |
+
+### hp:corrections (since 5.0)
+
+The correction log: what users put in the cells instead of what the protocols chose, with the rule each correction proposes; which rules fail most.
+
+Usage: `hp:corrections [-h] [--json] [--protocol=<protocol-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --protocol | string |  | Only the corrections of this protocol. |
+
 ### hp:delete (since 5.0)
 
 Deletes a protocol of the user layer, one saved with 'save'; a built-in or site protocol cannot be deleted, only disabled.
@@ -1027,16 +1052,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --set=<magnification> | --fit=<zoom-fit>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
 | --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
+| --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
 
 
 ## view3d

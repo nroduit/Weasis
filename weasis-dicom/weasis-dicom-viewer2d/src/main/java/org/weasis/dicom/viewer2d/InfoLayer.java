@@ -16,7 +16,9 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.font.TextAttribute;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.joml.Vector3d;
@@ -37,6 +39,7 @@ import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
@@ -57,7 +60,11 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
 import org.weasis.dicom.codec.geometry.VectorUtils;
+import org.weasis.dicom.codec.hp.HangingPlan.CellPlan;
+import org.weasis.dicom.codec.hp.HangingPlan.Match;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.hp.ActiveHanging;
+import org.weasis.dicom.explorer.hp.HangingPlanApplier;
 import org.weasis.dicom.viewer2d.fusion.FusionColorBar;
 import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
@@ -470,6 +477,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     drawY =
         paintTopRightCorner(
             g2, modality, patient, study, series, image, bound, fontHeight, hideMin);
+    drawY = paintHangingIndicator(g2, bound, fontHeight, drawY);
     setPosition(
         Position.TopRight,
         (double) bound.width - border,
@@ -507,6 +515,49 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       }
     }
     return drawY;
+  }
+
+  /**
+   * The cell indicator of a hanging protocol: how the series of this cell matched its image set
+   * (exact, preferred, fallback, shared, empty, corrected), under the top-right corner.
+   */
+  private float paintHangingIndicator(Graphics2D g2, Rectangle bound, int fontHeight, float drawY) {
+    ImageViewerPlugin<?> container =
+        (ImageViewerPlugin<?>)
+            javax.swing.SwingUtilities.getAncestorOfClass(
+                ImageViewerPlugin.class, view2DPane.getJComponent());
+    if (container == null) {
+      return drawY;
+    }
+    @SuppressWarnings("unchecked")
+    ImageViewerPlugin<DicomImageElement> typed = (ImageViewerPlugin<DicomImageElement>) container;
+    Optional<HangingPlanApplier.Applied> active = ActiveHanging.of(typed);
+    if (active.isEmpty()) {
+      return drawY;
+    }
+    int position = typed.cellPositionOf(view2DPane);
+    Optional<CellPlan> cell = active.get().cellAt(typed, position);
+    if (cell.isEmpty()) {
+      return drawY;
+    }
+    Match match = cell.get().match();
+    String text =
+        "\u25CF " // NON-NLS
+            + Messages.getString(
+                "InfoLayer.hp." + match.name().toLowerCase(Locale.ROOT)); // NON-NLS
+    Color old = g2.getColor();
+    g2.setColor(
+        switch (match) {
+          case EXACT -> IconColor.ACTIONS_GREEN.color;
+          case PREFERRED -> IconColor.ACTIONS_BLUE.color;
+          case FALLBACK, SHARED -> IconColor.ACTIONS_YELLOW.color;
+          case EMPTY -> IconColor.ACTIONS_RED.color;
+          case CORRECTED -> Color.WHITE;
+        });
+    FontTools.paintFontOutline(
+        g2, text, bound.width - g2.getFontMetrics().stringWidth(text) - (float) border, drawY);
+    g2.setColor(old);
+    return drawY + fontHeight;
   }
 
   private float paintTopRightCorner(

@@ -249,6 +249,21 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   }
 
   /**
+   * The layout position of the cell holding a canvas, directly or through its viewport pane.
+   *
+   * @return the 0-based position, or {@code -1} when the canvas is not in this viewer
+   */
+  public int cellPositionOf(ViewCanvas<E> canvas) {
+    if (canvas == null) {
+      return -1;
+    }
+    ViewportPane<E> pane = getOwningPane(canvas);
+    return pane != null
+        ? cellManager.findPositionOfComponent(pane)
+        : cellManager.findPositionOfViewCanvas(canvas);
+  }
+
+  /**
    * Assigns a series to the given view. A canvas belonging to a TILED {@link ViewportPane} receives
    * the series through its whole pane so every tile keeps showing the same series at successive
    * tile offsets.

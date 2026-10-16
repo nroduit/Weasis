@@ -58,7 +58,9 @@ public record HangingPlan(
     /** The best series was already shown by another cell of the step. */
     SHARED,
     /** No series of the study fills the image set; the cell stays as a placeholder. */
-    EMPTY
+    EMPTY,
+    /** The user put another series in the cell; a correction the protocol can learn from. */
+    CORRECTED
   }
 
   /**

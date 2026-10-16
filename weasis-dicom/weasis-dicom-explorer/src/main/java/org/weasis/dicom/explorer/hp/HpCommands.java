@@ -85,6 +85,8 @@ import picocli.CommandLine.ParentCommand;
       HpCommands.Sets.class,
       HpCommands.Group.class,
       HpCommands.Explain.class,
+      HpCommands.Correct.class,
+      HpCommands.CorrectionLog.class,
       HpCommands.Show.class,
       HpCommands.Save.class,
       HpCommands.Delete.class,
@@ -746,6 +748,125 @@ public class HpCommands implements CommandExtension {
         }
       }
       return out.toString().stripTrailing();
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "correct",
+      description =
+          "Puts another series of the study in a cell of the active hanging: the cell is re-hung "
+              + "with it, the correction is recorded with the rule that would have produced the "
+              + "choice, and --apply writes that rule into the protocol when it is a user one.")
+  @Since("5.0")
+  static class Correct extends Verb {
+    @Mixin HangingOptions target;
+
+    @Option(
+        names = "--cell",
+        required = true,
+        paramLabel = "<cell>",
+        description = "The cell to correct, from 1.")
+    Integer cell;
+
+    @Option(
+        names = "--series",
+        required = true,
+        paramLabel = "<series-uid>",
+        description = "Series Instance UID of the study, from 'dicom:list' or 'explain'.")
+    String seriesUid;
+
+    @Option(
+        names = "--apply",
+        description = "Writes the proposed rule into the protocol (user protocols only).")
+    boolean apply;
+
+    @Override
+    protected void run() {
+      if (cell < 1) {
+        throw new IllegalArgumentException("--cell counts from 1");
+      }
+      JsonObject result =
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                HangingPlanApplier.Applied current = activeHanging(target.viewId);
+                ActiveHanging.Corrected corrected =
+                    ActiveHanging.correct(current, cell - 1, seriesUid);
+                boolean applied = apply && ActiveHanging.applyProposal(corrected.correction());
+                JsonObjectBuilder json =
+                    Json.createObjectBuilder(corrected.correction().toJson())
+                        .add("userProtocol", corrected.userProtocol()) // NON-NLS
+                        .add("applied", applied); // NON-NLS
+                JsonArrayBuilder rule = Json.createArrayBuilder();
+                corrected.correction().proposal().forEach(s -> rule.add(s.describe()));
+                return json.add("proposalText", rule).build(); // NON-NLS
+              });
+      print(isJson() ? result.toString() : text(result));
+    }
+
+    static String text(JsonObject json) {
+      StringBuilder out = new StringBuilder();
+      out.append("cell ") // NON-NLS
+          .append(json.getInt("cell")) // NON-NLS
+          .append(" now shows ") // NON-NLS
+          .append(json.getString("chosen")) // NON-NLS
+          .append(json.containsKey("expected") ? " instead of " + json.getString("expected") : "")
+          .append('\n')
+          .append("proposed rule for image set ") // NON-NLS
+          .append(json.getInt("imageSet")) // NON-NLS
+          .append(": ")
+          .append(json.getJsonArray("proposalText").getValuesAs(JsonValue::toString)) // NON-NLS
+          .append('\n')
+          .append(
+              json.getBoolean("applied")
+                  ? "applied to the protocol" // NON-NLS
+                  : json.getBoolean("userProtocol")
+                      ? "not applied (use --apply)" // NON-NLS
+                      : "not applicable: not a user protocol"); // NON-NLS
+      return out.toString();
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "corrections",
+      description =
+          "The correction log: what users put in the cells instead of what the protocols chose, "
+              + "with the rule each correction proposes; which rules fail most.")
+  @Since("5.0")
+  static class CorrectionLog extends Verb {
+    @Option(
+        names = "--protocol",
+        paramLabel = "<protocol-id>",
+        description = "Only the corrections of this protocol.")
+    String protocolId;
+
+    @Override
+    protected void run() {
+      List<Corrections.Correction> list =
+          protocolId == null ? Corrections.all() : Corrections.of(protocolId);
+      JsonArrayBuilder array = Json.createArrayBuilder();
+      list.forEach(c -> array.add(c.toJson()));
+      JsonObject result = Json.createObjectBuilder().add("corrections", array).build(); // NON-NLS
+      if (isJson()) {
+        print(result.toString());
+        return;
+      }
+      StringBuilder out = new StringBuilder();
+      for (Corrections.Correction c : list) {
+        out.append(c.id())
+            .append(' ')
+            .append(c.protocol())
+            .append(" cell ") // NON-NLS
+            .append(c.cell())
+            .append(": ")
+            .append(c.chosen())
+            .append(c.expected() == null ? "" : " instead of " + c.expected()) // NON-NLS
+            .append('\n');
+      }
+      print(list.isEmpty() ? "No correction recorded" : out.toString().stripTrailing());
     }
   }
 

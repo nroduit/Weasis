@@ -175,6 +175,12 @@ line naming the current spelling. Use the current one everywhere.
    out among the study, plus preset, inversion, sort, tiling and synchronization), reports the
    rules and which loaded studies it applies to, and stores it in the user layer unless
    `--dry-run`; `hp:delete --id <protocol-id>` removes a user protocol.
+   Each hung cell shows an indicator of how its series matched (exact, preferred, fallback,
+   shared, nothing matched, corrected) and the *Why* tool of the bottom slot (`workspace:panel
+   --side tools --slot bottom --tool hp-why`) lists the rules and the alternatives of the
+   selected cell. `hp:correct --cell <n> --series <uid> [--apply]` puts another series of the
+   study in a cell, records the correction with the rule that would have chosen it, and
+   `--apply` writes that rule into a user protocol; `hp:corrections` lists the log.
    `hp:validate --corpus <dir> [--protocols <file>] [--expected <file>]` runs the matching over
    a folder of studies without any viewer and reports the counts per protocol, the protocol and
    first-step cells of each study and, with an expectations file, which studies hang as expected.

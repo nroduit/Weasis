@@ -214,7 +214,7 @@ public final class ProtocolDeriver {
    * series, then a preference on the thickness, the image count or the description when the filters
    * leave several.
    */
-  static CellRule rule(int cell, StudySeries series, List<StudySeries> study) {
+  public static CellRule rule(int cell, StudySeries series, List<StudySeries> study) {
     SeriesFeatures features = series.features();
     String modality = features == null ? null : features.modality();
     List<StudySeries> remaining = new ArrayList<>();
