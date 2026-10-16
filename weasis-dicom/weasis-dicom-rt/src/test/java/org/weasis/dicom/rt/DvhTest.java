@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -125,6 +126,72 @@ class DvhTest {
   void dvh_data_is_returned_as_is() {
     assertNotNull(dvh.getDvhData());
     assertEquals(8, dvh.getDvhData().length);
+  }
+
+  @Nested
+  @DisplayNameGeneration(ReplaceUnderscores.class)
+  class BinEdges {
+
+    @Test
+    void edges_default_to_one_dose_unit_per_bin() {
+      assertArrayEquals(new double[] {0, 1, 2, 3, 4, 5, 6, 7, 8}, dvh.getBinEdges(), 1e-12);
+    }
+
+    @Test
+    void edges_accumulate_scaled_bin_widths() {
+      dvh.setDvhData(new double[] {100, 80, 50, 0});
+      dvh.setDvhBinWidths(new double[] {10, 10, 20, 20});
+      dvh.setDvhDoseScaling(0.5);
+      assertArrayEquals(new double[] {0, 5, 10, 20, 30}, dvh.getBinEdges(), 1e-12);
+    }
+
+    @Test
+    void statistics_use_bin_edges() {
+      dvh.setDvhData(new double[] {100, 100, 60, 0});
+      dvh.setDvhBinWidths(new double[] {2, 2, 2, 2});
+      dvh.setDvhDoseScaling(1.0);
+      // first drop at i=2 -> (2 + 4) / 2
+      assertEquals(3.0, dvh.calculateDvhMin(), 1e-12);
+      // dDvh = [0, 40, 60, 0]; last non-zero at i=2 -> upper edge 6
+      assertEquals(6.0, dvh.calculateDvhMax(), 1e-12);
+      // (40 * 2 + 60 * 4) / 100
+      assertEquals(3.2, dvh.calculateDvhMean(), 1e-12);
+    }
+  }
+
+  @Nested
+  @DisplayNameGeneration(ReplaceUnderscores.class)
+  class Decimation {
+
+    @Test
+    void constant_runs_keep_only_their_ends() {
+      double[] x = {0, 1, 2, 3, 4, 5, 6};
+      double[] y = {100, 100, 100, 50, 0, 0, 0};
+      double[][] r = Dvh.decimate(x, y, 1000);
+      assertArrayEquals(new double[] {0, 2, 3, 4, 6}, r[0], 1e-12);
+      assertArrayEquals(new double[] {100, 100, 50, 0, 0}, r[1], 1e-12);
+    }
+
+    @Test
+    void long_series_is_bounded_and_keeps_end_points_and_extrema() {
+      int n = 70_000;
+      double[] x = new double[n];
+      double[] y = new double[n];
+      for (int i = 0; i < n; i++) {
+        x[i] = i * 0.1;
+        y[i] = 100.0 * (n - 1 - i) / (n - 1);
+      }
+      double[][] r = Dvh.decimate(x, y, 1000);
+      int m = r[0].length;
+      assertTrue(m <= 1000, "points: " + m);
+      assertEquals(x[0], r[0][0], 1e-12);
+      assertEquals(x[n - 1], r[0][m - 1], 1e-12);
+      assertEquals(100.0, r[1][0], 1e-12);
+      assertEquals(0.0, r[1][m - 1], 1e-12);
+      for (int i = 1; i < m; i++) {
+        assertTrue(r[0][i] > r[0][i - 1]);
+      }
+    }
   }
 
   @Nested
