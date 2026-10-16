@@ -35,6 +35,7 @@ import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshotIO;
 import org.weasis.core.ui.editor.SeriesViewer;
+import org.weasis.core.ui.editor.ViewerRestorer;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewDisplayState;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -355,7 +356,12 @@ public class WorkspaceCommands implements CommandExtension {
     }
   }
 
-  @Command(name = "load", description = "Restores a layout captured by 'workspace:save'.")
+  @Command(
+      name = "load",
+      description =
+          "Restores a layout captured by 'workspace:save': open views are reused, closed viewers "
+              + "are created again with their series and presentation when the series are still "
+              + "loaded.")
   static class Load extends Verb {
     @Option(
         names = "--file",
@@ -370,12 +376,9 @@ public class WorkspaceCommands implements CommandExtension {
       WorkspaceManager manager = parent.manager();
       GuiExecutor.invokeAndRethrow(
           () -> {
-            // reuse the currently open views by id; unresolved descriptors are skipped
+            // open views are reused by id, closed viewers recreated; the rest is skipped
             List<WorkspaceView> pool = manager.getViews();
-            manager.restore(
-                snapshot,
-                descriptor ->
-                    pool.stream().filter(v -> v.viewId().equals(descriptor.viewId())).findFirst());
+            manager.restore(snapshot, new ViewerRestorer(pool));
             for (WorkspaceView leftover : pool) {
               if (!manager.isShowing(leftover) && leftover instanceof ViewerPlugin<?> plugin) {
                 plugin.close();

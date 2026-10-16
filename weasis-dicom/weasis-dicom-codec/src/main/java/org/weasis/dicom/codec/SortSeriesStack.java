@@ -10,6 +10,10 @@
 package org.weasis.dicom.codec;
 
 import java.time.LocalTime;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
@@ -136,5 +140,30 @@ public final class SortSeriesStack {
     return new SeriesComparator[] {
       instanceNumber, slicePosition, sliceLocation, contentTime, acquisitionTime, diffusionBValue
     };
+  }
+
+  /** Stable, non-localized keys of the comparators, as snapshots and commands name them. */
+  private static final Map<String, SeriesComparator<DicomImageElement>> BY_KEY = byKey();
+
+  private static Map<String, SeriesComparator<DicomImageElement>> byKey() {
+    Map<String, SeriesComparator<DicomImageElement>> map = new LinkedHashMap<>();
+    map.put("instance", instanceNumber); // NON-NLS
+    map.put("slice-position", slicePosition); // NON-NLS
+    map.put("slice-location", sliceLocation); // NON-NLS
+    map.put("content-time", contentTime); // NON-NLS
+    map.put("acquisition-time", acquisitionTime); // NON-NLS
+    map.put("b-value", diffusionBValue); // NON-NLS
+    return map;
+  }
+
+  public static Optional<String> keyOf(Comparator<?> comparator) {
+    return BY_KEY.entrySet().stream()
+        .filter(e -> e.getValue() == comparator)
+        .map(Map.Entry::getKey)
+        .findFirst();
+  }
+
+  public static Optional<SeriesComparator<DicomImageElement>> fromKey(String key) {
+    return Optional.ofNullable(key).map(BY_KEY::get);
   }
 }

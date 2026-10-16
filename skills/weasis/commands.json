@@ -3065,7 +3065,7 @@
         },
         {
           "name": "load",
-          "description": "Restores a layout captured by 'workspace:save'.",
+          "description": "Restores a layout captured by 'workspace:save': open views are reused, closed viewers are created again with their series and presentation when the series are still loaded.",
           "usage": "workspace:load [-h] [--json] --file=<input-path>",
           "needs": [
             "file-read"

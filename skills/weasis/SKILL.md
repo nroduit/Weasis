@@ -127,8 +127,9 @@ line naming the current spelling. Use the current one everywhere.
    `(gggg,eeee)`; `--image <n>` selects the image, counting from 1).
 7. **Arrange** for comparison: `workspace:split --view <a> --anchor <b> --side right`,
    `workspace:stack`, `workspace:maximize`, `workspace:save --out layout.json` and
-   `workspace:load --file layout.json`. `workspace:list` shows, for each view, its grid, its
-   synchronization and what every pane holds.
+   `workspace:load --file layout.json` (a closed viewer is created again with its series, grid
+   and display when the series are still loaded). `workspace:list` shows, for each view, its
+   grid, its synchronization and what every pane holds.
 8. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
    and still have no usable 3D.

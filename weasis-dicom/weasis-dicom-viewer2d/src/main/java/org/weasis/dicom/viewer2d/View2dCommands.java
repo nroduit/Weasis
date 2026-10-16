@@ -107,7 +107,6 @@ import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.ui.model.utils.bean.MeasurementVocabulary;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
-import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PixelAttestation;
 import org.weasis.dicom.codec.PixelPrivacy;
@@ -1697,8 +1696,8 @@ public class View2dCommands implements CommandExtension {
 
     /** The configured id, or one derived from the name for a preset the image itself carries. */
     private static String presetId(Object item) {
-      if (item instanceof PresetWindowLevel preset && StringUtil.hasText(preset.getId())) {
-        return preset.getId();
+      if (item instanceof PresetWindowLevel preset) {
+        return DicomViewStateAdapter.idOf(preset);
       }
       String slug = item.toString().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
       return slug.replaceAll("^-+|-+$", "");

@@ -9,6 +9,11 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dialog;
@@ -45,6 +50,7 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -472,6 +478,178 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       }
     }
     return list;
+  }
+
+  /**
+   * The name and series of the base state, plus the grid, the synchronization, the selected slot
+   * and, per cell of the grid, the tiling of its viewport and the {@link ViewState} of each pane.
+   */
+  @Override
+  public JsonObject saveState() {
+    JsonObjectBuilder json =
+        Json.createObjectBuilder(super.saveState())
+            .add("grid", getLayoutModel().getId()) // NON-NLS
+            .add("synch", getSynchView().getCommand()); // NON-NLS
+    List<ViewCanvas<E>> slots = getSelectableSlots();
+    int selected = slots.indexOf(getSelectedViewCanvas());
+    if (selected >= 0) {
+      json.add("selected", selected + 1); // NON-NLS
+    }
+    JsonArrayBuilder cells = Json.createArrayBuilder();
+    for (MigCell cell : getLayoutModel().getCells()) {
+      cellState(cell.position()).ifPresent(cells::add);
+    }
+    return json.add("cells", cells).build(); // NON-NLS
+  }
+
+  private Optional<JsonObjectBuilder> cellState(int position) {
+    JsonObjectBuilder json = Json.createObjectBuilder().add("cell", position); // NON-NLS
+    JsonArrayBuilder views = Json.createArrayBuilder();
+    Component component = cellManager.getComponent(position);
+    if (component instanceof ViewportPane<?> pane) {
+      @SuppressWarnings("unchecked")
+      ViewportPane<E> typed = (ViewportPane<E>) pane;
+      if (typed.isTiled()) {
+        json.add(
+            "tiled", // NON-NLS
+            Json.createObjectBuilder()
+                .add("cols", typed.getTiledCols()) // NON-NLS
+                .add("rows", typed.getTiledRows())); // NON-NLS
+      }
+      typed.getAllViewCanvases().forEach(v -> views.add(ViewState.capture(v).toJson()));
+    } else {
+      Optional<ViewCanvas<E>> canvas = cellManager.getViewCanvas(position);
+      if (canvas.isEmpty()) {
+        return Optional.empty();
+      }
+      views.add(ViewState.capture(canvas.get()).toJson());
+    }
+    return Optional.of(json.add("views", views)); // NON-NLS
+  }
+
+  /**
+   * Rebuilds the grid, the viewports and the panes of a {@link #saveState()} state. A series the
+   * resolver cannot find leaves its pane empty; an unknown grid keeps the current one.
+   */
+  @Override
+  public boolean restoreState(JsonObject state, SeriesResolver resolver) {
+    if (!supportsViewportPanes()) {
+      return false; // MPR and 3D containers build their own views; not restored yet
+    }
+    findLayout(state.getString("grid", null)).ifPresent(this::setLayoutModel); // NON-NLS
+    JsonArray cells = state.getJsonArray("cells"); // NON-NLS
+    if (cells != null) {
+      for (JsonObject cell : cells.getValuesAs(JsonObject.class)) {
+        restoreCell(cell, resolver);
+      }
+    }
+    List<ViewCanvas<E>> slots = getSelectableSlots();
+    int selected = state.getInt("selected", 0); // NON-NLS
+    if (selected >= 1 && selected <= slots.size()) {
+      selectQuietly(slots.get(selected - 1));
+    }
+    // the listeners of the synchronization are registered when the viewer becomes the selected
+    // one; setSynchView would register them now against the event manager of another viewer
+    findSynchView(state.getString("synch", null)).ifPresent(v -> synchView = v); // NON-NLS
+    return true;
+  }
+
+  private void restoreCell(JsonObject cell, SeriesResolver resolver) {
+    JsonArray views = cell.getJsonArray("views"); // NON-NLS
+    if (views == null || views.isEmpty()) {
+      return;
+    }
+    List<ViewState> states =
+        views.getValuesAs(JsonObject.class).stream().map(ViewState::fromJson).toList();
+    int position = cell.getInt("cell", -1); // NON-NLS
+    Component component = cellManager.getComponent(position);
+    if (component instanceof ViewportPane<?> pane) {
+      @SuppressWarnings("unchecked")
+      ViewportPane<E> typed = (ViewportPane<E>) pane;
+      JsonObject tiled = cell.getJsonObject("tiled"); // NON-NLS
+      if (tiled != null) {
+        typed.switchToTiled(
+            tiled.getInt("cols", 1),
+            tiled.getInt("rows", 1),
+            () -> createDefaultView(null)); // NON-NLS
+      }
+      MediaSeries<E> series =
+          resolveSeries(states.getFirst().data().series(), resolver).orElse(null);
+      if (series == null) {
+        return;
+      }
+      typed.setSeries(series);
+      List<ViewCanvas<E>> canvases = typed.getAllViewCanvases();
+      for (int i = 0; i < canvases.size() && i < states.size(); i++) {
+        states.get(i).apply(canvases.get(i));
+      }
+    } else {
+      cellManager
+          .getViewCanvas(position)
+          .ifPresent(
+              canvas ->
+                  resolveSeries(states.getFirst().data().series(), resolver)
+                      .ifPresent(
+                          series -> {
+                            canvas.setSeries(series, null);
+                            states.getFirst().apply(canvas);
+                          }));
+    }
+  }
+
+  /**
+   * Marks a canvas as the selected one without telling the event manager: its listeners belong to
+   * the selected viewer, and a scroll event sent through them while another viewer is restored
+   * would synchronize the siblings onto this one. The event manager learns the selection when the
+   * viewer becomes the selected one.
+   */
+  private void selectQuietly(ViewCanvas<E> canvas) {
+    ViewCanvas<E> current = getSelectedViewCanvas();
+    if (current == canvas) {
+      return;
+    }
+    if (current != null) {
+      current.setSelected(false);
+    }
+    canvas.setSelected(true);
+    ViewportPane<E> owning = getOwningPane(canvas);
+    if (owning != null) {
+      selectedPane = owning;
+      owning.setSelectedCanvas(canvas);
+      selectedCanvas = null;
+    } else {
+      selectedPane = null;
+      selectedCanvas = canvas;
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private Optional<MediaSeries<E>> resolveSeries(String id, SeriesResolver resolver) {
+    if (id == null) {
+      return Optional.empty();
+    }
+    return resolver.resolve(id).map(series -> (MediaSeries<E>) series);
+  }
+
+  /** The grid of that id among the ones this viewer offers. */
+  public Optional<MigLayoutModel> findLayout(String id) {
+    if (id == null) {
+      return Optional.empty();
+    }
+    return getLayoutList().stream().filter(m -> id.equals(m.getId())).findFirst();
+  }
+
+  /** The synchronization of that command among the ones the event manager offers. */
+  public Optional<SynchView> findSynchView(String command) {
+    if (command == null) {
+      return Optional.empty();
+    }
+    return eventManager.getAction(ActionW.SYNCH).map(ComboItemListener::getAllItem).stream()
+        .flatMap(Arrays::stream)
+        .filter(SynchView.class::isInstance)
+        .map(SynchView.class::cast)
+        .filter(v -> command.equalsIgnoreCase(v.getCommand()))
+        .findFirst();
   }
 
   public void changeLayoutModel(MigLayoutModel layoutModel) {

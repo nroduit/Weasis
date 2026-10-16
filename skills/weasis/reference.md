@@ -743,7 +743,7 @@ Usage: `workspace:list [-h] [--json] [--after=<n>] [--limit=<n>]`
 
 ### workspace:load
 
-Restores a layout captured by 'workspace:save'.
+Restores a layout captured by 'workspace:save': open views are reused, closed viewers are created again with their series and presentation when the series are still loaded.
 
 Usage: `workspace:load [-h] [--json] --file=<input-path>`
 

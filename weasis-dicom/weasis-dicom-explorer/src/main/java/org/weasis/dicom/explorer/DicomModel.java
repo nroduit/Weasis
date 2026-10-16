@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -311,6 +312,31 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
       }
     }
     return null;
+  }
+
+  /**
+   * The series of that subseries id or Series Instance UID: a split series carries the UID of its
+   * origin, so the UID alone finds the first part.
+   */
+  @Override
+  @SuppressWarnings("unchecked")
+  public Optional<MediaSeries<? extends MediaElement>> findSeries(String id) {
+    if (id == null) {
+      return Optional.empty();
+    }
+    MediaSeriesGroup node = getSeriesNode(id);
+    if (node == null) {
+      node =
+          getChildren(MediaSeriesGroupNode.rootNode).stream()
+              .flatMap(pt -> getChildren(pt).stream())
+              .flatMap(st -> getChildren(st).stream())
+              .filter(se -> id.equals(TagD.getTagValue(se, Tag.SeriesInstanceUID, String.class)))
+              .findFirst()
+              .orElse(null);
+    }
+    return node instanceof MediaSeries<?> series
+        ? Optional.of((MediaSeries<? extends MediaElement>) series)
+        : Optional.empty();
   }
 
   public MediaSeriesGroup getSeriesNode(String seriesUID) {

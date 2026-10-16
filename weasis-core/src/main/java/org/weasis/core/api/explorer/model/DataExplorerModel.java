@@ -11,9 +11,11 @@ package org.weasis.core.api.explorer.model;
 
 import java.beans.PropertyChangeListener;
 import java.util.List;
+import java.util.Optional;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
 
 public interface DataExplorerModel {
 
@@ -26,4 +28,9 @@ public interface DataExplorerModel {
   void firePropertyChange(ObservableEvent event);
 
   TreeModelNode getTreeModelNodeForNewPlugin();
+
+  /** The loaded series with that id (the value of its series tag), when this model has it. */
+  default Optional<MediaSeries<? extends MediaElement>> findSeries(String id) {
+    return Optional.empty();
+  }
 }

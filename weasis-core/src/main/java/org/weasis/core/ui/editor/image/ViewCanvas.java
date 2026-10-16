@@ -347,6 +347,11 @@ public interface ViewCanvas<E extends ImageElement>
 
   OpManager getDisplayOpManager();
 
+  /** Translates presets and stack orders to ids for {@link ViewState}; none by default. */
+  default ViewStateAdapter<E> getViewStateAdapter() {
+    return ViewStateAdapter.none();
+  }
+
   void disableMouseAndKeyListener();
 
   void iniDefaultMouseListener();

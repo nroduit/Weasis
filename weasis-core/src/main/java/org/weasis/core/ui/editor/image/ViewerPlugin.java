@@ -35,6 +35,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
+import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.SplitLayout;
@@ -308,6 +309,13 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     return this;
   }
 
+  /** The id of the factory that creates this viewer type, so a snapshot can recreate it. */
+  @Override
+  public String typeId() {
+    String type = ViewDisplayState.viewerTypeId(this);
+    return type != null ? type : WorkspaceView.super.typeId();
+  }
+
   /**
    * Workspace snapshot state: the plugin name and the identifiers of the open series, the
    * foundation for restoring sessions and future hanging protocols. Subclasses may add specifics.
@@ -328,6 +336,17 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
       builder.add("series", series); // NON-NLS
     }
     return builder.build();
+  }
+
+  /**
+   * Gives a recreated viewer back the content and presentation of a {@link #saveState()} state; the
+   * resolver finds the loaded series by id.
+   *
+   * @return whether this viewer type restores a state; {@code false} leaves the viewer out of the
+   *     restored layout
+   */
+  public boolean restoreState(JsonObject state, SeriesResolver resolver) {
+    return false;
   }
 
   public void showDockable() {

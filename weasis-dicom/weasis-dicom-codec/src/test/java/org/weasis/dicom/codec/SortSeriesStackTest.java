@@ -11,9 +11,11 @@ package org.weasis.dicom.codec;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalTime;
+import java.util.Comparator;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.weasis.core.api.media.data.SeriesComparator;
@@ -256,5 +258,28 @@ class SortSeriesStackTest {
     for (int i = 0; i < first.length; i++) {
       assertEquals(first[i], second[i]);
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Stable keys — the spelling snapshots and commands use for a comparator
+  // ---------------------------------------------------------------------------
+
+  @Test
+  void everyComparatorHasAKeyThatFindsItAgain() {
+    for (SeriesComparator<DicomImageElement> comparator : SortSeriesStack.getValues()) {
+      String key = SortSeriesStack.keyOf(comparator).orElseThrow();
+      assertSame(comparator, SortSeriesStack.fromKey(key).orElseThrow(), key);
+    }
+  }
+
+  @Test
+  void keysAreStableAndUnknownOnesAreEmpty() {
+    Comparator<DicomImageElement> foreign = Comparator.comparing(Object::hashCode);
+    assertEquals("instance", SortSeriesStack.keyOf(SortSeriesStack.instanceNumber).orElseThrow());
+    assertEquals(
+        "slice-location", SortSeriesStack.keyOf(SortSeriesStack.sliceLocation).orElseThrow());
+    assertTrue(SortSeriesStack.keyOf(foreign).isEmpty());
+    assertTrue(SortSeriesStack.fromKey("other").isEmpty());
+    assertTrue(SortSeriesStack.fromKey(null).isEmpty());
   }
 }

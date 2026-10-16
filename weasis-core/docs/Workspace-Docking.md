@@ -39,6 +39,23 @@ Restoring takes a `ViewRestorer` that recreates a view from its descriptor; a vi
 restorer cannot recreate is skipped. What a view stores in its descriptor is opaque to the
 engine.
 
+The viewers fill that descriptor with their content and presentation. `ViewerPlugin` stores
+its name and series ids and reports the id of its factory as the view type; an
+`ImageViewerPlugin` adds its grid, its synchronization, the selected slot and, per cell, the
+tiling of the viewport and a `ViewState` per pane. A `ViewState` has two parts: the data
+(`ViewData`: series, image, instance, frame), which is what a session binds, and the
+presentation (`ViewPresentation`: zoom, pan, rotation, flip, window/level or preset id, LUT
+shape, color map id, inversion, stack order, a position in the stack and the modality and pixel
+size it was captured on), which holds no identifier. The combination restores a pane exactly;
+the presentation alone is a display template whose adapter rules keep, on other data, only what
+transfers (the image by slice location or relative position, the explicit scale for the same
+pixel size, the window values for the same modality, presets, color maps and stack orders by
+id). Both apply themselves through the events the synchronization uses; a viewer type whose
+presets and sort orders have ids supplies a `ViewStateAdapter`.
+`ViewerRestorer` (`org.weasis.core.ui.editor`) is the restorer of the application: it reuses
+an open view by id, otherwise asks the factory of the type for a new viewer, finds the series
+through the `DataExplorerModel` of each explorer and calls `ViewerPlugin.restoreState`.
+
 ## Commands
 
 `WorkspaceCommands` exposes the engine under the `workspace:` command namespace (list, select,

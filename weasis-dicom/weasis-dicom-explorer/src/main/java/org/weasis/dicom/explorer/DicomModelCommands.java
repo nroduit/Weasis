@@ -812,25 +812,11 @@ final class DicomModelCommands {
   }
 
   /** The series whose subseries id or Series Instance UID is {@code uid}. */
-  @SuppressWarnings("unchecked")
   static MediaSeries<? extends MediaElement> findSeries(DicomModel model, String uid) {
-    MediaSeriesGroup node = model.getSeriesNode(uid);
-    if (node == null) {
-      for (MediaSeriesGroup pt : model.getChildren(MediaSeriesGroupNode.rootNode)) {
-        for (MediaSeriesGroup st : model.getChildren(pt)) {
-          for (MediaSeriesGroup se : model.getChildren(st)) {
-            if (uid.equals(seriesUid(se))) {
-              node = se;
-              break;
-            }
-          }
-        }
-      }
-    }
-    if (!(node instanceof MediaSeries<?>)) {
-      throw CommandFailure.unknownHandle("Unknown series: " + uid, "dicom:list"); // NON-NLS
-    }
-    return (MediaSeries<? extends MediaElement>) node;
+    return model
+        .findSeries(uid)
+        .orElseThrow(
+            () -> CommandFailure.unknownHandle("Unknown series: " + uid, "dicom:list")); // NON-NLS
   }
 
   @SuppressWarnings("unchecked")

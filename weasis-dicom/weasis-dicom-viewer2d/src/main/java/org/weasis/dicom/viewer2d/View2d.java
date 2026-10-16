@@ -83,6 +83,7 @@ import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewStateAdapter;
 import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.ui.editor.image.export.AnimationExportDialog;
 import org.weasis.core.ui.editor.image.export.CineSourceBuilder;
@@ -309,6 +310,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       return byteLut.source().appliesTo(modality);
     }
     return true;
+  }
+
+  @Override
+  public ViewStateAdapter<DicomImageElement> getViewStateAdapter() {
+    return DicomViewStateAdapter.INSTANCE;
   }
 
   @Override
