@@ -9,7 +9,14 @@
  */
 package org.weasis.core.ui.editor;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
+import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 
@@ -18,4 +25,34 @@ import org.weasis.core.api.media.data.MediaSeries;
 public interface SeriesResolver {
 
   Optional<MediaSeries<? extends MediaElement>> resolve(String id);
+
+  /** Looks the id up in the model of every explorer of the application. */
+  static SeriesResolver ofApplication() {
+    return ofModels(applicationModels());
+  }
+
+  /** The model of every explorer of the application, in order. */
+  static List<DataExplorerModel> applicationModels() {
+    List<DataExplorerModel> models = new ArrayList<>();
+    for (DataExplorerView explorer : GuiUtils.getUICore().getExplorerPlugins()) {
+      DataExplorerModel model = explorer.getDataExplorerModel();
+      if (model != null && !models.contains(model)) {
+        models.add(model);
+      }
+    }
+    if (!models.contains(ViewerPluginBuilder.DefaultDataModel)) {
+      models.add(ViewerPluginBuilder.DefaultDataModel);
+    }
+    return models;
+  }
+
+  /** Looks the id up in every explorer model, in order. */
+  static SeriesResolver ofModels(Collection<? extends DataExplorerModel> models) {
+    return id -> models.stream().map(m -> m.findSeries(id)).flatMap(Optional::stream).findFirst();
+  }
+
+  /** Every series this resolver gives that the predicate accepts. */
+  default SeriesResolver filter(Predicate<MediaSeries<? extends MediaElement>> accept) {
+    return id -> resolve(id).filter(accept);
+  }
 }

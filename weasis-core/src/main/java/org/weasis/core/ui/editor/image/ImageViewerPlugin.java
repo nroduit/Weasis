@@ -10,10 +10,7 @@
 package org.weasis.core.ui.editor.image;
 
 import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dialog;
@@ -46,6 +43,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -481,50 +479,50 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   }
 
   /**
-   * The name and series of the base state, plus the grid, the synchronization, the selected slot
-   * and, per cell of the grid, the tiling of its viewport and the {@link ViewState} of each pane.
+   * The name and series of the base state, plus the {@link HangingLayout} of this viewer: grid,
+   * synchronization, selected slot and, per cell, the tiling and the {@link ViewState} of each
+   * pane.
    */
   @Override
   public JsonObject saveState() {
-    JsonObjectBuilder json =
-        Json.createObjectBuilder(super.saveState())
-            .add("grid", getLayoutModel().getId()) // NON-NLS
-            .add("synch", getSynchView().getCommand()); // NON-NLS
-    List<ViewCanvas<E>> slots = getSelectableSlots();
-    int selected = slots.indexOf(getSelectedViewCanvas());
-    if (selected >= 0) {
-      json.add("selected", selected + 1); // NON-NLS
+    if (!supportsViewportPanes()) {
+      return super.saveState(); // MPR and 3D containers store their own part
     }
-    JsonArrayBuilder cells = Json.createArrayBuilder();
-    for (MigCell cell : getLayoutModel().getCells()) {
-      cellState(cell.position()).ifPresent(cells::add);
-    }
-    return json.add("cells", cells).build(); // NON-NLS
+    return captureLayout().writeTo(Json.createObjectBuilder(super.saveState())).build();
   }
 
-  private Optional<JsonObjectBuilder> cellState(int position) {
-    JsonObjectBuilder json = Json.createObjectBuilder().add("cell", position); // NON-NLS
-    JsonArrayBuilder views = Json.createArrayBuilder();
+  /** What this viewer hangs now; the typed form of {@link #saveState()}. */
+  public HangingLayout captureLayout() {
+    List<ViewCanvas<E>> slots = getSelectableSlots();
+    HangingLayout.Builder layout =
+        HangingLayout.builder()
+            .grid(getLayoutModel().getId())
+            .synch(synchCommand())
+            .select(slots.indexOf(getSelectedViewCanvas()) + 1);
+    for (MigCell cell : getLayoutModel().getCells()) {
+      captureCell(cell.position()).ifPresent(layout::cell);
+    }
+    return layout.build();
+  }
+
+  private Optional<HangingLayout.Cell> captureCell(int position) {
     Component component = cellManager.getComponent(position);
     if (component instanceof ViewportPane<?> pane) {
       @SuppressWarnings("unchecked")
       ViewportPane<E> typed = (ViewportPane<E>) pane;
-      if (typed.isTiled()) {
-        json.add(
-            "tiled", // NON-NLS
-            Json.createObjectBuilder()
-                .add("cols", typed.getTiledCols()) // NON-NLS
-                .add("rows", typed.getTiledRows())); // NON-NLS
-      }
-      typed.getAllViewCanvases().forEach(v -> views.add(ViewState.capture(v).toJson()));
-    } else {
-      Optional<ViewCanvas<E>> canvas = cellManager.getViewCanvas(position);
-      if (canvas.isEmpty()) {
-        return Optional.empty();
-      }
-      views.add(ViewState.capture(canvas.get()).toJson());
+      HangingLayout.Tiling tiling =
+          typed.isTiled()
+              ? new HangingLayout.Tiling(typed.getTiledCols(), typed.getTiledRows())
+              : null;
+      return Optional.of(
+          new HangingLayout.Cell(
+              position,
+              tiling,
+              typed.getAllViewCanvases().stream().map(ViewState::capture).toList()));
     }
-    return Optional.of(json.add("views", views)); // NON-NLS
+    return cellManager
+        .getViewCanvas(position)
+        .map(canvas -> new HangingLayout.Cell(position, null, List.of(ViewState.capture(canvas))));
   }
 
   /**
@@ -533,67 +531,108 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
    */
   @Override
   public boolean restoreState(JsonObject state, SeriesResolver resolver) {
+    return hang(HangingLayout.fromJson(state), resolver);
+  }
+
+  /**
+   * Hangs a layout on this viewer, headlessly and whether it is the selected viewer or not: the
+   * grid, then every listed cell (tiling, series, presentation of each pane), then the selection
+   * and the synchronization. Containers whose cells are not viewports (MPR, 3D) refuse and return
+   * {@code false}. A series the resolver cannot find leaves its cell empty; an unknown grid or
+   * synchronization keeps the current one.
+   */
+  public boolean hang(HangingLayout layout, SeriesResolver resolver) {
     if (!supportsViewportPanes()) {
-      return false; // MPR and 3D containers build their own views; not restored yet
+      return false; // MPR and 3D containers build their own views
     }
-    findLayout(state.getString("grid", null)).ifPresent(this::setLayoutModel); // NON-NLS
-    JsonArray cells = state.getJsonArray("cells"); // NON-NLS
-    if (cells != null) {
-      for (JsonObject cell : cells.getValuesAs(JsonObject.class)) {
-        restoreCell(cell, resolver);
-      }
+    boolean selectedContainer = eventManager.getSelectedView2dContainer() == this;
+    findLayout(layout.grid())
+        .filter(model -> !model.getId().equals(getLayoutModel().getId()))
+        .ifPresent(
+            model -> {
+              if (selectedContainer) {
+                changeLayoutModel(model); // through the action, so the layout menu follows
+              } else {
+                setLayoutModel(model);
+              }
+            });
+    for (HangingLayout.Cell cell : layout.cells()) {
+      hangCell(cell, resolver);
     }
     List<ViewCanvas<E>> slots = getSelectableSlots();
-    int selected = state.getInt("selected", 0); // NON-NLS
+    int selected = layout.selected();
     if (selected >= 1 && selected <= slots.size()) {
-      selectQuietly(slots.get(selected - 1));
+      if (selectedContainer) {
+        setSelectedImagePane(slots.get(selected - 1));
+      } else {
+        selectQuietly(slots.get(selected - 1));
+      }
     }
-    // the listeners of the synchronization are registered when the viewer becomes the selected
-    // one; setSynchView would register them now against the event manager of another viewer
-    findSynchView(state.getString("synch", null)).ifPresent(v -> synchView = v); // NON-NLS
+    String synch = layout.synch();
+    if (synch != null) {
+      boolean none = NO_SYNCH.equalsIgnoreCase(synch);
+      Optional<SynchView> found = none ? Optional.empty() : findSynchView(synch);
+      if (selectedContainer) {
+        // through the actions, so the toolbar and the menu follow, as the sync verb does
+        found.ifPresent(
+            v -> eventManager.getAction(ActionW.SYNCH).ifPresent(a -> a.setSelectedItem(v)));
+        if (none || found.isPresent()) {
+          eventManager.getAction(ActionW.SYNCH_MODE).ifPresent(t -> t.setSelected(!none));
+        }
+      } else {
+        // the listeners of the synchronization are registered when the viewer becomes the
+        // selected one; setSynchView would register them now against the event manager of
+        // another viewer
+        found.ifPresent(v -> synchView = v);
+      }
+    }
     return true;
   }
 
-  private void restoreCell(JsonObject cell, SeriesResolver resolver) {
-    JsonArray views = cell.getJsonArray("views"); // NON-NLS
-    if (views == null || views.isEmpty()) {
-      return;
-    }
-    List<ViewState> states =
-        views.getValuesAs(JsonObject.class).stream().map(ViewState::fromJson).toList();
-    int position = cell.getInt("cell", -1); // NON-NLS
-    Component component = cellManager.getComponent(position);
+  /** The synchronization command of a viewer whose synchronization is switched off. */
+  private static final String NO_SYNCH = "none"; // NON-NLS
+
+  /** The command of the synchronization in force: {@value #NO_SYNCH} when the mode is off. */
+  private String synchCommand() {
+    boolean on =
+        eventManager
+            .getAction(ActionW.SYNCH_MODE)
+            .map(ToggleButtonListener::isSelected)
+            .orElse(Boolean.TRUE);
+    return on ? getSynchView().getCommand() : NO_SYNCH;
+  }
+
+  private void hangCell(HangingLayout.Cell cell, SeriesResolver resolver) {
+    List<ViewState> states = cell.panes();
+    MediaSeries<E> series = cell.seriesId().flatMap(id -> resolveSeries(id, resolver)).orElse(null);
+    Component component = cellManager.getComponent(cell.position());
     if (component instanceof ViewportPane<?> pane) {
       @SuppressWarnings("unchecked")
       ViewportPane<E> typed = (ViewportPane<E>) pane;
-      JsonObject tiled = cell.getJsonObject("tiled"); // NON-NLS
-      if (tiled != null) {
-        typed.switchToTiled(
-            tiled.getInt("cols", 1),
-            tiled.getInt("rows", 1),
-            () -> createDefaultView(null)); // NON-NLS
+      HangingLayout.Tiling tiling = cell.tiling();
+      if (tiling != null) {
+        typed.switchToTiled(tiling.cols(), tiling.rows(), () -> createDefaultView(null));
+      } else if (typed.isTiled()) {
+        typed.switchToStack();
       }
-      MediaSeries<E> series =
-          resolveSeries(states.getFirst().data().series(), resolver).orElse(null);
+      typed.setSeries(series);
       if (series == null) {
         return;
       }
-      typed.setSeries(series);
       List<ViewCanvas<E>> canvases = typed.getAllViewCanvases();
       for (int i = 0; i < canvases.size() && i < states.size(); i++) {
-        states.get(i).apply(canvases.get(i));
+        states.get(i).apply(canvases.get(i), resolver);
       }
     } else {
       cellManager
-          .getViewCanvas(position)
+          .getViewCanvas(cell.position())
           .ifPresent(
-              canvas ->
-                  resolveSeries(states.getFirst().data().series(), resolver)
-                      .ifPresent(
-                          series -> {
-                            canvas.setSeries(series, null);
-                            states.getFirst().apply(canvas);
-                          }));
+              canvas -> {
+                canvas.setSeries(series, null);
+                if (series != null && !states.isEmpty()) {
+                  states.getFirst().apply(canvas, resolver);
+                }
+              });
     }
   }
 

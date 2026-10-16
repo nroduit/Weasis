@@ -29,6 +29,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Taggable;
+import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
 import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.ColorLut;
@@ -46,10 +47,11 @@ import org.weasis.opencv.op.lut.LutShape;
  * <p>Values that refer to registries are ids, never copied definitions. {@link #capture} reads a
  * pane; applying drives it through the same events the synchronization uses.
  */
-public record ViewState(ViewData data, ViewPresentation view) {
+public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
 
   /** The state of an empty pane with the default presentation. */
-  public static final ViewState EMPTY = new ViewState(ViewData.NONE, ViewPresentation.DEFAULT);
+  public static final ViewState EMPTY =
+      new ViewState(ViewData.NONE, ViewPresentation.DEFAULT, null);
 
   public ViewState {
     if (data == null) {
@@ -60,18 +62,44 @@ public record ViewState(ViewData data, ViewPresentation view) {
     }
   }
 
+  /** A state without a blended series. */
+  public ViewState(ViewData data, ViewPresentation view) {
+    this(data, view, null);
+  }
+
   /** Reads the state of a pane; an empty pane gives {@link #EMPTY}. */
   public static <E extends ImageElement> ViewState capture(ViewCanvas<E> canvas) {
     MediaSeries<E> series = canvas.getSeries();
     if (series == null) {
       return EMPTY;
     }
-    return new ViewState(ViewData.capture(canvas), ViewPresentation.capture(canvas));
+    return new ViewState(
+        ViewData.capture(canvas),
+        ViewPresentation.capture(canvas),
+        canvas.getViewStateAdapter().blend(canvas).orElse(null));
   }
 
-  /** Restores the pane exactly: the pane already shows {@link ViewData#series()}. */
+  /** Restores the pane exactly, without its blended series (no resolver to find it). */
   public <E extends ImageElement> void apply(ViewCanvas<E> canvas) {
+    apply(canvas, id -> Optional.empty());
+  }
+
+  /**
+   * Restores the pane exactly: the pane already shows {@link ViewData#series()}; the blended
+   * series, when there is one, is found through the resolver and blended by the adapter.
+   */
+  @SuppressWarnings("unchecked")
+  public <E extends ImageElement> void apply(ViewCanvas<E> canvas, SeriesResolver resolver) {
     view.applyTo(canvas, data);
+    if (blend != null && blend.overlay() != null && canvas.getSeries() != null) {
+      resolver
+          .resolve(blend.overlay())
+          .ifPresent(
+              overlay ->
+                  canvas
+                      .getViewStateAdapter()
+                      .blend(canvas, (MediaSeries<E>) overlay, blend.params()));
+    }
   }
 
   public JsonObject toJson() {
@@ -79,16 +107,50 @@ public record ViewState(ViewData data, ViewPresentation view) {
     if (data.series() != null) {
       json.add("data", data.toJson()); // NON-NLS
     }
-    return json.add("view", view.toJson()).build(); // NON-NLS
+    json.add("view", view.toJson()); // NON-NLS
+    if (blend != null) {
+      json.add("blend", blend.toJson()); // NON-NLS
+    }
+    return json.build();
   }
 
   /** Reads a state written by {@link #toJson()}; missing keys take their default value. */
   public static ViewState fromJson(JsonObject json) {
     JsonObject data = json.getJsonObject("data"); // NON-NLS
     JsonObject view = json.getJsonObject("view"); // NON-NLS
+    JsonObject blend = json.getJsonObject("blend"); // NON-NLS
     return new ViewState(
         data == null ? ViewData.NONE : ViewData.fromJson(data),
-        view == null ? ViewPresentation.DEFAULT : ViewPresentation.fromJson(view));
+        view == null ? ViewPresentation.DEFAULT : ViewPresentation.fromJson(view),
+        blend == null ? null : Blend.fromJson(blend));
+  }
+
+  // ---- blend part --------------------------------------------------------------------------
+
+  /**
+   * A second series blended over the shown one (fusion): the id of that series is data, the
+   * parameters of the blend (color map, window, opacities) are presentation the adapter of the
+   * viewer type owns, opaque here.
+   */
+  public record Blend(String overlay, JsonObject params) {
+
+    public Blend {
+      if (params == null) {
+        params = Json.createObjectBuilder().build();
+      }
+    }
+
+    public JsonObject toJson() {
+      JsonObjectBuilder json = Json.createObjectBuilder();
+      if (overlay != null) {
+        json.add("overlay", overlay); // NON-NLS
+      }
+      return json.add("params", params).build(); // NON-NLS
+    }
+
+    public static Blend fromJson(JsonObject json) {
+      return new Blend(json.getString("overlay", null), json.getJsonObject("params")); // NON-NLS
+    }
   }
 
   // ---- data part ---------------------------------------------------------------------------
@@ -235,6 +297,26 @@ public record ViewState(ViewData data, ViewPresentation view) {
       ViewStateAdapter<E> adapter = canvas.getViewStateAdapter();
       OpManager manager = canvas.getDisplayOpManager();
       ImageElement image = canvas.getImage();
+      if (manager == null) {
+        // a canvas without display operations (volume rendering) has no 2D presentation
+        return new ViewPresentation(
+            position(canvas, series, image),
+            context(series, image),
+            ZoomType.BEST_FIT,
+            0,
+            0,
+            0,
+            0,
+            false,
+            null,
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            false);
+      }
       return new ViewPresentation(
           position(canvas, series, image),
           context(series, image),
@@ -301,8 +383,18 @@ public record ViewState(ViewData data, ViewPresentation view) {
      * for the same modality, the preset by id when the image offers it, color map and stack order
      * by id when known.
      */
-    @SuppressWarnings("unchecked")
     public <E extends ImageElement> void applyTo(ViewCanvas<E> canvas, ViewData data) {
+      applyTo(canvas, data, true);
+    }
+
+    /**
+     * As {@link #applyTo(ViewCanvas, ViewData)}; without {@code navigate} the stack order and the
+     * shown image are left alone, for panes whose image is chosen elsewhere (the planes of an MPR
+     * follow the crosshair).
+     */
+    @SuppressWarnings("unchecked")
+    public <E extends ImageElement> void applyTo(
+        ViewCanvas<E> canvas, ViewData data, boolean navigate) {
       MediaSeries<E> series = canvas.getSeries();
       if (series == null) {
         return;
@@ -311,21 +403,23 @@ public record ViewState(ViewData data, ViewPresentation view) {
       ViewStateAdapter<E> adapter = canvas.getViewStateAdapter();
       Filter<E> filter = (Filter<E>) canvas.getActionValue(ActionW.FILTERED_SERIES.cmd());
 
-      SynchEvent order = new SynchEvent(canvas);
-      Optional.ofNullable(sort)
-          .flatMap(adapter::sort)
-          .ifPresent(comparator -> order.put(ActionW.SORT_STACK.cmd(), comparator));
-      order.put(ActionW.INVERSE_STACK.cmd(), inverseStack);
-      fire(canvas, order);
+      if (navigate) {
+        SynchEvent order = new SynchEvent(canvas);
+        Optional.ofNullable(sort)
+            .flatMap(adapter::sort)
+            .ifPresent(comparator -> order.put(ActionW.SORT_STACK.cmd(), comparator));
+        order.put(ActionW.INVERSE_STACK.cmd(), inverseStack);
+        fire(canvas, order);
 
-      Picked<E> picked =
-          exact
-              ? exactImage(canvas, series, data, filter)
-              : positionedImage(canvas, series, filter);
-      if (picked != null && picked.media() != canvas.getImage()) {
-        fire(
-            canvas,
-            new SynchCineEvent(canvas, picked.media(), picked.index() - canvas.getTileOffset()));
+        Picked<E> picked =
+            exact
+                ? exactImage(canvas, series, data, filter)
+                : positionedImage(canvas, series, filter);
+        if (picked != null && picked.media() != canvas.getImage()) {
+          fire(
+              canvas,
+              new SynchCineEvent(canvas, picked.media(), picked.index() - canvas.getTileOffset()));
+        }
       }
 
       boolean sameScale = exact || samePixelSize(canvas.getImage());
@@ -433,16 +527,7 @@ public record ViewState(ViewData data, ViewPresentation view) {
     }
 
     private static Optional<ByteLut> colorMapOf(String id) {
-      if (id == null) {
-        return Optional.empty();
-      }
-      for (ColorLut lut : ColorLut.values()) {
-        if (id.equals(lut.getByteLut().name())) {
-          return Optional.of(lut.getByteLut());
-        }
-      }
-      ColorMapRegistry registry = ColorMapRegistry.getInstance();
-      return registry.findById(id).map(registry::byteLut);
+      return ViewState.colorMapOf(id);
     }
 
     public JsonObject toJson() {
@@ -529,6 +614,20 @@ public record ViewState(ViewData data, ViewPresentation view) {
         return ZoomType.BEST_FIT;
       }
     }
+  }
+
+  /** The color map of that id: a built-in LUT by name, else one of the registry. */
+  public static Optional<ByteLut> colorMapOf(String id) {
+    if (id == null) {
+      return Optional.empty();
+    }
+    for (ColorLut lut : ColorLut.values()) {
+      if (id.equals(lut.getByteLut().name())) {
+        return Optional.of(lut.getByteLut());
+      }
+    }
+    ColorMapRegistry registry = ColorMapRegistry.getInstance();
+    return registry.findById(id).map(registry::byteLut);
   }
 
   // ---- helpers -----------------------------------------------------------------------------

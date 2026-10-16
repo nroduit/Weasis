@@ -748,7 +748,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   }
 
   @Override
-  protected void setImage(DicomImageElement img) {
+  public void setImage(DicomImageElement img) {
     boolean newImg = img != null && !img.equals(imageLayer.getSourceImage());
     if (newImg) {
       deletePrLayers();

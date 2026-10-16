@@ -172,7 +172,7 @@ public class MipView extends View2d {
   }
 
   @Override
-  protected void setImage(DicomImageElement img) {
+  public void setImage(DicomImageElement img) {
     if (img == getImage()) {
       return; // No change, skip everything
     }

@@ -18,7 +18,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -77,13 +76,7 @@ public final class ViewerRestorer implements ViewRestorer {
       return Optional.empty();
     }
     List<DataExplorerModel> explorers = models.get();
-    SeriesResolver resolver =
-        id ->
-            explorers.stream()
-                .map(model -> model.findSeries(id))
-                .flatMap(Optional::stream)
-                .filter(factory::canReadSeries)
-                .findFirst();
+    SeriesResolver resolver = SeriesResolver.ofModels(explorers).filter(factory::canReadSeries);
     Loaded loaded = null;
     for (String id : seriesIds(descriptor)) {
       loaded = loadedIn(explorers, id, factory).orElse(null);
@@ -156,17 +149,7 @@ public final class ViewerRestorer implements ViewRestorer {
   }
 
   private static List<DataExplorerModel> applicationModels() {
-    List<DataExplorerModel> models = new ArrayList<>();
-    for (DataExplorerView explorer : GuiUtils.getUICore().getExplorerPlugins()) {
-      DataExplorerModel model = explorer.getDataExplorerModel();
-      if (model != null && !models.contains(model)) {
-        models.add(model);
-      }
-    }
-    if (!models.contains(ViewerPluginBuilder.DefaultDataModel)) {
-      models.add(ViewerPluginBuilder.DefaultDataModel);
-    }
-    return models;
+    return SeriesResolver.applicationModels();
   }
 
   private static void registerInApplication(ViewerPlugin<?> plugin) {

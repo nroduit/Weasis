@@ -52,9 +52,23 @@ transfers (the image by slice location or relative position, the explicit scale 
 pixel size, the window values for the same modality, presets, color maps and stack orders by
 id). Both apply themselves through the events the synchronization uses; a viewer type whose
 presets and sort orders have ids supplies a `ViewStateAdapter`.
+A third part, the blend (`ViewState.Blend`), carries the id of a series blended over the shown
+one (fusion) and the parameters of the blend, which the adapter owns: the series id is data, the
+parameters are presentation.
+
+The typed form of what an `ImageViewerPlugin` saves is a `HangingLayout`: grid, synchronization,
+selected slot and, per cell, the tiling and the `ViewState` of each pane. `ImageViewerPlugin.hang`
+applies one headlessly on a live viewer, selected or not ("this series, in this cell of this
+grid, shown this way"); `restoreState` is that call on the JSON, `captureLayout` the reverse, and
+the `view2d:hang` and `view2d:viewport` verbs expose both. A hanging plan produces the same
+object. The MPR and volume rendering containers store their own part instead (`MprState`:
+source series, crosshair, rotation, MIP mode, thickness and presentation per plane;
+`VolumeState`: series, preset id, camera, rendering); they build the volume again from the
+series and apply that part once the build is ready.
 `ViewerRestorer` (`org.weasis.core.ui.editor`) is the restorer of the application: it reuses
 an open view by id, otherwise asks the factory of the type for a new viewer, finds the series
-through the `DataExplorerModel` of each explorer and calls `ViewerPlugin.restoreState`.
+through the `DataExplorerModel` of each explorer (`SeriesResolver.ofApplication`) and calls
+`ViewerPlugin.restoreState`.
 
 ## Commands
 

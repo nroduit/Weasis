@@ -14,8 +14,11 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import java.awt.Component;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import org.weasis.core.api.gui.layout.MigCell;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -96,12 +99,39 @@ public final class ViewDisplayState {
     if (type != null) {
       target.add("viewerType", type); // NON-NLS
     }
-    return Json.createObjectBuilder()
-        .add("target", target) // NON-NLS
-        .add("grid", container.getLayoutModel().getId()) // NON-NLS
-        .add("sync", sync(container, selected)) // NON-NLS
-        .add("panes", panes) // NON-NLS
-        .build();
+    JsonObjectBuilder json =
+        Json.createObjectBuilder()
+            .add("target", target) // NON-NLS
+            .add("grid", container.getLayoutModel().getId()) // NON-NLS
+            .add("sync", sync(container, selected)) // NON-NLS
+            .add("panes", panes); // NON-NLS
+    if (container.supportsViewportPanes()) {
+      json.add("cells", cells(container)); // NON-NLS
+    }
+    return json.build();
+  }
+
+  /** One entry per cell of the grid, from 1: its viewport mode and the indices of its panes. */
+  private static JsonArrayBuilder cells(ImageViewerPlugin<?> container) {
+    JsonArrayBuilder cells = Json.createArrayBuilder();
+    List<? extends ViewCanvas<?>> all = container.getImagePanels();
+    for (MigCell cell : container.getLayoutModel().getCells()) {
+      Component component = container.getCellManager().getComponent(cell.position());
+      if (!(component instanceof ViewportPane<?> pane)) {
+        continue;
+      }
+      JsonArrayBuilder indices = Json.createArrayBuilder();
+      pane.getAllViewCanvases().forEach(v -> indices.add(all.indexOf(v) + 1));
+      JsonObjectBuilder entry =
+          Json.createObjectBuilder()
+              .add("cell", cell.position() + 1) // NON-NLS
+              .add("mode", pane.isTiled() ? "tiled" : "stack"); // NON-NLS
+      if (pane.isTiled()) {
+        entry.add("cols", pane.getTiledCols()).add("rows", pane.getTiledRows()); // NON-NLS
+      }
+      cells.add(entry.add("panes", indices)); // NON-NLS
+    }
+    return cells;
   }
 
   /** One line for text output, in the order of the JSON body. */

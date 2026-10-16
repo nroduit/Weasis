@@ -9,6 +9,8 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -50,6 +52,7 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.OpenTracker;
 import org.weasis.core.ui.editor.PromptPolicy;
+import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
@@ -314,6 +317,46 @@ public class MprContainer extends DicomViewerPlugin
   public Map<String, Object> openReport() {
     Volume<?, ?> volume = mprController == null ? null : mprController.getVolume();
     return build.report(volume == null ? null : !volume.isBasic());
+  }
+
+  /** The base state with the source series instead of the generated planes, plus the MPR part. */
+  @Override
+  public JsonObject saveState() {
+    return MprState.capture(this).writeTo(Json.createObjectBuilder(super.saveState())).build();
+  }
+
+  /**
+   * Builds the volume again from the source series and, once it is ready, drives the crosshair, the
+   * rotation, the MIP mode and the planes to the saved state.
+   */
+  @Override
+  public boolean restoreState(JsonObject state, SeriesResolver resolver) {
+    MprState mpr = MprState.fromJson(state);
+    if (mpr.series() == null) {
+      return false;
+    }
+    MediaSeries<DicomImageElement> source =
+        resolver.resolve(mpr.series()).filter(MediaSeries::isSuitableFor3d).stream()
+            .map(s -> (MediaSeries<DicomImageElement>) s)
+            .findFirst()
+            .orElse(null);
+    if (source == null) {
+      return false;
+    }
+    findLayout(mpr.grid()).ifPresent(this::setLayoutModel);
+    addSeries(source);
+    whenReady()
+        .thenRun(
+            () ->
+                GuiExecutor.execute(
+                    () -> {
+                      try {
+                        mpr.applyTo(this);
+                      } catch (RuntimeException e) {
+                        LOGGER.warn("Cannot apply the MPR state", e);
+                      }
+                    }));
+    return true;
   }
 
   @Override

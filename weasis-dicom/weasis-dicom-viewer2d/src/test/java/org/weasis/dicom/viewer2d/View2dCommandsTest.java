@@ -38,9 +38,11 @@ class View2dCommandsTest {
   void exclusiveAmountsAreEnforced() {
     CommandResult two = run("zoom", "--set", "2", "--by", "1");
     CommandResult gridBoth = run("grid", "--panes", "2", "--grid", "x");
+    CommandResult viewportBoth = run("viewport", "--tiled", "2x2", "--stack");
     assertAll(
         () -> assertEquals(CommandResult.USAGE, two.status()),
-        () -> assertEquals(CommandResult.USAGE, gridBoth.status()));
+        () -> assertEquals(CommandResult.USAGE, gridBoth.status()),
+        () -> assertEquals(CommandResult.USAGE, viewportBoth.status()));
   }
 
   /** A display verb called without an argument reads the state instead of failing. */
@@ -48,7 +50,17 @@ class View2dCommandsTest {
   void bareDisplayVerbsAskForTheState() {
     assertAll(
         Stream.of(
-                "zoom", "window-level", "pan", "scroll", "reset", "rotate", "flip", "grid", "sync")
+                "zoom",
+                "window-level",
+                "pan",
+                "scroll",
+                "reset",
+                "rotate",
+                "flip",
+                "grid",
+                "sync",
+                "viewport",
+                "hang")
             .map(
                 verb ->
                     (Executable)
@@ -82,6 +94,10 @@ class View2dCommandsTest {
                 "view2d:preset --pane 2 --preset lung",
                 "view2d:grid --view v1 --panes 2",
                 "view2d:grid --best-for 3",
+                "view2d:viewport --pane 2 --tiled 2x2",
+                "view2d:viewport --stack",
+                "view2d:hang --grid 2x2 --cell 1=1.2.3 --cell 2= --tiled 2=2x1 --sync stack --select 2",
+                "view2d:hang --file layout.json",
                 "view2d:mouse-action --button right --action zoom",
                 "view2d:capture --out /tmp/a.png --crop 0,0,100,100",
                 "view2d:annotate --label-at 100,200 --text caption",

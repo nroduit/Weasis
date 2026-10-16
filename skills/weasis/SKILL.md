@@ -140,8 +140,16 @@ line naming the current spelling. Use the current one everywhere.
 7. **Arrange** for comparison: `workspace:split --view <a> --anchor <b> --side right`,
    `workspace:stack`, `workspace:maximize`, `workspace:save --out layout.json` and
    `workspace:load --file layout.json` (a closed viewer is created again with its series, grid
-   and display when the series are still loaded). `workspace:list` shows, for each view, its
-   grid, its synchronization and what every pane holds.
+   and display when the series are still loaded; MPR and 3D viewers come back with their volume,
+   crosshair, preset and camera). `workspace:list` shows, for each view, its grid, its
+   synchronization and what every pane holds. To hang several series at once,
+   `view2d:hang --grid 2x2 --cell 1=<uid> --cell 2=<uid> --sync stack` fills the cells of one
+   viewer in a single call (`--tiled 1=2x2` tiles a cell, `--file` replays a saved layout,
+   no argument returns the current one); `view2d:viewport --tiled 2x2` shows successive images
+   of one series on tiles, `--stack` goes back to one image. The tool panels around the
+   workspace are slots: `workspace:panel` shows which tool fills each slot (explorer and tools
+   sides, top and bottom), `--side tools --slot bottom --tool measure` opens a tool there,
+   `--collapse` / `--expand` hide or show a side; `workspace:save` keeps the shell too.
 8. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
    and still have no usable 3D.

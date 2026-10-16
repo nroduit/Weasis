@@ -9,6 +9,8 @@
  */
 package org.weasis.dicom.viewer3d;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -50,6 +52,7 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.OpenTracker;
 import org.weasis.core.ui.editor.PromptPolicy;
+import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.RotationToolBar;
@@ -420,6 +423,44 @@ public class View3DContainer extends DicomViewerPlugin
     String patientName = TagD.getTagValue(series, Tag.PatientName, String.class);
     setPluginName(() -> IdentityMask.maskText(TagD.get(Tag.PatientName), patientName));
     setSelected(true);
+  }
+
+  /** The base state plus the volume part: preset, camera and rendering of the view. */
+  @Override
+  public JsonObject saveState() {
+    return VolumeState.capture(this).writeTo(Json.createObjectBuilder(super.saveState())).build();
+  }
+
+  /** Loads the volume again from the series and, once it is ready, restores the volume part. */
+  @Override
+  @SuppressWarnings("unchecked")
+  public boolean restoreState(JsonObject state, SeriesResolver resolver) {
+    VolumeState volume = VolumeState.fromJson(state);
+    if (volume.series() == null || !View3DFactory.isOpenglEnable()) {
+      return false;
+    }
+    MediaSeries<DicomImageElement> series =
+        resolver.resolve(volume.series()).filter(MediaSeries::isSuitableFor3d).stream()
+            .map(s -> (MediaSeries<DicomImageElement>) s)
+            .findFirst()
+            .orElse(null);
+    if (series == null) {
+      return false;
+    }
+    findLayout(volume.grid()).ifPresent(this::setLayoutModel);
+    addSeries(series);
+    whenReady()
+        .thenRun(
+            () ->
+                GuiExecutor.execute(
+                    () -> {
+                      try {
+                        volume.applyTo(this);
+                      } catch (RuntimeException e) {
+                        LOGGER.warn("Cannot apply the volume state", e);
+                      }
+                    }));
+    return true;
   }
 
   public void reload() {

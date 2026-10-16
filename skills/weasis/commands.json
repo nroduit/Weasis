@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.1",
+  "apiVersion": "2.2",
   "protocolVersion": 1,
   "applicationVersion": "development",
   "exitCodes": {
@@ -13,15 +13,16 @@
   },
   "namespaces": [
     {
-      "name": "acquire",
-      "description": "Image acquisition (Dicomizer): patient context.",
+      "name": "config",
+      "description": "Site configuration documents and declared settings.",
+      "since": "5.0",
       "verbs": [
         {
-          "name": "patient",
-          "description": "Loads the patient context of the acquisition and returns the context it set, masked for a remote caller.",
-          "usage": "acquire:patient [-h] [--json] (--url=<remote-url> | --xml=<text> | --xml-gzip-urlsafe=<base64> | --xml-gzip=<base64>)",
+          "name": "catalog",
+          "description": "The declared settings with their type and scope.",
+          "usage": "config:catalog [-h] [--json] [--out=<output-path>]",
           "needs": [
-            "network-read"
+            "file-write"
           ],
           "parameters": [],
           "options": [
@@ -37,66 +38,270 @@
             },
             {
               "names": [
-                "--url"
+                "--out"
               ],
-              "label": "<remote-url>",
-              "type": "remote-url",
+              "label": "<output-path>",
+              "type": "output-path",
               "arity": "1",
-              "required": true,
-              "description": "URL of an XML file holding the DICOM tags.",
+              "required": false,
+              "description": "File to write the catalog into instead of printing it.",
               "needs": [
-                "network-read"
+                "file-write"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "export",
+          "description": "Converts the legacy XML documents of a site package into JSON.",
+          "usage": "config:export [-h] [--force] [--json] [--source=<folder>] [--target=<folder>]",
+          "needs": [
+            "file-read",
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
               ],
-              "since": "5.0",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "1"
-              }
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
             },
             {
               "names": [
-                "--xml"
+                "--source"
               ],
-              "label": "<text>",
-              "type": "string",
+              "label": "<folder>",
+              "type": "path",
               "arity": "1",
-              "required": true,
-              "description": "XML text (UTF-8) holding the DICOM tags.",
-              "since": "5.0",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "1"
-              }
+              "required": false,
+              "description": "Root of the resources package holding the XML documents (default: the current one)."
             },
             {
               "names": [
-                "--xml-gzip-urlsafe"
+                "--target"
               ],
-              "label": "<base64>",
-              "type": "string",
+              "label": "<folder>",
+              "type": "path",
               "arity": "1",
-              "required": true,
-              "description": "XML encoded as GZIP then URL-safe Base64.",
-              "since": "5.0",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "1"
-              }
+              "required": false,
+              "description": "Folder to write the JSON documents into (default: the config folder of the preference directory)."
             },
             {
               "names": [
-                "--xml-gzip"
+                "--force"
               ],
-              "label": "<base64>",
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Overwrite a JSON document that exists."
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "description": "The config folder of the resources package, the documents it holds, and the user and machine documents of this installation.",
+          "usage": "config:list [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "pack",
+          "description": "Writes the settings and documents of a layer into a package, to move them to another machine or to give them to Viewer Hub.",
+          "usage": "config:pack [-h] [--json] [--with-machine] [--layer=<layer>] [--out=<output-path>]",
+          "needs": [
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--layer"
+              ],
+              "label": "<layer>",
               "type": "string",
               "arity": "1",
+              "required": false,
+              "default": "user",
+              "description": "user (default), machine, or site (the config folder of a resources package)."
+            },
+            {
+              "names": [
+                "--with-machine"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "With a user package, also the settings and documents of this workstation."
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": false,
+              "description": "The package to write (default: a dated name in the current folder).",
+              "needs": [
+                "file-write"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "reload",
+          "description": "Re-reads every site and user document without restarting Weasis.",
+          "usage": "config:reload [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "setting",
+          "description": "The value of a declared setting, where it comes from and whether it is locked.",
+          "usage": "config:setting [-h] [--json] <key>",
+          "parameters": [
+            {
+              "label": "<key>",
+              "type": "string",
+              "arity": "1",
+              "description": "Key of the setting, as listed by config:catalog."
+            }
+          ],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "sync",
+          "description": "Mirrors the user settings and documents with the preference service: sends what changed, and with --pull reads and merges the service's copy first.",
+          "usage": "config:sync [-h] [--json] [--pull]",
+          "needs": [
+            "network-read",
+            "network-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--pull"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Read and merge the service's copy before sending."
+            }
+          ]
+        },
+        {
+          "name": "unpack",
+          "description": "Imports a settings package after a backup of the current settings; --dry-run shows what would change.",
+          "usage": "config:unpack [-h] [--dry-run] [--json] [--replace] --file=<input-path>",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--file"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
               "required": true,
-              "description": "XML encoded as GZIP then Base64.",
-              "since": "5.0",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "1"
-              }
+              "description": "The package to import.",
+              "needs": [
+                "file-read"
+              ]
+            },
+            {
+              "names": [
+                "--replace"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Replace each document and settings group of the package whole, instead of merging."
+            },
+            {
+              "names": [
+                "--dry-run"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Show what would change, change nothing."
             }
           ]
         }
@@ -604,7 +809,7 @@
                 "--type"
               ],
               "label": "<kind>",
-              "type": "kind",
+              "type": "string",
               "arity": "1",
               "required": false,
               "description": "Only this kind: ko, rejection, pr, seg, rtstruct, rtplan, rtdose, other."
@@ -848,7 +1053,7 @@
           "name": "filter",
           "description": "Sets the facets of the series filter of the DICOM explorer, combined with AND: text, study, modalities, kinds of objects referencing the series, download state. Without option, prints the current filter. Returns the filter and how many series of the selected patient pass it.",
           "since": "5.0",
-          "usage": "| --state | download-state |  | Download states to keep: complete, pending, downloading. |\n| --interest | interest-source |  | Keep the series with images of interest: any, or pointed at by one of ko, graphics, pr, seg (repeatable, or comma-separated). |\n| --clear | boolean |  | Clears every facet first. |",
+          "usage": "explorer:filter [-h] [--clear] [--json] [--text=<text>] [--interest=<interest-source>[,<interest-source>...]]... [--modality=<modality>[,<modality>...]]... [--objects=<kind>[,<kind>...]]... [--state=<download-state>[, <download-state>...]]... [--study=<study-uid>]...",
           "parameters": [],
           "options": [
             {
@@ -866,7 +1071,7 @@
                 "--text"
               ],
               "label": "<text>",
-              "type": "text",
+              "type": "string",
               "arity": "1",
               "required": false,
               "description": "Free text over series and study attributes, anatomy and its region group."
@@ -879,6 +1084,7 @@
               "type": "study-uid",
               "arity": "1",
               "required": false,
+              "default": "[]",
               "description": "Study Instance UID from 'dicom:list': only its series; repeatable, as a selection on the timeline strip."
             },
             {
@@ -886,9 +1092,10 @@
                 "--modality"
               ],
               "label": "<modality>",
-              "type": "modality",
+              "type": "string",
               "arity": "1",
               "required": false,
+              "default": "[]",
               "description": "Modalities to keep (repeatable, or comma-separated)."
             },
             {
@@ -896,9 +1103,10 @@
                 "--objects"
               ],
               "label": "<kind>",
-              "type": "kind",
+              "type": "string",
               "arity": "1",
               "required": false,
+              "default": "[]",
               "description": "Keep the series referenced by an object of one of these kinds: ko, pr, seg, rtstruct, rtplan, rtdose, rejection, other (repeatable, or comma-separated)."
             },
             {
@@ -906,9 +1114,10 @@
                 "--state"
               ],
               "label": "<download-state>",
-              "type": "download-state",
+              "type": "string",
               "arity": "1",
               "required": false,
+              "default": "[]",
               "description": "Download states to keep: complete, pending, downloading."
             },
             {
@@ -916,9 +1125,10 @@
                 "--interest"
               ],
               "label": "<interest-source>",
-              "type": "interest-source",
+              "type": "string",
               "arity": "1",
               "required": false,
+              "default": "[]",
               "description": "Keep the series with images of interest: any, or pointed at by one of ko, graphics, pr, seg (repeatable, or comma-separated)."
             },
             {
@@ -941,7 +1151,7 @@
           "parameters": [
             {
               "label": "<explorer-mode>",
-              "type": "explorer-mode",
+              "type": "string",
               "arity": "0..1",
               "description": "thumbnails, list, or auto (forget the choice, let the rules decide)."
             }
@@ -984,6 +1194,7 @@
               "type": "series-uid",
               "arity": "1",
               "required": true,
+              "default": "[]",
               "description": "Series Instance UID (or series id) from 'dicom:list'; repeatable."
             }
           ]
@@ -1357,6 +1568,96 @@
               "required": false,
               "default": "IMAGE",
               "description": "Where it applies: IMAGE, SERIES."
+            }
+          ]
+        },
+        {
+          "name": "attest",
+          "description": "Records that a person reviewed the pixels of the selected image or series and found no burned-in identity, so it may be captured or exported without a redaction; --withdraw takes it back. Held until the study is unloaded.",
+          "since": "5.0",
+          "usage": "redact:attest [-h] [--json] [--withdraw] [--by=<name>] [--pane=<pane-index>] [--reason=<text>] [--scope=<scope>] [--view=<view-id>]",
+          "needs": [
+            "pixel-attest"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--scope"
+              ],
+              "label": "<scope>",
+              "type": "enum",
+              "values": [
+                "IMAGE",
+                "SERIES"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "IMAGE",
+              "description": "Where it applies: IMAGE, SERIES."
+            },
+            {
+              "names": [
+                "--by"
+              ],
+              "label": "<name>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Who reviewed the pixels; required unless --withdraw.",
+              "needs": [
+                "pixel-attest"
+              ]
+            },
+            {
+              "names": [
+                "--reason"
+              ],
+              "label": "<text>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "What the review was, such as the catalog and the date it was recorded."
+            },
+            {
+              "names": [
+                "--withdraw"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Takes back the attestation of that scope."
             }
           ]
         },
@@ -2013,9 +2314,9 @@
         },
         {
           "name": "capture",
-          "description": "Renders a view as displayed (window/level, annotations, identity masking) into a PNG or JPEG file and returns how image pixels map to the capture.",
+          "description": "Renders a view as displayed (window/level, annotations, identity masking) into a PNG or JPEG file and returns how image pixels map to the capture; --frame image renders the image alone at its own size, for exact comparisons.",
           "since": "5.0",
-          "usage": "view2d:capture [-h] [--force] [--json] [--crop=<canvas-rect>] [--max-pixels=<n>] --out=<output-path> [--pane=<pane-index>] [--view=<view-id>]",
+          "usage": "view2d:capture [-h] [--force] [--json] [--annotations=<on|off>] [--crop=<canvas-rect>] [--frame=<frame>] [--max-pixels=<n>] --out=<output-path> [--pane=<pane-index>] [--view=<view-id>]",
           "needs": [
             "file-write"
           ],
@@ -2094,8 +2395,38 @@
               "type": "integer",
               "arity": "1",
               "required": false,
-              "default": "2000000",
-              "description": "Downscale so the file has at most this many pixels (default: 2000000)."
+              "description": "Downscale so the file has at most this many pixels (default: 2000000 for the canvas, none for the image frame)."
+            },
+            {
+              "names": [
+                "--frame"
+              ],
+              "label": "<frame>",
+              "type": "enum",
+              "values": [
+                "canvas",
+                "image"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "canvas",
+              "description": "canvas (default): the pane as displayed, its size and zoom; image: one pixel per displayed image pixel, whatever the pane, the zoom and the pan.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--annotations"
+              ],
+              "label": "<on|off>",
+              "type": "enum",
+              "values": [
+                "on",
+                "off"
+              ],
+              "arity": "1",
+              "required": false,
+              "description": "Text, scale, orientation, drawings and cross-lines: on or off (default: as displayed for the canvas, off for the image frame).",
+              "since": "5.0"
             }
           ]
         },
@@ -2288,7 +2619,7 @@
         {
           "name": "grid",
           "description": "Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.",
-          "usage": "view2d:grid [-h] [--json] [--view=<view-id>] [--best-for=<n> | --panes=<n> | --grid=<grid-id>]",
+          "usage": "view2d:grid [-h] [--json] [--view=<view-id>] [--panes=<n> | --grid=<grid-id> | --best-for=<n>]",
           "parameters": [],
           "options": [
             {
@@ -2310,21 +2641,6 @@
               "arity": "1",
               "required": false,
               "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
-            },
-            {
-              "names": [
-                "--best-for"
-              ],
-              "label": "<n>",
-              "type": "integer",
-              "arity": "1",
-              "required": true,
-              "description": "Returns the best grid for this number of panes without applying it.",
-              "since": "5.0",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
             },
             {
               "names": [
@@ -2353,6 +2669,121 @@
                 "exclusive": true,
                 "multiplicity": "0..1"
               }
+            },
+            {
+              "names": [
+                "--best-for"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Returns the best grid for this number of panes without applying it.",
+              "since": "5.0",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            }
+          ]
+        },
+        {
+          "name": "hang",
+          "description": "Hangs series in the cells of a viewer in one call: --grid picks the grid, each --cell puts a series in a cell (an empty value clears it), --tiled tiles a cell, --sync and --select set the synchronization and the selected cell; --file applies a layout saved by 'workspace:save'. The state of the viewer is returned. With no argument the current layout is returned, in the form --file takes.",
+          "since": "5.0",
+          "usage": "view2d:hang [-h] [--json] [--file=<input-path>] [--grid=<grid-id>] [--select=<cell>] [--sync=<sync-mode>] [--view=<view-id>] [--cell=<cell>=<series-uid>]... [--tiled=<cell>=<cols>x<rows>]...",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--grid"
+              ],
+              "label": "<grid-id>",
+              "type": "grid-id",
+              "arity": "1",
+              "required": false,
+              "description": "Grid to apply, by id from 'grid'."
+            },
+            {
+              "names": [
+                "--cell"
+              ],
+              "label": "<cell>=<series-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Series shown in that cell, from 1; an empty value clears the cell."
+            },
+            {
+              "names": [
+                "--tiled"
+              ],
+              "label": "<cell>=<cols>x<rows>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Tiles of that cell; 1x1 returns it to a single image."
+            },
+            {
+              "names": [
+                "--sync"
+              ],
+              "label": "<sync-mode>",
+              "type": "enum",
+              "values": [
+                "none",
+                "stack",
+                "tile"
+              ],
+              "arity": "1",
+              "required": false,
+              "description": "none, stack or tile, among the modes the viewer offers."
+            },
+            {
+              "names": [
+                "--select"
+              ],
+              "label": "<cell>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Cell to select, from 1."
+            },
+            {
+              "names": [
+                "--file"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": false,
+              "description": "A layout written by 'workspace:save' or by this verb without argument.",
+              "needs": [
+                "file-read"
+              ]
             }
           ]
         },
@@ -2945,6 +3376,75 @@
           ]
         },
         {
+          "name": "viewport",
+          "description": "Viewport of a pane: --tiled shows its series on a grid of tiles, --stack returns it to one image; the state of the viewer, with its cells, is returned. With no argument the state is returned unchanged.",
+          "since": "5.0",
+          "usage": "view2d:viewport [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--tiled=<cols>x<rows> | --stack]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--tiled"
+              ],
+              "label": "<cols>x<rows>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Shows the series of the pane on this grid of tiles, successive images.",
+              "since": "5.0",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--stack"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": true,
+              "description": "Returns the pane to a single image.",
+              "since": "5.0",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            }
+          ]
+        },
+        {
           "name": "window-level",
           "description": "Window and level of a pane: absolute with --window and --level, relative with --window-by and --level-by in slider steps (range 4096). With no argument the state is returned unchanged.",
           "usage": "view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-index>] [--view=<view-id>] [--window-by=<steps>] [--window=<window-width> --level=<window-center>]",
@@ -3344,7 +3844,7 @@
         },
         {
           "name": "load",
-          "description": "Restores a layout captured by 'workspace:save': open views are reused, closed viewers are created again with their series and presentation when the series are still loaded.",
+          "description": "Restores a layout captured by 'workspace:save': open views are reused, closed viewers are created again with their series and presentation when the series are still loaded; the shell (explorer and tool slots) follows when the snapshot has one.",
           "usage": "workspace:load [-h] [--json] --file=<input-path>",
           "needs": [
             "file-read"
@@ -3401,6 +3901,133 @@
               "arity": "1",
               "required": true,
               "description": "View id from 'workspace:list'."
+            }
+          ]
+        },
+        {
+          "name": "panel",
+          "description": "Shell slots around the workspace: the explorer side (leading) and the tools side (trailing), two stacked slots each, and the central strip. Without option it returns the shell state; --side selects a side, then --slot with --tool or --clear fills or empties a slot, --collapse / --expand hide or show the side, --width and --ratio size it. Tool ids are stable across viewer types; an id the side does not offer now fails and lists the ones it does.",
+          "since": "5.0",
+          "usage": "workspace:panel [-h] [--clear] [--collapse] [--expand] [--json] [--no-strip] [--ratio=<split-ratio>] [--side=<side>] [--slot=<slot>] [--strip=<tool-id>] [--tool=<tool-id>] [--width=<pixels>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--side"
+              ],
+              "label": "<side>",
+              "type": "enum",
+              "values": [
+                "EXPLORER",
+                "TOOLS"
+              ],
+              "arity": "1",
+              "required": false,
+              "description": "Side by role: EXPLORER, TOOLS."
+            },
+            {
+              "names": [
+                "--slot"
+              ],
+              "label": "<slot>",
+              "type": "enum",
+              "values": [
+                "TOP",
+                "BOTTOM"
+              ],
+              "arity": "1",
+              "required": false,
+              "description": "Slot of the side: TOP, BOTTOM."
+            },
+            {
+              "names": [
+                "--tool"
+              ],
+              "label": "<tool-id>",
+              "type": "tool-id",
+              "arity": "1",
+              "required": false,
+              "description": "Opens this tool in --slot of --side, replacing what was there."
+            },
+            {
+              "names": [
+                "--clear"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Empties --slot of --side."
+            },
+            {
+              "names": [
+                "--collapse"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Hides both slots of --side (tools remembered)."
+            },
+            {
+              "names": [
+                "--expand"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Shows the remembered tools of --side again."
+            },
+            {
+              "names": [
+                "--width"
+              ],
+              "label": "<pixels>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Content width of --side, in pixels."
+            },
+            {
+              "names": [
+                "--ratio"
+              ],
+              "label": "<split-ratio>",
+              "type": "split-ratio",
+              "arity": "1",
+              "required": false,
+              "description": "Share of the top slot of --side when both slots are shown."
+            },
+            {
+              "names": [
+                "--strip"
+              ],
+              "label": "<tool-id>",
+              "type": "tool-id",
+              "arity": "1",
+              "required": false,
+              "description": "Keeps the central strip on this tool (fails when another tool is shown)."
+            },
+            {
+              "names": [
+                "--no-strip"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Empties the central strip."
             }
           ]
         },

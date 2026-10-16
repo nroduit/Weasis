@@ -1,26 +1,115 @@
 # Weasis commands
 
-Command API 2.1, protocol 1, application development.
+Command API 2.2, protocol 1, application development.
 
-## acquire
+## config
 
-Image acquisition (Dicomizer): patient context.
+Site configuration documents and declared settings.
 
-### acquire:patient
+### config:catalog
 
-Loads the patient context of the acquisition and returns the context it set, masked for a remote caller.
+The declared settings with their type and scope.
 
-Usage: `acquire:patient [-h] [--json] (--url=<remote-url> | --xml=<text> | --xml-gzip-urlsafe=<base64> | --xml-gzip=<base64>)`
+Usage: `config:catalog [-h] [--json] [--out=<output-path>]`
 
-Needs: network read
+Needs: file write
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --url | remote-url |  | URL of an XML file holding the DICOM tags. (since 5.0) |
-| --xml | string |  | XML text (UTF-8) holding the DICOM tags. (since 5.0) |
-| --xml-gzip-urlsafe | string |  | XML encoded as GZIP then URL-safe Base64. (since 5.0) |
-| --xml-gzip | string |  | XML encoded as GZIP then Base64. (since 5.0) |
+| --out | output-path |  | File to write the catalog into instead of printing it. |
+
+### config:export
+
+Converts the legacy XML documents of a site package into JSON.
+
+Usage: `config:export [-h] [--force] [--json] [--source=<folder>] [--target=<folder>]`
+
+Needs: file read, file write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --source | path |  | Root of the resources package holding the XML documents (default: the current one). |
+| --target | path |  | Folder to write the JSON documents into (default: the config folder of the preference directory). |
+| --force | boolean |  | Overwrite a JSON document that exists. |
+
+### config:list
+
+The config folder of the resources package, the documents it holds, and the user and machine documents of this installation.
+
+Usage: `config:list [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+### config:pack
+
+Writes the settings and documents of a layer into a package, to move them to another machine or to give them to Viewer Hub.
+
+Usage: `config:pack [-h] [--json] [--with-machine] [--layer=<layer>] [--out=<output-path>]`
+
+Needs: file write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --layer | string | user | user (default), machine, or site (the config folder of a resources package). |
+| --with-machine | boolean |  | With a user package, also the settings and documents of this workstation. |
+| --out | output-path |  | The package to write (default: a dated name in the current folder). |
+
+### config:reload
+
+Re-reads every site and user document without restarting Weasis.
+
+Usage: `config:reload [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+### config:setting
+
+The value of a declared setting, where it comes from and whether it is locked.
+
+Usage: `config:setting [-h] [--json] <key>`
+
+| Parameter | Type | Description |
+|---|---|---|
+| <key> | string | Key of the setting, as listed by config:catalog. |
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+### config:sync
+
+Mirrors the user settings and documents with the preference service: sends what changed, and with --pull reads and merges the service's copy first.
+
+Usage: `config:sync [-h] [--json] [--pull]`
+
+Needs: network read, network write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pull | boolean |  | Read and merge the service's copy before sending. |
+
+### config:unpack
+
+Imports a settings package after a backup of the current settings; --dry-run shows what would change.
+
+Usage: `config:unpack [-h] [--dry-run] [--json] [--replace] --file=<input-path>`
+
+Needs: file read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --file | input-path |  | The package to import. |
+| --replace | boolean |  | Replace each document and settings group of the package whole, instead of merging. |
+| --dry-run | boolean |  | Show what would change, change nothing. |
 
 
 ## dicom
@@ -121,7 +210,7 @@ Usage: `dicom:objects [-h] [--json] [--series=<series-uid>] [--study=<study-uid>
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --study | study-uid |  | Study Instance UID from 'dicom:list'; default: every loaded study. |
 | --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list': only the objects that reference this series. |
-| --type | kind |  | Only this kind: ko, rejection, pr, seg, rtstruct, rtplan, rtdose, other. |
+| --type | string |  | Only this kind: ko, rejection, pr, seg, rtstruct, rtplan, rtdose, other. |
 
 ### dicom:open (since 5.0)
 
@@ -176,17 +265,17 @@ The explorer panel: its filter facets, its selection and what it shows. 'dicom:'
 
 Sets the facets of the series filter of the DICOM explorer, combined with AND: text, study, modalities, kinds of objects referencing the series, download state. Without option, prints the current filter. Returns the filter and how many series of the selected patient pass it.
 
-Usage: `explorer:filter [-h] [--clear] [--json] [--interest=<interest-source>[,<interest-source>...]]... [--modality=<modality>[,<modality>...]]... [--objects=<kind>[,<kind>...]]... [--state=<download-state>[,<download-state>...]]... [--study=<study-uid>]... [--text=<text>]`
+Usage: `explorer:filter [-h] [--clear] [--json] [--text=<text>] [--interest=<interest-source>[,<interest-source>...]]... [--modality=<modality>[,<modality>...]]... [--objects=<kind>[,<kind>...]]... [--state=<download-state>[, <download-state>...]]... [--study=<study-uid>]...`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --text | text |  | Free text over series and study attributes, anatomy and its region group. |
-| --study | study-uid |  | Study Instance UID from 'dicom:list': only its series; repeatable, as a selection on the timeline strip. |
-| --modality | modality |  | Modalities to keep (repeatable, or comma-separated). |
-| --objects | kind |  | Keep the series referenced by an object of one of these kinds: ko, pr, seg, rtstruct, rtplan, rtdose, rejection, other (repeatable, or comma-separated). |
-| --state | download-state |  | Download states to keep: complete, pending, downloading. |
-| --interest | interest-source |  | Keep the series with images of interest: any, or pointed at by one of ko, graphics, pr, seg (repeatable, or comma-separated). |
+| --text | string |  | Free text over series and study attributes, anatomy and its region group. |
+| --study | study-uid | [] | Study Instance UID from 'dicom:list': only its series; repeatable, as a selection on the timeline strip. |
+| --modality | string | [] | Modalities to keep (repeatable, or comma-separated). |
+| --objects | string | [] | Keep the series referenced by an object of one of these kinds: ko, pr, seg, rtstruct, rtplan, rtdose, rejection, other (repeatable, or comma-separated). |
+| --state | string | [] | Download states to keep: complete, pending, downloading. |
+| --interest | string | [] | Keep the series with images of interest: any, or pointed at by one of ko, graphics, pr, seg (repeatable, or comma-separated). |
 | --clear | boolean |  | Clears every facet first. |
 
 ### explorer:mode (since 5.0)
@@ -197,7 +286,7 @@ Usage: `explorer:mode [-h] [--json] [<explorer-mode>]`
 
 | Parameter | Type | Description |
 |---|---|---|
-| explorer-mode | explorer-mode | thumbnails, list, or auto (forget the choice, let the rules decide). |
+| <explorer-mode> | string | thumbnails, list, or auto (forget the choice, let the rules decide). |
 
 | Option | Type | Default | Description |
 |---|---|---|---|
@@ -212,7 +301,7 @@ Usage: `explorer:select [-h] [--json] --series=<series-uid> [--series=<series-ui
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list'; repeatable. |
+| --series | series-uid | [] | Series Instance UID (or series id) from 'dicom:list'; repeatable. |
 
 ### explorer:state (since 5.0)
 
@@ -223,6 +312,7 @@ Usage: `explorer:state [-h] [--json]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
+
 
 ## image
 
@@ -314,6 +404,24 @@ Usage: `redact:apply [-h] [--json] --entry=<entry-id> [--pane=<pane-index>] [--s
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --entry | entry-id |  | Device entry from 'redact:library'. |
 | --scope | enum | IMAGE | Where it applies: IMAGE, SERIES. |
+
+### redact:attest (since 5.0)
+
+Records that a person reviewed the pixels of the selected image or series and found no burned-in identity, so it may be captured or exported without a redaction; --withdraw takes it back. Held until the study is unloaded.
+
+Usage: `redact:attest [-h] [--json] [--withdraw] [--by=<name>] [--pane=<pane-index>] [--reason=<text>] [--scope=<scope>] [--view=<view-id>]`
+
+Needs: pixel attest
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --scope | enum | IMAGE | Where it applies: IMAGE, SERIES. |
+| --by | string |  | Who reviewed the pixels; required unless --withdraw. |
+| --reason | string |  | What the review was, such as the catalog and the date it was recorded. |
+| --withdraw | boolean |  | Takes back the attestation of that scope. |
 
 ### redact:clear (since 5.0)
 
@@ -491,9 +599,9 @@ Usage: `view2d:annotate [-h] [--canvas] [--json] [--at=<image-point>] [--label-a
 
 ### view2d:capture (since 5.0)
 
-Renders a view as displayed (window/level, annotations, identity masking) into a PNG or JPEG file and returns how image pixels map to the capture.
+Renders a view as displayed (window/level, annotations, identity masking) into a PNG or JPEG file and returns how image pixels map to the capture; --frame image renders the image alone at its own size, for exact comparisons.
 
-Usage: `view2d:capture [-h] [--force] [--json] [--crop=<canvas-rect>] [--max-pixels=<n>] --out=<output-path> [--pane=<pane-index>] [--view=<view-id>]`
+Usage: `view2d:capture [-h] [--force] [--json] [--annotations=<on|off>] [--crop=<canvas-rect>] [--frame=<frame>] [--max-pixels=<n>] --out=<output-path> [--pane=<pane-index>] [--view=<view-id>]`
 
 Needs: file write
 
@@ -505,7 +613,9 @@ Needs: file write
 | --out | output-path |  | File to write; the extension selects PNG or JPEG (.jpg). |
 | --force | boolean |  | Replace the file when it exists and was not written by this session. (since 5.0) |
 | --crop | canvas-rect |  | Crop to this region of the canvas before scaling. (since 5.0) |
-| --max-pixels | integer | 2000000 | Downscale so the file has at most this many pixels (default: 2000000). |
+| --max-pixels | integer |  | Downscale so the file has at most this many pixels (default: 2000000 for the canvas, none for the image frame). |
+| --frame | enum | canvas | canvas (default): the pane as displayed, its size and zoom; image: one pixel per displayed image pixel, whatever the pane, the zoom and the pan. (since 5.0) |
+| --annotations | enum |  | Text, scale, orientation, drawings and cross-lines: on or off (default: as displayed for the canvas, off for the image frame). (since 5.0) |
 
 ### view2d:clear-ai (since 5.0)
 
@@ -556,15 +666,34 @@ Usage: `view2d:graphics [-h] [--json] [--no-measurements] [--after=<n>] [--layer
 
 Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.
 
-Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--best-for=<n> | --panes=<n> | --grid=<grid-id>]`
+Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--panes=<n> | --grid=<grid-id> | --best-for=<n>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --best-for | integer |  | Returns the best grid for this number of panes without applying it. (since 5.0) |
 | --panes | integer |  | Applies the best grid for this number of panes. |
 | --grid | grid-id |  | Applies this grid, by id from the bare verb. |
+| --best-for | integer |  | Returns the best grid for this number of panes without applying it. (since 5.0) |
+
+### view2d:hang (since 5.0)
+
+Hangs series in the cells of a viewer in one call: --grid picks the grid, each --cell puts a series in a cell (an empty value clears it), --tiled tiles a cell, --sync and --select set the synchronization and the selected cell; --file applies a layout saved by 'workspace:save'. The state of the viewer is returned. With no argument the current layout is returned, in the form --file takes.
+
+Usage: `view2d:hang [-h] [--json] [--file=<input-path>] [--grid=<grid-id>] [--select=<cell>] [--sync=<sync-mode>] [--view=<view-id>] [--cell=<cell>=<series-uid>]... [--tiled=<cell>=<cols>x<rows>]...`
+
+Needs: file read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --grid | grid-id |  | Grid to apply, by id from 'grid'. |
+| --cell | string |  | Series shown in that cell, from 1; an empty value clears the cell. |
+| --tiled | string |  | Tiles of that cell; 1x1 returns it to a single image. |
+| --sync | enum |  | none, stack or tile, among the modes the viewer offers. |
+| --select | integer |  | Cell to select, from 1. |
+| --file | input-path |  | A layout written by 'workspace:save' or by this verb without argument. |
 
 ### view2d:measure (since 5.0)
 
@@ -690,6 +819,20 @@ Usage: `view2d:sync [-h] [--json] [--mode=<sync-mode>] [--view=<view-id>]`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --mode | enum |  | none, stack or tile, among the modes the viewer offers. (since 5.0) |
+
+### view2d:viewport (since 5.0)
+
+Viewport of a pane: --tiled shows its series on a grid of tiles, --stack returns it to one image; the state of the viewer, with its cells, is returned. With no argument the state is returned unchanged.
+
+Usage: `view2d:viewport [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--tiled=<cols>x<rows> | --stack]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --tiled | string |  | Shows the series of the pane on this grid of tiles, successive images. (since 5.0) |
+| --stack | boolean |  | Returns the pane to a single image. (since 5.0) |
 
 ### view2d:window-level
 
@@ -826,7 +969,7 @@ Usage: `workspace:list [-h] [--json] [--after=<n>] [--limit=<n>]`
 
 ### workspace:load
 
-Restores a layout captured by 'workspace:save': open views are reused, closed viewers are created again with their series and presentation when the series are still loaded.
+Restores a layout captured by 'workspace:save': open views are reused, closed viewers are created again with their series and presentation when the series are still loaded; the shell (explorer and tool slots) follows when the snapshot has one.
 
 Usage: `workspace:load [-h] [--json] --file=<input-path>`
 
@@ -847,6 +990,26 @@ Usage: `workspace:maximize [-h] [--json] --view=<view-id>`
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | View id from 'workspace:list'. |
+
+### workspace:panel (since 5.0)
+
+Shell slots around the workspace: the explorer side (leading) and the tools side (trailing), two stacked slots each, and the central strip. Without option it returns the shell state; --side selects a side, then --slot with --tool or --clear fills or empties a slot, --collapse / --expand hide or show the side, --width and --ratio size it. Tool ids are stable across viewer types; an id the side does not offer now fails and lists the ones it does.
+
+Usage: `workspace:panel [-h] [--clear] [--collapse] [--expand] [--json] [--no-strip] [--ratio=<split-ratio>] [--side=<side>] [--slot=<slot>] [--strip=<tool-id>] [--tool=<tool-id>] [--width=<pixels>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --side | enum |  | Side by role: EXPLORER, TOOLS. |
+| --slot | enum |  | Slot of the side: TOP, BOTTOM. |
+| --tool | tool-id |  | Opens this tool in --slot of --side, replacing what was there. |
+| --clear | boolean |  | Empties --slot of --side. |
+| --collapse | boolean |  | Hides both slots of --side (tools remembered). |
+| --expand | boolean |  | Shows the remembered tools of --side again. |
+| --width | integer |  | Content width of --side, in pixels. |
+| --ratio | split-ratio |  | Share of the top slot of --side when both slots are shown. |
+| --strip | tool-id |  | Keeps the central strip on this tool (fails when another tool is shown). |
+| --no-strip | boolean |  | Empties the central strip. |
 
 ### workspace:save
 

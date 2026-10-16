@@ -220,7 +220,7 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
   }
 
   @Override
-  protected void setImage(DicomImageElement img) {
+  public void setImage(DicomImageElement img) {
     if (img == null) {
       imageLayer.setImage(null, null);
     }

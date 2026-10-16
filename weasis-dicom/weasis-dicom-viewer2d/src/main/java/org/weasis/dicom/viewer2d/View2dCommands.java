@@ -11,8 +11,10 @@ package org.weasis.dicom.viewer2d;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonException;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonReader;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import java.awt.Graphics2D;
@@ -28,8 +30,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,6 +56,7 @@ import org.weasis.core.api.command.ImageIndex;
 import org.weasis.core.api.command.ImagePoint;
 import org.weasis.core.api.command.ImagePolygon;
 import org.weasis.core.api.command.ImageRect;
+import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.LayerName;
 import org.weasis.core.api.command.ListOptions;
 import org.weasis.core.api.command.Magnification;
@@ -72,11 +78,15 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.IdentityMask;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
+import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.DisplayProfile;
+import org.weasis.core.ui.editor.image.HangingLayout;
 import org.weasis.core.ui.editor.image.ImageRegionStatistics;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
@@ -86,6 +96,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewDisplayState;
 import org.weasis.core.ui.editor.image.ViewTransferHandler;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.editor.image.ViewportPane;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -134,6 +145,8 @@ import picocli.CommandLine.TypeConversionException;
       View2dCommands.Pan.class,
       View2dCommands.Scroll.class,
       View2dCommands.Grid.class,
+      View2dCommands.Viewport.class,
+      View2dCommands.Hang.class,
       View2dCommands.MouseAction.class,
       View2dCommands.Reset.class,
       View2dCommands.Sync.class,
@@ -707,8 +720,7 @@ public class View2dCommands implements CommandExtension {
     }
 
     /** The grid of that id, or an error naming the ids the viewer offers (it used to fall back). */
-    private static MigLayoutModel requireGrid(
-        ImageViewerPlugin<DicomImageElement> container, GridId id) {
+    static MigLayoutModel requireGrid(ImageViewerPlugin<DicomImageElement> container, GridId id) {
       List<MigLayoutModel> layouts = layouts(container);
       return layouts.stream()
           .filter(layout -> id.value().equals(layout.getId()))
@@ -1617,6 +1629,210 @@ public class View2dCommands implements CommandExtension {
       }
       throw new IllegalArgumentException(
           "This viewer does not offer the '" + mode + "' synchronization, only: " + offered);
+    }
+  }
+
+  /** How a viewport shows its series: one image, or a grid of tiles. */
+  static class ViewportMode {
+    @Option(
+        names = "--tiled",
+        paramLabel = "<cols>x<rows>",
+        description = "Shows the series of the pane on this grid of tiles, successive images.")
+    @Since("5.0")
+    String tiled;
+
+    @Option(names = "--stack", description = "Returns the pane to a single image.")
+    @Since("5.0")
+    boolean stack;
+  }
+
+  @Command(
+      name = "viewport",
+      description =
+          "Viewport of a pane: --tiled shows its series on a grid of tiles, --stack returns it to "
+              + "one image; the state of the viewer, with its cells, is returned. With no "
+              + "argument the state is returned unchanged.")
+  @Since("5.0")
+  static class Viewport extends AbstractVerb {
+    @Mixin ViewOptions target;
+
+    @ArgGroup(exclusive = true)
+    ViewportMode mode;
+
+    @Override
+    protected void run() {
+      HangingLayout.Tiling tiling =
+          mode != null && mode.tiled != null ? HangingLayout.Tiling.parse(mode.tiled) : null;
+      JsonObject state =
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                Target resolved = target.resolve();
+                ImageViewerPlugin<DicomImageElement> container = resolved.container();
+                if (mode != null) {
+                  ViewportPane<DicomImageElement> pane = container.getOwningPane(resolved.view());
+                  if (pane == null) {
+                    throw new IllegalStateException("The pane is not a viewport of the viewer");
+                  }
+                  focus(resolved);
+                  if (tiling != null) {
+                    pane.switchToTiled(
+                        tiling.cols(), tiling.rows(), () -> container.createDefaultView(null));
+                  } else {
+                    pane.switchToStack();
+                  }
+                }
+                return ViewDisplayState.ofViewer(container);
+              });
+      print(isJson() ? state.toString() : ViewDisplayState.textViewer(state));
+    }
+  }
+
+  @Command(
+      name = "hang",
+      description =
+          "Hangs series in the cells of a viewer in one call: --grid picks the grid, each --cell "
+              + "puts a series in a cell (an empty value clears it), --tiled tiles a cell, --sync "
+              + "and --select set the synchronization and the selected cell; --file applies a "
+              + "layout saved by 'workspace:save'. The state of the viewer is returned. With no "
+              + "argument the current layout is returned, in the form --file takes.")
+  @Since("5.0")
+  static class Hang extends AbstractVerb {
+    @Mixin ViewerOptions target;
+
+    @Option(
+        names = "--grid",
+        paramLabel = "<grid-id>",
+        description = "Grid to apply, by id from 'grid'.")
+    GridId grid;
+
+    @Option(
+        names = "--cell",
+        paramLabel = "<cell>=<series-uid>",
+        description = "Series shown in that cell, from 1; an empty value clears the cell.")
+    Map<Integer, String> cells;
+
+    @Option(
+        names = "--tiled",
+        paramLabel = "<cell>=<cols>x<rows>",
+        description = "Tiles of that cell; 1x1 returns it to a single image.")
+    Map<Integer, String> tiled;
+
+    @Option(
+        names = "--sync",
+        paramLabel = "<sync-mode>",
+        description = "none, stack or tile, among the modes the viewer offers.")
+    SyncMode sync;
+
+    @Option(names = "--select", paramLabel = "<cell>", description = "Cell to select, from 1.")
+    Integer select;
+
+    @Option(
+        names = "--file",
+        paramLabel = "<input-path>",
+        description = "A layout written by 'workspace:save' or by this verb without argument.")
+    InputPath file;
+
+    boolean hasChange() {
+      return grid != null
+          || cells != null
+          || tiled != null
+          || sync != null
+          || select != null
+          || file != null;
+    }
+
+    @Override
+    protected void run() {
+      if (!hasChange()) {
+        JsonObject layout =
+            GuiExecutor.invokeAndRethrow(() -> target.resolve().captureLayout().toJson());
+        print(layout.toString());
+        return;
+      }
+      HangingLayout layout = file != null ? readFile() : build();
+      if (file != null && (grid != null || cells != null || tiled != null || sync != null)) {
+        throw new IllegalArgumentException("--file cannot be combined with the other options");
+      }
+      Map<String, MediaSeries<? extends MediaElement>> resolved = resolveSeries(layout);
+      JsonObject state =
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                ImageViewerPlugin<DicomImageElement> container = target.resolve();
+                focus(container);
+                if (layout.grid() != null) {
+                  Grid.requireGrid(container, new GridId(layout.grid()));
+                }
+                if (!container.hang(layout, id -> Optional.ofNullable(resolved.get(id)))) {
+                  throw new IllegalStateException("This viewer does not hang layouts");
+                }
+                return ViewDisplayState.ofViewer(container);
+              });
+      print(isJson() ? state.toString() : ViewDisplayState.textViewer(state));
+    }
+
+    private HangingLayout build() {
+      HangingLayout.Builder builder = HangingLayout.builder();
+      if (grid != null) {
+        builder.grid(grid.value());
+      }
+      if (sync != null) {
+        builder.synch(sync.toString());
+      }
+      if (select != null) {
+        builder.select(select);
+      }
+      if (cells != null) {
+        cells.forEach(
+            (cell, uid) ->
+                builder.series(position(cell), uid == null || uid.isBlank() ? null : uid));
+      }
+      if (tiled != null) {
+        tiled.forEach(
+            (cell, grid) -> {
+              HangingLayout.Tiling tiling = HangingLayout.Tiling.parse(grid);
+              builder.tiled(
+                  position(cell), tiling.cols() == 1 && tiling.rows() == 1 ? null : tiling);
+            });
+      }
+      return builder.build();
+    }
+
+    /** Cells are numbered from 1 on the command line and from 0 in the layout. */
+    private static int position(int cell) {
+      if (cell < 1) {
+        throw new IllegalArgumentException("Cells are numbered from 1, got: " + cell);
+      }
+      return cell - 1;
+    }
+
+    private HangingLayout readFile() {
+      try (JsonReader reader = Json.createReader(Files.newBufferedReader(file.value()))) {
+        return HangingLayout.fromJson(reader.readObject());
+      } catch (IOException | JsonException e) {
+        throw new IllegalArgumentException(
+            "Cannot read the layout " + file + ": " + e.getMessage());
+      }
+    }
+
+    /** Every series the layout names must be loaded: an unknown id fails before any change. */
+    private static Map<String, MediaSeries<? extends MediaElement>> resolveSeries(
+        HangingLayout layout) {
+      SeriesResolver resolver = SeriesResolver.ofApplication();
+      Map<String, MediaSeries<? extends MediaElement>> resolved = new HashMap<>();
+      for (HangingLayout.Cell cell : layout.cells()) {
+        cell.seriesId()
+            .ifPresent(
+                id ->
+                    resolved.put(
+                        id,
+                        resolver
+                            .resolve(id)
+                            .orElseThrow(
+                                () ->
+                                    CommandFailure.unknownHandle(
+                                        "Unknown series id: " + id, "dicom:list")))); // NON-NLS
+      }
+      return resolved;
     }
   }
 

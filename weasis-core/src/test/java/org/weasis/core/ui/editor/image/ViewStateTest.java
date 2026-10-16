@@ -247,6 +247,42 @@ class ViewStateTest {
     verify(series, never()).getMedia(eq(11), any(), any());
   }
 
+  /** The blended series is data found through the resolver; its parameters are the adapter's. */
+  @Test
+  @SuppressWarnings("unchecked")
+  void aBlendTravelsWithItsOverlayAndComesBackThroughTheAdapter() {
+    ViewCanvas<ImageElement> view = mock(ViewCanvas.class);
+    MediaSeries<ImageElement> series = mock(MediaSeries.class);
+    MediaSeries<ImageElement> overlay = mock(MediaSeries.class);
+    ViewModel model = mock(ViewModel.class);
+    ViewStateAdapter<ImageElement> adapter = mock(ViewStateAdapter.class);
+    JsonObject params = Json.createObjectBuilder().add("overlayOpacity", 0.4).build(); // NON-NLS
+    when(view.getSeries()).thenReturn(series);
+    when(view.getViewModel()).thenReturn(model);
+    when(view.getViewStateAdapter()).thenReturn(adapter);
+    when(view.getDisplayOpManager()).thenReturn(mock(OpManager.class));
+    when(adapter.blend(view))
+        .thenReturn(Optional.of(new ViewState.Blend("1.2.9", params))); // NON-NLS
+
+    ViewState captured = ViewState.capture(view);
+    ViewState read = ViewState.fromJson(captured.toJson());
+    read.apply(view); // no resolver: the overlay stays unknown
+    read.apply(view, id -> "1.2.9".equals(id) ? Optional.of(overlay) : Optional.empty()); // NON-NLS
+
+    assertAll(
+        () -> assertEquals("1.2.9", read.blend().overlay()), // NON-NLS
+        () ->
+            assertEquals(
+                0.4,
+                read.blend().params().getJsonNumber("overlayOpacity").doubleValue()), // NON-NLS
+        () ->
+            assertEquals(
+                "1.2.9", captured.toJson().getJsonObject("blend").getString("overlay")), // NON-NLS
+        () -> assertNull(ViewState.fromJson(Json.createObjectBuilder().build()).blend()));
+    verify(adapter).blend(view, overlay, params);
+    verify(adapter, never()).blend(eq(view), eq(series), any());
+  }
+
   @Test
   void applyOnAnEmptyPaneDoesNothing() {
     ViewCanvas<ImageElement> view = mock(ViewCanvas.class);

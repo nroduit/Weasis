@@ -9,9 +9,11 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import jakarta.json.JsonObject;
 import java.util.Comparator;
 import java.util.Optional;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaSeries;
 
 /**
  * Translates the values a {@link ViewState} stores by id (window/level preset, stack order) to the
@@ -38,6 +40,18 @@ public interface ViewStateAdapter<E extends ImageElement> {
   /** The stack order of that key. */
   default Optional<Comparator<E>> sort(String key) {
     return Optional.empty();
+  }
+
+  /**
+   * The series blended over the shown one and the parameters of the blend, when the view blends.
+   */
+  default Optional<ViewState.Blend> blend(ViewCanvas<E> view) {
+    return Optional.empty();
+  }
+
+  /** Blends that series over the shown one with the stored parameters. */
+  default void blend(ViewCanvas<E> view, MediaSeries<E> overlay, JsonObject params) {
+    // viewer types without a blend ignore it
   }
 
   @SuppressWarnings("unchecked")

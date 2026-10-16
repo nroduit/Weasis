@@ -320,6 +320,11 @@ public class Preset extends TextureData {
     return name;
   }
 
+  /** The stable id of the color map behind this preset, the one a session refers to. */
+  public String getMapId() {
+    return source.id();
+  }
+
   public Modality getModality() {
     return modality;
   }
