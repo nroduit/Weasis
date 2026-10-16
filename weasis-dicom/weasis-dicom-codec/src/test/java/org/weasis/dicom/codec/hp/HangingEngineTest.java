@@ -343,6 +343,82 @@ class HangingEngineTest {
                     .protocolId())); // NON-NLS
   }
 
+  /** One image set of every CT series, one display set repeated: a cell per series. */
+  private static Document eachSeries(Integer repeat, String partialData) {
+    HangingProtocol hp = new HangingProtocol();
+    hp.setHangingProtocolName("Each"); // NON-NLS
+    hp.setPartialDataDisplayHandling(partialData);
+    HPImageSet set = hp.addNewImageSet(null);
+    set.addImageSetSelector(
+        HPSelectorFactory.createAttributeValueSelector(
+            "MATCH", null, Tag.Modality, 1, VR.CS, new String[] {"CT"})); // NON-NLS
+    HPDisplaySet one = displaySet(1, "each", set, 1); // NON-NLS
+    one.addImageBox(new HPImageBox());
+    hp.addDisplaySet(one);
+    HPDisplaySet again = displaySet(2, "again", set, 1); // NON-NLS
+    again.addImageBox(new HPImageBox());
+    hp.addDisplaySet(again);
+    WeasisExtensions weasis =
+        new WeasisExtensions(
+            Map.of(),
+            Map.of(1, new WeasisExtensions.DisplaySet(null, null, List.of(), null, repeat)),
+            Map.of(),
+            null,
+            null,
+            null,
+            null,
+            jakarta.json.JsonValue.EMPTY_JSON_OBJECT);
+    return new Document("each", hp, weasis); // NON-NLS
+  }
+
+  @Test
+  void aRepeatedDisplaySetGivesOneCellPerRemainingSeriesAndTheGridGrows() {
+    Step all = HangingEngine.plan(eachSeries(0, "ADAPT_LAYOUT"), STUDY).steps().getFirst();
+    Step two = HangingEngine.plan(eachSeries(2, "ADAPT_LAYOUT"), STUDY).steps().getFirst();
+    Step shared = HangingEngine.plan(eachSeries(0, "MAINTAIN_LAYOUT"), STUDY).steps().getFirst();
+    assertAll(
+        () -> assertEquals(5, all.cells().size(), "every CT series once, the second set dropped"),
+        () ->
+            assertEquals(
+                5, all.cells().stream().map(CellPlan::series).distinct().count(), "no repeat"),
+        () -> assertEquals("2x3", all.layout().grid()), // NON-NLS
+        () -> assertEquals(5, all.layout().cells().size()),
+        () -> assertEquals(1, all.cells().get(4).displaySet(), "all cells of the repeated set"),
+        () -> assertEquals(3, two.cells().size(), "two of the repeated set, one of the other"),
+        () -> assertEquals(6, shared.cells().size(), "MAINTAIN keeps the second set, shared"),
+        () -> assertEquals(Match.SHARED, shared.cells().get(5).match()));
+  }
+
+  @Test
+  void aProtocolWithoutDefinitionIsALastResortAndOneResolvingNothingIsSkipped() {
+    HangingProtocol any = new HangingProtocol();
+    any.setHangingProtocolName("Anything"); // NON-NLS
+    HangingProtocol ctNothing = new HangingProtocol();
+    ctNothing.setHangingProtocolName("CT with an impossible set"); // NON-NLS
+    HPDefinition def = new HPDefinition();
+    def.setModality("CT"); // NON-NLS
+    ctNothing.addHangingProtocolDefinition(def);
+    HPImageSet impossible = ctNothing.addNewImageSet(null);
+    impossible.addImageSetSelector(
+        HPSelectorFactory.createAttributeValueSelector(
+            "MATCH", null, Tag.Modality, 1, VR.CS, new String[] {"NM"})); // NON-NLS
+    HPTimeBasedImageSet now = new HPTimeBasedImageSet();
+    now.setRelativeTime(new RelativeTime(0, 0, RelativeTimeUnits.DAYS));
+    impossible.addTimeBasedImageSet(now);
+    List<Candidate> candidates =
+        List.of(
+            new Candidate(new Document("any", any, WeasisExtensions.NONE), Origin.SITE, true),
+            new Candidate(chestCt("MAINTAIN_LAYOUT"), Origin.BUILT_IN, true), // NON-NLS
+            new Candidate(
+                new Document("nothing", ctNothing, WeasisExtensions.NONE), Origin.SITE, true));
+    List<ProtocolScore> scores = HangingEngine.select(candidates, STUDY);
+    assertAll(
+        () -> assertEquals(2, scores.size(), "the one hanging nothing is out"),
+        () -> assertEquals("ct-chest", scores.get(0).document().id()), // NON-NLS
+        () -> assertEquals("any", scores.get(1).document().id()), // NON-NLS
+        () -> assertTrue(scores.get(1).score() <= 1.5, "a last resort scores below any match"));
+  }
+
   /** The round trip through the protocol JSON keeps the image set numbers the plan relies on. */
   @Test
   void aProtocolReadBackFromJsonGivesTheSamePlan() {

@@ -1,0 +1,2226 @@
+{
+  "schema": 1,
+  "protocols": [
+    {
+      "id": "weasis.ct",
+      "schema": 1,
+      "dicom": {
+        "HangingProtocolName": "CT",
+        "HangingProtocolLevel": "MANUFACTURER",
+        "HangingProtocolCreator": "Weasis",
+        "HangingProtocolDefinitionSequence": [
+          {
+            "Modality": "CT"
+          }
+        ],
+        "ImageSetsSequence": [
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "CT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 1,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "CT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 2,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "CT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 3,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "CT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 4,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          }
+        ],
+        "DisplaySetsSequence": [
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 1,
+            "DisplaySetLabel": "Soft tissue",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 2,
+            "DisplaySetLabel": "Lung or bone",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 3,
+            "DisplaySetLabel": "Coronal",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 4,
+            "DisplaySetNumber": 4,
+            "DisplaySetLabel": "Sagittal",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          }
+        ],
+        "PartialDataDisplayHandling": "ADAPT_LAYOUT",
+        "SynchronizedScrollingSequence": [
+          {
+            "DisplaySetScrollingGroup": [
+              1,
+              2
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              3,
+              4
+            ]
+          }
+        ]
+      },
+      "weasis": {
+        "imageSets": {
+          "1": {
+            "label": "Axial soft tissue",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "AXIAL"
+                ]
+              },
+              {
+                "feature": "ctKernel.family",
+                "usage": "PREFER",
+                "values": [
+                  "SOFT"
+                ],
+                "weight": 2
+              },
+              {
+                "feature": "role",
+                "usage": "PREFER",
+                "values": [
+                  "ORIGINAL"
+                ],
+                "weight": 1
+              },
+              {
+                "feature": "sliceThickness",
+                "usage": "PREFER",
+                "weight": 0.5,
+                "prefer": "MIN"
+              },
+              {
+                "feature": "description",
+                "usage": "PREFER",
+                "values": [
+                  "MEDIASTINUM",
+                  "MEDIASTIN",
+                  "SOFT",
+                  "ABDOMEN",
+                  "STANDARD",
+                  "STD",
+                  "BRAIN"
+                ],
+                "weight": 0.5
+              }
+            ]
+          },
+          "2": {
+            "label": "Axial lung or bone",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "AXIAL"
+                ]
+              },
+              {
+                "feature": "ctKernel.family",
+                "usage": "PREFER",
+                "values": [
+                  "LUNG",
+                  "BONE"
+                ],
+                "weight": 2
+              },
+              {
+                "feature": "role",
+                "usage": "PREFER",
+                "values": [
+                  "ORIGINAL"
+                ],
+                "weight": 0.5
+              },
+              {
+                "feature": "description",
+                "usage": "PREFER",
+                "values": [
+                  "LUNG",
+                  "POUMON",
+                  "BONE",
+                  "OS",
+                  "HR"
+                ],
+                "weight": 0.5
+              }
+            ]
+          },
+          "3": {
+            "label": "Coronal",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "CORONAL"
+                ]
+              }
+            ]
+          },
+          "4": {
+            "label": "Sagittal",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "SAGITTAL"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "weasis.mr",
+      "schema": 1,
+      "dicom": {
+        "HangingProtocolName": "MR",
+        "HangingProtocolLevel": "MANUFACTURER",
+        "HangingProtocolCreator": "Weasis",
+        "HangingProtocolDefinitionSequence": [
+          {
+            "Modality": "MR"
+          }
+        ],
+        "ImageSetsSequence": [
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MR"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 1,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MR"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 2,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MR"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 3,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MR"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 4,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MR"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 5,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MR"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 6,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MR"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 7,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          }
+        ],
+        "DisplaySetsSequence": [
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 1,
+            "DisplaySetLabel": "T1",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 2,
+            "DisplaySetLabel": "T2",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 3,
+            "DisplaySetLabel": "FLAIR",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 4,
+            "DisplaySetNumber": 4,
+            "DisplaySetLabel": "DWI",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 5,
+            "DisplaySetNumber": 5,
+            "DisplaySetLabel": "T1 after contrast",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 6,
+            "DisplaySetNumber": 6,
+            "DisplaySetLabel": "ADC",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 7,
+            "DisplaySetNumber": 7,
+            "DisplaySetLabel": "Other",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          }
+        ],
+        "PartialDataDisplayHandling": "ADAPT_LAYOUT",
+        "SynchronizedScrollingSequence": [
+          {
+            "DisplaySetScrollingGroup": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              5,
+              6,
+              7
+            ]
+          }
+        ]
+      },
+      "weasis": {
+        "imageSets": {
+          "1": {
+            "label": "T1",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "SCREENSHOT",
+                  "MIP",
+                  "DOCUMENT",
+                  "DOSE_REPORT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "NO_MATCH",
+                "values": [
+                  "MIXED"
+                ]
+              },
+              {
+                "feature": "mrWeighting",
+                "usage": "MATCH",
+                "values": [
+                  "T1"
+                ]
+              },
+              {
+                "feature": "contrast",
+                "usage": "PREFER",
+                "values": [
+                  "NONE",
+                  "UNKNOWN"
+                ],
+                "weight": 1
+              },
+              {
+                "feature": "orientation",
+                "usage": "PREFER",
+                "values": [
+                  "AXIAL"
+                ],
+                "weight": 1
+              },
+              {
+                "feature": "role",
+                "usage": "PREFER",
+                "values": [
+                  "ORIGINAL"
+                ],
+                "weight": 0.5
+              }
+            ]
+          },
+          "2": {
+            "label": "T2",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "SCREENSHOT",
+                  "MIP",
+                  "DOCUMENT",
+                  "DOSE_REPORT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "NO_MATCH",
+                "values": [
+                  "MIXED"
+                ]
+              },
+              {
+                "feature": "mrWeighting",
+                "usage": "MATCH",
+                "values": [
+                  "T2",
+                  "PD"
+                ]
+              },
+              {
+                "feature": "mrWeighting",
+                "usage": "PREFER",
+                "values": [
+                  "T2"
+                ],
+                "weight": 1
+              },
+              {
+                "feature": "orientation",
+                "usage": "PREFER",
+                "values": [
+                  "AXIAL"
+                ],
+                "weight": 1
+              },
+              {
+                "feature": "role",
+                "usage": "PREFER",
+                "values": [
+                  "ORIGINAL"
+                ],
+                "weight": 0.5
+              }
+            ]
+          },
+          "3": {
+            "label": "FLAIR or STIR",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "SCREENSHOT",
+                  "MIP",
+                  "DOCUMENT",
+                  "DOSE_REPORT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "NO_MATCH",
+                "values": [
+                  "MIXED"
+                ]
+              },
+              {
+                "feature": "mrWeighting",
+                "usage": "MATCH",
+                "values": [
+                  "FLAIR",
+                  "STIR"
+                ]
+              },
+              {
+                "feature": "mrWeighting",
+                "usage": "PREFER",
+                "values": [
+                  "FLAIR"
+                ],
+                "weight": 1
+              },
+              {
+                "feature": "orientation",
+                "usage": "PREFER",
+                "values": [
+                  "AXIAL"
+                ],
+                "weight": 0.5
+              }
+            ]
+          },
+          "4": {
+            "label": "Diffusion",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "SCREENSHOT",
+                  "MIP",
+                  "DOCUMENT",
+                  "DOSE_REPORT"
+                ]
+              },
+              {
+                "feature": "mrWeighting",
+                "usage": "MATCH",
+                "values": [
+                  "DWI"
+                ]
+              },
+              {
+                "feature": "role",
+                "usage": "PREFER",
+                "values": [
+                  "ORIGINAL"
+                ],
+                "weight": 1
+              }
+            ]
+          },
+          "5": {
+            "label": "T1 after contrast",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "SCREENSHOT",
+                  "MIP",
+                  "DOCUMENT",
+                  "DOSE_REPORT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "NO_MATCH",
+                "values": [
+                  "MIXED"
+                ]
+              },
+              {
+                "feature": "mrWeighting",
+                "usage": "MATCH",
+                "values": [
+                  "T1"
+                ]
+              },
+              {
+                "feature": "contrast",
+                "usage": "MATCH",
+                "values": [
+                  "WITH"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "PREFER",
+                "values": [
+                  "AXIAL"
+                ],
+                "weight": 1
+              }
+            ]
+          },
+          "6": {
+            "label": "ADC",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "SCREENSHOT",
+                  "MIP",
+                  "DOCUMENT",
+                  "DOSE_REPORT"
+                ]
+              },
+              {
+                "feature": "mrWeighting",
+                "usage": "MATCH",
+                "values": [
+                  "ADC"
+                ]
+              }
+            ]
+          },
+          "7": {
+            "label": "Other series",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "SCREENSHOT",
+                  "MIP",
+                  "DOCUMENT",
+                  "DOSE_REPORT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "NO_MATCH",
+                "values": [
+                  "MIXED"
+                ]
+              }
+            ]
+          }
+        },
+        "displaySets": {
+          "7": {
+            "repeat": 4
+          }
+        }
+      }
+    },
+    {
+      "id": "weasis.xr",
+      "schema": 1,
+      "dicom": {
+        "HangingProtocolName": "Radiography",
+        "HangingProtocolLevel": "MANUFACTURER",
+        "HangingProtocolCreator": "Weasis",
+        "HangingProtocolDefinitionSequence": [
+          {
+            "Modality": "CR"
+          },
+          {
+            "Modality": "DX"
+          }
+        ],
+        "ImageSetsSequence": [
+          {
+            "ImageSetSelectorSequence": [],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 1,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 2,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 3,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          }
+        ],
+        "DisplaySetsSequence": [
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 1,
+            "DisplaySetLabel": "Frontal",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 2,
+            "DisplaySetLabel": "Lateral",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 3,
+            "DisplaySetLabel": "Images",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          }
+        ],
+        "PartialDataDisplayHandling": "ADAPT_LAYOUT"
+      },
+      "weasis": {
+        "imageSets": {
+          "1": {
+            "label": "Frontal view",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "PA",
+                  "AP",
+                  "POSTERO-ANTERIOR",
+                  "ANTERO-POSTERIOR",
+                  "POSTEROANTERIOR",
+                  "ANTEROPOSTERIOR"
+                ]
+              },
+              {
+                "feature": "role",
+                "usage": "PREFER",
+                "values": [
+                  "ORIGINAL"
+                ],
+                "weight": 0.5
+              }
+            ]
+          },
+          "2": {
+            "label": "Lateral view",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "LL",
+                  "RL",
+                  "LAT",
+                  "LATERAL",
+                  "LEFT_LATERAL",
+                  "RIGHT_LATERAL",
+                  "LEFT LATERAL",
+                  "RIGHT LATERAL"
+                ]
+              },
+              {
+                "feature": "role",
+                "usage": "PREFER",
+                "values": [
+                  "ORIGINAL"
+                ],
+                "weight": 0.5
+              }
+            ]
+          },
+          "3": {
+            "label": "Other images",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              }
+            ]
+          }
+        },
+        "displaySets": {
+          "3": {
+            "repeat": 6
+          }
+        }
+      }
+    },
+    {
+      "id": "weasis.mg",
+      "schema": 1,
+      "dicom": {
+        "HangingProtocolName": "Mammography",
+        "HangingProtocolLevel": "MANUFACTURER",
+        "HangingProtocolCreator": "Weasis",
+        "HangingProtocolDefinitionSequence": [
+          {
+            "Modality": "MG"
+          }
+        ],
+        "ImageSetsSequence": [
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 1,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 2,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 3,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 4,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 5,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 6,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 7,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 8,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 9,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          }
+        ],
+        "DisplaySetsSequence": [
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 1,
+            "DisplaySetLabel": "RCC",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 2,
+            "DisplaySetLabel": "LCC",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 3,
+            "DisplaySetLabel": "RMLO",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 4,
+            "DisplaySetNumber": 4,
+            "DisplaySetLabel": "LMLO",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 5,
+            "DisplaySetNumber": 5,
+            "DisplaySetLabel": "RCC tomosynthesis",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 6,
+            "DisplaySetNumber": 6,
+            "DisplaySetLabel": "LCC tomosynthesis",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 7,
+            "DisplaySetNumber": 7,
+            "DisplaySetLabel": "RMLO tomosynthesis",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 8,
+            "DisplaySetNumber": 8,
+            "DisplaySetLabel": "LMLO tomosynthesis",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 9,
+            "DisplaySetNumber": 9,
+            "DisplaySetLabel": "Other views",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          }
+        ],
+        "PartialDataDisplayHandling": "ADAPT_LAYOUT",
+        "SynchronizedScrollingSequence": [
+          {
+            "DisplaySetScrollingGroup": [
+              5,
+              6
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              7,
+              8
+            ]
+          }
+        ]
+      },
+      "weasis": {
+        "imageSets": {
+          "1": {
+            "label": "R CC",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "laterality",
+                "usage": "MATCH",
+                "values": [
+                  "R"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "CC"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "NO_MATCH",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.13.1.3"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "PREFER",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.1.2"
+                ],
+                "weight": 1
+              }
+            ]
+          },
+          "2": {
+            "label": "L CC",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "laterality",
+                "usage": "MATCH",
+                "values": [
+                  "L"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "CC"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "NO_MATCH",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.13.1.3"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "PREFER",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.1.2"
+                ],
+                "weight": 1
+              }
+            ]
+          },
+          "3": {
+            "label": "R MLO",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "laterality",
+                "usage": "MATCH",
+                "values": [
+                  "R"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "MLO"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "NO_MATCH",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.13.1.3"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "PREFER",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.1.2"
+                ],
+                "weight": 1
+              }
+            ]
+          },
+          "4": {
+            "label": "L MLO",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "laterality",
+                "usage": "MATCH",
+                "values": [
+                  "L"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "MLO"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "NO_MATCH",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.13.1.3"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "PREFER",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.1.2"
+                ],
+                "weight": 1
+              }
+            ]
+          },
+          "5": {
+            "label": "Tomosynthesis R CC",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "laterality",
+                "usage": "MATCH",
+                "values": [
+                  "R"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "CC"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "MATCH",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.13.1.3"
+                ]
+              }
+            ]
+          },
+          "6": {
+            "label": "Tomosynthesis L CC",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "laterality",
+                "usage": "MATCH",
+                "values": [
+                  "L"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "CC"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "MATCH",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.13.1.3"
+                ]
+              }
+            ]
+          },
+          "7": {
+            "label": "Tomosynthesis R MLO",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "laterality",
+                "usage": "MATCH",
+                "values": [
+                  "R"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "MLO"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "MATCH",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.13.1.3"
+                ]
+              }
+            ]
+          },
+          "8": {
+            "label": "Tomosynthesis L MLO",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "laterality",
+                "usage": "MATCH",
+                "values": [
+                  "L"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "MLO"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "MATCH",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.13.1.3"
+                ]
+              }
+            ]
+          },
+          "9": {
+            "label": "Other views",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              }
+            ]
+          }
+        },
+        "displaySets": {
+          "9": {
+            "repeat": 8
+          }
+        }
+      }
+    },
+    {
+      "id": "weasis.us",
+      "schema": 1,
+      "dicom": {
+        "HangingProtocolName": "Ultrasound",
+        "HangingProtocolLevel": "MANUFACTURER",
+        "HangingProtocolCreator": "Weasis",
+        "HangingProtocolDefinitionSequence": [
+          {
+            "Modality": "US"
+          }
+        ],
+        "ImageSetsSequence": [
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "US"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 1,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "US"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 2,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          }
+        ],
+        "DisplaySetsSequence": [
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 1,
+            "DisplaySetLabel": "Clips",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 2,
+            "DisplaySetLabel": "Images",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1,
+                "ImageBoxLayoutType": "TILED",
+                "ImageBoxTileHorizontalDimension": 2,
+                "ImageBoxTileVerticalDimension": 2
+              }
+            ]
+          }
+        ],
+        "PartialDataDisplayHandling": "ADAPT_LAYOUT"
+      },
+      "weasis": {
+        "imageSets": {
+          "1": {
+            "label": "Clips",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "temporal",
+                "usage": "MATCH",
+                "values": [
+                  "CINE"
+                ]
+              }
+            ]
+          },
+          "2": {
+            "label": "Still images",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "temporal",
+                "usage": "MATCH",
+                "values": [
+                  "STATIC",
+                  "DYNAMIC"
+                ]
+              }
+            ]
+          }
+        },
+        "displaySets": {
+          "1": {
+            "repeat": 4
+          },
+          "2": {
+            "repeat": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "weasis.xa",
+      "schema": 1,
+      "dicom": {
+        "HangingProtocolName": "Angiography",
+        "HangingProtocolLevel": "MANUFACTURER",
+        "HangingProtocolCreator": "Weasis",
+        "HangingProtocolDefinitionSequence": [
+          {
+            "Modality": "XA"
+          },
+          {
+            "Modality": "RF"
+          }
+        ],
+        "ImageSetsSequence": [
+          {
+            "ImageSetSelectorSequence": [],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 1,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          }
+        ],
+        "DisplaySetsSequence": [
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 1,
+            "DisplaySetLabel": "Run",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          }
+        ],
+        "PartialDataDisplayHandling": "ADAPT_LAYOUT"
+      },
+      "weasis": {
+        "imageSets": {
+          "1": {
+            "label": "Runs",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "temporal",
+                "usage": "PREFER",
+                "values": [
+                  "CINE"
+                ],
+                "weight": 1
+              }
+            ]
+          }
+        },
+        "displaySets": {
+          "1": {
+            "repeat": 6
+          }
+        }
+      }
+    },
+    {
+      "id": "weasis.pt",
+      "schema": 1,
+      "dicom": {
+        "HangingProtocolName": "PET with CT or MR",
+        "HangingProtocolLevel": "MANUFACTURER",
+        "HangingProtocolCreator": "Weasis",
+        "HangingProtocolDefinitionSequence": [
+          {
+            "Modality": "PT"
+          }
+        ],
+        "ImageSetsSequence": [
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "CT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 1,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "PT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 2,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MR"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 3,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          }
+        ],
+        "DisplaySetsSequence": [
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 1,
+            "DisplaySetLabel": "CT",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 2,
+            "DisplaySetLabel": "PET",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 3,
+            "DisplaySetLabel": "MR",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          }
+        ],
+        "PartialDataDisplayHandling": "ADAPT_LAYOUT",
+        "SynchronizedScrollingSequence": [
+          {
+            "DisplaySetScrollingGroup": [
+              1,
+              2,
+              3
+            ]
+          }
+        ]
+      },
+      "weasis": {
+        "imageSets": {
+          "1": {
+            "label": "CT",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "AXIAL"
+                ]
+              },
+              {
+                "feature": "ctKernel.family",
+                "usage": "PREFER",
+                "values": [
+                  "SOFT"
+                ],
+                "weight": 1
+              },
+              {
+                "feature": "role",
+                "usage": "PREFER",
+                "values": [
+                  "ORIGINAL"
+                ],
+                "weight": 0.5
+              }
+            ]
+          },
+          "2": {
+            "label": "PET",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "petCorrection.attenuationCorrected",
+                "usage": "PREFER",
+                "values": [
+                  "TRUE"
+                ],
+                "weight": 2
+              },
+              {
+                "feature": "orientation",
+                "usage": "PREFER",
+                "values": [
+                  "AXIAL"
+                ],
+                "weight": 0.5
+              }
+            ]
+          },
+          "3": {
+            "label": "MR",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "SCREENSHOT",
+                  "MIP",
+                  "DOCUMENT",
+                  "DOSE_REPORT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "PREFER",
+                "values": [
+                  "AXIAL"
+                ],
+                "weight": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "weasis.default",
+      "schema": 1,
+      "dicom": {
+        "HangingProtocolName": "Any study",
+        "HangingProtocolLevel": "MANUFACTURER",
+        "HangingProtocolCreator": "Weasis",
+        "HangingProtocolDefinitionSequence": [],
+        "ImageSetsSequence": [
+          {
+            "ImageSetSelectorSequence": [],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 1,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          }
+        ],
+        "DisplaySetsSequence": [
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 1,
+            "DisplaySetLabel": "Series",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          }
+        ],
+        "PartialDataDisplayHandling": "ADAPT_LAYOUT"
+      },
+      "weasis": {
+        "imageSets": {
+          "1": {
+            "label": "Image series",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT"
+                ]
+              }
+            ]
+          }
+        },
+        "displaySets": {
+          "1": {
+            "repeat": 12
+          }
+        }
+      }
+    }
+  ]
+}

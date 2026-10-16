@@ -38,6 +38,7 @@ import org.weasis.dicom.codec.display.ModalityViewJson;
 import org.weasis.dicom.codec.display.WindowPreset;
 import org.weasis.dicom.codec.display.WindowPresetJson;
 import org.weasis.dicom.codec.display.WindowPresetRegistry;
+import org.weasis.dicom.codec.hp.BuiltInProtocols;
 import org.weasis.dicom.codec.hp.DerivationTables;
 import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.codec.utils.SplittingRules;
@@ -84,6 +85,7 @@ public class Activator extends WeasisPlugin {
     SiteDocuments.onReload(WindowPresetRegistry.SITE_FILE, Activator::configureWindowPresets);
     DerivationTables tables = DerivationTables.getInstance();
     tables.configure();
+    BuiltInProtocols.install();
     SiteDocuments.onReload(DerivationTables.KERNELS, tables::reload);
     SiteDocuments.onReload(DerivationTables.MR_WEIGHTING, tables::reload);
     SiteDocuments.onReload(ModalityView.SITE_FILE, ModalityView::reload);

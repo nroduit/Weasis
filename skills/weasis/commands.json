@@ -1349,6 +1349,51 @@
           ]
         },
         {
+          "name": "features",
+          "description": "The series features the matching works on (modality, role, orientation, anatomy, laterality, view, contrast, MR weighting, CT kernel and family, thickness, spacing, temporal, images of interest...), per series of a loaded study or of a folder of studies: what a selector can test, and why a series matched or not.",
+          "since": "5.0",
+          "usage": "hp:features [-h] [--json] [--corpus=<input-path>] [--study=<study-uid>]",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": false,
+              "description": "Study Instance UID from 'dicom:list'."
+            },
+            {
+              "names": [
+                "--corpus"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": false,
+              "description": "A folder of DICOM studies read without a viewer, walked recursively.",
+              "needs": [
+                "file-read"
+              ]
+            }
+          ]
+        },
+        {
           "name": "list",
           "description": "The protocols of every layer (built-in, site, user) with their level, whether they are enabled, and the number of image sets and display sets they declare.",
           "since": "5.0",
@@ -1426,7 +1471,7 @@
           "name": "validate",
           "description": "Runs the matching over a folder of studies without a viewer and reports, per protocol, how many studies it applies to and how its cells matched (exact, preferred, fallback, shared, empty) and, per study, the protocol chosen: the regression test of a protocol library. The protocols are those of every layer, or the entries of --protocols.",
           "since": "5.0",
-          "usage": "hp:validate [-h] [--json] --corpus=<input-path> [--protocol=<protocol-id>] [--protocols=<input-path>]",
+          "usage": "hp:validate [-h] [--json] --corpus=<input-path> [--expected=<input-path>] [--protocol=<protocol-id>] [--protocols=<input-path>]",
           "needs": [
             "file-read"
           ],
@@ -1477,6 +1522,19 @@
               "arity": "1",
               "required": false,
               "description": "Only this protocol."
+            },
+            {
+              "names": [
+                "--expected"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": false,
+              "description": "A JSON file of expected hangings, {\"studies\": {\"<study-uid>\": {\"protocol\": <id>, \"cells\": {\"1\": <series-uid>}}}}: the report says per study whether the chosen protocol and the cells of its first step are the expected ones.",
+              "needs": [
+                "file-read"
+              ]
             }
           ]
         }
@@ -3799,7 +3857,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]",
           "parameters": [],
           "options": [
             {
@@ -3834,20 +3892,6 @@
             },
             {
               "names": [
-                "--set"
-              ],
-              "label": "<magnification>",
-              "type": "magnification",
-              "arity": "1",
-              "required": true,
-              "description": "Magnification, 1 being one image pixel per canvas pixel.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
                 "--fit"
               ],
               "label": "<zoom-fit>",
@@ -3874,6 +3918,20 @@
               "arity": "1",
               "required": true,
               "description": "Moves the zoom slider by this many steps, negative to zoom out.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--set"
+              ],
+              "label": "<magnification>",
+              "type": "magnification",
+              "arity": "1",
+              "required": true,
+              "description": "Magnification, 1 being one image pixel per canvas pixel.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"

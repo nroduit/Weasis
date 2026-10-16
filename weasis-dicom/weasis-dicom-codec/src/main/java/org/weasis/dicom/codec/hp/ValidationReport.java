@@ -13,6 +13,7 @@ import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonString;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -59,10 +60,68 @@ public record ValidationReport(List<ProtocolLine> protocols, List<StudyLine> stu
       String protocol,
       double score,
       Map<Match, Integer> cells,
-      List<String> unresolved) {}
+      List<String> unresolved,
+      Outcome outcome,
+      List<CellPlan> firstStep) {
+    public StudyLine {
+      firstStep = firstStep == null ? List.of() : List.copyOf(firstStep);
+    }
+  }
 
   /** A study to validate: its id, a description and its series. */
-  public record Input(String id, String description, List<StudySeries> series) {}
+  public record Input(
+      String id, String description, List<StudySeries> series, Expectation expected) {
+    public Input(String id, String description, List<StudySeries> series) {
+      this(id, description, series, null);
+    }
+  }
+
+  /**
+   * What a study is expected to hang, written once by hand from a reviewed plan.
+   *
+   * @param protocol the id of the protocol expected to be chosen, null when any
+   * @param cells the series expected in the cells of the first step, by cell number from 1
+   */
+  public record Expectation(String protocol, Map<Integer, String> cells) {
+    public Expectation {
+      cells = cells == null ? Map.of() : Map.copyOf(cells);
+    }
+
+    /**
+     * The expectations of a file: {@code {"studies": {"<uid>": {"protocol", "cells": {"1":
+     * uid}}}}}.
+     */
+    public static Map<String, Expectation> read(JsonObject json) {
+      Map<String, Expectation> result = new LinkedHashMap<>();
+      JsonObject studies = json.getJsonObject("studies"); // NON-NLS
+      if (studies == null) {
+        return result;
+      }
+      studies.forEach(
+          (uid, value) -> {
+            if (value instanceof JsonObject o) {
+              Map<Integer, String> cells = new LinkedHashMap<>();
+              JsonObject c = o.getJsonObject("cells"); // NON-NLS
+              if (c != null) {
+                c.forEach((k, v) -> cells.put(Integer.parseInt(k), ((JsonString) v).getString()));
+              }
+              result.put(uid, new Expectation(o.getString("protocol", null), cells)); // NON-NLS
+            }
+          });
+      return result;
+    }
+  }
+
+  /** How a study met its expectation: null fields when it had none. */
+  public record Outcome(Boolean protocolMet, int cellsExpected, int cellsMet, List<String> misses) {
+    public Outcome {
+      misses = misses == null ? List.of() : List.copyOf(misses);
+    }
+
+    public boolean met() {
+      return (protocolMet == null || protocolMet) && cellsMet == cellsExpected;
+    }
+  }
 
   /** Matches every candidate against every study and counts. */
   public static ValidationReport run(List<Candidate> candidates, List<Input> inputs) {
@@ -84,6 +143,7 @@ public record ValidationReport(List<ProtocolLine> protocols, List<StudyLine> stu
       double bestScore = 0;
       Map<Match, Integer> bestCells = new EnumMap<>(Match.class);
       List<String> bestUnresolved = List.of();
+      HangingPlan bestPlan = null;
       for (int i = 0; i < scores.size(); i++) {
         ProtocolScore score = scores.get(i);
         String id = score.document().id();
@@ -108,6 +168,7 @@ public record ValidationReport(List<ProtocolLine> protocols, List<StudyLine> stu
           best = id;
           bestScore = score.score();
           bestCells = cells;
+          bestPlan = plan;
           bestUnresolved =
               plan.unresolved().stream()
                   .map(u -> u.label() + ": " + u.reason())
@@ -117,7 +178,16 @@ public record ValidationReport(List<ProtocolLine> protocols, List<StudyLine> stu
       }
       studies.add(
           new StudyLine(
-              input.id(), input.description(), best, bestScore, bestCells, bestUnresolved));
+              input.id(),
+              input.description(),
+              best,
+              bestScore,
+              bestCells,
+              bestUnresolved,
+              input.expected() == null ? null : outcome(input.expected(), best, bestPlan),
+              bestPlan == null
+                  ? List.of()
+                  : bestPlan.firstStep().map(HangingPlan.Step::cells).orElse(List.of())));
     }
     for (Candidate candidate : candidates) {
       String id = candidate.document().id();
@@ -134,6 +204,46 @@ public record ValidationReport(List<ProtocolLine> protocols, List<StudyLine> stu
               failuresByProtocol.get(id)));
     }
     return new ValidationReport(new ArrayList<>(lines.values()), studies);
+  }
+
+  /** Compares the chosen protocol and the cells of its first step with the expectation. */
+  static Outcome outcome(Expectation expected, String protocol, HangingPlan plan) {
+    List<String> misses = new ArrayList<>();
+    Boolean protocolMet = null;
+    if (expected.protocol() != null) {
+      protocolMet = expected.protocol().equals(protocol);
+      if (!protocolMet) {
+        misses.add("protocol " + protocol + " instead of " + expected.protocol()); // NON-NLS
+      }
+    }
+    int met = 0;
+    List<CellPlan> cells =
+        plan == null ? List.of() : plan.firstStep().map(HangingPlan.Step::cells).orElse(List.of());
+    for (Map.Entry<Integer, String> e : expected.cells().entrySet()) {
+      int index = e.getKey() - 1;
+      String actual = index >= 0 && index < cells.size() ? cells.get(index).series() : null;
+      if (e.getValue().equals(actual)) {
+        met++;
+      } else {
+        misses.add("cell " + e.getKey() + ": " + actual + " instead of " + e.getValue()); // NON-NLS
+      }
+    }
+    return new Outcome(protocolMet, expected.cells().size(), met, misses);
+  }
+
+  /** The studies with an expectation that was met, and those with one. */
+  public int[] expectations() {
+    int with = 0;
+    int met = 0;
+    for (StudyLine line : studies) {
+      if (line.outcome() != null) {
+        with++;
+        if (line.outcome().met()) {
+          met++;
+        }
+      }
+    }
+    return new int[] {met, with};
   }
 
   /** The number of cells of every kind over the steps of a plan. */
@@ -175,12 +285,44 @@ public record ValidationReport(List<ProtocolLine> protocols, List<StudyLine> stu
       }
       JsonArrayBuilder unresolved = Json.createArrayBuilder();
       line.unresolved().forEach(unresolved::add);
-      studiesJson.add(s.add("cells", cells(line.cells())).add("unresolved", unresolved)); // NON-NLS
+      s.add("cells", cells(line.cells())).add("unresolved", unresolved); // NON-NLS
+      JsonArrayBuilder first = Json.createArrayBuilder();
+      for (CellPlan cell : line.firstStep()) {
+        JsonObjectBuilder c =
+            Json.createObjectBuilder()
+                .add("cell", cell.cell() + 1) // NON-NLS
+                .add("match", cell.match().name().toLowerCase(Locale.ROOT)); // NON-NLS
+        if (cell.label() != null) {
+          c.add("label", cell.label()); // NON-NLS
+        }
+        if (cell.series() != null) {
+          c.add("series", cell.series()); // NON-NLS
+        }
+        first.add(c);
+      }
+      s.add("firstStep", first); // NON-NLS
+      if (line.outcome() != null) {
+        JsonObjectBuilder o =
+            Json.createObjectBuilder().add("met", line.outcome().met()); // NON-NLS
+        JsonArrayBuilder misses = Json.createArrayBuilder();
+        line.outcome().misses().forEach(misses::add);
+        s.add("expected", o.add("misses", misses)); // NON-NLS
+      }
+      studiesJson.add(s);
     }
-    return Json.createObjectBuilder()
-        .add("protocols", protocolsJson) // NON-NLS
-        .add("studies", studiesJson) // NON-NLS
-        .build();
+    JsonObjectBuilder json =
+        Json.createObjectBuilder()
+            .add("protocols", protocolsJson) // NON-NLS
+            .add("studies", studiesJson); // NON-NLS
+    int[] expectations = expectations();
+    if (expectations[1] > 0) {
+      json.add(
+          "expectations",
+          Json.createObjectBuilder()
+              .add("met", expectations[0])
+              .add("total", expectations[1])); // NON-NLS
+    }
+    return json.build();
   }
 
   private static JsonObjectBuilder cells(Map<Match, Integer> counts) {
@@ -228,7 +370,20 @@ public record ValidationReport(List<ProtocolLine> protocols, List<StudyLine> stu
           out.append("unresolved=").append(line.unresolved()); // NON-NLS
         }
       }
+      if (line.outcome() != null) {
+        out.append(line.outcome().met() ? " [as expected]" : " [NOT as expected: "); // NON-NLS
+        if (!line.outcome().met()) {
+          out.append(String.join("; ", line.outcome().misses())).append(']');
+        }
+      }
       out.append('\n');
+    }
+    int[] expectations = expectations();
+    if (expectations[1] > 0) {
+      out.append(expectations[0])
+          .append(" of ") // NON-NLS
+          .append(expectations[1])
+          .append(" expectations met\n"); // NON-NLS
     }
     return out.toString().stripTrailing();
   }

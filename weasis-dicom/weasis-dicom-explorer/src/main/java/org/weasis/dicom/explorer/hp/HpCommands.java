@@ -16,6 +16,7 @@ import jakarta.json.JsonException;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonReader;
+import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,6 +24,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -73,6 +75,7 @@ import picocli.CommandLine.ParentCommand;
       HpCommands.ListProtocols.class,
       HpCommands.Match.class,
       HpCommands.Apply.class,
+      HpCommands.Features.class,
       HpCommands.Validate.class
     })
 @Since("5.0")
@@ -502,6 +505,128 @@ public class HpCommands implements CommandExtension {
   // ---------------------------------------------------------------------------------------------
 
   @Command(
+      name = "features",
+      description =
+          "The series features the matching works on (modality, role, orientation, anatomy, "
+              + "laterality, view, contrast, MR weighting, CT kernel and family, thickness, "
+              + "spacing, temporal, images of interest...), per series of a loaded study or of a "
+              + "folder of studies: what a selector can test, and why a series matched or not.")
+  @Since("5.0")
+  static class Features extends Verb {
+    @Option(
+        names = "--study",
+        paramLabel = "<study-uid>",
+        description = "Study Instance UID from 'dicom:list'.")
+    StudyUid studyUid;
+
+    @Option(
+        names = "--corpus",
+        paramLabel = "<input-path>",
+        description = "A folder of DICOM studies read without a viewer, walked recursively.")
+    InputPath corpus;
+
+    @Override
+    protected void run() {
+      JsonArray studies;
+      if (corpus != null) {
+        Path root = corpus.value();
+        if (!Files.isDirectory(root)) {
+          throw new IllegalArgumentException("Not a folder: " + root);
+        }
+        studies = corpusFeatures(root);
+      } else {
+        studies =
+            GuiExecutor.invokeAndRethrow(
+                () ->
+                    IdentityMask.callForCommand(
+                        () -> {
+                          DicomModel model = parent.model();
+                          MediaSeriesGroup study = parent.resolveStudy(model, studyUid);
+                          return Json.createArrayBuilder()
+                              .add(
+                                  study(
+                                      uidOf(study),
+                                      String.valueOf(
+                                          study.getTagValue(
+                                              TagD.get(Tag.StudyDescription))), // NON-NLS
+                                      studySeries(model, study)))
+                              .build();
+                        }));
+      }
+      JsonObject result = Json.createObjectBuilder().add("studies", studies).build(); // NON-NLS
+      print(isJson() ? result.toString() : text(result));
+    }
+
+    static JsonArray corpusFeatures(Path root) {
+      List<CorpusStudies.Study> studies;
+      try {
+        studies = CorpusStudies.read(root, null);
+      } catch (IOException e) {
+        throw new IllegalArgumentException("Cannot read " + root + ": " + e.getMessage());
+      }
+      SeriesFeatureExtractor extractor = new SeriesFeatureExtractor();
+      JsonArrayBuilder array = Json.createArrayBuilder();
+      try {
+        for (CorpusStudies.Study study : studies) {
+          array.add(
+              study(study.uid(), study.describe(), StudySeries.of(study.series(), extractor)));
+        }
+      } finally {
+        studies.forEach(CorpusStudies.Study::close);
+      }
+      return array.build();
+    }
+
+    static JsonObjectBuilder study(String uid, String description, List<StudySeries> series) {
+      JsonObjectBuilder json = Json.createObjectBuilder().add("study", uid); // NON-NLS
+      if (description != null && !"null".equals(description)) { // NON-NLS
+        json.add("description", description); // NON-NLS
+      }
+      JsonArrayBuilder list = Json.createArrayBuilder();
+      for (StudySeries s : series) {
+        JsonObjectBuilder entry = Json.createObjectBuilder().add("series", s.uid()); // NON-NLS
+        String seriesDescription =
+            TagD.getTagValue(s.series(), Tag.SeriesDescription, String.class);
+        if (seriesDescription != null) {
+          entry.add("description", seriesDescription); // NON-NLS
+        }
+        Integer number = TagD.getTagValue(s.series(), Tag.SeriesNumber, Integer.class);
+        if (number != null) {
+          entry.add("number", number); // NON-NLS
+        }
+        list.add(entry.add("features", s.features().toJson())); // NON-NLS
+      }
+      return json.add("series", list); // NON-NLS
+    }
+
+    static String text(JsonObject result) {
+      StringBuilder out = new StringBuilder();
+      for (JsonObject study : result.getJsonArray("studies").getValuesAs(JsonObject.class)) {
+        out.append(study.getString("description", study.getString("study"))).append('\n');
+        for (JsonObject s : study.getJsonArray("series").getValuesAs(JsonObject.class)) {
+          JsonObject f = s.getJsonObject("features"); // NON-NLS
+          out.append("  ")
+              .append(s.containsKey("number") ? s.getInt("number") + " " : "") // NON-NLS
+              .append(s.getString("description", "")) // NON-NLS
+              .append(" [") // NON-NLS
+              .append(s.getString("series")) // NON-NLS
+              .append("]: "); // NON-NLS
+          f.forEach(
+              (k, v) ->
+                  out.append(k)
+                      .append('=')
+                      .append(v instanceof JsonString str ? str.getString() : v.toString())
+                      .append(' '));
+          out.append('\n');
+        }
+      }
+      return out.toString().stripTrailing();
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
       name = "validate",
       description =
           "Runs the matching over a folder of studies without a viewer and reports, per protocol, "
@@ -529,6 +654,15 @@ public class HpCommands implements CommandExtension {
     @Option(names = "--protocol", paramLabel = "<protocol-id>", description = "Only this protocol.")
     String protocolId;
 
+    @Option(
+        names = "--expected",
+        paramLabel = "<input-path>",
+        description =
+            "A JSON file of expected hangings, {\"studies\": {\"<study-uid>\": {\"protocol\": "
+                + "<id>, \"cells\": {\"1\": <series-uid>}}}}: the report says per study whether "
+                + "the chosen protocol and the cells of its first step are the expected ones.")
+    InputPath expected;
+
     @Override
     protected void run() {
       Path root = corpus.value();
@@ -547,11 +681,28 @@ public class HpCommands implements CommandExtension {
       if (candidates.isEmpty()) {
         throw new IllegalArgumentException("No protocol to validate");
       }
-      ValidationReport report = validate(candidates, root);
+      Map<String, ValidationReport.Expectation> expectations =
+          expected == null ? Map.of() : readExpectations(expected.value());
+      ValidationReport report = validate(candidates, root, expectations);
       print(isJson() ? report.toJson().toString() : report.text());
     }
 
+    static Map<String, ValidationReport.Expectation> readExpectations(Path file) {
+      try (JsonReader reader = Json.createReader(Files.newBufferedReader(file))) {
+        return ValidationReport.Expectation.read(reader.readObject());
+      } catch (IOException | JsonException | ClassCastException | NumberFormatException e) {
+        throw new IllegalArgumentException("Cannot read " + file + ": " + e.getMessage());
+      }
+    }
+
     static ValidationReport validate(List<Candidate> candidates, Path root) {
+      return validate(candidates, root, Map.of());
+    }
+
+    static ValidationReport validate(
+        List<Candidate> candidates,
+        Path root,
+        Map<String, ValidationReport.Expectation> expectations) {
       List<CorpusStudies.Study> studies;
       try {
         studies = CorpusStudies.read(root, null);
@@ -564,7 +715,10 @@ public class HpCommands implements CommandExtension {
         for (CorpusStudies.Study study : studies) {
           inputs.add(
               new ValidationReport.Input(
-                  study.uid(), study.describe(), StudySeries.of(study.series(), extractor)));
+                  study.uid(),
+                  study.describe(),
+                  StudySeries.of(study.series(), extractor),
+                  expectations.get(study.uid())));
         }
         return ValidationReport.run(candidates, inputs);
       } finally {

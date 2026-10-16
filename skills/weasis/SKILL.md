@@ -151,7 +151,9 @@ line naming the current spelling. Use the current one everywhere.
    workspace are slots: `workspace:panel` shows which tool fills each slot (explorer and tools
    sides, top and bottom), `--side tools --slot bottom --tool measure` opens a tool there,
    `--collapse` / `--expand` hide or show a side; `workspace:save` keeps the shell too.
-9. **Hanging protocols** (engine only, no UI yet): `hp:list` shows the protocols of every layer;
+9. **Hanging protocols** (engine and built-in library, no UI yet): `hp:list` shows the
+   protocols of every layer, the built-in ones cover CT, MR, radiography, mammography,
+   ultrasound, angiography, PET and a last-resort one cell per series;
    `hp:match [--study <uid>]` returns the protocols that apply to a loaded study, best first,
    and the plan of the best one: per reading step the layout to hang and, per cell, the series
    chosen, how it matched (exact, preferred, fallback, shared, empty), the reasons and the
@@ -160,8 +162,12 @@ line naming the current spelling. Use the current one everywhere.
    of that plan: the 2D cells in one viewer (re-hung when a viewer of the patient is open) and
    each MPR or 3D cell in its own, and returns the cells with the view ids they went to, so the
    `view2d:` verbs can address them; empty cells are listed under `unmatched`.
-   `hp:validate --corpus <dir> [--protocols <file>]` runs the matching over a folder of studies
-   without any viewer and reports the counts per protocol and the protocol of each study.
+   `hp:validate --corpus <dir> [--protocols <file>] [--expected <file>]` runs the matching over
+   a folder of studies without any viewer and reports the counts per protocol, the protocol and
+   first-step cells of each study and, with an expectations file, which studies hang as expected.
+   `hp:features [--study <uid> | --corpus <dir>]` lists the series features the selectors test
+   (role, orientation, anatomy, view, laterality, MR weighting, CT kernel family, thickness,
+   temporal...), the way to see why a series matched or not.
 8. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
    and still have no usable 3D.

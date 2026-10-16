@@ -103,9 +103,18 @@ public record WeasisExtensions(
    * @param display the display state by reference
    * @param cells the non-image cells that follow the image cell
    * @param loading the loading strategy of the image set, overriding the protocol's
+   * @param repeat when set, the display set is repeated for every series of its image set that no
+   *     cell of the step shows yet, up to that many cells ({@code 0}: no limit); the grid grows
+   *     with the cells. One cell per series, the Weasis way of hanging a study whose series are all
+   *     to be seen (radiographs, cine runs, ultrasound clips)
    */
   public record DisplaySet(
-      ViewerType viewerType, Display display, List<Cell> cells, Loading loading) {}
+      ViewerType viewerType, Display display, List<Cell> cells, Loading loading, Integer repeat) {
+
+    public DisplaySet(ViewerType viewerType, Display display, List<Cell> cells, Loading loading) {
+      this(viewerType, display, cells, loading, null);
+    }
+  }
 
   /**
    * The display state by reference.
@@ -288,6 +297,9 @@ public record WeasisExtensions(
     if (ds.loading() != null) {
       json.add("loading", loading(ds.loading())); // NON-NLS
     }
+    if (ds.repeat() != null) {
+      json.add("repeat", ds.repeat()); // NON-NLS
+    }
     return json;
   }
 
@@ -304,7 +316,8 @@ public record WeasisExtensions(
         viewer == null ? null : ViewerType.valueOf(viewer),
         json.get("display") instanceof JsonObject d ? display(d) : null, // NON-NLS
         cells,
-        json.get("loading") instanceof JsonObject l ? loading(l) : null); // NON-NLS
+        json.get("loading") instanceof JsonObject l ? loading(l) : null, // NON-NLS
+        integer(json, "repeat")); // NON-NLS
   }
 
   private static JsonObjectBuilder display(Display d) {

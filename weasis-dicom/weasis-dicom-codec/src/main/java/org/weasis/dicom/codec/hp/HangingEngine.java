@@ -165,9 +165,10 @@ public final class HangingEngine {
     List<String> reasons = new ArrayList<>();
     double specificity = -1;
     List<HPDefinition> definitions = protocol.getHangingProtocolDefinitions();
-    if (definitions.isEmpty()) {
+    boolean lastResort = definitions.isEmpty();
+    if (lastResort) {
       specificity = 0;
-      reasons.add("no definition: applies to every study"); // NON-NLS
+      reasons.add("no definition: applies to every study, as a last resort"); // NON-NLS
     } else {
       for (HPDefinition definition : definitions) {
         if (study.stream().anyMatch(s -> definition.appliesTo(s.dataset()))) {
@@ -189,6 +190,9 @@ public final class HangingEngine {
             .filter(r -> r.unresolved() == null || !r.unresolved().equals(PRIORS_NOT_RESOLVED))
             .count();
     long resolved = resolutions.values().stream().filter(Resolution::isResolved).count();
+    if (current > 0 && resolved == 0) {
+      return Optional.empty(); // it would hang nothing
+    }
     double share = current == 0 ? 1 : (double) resolved / current;
     reasons.add(resolved + " of " + current + " image sets resolve"); // NON-NLS
     double levelBonus = levelBonus(candidate.origin(), protocol.getHangingProtocolLevel());
@@ -196,8 +200,11 @@ public final class HangingEngine {
       reasons.add("level " + levelName(candidate.origin(), protocol)); // NON-NLS
     }
     Integer screens = protocol.getNumberOfScreens();
+    // a last resort scores below any protocol whose definition applies (specificity >= 1)
     double score =
-        specificity + 3 * share + levelBonus - (screens != null && screens > 1 ? 0.05 : 0);
+        (lastResort ? share : specificity + 3 * share)
+            + levelBonus
+            - (screens != null && screens > 1 ? 0.05 : 0);
     return Optional.of(new ProtocolScore(candidate, score, reasons));
   }
 
@@ -481,7 +488,11 @@ public final class HangingEngine {
 
     List<Step> steps = new ArrayList<>();
     for (Map.Entry<Integer, List<HPDisplaySet>> entry : groups.entrySet()) {
-      steps.add(step(document, entry.getKey(), entry.getValue(), resolutions, adapt, scrolled));
+      Step step = step(document, entry.getKey(), entry.getValue(), resolutions, adapt, scrolled);
+      if (adapt && step.cells().isEmpty()) {
+        continue; // ADAPT_LAYOUT: a step with nothing to show is skipped
+      }
+      steps.add(step);
     }
 
     List<Unresolved> unresolved = new ArrayList<>();
@@ -528,66 +539,120 @@ public final class HangingEngine {
       DisplaySet extension = document.weasis().displaySets().get(displaySetNumber);
       ViewerType viewer = viewerOf(displaySet, extension);
       String label = displaySet.getDisplaySetLabel();
-
-      Scored chosen = null;
-      Match match = Match.EMPTY;
-      List<String> reasons = new ArrayList<>();
-      List<Alternative> alternatives = new ArrayList<>();
-      if (resolution != null && resolution.isResolved()) {
-        for (Scored candidate : resolution.candidates()) {
-          if (chosen == null && !used.contains(candidate.series())) {
-            chosen = candidate;
-            match = candidate.match();
-          } else {
-            alternatives.add(
-                new Alternative(
-                    candidate.series().uid(), candidate.score(), candidate.series().describe()));
-          }
-        }
-        if (chosen == null) {
-          // every candidate is already shown by this step: show the best one again
-          chosen = resolution.candidates().getFirst();
-          match = Match.SHARED;
-          alternatives.removeIf(
-              a -> a.series().equals(resolution.candidates().getFirst().series().uid()));
-          reasons.add("already shown by another cell of this step"); // NON-NLS
-        }
-        used.add(chosen.series());
-        reasons.addAll(chosen.reasons());
-      } else {
-        String expected = resolution == null ? "no image set" : resolution.unresolved(); // NON-NLS
-        reasons.add("expected: " + expected); // NON-NLS
-        if (adapt) {
-          continue; // ADAPT_LAYOUT removes the cell and the grid re-flows
-        }
-      }
-
-      int cell = cells.size();
-      HangingLayout.Cell layoutCell =
-          new HangingLayout.Cell(
-              cell,
-              tiling(displaySet),
-              List.of(viewState(chosen == null ? null : chosen.series(), displaySet, extension)));
-      layout.cell(layoutCell);
       if (synch == null) {
         synch = synchOf(displaySet, extension, scrolled);
       }
-      cells.add(
-          new CellPlan(
-              cell,
-              displaySetNumber,
-              label,
-              imageSetNumber,
-              chosen == null ? null : chosen.series().uid(),
-              match,
-              chosen == null ? 0 : chosen.score(),
-              viewer,
-              reasons,
-              alternatives));
+
+      if (resolution == null || !resolution.isResolved()) {
+        String expected = resolution == null ? "no image set" : resolution.unresolved(); // NON-NLS
+        if (adapt) {
+          continue; // ADAPT_LAYOUT removes the cell and the grid re-flows
+        }
+        addCell(
+            cells,
+            layout,
+            displaySet,
+            extension,
+            new CellPlan(
+                cells.size(),
+                displaySetNumber,
+                label,
+                imageSetNumber,
+                null,
+                Match.EMPTY,
+                0,
+                viewer,
+                List.of("expected: " + expected), // NON-NLS
+                List.of()));
+        continue;
+      }
+
+      List<Scored> fresh =
+          resolution.candidates().stream().filter(c -> !used.contains(c.series())).toList();
+      Integer repeat = extension == null ? null : extension.repeat();
+      int max = repeat == null ? 1 : repeat <= 0 ? Integer.MAX_VALUE : repeat;
+      if (fresh.isEmpty()) {
+        if (adapt) {
+          continue; // nothing new to show: ADAPT_LAYOUT drops the cell
+        }
+        // every candidate is already shown by this step: show the best one again
+        Scored shared = resolution.candidates().getFirst();
+        List<String> reasons = new ArrayList<>();
+        reasons.add("already shown by another cell of this step"); // NON-NLS
+        reasons.addAll(shared.reasons());
+        addCell(
+            cells,
+            layout,
+            displaySet,
+            extension,
+            new CellPlan(
+                cells.size(),
+                displaySetNumber,
+                label,
+                imageSetNumber,
+                shared.series().uid(),
+                Match.SHARED,
+                shared.score(),
+                viewer,
+                reasons,
+                alternatives(resolution, shared)));
+        continue;
+      }
+      int shown = 0;
+      for (Scored chosen : fresh) {
+        if (shown++ >= max) {
+          break;
+        }
+        used.add(chosen.series());
+        addCell(
+            cells,
+            layout,
+            displaySet,
+            extension,
+            new CellPlan(
+                cells.size(),
+                displaySetNumber,
+                label,
+                imageSetNumber,
+                chosen.series().uid(),
+                chosen.match(),
+                chosen.score(),
+                viewer,
+                chosen.reasons(),
+                alternatives(resolution, chosen)));
+      }
     }
     layout.grid(gridFor(cells.size())).synch(synch).select(cells.isEmpty() ? 0 : 1);
     return new Step(
         group, protocol.getDisplaySetPresentationGroupDescription(group), layout.build(), cells);
+  }
+
+  /** Appends the plan of a cell and the matching layout cell with its presentation. */
+  private static void addCell(
+      List<CellPlan> cells,
+      HangingLayout.Builder layout,
+      HPDisplaySet displaySet,
+      DisplaySet extension,
+      CellPlan cell) {
+    layout.cell(
+        new HangingLayout.Cell(
+            cell.cell(),
+            tiling(displaySet),
+            List.of(viewState(cell.series(), displaySet, extension))));
+    cells.add(cell);
+  }
+
+  /** The other candidates of the image set, best first. */
+  private static List<Alternative> alternatives(Resolution resolution, Scored chosen) {
+    List<Alternative> alternatives = new ArrayList<>();
+    for (Scored candidate : resolution.candidates()) {
+      if (candidate != chosen) {
+        alternatives.add(
+            new Alternative(
+                candidate.series().uid(), candidate.score(), candidate.series().describe()));
+      }
+    }
+    return alternatives;
   }
 
   private static ViewerType viewerOf(HPDisplaySet displaySet, DisplaySet extension) {
@@ -623,7 +688,7 @@ public final class HangingEngine {
   }
 
   /** The presentation of a cell: the display state by reference and the DICOM intent. */
-  static ViewState viewState(StudySeries series, HPDisplaySet displaySet, DisplaySet extension) {
+  static ViewState viewState(String seriesUid, HPDisplaySet displaySet, DisplaySet extension) {
     Display display = extension == null ? null : extension.display();
     String sort = null;
     boolean inverse = false;
@@ -673,7 +738,7 @@ public final class HangingEngine {
             "Y".equalsIgnoreCase(displaySet.getShowGrayscaleInverted()), // NON-NLS
             sort,
             inverse);
-    ViewData data = series == null ? ViewData.NONE : new ViewData(series.uid(), 0, null, null);
+    ViewData data = seriesUid == null ? ViewData.NONE : new ViewData(seriesUid, 0, null, null);
     return new ViewState(data, view);
   }
 

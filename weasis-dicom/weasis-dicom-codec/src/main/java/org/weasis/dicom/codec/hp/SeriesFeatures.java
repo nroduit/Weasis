@@ -163,4 +163,26 @@ public record SeriesFeatures(
         && orientation != Orientation.UNKNOWN
         && frameOfReference != null;
   }
+
+  /** The features as JSON, one member per feature, absent when unknown. */
+  public jakarta.json.JsonObject toJson() {
+    jakarta.json.JsonObjectBuilder json = jakarta.json.Json.createObjectBuilder();
+    for (FeatureSelector.Key key : FeatureSelector.Key.values()) {
+      Object value = key.read(this);
+      switch (value) {
+        case null -> {}
+        case String text -> json.add(key.id(), text);
+        case Boolean flag -> json.add(key.id(), flag);
+        case Integer number -> json.add(key.id(), number);
+        case Number number -> json.add(key.id(), number.doubleValue());
+        case java.util.Collection<?> values -> {
+          jakarta.json.JsonArrayBuilder array = jakarta.json.Json.createArrayBuilder();
+          values.forEach(v -> array.add(String.valueOf(v)));
+          json.add(key.id(), array);
+        }
+        default -> json.add(key.id(), String.valueOf(value));
+      }
+    }
+    return json.build();
+  }
 }
