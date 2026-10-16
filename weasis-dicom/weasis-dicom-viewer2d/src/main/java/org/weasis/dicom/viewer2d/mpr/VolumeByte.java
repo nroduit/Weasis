@@ -81,14 +81,17 @@ public final class VolumeByte extends Volume<Byte, byte[]> {
 
   @Override
   protected void writeToMappedBuffer(long byteOffset, byte[] pixelData, int length) {
-    for (int i = 0; i < length; i++) {
-      mappedBuffer.put(byteOffset + (long) i * byteDepth, pixelData[i]);
-    }
+    mappedBuffer.putBytes(byteOffset, pixelData, 0, length);
   }
 
   @Override
   protected Byte getFromPixelArray(byte[] pixelData, int index) {
     return pixelData[index];
+  }
+
+  @Override
+  protected float sourceValue(byte[] pixelData, int index) {
+    return isSigned ? pixelData[index] : Byte.toUnsignedInt(pixelData[index]);
   }
 
   @Override

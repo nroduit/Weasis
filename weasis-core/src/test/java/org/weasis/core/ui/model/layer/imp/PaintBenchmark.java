@@ -13,9 +13,15 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.sun.management.ThreadMXBean;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferInt;
+import java.awt.image.VolatileImage;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.lang.management.ManagementFactory;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -160,8 +166,69 @@ class PaintBenchmark {
         "repaint with the kept %s image: `drawImage` alone".formatted(name),
         () -> g2d.drawImage(reused, 0, 0, null));
 
+    benchStandardTypes(label, width, height, type, view, g2d, "offscreen INT_RGB");
+    if (!GraphicsEnvironment.isHeadless()) {
+      VolatileImage screen =
+          GraphicsEnvironment.getLocalGraphicsEnvironment()
+              .getDefaultScreenDevice()
+              .getDefaultConfiguration()
+              .createCompatibleVolatileImage(width, height);
+      Graphics2D vg = screen.createGraphics();
+      benchStandardTypes(label, width, height, type, view, vg, "volatile (screen)");
+      vg.dispose();
+      screen.flush();
+    }
+
     g2d.dispose();
     view.release();
+  }
+
+  // B2 open item and D3: the blit of each standard type, and the refill through FFM
+  private void benchStandardTypes(
+      String label, int width, int height, int type, Mat view, Graphics2D g, String target) {
+    long bytes = view.total() * view.elemSize();
+    MemorySegment source = MemorySegment.ofAddress(view.dataAddr()).reinterpret(bytes);
+    if (type == CvType.CV_8UC1) {
+      var gray = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+      byte[] pixels = ((DataBufferByte) gray.getRaster().getDataBuffer()).getData();
+      add(
+          label,
+          "[%s] refill BYTE_GRAY, JNI `Mat.get`".formatted(target),
+          () -> view.get(0, 0, pixels));
+      add(
+          label,
+          "[%s] refill BYTE_GRAY, `MemorySegment.copy` (D3)".formatted(target),
+          () -> MemorySegment.copy(source, ValueLayout.JAVA_BYTE, 0, pixels, 0, pixels.length));
+      add(label, "[%s] blit BYTE_GRAY".formatted(target), () -> g.drawImage(gray, 0, 0, null));
+      return;
+    }
+    var bgr = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
+    byte[] bgrPixels = ((DataBufferByte) bgr.getRaster().getDataBuffer()).getData();
+    view.get(0, 0, bgrPixels);
+    add(
+        label,
+        "[%s] blit 3BYTE_BGR (current)".formatted(target),
+        () -> g.drawImage(bgr, 0, 0, null));
+    add(
+        label,
+        "[%s] refill 3BYTE_BGR, `MemorySegment.copy` (D3)".formatted(target),
+        () -> MemorySegment.copy(source, ValueLayout.JAVA_BYTE, 0, bgrPixels, 0, bgrPixels.length));
+
+    var rgb = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    int[] ints = ((DataBufferInt) rgb.getRaster().getDataBuffer()).getData();
+    Mat bgra = new Mat();
+    ValueLayout.OfInt little = ValueLayout.JAVA_INT_UNALIGNED.withOrder(ByteOrder.LITTLE_ENDIAN);
+    add(
+        label,
+        "[%s] refill INT_RGB: `cvtColor` BGR→BGRA + `MemorySegment.copy`".formatted(target),
+        () -> {
+          Imgproc.cvtColor(view, bgra, Imgproc.COLOR_BGR2BGRA);
+          MemorySegment packed =
+              MemorySegment.ofAddress(bgra.dataAddr()).reinterpret(bgra.total() * 4);
+          MemorySegment.copy(packed, little, 0, ints, 0, ints.length);
+        });
+    add(label, "[%s] blit INT_RGB".formatted(target), () -> g.drawImage(rgb, 0, 0, null));
+    bgra.release();
   }
 
   private static void draw(Graphics2D g2d, Mat view) {

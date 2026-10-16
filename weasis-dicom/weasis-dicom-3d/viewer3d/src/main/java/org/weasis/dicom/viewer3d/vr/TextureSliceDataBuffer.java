@@ -9,94 +9,76 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.weasis.opencv.data.PlanarImage;
+import org.weasis.dicom.viewer3d.gl.Gl;
 
-/** Off-heap staging block holding the pixels of one or more slices, in the texture's own type. */
-public record TextureSliceDataBuffer(MemorySegment segment, Arena scope) {
+/**
+ * The pixels of consecutive slices as segments over their own native memory, uploaded to the 3D
+ * texture without a staging copy. The slices must stay alive until the upload returns; a slice that
+ * is not continuous is copied once, and that copy is what {@link #releaseMemory()} frees.
+ */
+public record TextureSliceDataBuffer(int cvType, List<MemorySegment> slices, List<Mat> copies) {
 
   public TextureSliceDataBuffer {
-    Objects.requireNonNull(scope);
-    Objects.requireNonNull(segment);
+    slices = List.copyOf(slices);
+    copies = List.copyOf(copies);
   }
 
   public void releaseMemory() {
-    scope.close();
+    copies.forEach(Mat::release);
   }
 
-  public static TextureSliceDataBuffer toImageData(PlanarImage image) {
-    int channels = CvType.channels(image.type());
-    int cvType = CvType.depth(image.type());
-    int width = image.width();
-    int height = image.height();
-    // Shared arena: the loader thread allocates, the GL thread may release.
-    Arena arena = Arena.ofShared();
-    if (cvType == CvType.CV_8U) {
-      byte[] data = new byte[width * height * channels];
-      image.get(0, 0, data);
-      return new TextureSliceDataBuffer(arena.allocateFrom(ValueLayout.JAVA_BYTE, data), arena);
-    } else if (cvType == CvType.CV_16U || cvType == CvType.CV_16S) {
-      short[] data = new short[width * height * channels];
-      image.get(0, 0, data);
-      return new TextureSliceDataBuffer(arena.allocateFrom(ValueLayout.JAVA_SHORT, data), arena);
-    } else if (cvType == CvType.CV_32F) {
-      float[] data = new float[width * height * channels];
-      image.get(0, 0, data);
-      return new TextureSliceDataBuffer(arena.allocateFrom(ValueLayout.JAVA_FLOAT, data), arena);
-    }
-    arena.close();
-    throw new IllegalArgumentException("Not supported dataType for LUT transformation:" + image);
-  }
-
+  /** Views the native memory of each slice; the slices share the type of the first one. */
   public static TextureSliceDataBuffer toImageData(List<Mat> slices) {
     if (slices.isEmpty()) {
       throw new IllegalStateException("Cannot process when no slice!");
     }
-    Mat image = slices.getFirst();
-    int channels = CvType.channels(image.type());
-    int cvType = CvType.depth(image.type());
-    long depth = slices.size();
-    int size = image.height() * image.width();
-
-    Arena arena = Arena.ofShared();
-    if (cvType == CvType.CV_8U) {
-      byte[] data = new byte[size * channels];
-      MemorySegment segment = arena.allocate(data.length * depth);
-      long offset = 0;
-      for (Mat slice : slices) {
-        slice.get(0, 0, data);
-        MemorySegment.copy(data, 0, segment, ValueLayout.JAVA_BYTE, offset, data.length);
-        offset += (long) data.length * Byte.BYTES;
-      }
-      return new TextureSliceDataBuffer(segment, arena);
-    } else if (cvType == CvType.CV_16U || cvType == CvType.CV_16S) {
-      short[] data = new short[size * channels];
-      MemorySegment segment = arena.allocate(data.length * depth * Short.BYTES);
-      long offset = 0;
-      for (Mat slice : slices) {
-        slice.get(0, 0, data);
-        MemorySegment.copy(data, 0, segment, ValueLayout.JAVA_SHORT, offset, data.length);
-        offset += (long) data.length * Short.BYTES;
-      }
-      return new TextureSliceDataBuffer(segment, arena);
-    } else if (cvType == CvType.CV_32F) {
-      float[] data = new float[size * channels];
-      MemorySegment segment = arena.allocate(data.length * depth * Float.BYTES);
-      long offset = 0;
-      for (Mat slice : slices) {
-        slice.get(0, 0, data);
-        MemorySegment.copy(data, 0, segment, ValueLayout.JAVA_FLOAT, offset, data.length);
-        offset += (long) data.length * Float.BYTES;
-      }
-      return new TextureSliceDataBuffer(segment, arena);
+    int type = slices.getFirst().type();
+    int depth = CvType.depth(type);
+    if (depth != CvType.CV_8U
+        && depth != CvType.CV_16U
+        && depth != CvType.CV_16S
+        && depth != CvType.CV_32F) {
+      throw new IllegalArgumentException("Not supported data type for a 3D texture: " + type);
     }
-    arena.close();
-    throw new IllegalArgumentException("Not supported dataType for LUT transformation:" + image);
+    List<MemorySegment> segments = new ArrayList<>(slices.size());
+    List<Mat> copies = new ArrayList<>();
+    for (Mat slice : slices) {
+      Mat continuous = slice;
+      if (!slice.isContinuous()) {
+        continuous = slice.clone();
+        copies.add(continuous);
+      }
+      long bytes = continuous.total() * continuous.elemSize();
+      segments.add(MemorySegment.ofAddress(continuous.dataAddr()).reinterpret(bytes));
+    }
+    return new TextureSliceDataBuffer(type, segments, copies);
+  }
+
+  /**
+   * Sends the slices to the bound 3D texture from depth {@code zOffset}, one layer per slice. Rows
+   * must be tightly packed ({@code GL_UNPACK_ALIGNMENT} 1 for widths that are not 4-byte aligned).
+   */
+  public void upload(Gl gl, TextureData texture, int zOffset) {
+    Objects.requireNonNull(texture);
+    for (int i = 0; i < slices.size(); i++) {
+      gl.glTexSubImage3D(
+          Gl.GL_TEXTURE_3D,
+          0,
+          0,
+          0,
+          zOffset + i,
+          texture.getWidth(),
+          texture.getHeight(),
+          1,
+          texture.getFormat(),
+          texture.getType(),
+          slices.get(i));
+    }
   }
 }

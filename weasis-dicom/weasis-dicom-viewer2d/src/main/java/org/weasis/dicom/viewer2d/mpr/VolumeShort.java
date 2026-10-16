@@ -81,14 +81,17 @@ public final class VolumeShort extends Volume<Short, short[]> {
 
   @Override
   protected void writeToMappedBuffer(long byteOffset, short[] pixelData, int length) {
-    for (int i = 0; i < length; i++) {
-      mappedBuffer.putShort(byteOffset + (long) i * byteDepth, pixelData[i]);
-    }
+    mappedBuffer.putShorts(byteOffset, pixelData, 0, length);
   }
 
   @Override
   protected Short getFromPixelArray(short[] pixelData, int index) {
     return pixelData[index];
+  }
+
+  @Override
+  protected float sourceValue(short[] pixelData, int index) {
+    return isSigned ? pixelData[index] : Short.toUnsignedInt(pixelData[index]);
   }
 
   @Override

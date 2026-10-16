@@ -771,14 +771,32 @@ public abstract sealed class Volume<T extends Number, A>
         writeToMappedBuffer(destOffset * byteDepth, pixelData, length);
       }
     } else {
+      SlicePlacement placement = placement(ctx.transform(), sliceIndex);
       copyPixels(
           ctx.dim(),
           (x, y) -> {
-            setValue(x, y, sliceIndex, pixelData, ctx);
+            setValue(x, y, sliceIndex, pixelData, ctx, placement);
             return 0;
           });
     }
   }
+
+  private SlicePlacement placement(Matrix4d transform, int sliceIndex) {
+    if (transform == null) {
+      return null;
+    }
+    return isBasic
+        ? new SlicePlacement(transform, sliceIndex, null, false, size.z)
+        : new SlicePlacement(
+            transform, 0.0, pixelRatio, stack.getPlane().equals(MprView.Plane.AXIAL), size.z);
+  }
+
+  /**
+   * The value of a source pixel as the splat accumulates it: unsigned for the unsigned 8- and
+   * 16-bit types, then rounded to {@code float}. Same as {@code (float)
+   * convertToUnsigned(getFromPixelArray(pixelData, index))}, without boxing.
+   */
+  protected abstract float sourceValue(A pixelData, int index);
 
   /** Sets a single channel value at the specified voxel coordinates. */
   protected void setChannelValue(int x, int y, int z, int channel, T value) {
@@ -1101,37 +1119,21 @@ public abstract sealed class Volume<T extends Number, A>
    * <p>When no accumulators are present (basic mode or disk-backed fallback) the nearest-corner
    * write is used.
    */
-  private void setValue(int x, int y, int z, A pixelData, SplatContext ctx) {
-    Matrix4d transform = ctx.transform();
+  private void setValue(
+      int x, int y, int z, A pixelData, SplatContext ctx, SlicePlacement placement) {
     int width = ctx.dim().width;
-    if (transform != null) {
-      Vector4d p = new Vector4d(x, y, 0.0, 1.0);
+    if (placement != null) {
+      double px = placement.x(x, y);
+      double py = placement.y(x, y);
+      double pz = placement.z(x, y);
 
-      if (isBasic) {
-        p.set(x, y, z, 1.0);
-      }
+      int x0 = SlicePlacement.floor(px);
+      int y0 = SlicePlacement.floor(py);
+      int z0 = SlicePlacement.floor(pz);
 
-      // World-space position of this source pixel
-      transform.transform(p);
-
-      if (!isBasic) {
-        // Convert mm → voxel units
-        p.div(new Vector4d(pixelRatio.x(), pixelRatio.y(), pixelRatio.z(), 1.0));
-
-        if (stack.getPlane().equals(MprView.Plane.AXIAL)) {
-          p.z = -p.z;
-        } else {
-          p.z = size.z - p.z;
-        }
-      }
-
-      int x0 = (int) Math.floor(p.x);
-      int y0 = (int) Math.floor(p.y);
-      int z0 = (int) Math.floor(p.z);
-
-      float fx = (float) (p.x - x0);
-      float fy = (float) (p.y - y0);
-      float fz = (float) (p.z - z0);
+      float fx = (float) (px - x0);
+      float fy = (float) (py - y0);
+      float fz = (float) (pz - z0);
 
       if (ctx.isWeighted()) {
         // Trilinear weights for the 8 surrounding corners (float arithmetic)
@@ -1147,29 +1149,28 @@ public abstract sealed class Volume<T extends Number, A>
         int x1 = x0 + 1;
         int y1 = y0 + 1;
         int z1 = z0 + 1;
+        // Most pixels land with their eight corners inside: one test instead of eight
+        boolean inside = x0 >= 0 && x1 < size.x && y0 >= 0 && y1 < size.y && z0 >= 0 && z1 < size.z;
 
         for (int channel = 0; channel < channels; channel++) {
-          float rawValue =
-              (float)
-                  convertToUnsigned(
-                      getFromPixelArray(pixelData, (y * width + x) * channels + channel));
+          float rawValue = sourceValue(pixelData, (y * width + x) * channels + channel);
           // Each corner is accumulated only when it falls inside the volume bounds and its
           // weight contribution is not negligible.
-          if (!isOutside(x0, y0, z0) && w000 >= WEIGHT_EPSILON)
+          if ((inside || !isOutside(x0, y0, z0)) && w000 >= WEIGHT_EPSILON)
             ctx.accumulate(linearIndex(x0, y0, z0, channel), rawValue, w000);
-          if (!isOutside(x1, y0, z0) && w100 >= WEIGHT_EPSILON)
+          if ((inside || !isOutside(x1, y0, z0)) && w100 >= WEIGHT_EPSILON)
             ctx.accumulate(linearIndex(x1, y0, z0, channel), rawValue, w100);
-          if (!isOutside(x0, y1, z0) && w010 >= WEIGHT_EPSILON)
+          if ((inside || !isOutside(x0, y1, z0)) && w010 >= WEIGHT_EPSILON)
             ctx.accumulate(linearIndex(x0, y1, z0, channel), rawValue, w010);
-          if (!isOutside(x1, y1, z0) && w110 >= WEIGHT_EPSILON)
+          if ((inside || !isOutside(x1, y1, z0)) && w110 >= WEIGHT_EPSILON)
             ctx.accumulate(linearIndex(x1, y1, z0, channel), rawValue, w110);
-          if (!isOutside(x0, y0, z1) && w001 >= WEIGHT_EPSILON)
+          if ((inside || !isOutside(x0, y0, z1)) && w001 >= WEIGHT_EPSILON)
             ctx.accumulate(linearIndex(x0, y0, z1, channel), rawValue, w001);
-          if (!isOutside(x1, y0, z1) && w101 >= WEIGHT_EPSILON)
+          if ((inside || !isOutside(x1, y0, z1)) && w101 >= WEIGHT_EPSILON)
             ctx.accumulate(linearIndex(x1, y0, z1, channel), rawValue, w101);
-          if (!isOutside(x0, y1, z1) && w011 >= WEIGHT_EPSILON)
+          if ((inside || !isOutside(x0, y1, z1)) && w011 >= WEIGHT_EPSILON)
             ctx.accumulate(linearIndex(x0, y1, z1, channel), rawValue, w011);
-          if (!isOutside(x1, y1, z1) && w111 >= WEIGHT_EPSILON)
+          if ((inside || !isOutside(x1, y1, z1)) && w111 >= WEIGHT_EPSILON)
             ctx.accumulate(linearIndex(x1, y1, z1, channel), rawValue, w111);
         }
       } else {

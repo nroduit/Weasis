@@ -98,21 +98,11 @@ public final class ChunkedMappedBuffer {
 
       long bufferPos = byteOffset + globalIndex * byteDepth;
       switch (chunk) {
-        case byte[] a -> {
-          for (int i = 0; i < count; i++) a[co + i] = get(bufferPos + (long) i * byteDepth);
-        }
-        case short[] a -> {
-          for (int i = 0; i < count; i++) a[co + i] = getShort(bufferPos + (long) i * byteDepth);
-        }
-        case int[] a -> {
-          for (int i = 0; i < count; i++) a[co + i] = getInt(bufferPos + (long) i * byteDepth);
-        }
-        case float[] a -> {
-          for (int i = 0; i < count; i++) a[co + i] = getFloat(bufferPos + (long) i * byteDepth);
-        }
-        case double[] a -> {
-          for (int i = 0; i < count; i++) a[co + i] = getDouble(bufferPos + (long) i * byteDepth);
-        }
+        case byte[] a -> getBytes(bufferPos, a, co, count);
+        case short[] a -> getShorts(bufferPos, a, co, count);
+        case int[] a -> getInts(bufferPos, a, co, count);
+        case float[] a -> getFloats(bufferPos, a, co, count);
+        case double[] a -> getDoubles(bufferPos, a, co, count);
         default -> throw new IllegalStateException("Unexpected array type: " + chunk.getClass());
       }
 
@@ -188,6 +178,58 @@ public final class ChunkedMappedBuffer {
       slice.position(co);
       slice.asFloatBuffer().get(dst, dstOff, n);
       byteOffset += (long) n * Float.BYTES;
+      dstOff += n;
+      count -= n;
+    }
+  }
+
+  /** Bulk reads {@code count} consecutive {@code byte} values; see {@link #getFloats}. */
+  public void getBytes(long byteOffset, byte[] dst, int dstOff, int count) {
+    while (count > 0) {
+      MappedByteBuffer chunk = chunks[chunkIndex(byteOffset)];
+      int co = chunkOffset(byteOffset);
+      int n = Math.min(count, chunk.limit() - co);
+      chunk.duplicate().position(co).get(dst, dstOff, n);
+      byteOffset += n;
+      dstOff += n;
+      count -= n;
+    }
+  }
+
+  /** Bulk reads {@code count} consecutive {@code short} values; see {@link #getFloats}. */
+  public void getShorts(long byteOffset, short[] dst, int dstOff, int count) {
+    while (count > 0) {
+      MappedByteBuffer chunk = chunks[chunkIndex(byteOffset)];
+      int co = chunkOffset(byteOffset);
+      int n = Math.min(count, (chunk.limit() - co) >>> 1);
+      chunk.duplicate().position(co).asShortBuffer().get(dst, dstOff, n);
+      byteOffset += (long) n * Short.BYTES;
+      dstOff += n;
+      count -= n;
+    }
+  }
+
+  /** Bulk reads {@code count} consecutive {@code int} values; see {@link #getFloats}. */
+  public void getInts(long byteOffset, int[] dst, int dstOff, int count) {
+    while (count > 0) {
+      MappedByteBuffer chunk = chunks[chunkIndex(byteOffset)];
+      int co = chunkOffset(byteOffset);
+      int n = Math.min(count, (chunk.limit() - co) >>> 2);
+      chunk.duplicate().position(co).asIntBuffer().get(dst, dstOff, n);
+      byteOffset += (long) n * Integer.BYTES;
+      dstOff += n;
+      count -= n;
+    }
+  }
+
+  /** Bulk reads {@code count} consecutive {@code double} values; see {@link #getFloats}. */
+  public void getDoubles(long byteOffset, double[] dst, int dstOff, int count) {
+    while (count > 0) {
+      MappedByteBuffer chunk = chunks[chunkIndex(byteOffset)];
+      int co = chunkOffset(byteOffset);
+      int n = Math.min(count, (chunk.limit() - co) >>> 3);
+      chunk.duplicate().position(co).asDoubleBuffer().get(dst, dstOff, n);
+      byteOffset += (long) n * Double.BYTES;
       dstOff += n;
       count -= n;
     }

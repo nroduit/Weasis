@@ -12,6 +12,8 @@ package org.weasis.dicom.viewer3d.vr;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.IntStream;
 import org.opencv.core.CvType;
 import org.weasis.dicom.viewer3d.gl.Gl;
@@ -92,24 +94,37 @@ public final class MajorantGrid {
    * normalized. A colour volume contributes its luminance, as the shader reads it. Unsupported
    * layouts leave the grid incomplete.
    */
-  void accumulate(MemorySegment data, int cvType, int firstSlice, int sliceCount) {
-    if (!supported || sliceCount <= 0) {
+  /** Folds slices given one segment each, from {@code firstSlice}. */
+  void accumulate(List<MemorySegment> slices, int cvType, int firstSlice) {
+    if (!supported || slices.isEmpty()) {
       return;
     }
     int channels = CvType.channels(cvType);
-    SampleReader reader = SampleReader.of(data, CvType.depth(cvType), channels);
-    if (reader == null) {
+    int depth = CvType.depth(cvType);
+    if (SampleReader.of(slices.getFirst(), depth, channels) == null) {
       supported = false;
       return;
     }
-    int sliceLength = volumeWidth * volumeHeight * channels;
-    IntStream.range(0, sliceCount)
+    IntStream.range(0, slices.size())
         .parallel()
         .forEach(
             s -> {
-              float[] sliceRange = sliceRange(reader, s * sliceLength);
-              foldSlice(sliceRange, firstSlice + s);
+              SampleReader reader = SampleReader.of(slices.get(s), depth, channels);
+              foldSlice(sliceRange(reader, 0), firstSlice + s);
             });
+  }
+
+  /** Folds {@code sliceCount} slices held one after the other in {@code data}. */
+  void accumulate(MemorySegment data, int cvType, int firstSlice, int sliceCount) {
+    if (sliceCount <= 0) {
+      return;
+    }
+    long sliceBytes = data.byteSize() / sliceCount;
+    List<MemorySegment> slices = new ArrayList<>(sliceCount);
+    for (int s = 0; s < sliceCount; s++) {
+      slices.add(data.asSlice(s * sliceBytes, sliceBytes));
+    }
+    accumulate(slices, cvType, firstSlice);
   }
 
   /** Marks the grid as covering the whole volume; blocks no slice reached bound nothing. */

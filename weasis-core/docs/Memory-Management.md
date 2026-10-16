@@ -10,6 +10,7 @@ and the 3D viewer share one native-memory budget.
 - [The native-memory budget](#the-native-memory-budget)
 - [The image caches](#the-image-caches)
 - [Pinning: protecting the visible images](#pinning-protecting-the-visible-images)
+- [Images of the display chain](#images-of-the-display-chain)
 - [Global coordination between consumers](#global-coordination-between-consumers)
 - [The 3D viewer](#the-3d-viewer)
 - [Tuning memory parameters](#tuning-memory-parameters)
@@ -77,6 +78,16 @@ Rules for view code:
   no pin is left dangling.
 - Code that reads from the cache must tolerate a released buffer and reload.
 
+## Images of the display chain
+
+The display op chain of a view keeps the input and output image of every operation between
+passes, so that an operation with nothing new is skipped (see
+[Display Op Chain](Display-Op-Chain.md)). When an operation runs again, the output it replaced is
+released at once, instead of waiting for the `Cleaner`, when the operation owns its output and
+nothing in the chain refers to it anymore; the source image, which belongs to the image cache,
+and the last output, which the view displays, are never released by the chain. Other
+intermediate images are freed by the `Cleaner` at GC time.
+
 ## Global coordination between consumers
 
 `MemoryManager` (`org.weasis.core.api.util`) is a process-wide **accountant**; it never allocates
@@ -89,7 +100,8 @@ Consumers play one of two roles:
 - **Elastic**: the `NativeCache` instances. They evict unpinned entries when either their own
   budget or the global budget is exceeded.
 - **Rigid**: an in-progress 3D volume load. `VolumeBuilder` registers a consumer reporting the
-  staging footprint for the duration of a build and unregisters it when the build ends.
+  memory of the slices it holds for the duration of a build and unregisters it when the build
+  ends.
 
 While a volume loads, aggregate usage rises and the image cache yields room on its next `put`.
 Eviction is `put`-driven, not immediate.
@@ -103,12 +115,13 @@ The 3D viewer (`weasis-dicom-3d`) does not use `java.nio` direct buffers for vol
 
 - **GPU / VRAM**: the volume is uploaded as a 3D texture; `VolumeBuilder` checks `glGetError()`
   after each upload.
-- **Off-heap staging**: slices are copied into FFM `Arena` segments (`TextureSliceDataBuffer`)
-  before upload, in chunks bounded by `SystemMemory.getVolumeStagingMemory()`.
+- **No staging copy**: the slices are prepared as OpenCV images and sent to the texture straight
+  from their native memory, one layer per slice (`TextureSliceDataBuffer` views each slice as an
+  FFM segment). The loader holds at most `SystemMemory.getVolumeStagingMemory()` of slices before
+  it sends them and waits for the transfer.
 
-`-XX:MaxDirectMemorySize` does **not** apply to FFM `Arena` memory; the staging chunk size is the
-only control. A smaller chunk lowers the transient spike; a larger one means fewer upload
-round-trips.
+`-XX:MaxDirectMemorySize` does **not** apply to this memory; the staging bound is the only
+control. A smaller bound lowers the transient spike; a larger one means fewer upload round-trips.
 
 ## Tuning memory parameters
 

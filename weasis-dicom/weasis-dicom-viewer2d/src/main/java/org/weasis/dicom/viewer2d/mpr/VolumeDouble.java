@@ -77,14 +77,17 @@ public final class VolumeDouble extends Volume<Double, double[]> {
 
   @Override
   protected void writeToMappedBuffer(long byteOffset, double[] pixelData, int length) {
-    for (int i = 0; i < length; i++) {
-      mappedBuffer.putDouble(byteOffset + (long) i * byteDepth, pixelData[i]);
-    }
+    mappedBuffer.putDoubles(byteOffset, pixelData, 0, length);
   }
 
   @Override
   protected Double getFromPixelArray(double[] pixelData, int index) {
     return pixelData[index];
+  }
+
+  @Override
+  protected float sourceValue(double[] pixelData, int index) {
+    return (float) pixelData[index];
   }
 
   @Override

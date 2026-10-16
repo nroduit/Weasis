@@ -77,13 +77,16 @@ public final class VolumeFloat extends Volume<Float, float[]> {
 
   @Override
   protected void writeToMappedBuffer(long byteOffset, float[] pixelData, int length) {
-    for (int i = 0; i < length; i++) {
-      mappedBuffer.putFloat(byteOffset + (long) i * byteDepth, pixelData[i]);
-    }
+    mappedBuffer.putFloats(byteOffset, pixelData, 0, length);
   }
 
   @Override
   protected Float getFromPixelArray(float[] pixelData, int index) {
+    return pixelData[index];
+  }
+
+  @Override
+  protected float sourceValue(float[] pixelData, int index) {
     return pixelData[index];
   }
 

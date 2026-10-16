@@ -134,20 +134,19 @@ public final class VolumeBuilder {
         return;
       }
       TextureSliceDataBuffer textureSliceData = TextureSliceDataBuffer.toImageData(slices);
-      int sliceCount = slices.size();
       try {
         // The path tracer's bounds are folded in from the staging block before it goes to the GPU.
         volumeBuilder
             .volTexture
             .getMajorantGrid()
-            .accumulate(textureSliceData.segment(), slices.getFirst().type(), offset, sliceCount);
+            .accumulate(textureSliceData.slices(), textureSliceData.cvType(), offset);
       } catch (RuntimeException e) {
         textureSliceData.releaseMemory();
         throw e;
       }
-      // The loader stays on its own thread for the reading and the staging; only the transfer
-      // needs the context, and it waits behind the frames so the display keeps up while the
-      // volume fills in. The task owns the staging block from here and releases it.
+      // The loader stays on its own thread for the reading; only the transfer needs the context,
+      // and it waits behind the frames so the display keeps up while the volume fills in. The
+      // slices are read in place: the loader keeps them until the transfer has returned.
       GlThread glThread = GlRuntime.thread();
       glThread.submit(
           gl -> {
@@ -158,7 +157,7 @@ public final class VolumeBuilder {
               // 8-bit) must not be padded. The default is restored once the slabs are sent.
               gl.glPixelStorei(Gl.GL_UNPACK_ALIGNMENT, 1);
               try {
-                setTexImage3DBuffer(gl, textureSliceData, sliceCount, offset);
+                setTexImage3DBuffer(gl, textureSliceData, offset);
               } finally {
                 gl.glPixelStorei(Gl.GL_UNPACK_ALIGNMENT, 4);
               }
@@ -167,30 +166,17 @@ public final class VolumeBuilder {
               textureSliceData.releaseMemory();
             }
           });
-      // At most one slab in flight, so the staging memory stays within the budget of the memory
+      // At most one slab in flight, so the slices held stay within the budget of the memory
       // manager and the loader does not run ahead of the GPU.
       glThread.drain();
     }
 
-    private void setTexImage3DBuffer(
-        Gl gl, TextureSliceDataBuffer data, int sliceCount, int offset) {
+    private void setTexImage3DBuffer(Gl gl, TextureSliceDataBuffer data, int offset) {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
       if (volTexture.getId() <= 0) {
         volTexture.init(gl);
       }
-      // See https://docs.gl/gl4/glTexSubImage3D
-      gl.glTexSubImage3D(
-          Gl.GL_TEXTURE_3D,
-          0,
-          0,
-          0,
-          offset,
-          volTexture.getWidth(),
-          volTexture.getHeight(),
-          sliceCount,
-          volTexture.getFormat(),
-          volTexture.getType(),
-          data.segment());
+      data.upload(gl, volTexture, offset);
       int error = gl.glGetError();
       if (error != Gl.GL_NO_ERROR) {
         LOGGER.error(

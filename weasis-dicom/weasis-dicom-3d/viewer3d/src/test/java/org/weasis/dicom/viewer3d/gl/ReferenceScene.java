@@ -19,6 +19,7 @@ import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
 import org.joml.Vector4d;
+import org.opencv.core.CvType;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.vr.AccumulationBuffers;
 import org.weasis.dicom.viewer3d.vr.EnvironmentMap;
@@ -29,6 +30,7 @@ import org.weasis.dicom.viewer3d.vr.RenderingType;
 import org.weasis.dicom.viewer3d.vr.SegVolumeTexture;
 import org.weasis.dicom.viewer3d.vr.ShaderManager;
 import org.weasis.dicom.viewer3d.vr.TextureData.PixelFormat;
+import org.weasis.dicom.viewer3d.vr.TextureSliceDataBuffer;
 import org.weasis.dicom.viewer3d.vr.VolumeTexture;
 
 /**
@@ -242,19 +244,17 @@ final class ReferenceScene implements AutoCloseable {
     gl.glActiveTexture(Gl.GL_TEXTURE0);
     gl.glBindTexture(Gl.GL_TEXTURE_3D, texture.getId());
     gl.glPixelStorei(Gl.GL_UNPACK_ALIGNMENT, 1);
+    // One layer per slice, the way VolumeBuilder sends the slices of a volume
     try (Arena arena = Arena.ofConfined()) {
-      gl.glTexSubImage3D(
-          Gl.GL_TEXTURE_3D,
-          0,
-          0,
-          0,
-          0,
-          size,
-          size,
-          size,
-          texture.getFormat(),
-          texture.getType(),
-          arena.allocateFrom(ValueLayout.JAVA_SHORT, SyntheticVolume.values()));
+      short[] voxels = SyntheticVolume.values();
+      int sliceLength = size * size;
+      List<MemorySegment> slices = new ArrayList<>(size);
+      for (int z = 0; z < size; z++) {
+        MemorySegment slice = arena.allocate(ValueLayout.JAVA_SHORT, sliceLength);
+        MemorySegment.copy(voxels, z * sliceLength, slice, ValueLayout.JAVA_SHORT, 0, sliceLength);
+        slices.add(slice);
+      }
+      new TextureSliceDataBuffer(CvType.CV_16UC1, slices, List.of()).upload(gl, texture, 0);
     }
     gl.glPixelStorei(Gl.GL_UNPACK_ALIGNMENT, 4);
     texture.setRequiredBuilding(false);

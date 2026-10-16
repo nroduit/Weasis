@@ -16,6 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.foreign.MemorySegment;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.opencv.core.CvType;
 
@@ -87,6 +89,34 @@ class MajorantGridTest {
         () -> assertEquals(1f, low[1], 1e-6f),
         () -> assertEquals(1f, high[0], 1e-6f),
         () -> assertEquals(1f, high[1], 1e-6f));
+  }
+
+  @Test
+  void oneSegmentPerSliceFoldsLikeOneBlock() {
+    short[] voxels = new short[SIZE * SIZE * SIZE];
+    for (int i = 0; i < voxels.length; i++) {
+      voxels[i] = (short) (i * 7919);
+    }
+    MajorantGrid block = new MajorantGrid(SIZE, SIZE, SIZE);
+    block.accumulate(MemorySegment.ofArray(voxels), CvType.CV_16UC1, 0, SIZE);
+    MajorantGrid perSlice = new MajorantGrid(SIZE, SIZE, SIZE);
+    List<MemorySegment> slices = new ArrayList<>();
+    for (int z = 0; z < SIZE; z++) {
+      slices.add(
+          MemorySegment.ofArray(
+              java.util.Arrays.copyOfRange(voxels, z * SIZE * SIZE, (z + 1) * SIZE * SIZE)));
+    }
+    perSlice.accumulate(slices.subList(0, 5), CvType.CV_16UC1, 0);
+    perSlice.accumulate(slices.subList(5, SIZE), CvType.CV_16UC1, 5);
+    block.complete();
+    perSlice.complete();
+    for (int z = 0; z < block.getDepth(); z++) {
+      for (int y = 0; y < block.getHeight(); y++) {
+        for (int x = 0; x < block.getWidth(); x++) {
+          assertArrayEquals(block.rangeAt(x, y, z), perSlice.rangeAt(x, y, z));
+        }
+      }
+    }
   }
 
   @Test
