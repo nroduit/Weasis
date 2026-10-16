@@ -95,7 +95,7 @@ class HangingEngineTest {
   static final List<StudySeries> STUDY = List.of(SOFT_THICK, SOFT_THIN, LUNG, SCOUT, CORONAL, MR);
 
   /** CT chest: soft tissue (thinnest, tiled) and lung side by side, then a prior step. */
-  private static Document chestCt(String partialData) {
+  static Document chestCt(String partialData) {
     HangingProtocol hp = new HangingProtocol();
     hp.setHangingProtocolName("CT chest"); // NON-NLS
     hp.setHangingProtocolLevel("SITE"); // NON-NLS
@@ -341,6 +341,22 @@ class HangingEngineTest {
                 HangingEngine.match(candidates, List.of(MR))
                     .orElseThrow()
                     .protocolId())); // NON-NLS
+  }
+
+  /** The round trip through the protocol JSON keeps the image set numbers the plan relies on. */
+  @Test
+  void aProtocolReadBackFromJsonGivesTheSamePlan() {
+    Document document = chestCt("MAINTAIN_LAYOUT"); // NON-NLS
+    Document read = ProtocolJson.fromJson(ProtocolJson.toJson(document));
+    HangingPlan expected = HangingEngine.plan(document, STUDY);
+    HangingPlan actual = HangingEngine.plan(read, STUDY);
+    assertAll(
+        () ->
+            assertEquals(
+                List.of(1, 2, 3),
+                read.protocol().getImageSets().stream().map(s -> s.getImageSetNumber()).toList()),
+        () -> assertEquals(expected.toJson(), actual.toJson()),
+        () -> assertEquals(1, actual.unresolved().size(), "the prior stays unresolved"));
   }
 
   @Test

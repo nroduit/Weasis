@@ -150,6 +150,13 @@ line naming the current spelling. Use the current one everywhere.
    workspace are slots: `workspace:panel` shows which tool fills each slot (explorer and tools
    sides, top and bottom), `--side tools --slot bottom --tool measure` opens a tool there,
    `--collapse` / `--expand` hide or show a side; `workspace:save` keeps the shell too.
+9. **Hanging protocols** (engine only, no UI yet): `hp:list` shows the protocols of every layer;
+   `hp:match [--study <uid>]` returns the protocols that apply to a loaded study, best first,
+   and the plan of the best one: per reading step the layout to hang and, per cell, the series
+   chosen, how it matched (exact, preferred, fallback, shared, empty), the reasons and the
+   alternatives; `--protocol <id>` plans another one, `--protocols <file>` tries a draft file.
+   `hp:validate --corpus <dir> [--protocols <file>]` runs the matching over a folder of studies
+   without any viewer and reports the counts per protocol and the protocol of each study.
 8. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
    and still have no usable 3D.

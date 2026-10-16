@@ -368,10 +368,25 @@ public final class HangingEngine {
     return true;
   }
 
+  /**
+   * The time-based items of an image set: its sequence, or, for a set the model read from a dataset
+   * (weasis-dicom-tools 5.35.1 builds it on the time-based item itself), its own attributes.
+   */
+  static List<Attributes> timeBasedItems(HPImageSet imageSet) {
+    Sequence items = imageSet.getTimeBasedImageSetsSequence();
+    if (items != null && !items.isEmpty()) {
+      List<Attributes> list = new ArrayList<>();
+      items.forEach(list::add);
+      return list;
+    }
+    Attributes own = imageSet.getAttributes();
+    return own != null && own.contains(Tag.ImageSetSelectorCategory) ? List.of(own) : List.of();
+  }
+
   /** Current unless every time-based item of the set is a prior. */
   static boolean isCurrent(HPImageSet imageSet) {
-    Sequence items = imageSet.getTimeBasedImageSetsSequence();
-    if (items == null || items.isEmpty()) {
+    List<Attributes> items = timeBasedItems(imageSet);
+    if (items.isEmpty()) {
       return true;
     }
     for (Attributes item : items) {
@@ -415,9 +430,9 @@ public final class HangingEngine {
     if (extension != null && extension.label() != null) {
       return extension.label();
     }
-    Sequence items = imageSet.getTimeBasedImageSetsSequence();
-    if (items != null && !items.isEmpty()) {
-      String label = new HPTimeBasedImageSet(items.get(0)).getImageSetLabel();
+    List<Attributes> items = timeBasedItems(imageSet);
+    if (!items.isEmpty()) {
+      String label = new HPTimeBasedImageSet(items.getFirst()).getImageSetLabel();
       if (hasText(label)) {
         return label;
       }

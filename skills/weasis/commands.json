@@ -1221,6 +1221,145 @@
       ]
     },
     {
+      "name": "hp",
+      "description": "Hanging protocols: the protocols of every layer, the plan the engine computes for a loaded study, and the validation of the protocols over a folder of studies.",
+      "since": "5.0",
+      "verbs": [
+        {
+          "name": "list",
+          "description": "The protocols of every layer (built-in, site, user) with their level, whether they are enabled, and the number of image sets and display sets they declare.",
+          "since": "5.0",
+          "usage": "hp:list [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "match",
+          "description": "The hanging plan of a loaded study: the protocols that apply, best first, and the plan of the best one (or of --protocol): per reading step the layout to hang and, per cell, the series chosen, how it matched, why, and the alternatives. The study is --study, else the one of the series selected in the explorer, else the only loaded one.",
+          "since": "5.0",
+          "usage": "hp:match [-h] [--json] [--protocol=<protocol-id>] [--protocols=<input-path>] [--study=<study-uid>]",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": false,
+              "description": "Study Instance UID from 'dicom:list'."
+            },
+            {
+              "names": [
+                "--protocol"
+              ],
+              "label": "<protocol-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Plans this protocol from 'list' even when another one scores better."
+            },
+            {
+              "names": [
+                "--protocols"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": false,
+              "description": "A JSON file of protocol entries matched instead of the layers, to try a draft.",
+              "needs": [
+                "file-read"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "validate",
+          "description": "Runs the matching over a folder of studies without a viewer and reports, per protocol, how many studies it applies to and how its cells matched (exact, preferred, fallback, shared, empty) and, per study, the protocol chosen: the regression test of a protocol library. The protocols are those of every layer, or the entries of --protocols.",
+          "since": "5.0",
+          "usage": "hp:validate [-h] [--json] --corpus=<input-path> [--protocol=<protocol-id>] [--protocols=<input-path>]",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--corpus"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": true,
+              "description": "A folder of DICOM studies, walked recursively.",
+              "needs": [
+                "file-read"
+              ]
+            },
+            {
+              "names": [
+                "--protocols"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": false,
+              "description": "A JSON file holding protocol entries (an array, or an object with a 'protocols' array) validated instead of the layers.",
+              "needs": [
+                "file-read"
+              ]
+            },
+            {
+              "names": [
+                "--protocol"
+              ],
+              "label": "<protocol-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Only this protocol."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "image",
       "description": "Loading and closing of plain images (non-DICOM) in the default viewer.",
       "verbs": [

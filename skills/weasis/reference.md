@@ -314,6 +314,51 @@ Usage: `explorer:state [-h] [--json]`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 
 
+## hp
+
+Hanging protocols: the protocols of every layer, the plan the engine computes for a loaded study, and the validation of the protocols over a folder of studies.
+
+### hp:list (since 5.0)
+
+The protocols of every layer (built-in, site, user) with their level, whether they are enabled, and the number of image sets and display sets they declare.
+
+Usage: `hp:list [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+### hp:match (since 5.0)
+
+The hanging plan of a loaded study: the protocols that apply, best first, and the plan of the best one (or of --protocol): per reading step the layout to hang and, per cell, the series chosen, how it matched, why, and the alternatives. The study is --study, else the one of the series selected in the explorer, else the only loaded one.
+
+Usage: `hp:match [-h] [--json] [--protocol=<protocol-id>] [--protocols=<input-path>] [--study=<study-uid>]`
+
+Needs: file read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --study | study-uid |  | Study Instance UID from 'dicom:list'. |
+| --protocol | string |  | Plans this protocol from 'list' even when another one scores better. |
+| --protocols | input-path |  | A JSON file of protocol entries matched instead of the layers, to try a draft. |
+
+### hp:validate (since 5.0)
+
+Runs the matching over a folder of studies without a viewer and reports, per protocol, how many studies it applies to and how its cells matched (exact, preferred, fallback, shared, empty) and, per study, the protocol chosen: the regression test of a protocol library. The protocols are those of every layer, or the entries of --protocols.
+
+Usage: `hp:validate [-h] [--json] --corpus=<input-path> [--protocol=<protocol-id>] [--protocols=<input-path>]`
+
+Needs: file read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --corpus | input-path |  | A folder of DICOM studies, walked recursively. |
+| --protocols | input-path |  | A JSON file holding protocol entries (an array, or an object with a 'protocols' array) validated instead of the layers. |
+| --protocol | string |  | Only this protocol. |
+
+
 ## image
 
 Loading and closing of plain images (non-DICOM) in the default viewer.

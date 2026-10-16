@@ -12,6 +12,7 @@ package org.weasis.dicom.codec.hp;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import java.util.List;
 import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
@@ -102,6 +103,20 @@ public final class ProtocolJson {
    * @throws IllegalArgumentException when the schema is newer than this version reads, or the entry
    *     has no id or no {@code dicom} block
    */
+  /**
+   * weasis-dicom-tools 5.35.1 builds each image set of a dataset on its time-based item and resets
+   * its Image Set Number to 0 before the number is read, so the numbers the display sets and the
+   * extensions refer to are lost; the sets are read in number order, so the index gives them back.
+   */
+  static void renumberImageSets(HangingProtocol protocol) {
+    List<HPImageSet> sets = protocol.getImageSets();
+    for (int i = 0; i < sets.size(); i++) {
+      if (sets.get(i).getImageSetNumber() != i + 1) {
+        sets.get(i).setImageSetNumber(i + 1);
+      }
+    }
+  }
+
   public static Document fromJson(JsonObject json) {
     int schema = json.getInt(SCHEMA_KEY, SCHEMA);
     if (schema > SCHEMA) {
@@ -115,6 +130,7 @@ public final class ProtocolJson {
       throw new IllegalArgumentException("Protocol " + id + " has no dicom block");
     }
     HangingProtocol protocol = new HangingProtocol(DicomJson.toAttributes(dicom));
+    renumberImageSets(protocol);
     return new Document(
         id,
         protocol,
