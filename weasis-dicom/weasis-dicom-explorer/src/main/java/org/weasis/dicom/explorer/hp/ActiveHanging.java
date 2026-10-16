@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.hp.HangingProtocolDocuments;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.util.LayeredDocument;
 import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.editor.SeriesResolver;
@@ -231,6 +232,62 @@ public final class ActiveHanging {
       throw new IllegalStateException("Cannot store the protocol: " + e.getMessage(), e);
     }
     return true;
+  }
+
+  /**
+   * Attaches a hanging to a restored 2D container without hanging anything: the plan of the
+   * protocol is computed on the study as it is now and its step is marked with the bindings the
+   * session kept, a cell whose binding differs from the plan counting as corrected. Empty when the
+   * protocol is not in the layers any more or the study has no plan.
+   *
+   * @param bindings the series shown per display set number
+   */
+  public static Optional<Applied> attach(
+      ViewerPlugin<?> container,
+      DicomModel model,
+      MediaSeriesGroup patient,
+      MediaSeriesGroup study,
+      String protocolId,
+      int step,
+      Map<Integer, String> bindings) {
+    List<HangingEngine.Candidate> candidates = HangingEngine.candidates();
+    List<StudySeries> series = HpCommands.studySeries(model, study);
+    List<ProtocolScore> ranking = HangingEngine.select(candidates, series);
+    Optional<HangingPlan> plan;
+    try {
+      plan = HpCommands.planOf(candidates, ranking, series, protocolId);
+    } catch (RuntimeException e) {
+      return Optional.empty(); // the protocol is gone
+    }
+    if (plan.isEmpty() || step < 0 || step >= plan.get().steps().size()) {
+      return Optional.empty();
+    }
+    Context context = new Context(model, patient, study, candidates, ranking);
+    List<HangingPlanApplier.Placed> placed = new ArrayList<>();
+    for (CellPlan cell : plan.get().steps().get(step).cells()) {
+      placed.add(new HangingPlanApplier.Placed(cell, container));
+    }
+    Applied applied = new Applied(plan.get(), step, List.of(container), placed, List.of(), context);
+    for (CellPlan cell : plan.get().steps().get(step).cells()) {
+      String bound = bindings.get(cell.displaySet());
+      if (bound != null && !bound.equals(cell.series())) {
+        applied =
+            applied.withCell(
+                new CellPlan(
+                    cell.cell(),
+                    cell.displaySet(),
+                    cell.label(),
+                    cell.imageSet(),
+                    bound,
+                    Match.CORRECTED,
+                    0,
+                    cell.viewer(),
+                    List.of("kept by the session"), // NON-NLS
+                    cell.alternatives()));
+      }
+    }
+    HangingPlanApplier.replace(applied);
+    return Optional.of(applied);
   }
 
   /** The candidates of the study, best first, empty when the hanging kept none. */

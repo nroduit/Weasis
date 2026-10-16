@@ -775,6 +775,56 @@ Needs: file read, file write
 | --report | output-path |  | Write a JUnit XML report of the run to this file. (since 5.0) |
 
 
+## state
+
+Reading states: keep the display as a session (windows, viewers, every pane's series and presentation, the shell, the protocol that hung it), list, restore and delete the sessions of the user.
+
+### state:delete (since 5.0)
+
+Deletes a session of the user.
+
+Usage: `state:delete [-h] [--json] --session=<session-id>`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --session | string |  | Session id from 'list'. |
+
+### state:keep (since 5.0)
+
+Keep this display: saves the workspace as a session of the user (windows, viewers, the series and presentation of every pane, the shell, the protocol and step that hung it) and returns its id. The session holds study and series identifiers, never credentials.
+
+Usage: `state:keep [-h] [--json] [--pin] [--label=<text>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --label | string |  | A label for the list. |
+| --pin | boolean |  | Keeps the session out of the retention by number. |
+
+### state:list (since 5.0)
+
+The sessions of the user, the most recently used first.
+
+Usage: `state:list [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+### state:restore (since 5.0)
+
+Restores a session when its studies are loaded: open views are reused, closed viewers are created again with their series and presentation, the shell follows. A study of the session that is not loaded is reported; load it first.
+
+Usage: `state:restore [-h] [--json] [--session=<session-id>] [--study=<study-uid>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --session | string |  | Session id from 'list'. |
+| --study | study-uid |  | The most recent session showing this study instead of an id. |
+
+
 ## view2d
 
 Display of a 2D DICOM view: zoom, window/level, pan, scrolling, grid, mouse action, and the agent verbs capture, stats and measure. Every verb works on the pane given by --view and --pane, the selected one by default, and returns its display state.
@@ -1052,16 +1102,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
+| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 
 
 ## view3d

@@ -2905,6 +2905,139 @@
       ]
     },
     {
+      "name": "state",
+      "description": "Reading states: keep the display as a session (windows, viewers, every pane's series and presentation, the shell, the protocol that hung it), list, restore and delete the sessions of the user.",
+      "since": "5.0",
+      "verbs": [
+        {
+          "name": "delete",
+          "description": "Deletes a session of the user.",
+          "since": "5.0",
+          "usage": "state:delete [-h] [--json] --session=<session-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--session"
+              ],
+              "label": "<session-id>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Session id from 'list'."
+            }
+          ]
+        },
+        {
+          "name": "keep",
+          "description": "Keep this display: saves the workspace as a session of the user (windows, viewers, the series and presentation of every pane, the shell, the protocol and step that hung it) and returns its id. The session holds study and series identifiers, never credentials.",
+          "since": "5.0",
+          "usage": "state:keep [-h] [--json] [--pin] [--label=<text>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--label"
+              ],
+              "label": "<text>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "A label for the list."
+            },
+            {
+              "names": [
+                "--pin"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Keeps the session out of the retention by number."
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "description": "The sessions of the user, the most recently used first.",
+          "since": "5.0",
+          "usage": "state:list [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "restore",
+          "description": "Restores a session when its studies are loaded: open views are reused, closed viewers are created again with their series and presentation, the shell follows. A study of the session that is not loaded is reported; load it first.",
+          "since": "5.0",
+          "usage": "state:restore [-h] [--json] [--session=<session-id>] [--study=<study-uid>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--session"
+              ],
+              "label": "<session-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Session id from 'list'."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": false,
+              "description": "The most recent session showing this study instead of an id."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "view2d",
       "description": "Display of a 2D DICOM view: zoom, window/level, pan, scrolling, grid, mouse action, and the agent verbs capture, stats and measure. Every verb works on the pane given by --view and --pane, the selected one by default, and returns its display state.",
       "verbs": [
@@ -4212,7 +4345,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]",
           "parameters": [],
           "options": [
             {
@@ -4247,20 +4380,6 @@
             },
             {
               "names": [
-                "--set"
-              ],
-              "label": "<magnification>",
-              "type": "magnification",
-              "arity": "1",
-              "required": true,
-              "description": "Magnification, 1 being one image pixel per canvas pixel.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
                 "--fit"
               ],
               "label": "<zoom-fit>",
@@ -4287,6 +4406,20 @@
               "arity": "1",
               "required": true,
               "description": "Moves the zoom slider by this many steps, negative to zoom out.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--set"
+              ],
+              "label": "<magnification>",
+              "type": "magnification",
+              "arity": "1",
+              "required": true,
+              "description": "Magnification, 1 being one image pixel per canvas pixel.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"

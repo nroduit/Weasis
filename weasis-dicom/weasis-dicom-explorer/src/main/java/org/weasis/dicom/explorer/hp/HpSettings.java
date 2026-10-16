@@ -32,5 +32,19 @@ public final class HpSettings {
               "How a study opens: hung by its best hanging protocol, or on its first series")
           .declare();
 
+  /** The sessions kept per user, the oldest unpinned ones purged beyond it; 0 for no limit. */
+  public static final Setting<Integer> SESSIONS_MAX =
+      Setting.builder(SettingType.INTEGER, GROUP, "weasis.hp.sessions.max", 100) // NON-NLS
+          .since("5.0") // NON-NLS
+          .description("Maximum number of sessions kept per user, 0 for no limit")
+          .declare();
+
+  /** Sessions not kept or restored for that many days are purged, pinned too; 0 for no limit. */
+  public static final Setting<Integer> SESSIONS_MAX_DAYS =
+      Setting.builder(SettingType.INTEGER, GROUP, "weasis.hp.sessions.max.days", 90) // NON-NLS
+          .since("5.0") // NON-NLS
+          .description("Days after which a session not used again is deleted, 0 for no limit")
+          .declare();
+
   private HpSettings() {}
 }

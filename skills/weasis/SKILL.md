@@ -181,13 +181,21 @@ line naming the current spelling. Use the current one everywhere.
    selected cell. `hp:correct --cell <n> --series <uid> [--apply]` puts another series of the
    study in a cell, records the correction with the rule that would have chosen it, and
    `--apply` writes that rule into a user protocol; `hp:corrections` lists the log.
+10. **Reading states**: `state:keep [--label <text>] [--pin]` keeps the whole display as a
+   session of the user (windows, viewers, every pane's series and presentation, the shell, the
+   protocol and step that hung it) and returns its id; `state:list` lists the sessions, most
+   recently used first; `state:restore --session <id> | --study <uid>` restores one exactly
+   when its studies are loaded (a study not loaded is reported: load it first); `state:delete
+   --session <id>` removes one. Sessions hold study and series identifiers, never credentials,
+   and are purged by the retention settings `weasis.hp.sessions.max` and
+   `weasis.hp.sessions.max.days`.
    `hp:validate --corpus <dir> [--protocols <file>] [--expected <file>]` runs the matching over
    a folder of studies without any viewer and reports the counts per protocol, the protocol and
    first-step cells of each study and, with an expectations file, which studies hang as expected.
    `hp:features [--study <uid> | --corpus <dir>]` lists the series features the selectors test
    (role, orientation, anatomy, view, laterality, MR weighting, CT kernel family, thickness,
    temporal...), the way to see why a series matched or not.
-8. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
+11. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
    and still have no usable 3D.
 
