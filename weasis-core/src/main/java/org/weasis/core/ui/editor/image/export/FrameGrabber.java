@@ -18,6 +18,7 @@ import java.awt.Point;
 import java.awt.PointerInfo;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Window;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
@@ -38,7 +39,8 @@ import org.weasis.opencv.op.ImageConversion;
  * Turns a {@link CaptureScope} into pixels. A single 2D view is re-rendered off-screen, which gives
  * a clean frame with no interactive-only annotation; everything else — a 3D view, a whole layout,
  * the application window — is painted as displayed, since that is the only way to pick up an OpenGL
- * surface and the surrounding interface.
+ * surface and the surrounding interface. The application window brings along the dialogs, menus and
+ * tooltips it owns.
  *
  * <p>The frame size is fixed once by {@link #prepare()} so a window resized halfway through a
  * recording cannot produce frames the encoder will refuse. A recording that follows the selection
@@ -300,8 +302,34 @@ public class FrameGrabber {
     Graphics2D g2d = image.createGraphics();
     try {
       component.paint(g2d);
+      if (component instanceof Window window && window.isShowing()) {
+        paintOwnedWindows(window, window.getLocationOnScreen(), g2d);
+      }
     } finally {
       g2d.dispose();
+    }
+  }
+
+  /**
+   * Paints the dialogs, menus and tooltips the window owns over it, where they are on screen. They
+   * are windows of their own, not children of the frame, so painting the frame leaves them out.
+   * Owned windows come in creation order, which puts a dialog opened from another one on top.
+   */
+  private static void paintOwnedWindows(Window owner, Point origin, Graphics2D g2d) {
+    for (Window owned : owner.getOwnedWindows()) {
+      if (!owned.isShowing() || owned.getWidth() <= 0 || owned.getHeight() <= 0) {
+        continue;
+      }
+      Point location = owned.getLocationOnScreen();
+      Graphics2D g = (Graphics2D) g2d.create();
+      try {
+        g.translate(location.x - origin.x, location.y - origin.y);
+        g.clipRect(0, 0, owned.getWidth(), owned.getHeight());
+        owned.paint(g);
+      } finally {
+        g.dispose();
+      }
+      paintOwnedWindows(owned, origin, g2d);
     }
   }
 
