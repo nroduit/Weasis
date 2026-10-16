@@ -11,7 +11,9 @@ package org.weasis.core.ui.model.graphic.imp.area;
 
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
+import java.awt.Graphics2D;
 import java.awt.Shape;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -27,6 +29,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape;
+import org.weasis.core.ui.model.utils.bean.AdvancedShape.BasicShape;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -55,6 +58,9 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
           "orientation", Messages.getString("measure.orientation"), 7, true, true, false);
 
   protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
+
+  // The dashed axis between the handles A and B, a guide for editing
+  private BasicShape axisGuide;
 
   static {
     MEASUREMENT_LIST.add(CENTER_X);
@@ -89,9 +95,19 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
     return Messages.getString("MeasureToolBar.ellipse");
   }
 
+  /** The axis guide is only drawn when the graphic can be edited: its layer is not locked. */
+  @Override
+  public void paint(Graphics2D g2d, AffineTransform transform) {
+    if (axisGuide != null) {
+      axisGuide.setVisible(getLayer() == null || !Boolean.TRUE.equals(getLayer().getLocked()));
+    }
+    super.paint(g2d, transform);
+  }
+
   @Override
   public void buildShape(MouseEventDouble mouseEvent) {
     updateTool();
+    axisGuide = null;
 
     Shape newShape = null;
     Path2D polygonPath = new Path2D.Double(Path2D.WIND_NON_ZERO, pts.size());
@@ -100,7 +116,7 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
       newShape = new AdvancedShape(this, 2);
       AdvancedShape aShape = (AdvancedShape) newShape;
       aShape.addShape(polygonPath);
-      aShape.addShape(new Line2D.Double(ptA, ptB), getDashStroke(1.0f), true);
+      axisGuide = aShape.addShape(new Line2D.Double(ptA, ptB), getDashStroke(1.0f), true);
 
       polygonPath.moveTo(ptA.getX(), ptA.getY());
       if (lineCDvalid) {
