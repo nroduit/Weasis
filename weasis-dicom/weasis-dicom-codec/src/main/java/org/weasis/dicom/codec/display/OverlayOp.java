@@ -10,23 +10,33 @@
 package org.weasis.dicom.codec.display;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import org.dcm4che3.img.DicomImageReadParam;
 import org.dcm4che3.img.DicomMetaData;
 import org.dcm4che3.img.data.OverlayData;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.stream.ImageDescriptor;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Rect;
+import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageTransformer;
 
 public class OverlayOp extends AbstractOp {
   public static final String OP_NAME = ActionW.IMAGE_OVERLAY.getTitle();
@@ -58,6 +68,7 @@ public class OverlayOp extends AbstractOp {
     if (OpEvent.IMAGE_CHANGE.equals(type) || OpEvent.RESET_DISPLAY.equals(type)) {
       setParam(WindowAndPresetsOp.P_PR_ELEMENT, null);
       setParam(P_IMAGE_ELEMENT, event.image());
+      setParam(ActionW.CROP.cmd(), null);
     } else if (OpEvent.APPLY_PR.equals(type)) {
       Map<String, Object> p = event.params();
       if (p != null) {
@@ -68,6 +79,8 @@ public class OverlayOp extends AbstractOp {
                 .orElse(null);
         setParam(WindowAndPresetsOp.P_PR_ELEMENT, pr == null ? null : pr.getPrDicomObject());
         setParam(P_IMAGE_ELEMENT, event.image());
+        // The displayed area of the presentation state crops the image
+        setParam(ActionW.CROP.cmd(), p.get(ActionW.CROP.cmd()));
       }
     }
   }
@@ -104,11 +117,16 @@ public class OverlayOp extends AbstractOp {
 
   /** The overlays of a frame do not depend on its rendering: the mask is kept across windows. */
   private record OverlayMask(
-      ImageElement image, int frame, PrDicomObject presentationState, ImageCV mask) {
-    boolean isFor(ImageElement image, int frame, PrDicomObject presentationState) {
+      ImageElement image,
+      int frame,
+      PrDicomObject presentationState,
+      Rectangle crop,
+      ImageCV mask) {
+    boolean isFor(ImageElement image, int frame, PrDicomObject presentationState, Rectangle crop) {
       return this.image == image
           && this.frame == frame
-          && this.presentationState == presentationState;
+          && this.presentationState == presentationState
+          && Objects.equals(this.crop, crop);
     }
   }
 
@@ -122,21 +140,71 @@ public class OverlayOp extends AbstractOp {
       throws Exception {
     OverlayMask kept = overlayMask;
     PrDicomObject pr = p.getPresentationState().orElse(null);
-    if (kept != null && kept.isFor(image, frame, pr)) {
+    Rectangle crop = (Rectangle) params.get(ActionW.CROP.cmd());
+    if (kept != null && kept.isFor(image, frame, pr, crop)) {
       return kept.mask();
     }
-    PlanarImage stored = source;
-    if (!desc.getEmbeddedOverlay().isEmpty()) {
+    // The overlay origins are relative to the stored frame: build the mask at its size, then
+    // stretch and crop it like the displayed image
+    PlanarImage stored;
+    if (desc.getEmbeddedOverlay().isEmpty()) {
+      // Only the size is read when no overlay is embedded in the pixel data
+      stored = new ImageCV(desc.getRows(), desc.getColumns(), CvType.CV_8UC1);
+    } else {
       stored = reader.getImageFragment(image, frame, false);
     }
     ImageCV mask = stored == null ? null : OverlayData.getOverlayMask(stored, desc, p, frame);
-    if (stored != null && stored != source) {
+    if (stored != null) {
       stored.release();
     }
+    mask = toImage(mask, image, crop, source.width(), source.height());
     if (kept != null && kept.mask() != null) {
       kept.mask().release();
     }
-    overlayMask = new OverlayMask(image, frame, pr, mask);
+    overlayMask = new OverlayMask(image, frame, pr, crop, mask);
     return mask;
+  }
+
+  /**
+   * Gives the mask of the stored frame the geometry of the image it is applied to: stretched to
+   * square pixels when they are not (as {@link ImageElement#getRectifyAspectRatioZoomOp()}) and the
+   * image is, then cropped to the displayed area.
+   *
+   * @param width the width of the image the mask is applied to
+   * @param height the height of the image the mask is applied to
+   */
+  static ImageCV toImage(ImageCV mask, ImageElement image, Rectangle crop, int width, int height) {
+    if (mask == null) {
+      return null;
+    }
+    ImageCV result = mask;
+    Dimension size =
+        new Dimension(
+            ZoomOp.scaledLength(mask.width(), image.getRescaleX()),
+            ZoomOp.scaledLength(mask.height(), image.getRescaleY()));
+    // The export renders the stored pixels and stretches them last: the mask is not stretched then
+    Rectangle shown = new Rectangle(size);
+    if (crop != null) {
+      shown = crop.intersection(shown);
+    }
+    if (MathUtil.isDifferent(image.getRescaleX(), image.getRescaleY())
+        && shown.width == width
+        && shown.height == height) {
+      // Pixel centers are kept aligned with the bilinear stretch of the image
+      result = ImageTransformer.scale(mask, size, Imgproc.INTER_NEAREST_EXACT);
+      mask.release();
+    }
+    if (crop != null) {
+      Rectangle area = crop.intersection(new Rectangle(0, 0, result.width(), result.height()));
+      if (!area.isEmpty() && (area.width != result.width() || area.height != result.height())) {
+        ImageCV cropped = new ImageCV();
+        Mat roi = new Mat(result, new Rect(area.x, area.y, area.width, area.height));
+        roi.copyTo(cropped);
+        roi.release();
+        result.release();
+        result = cropped;
+      }
+    }
+    return result;
   }
 }

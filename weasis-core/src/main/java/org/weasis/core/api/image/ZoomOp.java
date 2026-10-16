@@ -93,9 +93,14 @@ public class ZoomOp extends AbstractOp {
         || MathUtil.isDifferent(zoomY, DEFAULT_ZOOM_FACTOR);
   }
 
+  /** The length of the scaled image, as computed by this operation. */
+  public static int scaledLength(int length, double zoom) {
+    return (int) (Math.abs(zoom) * length);
+  }
+
   private PlanarImage scaleImage(PlanarImage source, double zoomX, double zoomY) throws Exception {
-    int newWidth = (int) (Math.abs(zoomX) * source.width());
-    int newHeight = (int) (Math.abs(zoomY) * source.height());
+    int newWidth = scaledLength(source.width(), zoomX);
+    int newHeight = scaledLength(source.height(), zoomY);
     Integer interpolation = selectInterpolation(zoomX, zoomY);
 
     return ImageTransformer.scale(
