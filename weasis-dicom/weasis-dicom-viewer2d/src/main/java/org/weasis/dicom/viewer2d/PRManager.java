@@ -11,8 +11,10 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.text.DateFormat;
@@ -54,10 +56,8 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
-import org.weasis.core.ui.model.graphic.AbstractGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
-import org.weasis.core.ui.model.graphic.imp.PointGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
@@ -104,8 +104,6 @@ public class PRManager {
   public static final String TAG_DICOM_LAYERS = "pr.layers";
 
   // Internal constants
-  private static final String DISPLAY_MODE = "DISPLAY"; // NON-NLS
-  private static final String PIXEL_MODE = "PIXEL"; // NON-NLS
   private static final String TRUE_SIZE_MODE = "TRUE SIZE"; // NON-NLS
   private static final String SCALE_TO_FIT_MODE = "SCALE TO FIT"; // NON-NLS
   private static final String MAGNIFY_MODE = "MAGNIFY"; // NON-NLS
@@ -510,6 +508,10 @@ public class PRManager {
     public void process() {
       Rectangle2D displayedArea = getSpecifiedDisplayedArea(context);
       if (displayedArea != null) {
+        AffineTransform pixelToImage = PrGraphicUtil.pixelToImage(context.img());
+        if (pixelToImage != null) {
+          displayedArea = pixelToImage.createTransformedShape(displayedArea).getBounds2D();
+        }
         Rectangle cropArea = new Rectangle();
         cropArea.setFrameFromDiagonal(
             getDisplayLength(displayedArea.getMinX()),
@@ -624,10 +626,21 @@ public class PRManager {
       // DISPLAY units refer to the Specified Displayed Area, not to the part inside the image
       Rectangle2D area = getSpecifiedDisplayedArea(context);
       if (area == null) {
-        area = context.view().getViewModel().getModelArea();
+        Integer columns = TagD.getTagValue(context.img(), Tag.Columns, Integer.class);
+        Integer rows = TagD.getTagValue(context.img(), Tag.Rows, Integer.class);
+        area =
+            columns == null || rows == null
+                ? context.view().getViewModel().getModelArea()
+                : new Rectangle2D.Double(0, 0, columns, rows);
       }
       return new TransformationContext(
-          area.getWidth(), area.getHeight(), PrGraphicUtil.displayToPixel(area, rotation, flip));
+          area.getWidth(),
+          area.getHeight(),
+          PrGraphicUtil.displayToPixel(area, rotation, flip),
+          PrGraphicUtil.pixelToImage(context.img()),
+          PrGraphicUtil.getTileOrigin(context.img()),
+          rotation,
+          flip);
     }
 
     private void processGraphicAnnotation(
@@ -709,15 +722,24 @@ public class PRManager {
 
       for (Attributes graphicObject : graphicSequence) {
         try {
+          Attributes item = graphicObject;
+          if (transformContext.tileOrigin() != null
+              && PrGraphicUtil.MATRIX_UNITS.equalsIgnoreCase(
+                  graphicObject.getString(Tag.GraphicAnnotationUnits))) {
+            item =
+                PrGraphicUtil.matrixToFrame(
+                    graphicObject, transformContext.tileOrigin(), Tag.GraphicAnnotationUnits);
+          }
           Graphic graphic =
               PrGraphicUtil.buildGraphic(
-                  graphicObject,
+                  item,
                   layerColor,
                   false,
                   transformContext.width(),
                   transformContext.height(),
                   true,
                   transformContext.displayToPixel(),
+                  transformContext.pixelToImage(),
                   false);
           if (graphic != null) {
             AbstractGraphicModel.addGraphicToModel(context.view(), layer, graphic);
@@ -765,12 +787,38 @@ public class PRManager {
       }
 
       public void process() {
-        Color textColor = extractTextColor();
-        Float thickness = extractThickness();
-        String[] textLines = extractTextLines();
+        Point2D anchor =
+            context.toModel(
+                textObject.getFloats(Tag.AnchorPoint),
+                textObject.getString(Tag.AnchorPointAnnotationUnits));
+        Rectangle2D box = extractBoundingBox();
+        if (anchor == null && box == null) {
+          return;
+        }
 
-        processAnchoredText(textColor, thickness, textLines);
-        processBoundedText(textColor, thickness, textLines);
+        Point2D boxPoint;
+        double[] alignment;
+        if (box != null) {
+          alignment = getTextAlignment();
+          boxPoint = context.alignedPoint(box, alignment[0], alignment[1]);
+        } else {
+          // No box: the text stands next to the anchor point
+          alignment = new double[] {0.5, 0.5};
+          boxPoint = anchor;
+        }
+        boolean anchorVisible =
+            anchor != null
+                && PresentationStateReader.getBooleanValue(textObject, Tag.AnchorPointVisibility);
+        if (anchorVisible && anchor.equals(boxPoint)) {
+          boxPoint = new Point2D.Double(anchor.getX() + 20, anchor.getY() + 50);
+        }
+        createAnnotationGraphic(
+            anchorVisible ? anchor : null,
+            boxPoint,
+            alignment,
+            extractTextColor(),
+            extractThickness(),
+            extractTextLines());
       }
 
       private Color extractTextColor() {
@@ -791,85 +839,47 @@ public class PRManager {
         return EscapeChars.convertToLines(textObject.getString(Tag.UnformattedTextValue));
       }
 
-      private void processAnchoredText(Color textColor, Float thickness, String[] textLines) {
-        float[] anchor = textObject.getFloats(Tag.AnchorPoint);
-        if (anchor == null || anchor.length != 2) {
-          return;
+      /**
+       * Where the text stands in its bounding box, as fractions of the box from its top left corner
+       * on screen. The Horizontal and Vertical Alignment of the Text Style override the Bounding
+       * Box Text Horizontal Justification; the text runs from the top by default (PS3.3
+       * C.10.5.1.1).
+       */
+      private double[] getTextAlignment() {
+        Attributes style = textObject.getNestedDataset(Tag.TextStyleSequence);
+        String horizontal = style == null ? null : style.getString(Tag.HorizontalAlignment);
+        if (horizontal == null) {
+          horizontal = textObject.getString(Tag.BoundingBoxTextHorizontalJustification);
         }
-
-        boolean isDisplay =
-            DISPLAY_MODE.equalsIgnoreCase(textObject.getString(Tag.AnchorPointAnnotationUnits));
-
-        Point2D.Double anchorPoint = new Point2D.Double(anchor[0], anchor[1]);
-        if (isDisplay) {
-          context.displayToPixel().transform(anchorPoint, anchorPoint);
-        }
-        anchorPoint.setLocation(
-            PrGraphicUtil.pixelToModel(anchorPoint.getX()),
-            PrGraphicUtil.pixelToModel(anchorPoint.getY()));
-
-        Rectangle2D boundingBox = extractBoundingBox();
-        // Use the box center. This does not follow the DICOM standard.
-        Point2D.Double boxPoint =
-            boundingBox != null
-                ? new Point2D.Double(boundingBox.getCenterX(), boundingBox.getCenterY())
-                : anchorPoint;
-
-        if (!PresentationStateReader.getBooleanValue(textObject, Tag.AnchorPointVisibility)) {
-          anchorPoint = null;
-        }
-
-        if (anchorPoint != null && anchorPoint.equals(boxPoint)) {
-          boxPoint = new Point2D.Double(anchorPoint.getX() + 20, anchorPoint.getY() + 50);
-        }
-
-        createAnnotationGraphic(anchorPoint, boxPoint, textColor, thickness, textLines);
+        String vertical = style == null ? null : style.getString(Tag.VerticalAlignment);
+        return new double[] {getAlignment(horizontal, "RIGHT"), getAlignment(vertical, "BOTTOM")};
       }
 
-      private void processBoundedText(Color textColor, Float thickness, String[] textLines) {
-        float[] anchor = textObject.getFloats(Tag.AnchorPoint);
-        if (anchor != null && anchor.length == 2) {
-          return; // Already processed as anchored text
+      private static double getAlignment(String value, String end) {
+        if ("CENTER".equalsIgnoreCase(value)) { // NON-NLS
+          return 0.5;
         }
-
-        Rectangle2D boundingBox = extractBoundingBox();
-        if (boundingBox != null) {
-          Point2D point = new Point2D.Double(boundingBox.getMinX(), boundingBox.getMinY());
-          createPointAnnotation(point, textColor, thickness, textLines);
-        }
+        return end.equalsIgnoreCase(value) ? 1.0 : 0.0;
       }
 
       private Rectangle2D extractBoundingBox() {
-        boolean isDisplay =
-            DISPLAY_MODE.equalsIgnoreCase(textObject.getString(Tag.BoundingBoxAnnotationUnits));
-
-        float[] topLeft = textObject.getFloats(Tag.BoundingBoxTopLeftHandCorner);
-        float[] bottomRight = textObject.getFloats(Tag.BoundingBoxBottomRightHandCorner);
-
-        if (topLeft == null || bottomRight == null) {
+        String units = textObject.getString(Tag.BoundingBoxAnnotationUnits);
+        Point2D p1 = context.toModel(textObject.getFloats(Tag.BoundingBoxTopLeftHandCorner), units);
+        Point2D p2 =
+            context.toModel(textObject.getFloats(Tag.BoundingBoxBottomRightHandCorner), units);
+        if (p1 == null || p2 == null) {
           return null;
         }
-
-        Point2D p1 = new Point2D.Double(topLeft[0], topLeft[1]);
-        Point2D p2 = new Point2D.Double(bottomRight[0], bottomRight[1]);
-        if (isDisplay) {
-          // Rotation and flip may swap the corners: the diagonal below orders them
-          context.displayToPixel().transform(p1, p1);
-          context.displayToPixel().transform(p2, p2);
-        }
+        // Rotation and flip may swap the corners: the diagonal orders them
         Rectangle2D rect = new Rectangle2D.Double();
         rect.setFrameFromDiagonal(p1, p2);
-        rect.setRect(
-            PrGraphicUtil.pixelToModel(rect.getX()),
-            PrGraphicUtil.pixelToModel(rect.getY()),
-            rect.getWidth(),
-            rect.getHeight());
         return rect;
       }
 
       private void createAnnotationGraphic(
-          Point2D.Double anchorPoint,
-          Point2D.Double boxPoint,
+          Point2D anchorPoint,
+          Point2D boxPoint,
+          double[] alignment,
           Color textColor,
           Float thickness,
           String[] textLines) {
@@ -878,7 +888,9 @@ public class PRManager {
           points.add(anchorPoint);
           points.add(boxPoint);
 
-          Graphic graphic = new AnnotationGraphic().buildGraphic(points);
+          AnnotationGraphic graphic = new AnnotationGraphic();
+          graphic.setLabelAlignment(alignment[0], alignment[1]);
+          graphic.buildGraphic(points);
           graphic.setPaint(textColor);
           graphic.setLineThickness(thickness);
           graphic.setLabelVisible(Boolean.TRUE);
@@ -886,24 +898,6 @@ public class PRManager {
 
           AbstractGraphicModel.addGraphicToModel(
               GraphicAnnotationReader.this.context.view(), layer, graphic);
-        } catch (InvalidShapeException e) {
-          LOGGER.error("Cannot create annotation: {}", e.getMessage(), e);
-        }
-      }
-
-      private void createPointAnnotation(
-          Point2D point, Color textColor, Float thickness, String[] textLines) {
-        try {
-          AbstractGraphic pointGraphic =
-              (AbstractGraphic) new PointGraphic().buildGraphic(Collections.singletonList(point));
-
-          pointGraphic.setLineThickness(thickness);
-          pointGraphic.setLabelVisible(Boolean.TRUE);
-
-          AbstractGraphicModel.addGraphicToModel(
-              GraphicAnnotationReader.this.context.view(), layer, pointGraphic);
-          pointGraphic.setShape(null, null);
-          pointGraphic.setLabel(textLines, GraphicAnnotationReader.this.context.view(), point);
         } catch (InvalidShapeException e) {
           LOGGER.error("Cannot create annotation: {}", e.getMessage(), e);
         }
@@ -1035,34 +1029,99 @@ public class PRManager {
 
   // ========== Records ==========
 
-  private record TransformationContext(
-      double width, double height, AffineTransform displayToPixel) {}
+  /**
+   * Converts the units of a presentation state to the model of the view.
+   *
+   * @param width the width multiplying DISPLAY units when there is no transform
+   * @param height the height multiplying DISPLAY units when there is no transform
+   * @param displayToPixel DISPLAY to PIXEL units, see {@link PrGraphicUtil#displayToPixel}
+   * @param pixelToImage PIXEL units to the displayed image, null for square pixels
+   * @param tileOrigin the position of the frame in the Total Pixel Matrix, null if not tiled
+   * @param rotation the Image Rotation, clockwise in degrees
+   * @param flip the Image Horizontal Flip
+   */
+  record TransformationContext(
+      double width,
+      double height,
+      AffineTransform displayToPixel,
+      AffineTransform pixelToImage,
+      Point tileOrigin,
+      int rotation,
+      boolean flip) {
+
+    /**
+     * Converts a point of a text object to the model.
+     *
+     * @param point the column and row, or null
+     * @param units PIXEL, DISPLAY or MATRIX
+     * @return the point in the model, or null when it is missing
+     */
+    Point2D toModel(float[] point, String units) {
+      if (point == null || point.length != 2) {
+        return null;
+      }
+      Point2D p = new Point2D.Double(point[0], point[1]);
+      if (PrGraphicUtil.DISPLAY_UNITS.equalsIgnoreCase(units)) {
+        displayToPixel.transform(p, p);
+      } else if (tileOrigin != null && PrGraphicUtil.MATRIX_UNITS.equalsIgnoreCase(units)) {
+        p.setLocation(p.getX() - tileOrigin.x, p.getY() - tileOrigin.y);
+      }
+      return PrGraphicUtil.pixelToModel(p, pixelToImage);
+    }
+
+    /**
+     * The point of a box, in the model, at the given fractions of its width and height from its top
+     * left corner as shown: after the rotation (clockwise) and then the flip of the image.
+     */
+    Point2D alignedPoint(Rectangle2D box, double alignX, double alignY) {
+      AffineTransform orientation = new AffineTransform();
+      if (flip) {
+        orientation.scale(-1.0, 1.0);
+      }
+      orientation.rotate(Math.toRadians(rotation));
+      Rectangle2D shown = orientation.createTransformedShape(box).getBounds2D();
+      Point2D p =
+          new Point2D.Double(
+              shown.getMinX() + alignX * shown.getWidth(),
+              shown.getMinY() + alignY * shown.getHeight());
+      try {
+        orientation.inverseTransform(p, p);
+      } catch (NoninvertibleTransformException e) {
+        return new Point2D.Double(box.getCenterX(), box.getCenterY());
+      }
+      return p;
+    }
+  }
 
   /**
-   * The Specified Displayed Area in PIXEL units (0\0 at the corner of the first pixel), in the
-   * resampled image when the pixels are not square. Its corners are the first and last displayed
-   * pixels from 1\1, swapped by the rotation (PS3.3 C.10.4), and may lie outside the image.
+   * The Specified Displayed Area in PIXEL units of the frame (0\0 at the corner of its first
+   * pixel). Its corners are the first and last displayed pixels from 1\1, swapped by the rotation,
+   * and may lie outside the image (PS3.3 C.10.4).
    */
   private static Rectangle2D getSpecifiedDisplayedArea(PresentationContext context) {
     int[] tlhc =
         TagD.getTagValue(context.reader(), Tag.DisplayedAreaTopLeftHandCorner, int[].class);
     int[] brhc =
         TagD.getTagValue(context.reader(), Tag.DisplayedAreaBottomRightHandCorner, int[].class);
-    return getSpecifiedDisplayedArea(
-        tlhc, brhc, context.img().getRescaleX(), context.img().getRescaleY());
+    String origin = TagD.getTagValue(context.reader(), Tag.PixelOriginInterpretation, String.class);
+    // VOLUME: the corners are relative to the Total Pixel Matrix of a tiled image
+    Point tileOrigin =
+        "VOLUME".equalsIgnoreCase(origin) ? PrGraphicUtil.getTileOrigin(context.img()) : null;
+    return getSpecifiedDisplayedArea(tlhc, brhc, tileOrigin);
   }
 
-  static Rectangle2D getSpecifiedDisplayedArea(
-      int[] tlhc, int[] brhc, double ratioX, double ratioY) {
+  static Rectangle2D getSpecifiedDisplayedArea(int[] tlhc, int[] brhc, Point tileOrigin) {
     if (tlhc == null || tlhc.length != 2 || brhc == null || brhc.length != 2) {
       return null;
     }
+    double dx = tileOrigin == null ? 0 : tileOrigin.x;
+    double dy = tileOrigin == null ? 0 : tileOrigin.y;
     Rectangle2D area = new Rectangle2D.Double();
     area.setFrameFromDiagonal(
-        (Math.min(tlhc[0], brhc[0]) - 1) * ratioX,
-        (Math.min(tlhc[1], brhc[1]) - 1) * ratioY,
-        Math.max(tlhc[0], brhc[0]) * ratioX,
-        Math.max(tlhc[1], brhc[1]) * ratioY);
+        Math.min(tlhc[0], brhc[0]) - 1 - dx,
+        Math.min(tlhc[1], brhc[1]) - 1 - dy,
+        Math.max(tlhc[0], brhc[0]) - dx,
+        Math.max(tlhc[1], brhc[1]) - dy);
     return area;
   }
 }

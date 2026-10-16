@@ -15,6 +15,7 @@ import java.awt.Color;
 import java.awt.Shape;
 import java.awt.color.ColorSpace;
 import java.awt.color.ICC_ColorSpace;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.FlatteningPathIterator;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
@@ -22,6 +23,7 @@ import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -66,6 +68,7 @@ import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.utils.GraphicOutline;
 import org.weasis.core.ui.serialize.XmlSerializer;
+import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -82,6 +85,7 @@ public class DicomPrSerializer {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrSerializer.class);
 
   private static final String PIXEL = "PIXEL";
+  private static final double ASPECT_PRECISION = 1e6;
   private static final String GSPS = "GSPS"; // NON-NLS
   private static final String DESCRIPTION = "Weasis Graphics and Annotations"; // NON-NLS
   private static final String YES = "Y"; // NON-NLS
@@ -131,6 +135,18 @@ public class DicomPrSerializer {
       String seriesInstanceUID,
       String sopInstanceUID,
       Point2D offset) {
+    return writePresentation(
+        model, parentAttributes, outputFile, seriesInstanceUID, sopInstanceUID, offset, null);
+  }
+
+  private static Attributes writePresentation(
+      GraphicModel model,
+      Attributes parentAttributes,
+      File outputFile,
+      String seriesInstanceUID,
+      String sopInstanceUID,
+      Point2D offset,
+      AffineTransform pixelToImage) {
     Objects.requireNonNull(model, "GraphicModel cannot be null");
     Objects.requireNonNull(outputFile, "Output file cannot be null");
 
@@ -140,7 +156,13 @@ public class DicomPrSerializer {
     }
     try {
       return createPresentationState(
-          model, parentAttributes, outputFile, seriesInstanceUID, sopInstanceUID, offset);
+          model,
+          parentAttributes,
+          outputFile,
+          seriesInstanceUID,
+          sopInstanceUID,
+          offset,
+          pixelToImage);
     } catch (Exception e) {
       LOGGER.error("Cannot write Presentation State to file: {}", outputFile.getAbsolutePath(), e);
       return null;
@@ -163,7 +185,12 @@ public class DicomPrSerializer {
       double unitRatio =
           img.getPixelSize()
               * Unit.MILLIMETER.getConversionRatio(img.getPixelSpacingUnit().getFactorToMeters());
-      attributes.setDouble(Tag.PresentationPixelSpacing, VR.DS, unitRatio, unitRatio);
+      // The pixel size is the one of the image stretched to square pixels: row then column spacing
+      attributes.setDouble(
+          Tag.PresentationPixelSpacing,
+          VR.DS,
+          unitRatio * img.getRescaleY(),
+          unitRatio * img.getRescaleX());
     } else if (attributes != null && attributes.containsValue(Tag.PresentationPixelSpacing)) {
       attributes.remove(Tag.PresentationPixelSpacing);
     }
@@ -188,7 +215,13 @@ public class DicomPrSerializer {
     Attributes imgAttributes = extractImageAttributes(img);
     writeCalibration(img, imgAttributes);
     return writePresentation(
-        model, imgAttributes, outputFile, seriesInstanceUID, sopInstanceUID, null);
+        model,
+        imgAttributes,
+        outputFile,
+        seriesInstanceUID,
+        sopInstanceUID,
+        null,
+        PrGraphicUtil.pixelToImage(img));
   }
 
   private static Attributes createPresentationState(
@@ -197,7 +230,8 @@ public class DicomPrSerializer {
       File outputFile,
       String seriesInstanceUID,
       String sopInstanceUID,
-      Point2D offset)
+      Point2D offset,
+      AffineTransform pixelToImage)
       throws Exception {
 
     GraphicModel serializedModel = getModelForSerialization(model, offset);
@@ -209,6 +243,9 @@ public class DicomPrSerializer {
     writeCommonTags(attributes);
     writeReferences(attributes, serializedModel, parentAttributes.getString(Tag.SOPClassUID));
     writeGraphics(serializedModel, attributes);
+    if (pixelToImage != null) {
+      toSourcePixels(attributes, pixelToImage.createInverse());
+    }
     writePrivateTags(serializedModel, attributes);
 
     if (saveToFile(outputFile, attributes)) {
@@ -351,12 +388,68 @@ public class DicomPrSerializer {
         DicomUtils.getDoubleArrayFromDicomElement(
             sourceAttributes, Tag.PresentationPixelSpacing, null);
     if (pixelSpacing == null) {
-      displayedAreaItem.setInt(Tag.PresentationPixelAspectRatio, VR.IS, new int[] {1, 1});
+      displayedAreaItem.setInt(
+          Tag.PresentationPixelAspectRatio, VR.IS, getPixelAspectRatio(sourceAttributes));
     } else {
       displayedAreaItem.setDouble(Tag.PresentationPixelSpacing, VR.DS, pixelSpacing);
     }
 
     displayedAreaSeq.add(displayedAreaItem);
+  }
+
+  /**
+   * The aspect ratio of the image pixels, vertical then horizontal: from Pixel Aspect Ratio, else
+   * from the row and column spacing, else 1\1.
+   */
+  static int[] getPixelAspectRatio(Attributes image) {
+    int[] ratio = DicomUtils.getIntArrayFromDicomElement(image, Tag.PixelAspectRatio, null);
+    if (ratio != null && ratio.length == 2 && ratio[0] > 0 && ratio[1] > 0) {
+      return ratio;
+    }
+    double[] spacing = DicomUtils.getDoubleArrayFromDicomElement(image, Tag.PixelSpacing, null);
+    if (spacing == null) {
+      spacing = DicomUtils.getDoubleArrayFromDicomElement(image, Tag.ImagerPixelSpacing, null);
+    }
+    if (spacing == null
+        || spacing.length != 2
+        || spacing[0] <= 0
+        || spacing[1] <= 0
+        || MathUtil.isEqual(spacing[0], spacing[1])) {
+      return new int[] {1, 1};
+    }
+    long vertical = Math.round(spacing[0] * ASPECT_PRECISION);
+    long horizontal = Math.round(spacing[1] * ASPECT_PRECISION);
+    long gcd = BigInteger.valueOf(vertical).gcd(BigInteger.valueOf(horizontal)).longValue();
+    return new int[] {(int) (vertical / gcd), (int) (horizontal / gcd)};
+  }
+
+  /**
+   * Converts the PIXEL coordinates written from the model, where the image is stretched to square
+   * pixels, to the pixels of the source image.
+   */
+  static void toSourcePixels(Attributes pr, AffineTransform imageToPixel) {
+    for (Attributes annotation : pr.getSequence(Tag.GraphicAnnotationSequence)) {
+      Sequence graphics = annotation.getSequence(Tag.GraphicObjectSequence);
+      if (graphics != null) {
+        graphics.forEach(g -> transformPoints(g, Tag.GraphicData, imageToPixel));
+      }
+      Sequence texts = annotation.getSequence(Tag.TextObjectSequence);
+      if (texts != null) {
+        for (Attributes text : texts) {
+          transformPoints(text, Tag.AnchorPoint, imageToPixel);
+          transformPoints(text, Tag.BoundingBoxTopLeftHandCorner, imageToPixel);
+          transformPoints(text, Tag.BoundingBoxBottomRightHandCorner, imageToPixel);
+        }
+      }
+    }
+  }
+
+  private static void transformPoints(Attributes item, int tag, AffineTransform t) {
+    float[] points = item.getFloats(tag);
+    if (points != null) {
+      t.transform(points, 0, points, 0, points.length / 2);
+      item.setFloat(tag, VR.FL, points);
+    }
   }
 
   private static void addGraphicAnnotationSequence(Attributes attributes) {

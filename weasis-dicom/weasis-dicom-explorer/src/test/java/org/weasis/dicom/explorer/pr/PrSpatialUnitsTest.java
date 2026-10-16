@@ -9,10 +9,13 @@
  */
 package org.weasis.dicom.explorer.pr;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.awt.Color;
+import java.awt.Point;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import org.dcm4che3.data.Attributes;
@@ -20,6 +23,7 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -118,5 +122,112 @@ class PrSpatialUnitsTest {
     assertEquals(minY, b.getMinY(), 1e-4);
     assertEquals(maxX, b.getMaxX(), 1e-4);
     assertEquals(maxY, b.getMaxY(), 1e-4);
+  }
+
+  private static Attributes graphic(String type, String units, float... points) {
+    Attributes a = new Attributes();
+    a.setString(Tag.GraphicAnnotationUnits, VR.CS, units);
+    a.setInt(Tag.GraphicDimensions, VR.US, 2);
+    a.setInt(Tag.NumberOfGraphicPoints, VR.US, points.length / 2);
+    a.setFloat(Tag.GraphicData, VR.FL, points);
+    a.setString(Tag.GraphicType, VR.CS, type);
+    a.setString(Tag.GraphicFilled, VR.CS, "N");
+    return a;
+  }
+
+  @Test
+  void two_point_ellipse_fills_its_bounding_rectangle() throws Exception {
+    // Compound ELLIPSE: top left then bottom right corners of the bounding rectangle
+    Graphic g =
+        PrGraphicUtil.buildGraphic(
+            graphic(PrGraphicUtil.ELLIPSE, "PIXEL", 10, 20, 50, 30),
+            Color.YELLOW,
+            false,
+            1,
+            1,
+            false,
+            null,
+            true);
+
+    assertNotNull(g);
+    Rectangle2D b = g.getShape().getBounds2D();
+    assertEquals(9.5, b.getMinX(), 1e-4);
+    assertEquals(19.5, b.getMinY(), 1e-4);
+    assertEquals(40, b.getWidth(), 1e-4);
+    assertEquals(10, b.getHeight(), 1e-4);
+  }
+
+  @Test
+  void pixel_units_are_stretched_with_non_square_pixels() throws Exception {
+    // Pixels twice as wide as high: the image is stretched to twice its width
+    Graphic g =
+        PrGraphicUtil.buildGraphic(
+            graphic(PrGraphicUtil.POLYLINE, "PIXEL", 0, 0, 10, 4),
+            Color.YELLOW,
+            false,
+            1,
+            1,
+            false,
+            null,
+            AffineTransform.getScaleInstance(2, 1),
+            false);
+
+    assertNotNull(g);
+    Rectangle2D b = g.getShape().getBounds2D();
+    assertEquals(-0.5, b.getMinX(), 1e-4);
+    assertEquals(-0.5, b.getMinY(), 1e-4);
+    assertEquals(19.5, b.getMaxX(), 1e-4);
+    assertEquals(3.5, b.getMaxY(), 1e-4);
+  }
+
+  @Test
+  void matrix_units_are_moved_to_the_frame() {
+    Attributes a = graphic(PrGraphicUtil.POLYLINE, "MATRIX", 1010, 2020, 1030, 2040);
+    a.setFloat(Tag.RotationPoint, VR.FL, 1000, 2000);
+
+    Attributes local =
+        PrGraphicUtil.matrixToFrame(a, new Point(1000, 2000), Tag.GraphicAnnotationUnits);
+
+    assertArrayEquals(new float[] {10, 20, 30, 40}, local.getFloats(Tag.GraphicData));
+    assertArrayEquals(new float[] {0, 0}, local.getFloats(Tag.RotationPoint));
+    assertEquals("PIXEL", local.getString(Tag.GraphicAnnotationUnits));
+    assertEquals("MATRIX", a.getString(Tag.GraphicAnnotationUnits), "source left unchanged");
+  }
+
+  @Test
+  void pixel_aspect_ratio_comes_from_the_image() {
+    Attributes ratio = new Attributes();
+    ratio.setInt(Tag.PixelAspectRatio, VR.IS, 4, 3);
+    Attributes spacing = new Attributes();
+    spacing.setDouble(Tag.PixelSpacing, VR.DS, 0.6, 0.4);
+    Attributes square = new Attributes();
+    square.setDouble(Tag.PixelSpacing, VR.DS, 0.5, 0.5);
+
+    assertArrayEquals(new int[] {4, 3}, DicomPrSerializer.getPixelAspectRatio(ratio));
+    assertArrayEquals(new int[] {3, 2}, DicomPrSerializer.getPixelAspectRatio(spacing));
+    assertArrayEquals(new int[] {1, 1}, DicomPrSerializer.getPixelAspectRatio(square));
+    assertArrayEquals(new int[] {1, 1}, DicomPrSerializer.getPixelAspectRatio(new Attributes()));
+  }
+
+  @Test
+  void written_pixels_are_the_source_pixels_with_non_square_pixels() throws Exception {
+    // Written from the image stretched twice in width: back to the source columns
+    Attributes pr = new Attributes();
+    Attributes annotation = new Attributes();
+    pr.newSequence(Tag.GraphicAnnotationSequence, 1).add(annotation);
+    Attributes polyline = graphic(PrGraphicUtil.POLYLINE, "PIXEL", 0, 0, 20, 4);
+    annotation.newSequence(Tag.GraphicObjectSequence, 1).add(polyline);
+    Attributes text = new Attributes();
+    text.setFloat(Tag.AnchorPoint, VR.FL, 10, 2);
+    text.setFloat(Tag.BoundingBoxTopLeftHandCorner, VR.FL, 20, 4);
+    text.setFloat(Tag.BoundingBoxBottomRightHandCorner, VR.FL, 40, 8);
+    annotation.newSequence(Tag.TextObjectSequence, 1).add(text);
+
+    DicomPrSerializer.toSourcePixels(pr, AffineTransform.getScaleInstance(2, 1).createInverse());
+
+    assertArrayEquals(new float[] {0, 0, 10, 4}, polyline.getFloats(Tag.GraphicData));
+    assertArrayEquals(new float[] {5, 2}, text.getFloats(Tag.AnchorPoint));
+    assertArrayEquals(new float[] {10, 4}, text.getFloats(Tag.BoundingBoxTopLeftHandCorner));
+    assertArrayEquals(new float[] {20, 8}, text.getFloats(Tag.BoundingBoxBottomRightHandCorner));
   }
 }

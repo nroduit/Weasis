@@ -11,11 +11,11 @@ package org.weasis.dicom.sr;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.data.VR;
 import org.dcm4che3.img.util.DicomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,11 +131,16 @@ public record SRGraphic(
     if (threeD) {
       graphic =
           SRScoordProjector.project(
-              item, image.getSliceGeometry(), image.getFrameOfReferenceUID(), COLOR, thickness);
+              item,
+              image.getSliceGeometry(),
+              image.getFrameOfReferenceUID(),
+              COLOR,
+              thickness,
+              PrGraphicUtil.pixelToImage(image));
     } else if (isVolumeOrigin()) {
       graphic = buildFromTotalPixelMatrix(image, thickness);
     } else {
-      graphic = build2D(item, COLOR, thickness, true);
+      graphic = build2D(item, COLOR, thickness, true, PrGraphicUtil.pixelToImage(image));
     }
     if (graphic != null && highlighted && label != null && !label.isBlank()) {
       // The label is measured again with the view's font when the model is attached to a view
@@ -153,20 +158,14 @@ public record SRGraphic(
     Point tile = tileOrigin(image);
     if (tile == null) {
       // Not a tiled image after all: the coordinates can only be frame-relative
-      return build2D(item, COLOR, thickness, true);
+      return build2D(item, COLOR, thickness, true, PrGraphicUtil.pixelToImage(image));
     }
     float[] data = DicomUtils.getFloatArrayFromDicomElement(item, Tag.GraphicData, null);
     if (data == null || data.length < 2) {
       return null;
     }
-    float[] shifted = new float[data.length];
-    for (int i = 0; i + 1 < data.length; i += 2) {
-      shifted[i] = data[i] - tile.x;
-      shifted[i + 1] = data[i + 1] - tile.y;
-    }
-    Attributes local = new Attributes(item);
-    local.setFloat(Tag.GraphicData, VR.FL, shifted);
-    Graphic graphic = build2D(local, COLOR, thickness, true);
+    Attributes local = PrGraphicUtil.matrixToFrame(item, tile, 0);
+    Graphic graphic = build2D(local, COLOR, thickness, true, PrGraphicUtil.pixelToImage(image));
     if (graphic == null) {
       return null;
     }
@@ -184,50 +183,21 @@ public record SRGraphic(
     return b.getMaxX() >= 0 && b.getMinX() <= columns && b.getMaxY() >= 0 && b.getMinY() <= rows;
   }
 
-  /**
-   * The position of a frame in the Total Pixel Matrix of a tiled image, as a 0-based (column, row)
-   * pixel offset.
-   *
-   * <p>The position comes from the Plane Position (Slide) Sequence of the frame's functional group
-   * (PS3.3 C.8.12.6.1), or is computed from the frame index for TILED_FULL organizations (PS3.3
-   * C.7.6.17.3), where tiles run left to right then top to bottom.
-   *
-   * @return the offset, or null when the image is not tiled or the position cannot be determined
-   */
+  /** See {@link PrGraphicUtil#getTileOrigin(DicomImageElement)}. */
   static Point tileOrigin(DicomImageElement image) {
-    if (image == null || image.getMediaReader() == null) {
-      return null;
-    }
-    Attributes dcm = image.getMediaReader().getDicomObject();
-    if (dcm == null || !dcm.containsValue(Tag.TotalPixelMatrixColumns)) {
-      return null;
-    }
-    int frame = image.getKey() instanceof Integer index ? index : 0;
-    Attributes group = dcm.getNestedDataset(Tag.PerFrameFunctionalGroupsSequence, frame);
-    Attributes position =
-        group == null ? null : group.getNestedDataset(Tag.PlanePositionSlideSequence);
-    if (position != null && position.containsValue(Tag.ColumnPositionInTotalImagePixelMatrix)) {
-      return new Point(
-          position.getInt(Tag.ColumnPositionInTotalImagePixelMatrix, 1) - 1,
-          position.getInt(Tag.RowPositionInTotalImagePixelMatrix, 1) - 1);
-    }
-    if ("TILED_FULL".equals(dcm.getString(Tag.DimensionOrganizationType))) { // NON-NLS
-      int columns = dcm.getInt(Tag.Columns, 0);
-      int rows = dcm.getInt(Tag.Rows, 0);
-      int total = dcm.getInt(Tag.TotalPixelMatrixColumns, 0);
-      if (columns > 0 && rows > 0 && total > 0) {
-        int tilesPerRow = (total + columns - 1) / columns;
-        return new Point((frame % tilesPerRow) * columns, (frame / tilesPerRow) * rows);
-      }
-    }
-    LOGGER.debug("Cannot locate frame {} in the Total Pixel Matrix", frame);
-    return null;
+    return PrGraphicUtil.getTileOrigin(image);
   }
 
-  static Graphic build2D(Attributes attributes, Color color, float thickness, boolean dcmSR) {
+  static Graphic build2D(
+      Attributes attributes,
+      Color color,
+      float thickness,
+      boolean dcmSR,
+      AffineTransform pixelToImage) {
     try {
       Graphic graphic =
-          PrGraphicUtil.buildGraphic(attributes, color, false, 1, 1, false, null, dcmSR);
+          PrGraphicUtil.buildGraphic(
+              attributes, color, false, 1, 1, false, null, pixelToImage, dcmSR);
       if (graphic != null) {
         graphic.setLineThickness(thickness);
       }

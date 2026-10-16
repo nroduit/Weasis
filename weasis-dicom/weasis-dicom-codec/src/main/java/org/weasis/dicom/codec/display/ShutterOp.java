@@ -28,6 +28,7 @@ import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.LangUtil;
+import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.opencv.data.ImageCV;
@@ -64,6 +65,24 @@ public class ShutterOp extends AbstractOp {
     return new ShutterOp(this);
   }
 
+  /**
+   * The shutter in the pixels of the displayed image, which is stretched to square pixels when they
+   * are not. The shape has pixel centres on whole numbers: the pixel corners scale with the image.
+   */
+  static Area toImage(Area shape, ImageElement image) {
+    if (shape == null
+        || image == null
+        || !MathUtil.isDifferent(image.getRescaleX(), image.getRescaleY())) {
+      return shape;
+    }
+    AffineTransform t = AffineTransform.getTranslateInstance(-0.5, -0.5);
+    t.scale(image.getRescaleX(), image.getRescaleY());
+    t.translate(0.5, 0.5);
+    Area stretched = new Area(shape);
+    stretched.transform(t);
+    return stretched;
+  }
+
   @Override
   public void handleImageOpEvent(ImageOpEvent event) {
     OpEvent type = event.eventType();
@@ -71,7 +90,8 @@ public class ShutterOp extends AbstractOp {
       ImageElement img = event.image();
       // If no image, reset the shutter
       boolean noMedia = img == null;
-      setParam(P_SHAPE, noMedia ? null : img.getTagValue(TagW.ShutterFinalShape));
+      setParam(
+          P_SHAPE, noMedia ? null : toImage((Area) img.getTagValue(TagW.ShutterFinalShape), img));
       setParam(P_PS_VALUE, noMedia ? null : img.getTagValue(TagW.ShutterPSValue));
       setParam(P_RGB_COLOR, noMedia ? null : img.getTagValue(TagW.ShutterRGBColor));
       setParam(WindowAndPresetsOp.P_PR_ELEMENT, null);
@@ -90,15 +110,15 @@ public class ShutterOp extends AbstractOp {
         setParam(WindowAndPresetsOp.P_PR_ELEMENT, pr == null ? null : pr.getPrDicomObject());
         setParam(P_IMAGE_ELEMENT, event.image());
 
-        Area shape = (Area) params.get(P_SHAPE);
+        Area shape = toImage((Area) params.get(P_SHAPE), event.image());
         if (shape != null) {
           Rectangle area = (Rectangle) p.get(ActionW.CROP.cmd());
           if (area != null) {
-            Area trArea = new Area(shape);
-            trArea.transform(AffineTransform.getTranslateInstance(-area.getX(), -area.getY()));
-            setParam(P_SHAPE, trArea);
+            shape = new Area(shape);
+            shape.transform(AffineTransform.getTranslateInstance(-area.getX(), -area.getY()));
           }
         }
+        setParam(P_SHAPE, shape);
       }
     }
   }

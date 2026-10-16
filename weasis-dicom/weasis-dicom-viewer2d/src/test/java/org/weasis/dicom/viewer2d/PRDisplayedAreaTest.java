@@ -12,10 +12,14 @@ package org.weasis.dicom.viewer2d;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.awt.Point;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
+import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 
 /**
  * The Specified Displayed Area runs from the first to the last displayed pixel, from 1\1 (PS3.3
@@ -25,7 +29,7 @@ import org.junit.jupiter.api.Test;
 class PRDisplayedAreaTest {
 
   private static Rectangle2D area(int[] tlhc, int[] brhc) {
-    return PRManager.getSpecifiedDisplayedArea(tlhc, brhc, 1.0, 1.0);
+    return PRManager.getSpecifiedDisplayedArea(tlhc, brhc, null);
   }
 
   @Test
@@ -55,15 +59,63 @@ class PRDisplayedAreaTest {
   }
 
   @Test
-  void non_square_pixels_follow_the_resampled_image() {
+  void volume_corners_are_moved_to_the_frame() {
+    // Pixel Origin Interpretation VOLUME: corners in the Total Pixel Matrix, frame at (512, 256)
     assertEquals(
-        new Rectangle2D.Double(0, 0, 1024, 256),
-        PRManager.getSpecifiedDisplayedArea(new int[] {1, 1}, new int[] {512, 256}, 2.0, 1.0));
+        new Rectangle2D.Double(-12, 9, 100, 50),
+        PRManager.getSpecifiedDisplayedArea(
+            new int[] {501, 266}, new int[] {600, 315}, new Point(512, 256)));
   }
 
   @Test
   void missing_corner_gives_no_area() {
     assertNull(area(null, new int[] {512, 256}));
     assertNull(area(new int[] {1}, new int[] {512, 256}));
+  }
+
+  private static PRManager.TransformationContext context(
+      Rectangle2D area, int rotation, boolean flip, AffineTransform pixelToImage, Point tile) {
+    return new PRManager.TransformationContext(
+        area.getWidth(),
+        area.getHeight(),
+        PrGraphicUtil.displayToPixel(area, rotation, flip),
+        pixelToImage,
+        tile,
+        rotation,
+        flip);
+  }
+
+  @Test
+  void text_points_are_converted_by_their_units() {
+    Rectangle2D area = new Rectangle2D.Double(0, 0, 100, 50);
+    PRManager.TransformationContext c =
+        context(area, 0, false, AffineTransform.getScaleInstance(2, 1), new Point(1000, 2000));
+
+    assertEquals(new Point2D.Double(19.5, 9.5), c.toModel(new float[] {10, 10}, "PIXEL"));
+    assertEquals(new Point2D.Double(99.5, 24.5), c.toModel(new float[] {0.5f, 0.5f}, "DISPLAY"));
+    assertEquals(new Point2D.Double(19.5, 9.5), c.toModel(new float[] {1010, 2010}, "MATRIX"));
+    assertNull(c.toModel(null, "PIXEL"));
+  }
+
+  @Test
+  void text_starts_from_the_box_corner_shown_top_left() {
+    Rectangle2D box = new Rectangle2D.Double(10, 20, 40, 30);
+    Rectangle2D area = new Rectangle2D.Double(0, 0, 100, 100);
+    // Without transformation: the top left corner; centred: the centre; right: the top right
+    assertEquals(
+        new Point2D.Double(10, 20), context(area, 0, false, null, null).alignedPoint(box, 0, 0));
+    assertEquals(
+        new Point2D.Double(30, 35),
+        context(area, 0, false, null, null).alignedPoint(box, 0.5, 0.5));
+    assertEquals(
+        new Point2D.Double(50, 20), context(area, 0, false, null, null).alignedPoint(box, 1, 0));
+    // Turned 90 degrees clockwise, the bottom left corner of the box is shown top left
+    Point2D p = context(area, 90, false, null, null).alignedPoint(box, 0, 0);
+    assertEquals(10, p.getX(), 1e-9);
+    assertEquals(50, p.getY(), 1e-9);
+    // Flipped, the top right corner is shown top left
+    Point2D q = context(area, 0, true, null, null).alignedPoint(box, 0, 0);
+    assertEquals(50, q.getX(), 1e-9);
+    assertEquals(20, q.getY(), 1e-9);
   }
 }

@@ -10,6 +10,7 @@
 package org.weasis.dicom.explorer.pr;
 
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
 import org.dcm4che3.img.data.CIELab;
 import org.dcm4che3.img.util.DicomObjectUtil;
 import org.dcm4che3.img.util.DicomUtils;
@@ -43,6 +45,7 @@ import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.core.util.MathUtil;
+import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 
 /**
@@ -91,6 +94,10 @@ public class PrGraphicUtil {
   public static final String RECTANGLE = "RECTANGLE";
   public static final String MULTIPOINT = "MULTIPOINT";
 
+  public static final String PIXEL_UNITS = "PIXEL";
+  public static final String DISPLAY_UNITS = "DISPLAY";
+  public static final String MATRIX_UNITS = "MATRIX";
+
   // Default values
   private static final int DEFAULT_POINT_SIZE = 3;
   private static final float DEFAULT_LINE_THICKNESS = 1.0f;
@@ -135,6 +142,102 @@ public class PrGraphicUtil {
   }
 
   /**
+   * Maps PIXEL units to the displayed image, which is stretched to square pixels when they are not
+   * (see {@link ImageElement#getRescaleX()}). Pixel corners scale with the image.
+   *
+   * @return the scale, or null when the pixels are square
+   */
+  public static AffineTransform pixelToImage(ImageElement image) {
+    if (image == null || !MathUtil.isDifferent(image.getRescaleX(), image.getRescaleY())) {
+      return null;
+    }
+    return AffineTransform.getScaleInstance(image.getRescaleX(), image.getRescaleY());
+  }
+
+  /**
+   * Converts a point in DICOM PIXEL units to the model: stretched with the image, then moved to the
+   * pixel centre convention.
+   *
+   * @param pixelToImage see {@link #pixelToImage(ImageElement)}, or null
+   */
+  public static Point2D pixelToModel(Point2D pixel, AffineTransform pixelToImage) {
+    Point2D p =
+        pixelToImage == null
+            ? new Point2D.Double(pixel.getX(), pixel.getY())
+            : pixelToImage.transform(pixel, null);
+    p.setLocation(pixelToModel(p.getX()), pixelToModel(p.getY()));
+    return p;
+  }
+
+  /**
+   * The position of a frame in the Total Pixel Matrix of a tiled image, as a 0-based (column, row)
+   * pixel offset.
+   *
+   * <p>The position comes from the Plane Position (Slide) Sequence of the frame's functional group
+   * (PS3.3 C.8.12.6.1), or is computed from the frame index for TILED_FULL organizations (PS3.3
+   * C.7.6.17.3), where tiles run left to right then top to bottom.
+   *
+   * @return the offset, or null when the image is not tiled or the position cannot be determined
+   */
+  public static Point getTileOrigin(DicomImageElement image) {
+    if (image == null || image.getMediaReader() == null) {
+      return null;
+    }
+    Attributes dcm = image.getMediaReader().getDicomObject();
+    if (dcm == null || !dcm.containsValue(Tag.TotalPixelMatrixColumns)) {
+      return null;
+    }
+    int frame = image.getKey() instanceof Integer index ? index : 0;
+    Attributes group = dcm.getNestedDataset(Tag.PerFrameFunctionalGroupsSequence, frame);
+    Attributes position =
+        group == null ? null : group.getNestedDataset(Tag.PlanePositionSlideSequence);
+    if (position != null && position.containsValue(Tag.ColumnPositionInTotalImagePixelMatrix)) {
+      return new Point(
+          position.getInt(Tag.ColumnPositionInTotalImagePixelMatrix, 1) - 1,
+          position.getInt(Tag.RowPositionInTotalImagePixelMatrix, 1) - 1);
+    }
+    if ("TILED_FULL".equals(dcm.getString(Tag.DimensionOrganizationType))) { // NON-NLS
+      int columns = dcm.getInt(Tag.Columns, 0);
+      int rows = dcm.getInt(Tag.Rows, 0);
+      int total = dcm.getInt(Tag.TotalPixelMatrixColumns, 0);
+      if (columns > 0 && rows > 0 && total > 0) {
+        int tilesPerRow = (total + columns - 1) / columns;
+        return new Point((frame % tilesPerRow) * columns, (frame / tilesPerRow) * rows);
+      }
+    }
+    LOGGER.debug("Cannot locate frame {} in the Total Pixel Matrix", frame);
+    return null;
+  }
+
+  /**
+   * Moves a graphic given in Total Pixel Matrix coordinates (MATRIX units in a PR, VOLUME Pixel
+   * Origin Interpretation in an SR) to the PIXEL units of a frame.
+   *
+   * @param attributes the graphic object, left unchanged
+   * @param tileOrigin the position of the frame, see {@link #getTileOrigin(DicomImageElement)}
+   * @param unitsTag the units attribute, set to PIXEL in the copy, or 0 when there is none
+   * @return a copy with shifted Graphic Data and Rotation Point
+   */
+  public static Attributes matrixToFrame(Attributes attributes, Point tileOrigin, int unitsTag) {
+    Attributes local = new Attributes(attributes);
+    for (int tag : new int[] {Tag.GraphicData, Tag.RotationPoint}) {
+      float[] data = DicomUtils.getFloatArrayFromDicomElement(attributes, tag, null);
+      if (data != null) {
+        float[] shifted = new float[data.length];
+        for (int i = 0; i + 1 < data.length; i += 2) {
+          shifted[i] = data[i] - tileOrigin.x;
+          shifted[i + 1] = data[i + 1] - tileOrigin.y;
+        }
+        local.setFloat(tag, VR.FL, shifted);
+      }
+    }
+    if (unitsTag != 0) {
+      local.setString(unitsTag, VR.CS, PIXEL_UNITS);
+    }
+    return local;
+  }
+
+  /**
    * Builds a graphic from DICOM attributes.
    *
    * @param attributes DICOM graphic attributes
@@ -158,6 +261,27 @@ public class PrGraphicUtil {
       AffineTransform inverse,
       boolean dcmSR)
       throws InvalidShapeException {
+    return buildGraphic(
+        attributes, defaultColor, labelVisible, width, height, canBeEdited, inverse, null, dcmSR);
+  }
+
+  /**
+   * Builds a graphic from DICOM attributes, see {@link #buildGraphic(Attributes, Color, boolean,
+   * double, double, boolean, AffineTransform, boolean)}.
+   *
+   * @param pixelToImage PIXEL units to the displayed image, see {@link #pixelToImage}, or null
+   */
+  public static Graphic buildGraphic(
+      Attributes attributes,
+      Color defaultColor,
+      boolean labelVisible,
+      double width,
+      double height,
+      boolean canBeEdited,
+      AffineTransform inverse,
+      AffineTransform pixelToImage,
+      boolean dcmSR)
+      throws InvalidShapeException {
     if (attributes == null) {
       LOGGER.warn("Cannot build graphic from null attributes");
       return null;
@@ -166,7 +290,15 @@ public class PrGraphicUtil {
     try {
       GraphicContext context =
           new GraphicContext(
-              attributes, defaultColor, labelVisible, width, height, canBeEdited, inverse, dcmSR);
+              attributes,
+              defaultColor,
+              labelVisible,
+              width,
+              height,
+              canBeEdited,
+              inverse,
+              pixelToImage,
+              dcmSR);
       return buildGraphicByType(context);
     } catch (Exception e) {
       LOGGER.error("Error building graphic: {}", e.getMessage(), e);
@@ -261,17 +393,18 @@ public class PrGraphicUtil {
     return null;
   }
 
-  private static Graphic buildSrEllipse(BaseGraphicContext context, float[] pts)
+  /**
+   * The ELLIPSE of a compound graphic: its two points are the top left and the bottom right corners
+   * of the bounding rectangle (PS3.3 C.10.5.1.3.3), which the Rotation Angle may turn.
+   */
+  private static Graphic buildBoundedEllipse(BaseGraphicContext context, float[] pts)
       throws InvalidShapeException {
-    Point2D center = context.transformPoint(pts[0], pts[1]);
-    Point2D boundary = context.transformPoint(pts[2], pts[3]);
-
-    // Calculate radius from distance between center and boundary
-    double radius = center.distance(boundary);
+    Point2D topLeft = context.transformPoint(pts[0], pts[1]);
+    Point2D bottomRight = context.transformPoint(pts[2], pts[3]);
 
     Ellipse2D ellipse = new Ellipse2D.Double();
-    ellipse.setFrameFromCenter(
-        center.getX(), center.getY(), center.getX() + radius, center.getY() + radius);
+    ellipse.setFrameFromDiagonal(topLeft, bottomRight);
+    Point2D center = new Point2D.Double(ellipse.getCenterX(), ellipse.getCenterY());
 
     // Apply rotation if present
     double rotation = getRotationAngle(context.attributes);
@@ -349,9 +482,9 @@ public class PrGraphicUtil {
       return null;
     }
 
-    // SR format: 2 points (center + boundary, 4 coords)
+    // Compound graphic: 2 points (bounding rectangle, 4 coords)
     if (context.isDcmSR() && pts.length == 4) {
-      return buildSrEllipse(context, pts);
+      return buildBoundedEllipse(context, pts);
     }
 
     // PR format: 4 points (major + minor axes, 8 coords)
@@ -909,6 +1042,7 @@ public class PrGraphicUtil {
     protected final double width;
     protected final double height;
     protected final AffineTransform inverse;
+    protected final AffineTransform pixelToImage;
     protected final boolean isDisplay;
     protected final String type;
     protected final Integer groupID;
@@ -924,6 +1058,7 @@ public class PrGraphicUtil {
         double width,
         double height,
         AffineTransform inverse,
+        AffineTransform pixelToImage,
         int unitsTag,
         int typeTag) {
       this.attributes = attributes;
@@ -932,7 +1067,8 @@ public class PrGraphicUtil {
       this.width = width;
       this.height = height;
       this.inverse = inverse;
-      this.isDisplay = "DISPLAY".equalsIgnoreCase(attributes.getString(unitsTag));
+      this.pixelToImage = pixelToImage;
+      this.isDisplay = DISPLAY_UNITS.equalsIgnoreCase(attributes.getString(unitsTag));
       this.type = attributes.getString(typeTag);
       this.groupID = DicomUtils.getIntegerFromDicomElement(attributes, Tag.GraphicGroupID, null);
       this.filled = PresentationStateReader.getBooleanValue(attributes, Tag.GraphicFilled);
@@ -976,7 +1112,7 @@ public class PrGraphicUtil {
           inverse.transform(p, p);
         }
       }
-      return new Point2D.Double(pixelToModel(p.getX()), pixelToModel(p.getY()));
+      return pixelToModel(p, pixelToImage);
     }
 
     public void applyProperties(Graphic graphic, boolean filled) {
@@ -1002,6 +1138,7 @@ public class PrGraphicUtil {
         double height,
         boolean canBeEdited,
         AffineTransform inverse,
+        AffineTransform pixelToImage,
         boolean dcmSR) {
       super(
           attributes,
@@ -1010,6 +1147,7 @@ public class PrGraphicUtil {
           width,
           height,
           inverse,
+          pixelToImage,
           Tag.GraphicAnnotationUnits,
           Tag.GraphicType);
       this.canBeEdited = canBeEdited;
@@ -1042,6 +1180,7 @@ public class PrGraphicUtil {
           width,
           height,
           inverse,
+          null,
           Tag.CompoundGraphicUnits,
           Tag.CompoundGraphicType);
     }

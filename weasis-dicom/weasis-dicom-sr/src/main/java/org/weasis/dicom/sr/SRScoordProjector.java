@@ -10,6 +10,7 @@
 package org.weasis.dicom.sr;
 
 import java.awt.Color;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +63,21 @@ final class SRScoordProjector {
       String imageFrameOfReferenceUID,
       Color color,
       float thickness) {
+    return project(item, geometry, imageFrameOfReferenceUID, color, thickness, null);
+  }
+
+  /**
+   * See {@link #project(Attributes, GeometryOfSlice, String, Color, float)}.
+   *
+   * @param pixelToImage PIXEL units to the displayed image, null for square pixels
+   */
+  static Graphic project(
+      Attributes item,
+      GeometryOfSlice geometry,
+      String imageFrameOfReferenceUID,
+      Color color,
+      float thickness,
+      AffineTransform pixelToImage) {
     if (item == null || geometry == null) {
       return null;
     }
@@ -92,7 +108,8 @@ final class SRScoordProjector {
     double tol = tolerance(geometry);
 
     return switch (type.toUpperCase()) {
-      case POINT, MULTIPOINT -> points(inPlane(pts, dist, tol), geometry, color, thickness);
+      case POINT, MULTIPOINT ->
+          points(inPlane(pts, dist, tol), geometry, color, thickness, pixelToImage);
       case POLYLINE, POLYGON -> {
         if (allInPlane(dist, tol)) {
           List<Point2D> p2 = toImage(pts, geometry);
@@ -103,24 +120,24 @@ final class SRScoordProjector {
               p2.add(first);
             }
           }
-          yield build(POLYLINE, p2, color, thickness, true);
+          yield build(POLYLINE, p2, color, thickness, true, pixelToImage);
         }
         List<Vector3d> hits = inPlane(pts, dist, tol);
         boolean closed = POLYGON.equals(type.toUpperCase());
         hits.addAll(crossings(pts, dist, closed));
-        yield points(hits, geometry, color, thickness);
+        yield points(hits, geometry, color, thickness, pixelToImage);
       }
       case ELLIPSE -> {
         if (n == 4 && allInPlane(dist, tol)) {
           // PR-style ellipse: end points of the major axis then of the minor axis
-          yield build(ELLIPSE, toImage(pts, geometry), color, thickness, false);
+          yield build(ELLIPSE, toImage(pts, geometry), color, thickness, false, pixelToImage);
         }
-        yield points(axisHits(pts, dist, tol), geometry, color, thickness);
+        yield points(axisHits(pts, dist, tol), geometry, color, thickness, pixelToImage);
       }
       case ELLIPSOID ->
           n == 6 && hasValidAxes(pts)
-              ? ellipsoidSection(pts, dist, geometry, color, thickness)
-              : points(axisHits(pts, dist, tol), geometry, color, thickness);
+              ? ellipsoidSection(pts, dist, geometry, color, thickness, pixelToImage)
+              : points(axisHits(pts, dist, tol), geometry, color, thickness, pixelToImage);
       default -> null;
     };
   }
@@ -199,7 +216,12 @@ final class SRScoordProjector {
    * @return the closed outline, or null when the plane misses the ellipsoid
    */
   static Graphic ellipsoidSection(
-      Vector3d[] pts, double[] dist, GeometryOfSlice geometry, Color color, float thickness) {
+      Vector3d[] pts,
+      double[] dist,
+      GeometryOfSlice geometry,
+      Color color,
+      float thickness,
+      AffineTransform pixelToImage) {
     Vector3d center = new Vector3d(pts[0]).add(pts[1]).mul(0.5);
     Vector3d[] axes = new Vector3d[3];
     for (int i = 0; i < 3; i++) {
@@ -238,7 +260,7 @@ final class SRScoordProjector {
       }
       outline.add(p2);
     }
-    return build(POLYLINE, outline, color, thickness, true);
+    return build(POLYLINE, outline, color, thickness, true, pixelToImage);
   }
 
   private static List<Point2D> toImage(Vector3d[] pts, GeometryOfSlice geometry) {
@@ -253,16 +275,25 @@ final class SRScoordProjector {
   }
 
   private static Graphic points(
-      List<Vector3d> pts, GeometryOfSlice geometry, Color color, float thickness) {
+      List<Vector3d> pts,
+      GeometryOfSlice geometry,
+      Color color,
+      float thickness,
+      AffineTransform pixelToImage) {
     if (pts.isEmpty()) {
       return null;
     }
     List<Point2D> p2 = toImage(pts.toArray(new Vector3d[0]), geometry);
-    return build(p2.size() == 1 ? POINT : MULTIPOINT, p2, color, thickness, true);
+    return build(p2.size() == 1 ? POINT : MULTIPOINT, p2, color, thickness, true, pixelToImage);
   }
 
   private static Graphic build(
-      String type, List<Point2D> points, Color color, float thickness, boolean dcmSR) {
+      String type,
+      List<Point2D> points,
+      Color color,
+      float thickness,
+      boolean dcmSR,
+      AffineTransform pixelToImage) {
     if (points.isEmpty()) {
       return null;
     }
@@ -277,6 +308,6 @@ final class SRScoordProjector {
     a.setInt(Tag.NumberOfGraphicPoints, VR.US, points.size());
     a.setFloat(Tag.GraphicData, VR.FL, coords);
     a.setString(Tag.GraphicType, VR.CS, type);
-    return SRGraphic.build2D(a, color, thickness, dcmSR);
+    return SRGraphic.build2D(a, color, thickness, dcmSR, pixelToImage);
   }
 }
