@@ -33,7 +33,6 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
 import org.weasis.core.Messages;
-import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -44,7 +43,8 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicLabel;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape.BasicShape;
-import org.weasis.core.ui.model.utils.bean.AdvancedShape.ScaleInvariantShape;
+import org.weasis.core.ui.model.utils.bean.AdvancedShape.LinkArrowShape;
+import org.weasis.core.ui.model.utils.bean.AdvancedShape.LinkSegmentToInvariantShape;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.serialize.RectangleAdapter;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -65,10 +65,12 @@ public class AnnotationGraphic extends AbstractDragGraphic {
   protected Rectangle2D labelBounds;
   protected Double labelWidth;
   protected Double labelHeight;
-  // Position of the box point in the label, as a fraction of its width and height: centre by
+  // Position of the box point in the label, as a fraction of its width and height: center by
   // default
   protected Double labelAlignX;
   protected Double labelAlignY;
+  // Clockwise rotation of the label on screen around the box point, in quarter turns
+  protected Integer labelRotation;
 
   public AnnotationGraphic() {
     super(POINTS_NUMBER);
@@ -91,6 +93,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
       labelHeight = annotationGraphic.labelHeight;
       labelAlignX = annotationGraphic.labelAlignX;
       labelAlignY = annotationGraphic.labelAlignY;
+      labelRotation = annotationGraphic.labelRotation;
     }
   }
 
@@ -182,9 +185,26 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     this.labelAlignY = labelAlignY;
   }
 
+  @XmlAttribute(name = "labelRotation")
+  public Integer getLabelRotation() {
+    return labelRotation;
+  }
+
+  /**
+   * Rotates the label on screen around the box point, clockwise by the given number of quarter
+   * turns: 2 shows the text upside down. The alignment applies to the label before its rotation.
+   */
+  public void setLabelRotation(Integer labelRotation) {
+    this.labelRotation = labelRotation;
+  }
+
+  private int getQuarterTurns() {
+    return labelRotation == null ? 0 : Math.floorMod(labelRotation, 4);
+  }
+
   /**
    * Places the label around the box point: 0, 0 puts the point at the top left corner of the label,
-   * 1, 1 at the bottom right and 0.5, 0.5 (the default) at its centre.
+   * 1, 1 at the bottom right and 0.5, 0.5 (the default) at its center.
    */
   public void setLabelAlignment(double alignX, double alignY) {
     this.labelAlignX = alignX;
@@ -197,7 +217,17 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     double h = labelHeight * lines + 4.0 * GraphicLabel.GROWING_BOUND;
     double ax = labelAlignX == null ? 0.5 : labelAlignX;
     double ay = labelAlignY == null ? 0.5 : labelAlignY;
-    return new Rectangle2D.Double(pos.getX() - ax * w, pos.getY() - ay * h, w, h);
+    Rectangle2D label = new Rectangle2D.Double(-ax * w, -ay * h, w, h);
+    Rectangle2D bounds =
+        AffineTransform.getQuadrantRotateInstance(getQuarterTurns())
+            .createTransformedShape(label)
+            .getBounds2D();
+    bounds.setRect(
+        pos.getX() + bounds.getX(),
+        pos.getY() + bounds.getY(),
+        bounds.getWidth(),
+        bounds.getHeight());
+    return bounds;
   }
 
   @Override
@@ -242,15 +272,12 @@ public class AnnotationGraphic extends AbstractDragGraphic {
       }
       labelBounds = buildLabelBounds(ptBox, labels == null ? 1 : labels.length);
       if (line != null) {
-        newShape.addLinkSegmentToInvariantShape(
-            line, ptBox, labelBounds, getDashStroke(lineThickness), false);
+        LinkSegmentToInvariantShape link =
+            newShape.addLinkSegmentToInvariantShape(
+                line, ptBox, labelBounds, getDashStroke(lineThickness), false);
 
-        ScaleInvariantShape arrow =
-            newShape.addScaleInvShape(
-                GeomUtil.getArrowShape(ptAnchor, ptBox, 15, 8),
-                ptAnchor,
-                getStroke(lineThickness),
-                false);
+        // Follows the link, which leaves the label from its edge and not from the box point
+        LinkArrowShape arrow = newShape.addLinkArrow(link, 15, 8, getStroke(lineThickness), false);
         arrow.setFilled(true);
       }
       newShape.addAllInvShape(labelBounds, ptBox, getStroke(lineThickness), false);
@@ -284,10 +311,23 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         transform.transform(pt, pt);
       }
 
-      float px = (float) (pt.getX() + rect.getMinX() - origin.getX() + GraphicLabel.GROWING_BOUND);
-      float py = (float) (pt.getY() + rect.getMinY() - origin.getY() + GraphicLabel.GROWING_BOUND);
+      // The text is laid out unrotated around the box point, then turned with the label
+      AffineTransform turn = AffineTransform.getQuadrantRotateInstance(-getQuarterTurns());
+      Rectangle2D local =
+          turn.createTransformedShape(
+                  new Rectangle2D.Double(
+                      rect.getMinX() - origin.getX(),
+                      rect.getMinY() - origin.getY(),
+                      rect.getWidth(),
+                      rect.getHeight()))
+              .getBounds2D();
+      float px = (float) (local.getMinX() + GraphicLabel.GROWING_BOUND);
+      float py = (float) (local.getMinY() + GraphicLabel.GROWING_BOUND);
       float height = labelHeight.floatValue();
 
+      AffineTransform oldTransform = g2d.getTransform();
+      g2d.translate(pt.getX(), pt.getY());
+      g2d.rotate(getQuarterTurns() * Math.PI / 2.0);
       g2d.setFont(MeasureTool.viewSetting.getFont());
 
       for (String label : labels) {
@@ -296,6 +336,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
           FontTools.paintColorFontOutline(g2d, label, px, py, Color.WHITE);
         }
       }
+      g2d.setTransform(oldTransform);
       g2d.setPaint(oldPaint);
     }
   }

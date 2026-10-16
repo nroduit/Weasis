@@ -798,9 +798,11 @@ public class PRManager {
 
         Point2D boxPoint;
         double[] alignment;
+        int quarterTurns = 0;
         if (box != null) {
           alignment = getTextAlignment();
-          boxPoint = context.alignedPoint(box, alignment[0], alignment[1]);
+          quarterTurns = getTextQuarterTurns();
+          boxPoint = context.alignedPoint(box, alignment[0], alignment[1], quarterTurns);
         } else {
           // No box: the text stands next to the anchor point
           alignment = new double[] {0.5, 0.5};
@@ -816,6 +818,7 @@ public class PRManager {
             anchorVisible ? anchor : null,
             boxPoint,
             alignment,
+            quarterTurns,
             extractTextColor(),
             extractThickness(),
             extractTextLines());
@@ -862,6 +865,25 @@ public class PRManager {
         return end.equalsIgnoreCase(value) ? 1.0 : 0.0;
       }
 
+      /**
+       * The clockwise quarter turns of the text, which runs from the top left to the bottom right
+       * corner of its bounding box (PS3.3 C.10.5.1.1): 2 when the top left corner is given at the
+       * bottom right. The corners are compared in their own units, so the rotation and the flip of
+       * the image do not turn the text: the rotation of the characters is unspecified.
+       */
+      private int getTextQuarterTurns() {
+        float[] tl = textObject.getFloats(Tag.BoundingBoxTopLeftHandCorner);
+        float[] br = textObject.getFloats(Tag.BoundingBoxBottomRightHandCorner);
+        if (tl == null || br == null || tl.length != 2 || br.length != 2) {
+          return 0;
+        }
+        boolean down = br[1] >= tl[1];
+        if (br[0] >= tl[0]) {
+          return down ? 0 : 3;
+        }
+        return down ? 1 : 2;
+      }
+
       private Rectangle2D extractBoundingBox() {
         String units = textObject.getString(Tag.BoundingBoxAnnotationUnits);
         Point2D p1 = context.toModel(textObject.getFloats(Tag.BoundingBoxTopLeftHandCorner), units);
@@ -880,6 +902,7 @@ public class PRManager {
           Point2D anchorPoint,
           Point2D boxPoint,
           double[] alignment,
+          int quarterTurns,
           Color textColor,
           Float thickness,
           String[] textLines) {
@@ -890,6 +913,9 @@ public class PRManager {
 
           AnnotationGraphic graphic = new AnnotationGraphic();
           graphic.setLabelAlignment(alignment[0], alignment[1]);
+          if (quarterTurns != 0) {
+            graphic.setLabelRotation(quarterTurns);
+          }
           graphic.buildGraphic(points);
           graphic.setPaint(textColor);
           graphic.setLineThickness(thickness);
@@ -1070,21 +1096,29 @@ public class PRManager {
     }
 
     /**
-     * The point of a box, in the model, at the given fractions of its width and height from its top
-     * left corner as shown: after the rotation (clockwise) and then the flip of the image.
+     * The point of a box, in the model, at the given fractions of the width and height of its text
+     * from the top left corner of the text, as shown after the rotation (clockwise) and then the
+     * flip of the image. The text is turned clockwise on screen by the given quarter turns: 2
+     * starts it from the bottom right corner shown and runs it to the left.
      */
-    Point2D alignedPoint(Rectangle2D box, double alignX, double alignY) {
+    Point2D alignedPoint(Rectangle2D box, double alignX, double alignY, int quarterTurns) {
       AffineTransform orientation = new AffineTransform();
       if (flip) {
         orientation.scale(-1.0, 1.0);
       }
       orientation.rotate(Math.toRadians(rotation));
       Rectangle2D shown = orientation.createTransformedShape(box).getBounds2D();
+      // The box as the text sees it, turned back around its center
+      AffineTransform turn =
+          AffineTransform.getQuadrantRotateInstance(
+              -quarterTurns, shown.getCenterX(), shown.getCenterY());
+      Rectangle2D text = turn.createTransformedShape(shown).getBounds2D();
       Point2D p =
           new Point2D.Double(
-              shown.getMinX() + alignX * shown.getWidth(),
-              shown.getMinY() + alignY * shown.getHeight());
+              text.getMinX() + alignX * text.getWidth(),
+              text.getMinY() + alignY * text.getHeight());
       try {
+        turn.inverseTransform(p, p);
         orientation.inverseTransform(p, p);
       } catch (NoninvertibleTransformException e) {
         return new Point2D.Double(box.getCenterX(), box.getCenterY());

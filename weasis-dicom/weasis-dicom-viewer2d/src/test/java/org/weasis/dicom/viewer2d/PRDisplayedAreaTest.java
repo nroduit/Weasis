@@ -101,21 +101,34 @@ class PRDisplayedAreaTest {
   void text_starts_from_the_box_corner_shown_top_left() {
     Rectangle2D box = new Rectangle2D.Double(10, 20, 40, 30);
     Rectangle2D area = new Rectangle2D.Double(0, 0, 100, 100);
-    // Without transformation: the top left corner; centred: the centre; right: the top right
+    // Without transformation: the top left corner; centered: the center; right: the top right
     assertEquals(
-        new Point2D.Double(10, 20), context(area, 0, false, null, null).alignedPoint(box, 0, 0));
+        new Point2D.Double(10, 20), context(area, 0, false, null, null).alignedPoint(box, 0, 0, 0));
     assertEquals(
         new Point2D.Double(30, 35),
-        context(area, 0, false, null, null).alignedPoint(box, 0.5, 0.5));
+        context(area, 0, false, null, null).alignedPoint(box, 0.5, 0.5, 0));
     assertEquals(
-        new Point2D.Double(50, 20), context(area, 0, false, null, null).alignedPoint(box, 1, 0));
+        new Point2D.Double(50, 20), context(area, 0, false, null, null).alignedPoint(box, 1, 0, 0));
     // Turned 90 degrees clockwise, the bottom left corner of the box is shown top left
-    Point2D p = context(area, 90, false, null, null).alignedPoint(box, 0, 0);
+    Point2D p = context(area, 90, false, null, null).alignedPoint(box, 0, 0, 0);
     assertEquals(10, p.getX(), 1e-9);
     assertEquals(50, p.getY(), 1e-9);
     // Flipped, the top right corner is shown top left
-    Point2D q = context(area, 0, true, null, null).alignedPoint(box, 0, 0);
+    Point2D q = context(area, 0, true, null, null).alignedPoint(box, 0, 0, 0);
     assertEquals(50, q.getX(), 1e-9);
     assertEquals(20, q.getY(), 1e-9);
+  }
+
+  @Test
+  void turned_text_starts_from_the_box_corner_it_reads_from() {
+    Rectangle2D box = new Rectangle2D.Double(10, 20, 40, 30);
+    Rectangle2D area = new Rectangle2D.Double(0, 0, 100, 100);
+    PRManager.TransformationContext c = context(area, 0, false, null, null);
+    // Upside down, the text starts at the bottom right corner
+    assertEquals(new Point2D.Double(50, 50), c.alignedPoint(box, 0, 0, 2));
+    // Turned clockwise, it reads down from the top right corner: its width runs along y
+    assertEquals(new Point2D.Double(50, 35), c.alignedPoint(box, 0.5, 0, 1));
+    // Turned counterclockwise, it reads up from the bottom left corner
+    assertEquals(new Point2D.Double(10, 50), c.alignedPoint(box, 0, 0, 3));
   }
 }
