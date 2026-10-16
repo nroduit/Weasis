@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "families": [
+    {
+      "id": "SOFT",
+      "vendors": {
+        "SIEMENS": ["B10f", "B20f", "B20s", "B30f", "B30s", "B31f", "B35f", "B40f", "B41f", "B45f", "I26f", "I30f", "I31f", "I40f", "Br36", "Br38", "Br40", "Bf37", "Bf39", "Hr36", "Hr38", "Hr40", "Qr36", "Qr40"],
+        "GE": ["SOFT", "STANDARD", "STND", "DETAIL", "CHST"],
+        "PHILIPS": ["A", "B", "C", "SA", "SB", "UA", "UB", "YA", "YB", "IMR1", "IMR2"],
+        "TOSHIBA": ["FC01", "FC02", "FC03", "FC04", "FC05", "FC07", "FC08", "FC09", "FC13", "FC17", "FC18", "FC19", "FC21", "FC22", "FC23"],
+        "CANON": ["FC01", "FC02", "FC03", "FC04", "FC05", "FC07", "FC08", "FC09", "FC13", "FC17", "FC18", "FC19", "FC21", "FC22", "FC23"]
+      },
+      "patterns": ["^B[1-4]\\d[A-Z]?$", "^I[1-4]\\d[A-Z]?$", "^B[RF][1-4]\\d[A-Z]?$", "^[HQ]R[1-4]\\d[A-Z]?$", "^FC[0-2]\\d$", "^(SOFT|SMOOTH|STANDARD|BODY|BRAIN|STD|MEDIUM)"]
+    },
+    {
+      "id": "LUNG",
+      "vendors": {
+        "SIEMENS": ["B50f", "B60f", "B70f", "B75f", "B80f", "I50f", "I70f", "Bl57", "Bl64", "Br56", "Br59", "Br60", "Br64", "Bl56"],
+        "GE": ["LUNG", "EDGE"],
+        "PHILIPS": ["L", "YC", "YD", "C"],
+        "TOSHIBA": ["FC51", "FC52", "FC53", "FC55", "FC56", "FC81", "FC82", "FC83", "FC85", "FC86"],
+        "CANON": ["FC51", "FC52", "FC53", "FC55", "FC56", "FC81", "FC82", "FC83", "FC85", "FC86"]
+      },
+      "patterns": ["^B[5-7]\\d[A-Z]?$", "^I[5-7]\\d[A-Z]?$", "^BL[5-6]\\d[A-Z]?$", "^BR[5-6]\\d[A-Z]?$", "^FC[5-8]\\d$", "^(LUNG|SHARP|EDGE|HIGH|CHEST HIGH)"]
+    },
+    {
+      "id": "BONE",
+      "vendors": {
+        "SIEMENS": ["B80f", "B90s", "U70u", "U75u", "U90u", "Ur77", "Ur73", "Hr68", "Hr64", "Hr60"],
+        "GE": ["BONE", "BONEPLUS", "BONE+", "ULTRA", "DETAIL BONE"],
+        "PHILIPS": ["D", "E", "YE", "XCB"],
+        "TOSHIBA": ["FC30", "FC31", "FC35", "FC81"],
+        "CANON": ["FC30", "FC31", "FC35"]
+      },
+      "patterns": ["^B[8-9]\\d[A-Z]?$", "^U[7-9]\\d[A-Z]?$", "^UR\\d\\d", "^HR[6-9]\\d[A-Z]?$", "^FC3\\d$", "^(BONE|ULTRA|HARD|EAR|DENTAL)"]
+    }
+  ]
+}

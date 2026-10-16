@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "rules": [
+    {"id": "adc-image-type", "weighting": "ADC", "priority": 100, "when": {"imageType": ["ADC"]}},
+    {"id": "adc-token", "weighting": "ADC", "priority": 99, "when": {"tokens": ["ADC", "APPARENT"]}},
+    {"id": "dwi-b-value", "weighting": "DWI", "priority": 95, "when": {"bValueMin": 1}},
+    {"id": "dwi-token", "weighting": "DWI", "priority": 94, "when": {"tokens": ["DWI", "DIFF", "DIFFUSION", "TRACE", "TRACEW"]}},
+    {"id": "swi-token", "weighting": "SWI", "priority": 90, "when": {"tokens": ["SWI", "SWAN", "VENBOLD", "SUSCEPTIBILITY"]}},
+    {"id": "perfusion-token", "weighting": "PERFUSION", "priority": 90, "when": {"tokens": ["PERF", "PERFUSION", "DSC", "DCE", "ASL"]}},
+    {"id": "dixon-token", "weighting": "DIXON", "priority": 90, "when": {"tokens": ["DIXON", "MDIXON", "LAVA", "VIBE DIXON", "IDEAL"]}},
+    {"id": "flair-inversion", "weighting": "FLAIR", "priority": 80, "when": {"scanningSequence": ["IR"], "tiMin": 1500}},
+    {"id": "flair-token", "weighting": "FLAIR", "priority": 79, "when": {"tokens": ["FLAIR"]}},
+    {"id": "stir-inversion", "weighting": "STIR", "priority": 78, "when": {"scanningSequence": ["IR"], "tiMin": 80, "tiMax": 300}},
+    {"id": "stir-token", "weighting": "STIR", "priority": 77, "when": {"tokens": ["STIR", "TIRM"]}},
+    {"id": "t1-timing", "weighting": "T1", "priority": 60, "when": {"trMax": 1000, "teMax": 30}},
+    {"id": "t1-gradient", "weighting": "T1", "priority": 59, "when": {"scanningSequence": ["GR"], "trMax": 50, "teMax": 10}},
+    {"id": "t2-timing", "weighting": "T2", "priority": 58, "when": {"trMin": 1500, "teMin": 60}},
+    {"id": "pd-timing", "weighting": "PD", "priority": 57, "when": {"trMin": 1500, "teMax": 40}},
+    {"id": "t1-token", "weighting": "T1", "priority": 40, "when": {"tokens": ["T1", "T1W", "T1WI", "MPRAGE", "SPGR", "FSPGR", "VIBE", "THRIVE", "BRAVO"]}},
+    {"id": "t2-token", "weighting": "T2", "priority": 40, "when": {"tokens": ["T2", "T2W", "T2WI", "HASTE", "SSFSE", "TSE", "FSE"]}},
+    {"id": "pd-token", "weighting": "PD", "priority": 40, "when": {"tokens": ["PD", "PDW", "PROTON"]}}
+  ]
+}
