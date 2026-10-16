@@ -37,6 +37,20 @@ public final class CoreSettings {
           .description("Width of the right side panel")
           .declare();
 
+  /** Share of the top slot of the explorer side when both slots are shown. */
+  public static final Setting<Double> SIDE_PANEL_EXPLORER_RATIO =
+      Setting.builder(SettingType.DOUBLE, GROUP, "weasis.sidepanel.explorer.ratio", 0.0) // NON-NLS
+          .scope(Scope.MACHINE)
+          .description("Share of the top slot of the explorer side")
+          .declare();
+
+  /** Share of the top slot of the tools side when both slots are shown. */
+  public static final Setting<Double> SIDE_PANEL_TOOLS_RATIO =
+      Setting.builder(SettingType.DOUBLE, GROUP, "weasis.sidepanel.tools.ratio", 0.0) // NON-NLS
+          .scope(Scope.MACHINE)
+          .description("Share of the top slot of the tools side")
+          .declare();
+
   /** Height of the expanded import / export footer, in pixels; scaled default if unset. */
   public static final Setting<Integer> FOOTER_HEIGHT =
       Setting.builder(SettingType.INTEGER, GROUP, "weasis.footer.split.height", 0) // NON-NLS

@@ -98,7 +98,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   private DefaultMutableTreeNode minAnnotations;
 
   public DisplayTool(String pluginName) {
-    super(pluginName, Insertable.Type.TOOL, 10);
+    super("display", pluginName, Insertable.Type.TOOL, 10); // NON-NLS
     setIcon(ResourceUtil.getIcon(OtherIcon.VIEW_SETTING));
     setDockableWidth(230);
 

@@ -9,9 +9,12 @@
  */
 package org.weasis.core.ui.docking.ws.snapshot;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.json.Json;
@@ -23,6 +26,7 @@ import java.util.UUID;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.junit.jupiter.api.Test;
+import org.weasis.core.ui.docking.ShellState;
 import org.weasis.core.ui.docking.ws.DockSide;
 import org.weasis.core.ui.docking.ws.TabGroup;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
@@ -171,5 +175,24 @@ class WorkspaceSnapshotTest {
     assertEquals(snapshot, parsed);
     assertNotNull(parsed.windows().get(1).bounds());
     assertEquals(":0.1", parsed.windows().get(1).screenId());
+  }
+
+  @Test
+  void theShellTravelsWithTheSnapshotAndIsOptional() {
+    ShellState shell =
+        new ShellState(
+            new ShellState.ShellSide(
+                java.util.Arrays.asList("dicom-explorer", null), 300, 0.6, false),
+            new ShellState.ShellSide(List.of("display", "measure"), 320, 0.5, false),
+            "mini");
+    WorkspaceSnapshot with =
+        new WorkspaceSnapshot(WorkspaceSnapshot.CURRENT_VERSION, List.of()).withShell(shell);
+    WorkspaceSnapshot without = new WorkspaceSnapshot(WorkspaceSnapshot.CURRENT_VERSION, List.of());
+    assertAll(
+        () ->
+            assertEquals(
+                shell, WorkspaceSnapshotIO.fromJson(WorkspaceSnapshotIO.toJson(with)).shell()),
+        () -> assertNull(WorkspaceSnapshotIO.fromJson(WorkspaceSnapshotIO.toJson(without)).shell()),
+        () -> assertFalse(WorkspaceSnapshotIO.toJson(without).containsKey("shell")));
   }
 }

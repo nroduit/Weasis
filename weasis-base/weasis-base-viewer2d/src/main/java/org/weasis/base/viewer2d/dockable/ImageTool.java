@@ -42,7 +42,7 @@ public class ImageTool extends PluginTool {
   private final Border spaceY = GuiUtils.getEmptyBorder(15, 3, 0, 3);
 
   public ImageTool(String pluginName) {
-    super(pluginName, Insertable.Type.TOOL, 20);
+    super("image", pluginName, Insertable.Type.TOOL, 20); // NON-NLS
     setIcon(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));
     setDockableWidth(290);
     init();

@@ -74,7 +74,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
   private final JPanel jRootPanel = new JPanel();
 
   public DefaultExplorer(final FileTreeModel model, JIThumbnailCache thumbCache) {
-    super(NAME, Insertable.Type.EXPLORER, 10);
+    super("file-explorer", NAME, Insertable.Type.EXPLORER, 10); // NON-NLS
     if (model == null) {
       throw new IllegalArgumentException();
     }

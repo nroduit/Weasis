@@ -48,7 +48,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
   private final AcquireSubmitButtonsPanel bottomPanel = new AcquireSubmitButtonsPanel();
 
   public EditionTool(Type type) {
-    super(BUTTON_NAME, type, 9);
+    super("acquire-edition", BUTTON_NAME, type, 9); // NON-NLS
     setIcon(ResourceUtil.getIcon(OtherIcon.RASTER_IMAGE));
     setDockableWidth(300);
     setLayout(new BorderLayout());

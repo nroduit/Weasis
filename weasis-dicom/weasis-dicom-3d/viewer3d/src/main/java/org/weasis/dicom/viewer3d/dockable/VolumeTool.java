@@ -44,7 +44,7 @@ public class VolumeTool extends PluginTool {
   private final Border spaceY = GuiUtils.getEmptyBorder(15, 3, 0, 3);
 
   public VolumeTool(String pluginName) {
-    super(pluginName, Type.TOOL, 20);
+    super("volume", pluginName, Type.TOOL, 20); // NON-NLS
     setIcon(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));
     setDockableWidth(290);
     init();

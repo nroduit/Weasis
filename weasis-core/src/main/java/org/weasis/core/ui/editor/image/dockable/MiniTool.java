@@ -36,7 +36,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
   private boolean vertical = true;
 
   protected MiniTool(String pluginName) {
-    super(pluginName, Insertable.Type.TOOL, 5);
+    super("mini", pluginName, Insertable.Type.TOOL, 5); // NON-NLS
     // TODO display a button to minimize or do not display the tab
     // setTitleShown(false);
     setDockableWidth(32);

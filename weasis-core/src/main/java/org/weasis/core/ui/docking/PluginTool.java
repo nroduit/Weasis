@@ -10,41 +10,46 @@
 package org.weasis.core.ui.docking;
 
 import java.awt.Component;
+import java.util.Objects;
 import javax.swing.Icon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.UICore;
+import org.weasis.core.ui.docking.SidePanel.Role;
 import org.weasis.core.ui.docking.SidePanel.Side;
 
 /**
- * Base class for explorer/tool side panels. A {@code PluginTool} is a plain panel hosted in the
- * left (explorers) or right (tools) {@link SidePanel}; it is not part of the central workspace, so
- * viewers can never be dropped on it. {@link #showDockable()} / {@link #closeDockable()} add and
- * remove it from its side host.
+ * Base class for explorer/tool side panels. A {@code PluginTool} is a plain panel hosted by the
+ * explorer or the tools {@link SidePanel} (by role: the explorer side leads, the tools side trails,
+ * the locale decides which is left); it is not part of the central workspace, so viewers can never
+ * be dropped on it. {@link #showDockable()} / {@link #closeDockable()} add and remove it from its
+ * side host, where it replaces any tool of the same {@link #getToolId() id}.
  */
 public abstract class PluginTool extends JPanel implements DockableTool {
   private final Type panelType;
+  private final String toolId;
   private final String toolName;
-  private final Side side;
+  private final Role role;
 
   private int toolPosition;
   private int dockableWidth;
   private Icon icon;
 
-  protected PluginTool(String toolName, Type panelType, int position) {
-    this(toolName, panelType == Type.EXPLORER ? Side.LEFT : Side.RIGHT, panelType, position);
-  }
-
-  protected PluginTool(String toolName, Side side, Type panelType, int position) {
+  /**
+   * @param toolId the stable id, the same for every viewer type that offers this tool
+   * @param toolName the localized title
+   */
+  protected PluginTool(String toolId, String toolName, Type panelType, int position) {
+    this.toolId = Objects.requireNonNull(toolId);
     this.toolName = toolName;
     setName(toolName);
     // Works only if there is only one instance of pluginTool at the same time
     this.dockableWidth = -1;
     this.panelType = panelType;
     this.toolPosition = position;
-    this.side = side == null ? Side.RIGHT : side;
+    this.role = panelType == Type.EXPLORER ? Role.EXPLORER : Role.TOOLS;
   }
 
   /** Called when the panel is shown so it can adapt its layout to the side it is docked on. */
@@ -72,8 +77,26 @@ public abstract class PluginTool extends JPanel implements DockableTool {
     return panelType;
   }
 
+  @Override
+  public String getToolId() {
+    return toolId;
+  }
+
+  /**
+   * Detail tools ({@link Type#TOOL_EXT}) open at the bottom, control tools and explorers on top.
+   */
+  @Override
+  public Slot getPreferredSlot() {
+    return panelType == Type.TOOL_EXT ? Slot.BOTTOM : Slot.TOP;
+  }
+
+  public Role getRole() {
+    return role;
+  }
+
+  /** The window side the role resolves to for the current locale. */
   public Side getSide() {
-    return side;
+    return role.side();
   }
 
   @Override
@@ -135,14 +158,14 @@ public abstract class PluginTool extends JPanel implements DockableTool {
   }
 
   private SidePanel host() {
-    return UICore.getInstance().getSidePanel(side);
+    return UICore.getInstance().getSidePanel(role);
   }
 
   @Override
   public void showDockable() {
     GuiExecutor.execute(
         () -> {
-          updateLayoutForSide(side);
+          updateLayoutForSide(getSide());
           if (isFixedStrip()) {
             MiniStrip strip = UICore.getInstance().getMiniStrip();
             if (strip != null) {

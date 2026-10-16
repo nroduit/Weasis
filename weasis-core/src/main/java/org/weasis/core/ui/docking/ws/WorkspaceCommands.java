@@ -27,11 +27,17 @@ import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.ScreenRect;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.command.SplitRatio;
+import org.weasis.core.api.command.ToolId;
 import org.weasis.core.api.command.ViewId;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.ui.docking.MiniStrip;
+import org.weasis.core.ui.docking.Shell;
+import org.weasis.core.ui.docking.ShellState;
+import org.weasis.core.ui.docking.SidePanel;
+import org.weasis.core.ui.docking.Slot;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshotIO;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -65,13 +71,15 @@ import picocli.CommandLine.ParentCommand;
       WorkspaceCommands.Split.class,
       WorkspaceCommands.Detach.class,
       WorkspaceCommands.Save.class,
-      WorkspaceCommands.Load.class
+      WorkspaceCommands.Load.class,
+      WorkspaceCommands.Panel.class
     })
 @Since("5.0")
 public class WorkspaceCommands implements CommandExtension {
 
   private Supplier<WorkspaceManager> managerSupplier =
       () -> GuiUtils.getUICore().getWorkspaceManager();
+  private Supplier<Shell> shellSupplier = Shell::current;
 
   @Override
   public String getNamespace() {
@@ -89,12 +97,31 @@ public class WorkspaceCommands implements CommandExtension {
     return this;
   }
 
+  /** Replaces the shell lookup, for headless tests. */
+  WorkspaceCommands withShell(Supplier<Shell> supplier) {
+    this.shellSupplier = supplier;
+    return this;
+  }
+
   WorkspaceManager manager() {
     WorkspaceManager manager = managerSupplier.get();
     if (manager == null) {
       throw new IllegalStateException("No workspace available (headless)");
     }
     return manager;
+  }
+
+  /** The shell, or null when the application runs without one. */
+  Shell shell() {
+    return shellSupplier.get();
+  }
+
+  Shell requireShell() {
+    Shell shell = shell();
+    if (shell == null) {
+      throw new IllegalStateException("No shell available (headless)");
+    }
+    return shell;
   }
 
   WorkspaceView requireView(ViewId id) {
@@ -340,6 +367,11 @@ public class WorkspaceCommands implements CommandExtension {
     @Override
     protected void run() throws Exception {
       WorkspaceSnapshot snapshot = capture(parent.manager());
+      Shell shell = parent.shell();
+      if (shell != null) {
+        snapshot =
+            snapshot.withShell(GuiExecutor.invokeAndRethrow(() -> ShellState.capture(shell)));
+      }
       if (file != null) {
         WorkspaceSnapshotIO.write(snapshot, file.value());
         CommandContext.current().addFile(file.value());
@@ -361,7 +393,7 @@ public class WorkspaceCommands implements CommandExtension {
       description =
           "Restores a layout captured by 'workspace:save': open views are reused, closed viewers "
               + "are created again with their series and presentation when the series are still "
-              + "loaded.")
+              + "loaded; the shell (explorer and tool slots) follows when the snapshot has one.")
   static class Load extends Verb {
     @Option(
         names = "--file",
@@ -385,8 +417,173 @@ public class WorkspaceCommands implements CommandExtension {
                 plugin.handleFocusAfterClosing();
               }
             }
+            Shell shell = parent.shell();
+            if (shell != null && snapshot.shell() != null) {
+              ShellState.apply(snapshot.shell(), shell);
+            }
           });
       printState();
+    }
+  }
+
+  @Command(
+      name = "panel",
+      description =
+          "Shell slots around the workspace: the explorer side (leading) and the tools side "
+              + "(trailing), two stacked slots each, and the central strip. Without option it "
+              + "returns the shell state; --side selects a side, then --slot with --tool or --clear "
+              + "fills or empties a slot, --collapse / --expand hide or show the side, --width and "
+              + "--ratio size it. Tool ids are stable across viewer types; an id the side does not "
+              + "offer now fails and lists the ones it does.")
+  @Since("5.0")
+  static class Panel extends Verb {
+    @Option(
+        names = "--side",
+        paramLabel = "<side>",
+        description = "Side by role: ${COMPLETION-CANDIDATES}.")
+    SidePanel.Role side;
+
+    @Option(
+        names = "--slot",
+        paramLabel = "<slot>",
+        description = "Slot of the side: ${COMPLETION-CANDIDATES}.")
+    Slot slot;
+
+    @Option(
+        names = "--tool",
+        paramLabel = "<tool-id>",
+        description = "Opens this tool in --slot of --side, replacing what was there.")
+    ToolId tool;
+
+    @Option(names = "--clear", description = "Empties --slot of --side.")
+    boolean clear;
+
+    @Option(names = "--collapse", description = "Hides both slots of --side (tools remembered).")
+    boolean collapse;
+
+    @Option(names = "--expand", description = "Shows the remembered tools of --side again.")
+    boolean expand;
+
+    @Option(
+        names = "--width",
+        paramLabel = "<pixels>",
+        description = "Content width of --side, in pixels.")
+    Integer width;
+
+    @Option(
+        names = "--ratio",
+        paramLabel = "<split-ratio>",
+        description = "Share of the top slot of --side when both slots are shown.")
+    SplitRatio ratio;
+
+    @Option(
+        names = "--strip",
+        paramLabel = "<tool-id>",
+        description = "Keeps the central strip on this tool (fails when another tool is shown).")
+    ToolId strip;
+
+    @Option(names = "--no-strip", description = "Empties the central strip.")
+    boolean noStrip;
+
+    @Override
+    protected void run() {
+      boolean change = validate();
+      Shell shell = parent.requireShell();
+      if (change) {
+        GuiExecutor.invokeAndRethrow(() -> apply(shell));
+      }
+      ShellState state = GuiExecutor.invokeAndRethrow(() -> ShellState.capture(shell));
+      if (isJson() || !change) {
+        print(isJson() ? state.toJson().toString() : text(state));
+      }
+    }
+
+    /** Checks the option combinations; returns whether the verb changes something. */
+    private boolean validate() {
+      boolean slotChange = tool != null || clear;
+      boolean sideChange = slotChange || collapse || expand || width != null || ratio != null;
+      if (sideChange && side == null) {
+        throw invalid(
+            "--side is required with "
+                + "--tool, --clear, --collapse, --expand, --width and --ratio");
+      }
+      if (slotChange && slot == null) {
+        throw invalid("--slot is required with --tool and --clear");
+      }
+      if (tool != null && clear) {
+        throw invalid("--tool and --clear are exclusive");
+      }
+      if (collapse && expand) {
+        throw invalid("--collapse and --expand are exclusive");
+      }
+      if (strip != null && noStrip) {
+        throw invalid("--strip and --no-strip are exclusive");
+      }
+      if (width != null && width <= 0) {
+        throw invalid("--width must be positive");
+      }
+      return sideChange || strip != null || noStrip;
+    }
+
+    private void apply(Shell shell) {
+      if (side != null) {
+        SidePanel panel = shell.side(side);
+        if (tool != null && !panel.open(tool.value(), slot)) {
+          throw unknownTool(tool.value(), side.key(), panel.toolIds());
+        }
+        if (clear) {
+          panel.clear(slot);
+        }
+        if (width != null) {
+          panel.setContentWidth(width);
+        }
+        if (ratio != null) {
+          panel.setRatio(ratio.value());
+        }
+        if (collapse) {
+          panel.collapse();
+        } else if (expand) {
+          panel.expand();
+        }
+      }
+      MiniStrip miniStrip = shell.strip();
+      if (noStrip) {
+        miniStrip.hideCurrent();
+      } else if (strip != null && !strip.value().equals(miniStrip.toolId())) {
+        throw unknownTool(
+            strip.value(),
+            "strip", // NON-NLS
+            miniStrip.toolId() == null ? List.of() : List.of(miniStrip.toolId()));
+      }
+    }
+
+    private static CommandFailure unknownTool(String id, String where, List<String> available) {
+      return CommandFailure.unknownHandle(
+          "Unknown tool id on " + where + ": " + id + " (available: " + available + ")",
+          "workspace:panel"); // NON-NLS
+    }
+
+    private static String text(ShellState state) {
+      StringBuilder sb = new StringBuilder();
+      for (SidePanel.Role role : SidePanel.Role.values()) {
+        ShellState.ShellSide s = state.side(role);
+        sb.append(role.key()).append(": "); // NON-NLS
+        for (Slot slot : Slot.values()) {
+          String id = s.slot(slot);
+          sb.append(slot.name().toLowerCase(java.util.Locale.ROOT))
+              .append('=')
+              .append(id == null ? "-" : id)
+              .append(' ');
+        }
+        sb.append("width=")
+            .append(s.width()) // NON-NLS
+            .append(" ratio=") // NON-NLS
+            .append(String.format(java.util.Locale.ROOT, "%.2f", s.ratio()))
+            .append(s.collapsed() ? " collapsed" : "") // NON-NLS
+            .append(System.lineSeparator());
+      }
+      sb.append("strip: ").append(state.strip() == null ? "-" : state.strip()); // NON-NLS
+      return sb.toString();
     }
   }
 }

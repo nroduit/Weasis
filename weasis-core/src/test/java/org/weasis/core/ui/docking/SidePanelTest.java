@@ -1,0 +1,177 @@
+/*
+ * Copyright (c) 2026 Weasis Team and other contributors.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
+package org.weasis.core.ui.docking;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.awt.Component;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
+import org.junit.jupiter.api.Test;
+import org.weasis.core.ui.docking.ShellState.ShellSide;
+import org.weasis.core.ui.docking.SidePanel.Role;
+import org.weasis.core.ui.docking.SidePanel.Side;
+
+class SidePanelTest {
+
+  /** The shell is driven from the EDT, as the viewers do through the GUI executor. */
+  private static void edt(Runnable action) throws Exception {
+    SwingUtilities.invokeAndWait(action);
+  }
+
+  private static void flush() throws Exception {
+    edt(() -> {});
+  }
+
+  private static List<String> buttonIds(SidePanel panel) {
+    return Arrays.stream(panel.getStripe().getComponents())
+        .map(c -> ((JToggleButton) c).getName())
+        .toList();
+  }
+
+  private static Optional<JToggleButton> button(SidePanel panel, String id) {
+    return Arrays.stream(panel.getStripe().getComponents())
+        .map(JToggleButton.class::cast)
+        .filter(b -> id.equals(b.getName()))
+        .findFirst();
+  }
+
+  @Test
+  void theExplorerSideOpensItsFirstToolAndTheToolsSideWaitsForAClick() throws Exception {
+    SidePanel explorer = new SidePanel(Role.EXPLORER, Side.LEFT);
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    edt(() -> explorer.show(new FakeTool("file-explorer", 10)));
+    edt(() -> explorer.show(new FakeTool("dicom-explorer", 20)));
+    edt(() -> tools.show(new FakeTool("display", 10)));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.of("file-explorer"), explorer.toolIn(Slot.TOP)),
+        () -> assertEquals(Optional.empty(), explorer.toolIn(Slot.BOTTOM)),
+        () -> assertEquals(Optional.empty(), tools.toolIn(Slot.TOP)),
+        () -> assertEquals(List.of("file-explorer", "dicom-explorer"), buttonIds(explorer)),
+        () -> assertTrue(button(explorer, "file-explorer").orElseThrow().isSelected()));
+  }
+
+  @Test
+  void aToolWithTheSameIdIsSwappedInPlaceAndTheStripeKeepsItsButton() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    FakeTool display2d = new FakeTool("display", 10);
+    FakeTool image = new FakeTool("image", 20);
+    edt(() -> tools.show(display2d));
+    edt(() -> tools.show(image));
+    edt(() -> tools.open("display", Slot.TOP));
+    flush();
+    JToggleButton before = button(tools, "display").orElseThrow();
+    Component shownBefore = tools.getComponent(0);
+
+    // a viewer switch: the 2D tools close and the 3D tools show in one event, same ids
+    FakeTool display3d = new FakeTool("display", 10);
+    FakeTool volume = new FakeTool("volume", 20);
+    edt(
+        () -> {
+          tools.hide(display2d);
+          tools.hide(image);
+          tools.show(display3d);
+          tools.show(volume);
+        });
+    flush();
+
+    assertAll(
+        () -> assertEquals(Optional.of("display"), tools.toolIn(Slot.TOP)),
+        () -> assertSame(before, button(tools, "display").orElseThrow(), "button kept"),
+        () -> assertSame(shownBefore, tools.getComponent(0), "slot host kept"),
+        () ->
+            assertTrue(
+                SwingUtilities.isDescendingFrom(display3d.getToolComponent(), shownBefore),
+                "content swapped in place"),
+        () -> assertEquals(List.of("display", "volume"), buttonIds(tools)));
+  }
+
+  @Test
+  void aDetailToolOpensAtTheBottomAndTheSideStateReportsBothSlots() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    edt(() -> tools.show(new FakeTool("display", 10)));
+    edt(() -> tools.show(new FakeTool("segmentation", 30, Slot.BOTTOM)));
+    edt(() -> tools.open("display", Slot.TOP));
+    flush();
+    edt(() -> button(tools, "segmentation").orElseThrow().doClick());
+    flush();
+    ShellSide state = tools.captureState();
+    assertAll(
+        () -> assertEquals(Optional.of("segmentation"), tools.toolIn(Slot.BOTTOM)),
+        () -> assertEquals(Arrays.asList("display", "segmentation"), state.slots()),
+        () -> assertFalse(state.collapsed()),
+        () -> assertTrue(state.width() > 0),
+        () ->
+            assertTrue(
+                button(tools, "segmentation").orElseThrow().getToolTipText().contains("bottom")));
+  }
+
+  @Test
+  void clickingAShownToolCollapsesItsSlotAndTheMemoryBringsItBack() throws Exception {
+    SidePanel explorer = new SidePanel(Role.EXPLORER, Side.LEFT);
+    FakeTool dicom = new FakeTool("dicom-explorer", 10);
+    edt(() -> explorer.show(dicom));
+    flush();
+    edt(() -> button(explorer, "dicom-explorer").orElseThrow().doClick());
+    flush();
+    boolean collapsed = explorer.isCollapsed();
+    edt(() -> explorer.expand());
+    flush();
+    assertAll(
+        () -> assertTrue(collapsed),
+        () -> assertEquals(Arrays.asList("dicom-explorer", null), explorer.captureState().slots()),
+        () -> assertFalse(explorer.isCollapsed()),
+        () -> assertEquals(Optional.of("dicom-explorer"), explorer.toolIn(Slot.TOP)));
+  }
+
+  @Test
+  void applyingAStateFillsTheSlotsAndSkipsTheIdsTheSideDoesNotOffer() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    edt(() -> tools.show(new FakeTool("display", 10)));
+    edt(() -> tools.show(new FakeTool("measure", 30)));
+    flush();
+    List<String> skipped =
+        tools.applyState(new ShellSide(Arrays.asList("measure", "nope"), 333, 0.4, false));
+    flush();
+    List<String> cleared =
+        tools.applyState(new ShellSide(Arrays.asList("display", null), 0, 0, true));
+    flush();
+    assertAll(
+        () -> assertEquals(List.of("nope"), skipped),
+        () -> assertEquals(List.of(), cleared),
+        () -> assertEquals(333, tools.getContentWidth()),
+        () -> assertEquals(0.4, tools.getRatio(), 1e-9),
+        () -> assertEquals(Optional.of("display"), tools.toolIn(Slot.TOP)),
+        () -> assertEquals(Optional.empty(), tools.toolIn(Slot.BOTTOM)),
+        () -> assertTrue(tools.isCollapsed()));
+  }
+
+  @Test
+  void aToolMovedToTheOtherSlotLeavesTheFirstOne() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    edt(() -> tools.show(new FakeTool("display", 10)));
+    edt(() -> tools.open("display", Slot.TOP));
+    flush();
+    edt(() -> tools.open("display", Slot.BOTTOM));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.empty(), tools.toolIn(Slot.TOP)),
+        () -> assertEquals(Optional.of("display"), tools.toolIn(Slot.BOTTOM)),
+        () -> assertFalse(tools.open("nope", Slot.TOP)));
+  }
+}

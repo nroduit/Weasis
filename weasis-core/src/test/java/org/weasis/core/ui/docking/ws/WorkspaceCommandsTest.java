@@ -22,6 +22,7 @@ import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -34,6 +35,10 @@ import org.weasis.core.api.command.CommandOrigin;
 import org.weasis.core.api.command.CommandResult;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.docking.MiniStrip;
+import org.weasis.core.ui.docking.Shell;
+import org.weasis.core.ui.docking.SidePanel;
+import org.weasis.core.ui.docking.Slot;
 
 class WorkspaceCommandsTest {
 
@@ -314,5 +319,145 @@ class WorkspaceCommandsTest {
     assertAll(
         () -> assertEquals(CommandResult.ERROR, result.status()),
         () -> assertTrue(result.error().contains("No workspace available"), result.error()));
+  }
+
+  @Test
+  void panelReportsTheShellAndFillsAndClearsSlots() throws Exception {
+    Shell shell =
+        new Shell(
+            new SidePanel(SidePanel.Role.EXPLORER, SidePanel.Side.LEFT),
+            new SidePanel(SidePanel.Role.TOOLS, SidePanel.Side.RIGHT),
+            new MiniStrip());
+    javax.swing.SwingUtilities.invokeAndWait(
+        () -> {
+          shell.tools().show(new StubTool("display"));
+          shell.tools().show(new StubTool("measure"));
+        });
+    commands.withShell(() -> shell);
+
+    CommandResult initial = run(CommandOrigin.REMOTE, "panel");
+    CommandResult opened =
+        run(
+            CommandOrigin.REMOTE,
+            "panel",
+            "--side",
+            "tools",
+            "--slot",
+            "bottom",
+            "--tool",
+            "measure");
+    CommandResult unknown =
+        run(CommandOrigin.REMOTE, "panel", "--side", "tools", "--slot", "top", "--tool", "nope");
+    CommandResult noSide = run(CommandOrigin.REMOTE, "panel", "--slot", "top", "--tool", "display");
+    CommandResult collapsed = run(CommandOrigin.REMOTE, "panel", "--side", "tools", "--collapse");
+    CommandResult cleared =
+        run(CommandOrigin.REMOTE, "panel", "--side", "tools", "--slot", "bottom", "--clear");
+    CommandResult text = run(CommandOrigin.LAUNCH_ARGS, "panel");
+    assertAll(
+        () -> assertEquals(CommandResult.OK, initial.status(), initial.error()),
+        () ->
+            assertTrue(json(initial.body()).getJsonObject("tools").getJsonArray("slots").isNull(0)),
+        () -> assertEquals(CommandResult.OK, opened.status(), opened.error()),
+        () ->
+            assertEquals(
+                "measure",
+                json(opened.body()).getJsonObject("tools").getJsonArray("slots").getString(1)),
+        () -> assertEquals(CommandResult.ERROR, unknown.status()),
+        () -> assertTrue(unknown.error().contains("display, measure"), unknown.error()),
+        () -> assertEquals(CommandResult.USAGE, noSide.status()),
+        () -> assertTrue(json(collapsed.body()).getJsonObject("tools").getBoolean("collapsed")),
+        () ->
+            assertTrue(json(cleared.body()).getJsonObject("tools").getJsonArray("slots").isNull(1)),
+        () -> assertTrue(text.body().contains("tools: top="), text.body()),
+        () -> assertEquals(Optional.empty(), shell.tools().toolIn(Slot.BOTTOM)));
+  }
+
+  @Test
+  void saveCarriesTheShellAndLoadAppliesIt() throws Exception {
+    Shell shell =
+        new Shell(
+            new SidePanel(SidePanel.Role.EXPLORER, SidePanel.Side.LEFT),
+            new SidePanel(SidePanel.Role.TOOLS, SidePanel.Side.RIGHT),
+            new MiniStrip());
+    javax.swing.SwingUtilities.invokeAndWait(() -> shell.tools().show(new StubTool("display")));
+    commands.withShell(() -> shell);
+    run(CommandOrigin.REMOTE, "panel", "--side", "tools", "--slot", "top", "--tool", "display");
+    JsonObject saved = json(run(CommandOrigin.REMOTE, "save").body());
+    javax.swing.SwingUtilities.invokeAndWait(() -> shell.tools().clear(Slot.TOP));
+    Path file = Files.createTempFile("workspace", ".json");
+    try {
+      Files.writeString(file, saved.toString());
+      CommandResult loaded = run(CommandOrigin.REMOTE, "load", "--file", file.toString());
+      assertAll(
+          () ->
+              assertEquals(
+                  "display",
+                  saved
+                      .getJsonObject("shell")
+                      .getJsonObject("tools")
+                      .getJsonArray("slots")
+                      .getString(0)),
+          () -> assertEquals(CommandResult.OK, loaded.status(), loaded.error()),
+          () -> assertEquals(Optional.of("display"), shell.tools().toolIn(Slot.TOP)));
+    } finally {
+      Files.deleteIfExists(file);
+    }
+  }
+
+  /** A tool of the shell: an id, a panel, nothing else. */
+  private static final class StubTool extends JPanel
+      implements org.weasis.core.ui.docking.DockableTool {
+    private final String id;
+
+    StubTool(String id) {
+      this.id = id;
+    }
+
+    @Override
+    public String getToolId() {
+      return id;
+    }
+
+    @Override
+    public void showDockable() {}
+
+    @Override
+    public void closeDockable() {}
+
+    @Override
+    public java.awt.Component getToolComponent() {
+      return this;
+    }
+
+    @Override
+    public int getDockableWidth() {
+      return 200;
+    }
+
+    @Override
+    public String getComponentName() {
+      return id;
+    }
+
+    @Override
+    public Type getPanelType() {
+      return Type.TOOL;
+    }
+
+    @Override
+    public boolean isComponentEnabled() {
+      return true;
+    }
+
+    @Override
+    public void setComponentEnabled(boolean enabled) {}
+
+    @Override
+    public int getComponentPosition() {
+      return id.equals("display") ? 10 : 30;
+    }
+
+    @Override
+    public void setComponentPosition(int position) {}
   }
 }

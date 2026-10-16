@@ -17,6 +17,7 @@ import com.formdev.flatlaf.util.SystemInfo;
 import jakarta.json.JsonException;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -56,6 +57,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -376,6 +378,11 @@ public class WeasisWin {
     return GuiUtils.getUICore().getWorkspaceManager();
   }
 
+  private static JPanel oriented(JPanel panel, ComponentOrientation orientation) {
+    panel.setComponentOrientation(orientation);
+    return panel;
+  }
+
   public void createMainPanel() {
     runOnClose(() -> workspace().disposeAll());
     workspace()
@@ -390,46 +397,56 @@ public class WeasisWin {
     Workspace centerArea = GuiUtils.getUICore().getCenterWorkspace();
     centerArea.setTransferHandler(new SeriesHandler());
 
-    SidePanel left = GuiUtils.getUICore().getLeftSidePanel();
-    SidePanel right = GuiUtils.getUICore().getRightSidePanel();
+    // The shell is named by role: the explorer side leads, the tools side trails, and the
+    // orientation of the locale decides which one is on the left. The canvas never mirrors.
+    ComponentOrientation orientation = ComponentOrientation.getOrientation(Locale.getDefault());
+    boolean ltr = orientation.isLeftToRight();
+    SidePanel explorer = GuiUtils.getUICore().getSidePanel(SidePanel.Role.EXPLORER);
+    SidePanel tools = GuiUtils.getUICore().getSidePanel(SidePanel.Role.TOOLS);
     MiniStrip miniStrip = GuiUtils.getUICore().getMiniStrip();
 
-    // the central area and the fixed MiniTool strip sit together (mini immediately right of centre)
-    JPanel centreWithMini = new JPanel(new BorderLayout());
-    centreWithMini.add(centerArea, BorderLayout.CENTER);
-    centreWithMini.add(miniStrip, BorderLayout.EAST);
+    // the central area and the fixed strip sit together (strip immediately trailing the centre)
+    JPanel centreWithStrip = oriented(new JPanel(new BorderLayout()), orientation);
+    centreWithStrip.add(centerArea, BorderLayout.CENTER);
+    centreWithStrip.add(miniStrip, BorderLayout.LINE_END);
 
-    // right tools: the resizable content is the split's right child
-    JSplitPane innerSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, centreWithMini, right);
-    innerSplit.setResizeWeight(1.0); // the centre absorbs resizing, the right content stays fixed
-    innerSplit.setContinuousLayout(true);
-    innerSplit.setBorder(null);
-    right.attachTo(innerSplit, false);
-    JPanel rightGroup = new JPanel(new BorderLayout());
-    rightGroup.add(innerSplit, BorderLayout.CENTER);
-    rightGroup.add(right.getStripe(), BorderLayout.EAST);
+    // tools side: the resizable content is the trailing child of the split
+    JSplitPane toolsSplit =
+        ltr
+            ? new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, centreWithStrip, tools)
+            : new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tools, centreWithStrip);
+    toolsSplit.setResizeWeight(ltr ? 1.0 : 0.0); // the centre absorbs resizing
+    toolsSplit.setContinuousLayout(true);
+    toolsSplit.setBorder(null);
+    tools.attachTo(toolsSplit);
+    JPanel toolsGroup = oriented(new JPanel(new BorderLayout()), orientation);
+    toolsGroup.add(toolsSplit, BorderLayout.CENTER);
+    toolsGroup.add(tools.getStripe(), BorderLayout.LINE_END);
 
-    // left explorers: resizable content is the split's left child
-    JSplitPane outerSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, rightGroup);
-    outerSplit.setResizeWeight(0.0); // the left content stays fixed, the rest absorbs resizing
-    outerSplit.setContinuousLayout(true);
-    outerSplit.setBorder(null);
-    left.attachTo(outerSplit, true);
+    // explorer side: the resizable content is the leading child of the split
+    JSplitPane explorerSplit =
+        ltr
+            ? new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, explorer, toolsGroup)
+            : new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, toolsGroup, explorer);
+    explorerSplit.setResizeWeight(ltr ? 0.0 : 1.0); // the explorer content stays fixed
+    explorerSplit.setContinuousLayout(true);
+    explorerSplit.setBorder(null);
+    explorer.attachTo(explorerSplit);
 
     // bottom footer (import/export): its panel spans the full window width under the three zones
     ImportExportFooter footer = new ImportExportFooter();
     JSplitPane footerSplit =
-        new JSplitPane(JSplitPane.VERTICAL_SPLIT, outerSplit, footer.getPanelHost());
+        new JSplitPane(JSplitPane.VERTICAL_SPLIT, explorerSplit, footer.getPanelHost());
     footerSplit.setResizeWeight(1.0); // the viewing area absorbs resizing, the footer stays fixed
     footerSplit.setContinuousLayout(true);
     footerSplit.setBorder(null);
     footer.attachTo(footerSplit);
 
-    JPanel leftEdge = new JPanel(new BorderLayout());
-    leftEdge.add(left.getStripe(), BorderLayout.CENTER);
-    leftEdge.add(footer, BorderLayout.SOUTH);
-    JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.add(leftEdge, BorderLayout.WEST);
+    JPanel explorerEdge = oriented(new JPanel(new BorderLayout()), orientation);
+    explorerEdge.add(explorer.getStripe(), BorderLayout.CENTER);
+    explorerEdge.add(footer, BorderLayout.SOUTH);
+    JPanel mainPanel = oriented(new JPanel(new BorderLayout()), orientation);
+    mainPanel.add(explorerEdge, BorderLayout.LINE_START);
     mainPanel.add(footerSplit, BorderLayout.CENTER);
 
     rootPaneContainer.getContentPane().add(mainPanel, BorderLayout.CENTER);

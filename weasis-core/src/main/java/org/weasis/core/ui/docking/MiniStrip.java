@@ -37,6 +37,18 @@ public class MiniStrip extends JPanel {
     repaint();
   }
 
+  /** The id of the tool the strip shows, or null. */
+  public String toolId() {
+    return current == null ? null : current.getToolId();
+  }
+
+  /** Empties the strip until the next viewer shows its tool again. */
+  public void hideCurrent() {
+    if (current != null) {
+      hide(current);
+    }
+  }
+
   public void hide(DockableTool tool) {
     if (current == tool) {
       current = null;

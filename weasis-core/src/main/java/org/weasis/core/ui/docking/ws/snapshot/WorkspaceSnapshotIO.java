@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import org.weasis.core.ui.docking.ShellState;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.GroupNode;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.Node;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.SplitNode;
@@ -52,10 +53,12 @@ public final class WorkspaceSnapshotIO {
       w.add("root", toJson(window.root()));
       windows.add(w);
     }
-    return Json.createObjectBuilder()
-        .add("version", snapshot.version())
-        .add("windows", windows)
-        .build();
+    JsonObjectBuilder json =
+        Json.createObjectBuilder().add("version", snapshot.version()).add("windows", windows);
+    if (snapshot.shell() != null) {
+      json.add(ShellState.SHELL, snapshot.shell().toJson());
+    }
+    return json.build();
   }
 
   private static JsonObject toJson(Rectangle r) {
@@ -101,8 +104,11 @@ public final class WorkspaceSnapshotIO {
             .map(JsonValue::asJsonObject)
             .map(WorkspaceSnapshotIO::windowFromJson)
             .toList();
+    JsonObject shell = json.getJsonObject(ShellState.SHELL);
     return new WorkspaceSnapshot(
-        json.getString("version", WorkspaceSnapshot.CURRENT_VERSION), windows);
+        json.getString("version", WorkspaceSnapshot.CURRENT_VERSION),
+        windows,
+        shell == null ? null : ShellState.fromJson(shell));
   }
 
   private static WindowSnapshot windowFromJson(JsonObject w) {

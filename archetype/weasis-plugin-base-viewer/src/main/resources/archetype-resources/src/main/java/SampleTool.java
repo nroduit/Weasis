@@ -17,7 +17,7 @@ public class SampleTool extends PluginTool {
     private final JScrollPane rootPane = new JScrollPane();
 
     public SampleTool(Type type) {
-        super(BUTTON_NAME, type, 120);
+        super("sample", BUTTON_NAME, type, 120);
         setIcon(
             new FlatSVGIcon(
                 (Objects.requireNonNull(SampleTool.class.getResource("/icon/svg/tools.svg")))));

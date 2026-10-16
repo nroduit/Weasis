@@ -31,6 +31,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.dialog.PropertiesDialog;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.Slot;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -69,7 +70,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   private final JSliderW slider;
 
   public SegmentationTool() {
-    super(BUTTON_NAME, Type.TOOL, 30);
+    super("segmentation", BUTTON_NAME, Type.TOOL, 30); // NON-NLS
     this.setLayout(new BorderLayout(0, 0));
     setIcon(ResourceUtil.getIcon(OtherIcon.SEGMENTATION));
     this.setDockableWidth(350);
@@ -87,6 +88,12 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     this.initData();
 
     initListeners();
+  }
+
+  /** A detail tool: the segment list opens under the control tool of the reading. */
+  @Override
+  public Slot getPreferredSlot() {
+    return Slot.BOTTOM;
   }
 
   private void initListeners() {

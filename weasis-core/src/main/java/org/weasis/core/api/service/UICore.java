@@ -69,6 +69,7 @@ import org.weasis.core.api.util.ResourceMonitor;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.ui.docking.MiniStrip;
+import org.weasis.core.ui.docking.Shell;
 import org.weasis.core.ui.docking.SidePanel;
 import org.weasis.core.ui.docking.ws.Workspace;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
@@ -114,8 +115,8 @@ public final class UICore {
   private final List<DataExplorerView> explorerPlugins;
   private final List<Toolbar> explorerPluginToolbars;
   private final WorkspaceManager workspaceManager;
-  private final SidePanel leftSidePanel;
-  private final SidePanel rightSidePanel;
+  private final SidePanel explorerSidePanel;
+  private final SidePanel toolsSidePanel;
   private final MiniStrip miniStrip;
   private volatile ViewerPlugin<?> selectedPlugin; // NOSONAR reference swapped whole
 
@@ -140,14 +141,15 @@ public final class UICore {
     if (mainWindow == null || GraphicsEnvironment.isHeadless()) {
       // No GUI available (e.g. unit tests or headless mode): docking stays uninitialized
       this.workspaceManager = null;
-      this.leftSidePanel = null;
-      this.rightSidePanel = null;
+      this.explorerSidePanel = null;
+      this.toolsSidePanel = null;
       this.miniStrip = null;
     } else {
       this.workspaceManager = new WorkspaceManager(mainWindow);
-      this.leftSidePanel = new SidePanel(SidePanel.Side.LEFT);
-      this.rightSidePanel = new SidePanel(SidePanel.Side.RIGHT);
+      this.explorerSidePanel = new SidePanel(SidePanel.Role.EXPLORER);
+      this.toolsSidePanel = new SidePanel(SidePanel.Role.TOOLS);
       this.miniStrip = new MiniStrip();
+      Shell.register(new Shell(explorerSidePanel, toolsSidePanel, miniStrip));
     }
     this.toolbarContainer = new ToolBarContainer();
     this.configData = retrieveconfigData();
@@ -540,16 +542,17 @@ public final class UICore {
     return workspaceManager == null ? null : workspaceManager.mainWorkspace();
   }
 
-  public SidePanel getLeftSidePanel() {
-    return leftSidePanel;
+  /** The side of that role: explorer (leading) or tools (trailing); null when headless. */
+  public SidePanel getSidePanel(SidePanel.Role role) {
+    return role == SidePanel.Role.EXPLORER ? explorerSidePanel : toolsSidePanel;
   }
 
-  public SidePanel getRightSidePanel() {
-    return rightSidePanel;
-  }
-
+  /** The side on that window side for the current locale; null when headless. */
   public SidePanel getSidePanel(SidePanel.Side side) {
-    return side == SidePanel.Side.LEFT ? leftSidePanel : rightSidePanel;
+    if (explorerSidePanel == null) {
+      return null;
+    }
+    return explorerSidePanel.getSide() == side ? explorerSidePanel : toolsSidePanel;
   }
 
   public MiniStrip getMiniStrip() {

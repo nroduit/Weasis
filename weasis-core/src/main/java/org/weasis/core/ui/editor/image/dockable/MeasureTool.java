@@ -136,7 +136,7 @@ public class MeasureTool extends PluginTool
   private List<DragGraphic> selectedGraphic;
 
   public MeasureTool(ImageViewerEventManager<? extends ImageElement> eventManager) {
-    super(BUTTON_NAME, Insertable.Type.TOOL, 30);
+    super("measure", BUTTON_NAME, Insertable.Type.TOOL, 30); // NON-NLS
     this.eventManager = eventManager;
     this.rootPane = new JScrollPane();
     setIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));

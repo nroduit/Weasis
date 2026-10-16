@@ -142,7 +142,7 @@ public class DicomExplorer extends PluginTool
   }
 
   public DicomExplorer(DicomModel model) {
-    super(NAME, Insertable.Type.EXPLORER, 20);
+    super("dicom-explorer", NAME, Insertable.Type.EXPLORER, 20); // NON-NLS
     setIcon(ResourceUtil.getIcon(ResourceUtil.OtherIcon.PATIENT));
 
     // Initialize core model and managers

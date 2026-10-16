@@ -12,15 +12,27 @@ package org.weasis.core.ui.docking.ws.snapshot;
 import jakarta.json.JsonObject;
 import java.awt.Rectangle;
 import java.util.List;
+import org.weasis.core.ui.docking.ShellState;
 
 /**
  * Serializable state of the workspace: every window (main and floating) with its screen, bounds and
- * split tree of view descriptors. The foundation for saving/restoring sessions and future hanging
- * protocols; view {@code state} content is opaque to the engine.
+ * split tree of view descriptors, and the {@link ShellState shell} around the tree (null when
+ * unknown or headless: a snapshot without it leaves the shell unchanged). The foundation for
+ * saving/restoring sessions and future hanging protocols; view {@code state} content is opaque to
+ * the engine.
  */
-public record WorkspaceSnapshot(String version, List<WindowSnapshot> windows) {
+public record WorkspaceSnapshot(String version, List<WindowSnapshot> windows, ShellState shell) {
 
   public static final String CURRENT_VERSION = "1";
+
+  public WorkspaceSnapshot(String version, List<WindowSnapshot> windows) {
+    this(version, windows, null);
+  }
+
+  /** The same windows with that shell. */
+  public WorkspaceSnapshot withShell(ShellState state) {
+    return new WorkspaceSnapshot(version, windows, state);
+  }
 
   public record WindowSnapshot(
       String screenId, Rectangle bounds, boolean main, Node root, String maximizedViewId) {}

@@ -62,7 +62,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
   private JTable tableTag;
 
   public MeasureAnnotationTool() {
-    super(BUTTON_NAME, Insertable.Type.TOOL, 30);
+    super("wave-measure", BUTTON_NAME, Insertable.Type.TOOL, 30); // NON-NLS
     this.rootPane = new JScrollPane();
     setIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line

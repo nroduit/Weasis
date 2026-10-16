@@ -12,12 +12,21 @@ package org.weasis.core.ui.docking;
 import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
@@ -27,6 +36,8 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
@@ -35,67 +46,125 @@ import org.weasis.core.api.setting.Setting;
 import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.docking.ShellState.ShellSide;
 
 /**
- * Hosts explorer (left) or tool (right) panels around the central workspace. The side is NOT part
- * of the workspace tree (viewers can never be dropped on it).
+ * One side of the shell around the central workspace: the explorer side (sources) or the tools side
+ * (controls). The side is NOT part of the workspace tree (viewers can never be dropped on it), and
+ * it is named by its role: the explorer side leads and the tools side trails, so the locale decides
+ * which one is on the left.
  *
  * <p>It is made of two pieces placed separately in the window: a fixed vertical {@link #getStripe()
- * button stripe} pinned to the window edge (one toggle button per panel), and this resizable
- * content area placed in the split pane. At most one panel is expanded at a time and pushes the
- * center; because the stripe is outside the split, the resizable minimum is one content column
- * only. Clicking a stripe button expands that panel (replacing the current one); the panel header
- * has a Minimize button that collapses it back to the stripe.
+ * button stripe} pinned to the window edge (one toggle button per tool id) and this resizable
+ * content area placed in the split pane. The content holds two {@link Slot slots}, stacked under
+ * one horizontal divider: a tool opens in its preferred slot and replaces what was there; a
+ * Shift-click on its button puts it in the other slot. Nothing in the bottom slot means no divider,
+ * so a user who never uses it sees one expanded panel, as before. When the window is too short for
+ * both, the bottom slot collapses instead of squeezing.
  *
- * <p>The content width belongs to the user, not to the hosted tools: it is seeded once from the
- * persisted preference (falling back to the widest tool), memorized on divider drags and written
- * back to the local persistence — swapping tools on a viewer switch never moves the divider. The
- * expanded panel is sticky as well: when tools are swapped, the panel matching the remembered name
- * (or the first one) is re-expanded unless the user explicitly collapsed the side.
+ * <p>Tools are keyed by their stable {@link DockableTool#getToolId() id}: when a viewer switch
+ * closes the display tool of one viewer type and shows the display tool of another, the stripe
+ * keeps its button and the slot swaps its content in place, without moving the divider. The content
+ * width belongs to the user: seeded once from the persisted preference (falling back to the widest
+ * tool), memorized on divider drags and written back. The slot ratio is remembered the same way.
+ * The expanded tools are sticky as well: when tools are swapped, the slots re-open the remembered
+ * ids (or, on the explorer side, the first tool) unless the user explicitly collapsed them.
  */
 public class SidePanel extends JPanel {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(SidePanel.class);
+
+  /** The window side a role resolves to for a locale; code never names a side directly. */
   public enum Side {
     LEFT,
     RIGHT
   }
 
-  private static final int MIN_CONTENT_WIDTH = 200;
+  /** The role of a shell side: the explorer side leads, the tools side trails. */
+  public enum Role {
+    EXPLORER,
+    TOOLS;
 
+    /** The side for the orientation of the default locale. */
+    public Side side() {
+      return side(ComponentOrientation.getOrientation(Locale.getDefault()));
+    }
+
+    public Side side(ComponentOrientation orientation) {
+      boolean leading = this == EXPLORER;
+      return leading == orientation.isLeftToRight() ? Side.LEFT : Side.RIGHT;
+    }
+
+    /** The JSON and command name of the role. */
+    public String key() {
+      return name().toLowerCase(Locale.ROOT);
+    }
+  }
+
+  private static final int MIN_CONTENT_WIDTH = 200;
+  private static final int MIN_SLOT_HEIGHT = 120;
+  private static final double DEFAULT_RATIO = 0.6;
+  private static final double MIN_RATIO = 0.1;
+  private static final double MAX_RATIO = 0.9;
+
+  private final Role role;
   private final Side side;
   private final JPanel stripe = new JPanel();
-  private final JPanel contentArea = new JPanel(new BorderLayout());
-  private final JPanel contentHost = new JPanel(new BorderLayout());
-  private final JLabel titleLabel = new JLabel();
-  private final JButton minimize = new JButton();
+  private final JSplitPane slotSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+  private final SlotHost[] hosts = {new SlotHost(Slot.TOP), new SlotHost(Slot.BOTTOM)};
   private final List<DockableTool> tools = new ArrayList<>();
-  private final Map<DockableTool, JToggleButton> buttons = new LinkedHashMap<>();
+  private final Map<String, JToggleButton> buttons = new LinkedHashMap<>();
+  private final String[] remembered = new String[Slot.values().length];
+  private final boolean[] collapsed = new boolean[Slot.values().length];
 
   private JSplitPane split;
   private boolean leftChild;
-  private DockableTool expanded;
-  private String rememberedExpandedName;
-  private boolean userCollapsed;
   private int contentWidth;
+  private double ratio;
   private boolean applyingWidth;
+  private boolean applyingRatio;
   private boolean relayoutPending;
+  private boolean bottomSuppressed;
+  private Icon minimizeIcon;
 
-  public SidePanel(Side side) {
-    this.side = side;
+  public SidePanel(Role role) {
+    this(role, role.side());
+  }
+
+  /** A side whose window side is given, for tests and for a shell built for another locale. */
+  public SidePanel(Role role, Side side) {
+    this.role = Objects.requireNonNull(role);
+    this.side = Objects.requireNonNull(side);
     setLayout(new BorderLayout());
 
     stripe.setLayout(new BoxLayout(stripe, BoxLayout.Y_AXIS));
     stripe.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-    minimize.setToolTipText(Messages.getString("Docking.minimize"));
-    minimize.setFocusable(false);
-    minimize.addActionListener(e -> minimize());
-    JPanel header = new JPanel(new BorderLayout());
-    header.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 2));
-    header.add(titleLabel, BorderLayout.CENTER);
-    header.add(minimize, BorderLayout.EAST);
-    contentArea.add(header, BorderLayout.NORTH);
-    contentArea.add(contentHost, BorderLayout.CENTER);
+    slotSplit.setContinuousLayout(true);
+    slotSplit.setBorder(null);
+    slotSplit.setResizeWeight(DEFAULT_RATIO);
+    slotSplit.addPropertyChangeListener(
+        JSplitPane.DIVIDER_LOCATION_PROPERTY,
+        e -> {
+          int usable = slotSplit.getHeight() - slotSplit.getDividerSize();
+          if (!applyingRatio && bothShown() && usable > 0) {
+            ratio = clampRatio((double) slotSplit.getDividerLocation() / usable);
+            Settings.set(ratioSetting(), ratio);
+          }
+        });
+    addComponentListener(
+        new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent e) {
+            if (updateBottomSuppressed()) {
+              scheduleRelayout();
+            }
+          }
+        });
+  }
+
+  public Role getRole() {
+    return role;
   }
 
   public Side getSide() {
@@ -107,14 +176,17 @@ public class SidePanel extends JPanel {
     return stripe;
   }
 
-  /** Attach the resizable content area to the split pane it controls. */
-  public void attachTo(JSplitPane splitPane, boolean isLeftChild) {
+  /**
+   * Attach the resizable content area to the split pane it controls. The side knows from its role
+   * and the locale whether it is the left or the right child of that split.
+   */
+  public void attachTo(JSplitPane splitPane) {
     this.split = splitPane;
-    this.leftChild = isLeftChild;
+    this.leftChild = side == Side.LEFT;
     splitPane.addPropertyChangeListener(
         JSplitPane.DIVIDER_LOCATION_PROPERTY,
         e -> {
-          if (!applyingWidth && expanded != null && getWidth() > 0) {
+          if (!applyingWidth && isShowingContent() && getWidth() > 0) {
             contentWidth = getWidth();
             Settings.set(widthSetting(), contentWidth);
           }
@@ -122,23 +194,37 @@ public class SidePanel extends JPanel {
     applyWidth();
   }
 
+  // ---- tools -----------------------------------------------------------------------------------
+
   /**
-   * Register and show a panel. The remembered expanded panel (or, on the left side, the first one)
-   * is re-expanded unless the user explicitly collapsed this side.
+   * Register and show a tool. A tool with the same id replaces the previous instance in place: the
+   * stripe keeps its button and a slot showing that id swaps its content. The remembered slots are
+   * re-opened unless the user explicitly collapsed them.
    */
   public void show(DockableTool tool) {
-    if (!tools.contains(tool)) {
+    DockableTool previous = find(tool.getToolId()).orElse(null);
+    if (previous != tool) {
+      if (previous != null) {
+        tools.remove(previous);
+        for (SlotHost host : hosts) {
+          if (host.tool == previous) {
+            host.setTool(tool);
+          }
+        }
+      }
       tools.add(tool);
       tools.sort(Comparator.comparingInt(DockableTool::getComponentPosition));
     }
     scheduleRelayout();
   }
 
-  /** Remove a panel; the expansion memory is kept so a matching panel re-expands later. */
+  /** Remove a tool; the slot memory is kept so a tool with the same id re-opens there later. */
   public void hide(DockableTool tool) {
     if (tools.remove(tool)) {
-      if (expanded == tool) {
-        expanded = null;
+      for (SlotHost host : hosts) {
+        if (host.tool == tool) {
+          host.setTool(null);
+        }
       }
       scheduleRelayout();
     }
@@ -148,17 +234,173 @@ public class SidePanel extends JPanel {
     return tools.contains(tool);
   }
 
-  private void expand(DockableTool tool) {
-    expanded = tool;
-    rememberedExpandedName = tool.getComponentName();
-    userCollapsed = false;
+  /** The ids of the tools this side currently offers, in stripe order. */
+  public List<String> toolIds() {
+    return tools.stream().map(DockableTool::getToolId).toList();
+  }
+
+  /** The id of the tool a slot holds (even while the slot is collapsed or suppressed). */
+  public Optional<String> toolIn(Slot slot) {
+    DockableTool tool = host(slot).tool;
+    return Optional.ofNullable(tool).map(DockableTool::getToolId);
+  }
+
+  /** Whether the user collapsed the whole side (both slots hidden by choice). */
+  public boolean isCollapsed() {
+    return collapsed[Slot.TOP.ordinal()]
+        && (collapsed[Slot.BOTTOM.ordinal()] || remembered[Slot.BOTTOM.ordinal()] == null);
+  }
+
+  public int getContentWidth() {
+    return contentWidth > 0
+        ? contentWidth
+        : Settings.get(widthSetting(), this::preferredContentWidth);
+  }
+
+  public double getRatio() {
+    return ratio > 0 ? ratio : Settings.get(ratioSetting(), () -> DEFAULT_RATIO);
+  }
+
+  /**
+   * Opens the tool of that id in a slot, replacing what was there and leaving the other slot if it
+   * held that tool.
+   *
+   * @return false when no tool of that id is offered on this side
+   */
+  public boolean open(String toolId, Slot slot) {
+    Optional<DockableTool> tool = find(toolId);
+    tool.ifPresent(t -> open(t, slot));
+    return tool.isPresent();
+  }
+
+  /** Empties a slot and forgets it. */
+  public void clear(Slot slot) {
+    host(slot).setTool(null);
+    remembered[slot.ordinal()] = null;
+    collapsed[slot.ordinal()] = false;
     scheduleRelayout();
   }
 
-  private void minimize() {
-    expanded = null;
-    userCollapsed = true;
+  /** Hides both slots; their tools are remembered for {@link #expand()}. */
+  public void collapse() {
+    for (Slot slot : Slot.values()) {
+      collapse(slot);
+    }
+  }
+
+  /** Shows the remembered tools again. */
+  public void expand() {
+    Arrays.fill(collapsed, false);
     scheduleRelayout();
+  }
+
+  public void setContentWidth(int width) {
+    if (width > 0) {
+      contentWidth = width;
+      Settings.set(widthSetting(), width);
+      applyWidth();
+    }
+  }
+
+  public void setRatio(double value) {
+    ratio = clampRatio(value);
+    Settings.set(ratioSetting(), ratio);
+    applyRatio();
+  }
+
+  /** The state of this side as a session or a UI profile records it. */
+  public ShellSide captureState() {
+    List<String> slots = new ArrayList<>();
+    for (Slot slot : Slot.values()) {
+      int i = slot.ordinal();
+      slots.add(collapsed[i] ? remembered[i] : toolIn(slot).orElse(null));
+    }
+    return new ShellSide(slots, getContentWidth(), getRatio(), isCollapsed());
+  }
+
+  /**
+   * Applies a side state: each slot gets its tool, or is emptied by a null entry; then the width,
+   * the ratio and the collapsed flag.
+   *
+   * @return the tool ids this side does not offer, skipped (the viewer decides which tools exist)
+   */
+  public List<String> applyState(ShellSide state) {
+    List<String> skipped = new ArrayList<>();
+    for (Slot slot : Slot.values()) {
+      String id = state.slot(slot);
+      if (id == null) {
+        clear(slot);
+      } else if (!open(id, slot)) {
+        skipped.add(id);
+      }
+    }
+    if (state.width() > 0) {
+      setContentWidth(state.width());
+    }
+    if (state.ratio() > 0) {
+      setRatio(state.ratio());
+    }
+    if (state.collapsed()) {
+      collapse();
+    } else {
+      expand();
+    }
+    return skipped;
+  }
+
+  // ---- slots -----------------------------------------------------------------------------------
+
+  private SlotHost host(Slot slot) {
+    return hosts[slot.ordinal()];
+  }
+
+  private Optional<DockableTool> find(String toolId) {
+    return tools.stream().filter(t -> t.getToolId().equals(toolId)).findFirst();
+  }
+
+  private Optional<Slot> slotOf(DockableTool tool) {
+    for (SlotHost host : hosts) {
+      if (host.tool == tool) {
+        return Optional.of(host.slot);
+      }
+    }
+    return Optional.empty();
+  }
+
+  private void open(DockableTool tool, Slot slot) {
+    SlotHost other = host(slot.other());
+    if (other.tool == tool) {
+      other.setTool(null);
+      remembered[slot.other().ordinal()] = null;
+    }
+    host(slot).setTool(tool);
+    remembered[slot.ordinal()] = tool.getToolId();
+    collapsed[slot.ordinal()] = false;
+    scheduleRelayout();
+  }
+
+  private void collapse(Slot slot) {
+    collapsed[slot.ordinal()] = true;
+    scheduleRelayout();
+  }
+
+  private Slot preferredSlot(DockableTool tool) {
+    return Optional.ofNullable(tool.getPreferredSlot()).orElse(Slot.TOP);
+  }
+
+  private void toggle(String toolId, boolean otherSlot) {
+    DockableTool tool = find(toolId).orElse(null);
+    if (tool == null) {
+      return;
+    }
+    Optional<Slot> current = slotOf(tool).filter(s -> !collapsed[s.ordinal()]);
+    if (otherSlot) {
+      open(tool, current.map(Slot::other).orElseGet(() -> preferredSlot(tool).other()));
+    } else if (current.isPresent()) {
+      collapse(current.get());
+    } else {
+      open(tool, slotOf(tool).orElseGet(() -> preferredSlot(tool)));
+    }
   }
 
   /** Coalesces the close-then-show storm of a viewer switch into a single relayout. */
@@ -175,71 +417,146 @@ public class SidePanel extends JPanel {
   }
 
   private void relayout() {
-    if (expanded == null && !userCollapsed && !tools.isEmpty()) {
-      if (rememberedExpandedName != null) {
-        // sticky expansion: the remembered panel, or the first one so the column keeps its width
-        expanded =
-            tools.stream()
-                .filter(t -> t.getComponentName().equals(rememberedExpandedName))
-                .findFirst()
-                .orElse(tools.getFirst());
-      } else if (side == Side.LEFT) {
-        expanded = tools.getFirst(); // explorers open by default
-      }
-    }
+    refillSlots();
     rebuildStripe();
-    removeAll();
-    if (expanded != null) {
-      if (minimize.getIcon() == null) {
-        // load lazily: the resource path is only configured after the launcher starts
-        minimize.setIcon(minimizeIcon());
-      }
-      titleLabel.setText(expanded.getComponentName());
-      contentHost.removeAll();
-      contentHost.add(expanded.getToolComponent(), BorderLayout.CENTER);
-      add(contentArea, BorderLayout.CENTER);
-    }
+    updateBottomSuppressed();
+    rebuildContent();
     applyWidth();
+    applyRatio();
     revalidate();
     repaint();
   }
 
+  /** Sticky slots: an empty slot re-opens its remembered id, the explorer top the first tool. */
+  private void refillSlots() {
+    for (Slot slot : Slot.values()) {
+      SlotHost host = host(slot);
+      int i = slot.ordinal();
+      if (host.tool != null || tools.isEmpty()) {
+        continue;
+      }
+      DockableTool tool = null;
+      if (remembered[i] != null) {
+        tool = find(remembered[i]).orElse(slot == Slot.TOP ? tools.getFirst() : null);
+      } else if (slot == Slot.TOP && role == Role.EXPLORER) {
+        tool = tools.getFirst(); // explorers open by default
+      }
+      if (tool != null && slotOf(tool).isEmpty()) {
+        host.setTool(tool);
+      }
+    }
+  }
+
+  private boolean isShown(Slot slot) {
+    SlotHost host = host(slot);
+    return host.tool != null
+        && !collapsed[slot.ordinal()]
+        && !(slot == Slot.BOTTOM && bottomSuppressed);
+  }
+
+  private boolean bothShown() {
+    return isShown(Slot.TOP) && isShown(Slot.BOTTOM);
+  }
+
+  private boolean isShowingContent() {
+    return isShown(Slot.TOP) || isShown(Slot.BOTTOM);
+  }
+
+  /** Too short for two slots: the bottom one collapses instead of squeezing. */
+  private boolean updateBottomSuppressed() {
+    boolean before = bottomSuppressed;
+    int needed = 2 * GuiUtils.getScaleLength(MIN_SLOT_HEIGHT) + slotSplit.getDividerSize();
+    bottomSuppressed =
+        host(Slot.BOTTOM).tool != null
+            && host(Slot.TOP).tool != null
+            && !collapsed[Slot.TOP.ordinal()]
+            && getHeight() > 0
+            && getHeight() < needed;
+    return before != bottomSuppressed;
+  }
+
+  private void rebuildContent() {
+    Component desired;
+    if (bothShown()) {
+      slotSplit.setTopComponent(host(Slot.TOP).panel);
+      slotSplit.setBottomComponent(host(Slot.BOTTOM).panel);
+      desired = slotSplit;
+    } else if (isShown(Slot.TOP)) {
+      desired = host(Slot.TOP).panel;
+    } else if (isShown(Slot.BOTTOM)) {
+      desired = host(Slot.BOTTOM).panel;
+    } else {
+      desired = null;
+    }
+    Component current = getComponentCount() == 1 ? getComponent(0) : null;
+    if (current == desired) {
+      return;
+    }
+    removeAll();
+    if (desired != null) {
+      add(desired, BorderLayout.CENTER);
+    }
+  }
+
+  // ---- stripe ----------------------------------------------------------------------------------
+
+  /** One button per tool id in position order; unchanged ids keep their button. */
   private void rebuildStripe() {
-    if (!buttons.keySet().equals(new java.util.HashSet<>(tools))
-        || buttons.size() != tools.size()) {
+    List<String> ids = toolIds();
+    if (!new ArrayList<>(buttons.keySet()).equals(ids)) {
+      Map<String, JToggleButton> kept = new LinkedHashMap<>();
       stripe.removeAll();
-      buttons.clear();
       for (DockableTool tool : tools) {
-        JToggleButton button = new JToggleButton(buttonIcon(tool));
-        button.setToolTipText(tool.getComponentName());
-        button.setFocusable(false);
-        button.setAlignmentX(CENTER_ALIGNMENT);
-        button.setMaximumSize(button.getPreferredSize());
-        button.addActionListener(e -> toggle(tool));
-        buttons.put(tool, button);
+        String id = tool.getToolId();
+        JToggleButton button = buttons.get(id);
+        if (button == null) {
+          button = createButton(tool);
+        }
+        kept.put(id, button);
         stripe.add(button);
       }
+      buttons.clear();
+      buttons.putAll(kept);
       stripe.revalidate();
       stripe.repaint();
     }
-    buttons.forEach((tool, button) -> button.setSelected(tool == expanded));
+    for (DockableTool tool : tools) {
+      JToggleButton button = buttons.get(tool.getToolId());
+      Optional<Slot> slot = slotOf(tool).filter(this::isShown);
+      button.setSelected(slot.isPresent());
+      button.setToolTipText(
+          slot.filter(s -> s == Slot.BOTTOM)
+              .map(s -> tool.getComponentName() + " (" + Messages.getString("Docking.bottom") + ")")
+              .orElse(tool.getComponentName()));
+    }
   }
 
-  private void toggle(DockableTool tool) {
-    if (tool == expanded) {
-      minimize();
-    } else {
-      expand(tool);
-    }
+  private JToggleButton createButton(DockableTool tool) {
+    String id = tool.getToolId();
+    Icon icon = buttonIcon(tool);
+    JToggleButton button = icon == null ? new JToggleButton(id) : new JToggleButton(icon);
+    button.setName(id);
+    button.setFocusable(false);
+    button.setAlignmentX(CENTER_ALIGNMENT);
+    button.setMaximumSize(button.getPreferredSize());
+    button.addActionListener(e -> toggle(id, (e.getModifiers() & ActionEvent.SHIFT_MASK) != 0));
+    return button;
   }
 
   /**
    * The minus icon recolored from its native red to the default grey used by other action icons.
    */
-  private static Icon minimizeIcon() {
-    // map every colour of the icon to the action grey, regardless of the source palette colour
-    ColorFilter filter = new ColorFilter(c -> greyColor());
-    return GuiUtils.getDerivedIcon(ResourceUtil.getIcon(ActionIcon.MINUS), filter);
+  private Icon minimizeIcon() {
+    if (minimizeIcon == null) {
+      try {
+        // map every colour of the icon to the action grey, regardless of the source palette colour
+        ColorFilter filter = new ColorFilter(c -> greyColor());
+        minimizeIcon = GuiUtils.getDerivedIcon(ResourceUtil.getIcon(ActionIcon.MINUS), filter);
+      } catch (RuntimeException e) {
+        LOGGER.debug("No minimize icon", e);
+      }
+    }
+    return minimizeIcon;
   }
 
   private static Color greyColor() {
@@ -247,15 +564,34 @@ public class SidePanel extends JPanel {
     return grey != null ? grey : new Color(0x6E6E6E);
   }
 
-  private Icon buttonIcon(DockableTool tool) {
+  private static Icon buttonIcon(DockableTool tool) {
     Icon icon = tool instanceof PluginTool pt ? pt.getIcon() : null;
-    return icon != null ? icon : ResourceUtil.getIcon(ActionIcon.MORE_V);
+    if (icon != null) {
+      return icon;
+    }
+    try {
+      return ResourceUtil.getIcon(ActionIcon.MORE_V);
+    } catch (RuntimeException e) {
+      return null; // no resource path (tests): the button shows the id
+    }
   }
+
+  // ---- sizes -----------------------------------------------------------------------------------
 
   private Setting<Integer> widthSetting() {
     return side == Side.LEFT
         ? CoreSettings.SIDE_PANEL_LEFT_WIDTH
         : CoreSettings.SIDE_PANEL_RIGHT_WIDTH;
+  }
+
+  private Setting<Double> ratioSetting() {
+    return role == Role.EXPLORER
+        ? CoreSettings.SIDE_PANEL_EXPLORER_RATIO
+        : CoreSettings.SIDE_PANEL_TOOLS_RATIO;
+  }
+
+  private static double clampRatio(double value) {
+    return Math.clamp(value, MIN_RATIO, MAX_RATIO);
   }
 
   /** Fallback content width when nothing is persisted: the widest hosted panel's width. */
@@ -270,13 +606,14 @@ public class SidePanel extends JPanel {
   }
 
   private void applyWidth() {
-    if (expanded != null && contentWidth <= 0) {
+    boolean showing = isShowingContent();
+    if (showing && contentWidth <= 0) {
       // seed once: the user-set width survives viewer switches and sessions
       contentWidth = Settings.get(widthSetting(), this::preferredContentWidth);
     }
-    int total = expanded != null ? contentWidth : 0;
+    int total = showing ? contentWidth : 0;
     // constant minimum: a per-tool minimum would push the divider on viewer switches
-    int min = expanded != null ? GuiUtils.getScaleLength(MIN_CONTENT_WIDTH) : 0;
+    int min = showing ? GuiUtils.getScaleLength(MIN_CONTENT_WIDTH) : 0;
     setPreferredSize(new Dimension(total, getPreferredSize().height));
     setMinimumSize(new Dimension(min, 0));
     if (split != null && split.getWidth() > 0) {
@@ -291,6 +628,64 @@ public class SidePanel extends JPanel {
         applyingWidth = false;
       }
       split.revalidate();
+    }
+  }
+
+  private void applyRatio() {
+    if (!bothShown()) {
+      return;
+    }
+    if (ratio <= 0) {
+      ratio = clampRatio(Settings.get(ratioSetting(), () -> DEFAULT_RATIO));
+    }
+    applyingRatio = true;
+    try {
+      slotSplit.setResizeWeight(ratio);
+      int usable = slotSplit.getHeight() - slotSplit.getDividerSize();
+      if (usable > 0) {
+        slotSplit.setDividerLocation((int) Math.round(ratio * usable));
+      }
+    } finally {
+      applyingRatio = false;
+    }
+  }
+
+  /** A slot: a header with the tool title and a minimize button, and the tool component. */
+  private final class SlotHost {
+    final Slot slot;
+    final JPanel panel = new JPanel(new BorderLayout());
+    final JPanel content = new JPanel(new BorderLayout());
+    final JLabel title = new JLabel();
+    final JButton minimize = new JButton();
+    DockableTool tool;
+
+    SlotHost(Slot slot) {
+      this.slot = slot;
+      minimize.setToolTipText(Messages.getString("Docking.minimize"));
+      minimize.setFocusable(false);
+      minimize.addActionListener(e -> collapse(slot));
+      JPanel header = new JPanel(new BorderLayout());
+      header.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 2));
+      header.add(title, BorderLayout.CENTER);
+      header.add(minimize, BorderLayout.LINE_END);
+      panel.add(header, BorderLayout.NORTH);
+      panel.add(content, BorderLayout.CENTER);
+      panel.setMinimumSize(new Dimension(0, GuiUtils.getScaleLength(MIN_SLOT_HEIGHT)));
+    }
+
+    void setTool(DockableTool newTool) {
+      tool = newTool;
+      content.removeAll();
+      if (newTool != null) {
+        if (minimize.getIcon() == null) {
+          // load lazily: the resource path is only configured after the launcher starts
+          minimize.setIcon(minimizeIcon());
+        }
+        title.setText(newTool.getComponentName());
+        content.add(newTool.getToolComponent(), BorderLayout.CENTER);
+      }
+      content.revalidate();
+      content.repaint();
     }
   }
 }

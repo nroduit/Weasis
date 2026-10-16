@@ -60,6 +60,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.dialog.PropertiesDialog;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.Slot;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -169,7 +170,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private final transient ItemListener planChangeListener;
 
   public RtDisplayTool() {
-    super(BUTTON_NAME, Insertable.Type.TOOL, 30);
+    super("rt", BUTTON_NAME, Insertable.Type.TOOL, 30); // NON-NLS
     this.setLayout(new BorderLayout(0, 0));
     this.setIcon(ResourceUtil.getIcon(OtherIcon.RADIOACTIVE));
     this.setDockableWidth(350);
@@ -214,6 +215,12 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
     initializeUI();
     initializeListeners();
+  }
+
+  /** A detail tool: the segment list opens under the control tool of the reading. */
+  @Override
+  public Slot getPreferredSlot() {
+    return Slot.BOTTOM;
   }
 
   private void initializeUI() {
