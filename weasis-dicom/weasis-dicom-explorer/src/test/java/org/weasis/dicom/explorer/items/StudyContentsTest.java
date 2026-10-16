@@ -21,9 +21,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
 import javax.swing.JProgressBar;
 import org.dcm4che3.data.Attributes;
-import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -60,7 +58,7 @@ class StudyContentsTest {
     final DicomSeries ct;
 
     Fixture() throws URISyntaxException {
-      Attributes attrs = koAttributes(studyUID, ctUID, 2);
+      Attributes attrs = KoFixtures.koAttributes(studyUID, ctUID, 2);
       ko = element(attrs);
       // The pseudo UID is what the loader computes from the identity; any key works for the index
       String pseudoUID = "PSEUDO-" + UIDUtils.createUID(); // NON-NLS
@@ -127,7 +125,7 @@ class StudyContentsTest {
     MediaSeriesGroup other = studyNode(otherStudyUID);
     f.model.addHierarchyNode(f.patient, other);
     f.model.addHierarchyNode(other, series(UIDUtils.createUID(), "MR", 1, "T2"));
-    Attributes attrs = koAttributes(otherStudyUID, f.ctUID, 1);
+    Attributes attrs = KoFixtures.koAttributes(otherStudyUID, f.ctUID, 1);
     attrs.setString(Tag.PatientID, VR.LO, patientId(f.ko));
     KOSpecialElement crossKo = element(attrs);
     register(crossKo, (String) f.patient.getTagValue(TagW.PatientPseudoUID), f.ctUID);
@@ -288,48 +286,5 @@ class StudyContentsTest {
       @Override
       public void setPriority() {}
     };
-  }
-
-  static Attributes koAttributes(String studyUID, String refSeries, int images) {
-    Attributes a = new Attributes();
-    a.setString(Tag.SOPClassUID, VR.UI, UID.KeyObjectSelectionDocumentStorage);
-    a.setString(Tag.SOPInstanceUID, VR.UI, UIDUtils.createUID());
-    a.setString(Tag.Modality, VR.CS, "KO");
-    a.setString(Tag.PatientID, VR.LO, "P-" + UIDUtils.createUID());
-    a.setString(Tag.PatientName, VR.PN, "Doe^Jane");
-    a.setString(Tag.StudyInstanceUID, VR.UI, studyUID);
-    a.setString(Tag.SeriesInstanceUID, VR.UI, UIDUtils.createUID());
-    a.setInt(Tag.SeriesNumber, VR.IS, 999);
-    a.setInt(Tag.InstanceNumber, VR.IS, 1);
-    a.setString(Tag.ContentDate, VR.DA, "20260115");
-    a.setString(Tag.ContentTime, VR.TM, "103000");
-    Attributes code = item(a, Tag.ConceptNameCodeSequence);
-    code.setString(Tag.CodeValue, VR.SH, "113000");
-    code.setString(Tag.CodingSchemeDesignator, VR.SH, "DCM");
-    code.setString(Tag.CodeMeaning, VR.LO, "Of Interest");
-    Attributes text = item(a, Tag.ContentSequence);
-    text.setString(Tag.RelationshipType, VR.CS, "CONTAINS");
-    text.setString(Tag.ValueType, VR.CS, "TEXT");
-    text.setString(Tag.TextValue, VR.UT, "Key images");
-    Attributes study = item(a, Tag.CurrentRequestedProcedureEvidenceSequence);
-    study.setString(Tag.StudyInstanceUID, VR.UI, studyUID);
-    Attributes series = item(study, Tag.ReferencedSeriesSequence);
-    series.setString(Tag.SeriesInstanceUID, VR.UI, refSeries);
-    Sequence sops = series.newSequence(Tag.ReferencedSOPSequence, images);
-    for (int i = 0; i < images; i++) {
-      Attributes sop = new Attributes();
-      sop.setString(Tag.ReferencedSOPClassUID, VR.UI, UID.CTImageStorage);
-      sop.setString(Tag.ReferencedSOPInstanceUID, VR.UI, UIDUtils.createUID());
-      sops.add(sop);
-    }
-    return a;
-  }
-
-  /** Adds a one-item sequence to {@code parent} and returns the item. */
-  static Attributes item(Attributes parent, int tag) {
-    Sequence sequence = parent.newSequence(tag, 1);
-    Attributes item = new Attributes();
-    sequence.add(item);
-    return item;
   }
 }

@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -52,6 +53,7 @@ import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.ui.editor.image.PlayViewButton;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 
@@ -76,6 +78,13 @@ public class SeriesThumbnail extends Thumbnail
   private Point dragPressed = null;
   private DragSource dragSource = null;
   private OpManager opManager;
+  private Supplier<Badge> badge;
+
+  /**
+   * A short text drawn in the top-left corner of the thumbnail, next to the open mark, with a line
+   * for the tooltip; e.g. the number of images of interest of the series.
+   */
+  public record Badge(String text, String tooltip) {}
 
   public SeriesThumbnail(
       final MediaSeries<? extends MediaElement> sequence,
@@ -383,9 +392,28 @@ public class SeriesThumbnail extends Thumbnail
     return null;
   }
 
+  /** Sets the provider of the corner badge, read at each paint; null for none. */
+  public void setBadge(Supplier<Badge> badge) {
+    this.badge = badge;
+  }
+
+  private Badge currentBadge() {
+    Supplier<Badge> supplier = badge;
+    return supplier == null ? null : supplier.get();
+  }
+
   @Override
   public String getToolTipText() {
-    return series.getToolTips();
+    String tips = series.getToolTips();
+    Badge current = currentBadge();
+    if (current == null || !StringUtil.hasText(current.tooltip())) {
+      return tips;
+    }
+    if (tips != null && tips.contains(GuiUtils.HTML_END)) {
+      return tips.replace(
+          GuiUtils.HTML_END, current.tooltip() + GuiUtils.HTML_BR + GuiUtils.HTML_END);
+    }
+    return GuiUtils.HTML_START + current.tooltip() + GuiUtils.HTML_END;
   }
 
   @Override
@@ -393,6 +421,7 @@ public class SeriesThumbnail extends Thumbnail
     if (dragPressed == null) {
       Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, false, true);
       int inset = GuiUtils.getScaleLength(2);
+      int badgeX = x + inset;
       if (series.isOpen()) {
         if (series.isSelected() && series.isFocused()) {
           g2d.setPaint(IconColor.ACTIONS_YELLOW.getColor());
@@ -403,6 +432,7 @@ public class SeriesThumbnail extends Thumbnail
         g2d.fillArc(x + inset, y + inset, size, size, 0, 360);
         g2d.setPaint(Color.BLACK);
         g2d.drawArc(x + inset, y + inset, size, size, 0, 360);
+        badgeX += size + inset;
       }
 
       g2d.setFont(
@@ -412,6 +442,15 @@ public class SeriesThumbnail extends Thumbnail
       FontMetrics fontMetrics = g2d.getFontMetrics();
       final int fontHeight = fontMetrics.getHeight();
       int descent = g2d.getFontMetrics().getDescent();
+      Badge current = currentBadge();
+      if (current != null && StringUtil.hasText(current.text())) {
+        FontTools.paintColorFontOutline(
+            g2d,
+            current.text(),
+            badgeX,
+            y + inset + fontHeight - (float) descent,
+            IconColor.ACTIONS_YELLOW.getColor());
+      }
       Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
       if (splitNb != null) {
         String nb = "#" + splitNb;

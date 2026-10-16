@@ -44,6 +44,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.SeriesUid;
 import org.weasis.dicom.explorer.StudyUid;
 import org.weasis.dicom.explorer.items.DownloadState;
+import org.weasis.dicom.explorer.items.FacetCounts;
 import org.weasis.dicom.explorer.items.Interest;
 import org.weasis.dicom.explorer.items.InterestSource;
 import org.weasis.dicom.explorer.items.ObjectItem;
@@ -67,8 +68,10 @@ import picocli.CommandLine.ParentCommand;
             + "the data, 'explorer:' the view of it.",
     subcommands = {
       ExplorerCommands.Filter.class,
+      ExplorerCommands.Facets.class,
       ExplorerCommands.Mode.class,
       ExplorerCommands.Select.class,
+      ExplorerCommands.Reveal.class,
       ExplorerCommands.State.class
     })
 @Since("5.0")
@@ -304,6 +307,49 @@ public class ExplorerCommands implements CommandExtension {
   // ---------------------------------------------------------------------------------------------
 
   @Command(
+      name = "facets",
+      description =
+          "The values the series filter can take for the selected patient, with the number of its "
+              + "series each value keeps: modalities, kinds of objects referencing the series, "
+              + "sources of images of interest, download states. The menu of the filter button "
+              + "shows the same; lets an agent choose a filter before 'explorer:filter'.")
+  @Since("5.0")
+  static class Facets extends Verb {
+    @Override
+    protected void run() {
+      print(
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                DicomExplorer explorer = parent.explorer();
+                FacetCounts counts =
+                    FacetCounts.of(explorer.getDataExplorerModel(), explorer.getSelectedPatient());
+                return facetsJson(counts).build().toString();
+              }));
+    }
+  }
+
+  static JsonObjectBuilder facetsJson(FacetCounts counts) {
+    JsonObjectBuilder json = Json.createObjectBuilder();
+    json.add("total", counts.total()); // NON-NLS
+    JsonObjectBuilder modalities = Json.createObjectBuilder();
+    counts.modalities().forEach(modalities::add);
+    json.add("modalities", modalities); // NON-NLS
+    JsonObjectBuilder objects = Json.createObjectBuilder();
+    counts.objectKinds().forEach((kind, n) -> objects.add(kind.getId(), n));
+    json.add("objects", objects); // NON-NLS
+    JsonObjectBuilder interest = Json.createObjectBuilder();
+    interest.add("any", counts.interestAny()); // NON-NLS
+    counts.interestSources().forEach((source, n) -> interest.add(source.getId(), n));
+    json.add("interest", interest); // NON-NLS
+    JsonObjectBuilder states = Json.createObjectBuilder();
+    counts.downloadStates().forEach((state, n) -> states.add(state.getId(), n));
+    json.add("states", states); // NON-NLS
+    return json;
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
       name = "mode",
       description =
           "Sets how the DICOM explorer draws the selected patient: 'thumbnails' (the column of "
@@ -406,6 +452,56 @@ public class ExplorerCommands implements CommandExtension {
                           selection.addAll(selected);
                         }
                         return stateJson(explorer).build().toString();
+                      })));
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "reveal",
+      description =
+          "Scrolls the DICOM explorer to a series and selects it, as a reader pointing at it: "
+              + "selects its patient, unfolds its study in the compact list and brings its "
+              + "thumbnail or row into view. Reports 'visible': false when the filter hides it "
+              + "(the filter is not changed).")
+  @Since("5.0")
+  static class Reveal extends Verb {
+    @Option(
+        names = "--series",
+        paramLabel = "<series-uid>",
+        required = true,
+        description = "Series Instance UID (or series id) from 'dicom:list'.")
+    SeriesUid series;
+
+    @Override
+    protected void run() {
+      print(
+          GuiExecutor.invokeAndRethrow(
+              () ->
+                  IdentityMask.callForCommand(
+                      () -> {
+                        DicomExplorer explorer = parent.explorer();
+                        DicomModel model = explorer.getDataExplorerModel();
+                        MediaSeries<? extends MediaElement> s =
+                            model
+                                .findSeries(series.value())
+                                .orElseThrow(
+                                    () ->
+                                        CommandFailure.unknownHandle(
+                                            "Unknown series: " + series, // NON-NLS
+                                            "dicom:list")); // NON-NLS
+                        boolean visible =
+                            s instanceof DicomSeries dicomSeries && explorer.reveal(dicomSeries);
+                        JsonObjectBuilder json = Json.createObjectBuilder();
+                        put(json, "id", String.valueOf(s.getTagValue(TagW.SubseriesInstanceUID)));
+                        put(
+                            json,
+                            "seriesInstanceUID", // NON-NLS
+                            TagD.getTagValue(s, Tag.SeriesInstanceUID, String.class));
+                        json.add("visible", visible); // NON-NLS
+                        json.add("mode", explorer.getMode().getId()); // NON-NLS
+                        return json.build().toString();
                       })));
     }
   }

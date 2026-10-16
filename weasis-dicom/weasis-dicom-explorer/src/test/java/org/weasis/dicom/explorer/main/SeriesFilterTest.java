@@ -40,6 +40,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.items.DownloadState;
+import org.weasis.dicom.explorer.items.InterestSource;
 import org.weasis.dicom.explorer.items.StudyContents;
 import org.weasis.dicom.explorer.main.SeriesFilter.Mode;
 
@@ -300,5 +301,15 @@ class SeriesFilterTest {
             TagD.getUID(Level.STUDY), UIDUtils.createUID(), DicomModel.study.tagView());
     study.setTagNoNull(TagD.get(Tag.StudyDescription), description);
     return study;
+  }
+
+  @Test
+  void interest_can_be_set_from_its_own_view() {
+    SeriesFilter filter = new SeriesFilter();
+    filter.setInterest(true, List.of(InterestSource.GRAPHICS));
+    filter.setInterest(false, filter.getInterestSources());
+    assertAll(
+        () -> assertFalse(filter.isInterestAny()),
+        () -> assertEquals(Set.of(InterestSource.GRAPHICS), filter.getInterestSources()));
   }
 }

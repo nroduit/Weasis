@@ -126,11 +126,14 @@ public class SeriesFilter {
   }
 
   public void setInterest(boolean any, Collection<InterestSource> sources) {
+    // Copy first: the caller may pass the view returned by getInterestSources()
+    Set<InterestSource> kept = EnumSet.noneOf(InterestSource.class);
+    if (sources != null) {
+      sources.stream().filter(Objects::nonNull).forEach(kept::add);
+    }
     interestAny = any;
     interestSources.clear();
-    if (sources != null) {
-      sources.stream().filter(Objects::nonNull).forEach(interestSources::add);
-    }
+    interestSources.addAll(kept);
   }
 
   /** Returns true when the facet the field edits carries a criterion. */

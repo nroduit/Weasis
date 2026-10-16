@@ -255,6 +255,7 @@ public class SeriesPane extends JPanel {
     SeriesThumbnail thumb =
         new SeriesThumbnail(series, thumbnailSize, drawIcons, Redaction.opManagerFor(series));
 
+    InterestBadge.attach(thumb, series);
     // Set progress bar if series is being loaded
     if (series.getSeriesLoader() instanceof LoadSeries loader) {
       thumb.setProgressBar(loader.isDone() ? null : loader.getProgressBar());

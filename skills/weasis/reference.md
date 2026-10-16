@@ -278,6 +278,16 @@ Usage: `explorer:filter [-h] [--clear] [--json] [--text=<text>] [--interest=<int
 | --interest | string | [] | Keep the series with images of interest: any, or pointed at by one of ko, graphics, pr, seg (repeatable, or comma-separated). |
 | --clear | boolean |  | Clears every facet first. |
 
+### explorer:facets (since 5.0)
+
+The values the series filter can take for the selected patient, with the number of its series each value keeps: modalities, kinds of objects referencing the series, sources of images of interest, download states. The menu of the filter button shows the same; lets an agent choose a filter before 'explorer:filter'.
+
+Usage: `explorer:facets [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
 ### explorer:mode (since 5.0)
 
 Sets how the DICOM explorer draws the selected patient: 'thumbnails' (the column of thumbnails) or 'list' (one row per series and per object, studies as group rows). Without argument, prints the current mode.
@@ -302,6 +312,17 @@ Usage: `explorer:select [-h] [--json] --series=<series-uid> [--series=<series-ui
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --series | series-uid | [] | Series Instance UID (or series id) from 'dicom:list'; repeatable. |
+
+### explorer:reveal (since 5.0)
+
+Scrolls the DICOM explorer to a series and selects it, as a reader pointing at it: selects its patient, unfolds its study in the compact list and brings its thumbnail or row into view. Reports 'visible': false when the filter hides it (the filter is not changed).
+
+Usage: `explorer:reveal [-h] [--json] --series=<series-uid>`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list'. |
 
 ### explorer:state (since 5.0)
 

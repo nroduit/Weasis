@@ -925,6 +925,9 @@ final class DicomModelCommands {
             if (se instanceof MediaSeries<?> ms) {
               s.add("imageCount", ms.size(null)); // NON-NLS
             }
+            if (se instanceof DicomSeries ds) {
+              s.add("downloadState", SeriesItem.downloadStateOf(ds).getId()); // NON-NLS
+            }
             series.add(s);
           }
           study.add("series", series); // NON-NLS

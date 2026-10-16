@@ -20,7 +20,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import org.dcm4che3.data.Tag;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
@@ -29,9 +31,17 @@ import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.CommandModel;
 import org.weasis.core.api.command.CommandResult;
 import org.weasis.core.api.command.CommandVocabulary;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.MediaSeriesGroupNode;
+import org.weasis.core.api.media.data.TagW;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.ObjectKind;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.items.DownloadState;
+import org.weasis.dicom.explorer.items.FacetCounts;
+import org.weasis.dicom.explorer.items.InterestSource;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
 class ExplorerCommandsTest {
@@ -44,10 +54,12 @@ class ExplorerCommandsTest {
           "explorer:filter --interest any",
           "explorer:filter --interest ko,graphics",
           "explorer:select --series 1.2.3 --series 1.2.4",
+          "explorer:reveal --series 1.2.3",
           "explorer:mode",
           "explorer:mode list",
           "explorer:mode auto",
-          "explorer:state");
+          "explorer:state",
+          "explorer:facets");
 
   @Test
   void documented_command_lines_parse() {
@@ -157,5 +169,67 @@ class ExplorerCommandsTest {
     Object commands = new ExplorerCommands().withExplorer(() -> null);
     CommandResult result = CommandModel.execute(commands, "state", new String[0]);
     assertFalse(result.status() == CommandResult.OK, result.body());
+  }
+
+  @Test
+  void facets_verb_reports_the_values_the_filter_can_take_with_their_counts() {
+    DicomExplorer explorer = mock(DicomExplorer.class);
+    when(explorer.getDataExplorerModel()).thenReturn(new DicomModel());
+    when(explorer.getSelectedPatient()).thenReturn(null);
+    Object commands = new ExplorerCommands().withExplorer(() -> explorer);
+
+    CommandResult result = CommandModel.execute(commands, "facets", new String[0]);
+    assertAll(
+        () -> assertEquals(CommandResult.OK, result.status(), result.error()),
+        () -> assertTrue(result.body().contains("\"total\":0"), result.body()),
+        () -> assertTrue(result.body().contains("\"interest\":{\"any\":0}"), result.body()));
+
+    String json =
+        ExplorerCommands.facetsJson(
+                new FacetCounts(
+                    3,
+                    Map.of("CT", 2, "MR", 1),
+                    Map.of(ObjectKind.KEY_OBJECT, 1),
+                    1,
+                    Map.of(InterestSource.KEY_OBJECT, 1),
+                    Map.of(DownloadState.COMPLETE, 2, DownloadState.PENDING, 1)))
+            .build()
+            .toString();
+    assertAll(
+        () -> assertTrue(json.contains("\"modalities\":{\"CT\":2,\"MR\":1}"), json),
+        () -> assertTrue(json.contains("\"objects\":{\"ko\":1}"), json),
+        () -> assertTrue(json.contains("\"interest\":{\"any\":1,\"ko\":1}"), json),
+        () -> assertTrue(json.contains("\"states\":{\"complete\":2,\"pending\":1}"), json));
+  }
+
+  @Test
+  void reveal_verb_points_the_explorer_at_the_series_and_reports_whether_it_is_visible() {
+    DicomModel model = new DicomModel();
+    MediaSeriesGroup patient =
+        new MediaSeriesGroupNode(TagW.PatientPseudoUID, "P1", DicomModel.patient.tagView());
+    MediaSeriesGroup study =
+        new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), "1.2.3.4", DicomModel.study.tagView());
+    DicomSeries series = new DicomSeries("1.2.3");
+    series.setTag(TagD.get(Tag.SeriesInstanceUID), "1.2.3");
+    model.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
+    model.addHierarchyNode(patient, study);
+    model.addHierarchyNode(study, series);
+    DicomExplorer explorer = mock(DicomExplorer.class);
+    when(explorer.getDataExplorerModel()).thenReturn(model);
+    when(explorer.getMode()).thenReturn(ExplorerMode.LIST);
+    when(explorer.reveal(series)).thenReturn(true);
+    Object commands = new ExplorerCommands().withExplorer(() -> explorer);
+
+    CommandResult result =
+        CommandModel.execute(commands, "reveal", new String[] {"--series", "1.2.3"});
+    verify(explorer).reveal(series);
+    assertAll(
+        () -> assertEquals(CommandResult.OK, result.status(), result.error()),
+        () -> assertTrue(result.body().contains("\"visible\":true"), result.body()),
+        () -> assertTrue(result.body().contains("\"mode\":\"list\""), result.body()));
+
+    CommandResult unknown =
+        CommandModel.execute(commands, "reveal", new String[] {"--series", "9.9"});
+    assertEquals(CommandResult.ERROR, unknown.status());
   }
 }

@@ -45,7 +45,7 @@ class InterestTest {
   void a_key_object_marks_the_images_it_references() throws URISyntaxException {
     String seriesUID = UIDUtils.createUID();
     DicomSeries series = series(seriesUID);
-    Attributes attrs = StudyContentsTest.koAttributes(UIDUtils.createUID(), seriesUID, 2);
+    Attributes attrs = KoFixtures.koAttributes(UIDUtils.createUID(), seriesUID, 2);
     KOSpecialElement ko = new KOSpecialElement(new DicomMediaIO(attrs));
     for (int tag : new int[] {Tag.SOPInstanceUID, Tag.SeriesInstanceUID, Tag.Modality}) {
       ko.setTag(TagD.get(tag), attrs.getString(tag));

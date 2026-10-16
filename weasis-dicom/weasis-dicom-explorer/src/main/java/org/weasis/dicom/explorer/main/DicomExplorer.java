@@ -25,7 +25,10 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.swing.*;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import net.miginfocom.swing.MigLayout;
@@ -61,6 +64,7 @@ import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.explorer.exp.ExportToolBar;
 import org.weasis.dicom.explorer.imp.ImportToolBar;
+import org.weasis.dicom.explorer.items.FacetCounts;
 import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 
 public class DicomExplorer extends PluginTool
@@ -124,7 +128,8 @@ public class DicomExplorer extends PluginTool
   private final JPopupMenu modePopup = new JPopupMenu();
   private final Map<SeriesFilter.Mode, JRadioButtonMenuItem> modeItems =
       new EnumMap<>(SeriesFilter.Mode.class);
-  private final JLabel filterStatusLabel = new JLabel();
+  private final FacetChipBar chipBar = new FacetChipBar(this);
+  private final JButton facetButton = new JButton();
   private final javax.swing.Timer filterDebounce = new javax.swing.Timer(250, _ -> runFilter());
   private final Set<String> availableModalities = new TreeSet<>();
   private JPanel filterBar;
@@ -272,10 +277,11 @@ public class DicomExplorer extends PluginTool
       patientBar.add(displayModeButton, "aligny center"); // NON-NLS
       panelMain.add(patientBar, "newline, spanx, growx"); // NON-NLS
 
-      filterBar = new JPanel(new MigLayout("ins 1, fillx", "[grow,fill]", "")); // NON-NLS
+      filterBar = new JPanel(new MigLayout("ins 1, fillx", "[grow,fill]2lp[]", "")); // NON-NLS
       filterBar.add(seriesFilterField, "growx, width 30lp:30lp:250lp"); // NON-NLS
+      filterBar.add(facetButton, "aligny center"); // NON-NLS
       panelMain.add(filterBar, "newline, spanx, growx"); // NON-NLS
-      panelMain.add(filterStatusLabel, "newline, spanx, growx, hidemode 3"); // NON-NLS
+      panelMain.add(chipBar, "newline, spanx, growx, hidemode 3"); // NON-NLS
       stripPane = new StudyStripPane(this);
       stripPane.setVisible(false);
       panelMain.add(stripPane, "newline, spanx, growx, hidemode 3"); // NON-NLS
@@ -706,10 +712,25 @@ public class DicomExplorer extends PluginTool
 
     buildModePopup();
 
-    filterStatusLabel.setFont(FontItem.SMALL.getFont());
-    filterStatusLabel.setVisible(false);
+    setupFacetButton();
 
     applyMode(DicomExplorerPrefView.getDefaultFilterMode());
+  }
+
+  /** The funnel button next to the field: a menu of the facet values with their counts. */
+  private void setupFacetButton() {
+    facetButton.setIcon(ResourceUtil.getIcon(ResourceUtil.ActionIcon.FILTER));
+    facetButton.setFocusable(false);
+    facetButton.putClientProperty(
+        FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+    facetButton.setToolTipText(Messages.getString("DicomExplorer.facets"));
+    facetButton.addActionListener(_ -> showFacetMenu());
+  }
+
+  private void showFacetMenu() {
+    FacetChipBar.menu(
+            FacetCounts.of(model, getSelectedPatient()), seriesFilter, this::refreshFilter)
+        .show(facetButton, 0, facetButton.getHeight());
   }
 
   /** Creates a filter initialized with the user-configured default mode. */
@@ -971,18 +992,12 @@ public class DicomExplorer extends PluginTool
       return;
     }
     if (active) {
-      int[] counts = countSeries();
       Color accent = FlatUIUtils.getUIColor("Component.accentColor", Color.BLUE); // NON-NLS
       filterBar.setBorder(BorderFactory.createLineBorder(accent));
-      filterStatusLabel.setForeground(accent);
-      filterStatusLabel.setText(
-          MessageFormat.format(
-              Messages.getString("DicomExplorer.filter_status"), counts[0], counts[1]));
-      filterStatusLabel.setVisible(true);
+      chipBar.update(seriesFilter, countSeries());
     } else {
       filterBar.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-      filterStatusLabel.setText(StringUtil.EMPTY_STRING);
-      filterStatusLabel.setVisible(false);
+      chipBar.update(seriesFilter, null);
     }
     filterBar.revalidate();
     filterBar.repaint();
@@ -1756,6 +1771,39 @@ public class DicomExplorer extends PluginTool
 
   @Override
   public boolean canImportFiles() {
+    return true;
+  }
+
+  /**
+   * Scrolls the explorer to the series and selects it, in the mode shown: the thumbnail pane or the
+   * row of the list (its study group unfolded). Selects the patient first. Returns false when the
+   * filter hides the series, which is left as it is.
+   */
+  public boolean reveal(DicomSeries series) {
+    if (series == null) {
+      return false;
+    }
+    MediaSeriesGroup study = model.getParent(series, DicomModel.study);
+    MediaSeriesGroup patient = study == null ? null : model.getParent(study, DicomModel.patient);
+    if (patient == null) {
+      return false;
+    }
+    if (patient != getSelectedPatient()) {
+      selectPatient(patient);
+    }
+    if (!seriesFilter.test(series, study)) {
+      return false;
+    }
+    selectionList.clear();
+    selectionList.add(series);
+    if (mode == ExplorerMode.LIST) {
+      getListPane().reveal(series);
+    } else {
+      SeriesPane pane = paneManager.getSeriesPane(series);
+      if (pane != null) {
+        pane.scrollRectToVisible(new Rectangle(0, 0, pane.getWidth(), pane.getHeight()));
+      }
+    }
     return true;
   }
 

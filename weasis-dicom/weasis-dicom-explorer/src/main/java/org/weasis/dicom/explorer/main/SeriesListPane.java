@@ -345,6 +345,28 @@ public class SeriesListPane extends JPanel implements Scrollable {
   }
 
   /** Folds or unfolds the rows of a study under its group row. */
+  /** Unfolds the study of the series if needed, scrolls its row into view and selects it. */
+  public void reveal(DicomSeries series) {
+    MediaSeriesGroup study = explorer.getDataExplorerModel().getParent(series, DicomModel.study);
+    String studyUID =
+        study == null ? null : TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+    if (studyUID != null && collapsed.remove(studyUID)) {
+      refresh();
+    }
+    for (int i = 0; i < rows.size(); i++) {
+      if (rows.get(i) instanceof SeriesRow s && s.item().series() == series) {
+        table.scrollRectToVisible(table.getCellRect(i, 0, true));
+        syncing = true;
+        try {
+          table.setRowSelectionInterval(i, i);
+        } finally {
+          syncing = false;
+        }
+        return;
+      }
+    }
+  }
+
   public void toggleCollapsed(String studyUID) {
     if (studyUID == null) {
       return;

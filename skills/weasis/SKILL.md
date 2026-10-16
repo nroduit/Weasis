@@ -97,8 +97,9 @@ line naming the current spelling. Use the current one everywhere.
    (patients, studies, series with UIDs and image counts).
    `explorer:state` says what the explorer panel itself shows (selected patient, filter, which
    series are visible, selected or not downloaded, the objects of each study);
-   `explorer:filter --modality CT --objects seg` narrows it, `explorer:select --series <uid>`
-   selects as a click would, and `explorer:mode list` switches to the compact list (`auto` lets the explorer choose from the
+   `explorer:facets` lists the values the filter can take with their counts (modalities, objects,
+   images of interest, download states); `explorer:filter --modality CT --objects seg` narrows it, `explorer:select --series <uid>`
+   selects as a click would, `explorer:reveal --series <uid>` scrolls to it and selects it (`visible: false` when the filter hides it), and `explorer:mode list` switches to the compact list (`auto` lets the explorer choose from the
    content and the panel width; the state says `modeSource`).
 2. **Open** a series when needed: `weasis-cli dicom:open --series <uid>` returns the view id, and
    `--view <id> --pane <n>` puts it in a chosen pane of a view you already have.
