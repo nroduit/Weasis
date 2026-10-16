@@ -37,7 +37,7 @@
     <picocli.version>4.7.7</picocli.version>
     <semver4j.version>6.0.0</semver4j.version>
     <slf4j.version>2.0.18</slf4j.version>
-    <logback.version>1.6.1</logback.version>
+    <logback.version>1.6.5</logback.version>
     <weasis-dicom-tools.version>5.35.1</weasis-dicom-tools.version>
     <weasis.core.img.version>5.0.0.1</weasis.core.img.version>
     <weasis.opencv.native.version>5.0.0-dcm</weasis.opencv.native.version>
