@@ -21,15 +21,19 @@ import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_STD;
 import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_SUM;
 
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.image.DataBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -37,6 +41,8 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.HistogramData.Model;
 import org.weasis.core.ui.model.graphic.GraphicArea;
+import org.weasis.core.ui.model.graphic.imp.seg.SegGraphic;
+import org.weasis.core.ui.model.graphic.imp.seg.ShapeRaster;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.util.MathUtil;
@@ -70,9 +76,36 @@ public class ImageRegionStatistics {
       // Always apply pixel padding (deactivate in Display has no effect in statistics)
       Integer paddingValue = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingValue"));
       Integer paddingLimit = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingRangeLimit"));
+      if (graphic instanceof SegGraphic) {
+        return getRasterMaskImage(image.toMat(), roi, paddingValue, paddingLimit);
+      }
       return ImageAnalyzer.getMaskImage(image.toMat(), roi, paddingValue, paddingLimit);
     }
     return Collections.emptyList();
+  }
+
+  /**
+   * Same contract as {@link ImageAnalyzer#getMaskImage}, but selects the pixels whose centre lies
+   * inside the shape, as the shape is filled on screen. A segmentation outline follows the pixel
+   * edges, so this selects exactly the segmented pixels.
+   */
+  private static List<Mat> getRasterMaskImage(
+      Mat source, Shape roi, Integer paddingValue, Integer paddingLimit) {
+    ShapeRaster raster = ShapeRaster.of(roi, new Rectangle(0, 0, source.width(), source.height()));
+    if (raster == null) {
+      return Collections.emptyList();
+    }
+    Rectangle b = raster.bounds();
+    Mat cropped = source.submat(new Rect(b.x, b.y, b.width, b.height));
+    Mat mask = new Mat(b.height, b.width, CvType.CV_8UC1);
+    mask.put(0, 0, raster.mask());
+    List<Mat> padding = ImageAnalyzer.getMaskImage(cropped, null, paddingValue, paddingLimit);
+    Mat paddingMask = padding.size() == 2 ? padding.get(1) : null;
+    if (paddingMask != null) {
+      Core.bitwise_and(mask, paddingMask, mask);
+      paddingMask.release();
+    }
+    return Arrays.asList(cropped, mask);
   }
 
   private static Shape getShape(MeasurableLayer layer, Shape shape) {

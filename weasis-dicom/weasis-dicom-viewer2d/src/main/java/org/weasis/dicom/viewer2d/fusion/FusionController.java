@@ -140,6 +140,7 @@ public final class FusionController {
       clearCache(disOp);
       view.getImageLayer().updateDisplayOperations();
     }
+    EventManager.getInstance().refreshFusionWindowControl();
     if (state.volume() == null) {
       buildVolume(state.series());
     }
@@ -191,6 +192,64 @@ public final class FusionController {
 
   /** Applies a FusionOp parameter to every pane of the current container. */
   public static void applyParam(String propertyName, Object value) {
+    setParam(propertyName, value);
+    if (FusionOp.P_FUSION_WINDOW.equals(propertyName)) {
+      EventManager.getInstance().refreshFusionWindowControl();
+    }
+  }
+
+  /**
+   * Moves the top of the display window to {@code displayMax} (in its display unit), the bottom
+   * unchanged. Leaves the window control alone: it is the caller.
+   */
+  public static void applyWindowTop(double displayMax) {
+    FusionWindow window = currentWindow();
+    if (window != null && Double.isFinite(displayMax) && displayMax > window.displayMin()) {
+      setParam(FusionOp.P_FUSION_WINDOW, window.withDisplayMax(displayMax));
+    }
+  }
+
+  /** The display window of the selected pane, or {@code null} when it has none. */
+  public static FusionWindow currentWindow() {
+    List<ViewCanvas<DicomImageElement>> views = targetViews();
+    return views.isEmpty() ? null : windowOf(views.getFirst());
+  }
+
+  /** The display window of {@code view}, or {@code null} when it has none. */
+  public static FusionWindow windowOf(ViewCanvas<DicomImageElement> view) {
+    if (view == null) {
+      return null;
+    }
+    return view.getDisplayOpManager()
+        .getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_WINDOW, FusionWindow.class)
+        .orElse(null);
+  }
+
+  /**
+   * Highest top the window of {@code view} can be given, in its display unit (see {@link
+   * FusionWindow#displayTopLimit}), or {@code NaN} when it has no window.
+   */
+  @SuppressWarnings("unchecked")
+  public static double windowTopLimit(ViewCanvas<DicomImageElement> view) {
+    FusionWindow window = windowOf(view);
+    if (window == null) {
+      return Double.NaN;
+    }
+    OpManager disOp = view.getDisplayOpManager();
+    MediaSeries<DicomImageElement> series =
+        disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES).orElse(null)
+                instanceof MediaSeries<?> ms
+            ? (MediaSeries<DicomImageElement>) ms
+            : null;
+    Volume<?, ?> volume =
+        disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_VOLUME).orElse(null)
+                instanceof Volume<?, ?> v
+            ? v
+            : null;
+    return window.displayTopLimit(FusionWindow.dataMax(series, volume));
+  }
+
+  private static void setParam(String propertyName, Object value) {
     // The cached overlays bake in the color LUT, the selected series and the resampled volume, so
     // they must be invalidated when any of those changes. Opacity is applied at composite time and
     // does not need a cache clear.
@@ -253,6 +312,8 @@ public final class FusionController {
     MediaSeries<DicomImageElement> overlaySeries = (MediaSeries<DicomImageElement>) selectedSeries;
     buildingVolumes.add(overlaySeries);
     ColorMap map = currentMap();
+    // The window shown while the build runs; one the reader changed meanwhile is kept.
+    FusionWindow shown = currentWindow();
     GuiExecutor.execute(FusionController::repaintViews);
     Thread worker =
         new Thread(
@@ -262,7 +323,7 @@ public final class FusionController {
                 if (volume != null) {
                   // Measured here rather than in applyVolume: it scans the voxels.
                   FusionWindow window = FusionWindow.fromVolume(overlaySeries, volume, map);
-                  GuiExecutor.execute(() -> applyVolume(overlaySeries, volume, window));
+                  GuiExecutor.execute(() -> applyVolume(overlaySeries, volume, window, shown));
                 }
               } finally {
                 buildingVolumes.remove(overlaySeries);
@@ -292,21 +353,28 @@ public final class FusionController {
    * <p>Scans the whole container rather than the current fusion targets: the selection can have
    * moved while the build ran, and carrying {@code series} as the overlay is the condition that
    * matters here.
+   *
+   * <p>The refined window only replaces {@code shown}, the provisional one the build started with:
+   * a window the reader set in the meantime (moved top, other color map) is theirs to keep.
    */
   private static void applyVolume(
-      MediaSeries<DicomImageElement> series, Volume<?, ?> volume, FusionWindow refined) {
+      MediaSeries<DicomImageElement> series,
+      Volume<?, ?> volume,
+      FusionWindow refined,
+      FusionWindow shown) {
     for (ViewCanvas<DicomImageElement> view : containerViews()) {
       OpManager disOp = view.getDisplayOpManager();
       if (disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES).orElse(null) != series) {
         continue;
       }
       disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_VOLUME, volume);
-      if (refined != null) {
+      if (refined != null && Objects.equals(windowOf(view), shown)) {
         disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_WINDOW, refined);
       }
       clearCache(disOp);
       view.getImageLayer().updateDisplayOperations();
     }
+    EventManager.getInstance().refreshFusionWindowControl();
   }
 
   /**

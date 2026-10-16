@@ -20,6 +20,7 @@ import java.awt.Shape;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -128,6 +129,7 @@ import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
 import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
+import org.weasis.dicom.viewer2d.fusion.FusionScaleDragHandler;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.ByteLut;
@@ -142,6 +144,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   public static final String P_MPR_SCROLL_NEURO = "mpr.scroll.neuro";
   private final Dimension oldSize;
   private final ContextMenuHandler contextMenuHandler;
+  private final FusionScaleDragHandler fusionScaleHandler = new FusionScaleDragHandler(this);
   private volatile BufferedImage segOverlayImage; // NOSONAR visibility reference
 
   /** Segmentations whose canonical volume was still building at the last update pass. */
@@ -184,6 +187,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     this.koStarButton = KOComponentFactory.buildKoStarButton(this);
     koStarButton.setPosition(GridBagConstraints.NORTHEAST);
     getViewButtons().add(koStarButton);
+  }
+
+  @Override
+  public synchronized void iniDefaultMouseListener() {
+    super.iniDefaultMouseListener();
+    // After the focus handler (which selects the view), before the mouse actions it must preempt.
+    addMouseListener(fusionScaleHandler);
+    addMouseMotionListener(fusionScaleHandler);
   }
 
   private List<MeasurableLayer> getFusionStatsLayers() {
@@ -947,10 +958,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     BufferedImage overlay = segOverlayImage;
     if (overlay != null) {
       // Re-enter the image coordinate space (translate + affineTransform) to draw the overlay
-      // aligned with the source image pixels.
+      // aligned with the source image pixels. The image is rendered by OpenCV, whose pixel centres
+      // have integer coordinates: overlay pixel (x, y) must cover [x - 0.5, x + 0.5].
       java.awt.geom.Point2D p = getClipViewCoordinatesOffset();
+      AffineTransform overlayTransform = new AffineTransform(affineTransform);
+      overlayTransform.translate(-0.5, -0.5);
       g2d.translate(p.getX(), p.getY());
-      g2d.drawImage(overlay, affineTransform, null);
+      g2d.drawImage(overlay, overlayTransform, null);
       g2d.translate(-p.getX(), -p.getY());
     }
     drawLoadingMessages(g2d);

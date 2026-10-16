@@ -125,6 +125,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     FontMetrics fontMetrics =
         view2DPane.getJComponent().getFontMetrics(FontItem.MICRO_SEMIBOLD.getFont());
     Rectangle bound = view2DPane.getJComponent().getBounds();
+    FusionColorBar.clearHitArea(view2DPane);
 
     if (!shouldPaint(image, fontMetrics, bound)) {
       if (visible && image != null) {

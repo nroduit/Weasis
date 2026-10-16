@@ -337,7 +337,8 @@ public record ThumbnailManager(
 
   private Path downloadDirectThumbnail(
       String thumbURL, WadoParameters wadoParameters, AuthMethod authMethod) {
-    if (thumbURL.startsWith(Thumbnail.THUMBNAIL_CACHE_DIR.toString())) {
+    // Callers pass a non-empty URL (checked with StringUtil.hasLength)
+    if (thumbURL.startsWith(Thumbnail.THUMBNAIL_CACHE_DIR.toString())) { // NOSONAR
       return Path.of(thumbURL);
     }
     String url = thumbURL.contains("://") ? thumbURL : wadoParameters.getBaseURL() + thumbURL;

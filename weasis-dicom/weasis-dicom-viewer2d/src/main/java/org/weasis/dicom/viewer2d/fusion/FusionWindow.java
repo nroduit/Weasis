@@ -27,8 +27,9 @@ import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
  * #displayFactor()} converts them to the unit the user reads: SUVbw when the series carries a
  * {@link TagW#SuvFactor}, the raw DICOM pixel value unit otherwise.
  *
- * <p>It is derived from the series and never exposed as a control, as in other PET viewers, so the
- * {@link FusionColorBar} is the only place the resulting scale can be read.
+ * <p>It is derived from the series (or declared by the color map) and the reader can then move its
+ * top, from the fusion panel or by dragging the {@link FusionColorBar}; the bottom stays where it
+ * was set.
  *
  * @param min the real value mapped to the bottom of the LUT (fully transparent)
  * @param max the real value mapped to the top of the LUT
@@ -38,10 +39,11 @@ import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
 public record FusionWindow(double min, double max, double displayFactor, String displayUnit) {
 
   /**
-   * Bottom of the SUVbw scale. Normal blood pool sits around 1, so everything below it is
-   * background: leaving it out keeps the anatomy untinted where there is nothing to read.
+   * Bottom of the SUVbw scale. Nuclear medicine reads the scale from zero, with no background
+   * subtraction; the lowest activity is still kept untinted by the transparent foot of the overlay
+   * alpha ramp (see {@link FusionOp}).
    */
-  public static final double SUV_MIN = 1.0;
+  public static final double SUV_MIN = 0.0;
 
   /** Narrowest top of the SUVbw scale: below this the scale mostly amplifies noise. */
   private static final double SUV_TOP_MIN = 4.0;
@@ -80,7 +82,7 @@ public record FusionWindow(double min, double max, double displayFactor, String 
     }
     double dataMax = ref.getMaxValue(null);
     FusionWindow declared = fromMap(map, ref, dataMax);
-    return declared != null ? declared : windowFor(ref, dataMax);
+    return declared != null ? declared : windowFor(ref, dataMax, dataMax);
   }
 
   /**
@@ -107,7 +109,7 @@ public record FusionWindow(double min, double max, double displayFactor, String 
     FusionWindow declared = fromMap(map, ref, dataMax);
     return declared != null
         ? declared
-        : windowFor(ref, FusionWindowEstimator.robustMax(volume, dataMax));
+        : windowFor(ref, FusionWindowEstimator.robustMax(volume, dataMax), dataMax);
   }
 
   /**
@@ -174,21 +176,38 @@ public record FusionWindow(double min, double max, double displayFactor, String 
         : null;
   }
 
+  /**
+   * The highest value a series holds: the volume maximum once it is built, the middle slice's
+   * otherwise. {@code NaN} when the series holds no image.
+   */
+  public static double dataMax(MediaSeries<DicomImageElement> series, Volume<?, ?> volume) {
+    DicomImageElement ref =
+        series == null ? null : series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
+    return ref == null ? Double.NaN : dataMax(ref, volume);
+  }
+
   private static boolean isSuvUnit(String unit) {
     return unit != null && unit.toUpperCase(Locale.ROOT).startsWith("SUV"); // NON-NLS
   }
 
   /**
-   * {@value #SUV_MIN} to {@link #suvTop} SUVbw when the SUV factor is known, 0 to {@code dataMax}
-   * otherwise. The lower bound is pinned in both cases: activity is a non-negative physical
+   * {@value #SUV_MIN} to {@link #suvTop} SUVbw when the SUV factor is known, 0 to {@code top}
+   * otherwise. The lower bound is pinned in all cases: activity is a non-negative physical
    * quantity, so the bottom of the scale is background, not the lowest value that happens to occur.
+   *
+   * <p>Without any unit the values read as a percentage of {@code dataMax}, so the color bar and
+   * the scale maximum slider show the same numbers and the top label follows a drag.
    */
-  private static FusionWindow windowFor(DicomImageElement ref, double dataMax) {
+  private static FusionWindow windowFor(DicomImageElement ref, double top, double dataMax) {
     if (ref.getTagValue(TagW.SuvFactor) instanceof Double suvFactor && suvFactor > 0.0) {
       return new FusionWindow(
-          SUV_MIN / suvFactor, suvTop(dataMax * suvFactor) / suvFactor, suvFactor, SUV_UNIT);
+          SUV_MIN / suvFactor, suvTop(top * suvFactor) / suvFactor, suvFactor, SUV_UNIT);
     }
-    return new FusionWindow(0.0, dataMax, 1.0, ref.getPixelValueUnit());
+    String unit = ref.getPixelValueUnit();
+    if (!StringUtil.hasText(unit) && Double.isFinite(dataMax) && dataMax > 0.0) {
+      return new FusionWindow(0.0, top, 100.0 / dataMax, "%");
+    }
+    return new FusionWindow(0.0, top, 1.0, unit);
   }
 
   /**
@@ -209,6 +228,25 @@ public record FusionWindow(double min, double max, double displayFactor, String 
    */
   public boolean isQuantitative() {
     return SUV_UNIT.equals(displayUnit);
+  }
+
+  /**
+   * This window with its top moved to {@code displayMax} (in the display unit), the bottom
+   * unchanged.
+   */
+  public FusionWindow withDisplayMax(double displayMax) {
+    return new FusionWindow(min, displayMax / displayFactor, displayFactor, displayUnit);
+  }
+
+  /**
+   * Highest top the reader can give this window, in the display unit: the data maximum {@code
+   * dataMax} (a real value), never below the current top, and for SUVbw never below the widest
+   * automatic scale, so a fixed tracer scale (PSMA 0 to 20) stays reachable on a quieter study.
+   */
+  public double displayTopLimit(double dataMax) {
+    double limit = Double.isFinite(dataMax) ? dataMax * displayFactor : displayMax();
+    limit = Math.max(limit, displayMax());
+    return isQuantitative() ? Math.max(limit, SUV_TOP_MAX) : limit;
   }
 
   public double displayMin() {

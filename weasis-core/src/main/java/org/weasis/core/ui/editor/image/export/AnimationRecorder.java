@@ -37,9 +37,7 @@ import org.weasis.core.api.util.ThreadUtil;
  *
  * <p>Recording stops at the chosen duration. Identical samples are merged into one longer frame, so
  * an idle screen writes almost nothing and the frame cap alone would never end it; the cap still
- * bounds a busy recording, which stops cleanly there rather than failing at the encode. Menus and
- * tooltips shown in their own native window are not children of the application frame and so do not
- * appear in a window-scope recording.
+ * bounds a busy recording, which stops cleanly there rather than failing at the encode.
  */
 public class AnimationRecorder {
 

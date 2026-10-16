@@ -12,6 +12,7 @@ package org.weasis.dicom.viewer2d.fusion;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
@@ -24,14 +25,16 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 
 /**
- * Draws the overlay color scale on a fused view. Since the display window is derived from the
- * series rather than set by the user, this bar is the only place the resulting scale can be read.
+ * Draws the overlay color scale on a fused view: the place where the display window, derived from
+ * the series or the color map, can be read. Dragging the bar vertically moves the top of the window
+ * (see {@link FusionScaleDragHandler}); the area it was last painted in is kept on the view for
+ * that.
  *
  * <p>It is labelled in the unit the overlay actually carries — SUVbw when it could be computed, the
- * raw DICOM pixel value unit otherwise, and a percentage of the window when even that is unknown.
- * Hiding the scale for non-SUV series would not stop a reader from over-reading the colors, it
- * would only hide that the overlay is windowed at all; the unit is what says whether the numbers
- * can be compared between acquisitions.
+ * raw DICOM pixel value unit otherwise, and a percentage of the data maximum when even that is
+ * unknown (see {@link FusionWindow}). Hiding the scale for non-SUV series would not stop a reader
+ * from over-reading the colors, it would only hide that the overlay is windowed at all; the unit is
+ * what says whether the numbers can be compared between acquisitions.
  *
  * <p>Entries the overlay paints as fully transparent are left blank, so the band of activity that
  * is deliberately not shown is visible as such instead of being mistaken for a color.
@@ -48,6 +51,12 @@ public final class FusionColorBar {
 
   /** Left shift applied when the base image LUT bar already occupies the right edge. */
   private static final int LUT_BAR_SHIFT = 70;
+
+  /** Pixels around the bar that still grab it. */
+  private static final int GRAB_MARGIN = 4;
+
+  /** Client property of the view holding the area where the bar was last painted. */
+  private static final String HIT_AREA = "fusion.colorBar.area"; // NON-NLS
 
   private FusionColorBar() {}
 
@@ -75,6 +84,14 @@ public final class FusionColorBar {
     int length = ByteLutAlpha.CHANNEL_SIZE;
     float x = bound.width - 30f - eastButtonWidth(view) - (baseLutBarVisible ? LUT_BAR_SHIFT : 0);
     float y = bound.height / 2f - length / 2f;
+    view.getJComponent()
+        .putClientProperty(
+            HIT_AREA,
+            new Rectangle2D.Float(
+                x - GRAB_MARGIN,
+                y - GRAB_MARGIN,
+                BAR_WIDTH + 2f * GRAB_MARGIN,
+                length + 2f * GRAB_MARGIN));
 
     Rectangle2D.Float rect = new Rectangle2D.Float();
     // Top row is the window maximum: walk the LUT downwards.
@@ -98,6 +115,17 @@ public final class FusionColorBar {
 
     g2.setPaint(Color.WHITE);
     paintTicks(g2, scale.window(), x, y, length, midFontHeight);
+  }
+
+  /** Forgets the painted area; called before each paint, which sets it again when the bar shows. */
+  public static void clearHitArea(ViewCanvas<?> view) {
+    view.getJComponent().putClientProperty(HIT_AREA, null);
+  }
+
+  /** {@code true} when {@code point} (view coordinates) is on the bar as last painted. */
+  public static boolean isOnBar(ViewCanvas<?> view, Point point) {
+    return view.getJComponent().getClientProperty(HIT_AREA) instanceof Rectangle2D area
+        && area.contains(point);
   }
 
   /**

@@ -212,6 +212,24 @@ class HttpUtilsTest {
     // entries were added (no NullPointerException raised).
   }
 
+  @Test
+  void applyHeadersAcceptsNonAsciiValuesWithJavaNetHttpBuilder() {
+    // A non-validating setter such as Map::put cannot reproduce #941: use the real builder.
+    HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create("http://localhost/x"));
+    HttpUtils.applyHeaders(Map.of("X-Name", "山田太郎", "X-Latin", "José Müller"), builder::header);
+    HttpRequest request = builder.build();
+    assertEquals(
+        "%E5%B1%B1%E7%94%B0%E5%A4%AA%E9%83%8E",
+        request.headers().firstValue("X-Name").orElseThrow());
+    assertEquals("Jos%C3%A9%20M%C3%BCller", request.headers().firstValue("X-Latin").orElseThrow());
+  }
+
+  @Test
+  void encodeHeaderValueKeepsAsciiUnchanged() {
+    assertEquals("John Smith 100%", HttpUtils.encodeHeaderValue("John Smith 100%"));
+    assertEquals("a%25%C3%A9", HttpUtils.encodeHeaderValue("a%é"));
+  }
+
   // -------------------------------------------------------------------------
   // Additional branch coverage
   // -------------------------------------------------------------------------

@@ -112,9 +112,10 @@ public final class MprGraphicStore {
   /** Fills the model of a view for its plane: in-plane graphics editable, the others as marks. */
   public void populate(ViewCanvas<?> view, PlaneGeometry geometry, double halfThickness) {
     for (Graphic g : graphics()) {
-      switch (classify(g.getAnchor(), geometry, halfThickness)) {
-        case IN_PLANE -> place(view, g, geometry);
-        case CROSSING -> addFootprint(view, g, geometry);
+      SpatialAnchor anchor = g.getAnchor();
+      switch (classify(anchor, geometry, halfThickness)) {
+        case IN_PLANE -> place(view, g, anchor, geometry);
+        case CROSSING -> addFootprint(view, g, anchor, geometry);
         case OUTSIDE -> {
           // Not visible on this plane
         }
@@ -129,9 +130,10 @@ public final class MprGraphicStore {
     Set<String> shown =
         model.getModels().stream().map(Graphic::getUuid).collect(Collectors.toSet());
     for (Graphic g : graphics()) {
+      SpatialAnchor anchor = g.getAnchor();
       if (!shown.contains(g.getUuid())
-          && classify(g.getAnchor(), geometry, halfThickness) == Placement.CROSSING) {
-        addFootprint(view, g, geometry);
+          && classify(anchor, geometry, halfThickness) == Placement.CROSSING) {
+        addFootprint(view, g, anchor, geometry);
       }
     }
   }
@@ -203,8 +205,9 @@ public final class MprGraphicStore {
     return result;
   }
 
-  private static void place(ViewCanvas<?> view, Graphic graphic, PlaneGeometry geometry) {
-    List<Point2D> pts = graphic.getAnchor().toImage(geometry);
+  private static void place(
+      ViewCanvas<?> view, Graphic graphic, SpatialAnchor anchor, PlaneGeometry geometry) {
+    List<Point2D> pts = anchor.toImage(geometry);
     try {
       graphic.buildGraphic(pts);
     } catch (InvalidShapeException e) {
@@ -217,12 +220,12 @@ public final class MprGraphicStore {
     AbstractGraphicModel.addGraphicToModel(view, graphic);
   }
 
-  private static void addFootprint(ViewCanvas<?> view, Graphic graphic, PlaneGeometry geometry) {
+  private static void addFootprint(
+      ViewCanvas<?> view, Graphic graphic, SpatialAnchor anchor, PlaneGeometry geometry) {
     Point3 normal = geometry.getNormal();
     Point3 origin = geometry.toPatient(new Point2D.Double(0, 0));
     List<Point3> crossings =
-        planeIntersections(
-            graphic.getAnchor().getPoints(), graphic instanceof GraphicArea, normal, origin);
+        planeIntersections(anchor.getPoints(), graphic instanceof GraphicArea, normal, origin);
     if (crossings.isEmpty()) {
       return;
     }

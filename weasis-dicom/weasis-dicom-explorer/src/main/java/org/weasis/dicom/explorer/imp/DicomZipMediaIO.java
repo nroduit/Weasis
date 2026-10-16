@@ -196,7 +196,8 @@ public class DicomZipMediaIO implements MediaReader<MediaElement> {
     }
   }
 
-  private static void extractAndLoad(
+  /** Runs on the calling thread; package-private for tests. */
+  static void extractAndLoad(
       File file, DicomModel dicomModel, OpeningViewer openingViewer, Component parent) {
     Path dir =
         FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip")); // NON-NLS
@@ -214,7 +215,8 @@ public class DicomZipMediaIO implements MediaReader<MediaElement> {
       LOGGER.error("unzipping", e);
     }
     File dicomdir = new File(dir.toFile(), "DICOMDIR");
-    if (dicomdir.canRead()) {
+    // A directory named DICOMDIR is not a PS3.10 index file; import its contents recursively.
+    if (dicomdir.isFile() && dicomdir.canRead()) {
       DicomDirLoader dirImport = new DicomDirLoader(dicomdir, dicomModel, false);
       List<LoadSeries> loadSeries = dirImport.readDicomDir();
       if (loadSeries != null && !loadSeries.isEmpty()) {

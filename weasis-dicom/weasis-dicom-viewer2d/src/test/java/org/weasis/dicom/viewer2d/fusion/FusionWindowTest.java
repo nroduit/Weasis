@@ -64,14 +64,14 @@ class FusionWindowTest {
   }
 
   @Test
-  @DisplayName("A SUV scale starts at 1 and ends on the next whole SUVbw above the data")
+  @DisplayName("A SUV scale starts at 0 and ends on the next whole SUVbw above the data")
   void suvScaleFollowsTheData() {
     assertAll(
-        () -> assertEquals(FusionWindow.SUV_MIN, windowForSuvMax(11.2).displayMin(), DELTA),
+        () -> assertEquals(0.0, windowForSuvMax(11.2).displayMin(), DELTA),
         () -> assertEquals(12.0, windowForSuvMax(11.2).displayMax(), DELTA),
         () -> assertEquals(10.0, windowForSuvMax(9.7).displayMax(), DELTA),
-        // Bounds are held in modality-LUT values: 1 and 10 SUVbw are 4000 and 40000 BQML.
-        () -> assertEquals(4_000.0, windowForSuvMax(9.7).min(), DELTA),
+        // Bounds are held in modality-LUT values: 0 and 10 SUVbw are 0 and 40000 BQML.
+        () -> assertEquals(0.0, windowForSuvMax(9.7).min(), DELTA),
         () -> assertEquals(40_000.0, windowForSuvMax(9.7).max(), DELTA));
   }
 
@@ -122,6 +122,54 @@ class FusionWindowTest {
         () -> assertEquals(1.0, window.displayFactor(), DELTA),
         () -> assertEquals(100.0, window.displayMax(), DELTA),
         () -> assertEquals("", window.displayUnit()));
+  }
+
+  @Test
+  @DisplayName("Without any unit the scale reads as a percentage of the data maximum")
+  void unitlessSeriesReadsAsPercentOfMaximum() {
+    DicomImageElement ref = mock(DicomImageElement.class);
+    when(ref.getMaxValue(null)).thenReturn(7086.0);
+
+    FusionWindow window = FusionWindow.fromSlice(seriesWith(ref));
+    FusionWindow moved = window.withDisplayMax(60.0);
+    assertAll(
+        () -> assertEquals(7086.0, window.max(), DELTA),
+        () -> assertEquals(0.0, window.displayMin(), DELTA),
+        () -> assertEquals(100.0, window.displayMax(), DELTA),
+        () -> assertEquals("%", window.displayUnit()),
+        () -> assertFalse(window.isQuantitative()),
+        // A drag to 60 % is a real value of 60 % of the maximum, and the bar labels it so.
+        () -> assertEquals(7086.0 * 0.6, moved.max(), DELTA),
+        () -> assertEquals(60.0, moved.displayMax(), DELTA),
+        () -> assertEquals(100.0, window.displayTopLimit(7086.0), DELTA));
+  }
+
+  @Test
+  @DisplayName("Moving the top keeps the bottom and converts from the display unit")
+  void movingTheTopKeepsTheBottom() {
+    FusionWindow window = suvWindow(2000.0, 20000.0).withDisplayMax(15.0);
+    assertAll(
+        () -> assertEquals(2000.0, window.min(), DELTA),
+        () -> assertEquals(60_000.0, window.max(), DELTA),
+        () -> assertEquals(15.0, window.displayMax(), DELTA),
+        () -> assertEquals("SUVbw", window.displayUnit()));
+  }
+
+  @Test
+  @DisplayName("The top can reach the data maximum, and 30 SUVbw for a quieter SUV study")
+  void topLimitCoversTheDataAndFixedTracerScales() {
+    assertAll(
+        // 0 to 5 SUVbw on a study reaching 12 SUVbw (48000 BQML): fixed tracer scales up to 30.
+        () -> assertEquals(30.0, suvWindow(0.0, 20000.0).displayTopLimit(48_000.0), DELTA),
+        () -> assertEquals(45.0, suvWindow(0.0, 20000.0).displayTopLimit(180_000.0), DELTA),
+        // Raw units have no tracer scale: the data maximum, never below the current top.
+        () ->
+            assertEquals(7086.0, new FusionWindow(0, 5000, 1, "BQML").displayTopLimit(7086), DELTA),
+        () ->
+            assertEquals(9000.0, new FusionWindow(0, 9000, 1, "BQML").displayTopLimit(7086), DELTA),
+        () ->
+            assertEquals(
+                9000.0, new FusionWindow(0, 9000, 1, "BQML").displayTopLimit(Double.NaN), DELTA));
   }
 
   private static ColorMap absoluteMap(String unit, double min, double max) {

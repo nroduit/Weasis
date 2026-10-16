@@ -816,6 +816,10 @@ public class SeriesDownloadManager {
       } catch (IOException | URISyntaxException e) {
         markAsError();
         LOGGER.error("Download failed: {}", url, e);
+      } catch (RuntimeException e) {
+        // The result of invokeAll() is not read, so an uncaught exception would be lost (#941)
+        markAsError();
+        LOGGER.error("Unexpected error while downloading: {}", url, e);
       }
       return Boolean.TRUE;
     }
