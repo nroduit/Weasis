@@ -98,6 +98,16 @@ public class DicomExplorer extends PluginTool
   private final LoadingPanel loadingPanel;
   private final SeriesSelectionModel selectionList;
   private final JButton koOpen;
+  // Display mode of the selected patient: thumbnails (the panes) or the compact list
+  private static final int LIST_MIN_WIDTH = 340;
+  private ExplorerMode defaultMode = readModePreference();
+  private ExplorerMode mode = defaultMode;
+  private final Map<MediaSeriesGroup, ExplorerMode> manualModes = new HashMap<>();
+  private final javax.swing.Timer modeCheck = new javax.swing.Timer(300, _ -> applyAutomaticMode());
+  private SeriesListPane listPane;
+  private StudyStripPane stripPane;
+  private final JButton displayModeButton = new JButton();
+  private final javax.swing.Timer listRefresh = new javax.swing.Timer(150, _ -> refreshList());
   private JPanel panelMain;
 
   private final ArrayListComboBoxModel<Object> modelPatient;
@@ -255,14 +265,20 @@ public class DicomExplorer extends PluginTool
       panelMain = new JPanel(layout);
 
       // Small preferred width so the combos grow to fill the panel but never drive its width
-      JPanel patientBar = new JPanel(new MigLayout("ins 1, fillx", "[grow,fill]", "")); // NON-NLS
+      JPanel patientBar =
+          new JPanel(new MigLayout("ins 1, fillx", "[grow,fill]2lp[]", "")); // NON-NLS
       patientBar.add(patientCombobox, "growx, width 30lp:30lp:250lp"); // NON-NLS
+      setupModeButton();
+      patientBar.add(displayModeButton, "aligny center"); // NON-NLS
       panelMain.add(patientBar, "newline, spanx, growx"); // NON-NLS
 
       filterBar = new JPanel(new MigLayout("ins 1, fillx", "[grow,fill]", "")); // NON-NLS
       filterBar.add(seriesFilterField, "growx, width 30lp:30lp:250lp"); // NON-NLS
       panelMain.add(filterBar, "newline, spanx, growx"); // NON-NLS
       panelMain.add(filterStatusLabel, "newline, spanx, growx, hidemode 3"); // NON-NLS
+      stripPane = new StudyStripPane(this);
+      stripPane.setVisible(false);
+      panelMain.add(stripPane, "newline, spanx, growx, hidemode 3"); // NON-NLS
       updateFilterIndicator();
 
       koOpen.setToolTipText(koOpen.getText());
@@ -300,10 +316,290 @@ public class DicomExplorer extends PluginTool
     return panelMain;
   }
 
+  // ========== Display mode ==========
+
+  /** How the selected patient is drawn: thumbnails or the compact list. */
+  public ExplorerMode getMode() {
+    return mode;
+  }
+
+  /** True when the shown mode was chosen by the user for this patient, not by the rules. */
+  public boolean isModeChosenByUser() {
+    MediaSeriesGroup patient = getSelectedPatient();
+    return patient != null && manualModes.containsKey(patient);
+  }
+
+  /**
+   * Switches the display mode as the user asks: it becomes the stored default and wins over the
+   * automatic rules for the selected patient until {@link #resetModeToAutomatic()}.
+   */
+  public void setMode(ExplorerMode newMode) {
+    Objects.requireNonNull(newMode);
+    MediaSeriesGroup patient = getSelectedPatient();
+    if (patient != null) {
+      manualModes.put(patient, newMode);
+    }
+    defaultMode = newMode;
+    GuiUtils.getUICore()
+        .getSystemPreferences()
+        .setProperty(DicomExplorerPrefView.EXPLORER_MODE, newMode.getId());
+    showMode(newMode);
+  }
+
+  /** Forgets the user's choice for the selected patient and lets the rules choose again. */
+  public void resetModeToAutomatic() {
+    MediaSeriesGroup patient = getSelectedPatient();
+    if (patient != null) {
+      manualModes.remove(patient);
+    }
+    applyAutomaticMode();
+  }
+
+  /**
+   * The rules of the spec, when the user chose nothing for this patient: a narrow panel or a
+   * thumbnail column longer than three panel heights (series count as the fallback before the panes
+   * are laid out) call for the list; otherwise the stored default.
+   */
+  private void applyAutomaticMode() {
+    if (isModeChosenByUser()) {
+      return;
+    }
+    ExplorerMode wanted = computeAutomaticMode();
+    if (wanted != mode || thumbnailView.getViewport().getView() == null) {
+      showMode(wanted);
+    }
+  }
+
+  ExplorerMode computeAutomaticMode() {
+    MediaSeriesGroup patient = getSelectedPatient();
+    if (patient == null) {
+      return defaultMode;
+    }
+    int viewportWidth = thumbnailView.getViewport().getWidth();
+    int narrow =
+        GuiUtils.getScaleLength(intPreference(DicomExplorerPrefView.LIST_WIDTH_THRESHOLD, 220));
+    if (viewportWidth > 0 && viewportWidth < narrow) {
+      return ExplorerMode.LIST;
+    }
+    int seriesCount = 0;
+    for (StudyPane studyPane : paneManager.getStudyList(patient)) {
+      seriesCount += paneManager.getSeriesList(studyPane.getDicomStudy()).size();
+    }
+    int viewportHeight = thumbnailView.getViewport().getHeight();
+    int column = measuredSingleColumnWidth();
+    if (viewportWidth > 0 && viewportHeight > 0 && column > 0) {
+      int perRow = Math.max(1, viewportWidth / column);
+      int rowHeight =
+          GuiUtils.getScaleLength(SeriesThumbnail.getThumbnailSizeFromPreferences())
+              + GuiUtils.getScaleLength(40); // label lines under the thumbnail
+      long height = (long) Math.ceil(seriesCount / (double) perRow) * rowHeight;
+      return height > 3L * viewportHeight ? ExplorerMode.LIST : defaultMode;
+    }
+    return seriesCount > intPreference(DicomExplorerPrefView.LIST_SERIES_THRESHOLD, 30)
+        ? ExplorerMode.LIST
+        : defaultMode;
+  }
+
+  private static int intPreference(String key, int fallback) {
+    return GuiUtils.getUICore().getSystemPreferences().getIntProperty(key, fallback);
+  }
+
+  /** Shows a mode without touching the user's choice or the stored default. */
+  private void showMode(ExplorerMode newMode) {
+    boolean same = newMode == mode && thumbnailView.getViewport().getView() != null;
+    mode = newMode;
+    if (same) {
+      return;
+    }
+    thumbnailView.setViewportView(newMode == ExplorerMode.LIST ? getListPane() : selectedPatient);
+    if (newMode == ExplorerMode.THUMBNAILS) {
+      adjustDockableWidth();
+    }
+    displayModeButton.setToolTipText(
+        Messages.getString("DicomExplorer.mode") + StringUtil.COLON_AND_SPACE + newMode.getTitle());
+    refreshList();
+    thumbnailView.revalidate();
+    thumbnailView.repaint();
+  }
+
+  /** Row density of the compact list. */
+  public ListDensity getListDensity() {
+    ListDensity stored =
+        ListDensity.fromId(
+            GuiUtils.getUICore()
+                .getSystemPreferences()
+                .getProperty(DicomExplorerPrefView.LIST_DENSITY, ListDensity.MEDIUM.getId()));
+    return stored == null ? ListDensity.MEDIUM : stored;
+  }
+
+  public void setListDensity(ListDensity density) {
+    Objects.requireNonNull(density);
+    GuiUtils.getUICore()
+        .getSystemPreferences()
+        .setProperty(DicomExplorerPrefView.LIST_DENSITY, density.getId());
+    if (listPane != null) {
+      listPane.applyDensity(density);
+    }
+  }
+
+  /** Whether the compact list shows the non-image objects as rows. */
+  public boolean isObjectsShown() {
+    return GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getBooleanProperty(DicomExplorerPrefView.EXPLORER_OBJECTS, true);
+  }
+
+  public void setObjectsShown(boolean shown) {
+    GuiUtils.getUICore()
+        .getSystemPreferences()
+        .putBooleanProperty(DicomExplorerPrefView.EXPLORER_OBJECTS, shown);
+    refreshList();
+  }
+
+  private SeriesListPane getListPane() {
+    if (listPane == null) {
+      listPane = new SeriesListPane(this);
+    }
+    return listPane;
+  }
+
+  /** Rebuilds the compact list now, when it is the shown mode. */
+  private void refreshList() {
+    if (mode == ExplorerMode.LIST && listPane != null) {
+      listPane.refresh();
+    }
+    refreshStrip();
+  }
+
+  /** Rebuilds the timeline strip, or hides it when it is switched off. */
+  private void refreshStrip() {
+    if (stripPane == null) {
+      return;
+    }
+    if (isStripShown()) {
+      stripPane.refresh();
+    } else {
+      stripPane.setVisible(false);
+    }
+  }
+
+  /** Whether the timeline strip of the studies is shown above the body. */
+  public boolean isStripShown() {
+    return GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getBooleanProperty(DicomExplorerPrefView.EXPLORER_STRIP, true);
+  }
+
+  public void setStripShown(boolean shown) {
+    GuiUtils.getUICore()
+        .getSystemPreferences()
+        .putBooleanProperty(DicomExplorerPrefView.EXPLORER_STRIP, shown);
+    if (!shown) {
+      seriesFilter.setStudies(List.of());
+      refreshFilter();
+    } else {
+      refreshStrip();
+    }
+  }
+
+  /** Rebuilds the compact list once the burst of model events settles. */
+  private void scheduleListRefresh() {
+    if (mode == ExplorerMode.LIST) {
+      listRefresh.restart();
+    }
+    modeCheck.restart();
+  }
+
+  private static ExplorerMode readModePreference() {
+    String value =
+        GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getProperty(DicomExplorerPrefView.EXPLORER_MODE, ExplorerMode.THUMBNAILS.getId());
+    ExplorerMode stored = ExplorerMode.fromId(value);
+    return stored == null ? ExplorerMode.THUMBNAILS : stored;
+  }
+
+  private void setupModeButton() {
+    listRefresh.setRepeats(false);
+    modeCheck.setRepeats(false);
+    displayModeButton.setIcon(ResourceUtil.getIcon(ResourceUtil.ActionIcon.LAYOUT));
+    displayModeButton.setFocusable(false);
+    displayModeButton.putClientProperty(
+        FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+    displayModeButton.setToolTipText(
+        Messages.getString("DicomExplorer.mode") + StringUtil.COLON_AND_SPACE + mode.getTitle());
+    JPopupMenu popup = new JPopupMenu();
+    ButtonGroup group = new ButtonGroup();
+    for (ExplorerMode m : ExplorerMode.values()) {
+      JRadioButtonMenuItem item = new JRadioButtonMenuItem(m.getTitle());
+      item.setSelected(m == mode);
+      item.addActionListener(_ -> setMode(m));
+      group.add(item);
+      popup.add(item);
+    }
+    JRadioButtonMenuItem automatic =
+        new JRadioButtonMenuItem(Messages.getString("DicomExplorer.mode_auto"));
+    automatic.addActionListener(_ -> resetModeToAutomatic());
+    group.add(automatic);
+    popup.add(automatic);
+    popup.addSeparator();
+    JCheckBoxMenuItem objects =
+        new JCheckBoxMenuItem(Messages.getString("DicomExplorer.show_objects"));
+    objects.addActionListener(_ -> setObjectsShown(objects.isSelected()));
+    popup.add(objects);
+    JCheckBoxMenuItem strip = new JCheckBoxMenuItem(Messages.getString("DicomExplorer.show_strip"));
+    strip.addActionListener(_ -> setStripShown(strip.isSelected()));
+    popup.add(strip);
+    JMenu densityMenu = new JMenu(Messages.getString("DicomExplorer.density"));
+    ButtonGroup densityGroup = new ButtonGroup();
+    Map<ListDensity, JRadioButtonMenuItem> densityItems = new EnumMap<>(ListDensity.class);
+    for (ListDensity d : ListDensity.values()) {
+      JRadioButtonMenuItem item = new JRadioButtonMenuItem(d.getTitle());
+      item.addActionListener(_ -> setListDensity(d));
+      densityGroup.add(item);
+      densityMenu.add(item);
+      densityItems.put(d, item);
+    }
+    popup.add(densityMenu);
+    popup.addPopupMenuListener(
+        new PopupMenuListener() {
+          @Override
+          public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            int i = 0;
+            boolean byUser = isModeChosenByUser();
+            for (ExplorerMode m : ExplorerMode.values()) {
+              ((JRadioButtonMenuItem) popup.getComponent(i++)).setSelected(byUser && m == mode);
+            }
+            automatic.setSelected(!byUser);
+            objects.setSelected(isObjectsShown());
+            strip.setSelected(isStripShown());
+            JRadioButtonMenuItem current = densityItems.get(getListDensity());
+            if (current != null) {
+              current.setSelected(true);
+            }
+          }
+
+          @Override
+          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            // no-op
+          }
+
+          @Override
+          public void popupMenuCanceled(PopupMenuEvent e) {
+            // no-op
+          }
+        });
+    displayModeButton.addActionListener(
+        _ -> popup.show(displayModeButton, 0, displayModeButton.getHeight()));
+  }
+
   // ========== Initialization Methods ==========
 
   private void setupInitialSize() {
-    setDockableWidth(computeThumbnailPanelWidth(SeriesThumbnail.getThumbnailSizeFromPreferences()));
+    setDockableWidth(
+        mode == ExplorerMode.LIST
+            ? LIST_MIN_WIDTH
+            : computeThumbnailPanelWidth(SeriesThumbnail.getThumbnailSizeFromPreferences()));
   }
 
   /**
@@ -337,6 +633,9 @@ public class DicomExplorer extends PluginTool
 
   /** Re-applies the dock width from the actual laid-out study panes; a no-op if already correct. */
   private void adjustDockableWidth() {
+    if (mode == ExplorerMode.LIST) {
+      return; // the thumbnail column does not drive the width of the list
+    }
     int width = computeThumbnailPanelWidth(SeriesThumbnail.getThumbnailSizeFromPreferences());
     if (width != getDockableWidth()) {
       updateDockableWidth(width);
@@ -581,6 +880,7 @@ public class DicomExplorer extends PluginTool
       selectedPatient.removeAll();
     }
     selectedPatient.repaint();
+    refreshList();
     updateFilterIndicator();
     // Once study panes are laid out, size the dock to their exact one-column width
     SwingUtilities.invokeLater(this::adjustDockableWidth);
@@ -688,6 +988,21 @@ public class DicomExplorer extends PluginTool
     filterBar.repaint();
   }
 
+  /**
+   * Re-applies the filter after its facets were changed outside the filter bar (by a command): the
+   * field shows the facet of the current mode again, the panes are laid out and the indicator
+   * updated. Must run on the EDT.
+   */
+  public void refreshFilter() {
+    syncFilterToState(getSelectedPatient());
+    runFilter();
+  }
+
+  /** Counts the series of the selected patient as {@code {matching, total}}. */
+  public int[] getFilterCounts() {
+    return countSeries();
+  }
+
   /** Counts the series of the selected patient as {@code {matching, total}}. */
   private int[] countSeries() {
     MediaSeriesGroup patient = getSelectedPatient();
@@ -726,7 +1041,7 @@ public class DicomExplorer extends PluginTool
   private void setupThumbnailView() {
     thumbnailView.setBorder(BorderFactory.createEmptyBorder());
     thumbnailView.getVerticalScrollBar().setUnitIncrement(16);
-    thumbnailView.setViewportView(selectedPatient);
+    thumbnailView.setViewportView(mode == ExplorerMode.LIST ? getListPane() : selectedPatient);
     thumbnailView.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     thumbnailView.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     // Study panes keep their content width, so recompute their columns on viewport resize
@@ -739,6 +1054,7 @@ public class DicomExplorer extends PluginTool
                 paneManager
                     .getStudyList(getSelectedPatient())
                     .forEach(StudyPane::refreshLayoutAsync);
+                modeCheck.restart();
               }
             });
 
@@ -832,6 +1148,7 @@ public class DicomExplorer extends PluginTool
   }
 
   private void handleRemoveEvent(Object newVal) {
+    scheduleListRefresh();
     if (newVal instanceof MediaSeriesGroup group) {
       if (group.getTagID().equals(DicomModel.patient.tagElement())) {
         paneManager.removePatientPane(group);
@@ -844,6 +1161,7 @@ public class DicomExplorer extends PluginTool
   }
 
   private void handleUpdateEvent(ObservableEvent event) {
+    scheduleListRefresh();
     Object newVal = event.getNewValue();
     if (newVal instanceof DicomSeries series) {
       updateSplitSeries(series);
@@ -855,6 +1173,7 @@ public class DicomExplorer extends PluginTool
    * been applied (e.g. DICOMDIR or manifest without Series Description).
    */
   private void handleUpdateParentEvent(Object newVal) {
+    scheduleListRefresh();
     if (newVal instanceof DicomSeries series) {
       if (!DicomModel.isHiddenModality(series)) {
         paneManager.refreshSeriesPane(series);
@@ -867,6 +1186,7 @@ public class DicomExplorer extends PluginTool
   }
 
   private void handleReplaceEvent(ObservableEvent event) {
+    scheduleListRefresh();
     // Handle series replacement
     Object oldVal = event.getOldValue();
     Object newVal = event.getNewValue();
@@ -890,6 +1210,7 @@ public class DicomExplorer extends PluginTool
 
   private void onPatientChanged(MediaSeriesGroup patient) {
     loadFilterForPatient(patient);
+    applyAutomaticMode();
     applyFilterLayout();
     koOpen.setVisible(
         HiddenSeriesManager.hasHiddenSpecialElements(KOSpecialElement.class, patient));
@@ -909,6 +1230,7 @@ public class DicomExplorer extends PluginTool
   }
 
   private void addDicomSeries(DicomSeries series) {
+    scheduleListRefresh();
     if (DicomModel.isHiddenModality(series)) {
       // Up to now nothing has to be done in the explorer view about specialModality
       return;
@@ -1498,6 +1820,11 @@ public class DicomExplorer extends PluginTool
   @Override
   public void dispose() {
     IdentityMask.removeChangeListener(maskListener);
+    listRefresh.stop();
+    modeCheck.stop();
+    if (listPane != null) {
+      listPane.dispose();
+    }
     if (model != null) {
       model.removePropertyChangeListener(this);
     }

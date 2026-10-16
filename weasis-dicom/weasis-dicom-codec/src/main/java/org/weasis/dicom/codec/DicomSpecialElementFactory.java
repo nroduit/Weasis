@@ -22,4 +22,13 @@ public interface DicomSpecialElementFactory extends ExtensionPoint {
   }
 
   DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO);
+
+  /**
+   * What the explorer shows for one of the elements this factory builds: kind, label, date, creator
+   * and references. The default reads the standard attributes; a plugin overrides it when its
+   * objects carry the information elsewhere.
+   */
+  default ObjectDescriptor describe(DicomSpecialElement element) {
+    return ObjectDescriptor.generic(element);
+  }
 }

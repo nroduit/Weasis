@@ -17,6 +17,7 @@ import java.beans.PropertyChangeListener;
 import java.time.Duration;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -43,6 +44,7 @@ import org.dcm4che3.util.TagUtils;
 import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.Capability;
 import org.weasis.core.api.command.CommandContext;
+import org.weasis.core.api.command.CommandError;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.ImageIndex;
 import org.weasis.core.api.command.InputPath;
@@ -80,7 +82,16 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewDisplayState;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.ObjectDescriptor;
+import org.weasis.dicom.codec.ObjectKind;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.explorer.items.Interest;
+import org.weasis.dicom.explorer.items.InterestSource;
+import org.weasis.dicom.explorer.items.ObjectItem;
+import org.weasis.dicom.explorer.items.SeriesItem;
+import org.weasis.dicom.explorer.items.StudyContents;
+import org.weasis.dicom.explorer.main.InterestOpener;
 import org.weasis.dicom.explorer.rs.RsQueryParams;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -104,7 +115,9 @@ import picocli.CommandLine.TypeConversionException;
       DicomModelCommands.ListStudies.class,
       DicomModelCommands.Open.class,
       DicomModelCommands.Info.class,
-      DicomModelCommands.TagValue.class
+      DicomModelCommands.TagValue.class,
+      DicomModelCommands.ListObjects.class,
+      DicomModelCommands.ListInterest.class
     })
 final class DicomModelCommands {
 
@@ -975,6 +988,14 @@ final class DicomModelCommands {
     PaneIndex pane;
 
     @Option(
+        names = "--interest",
+        description =
+            "Show the images of interest only (referenced by a KO, an annotated PR or a SEG, or "
+                + "drawn on); the whole series when it has none.")
+    @Since("5.0")
+    boolean interestOnly;
+
+    @Option(
         names = "--wait",
         paramLabel = "<wait-level>",
         arity = "0..1",
@@ -1060,6 +1081,14 @@ final class DicomModelCommands {
     /** Opens the series on the EDT and returns the id of the view showing it, or null. */
     @SuppressWarnings("unchecked")
     private String open(PromptPolicy policy) {
+      String viewId = openSeries(policy);
+      if (interestOnly && findSeries(parent.model, seriesUid.value()) instanceof DicomSeries ds) {
+        InterestOpener.applyWhenReady(ds);
+      }
+      return viewId;
+    }
+
+    private String openSeries(PromptPolicy policy) {
       MediaSeries<? extends MediaElement> series = findSeries(parent.model, seriesUid.value());
       if (destination.viewId != null) {
         ImageViewerPlugin<ImageElement> viewer = viewerOf(destination.viewId.value());
@@ -1302,6 +1331,211 @@ final class DicomModelCommands {
           .forEach(viewers::add);
       json.add("viewerTypes", viewers); // NON-NLS
       return json.build().toString();
+    }
+  }
+
+  @Command(
+      name = "objects",
+      description =
+          "Non-image objects of the loaded studies (key object selections, presentation states, "
+              + "segmentations, RT objects): kind, label, date, creator and the series they "
+              + "reference. Filter by study, by referenced series or by kind. Labels follow the "
+              + "identity policy.")
+  @Since("5.0")
+  static class ListObjects extends Verb {
+    @Option(
+        names = "--study",
+        paramLabel = "<study-uid>",
+        description = "Study Instance UID from 'dicom:list'; default: every loaded study.")
+    StudyUid studyUid;
+
+    @Option(
+        names = "--series",
+        paramLabel = "<series-uid>",
+        description =
+            "Series Instance UID (or series id) from 'dicom:list': only the objects that "
+                + "reference this series.")
+    SeriesUid seriesUid;
+
+    @Option(
+        names = "--type",
+        paramLabel = "<kind>",
+        description = "Only this kind: ko, rejection, pr, seg, rtstruct, rtplan, rtdose, other.")
+    String type;
+
+    @Override
+    protected void run() {
+      ObjectKind kind = null;
+      if (type != null) {
+        kind = ObjectKind.fromId(type);
+        if (kind == null) {
+          throw new CommandFailure(
+              CommandError.invalidValue(
+                  "Unknown object kind: " + type, // NON-NLS
+                  "--type", // NON-NLS
+                  "--type <kind>, one of: "
+                      + Arrays.stream(ObjectKind.values())
+                          .map(ObjectKind::getId)
+                          .collect(Collectors.joining(", "))));
+        }
+      }
+      ObjectKind kindFilter = kind;
+      print(
+          GuiExecutor.invokeAndRethrow(
+              () ->
+                  IdentityMask.callForCommand(
+                      () ->
+                          objectsJson(
+                              parent.model,
+                              studyUid == null ? null : studyUid.value(),
+                              seriesUid,
+                              kindFilter))));
+    }
+
+    private static String objectsJson(
+        DicomModel model, String studyUid, SeriesUid seriesUid, ObjectKind kind) {
+      String referencedUid = null;
+      if (seriesUid != null) {
+        referencedUid = seriesUid(findSeries(model, seriesUid.value()));
+      }
+      JsonArrayBuilder studies = Json.createArrayBuilder();
+      for (MediaSeriesGroup pt : model.getChildren(MediaSeriesGroupNode.rootNode)) {
+        for (MediaSeriesGroup st : model.getChildren(pt)) {
+          String uid = TagD.getTagValue(st, Tag.StudyInstanceUID, String.class);
+          if (studyUid != null && !studyUid.equals(uid)) {
+            continue;
+          }
+          StudyContents contents = StudyContents.of(model, st);
+          JsonArrayBuilder objects = Json.createArrayBuilder();
+          int count = 0;
+          for (ObjectItem item : contents.objects()) {
+            if ((kind != null && item.kind() != kind)
+                || (referencedUid != null && !item.references(referencedUid))) {
+              continue;
+            }
+            objects.add(objectJson(item.descriptor()));
+            count++;
+          }
+          if (count == 0 && (studyUid == null || !studyUid.equals(uid))) {
+            continue;
+          }
+          JsonObjectBuilder study = Json.createObjectBuilder();
+          put(study, "studyInstanceUID", uid); // NON-NLS
+          study.add("seriesCount", contents.series().size()); // NON-NLS
+          study.add("objects", objects); // NON-NLS
+          studies.add(study);
+        }
+      }
+      return Json.createObjectBuilder().add("studies", studies).build().toString(); // NON-NLS
+    }
+
+    private static JsonObjectBuilder objectJson(ObjectDescriptor d) {
+      JsonObjectBuilder json = Json.createObjectBuilder();
+      put(json, "kind", d.kind().getId()); // NON-NLS
+      put(json, "modality", d.modality()); // NON-NLS
+      put(json, "label", d.label()); // NON-NLS
+      put(json, "date", d.date() == null ? null : d.date().toString()); // NON-NLS
+      put(json, "creator", d.creator()); // NON-NLS
+      put(json, "seriesInstanceUID", d.seriesUID()); // NON-NLS
+      put(json, "sopInstanceUID", d.sopInstanceUID()); // NON-NLS
+      JsonArrayBuilder refs = Json.createArrayBuilder();
+      d.referencedSeriesUIDs().forEach(refs::add);
+      json.add("referencedSeries", refs); // NON-NLS
+      json.add("referencedImages", d.referencedImages()); // NON-NLS
+      if (d.parts() > 0) {
+        json.add("parts", d.parts()); // NON-NLS
+      }
+      return json;
+    }
+  }
+
+  @Command(
+      name = "interest",
+      description =
+          "Images of interest of the loaded series: those a key object selection, an annotated "
+              + "presentation state or a segmentation points at, and those drawn on in Weasis, "
+              + "with their sources. Filter by study or by series.")
+  @Since("5.0")
+  static class ListInterest extends Verb {
+    @Option(
+        names = "--study",
+        paramLabel = "<study-uid>",
+        description = "Study Instance UID from 'dicom:list'; default: every loaded study.")
+    StudyUid studyUid;
+
+    @Option(
+        names = "--series",
+        paramLabel = "<series-uid>",
+        description = "Series Instance UID (or series id) from 'dicom:list': this series only.")
+    SeriesUid seriesUid;
+
+    @Option(
+        names = "--images",
+        description = "Also list the SOP Instance UIDs of the images of interest.")
+    boolean images;
+
+    @Override
+    protected void run() {
+      print(
+          GuiExecutor.invokeAndRethrow(
+              () ->
+                  IdentityMask.callForCommand(
+                      () ->
+                          interestJson(
+                              parent.model,
+                              studyUid == null ? null : studyUid.value(),
+                              seriesUid,
+                              images))));
+    }
+
+    private static String interestJson(
+        DicomModel model, String studyUid, SeriesUid seriesUid, boolean withImages) {
+      JsonArrayBuilder out = Json.createArrayBuilder();
+      List<MediaSeries<? extends MediaElement>> targets = new ArrayList<>();
+      if (seriesUid != null) {
+        targets.add(findSeries(model, seriesUid.value()));
+      } else {
+        for (MediaSeriesGroup pt : model.getChildren(MediaSeriesGroupNode.rootNode)) {
+          for (MediaSeriesGroup st : model.getChildren(pt)) {
+            String uid = TagD.getTagValue(st, Tag.StudyInstanceUID, String.class);
+            if (studyUid != null && !studyUid.equals(uid)) {
+              continue;
+            }
+            for (SeriesItem item : StudyContents.of(model, st).series()) {
+              targets.add(item.series());
+            }
+          }
+        }
+      }
+      for (MediaSeries<? extends MediaElement> target : targets) {
+        if (!(target instanceof DicomSeries series)) {
+          continue;
+        }
+        Interest interest = Interest.of(series);
+        if (interest.isEmpty()) {
+          continue;
+        }
+        JsonObjectBuilder se = Json.createObjectBuilder();
+        put(se, "id", String.valueOf(series.getTagValue(TagW.SubseriesInstanceUID))); // NON-NLS
+        put(se, "seriesInstanceUID", seriesUid(series)); // NON-NLS
+        put(
+            se,
+            "studyInstanceUID", // NON-NLS
+            TagD.getTagValue(series, Tag.StudyInstanceUID, String.class));
+        se.add("images", interest.count()); // NON-NLS
+        JsonObjectBuilder sources = Json.createObjectBuilder();
+        for (InterestSource source : interest.sources()) {
+          sources.add(source.getId(), interest.count(source));
+        }
+        se.add("sources", sources); // NON-NLS
+        if (withImages) {
+          JsonArrayBuilder uids = Json.createArrayBuilder();
+          interest.images().forEach(uids::add);
+          se.add("imageUIDs", uids); // NON-NLS
+        }
+        out.add(se);
+      }
+      return Json.createObjectBuilder().add("series", out).build().toString(); // NON-NLS
     }
   }
 

@@ -24,7 +24,7 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.0 and protocol
+This instance runs Weasis development with command API 2.1 and protocol
 1, and answers these namespaces: acquire, dicom, image, redact, script, view2d, view3d, weasis, workspace.
 
 Check the connection first:
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.0 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.1 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -95,6 +95,11 @@ line naming the current spelling. Use the current one everywhere.
 
 1. **Discover** what is open: `weasis-cli workspace:list` (viewers) and `weasis-cli dicom:list`
    (patients, studies, series with UIDs and image counts).
+   `explorer:state` says what the explorer panel itself shows (selected patient, filter, which
+   series are visible, selected or not downloaded, the objects of each study);
+   `explorer:filter --modality CT --objects seg` narrows it, `explorer:select --series <uid>`
+   selects as a click would, and `explorer:mode list` switches to the compact list (`auto` lets the explorer choose from the
+   content and the panel width; the state says `modeSource`).
 2. **Open** a series when needed: `weasis-cli dicom:open --series <uid>` returns the view id, and
    `--view <id> --pane <n>` puts it in a chosen pane of a view you already have.
    `dicom:info` lists the `viewerTypes` able to display the series; `weasis-cli -y dicom:open
@@ -124,7 +129,14 @@ line naming the current spelling. Use the current one everywhere.
      `view2d:clear-ai` removes everything you drew.
 6. **Read metadata**: `dicom:info --series <uid>` (modality, geometry, spacing, counts) and
    `dicom:tag --series <uid> --tag SliceLocation` (any standard attribute, by keyword or
-   `(gggg,eeee)`; `--image <n>` selects the image, counting from 1).
+   `(gggg,eeee)`; `--image <n>` selects the image, counting from 1). `dicom:objects --study <uid>`
+   lists the non-image objects of a study (key object selections, presentation states,
+   segmentations, RT objects) with their kind, label, creator and the series they reference;
+   `--series <uid>` keeps the objects that reference one series, `--type seg` one kind.
+   `dicom:interest --study <uid> --images` lists the images of interest (referenced by a KO, an
+   annotated PR or a SEG, or drawn on) with their sources; `explorer:filter --interest any` keeps
+   only the series that have some; `dicom:open --series <uid> --interest` opens a series on those
+   images alone.
 7. **Arrange** for comparison: `workspace:split --view <a> --anchor <b> --side right`,
    `workspace:stack`, `workspace:maximize`, `workspace:save --out layout.json` and
    `workspace:load --file layout.json` (a closed viewer is created again with its series, grid

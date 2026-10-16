@@ -16,6 +16,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -52,6 +53,7 @@ import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
+import org.weasis.dicom.explorer.items.Interest;
 import org.weasis.dicom.explorer.tag.DicomFieldsView;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
@@ -146,6 +148,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
     List<MediaSeries<? extends MediaElement>> seriesList = getFilteredSeriesList(selList);
 
     addViewerMenuItems(popupMenu, seriesList);
+    addInterestMenuItem(popupMenu);
     addSelectionMenuItems(popupMenu, selList);
     addLoadSeriesMenuItems(popupMenu, selList);
     addMergeMenuItem(popupMenu, selList, seriesList);
@@ -154,6 +157,18 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
     addThumbnailMenuItems(popupMenu, selList);
 
     popupMenu.show(e.getComponent(), e.getX() - 5, e.getY() - 5);
+  }
+
+  /** Opens the series on its images of interest only, when it has some. */
+  private void addInterestMenuItem(JPopupMenu popupMenu) {
+    int count = Interest.of(series).count();
+    if (count > 0) {
+      JMenuItem item =
+          new JMenuItem(
+              MessageFormat.format(Messages.getString("DicomExplorer.open_interest"), count));
+      item.addActionListener(_ -> InterestOpener.open(series, dicomModel));
+      popupMenu.add(item);
+    }
   }
 
   private void ensureSeriesSelected(SeriesSelectionModel selList) {

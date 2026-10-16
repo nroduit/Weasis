@@ -39,7 +39,14 @@ class LegacyCommandsTest {
           "dicom:unload --all",
           "dicom:unload --patient P1 --study 1.2.3 --series 1.2.4",
           "dicom:open --series 1.2.3 --viewer-type mpr",
-          "dicom:tag --series 1.2.3 --tag SliceLocation");
+          "dicom:open --series 1.2.3 --interest",
+          "dicom:tag --series 1.2.3 --tag SliceLocation",
+          "dicom:objects",
+          "dicom:objects --study 1.2.3 --type ko",
+          "dicom:objects --series 1.2.4 --type seg",
+          "dicom:interest",
+          "dicom:interest --study 1.2.3 --images",
+          "dicom:interest --series 1.2.4");
 
   @Test
   void documentedCommandLinesStillParse() {

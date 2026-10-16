@@ -169,7 +169,7 @@ public class HiddenSeriesManager {
             list.add((E) media);
             if (childNumber > 0) {
               String sopUID = TagD.getTagValue(media, Tag.SOPInstanceUID, String.class);
-              Set<String> refs = getInstance().sopRef2Series.get(sopUID);
+              Set<String> refs = sopUID == null ? null : getInstance().sopRef2Series.get(sopUID);
               if (refs != null) {
                 for (String ref : refs) {
                   addHiddenElements(list, clazz, ref, childNumber - 1);
@@ -329,6 +329,23 @@ public class HiddenSeriesManager {
       }
     }
     return result;
+  }
+
+  /**
+   * The image series referenced by the hidden series {@code originSeriesUID}, as the index learnt
+   * them from the objects it holds (the reverse of {@link #reference2Series}); empty when none.
+   */
+  public static Set<String> getReferencedSeries(String originSeriesUID) {
+    if (!StringUtil.hasText(originSeriesUID)) {
+      return Collections.emptySet();
+    }
+    Set<String> referenced = new LinkedHashSet<>();
+    for (Map.Entry<String, Set<String>> entry : getInstance().reference2Series.entrySet()) {
+      if (entry.getValue().contains(originSeriesUID)) {
+        referenced.add(entry.getKey());
+      }
+    }
+    return referenced;
   }
 
   public static Set<ResourceIconPath> getRelatedIcons(String seriesUID) {

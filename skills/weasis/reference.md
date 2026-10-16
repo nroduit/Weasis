@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.0, protocol 1, application development.
+Command API 2.1, protocol 1, application development.
 
 ## acquire
 
@@ -38,6 +38,19 @@ Usage: `dicom:info [-h] [--json] (--series=<series-uid> | --view=<view-id>)`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list'. |
 | --view | view-id |  | Viewer id from 'workspace:list'; its selected pane gives the series. |
+
+### dicom:interest (since 5.0)
+
+Images of interest of the loaded series: those a key object selection, an annotated presentation state or a segmentation points at, and those drawn on in Weasis, with their sources. Filter by study or by series.
+
+Usage: `dicom:interest [-h] [--images] [--json] [--series=<series-uid>] [--study=<study-uid>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --study | study-uid |  | Study Instance UID from 'dicom:list'; default: every loaded study. |
+| --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list': this series only. |
+| --images | boolean |  | Also list the SOP Instance UIDs of the images of interest. |
 
 ### dicom:list (since 5.0)
 
@@ -97,11 +110,24 @@ Needs: network read
 | --wait | enum | none | Answer when the loading reaches this point: none, first-series or all (default: none, or all when the option carries no value). (since 5.0) |
 | --timeout | integer | 600 | Give up waiting after this long (default: 600). (since 5.0) |
 
+### dicom:objects (since 5.0)
+
+Non-image objects of the loaded studies (key object selections, presentation states, segmentations, RT objects): kind, label, date, creator and the series they reference. Filter by study, by referenced series or by kind. Labels follow the identity policy.
+
+Usage: `dicom:objects [-h] [--json] [--series=<series-uid>] [--study=<study-uid>] [--type=<kind>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --study | study-uid |  | Study Instance UID from 'dicom:list'; default: every loaded study. |
+| --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list': only the objects that reference this series. |
+| --type | kind |  | Only this kind: ko, rejection, pr, seg, rtstruct, rtplan, rtdose, other. |
+
 ### dicom:open (since 5.0)
 
 Opens a series: in the view given by --view, and in its pane given by --pane, in a new view of the type given by --viewer-type, or in the default viewer of its type. Returns the view id and what the viewer decided while opening (e.g. 'rectified', 'warnings'); the client option -y answers its questions instead of showing them.
 
-Usage: `dicom:open [-h] [--json] [--wait[=<wait-level>]] [--pane=<pane-index>] --series=<series-uid> [--view=<view-id> | --viewer-type=<viewer-type>]`
+Usage: `dicom:open [-h] [--interest] [--json] [--wait[=<wait-level>]] [--pane=<pane-index>] --series=<series-uid> [--view=<view-id> | --viewer-type=<viewer-type>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
@@ -110,6 +136,7 @@ Usage: `dicom:open [-h] [--json] [--wait[=<wait-level>]] [--pane=<pane-index>] -
 | --view | view-id |  | Viewer id from 'workspace:list' that receives the series. |
 | --viewer-type | string |  | Opens a new view of this type, by id from 'dicom:info' (e.g. 'mpr'), or by the name the interface shows. (since 5.0) |
 | --pane | pane-index |  | Pane of --view that receives the series, from 1 (default: the selected one). (since 5.0) |
+| --interest | boolean |  | Show the images of interest only (referenced by a KO, an annotated PR or a SEG, or drawn on); the whole series when it has none. (since 5.0) |
 | --wait | enum | none | Answer once the viewer has finished building its content, e.g. the MPR volume: none or all, since a viewer builds in one step (default: none, or all when the option carries no value). |
 
 ### dicom:tag (since 5.0)
@@ -140,6 +167,62 @@ Usage: `dicom:unload [-h] [--all] [--json] [--patient=<patient-handle>]... [--se
 | --study | study-uid | [] | Study Instance UID to unload. |
 | --series | series-uid | [] | Series Instance UID, or series id, to unload. |
 
+
+## explorer
+
+The explorer panel: its filter facets, its selection and what it shows. 'dicom:' reads the data, 'explorer:' the view of it.
+
+### explorer:filter (since 5.0)
+
+Sets the facets of the series filter of the DICOM explorer, combined with AND: text, study, modalities, kinds of objects referencing the series, download state. Without option, prints the current filter. Returns the filter and how many series of the selected patient pass it.
+
+Usage: `explorer:filter [-h] [--clear] [--json] [--interest=<interest-source>[,<interest-source>...]]... [--modality=<modality>[,<modality>...]]... [--objects=<kind>[,<kind>...]]... [--state=<download-state>[,<download-state>...]]... [--study=<study-uid>]... [--text=<text>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --text | text |  | Free text over series and study attributes, anatomy and its region group. |
+| --study | study-uid |  | Study Instance UID from 'dicom:list': only its series; repeatable, as a selection on the timeline strip. |
+| --modality | modality |  | Modalities to keep (repeatable, or comma-separated). |
+| --objects | kind |  | Keep the series referenced by an object of one of these kinds: ko, pr, seg, rtstruct, rtplan, rtdose, rejection, other (repeatable, or comma-separated). |
+| --state | download-state |  | Download states to keep: complete, pending, downloading. |
+| --interest | interest-source |  | Keep the series with images of interest: any, or pointed at by one of ko, graphics, pr, seg (repeatable, or comma-separated). |
+| --clear | boolean |  | Clears every facet first. |
+
+### explorer:mode (since 5.0)
+
+Sets how the DICOM explorer draws the selected patient: 'thumbnails' (the column of thumbnails) or 'list' (one row per series and per object, studies as group rows). Without argument, prints the current mode.
+
+Usage: `explorer:mode [-h] [--json] [<explorer-mode>]`
+
+| Parameter | Type | Description |
+|---|---|---|
+| explorer-mode | explorer-mode | thumbnails, list, or auto (forget the choice, let the rules decide). |
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+### explorer:select (since 5.0)
+
+Selects series in the DICOM explorer (and the patient they belong to), as a click would; the next 'dicom:open' without --series opens them. Returns the state.
+
+Usage: `explorer:select [-h] [--json] --series=<series-uid> [--series=<series-uid>]...`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list'; repeatable. |
+
+### explorer:state (since 5.0)
+
+What the DICOM explorer shows: the selected patient, the filter and its counts, the studies with their series (visible or filtered out, download state, selected) and their non-image objects. Identifiers follow the identity policy.
+
+Usage: `explorer:state [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 ## image
 

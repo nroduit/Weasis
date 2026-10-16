@@ -133,7 +133,8 @@ public class AbstractKOSpecialElement extends HiddenSpecialElement {
     return OtherIcon.KEY;
   }
 
-  protected String getLabelWithoutPrefix() {
+  /** The text of the first content item, the title the author gave the selection; may be null. */
+  public String getLabelWithoutPrefix() {
     Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
     Attributes item = dicom.getNestedDataset(Tag.ContentSequence);
     if (item != null) {

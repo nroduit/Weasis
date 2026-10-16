@@ -10,21 +10,37 @@
 package org.weasis.dicom.explorer.main;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import javax.swing.JProgressBar;
+import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
+import org.weasis.core.api.media.data.SeriesImporter;
+import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.HiddenSpecialElement;
+import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.ObjectKind;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.items.DownloadState;
+import org.weasis.dicom.explorer.items.StudyContents;
 import org.weasis.dicom.explorer.main.SeriesFilter.Mode;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
@@ -145,7 +161,130 @@ class SeriesFilterTest {
     assertTrue(filter.test(series("US", 9, "Abdomen", null), study("x")));
   }
 
-  private static MediaSeriesGroup series(
+  @Test
+  void facets_combine_with_and_and_a_mode_switch_keeps_the_code_facets() {
+    SeriesFilter filter = new SeriesFilter();
+    filter.setText("chest");
+    filter.setModalities(List.of("CT"));
+    assertTrue(filter.test(series("CT", 1, "Chest CT", null), study("x")));
+    assertFalse(
+        filter.test(series("MR", 1, "Chest MR", null), study("x")), "text yes, modality no");
+    assertFalse(filter.test(series("CT", 1, "Abdomen", null), study("x")), "modality yes, text no");
+
+    filter.setDownloadStates(List.of(DownloadState.COMPLETE));
+    filter.setMode(Mode.MODALITY);
+    assertAll(
+        () -> assertTrue(filter.getText().isEmpty(), "field facets cleared by the mode switch"),
+        () -> assertTrue(filter.getModalities().isEmpty()),
+        () -> assertEquals(Set.of(DownloadState.COMPLETE), filter.getDownloadStates()),
+        () -> assertTrue(filter.isActive()),
+        () -> assertFalse(filter.isFieldActive()));
+    filter.clear();
+    assertFalse(filter.isActive());
+  }
+
+  @Test
+  void studies_facet_keeps_the_series_of_the_selected_studies_only() {
+    MediaSeriesGroup a = study("A");
+    MediaSeriesGroup b = study("B");
+    MediaSeriesGroup c = study("C");
+    SeriesFilter filter = new SeriesFilter();
+    filter.setStudies(List.of(a, b));
+    assertAll(
+        () -> assertTrue(filter.isActive()),
+        () -> assertEquals(Set.of(a, b), filter.getStudies()),
+        () -> assertTrue(filter.test(series("CT", 1, "x", null), a)),
+        () -> assertTrue(filter.test(series("CT", 1, "x", null), b)),
+        () -> assertFalse(filter.test(series("CT", 1, "x", null), c)));
+    filter.setMode(Mode.TEXT);
+    assertEquals(Set.of(a, b), filter.getStudies(), "a field mode switch keeps the strip facet");
+    filter.clear();
+    assertTrue(filter.getStudies().isEmpty());
+  }
+
+  @Test
+  void download_state_facet_follows_the_series_loader() {
+    SeriesFilter filter = new SeriesFilter();
+    filter.setDownloadStates(List.of(DownloadState.PENDING));
+    DicomSeries series = series("CT", 1, "Chest", null);
+    assertFalse(filter.test(series, study("x")), "no loader: complete");
+    series.setSeriesLoader(stoppedLoader());
+    assertTrue(filter.test(series, study("x")));
+  }
+
+  @Test
+  void object_facet_keeps_the_series_referenced_by_an_object_of_a_kind() {
+    String referenced = UIDUtils.createUID();
+    String koSeries = UIDUtils.createUID();
+    HiddenSeriesManager manager = HiddenSeriesManager.getInstance();
+    manager
+        .reference2Series
+        .computeIfAbsent(referenced, _ -> new CopyOnWriteArraySet<>())
+        .add(koSeries);
+    manager
+        .series2Elements
+        .computeIfAbsent(koSeries, _ -> new CopyOnWriteArraySet<>())
+        .add(keyObject());
+
+    SeriesFilter filter = new SeriesFilter();
+    filter.setObjectKinds(List.of(ObjectKind.KEY_OBJECT, ObjectKind.SEGMENTATION));
+    DicomSeries withKo = series("CT", 1, "Chest", null);
+    withKo.setTag(TagD.get(Tag.SeriesInstanceUID), referenced);
+    DicomSeries without = series("CT", 2, "Chest", null);
+    without.setTag(TagD.get(Tag.SeriesInstanceUID), UIDUtils.createUID());
+
+    assertAll(
+        () -> assertTrue(filter.isActive()),
+        () -> assertTrue(filter.test(withKo, study("x"))),
+        () -> assertFalse(filter.test(without, study("x"))),
+        () ->
+            assertEquals(Set.of(ObjectKind.KEY_OBJECT), StudyContents.kindsReferencing(referenced)),
+        () -> assertEquals(Set.of(), StudyContents.kindsReferencing(null)));
+    filter.setObjectKinds(List.of(ObjectKind.SEGMENTATION));
+    assertFalse(filter.test(withKo, study("x")), "a KO is not a SEG");
+  }
+
+  private static HiddenSpecialElement keyObject() {
+    try {
+      Attributes a = new Attributes();
+      a.setString(Tag.SOPClassUID, VR.UI, UID.KeyObjectSelectionDocumentStorage);
+      a.setString(Tag.SOPInstanceUID, VR.UI, UIDUtils.createUID());
+      a.setString(Tag.Modality, VR.CS, "KO");
+      KOSpecialElement ko = new KOSpecialElement(new DicomMediaIO(a));
+      ko.setTag(TagD.get(Tag.Modality), "KO");
+      ko.setTag(TagD.get(Tag.SOPInstanceUID), a.getString(Tag.SOPInstanceUID));
+      return ko;
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  private static SeriesImporter stoppedLoader() {
+    return new SeriesImporter() {
+      @Override
+      public boolean isStopped() {
+        return true;
+      }
+
+      @Override
+      public JProgressBar getProgressBar() {
+        return null;
+      }
+
+      @Override
+      public boolean stop() {
+        return true;
+      }
+
+      @Override
+      public void resume() {}
+
+      @Override
+      public void setPriority() {}
+    };
+  }
+
+  private static DicomSeries series(
       String modality, int number, String description, String bodyPart) {
     DicomSeries series = new DicomSeries(UIDUtils.createUID());
     series.setTagNoNull(TagD.get(Tag.Modality), modality);

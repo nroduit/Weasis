@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.0",
+  "apiVersion": "2.1",
   "protocolVersion": 1,
   "applicationVersion": "development",
   "exitCodes": {
@@ -150,6 +150,55 @@
                 "exclusive": true,
                 "multiplicity": "1"
               }
+            }
+          ]
+        },
+        {
+          "name": "interest",
+          "description": "Images of interest of the loaded series: those a key object selection, an annotated presentation state or a segmentation points at, and those drawn on in Weasis, with their sources. Filter by study or by series.",
+          "since": "5.0",
+          "usage": "dicom:interest [-h] [--images] [--json] [--series=<series-uid>] [--study=<study-uid>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": false,
+              "description": "Study Instance UID from 'dicom:list'; default: every loaded study."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": false,
+              "description": "Series Instance UID (or series id) from 'dicom:list': this series only."
+            },
+            {
+              "names": [
+                "--images"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Also list the SOP Instance UIDs of the images of interest."
             }
           ]
         },
@@ -514,10 +563,59 @@
           ]
         },
         {
+          "name": "objects",
+          "description": "Non-image objects of the loaded studies (key object selections, presentation states, segmentations, RT objects): kind, label, date, creator and the series they reference. Filter by study, by referenced series or by kind. Labels follow the identity policy.",
+          "since": "5.0",
+          "usage": "dicom:objects [-h] [--json] [--series=<series-uid>] [--study=<study-uid>] [--type=<kind>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": false,
+              "description": "Study Instance UID from 'dicom:list'; default: every loaded study."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": false,
+              "description": "Series Instance UID (or series id) from 'dicom:list': only the objects that reference this series."
+            },
+            {
+              "names": [
+                "--type"
+              ],
+              "label": "<kind>",
+              "type": "kind",
+              "arity": "1",
+              "required": false,
+              "description": "Only this kind: ko, rejection, pr, seg, rtstruct, rtplan, rtdose, other."
+            }
+          ]
+        },
+        {
           "name": "open",
           "description": "Opens a series: in the view given by --view, and in its pane given by --pane, in a new view of the type given by --viewer-type, or in the default viewer of its type. Returns the view id and what the viewer decided while opening (e.g. 'rectified', 'warnings'); the client option -y answers its questions instead of showing them.",
           "since": "5.0",
-          "usage": "dicom:open [-h] [--json] [--wait[=<wait-level>]] [--pane=<pane-index>] --series=<series-uid> [--view=<view-id> | --viewer-type=<viewer-type>]",
+          "usage": "dicom:open [-h] [--interest] [--json] [--wait[=<wait-level>]] [--pane=<pane-index>] --series=<series-uid> [--view=<view-id> | --viewer-type=<viewer-type>]",
           "parameters": [],
           "options": [
             {
@@ -578,6 +676,17 @@
               "arity": "1",
               "required": false,
               "description": "Pane of --view that receives the series, from 1 (default: the selected one).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--interest"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Show the images of interest only (referenced by a KO, an annotated PR or a SEG, or drawn on); the whole series when it has none.",
               "since": "5.0"
             },
             {
@@ -725,6 +834,176 @@
               "required": false,
               "default": "[]",
               "description": "Series Instance UID, or series id, to unload."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "explorer",
+      "description": "The explorer panel: its filter facets, its selection and what it shows. 'dicom:' reads the data, 'explorer:' the view of it.",
+      "since": "5.0",
+      "verbs": [
+        {
+          "name": "filter",
+          "description": "Sets the facets of the series filter of the DICOM explorer, combined with AND: text, study, modalities, kinds of objects referencing the series, download state. Without option, prints the current filter. Returns the filter and how many series of the selected patient pass it.",
+          "since": "5.0",
+          "usage": "| --state | download-state |  | Download states to keep: complete, pending, downloading. |\n| --interest | interest-source |  | Keep the series with images of interest: any, or pointed at by one of ko, graphics, pr, seg (repeatable, or comma-separated). |\n| --clear | boolean |  | Clears every facet first. |",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--text"
+              ],
+              "label": "<text>",
+              "type": "text",
+              "arity": "1",
+              "required": false,
+              "description": "Free text over series and study attributes, anatomy and its region group."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": false,
+              "description": "Study Instance UID from 'dicom:list': only its series; repeatable, as a selection on the timeline strip."
+            },
+            {
+              "names": [
+                "--modality"
+              ],
+              "label": "<modality>",
+              "type": "modality",
+              "arity": "1",
+              "required": false,
+              "description": "Modalities to keep (repeatable, or comma-separated)."
+            },
+            {
+              "names": [
+                "--objects"
+              ],
+              "label": "<kind>",
+              "type": "kind",
+              "arity": "1",
+              "required": false,
+              "description": "Keep the series referenced by an object of one of these kinds: ko, pr, seg, rtstruct, rtplan, rtdose, rejection, other (repeatable, or comma-separated)."
+            },
+            {
+              "names": [
+                "--state"
+              ],
+              "label": "<download-state>",
+              "type": "download-state",
+              "arity": "1",
+              "required": false,
+              "description": "Download states to keep: complete, pending, downloading."
+            },
+            {
+              "names": [
+                "--interest"
+              ],
+              "label": "<interest-source>",
+              "type": "interest-source",
+              "arity": "1",
+              "required": false,
+              "description": "Keep the series with images of interest: any, or pointed at by one of ko, graphics, pr, seg (repeatable, or comma-separated)."
+            },
+            {
+              "names": [
+                "--clear"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Clears every facet first."
+            }
+          ]
+        },
+        {
+          "name": "mode",
+          "description": "Sets how the DICOM explorer draws the selected patient: 'thumbnails' (the column of thumbnails) or 'list' (one row per series and per object, studies as group rows). Without argument, prints the current mode.",
+          "since": "5.0",
+          "usage": "explorer:mode [-h] [--json] [<explorer-mode>]",
+          "parameters": [
+            {
+              "label": "<explorer-mode>",
+              "type": "explorer-mode",
+              "arity": "0..1",
+              "description": "thumbnails, list, or auto (forget the choice, let the rules decide)."
+            }
+          ],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "select",
+          "description": "Selects series in the DICOM explorer (and the patient they belong to), as a click would; the next 'dicom:open' without --series opens them. Returns the state.",
+          "since": "5.0",
+          "usage": "explorer:select [-h] [--json] --series=<series-uid> [--series=<series-uid>]...",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": true,
+              "description": "Series Instance UID (or series id) from 'dicom:list'; repeatable."
+            }
+          ]
+        },
+        {
+          "name": "state",
+          "description": "What the DICOM explorer shows: the selected patient, the filter and its counts, the studies with their series (visible or filtered out, download state, selected) and their non-image objects. Identifiers follow the identity policy.",
+          "since": "5.0",
+          "usage": "explorer:state [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
             }
           ]
         }

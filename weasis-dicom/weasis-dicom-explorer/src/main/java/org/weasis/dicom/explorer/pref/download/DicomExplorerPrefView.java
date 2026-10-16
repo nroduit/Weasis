@@ -35,6 +35,23 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
   public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately";
   public static final String STUDY_DATE_SORTING = "weasis.sorting.study.date";
   public static final String FILTER_DEFAULT_MODE = "weasis.dicom.explorer.filter.mode";
+  public static final String EXPLORER_MODE = "weasis.dicom.explorer.mode"; // NON-NLS
+
+  /** Whether the compact list shows the non-image objects as rows. */
+  public static final String EXPLORER_OBJECTS = "weasis.dicom.explorer.objects"; // NON-NLS
+
+  /** Series count above which the list is chosen when the thumbnail column cannot be measured. */
+  public static final String LIST_SERIES_THRESHOLD = "weasis.dicom.explorer.list.series"; // NON-NLS
+
+  /** Whether the timeline strip of the studies is shown above the body. */
+  public static final String EXPLORER_STRIP = "weasis.dicom.explorer.strip"; // NON-NLS
+
+  /** Row density of the compact list: small, medium or large. */
+  public static final String LIST_DENSITY = "weasis.dicom.explorer.list.density"; // NON-NLS
+
+  /** Panel width (logical px) below which the list is chosen. */
+  public static final String LIST_WIDTH_THRESHOLD = "weasis.dicom.explorer.list.width"; // NON-NLS
+
   private final JCheckBox downloadImmediatelyCheckbox =
       new JCheckBox(Messages.getString("SeriesDownloadPrefView.downloadImmediatelyCheckbox"));
   private final JSpinner spinner;

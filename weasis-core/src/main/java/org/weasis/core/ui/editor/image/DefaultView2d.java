@@ -1055,7 +1055,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
   }
 
-  protected void setImage(E img) {
+  public void setImage(E img) {
     updatePinnedImage(img);
     boolean updateGraphics = false;
     imageLayer.setEnableDispOperations(false);

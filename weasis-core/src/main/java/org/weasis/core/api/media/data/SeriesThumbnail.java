@@ -17,6 +17,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
 import java.awt.dnd.DragGestureListener;
@@ -27,6 +28,7 @@ import java.awt.dnd.DragSourceEvent;
 import java.awt.dnd.DragSourceListener;
 import java.awt.dnd.DragSourceMotionListener;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -50,6 +52,8 @@ import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.ui.editor.image.PlayViewButton;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.util.FileUtil;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
 
 public class SeriesThumbnail extends Thumbnail
     implements MouseListener,
@@ -225,6 +229,43 @@ public class SeriesThumbnail extends Thumbnail
 
   public synchronized int getThumbnailSize() {
     return thumbnailSize;
+  }
+
+  /**
+   * The thumbnail scaled to fit a square of {@code size} pixels, from the same cache and file the
+   * icon paints from; null while it is still being built, the build having been started here as a
+   * paint would start it. A list of series uses it for its rows without decoding anything more than
+   * the thumbnails do.
+   */
+  public BufferedImage getScaledImage(int size) {
+    if (size <= 0) {
+      return null;
+    }
+    MediaElement media = series.getMedia(mediaPosition, null, null);
+    if (media == null) {
+      media = series.getFirstSpecialElement();
+    }
+    PlanarImage image = getImage(media, series.getTagValue(TagW.ExplorerModel) != null, opManager);
+    if (image == null || image.width() <= 0 || image.height() <= 0) {
+      return null;
+    }
+    BufferedImage source = ImageConversion.toBufferedImage(image);
+    if (source == null) {
+      return null;
+    }
+    double scale = Math.min(size / (double) source.getWidth(), size / (double) source.getHeight());
+    int w = Math.max(1, (int) Math.round(source.getWidth() * scale));
+    int h = Math.max(1, (int) Math.round(source.getHeight() * scale));
+    BufferedImage scaled = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+    Graphics2D g2d = scaled.createGraphics();
+    try {
+      g2d.setRenderingHint(
+          RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+      g2d.drawImage(source, 0, 0, w, h, null);
+    } finally {
+      g2d.dispose();
+    }
+    return scaled;
   }
 
   public synchronized void setThumbnailSize(int thumbnailSize) {
