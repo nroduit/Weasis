@@ -133,13 +133,13 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
       rtDvh.setDvhSource(DataSource.PROVIDED);
       LOGGER.debug("Found DVH for ROI: {}", rtDvh.getReferencedRoiNumber());
 
+      populateDvhMetadata(rtDvh, dvhAttributes);
       String dvhType = dvhAttributes.getString(Tag.DVHType);
       if ("DIFFERENTIAL".equals(dvhType)) {
         parseDifferentialDvh(rtDvh, dvhAttributes);
       } else {
         parseCumulativeDvh(rtDvh, dvhAttributes);
       }
-      populateDvhMetadata(rtDvh, dvhAttributes);
       dvhMap.put(rtDvh.getReferencedRoiNumber(), rtDvh);
     }
   }
@@ -193,17 +193,23 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     System.arraycopy(interpCumVolume, 0, cumDvhData, minDose, interpCumVolume.length);
     rtDvh.setDvhData(cumDvhData);
     rtDvh.setDvhNumberOfBins(cumDvhData.length);
+    // The data have been resampled to uniform 1 cGy bins
+    rtDvh.setDoseUnit("CGY");
+    rtDvh.setDvhDoseScaling(1.0);
   }
 
   private static void parseCumulativeDvh(Dvh rtDvh, Attributes att) {
-    // "filler" values are included in DVH data array (every second is DVH value)
+    // DVH data are (bin width, volume) pairs
     double[] data = att.getDoubles(Tag.DVHData);
     if (data != null && data.length % 2 == 0) {
+      double[] binWidths = new double[data.length / 2];
       double[] newData = new double[data.length / 2];
-      for (int i = 1, j = 0; i < data.length; i += 2, j++) {
-        newData[j] = data[i];
+      for (int i = 0, j = 0; i < data.length; i += 2, j++) {
+        binWidths[j] = data[i];
+        newData[j] = data[i + 1];
       }
       rtDvh.setDvhData(newData);
+      rtDvh.setDvhBinWidths(binWidths);
     }
     rtDvh.setDvhNumberOfBins(att.getInt(Tag.DVHNumberOfBins, -1));
   }

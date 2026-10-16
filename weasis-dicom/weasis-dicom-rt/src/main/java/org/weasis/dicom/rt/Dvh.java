@@ -22,6 +22,9 @@ public class Dvh {
 
   private static final double UNCOMPUTED = -1.0;
 
+  /** Upper bound of points per chart series; more cannot be distinguished at screen resolution. */
+  static final int MAX_CHART_POINTS = 1000;
+
   private int referencedRoiNumber;
   private String type;
   private String doseUnit;
@@ -33,6 +36,8 @@ public class Dvh {
   private double dvhMaximumDose = UNCOMPUTED;
   private double dvhMeanDose = UNCOMPUTED;
   private double[] dvhData;
+  private double[] dvhBinWidths;
+  private double[] binEdges;
   private double[] otherDvhData;
   private DataSource dvhSource;
   private Plan plan;
@@ -75,6 +80,7 @@ public class Dvh {
 
   public void setDvhDoseScaling(double dvhDoseScaling) {
     this.dvhDoseScaling = dvhDoseScaling;
+    this.binEdges = null;
   }
 
   public String getDvhVolumeUnit() {
@@ -148,6 +154,40 @@ public class Dvh {
 
   public void setDvhData(double[] dvhData) {
     this.dvhData = dvhData;
+    this.binEdges = null;
+    this.otherDvhData = null;
+  }
+
+  public double[] getDvhBinWidths() {
+    return dvhBinWidths;
+  }
+
+  /**
+   * Sets the raw dose bin widths of the DVH Data (3004,0058), before applying the DVH Dose Scaling.
+   * When {@code null}, the bins are considered uniform with a width of one dose unit.
+   */
+  public void setDvhBinWidths(double[] dvhBinWidths) {
+    this.dvhBinWidths = dvhBinWidths;
+    this.binEdges = null;
+  }
+
+  /**
+   * Returns the dose bin edges in dose units: {@code edges[i]} is the lower edge of bin {@code i}
+   * (the dose received by the cumulative volume {@code dvhData[i]}) and the last value is the upper
+   * edge of the last bin.
+   */
+  double[] getBinEdges() {
+    if (binEdges == null) {
+      int n = dvhData == null ? 0 : dvhData.length;
+      double[] edges = new double[n + 1];
+      boolean hasWidths = dvhBinWidths != null && dvhBinWidths.length == n;
+      double scaling = dvhDoseScaling > 0.0 ? dvhDoseScaling : 1.0;
+      for (int i = 0; i < n; i++) {
+        edges[i + 1] = hasWidths ? edges[i] + dvhBinWidths[i] * scaling : i + 1.0;
+      }
+      binEdges = edges;
+    }
+    return binEdges;
   }
 
   public DataSource getDvhSource() {
@@ -167,8 +207,9 @@ public class Dvh {
   }
 
   /**
-   * Adds this DVH as a series on the given chart, expressed as relative volume (%) versus dose bin
-   * index. A unique series name is derived from the region label to avoid collisions.
+   * Adds this DVH as a series on the given chart, expressed as relative volume (%) versus dose
+   * (cGy). The series is decimated to at most {@link #MAX_CHART_POINTS} points. A unique series
+   * name is derived from the region label to avoid collisions.
    */
   public XYChart appendChart(StructRegion region, XYChart dvhChart) {
     if (dvhChart == null || dvhData == null || dvhData.length == 0) {
@@ -192,19 +233,89 @@ public class Dvh {
       reference = region.getVolume();
     }
     double scale = reference == 0.0 ? 0.0 : 100.0 / reference;
+    double[] edges = getBinEdges();
     double[] x = new double[n];
     double[] y = new double[n];
     for (int i = 0; i < n; i++) {
-      x[i] = i;
+      x[i] = toCGy(edges[i]);
       y[i] = scale * dvhData[i];
     }
+    double[][] points = decimate(x, y, MAX_CHART_POINTS);
 
     String seriesName = uniqueSeriesName(dvhChart, region.getLabel());
     dvhChart
-        .addSeries(seriesName, x, y)
+        .addSeries(seriesName, points[0], points[1])
         .setMarker(SeriesMarkers.NONE)
         .setLineColor(region.getColor());
     return dvhChart;
+  }
+
+  /**
+   * Reduces a polyline to a number of points that can be drawn quickly without visible change.
+   * Interior points of constant runs are dropped first (exact). If more than {@code maxPoints}
+   * remain, the x range is split into buckets and each bucket keeps its first, minimum, maximum and
+   * last points, which preserves the envelope of the curve.
+   *
+   * @return the {x, y} arrays of the kept points, in their original order
+   */
+  static double[][] decimate(double[] x, double[] y, int maxPoints) {
+    int n = x.length;
+    int[] kept = new int[n];
+    int count = 0;
+    for (int i = 0; i < n; i++) {
+      if (i == 0 || i == n - 1 || y[i] != y[i - 1] || y[i] != y[i + 1]) {
+        kept[count++] = i;
+      }
+    }
+
+    if (count > maxPoints && maxPoints >= 4) {
+      int buckets = maxPoints / 4;
+      double xMin = x[kept[0]];
+      double range = x[kept[count - 1]] - xMin;
+      int[] reduced = new int[count];
+      int size = 0;
+      int k = 0;
+      while (k < count) {
+        int bucket = bucketOf(x[kept[k]], xMin, range, buckets);
+        int first = kept[k];
+        int min = first;
+        int max = first;
+        int last = first;
+        while (k < count && bucketOf(x[kept[k]], xMin, range, buckets) == bucket) {
+          int idx = kept[k++];
+          if (y[idx] < y[min]) {
+            min = idx;
+          }
+          if (y[idx] > y[max]) {
+            max = idx;
+          }
+          last = idx;
+        }
+        int[] candidates = {first, Math.min(min, max), Math.max(min, max), last};
+        for (int idx : candidates) {
+          if (size == 0 || reduced[size - 1] < idx) {
+            reduced[size++] = idx;
+          }
+        }
+      }
+      kept = reduced;
+      count = size;
+    }
+
+    double[] xs = new double[count];
+    double[] ys = new double[count];
+    for (int i = 0; i < count; i++) {
+      xs[i] = x[kept[i]];
+      ys[i] = y[kept[i]];
+    }
+    return new double[][] {xs, ys};
+  }
+
+  private static int bucketOf(double x, double xMin, double range, int buckets) {
+    if (range <= 0.0) {
+      return 0;
+    }
+    return Math.min(buckets - 1, (int) ((x - xMin) / range * buckets));
   }
 
   private static String uniqueSeriesName(XYChart chart, String base) {
@@ -226,9 +337,10 @@ public class Dvh {
 
   /** Returns the minimal dose received by 100% of the ROI volume (derived from cumulative DVH). */
   public double calculateDvhMin() {
+    double[] edges = getBinEdges();
     for (int i = 1; i < dvhData.length - 1; i++) {
       if (dvhData[i] < dvhData[0]) {
-        return (2 * i - 1) / 2.0;
+        return (edges[i - 1] + edges[i]) / 2.0;
       }
     }
     return 0.0;
@@ -237,9 +349,10 @@ public class Dvh {
   /** Returns the maximum dose received by any % of the ROI volume (derived from cumulative DVH). */
   public double calculateDvhMax() {
     double[] dDvh = getOtherDvhData();
+    double[] edges = getBinEdges();
     for (int i = dDvh.length - 1; i >= 0; i--) {
       if (dDvh[i] > 0.0) {
-        return i + 1.0;
+        return edges[i + 1];
       }
     }
     return 0.0;
@@ -251,9 +364,10 @@ public class Dvh {
     if (dDvh.length == 0 || dvhData[0] == 0.0) {
       return 0.0;
     }
+    double[] edges = getBinEdges();
     double totalDose = 0.0;
     for (int i = 1; i < dDvh.length; i++) {
-      totalDose += dDvh[i] * i;
+      totalDose += dDvh[i] * edges[i];
     }
     return totalDose / dvhData[0];
   }
