@@ -161,6 +161,17 @@ class ProtocolJsonTest {
     return new WeasisExtensions(
         Map.of(
             1,
+            new WeasisExtensions.ImageSet(
+                "Axial soft tissue", // NON-NLS
+                List.of(
+                    FeatureSelector.match(FeatureSelector.Key.ORIENTATION, "AXIAL"), // NON-NLS
+                    FeatureSelector.noMatch(FeatureSelector.Key.ROLE, "LOCALIZER"), // NON-NLS
+                    FeatureSelector.prefer(
+                        FeatureSelector.Key.CT_KERNEL_FAMILY, 2, "SOFT"), // NON-NLS
+                    FeatureSelector.prefer(
+                        FeatureSelector.Key.SLICE_THICKNESS, 1, FeatureSelector.Extreme.MIN)))),
+        Map.of(
+            1,
             new DisplaySet(
                 ViewerType.VIEWER_2D,
                 new Display(

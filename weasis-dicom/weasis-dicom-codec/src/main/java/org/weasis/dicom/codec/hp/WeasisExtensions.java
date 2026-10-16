@@ -19,6 +19,7 @@ import jakarta.json.JsonValue;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.weasis.core.api.util.JsonUtil;
 
@@ -29,6 +30,7 @@ import org.weasis.core.api.util.JsonUtil;
  * loading strategy and the UI profile. Members this version does not know are kept in {@link
  * #extra} and written back unchanged, so an older Weasis never loses what a newer one wrote.
  *
+ * @param imageSets the extension of each image set, by Image Set Number
  * @param displaySets the extension of each display set, by Display Set Number
  * @param steps the UI profile of each presentation group (a reading step), by group number
  * @param placement the workspace node tree the display sets live in, in the form of the workspace
@@ -39,6 +41,7 @@ import org.weasis.core.api.util.JsonUtil;
  * @param extra members of the {@code weasis} block this version does not read
  */
 public record WeasisExtensions(
+    Map<Integer, ImageSet> imageSets,
     Map<Integer, DisplaySet> displaySets,
     Map<Integer, String> steps,
     JsonObject placement,
@@ -48,11 +51,37 @@ public record WeasisExtensions(
     JsonObject extra) {
 
   public static final WeasisExtensions NONE =
-      new WeasisExtensions(Map.of(), Map.of(), null, null, null, null, JsonValue.EMPTY_JSON_OBJECT);
+      new WeasisExtensions(
+          Map.of(), Map.of(), Map.of(), null, null, null, null, JsonValue.EMPTY_JSON_OBJECT);
 
   private static final Set<String> KNOWN =
       Set.of(
-          "displaySets", "steps", "placement", "maskingProfile", "loading", "uiProfile"); // NON-NLS
+          "imageSets", // NON-NLS
+          "displaySets", // NON-NLS
+          "steps", // NON-NLS
+          "placement", // NON-NLS
+          "maskingProfile", // NON-NLS
+          "loading", // NON-NLS
+          "uiProfile"); // NON-NLS
+
+  public WeasisExtensions {
+    imageSets = imageSets == null ? Map.of() : Map.copyOf(imageSets);
+    displaySets = displaySets == null ? Map.of() : Map.copyOf(displaySets);
+    steps = steps == null ? Map.of() : Map.copyOf(steps);
+  }
+
+  /**
+   * The extension of one image set: selectors on the normalized series features next to the DICOM
+   * selectors on raw attributes, filters and weighted preferences alike.
+   *
+   * @param label a label for the why panel, null for the DICOM label
+   * @param selectors the feature selectors, in order
+   */
+  public record ImageSet(String label, List<FeatureSelector> selectors) {
+    public ImageSet {
+      selectors = selectors == null ? List.of() : List.copyOf(selectors);
+    }
+  }
 
   /** How a series is viewed: 2D, MPR, 3D, curved MPR, waveform, SR, audio, video, document. */
   public enum ViewerType {
@@ -135,6 +164,11 @@ public record WeasisExtensions(
 
   public JsonObject toJson() {
     JsonObjectBuilder json = Json.createObjectBuilder();
+    if (!imageSets.isEmpty()) {
+      JsonObjectBuilder sets = Json.createObjectBuilder();
+      imageSets.forEach((n, is) -> sets.add(String.valueOf(n), imageSet(is)));
+      json.add("imageSets", sets); // NON-NLS
+    }
     if (!displaySets.isEmpty()) {
       JsonObjectBuilder sets = Json.createObjectBuilder();
       displaySets.forEach((n, ds) -> sets.add(String.valueOf(n), displaySet(ds)));
@@ -168,6 +202,15 @@ public record WeasisExtensions(
     if (json == null) {
       return NONE;
     }
+    Map<Integer, ImageSet> imageSets = new LinkedHashMap<>();
+    if (json.get("imageSets") instanceof JsonObject o) { // NON-NLS
+      o.forEach(
+          (k, v) -> {
+            if (v instanceof JsonObject is) {
+              imageSets.put(Integer.valueOf(k), imageSet(is));
+            }
+          });
+    }
     Map<Integer, DisplaySet> sets = new LinkedHashMap<>();
     if (json.get("displaySets") instanceof JsonObject o) { // NON-NLS
       o.forEach(
@@ -194,6 +237,7 @@ public record WeasisExtensions(
           }
         });
     return new WeasisExtensions(
+        Map.copyOf(imageSets),
         Map.copyOf(sets),
         Map.copyOf(steps),
         json.get("placement") instanceof JsonObject p ? p : null, // NON-NLS
@@ -201,6 +245,25 @@ public record WeasisExtensions(
         json.get("loading") instanceof JsonObject l ? loading(l) : null, // NON-NLS
         json.getString("uiProfile", null), // NON-NLS
         extra.build());
+  }
+
+  private static JsonObjectBuilder imageSet(ImageSet is) {
+    JsonObjectBuilder json = Json.createObjectBuilder();
+    JsonUtil.addIfPresent(json, "label", is.label()); // NON-NLS
+    JsonArrayBuilder selectors = Json.createArrayBuilder();
+    is.selectors().forEach(sel -> selectors.add(sel.toJson()));
+    return json.add("selectors", selectors); // NON-NLS
+  }
+
+  private static ImageSet imageSet(JsonObject json) {
+    List<FeatureSelector> selectors =
+        json.get("selectors") instanceof JsonArray a // NON-NLS
+            ? JsonUtil.objects(a).stream()
+                .map(FeatureSelector::fromJson)
+                .flatMap(Optional::stream)
+                .toList()
+            : List.of();
+    return new ImageSet(json.getString("label", null), selectors); // NON-NLS
   }
 
   private static JsonObjectBuilder displaySet(DisplaySet ds) {
