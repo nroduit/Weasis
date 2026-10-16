@@ -135,8 +135,18 @@ public class DicomPrSerializer {
       String seriesInstanceUID,
       String sopInstanceUID,
       Point2D offset) {
+    double[] spacing =
+        DicomUtils.getDoubleArrayFromDicomElement(
+            parentAttributes, Tag.PresentationPixelSpacing, null);
     return writePresentation(
-        model, parentAttributes, outputFile, seriesInstanceUID, sopInstanceUID, offset, null);
+        model,
+        parentAttributes,
+        outputFile,
+        seriesInstanceUID,
+        sopInstanceUID,
+        offset,
+        null,
+        spacing);
   }
 
   private static Attributes writePresentation(
@@ -146,7 +156,8 @@ public class DicomPrSerializer {
       String seriesInstanceUID,
       String sopInstanceUID,
       Point2D offset,
-      AffineTransform pixelToImage) {
+      AffineTransform pixelToImage,
+      double[] presentationPixelSpacing) {
     Objects.requireNonNull(model, "GraphicModel cannot be null");
     Objects.requireNonNull(outputFile, "Output file cannot be null");
 
@@ -162,7 +173,8 @@ public class DicomPrSerializer {
           seriesInstanceUID,
           sopInstanceUID,
           offset,
-          pixelToImage);
+          pixelToImage,
+          presentationPixelSpacing);
     } catch (Exception e) {
       LOGGER.error("Cannot write Presentation State to file: {}", outputFile.getAbsolutePath(), e);
       return null;
@@ -170,30 +182,22 @@ public class DicomPrSerializer {
   }
 
   /**
-   * Set Presentation Spacial Calibration related attribute, according to <a
+   * The Presentation Pixel Spacing of a calibration made by the user, according to <a
    * href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.4.html#table_C.10-4">DICOM
    * standard</a>
    *
    * @param img DICOM image element containing pixel spacing information
-   * @param attributes DICOM attributes to modify
+   * @return the row and column spacing in mm, or null when the image is not calibrated by the user
    */
-  private static void writeCalibration(DicomImageElement img, Attributes attributes) {
-    if (img != null
-        && Unit.PIXEL != img.getPixelSpacingUnit()
-        && attributes != null
-        && img.isPixelSizeModifiedByUser()) {
+  private static double[] getCalibration(DicomImageElement img) {
+    if (img != null && Unit.PIXEL != img.getPixelSpacingUnit() && img.isPixelSizeModifiedByUser()) {
       double unitRatio =
           img.getPixelSize()
               * Unit.MILLIMETER.getConversionRatio(img.getPixelSpacingUnit().getFactorToMeters());
       // The pixel size is the one of the image stretched to square pixels: row then column spacing
-      attributes.setDouble(
-          Tag.PresentationPixelSpacing,
-          VR.DS,
-          unitRatio * img.getRescaleY(),
-          unitRatio * img.getRescaleX());
-    } else if (attributes != null && attributes.containsValue(Tag.PresentationPixelSpacing)) {
-      attributes.remove(Tag.PresentationPixelSpacing);
+      return new double[] {unitRatio * img.getRescaleY(), unitRatio * img.getRescaleX()};
     }
+    return null;
   }
 
   /**
@@ -212,16 +216,16 @@ public class DicomPrSerializer {
       File outputFile,
       String seriesInstanceUID,
       String sopInstanceUID) {
-    Attributes imgAttributes = extractImageAttributes(img);
-    writeCalibration(img, imgAttributes);
+    // The calibration goes to the presentation state only: the image keeps its own attributes
     return writePresentation(
         model,
-        imgAttributes,
+        extractImageAttributes(img),
         outputFile,
         seriesInstanceUID,
         sopInstanceUID,
         null,
-        PrGraphicUtil.pixelToImage(img));
+        PrGraphicUtil.pixelToImage(img),
+        getCalibration(img));
   }
 
   private static Attributes createPresentationState(
@@ -231,13 +235,14 @@ public class DicomPrSerializer {
       String seriesInstanceUID,
       String sopInstanceUID,
       Point2D offset,
-      AffineTransform pixelToImage)
+      AffineTransform pixelToImage,
+      double[] presentationPixelSpacing)
       throws Exception {
 
     GraphicModel serializedModel = getModelForSerialization(model, offset);
     Attributes attributes = createDicomPR(parentAttributes, seriesInstanceUID, sopInstanceUID);
 
-    addDisplayedAreaSelectionSequence(attributes, parentAttributes);
+    addDisplayedAreaSelectionSequence(attributes, parentAttributes, presentationPixelSpacing);
     addGraphicAnnotationSequence(attributes);
 
     writeCommonTags(attributes);
@@ -371,8 +376,12 @@ public class DicomPrSerializer {
    * href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.4.html#table_C.10-4">C.10-4.
    * Displayed Area Module Attributes</a>
    */
-  private static void addDisplayedAreaSelectionSequence(
-      Attributes attributes, Attributes sourceAttributes) {
+  /**
+   * @param pixelSpacing the Presentation Pixel Spacing, or null to give the aspect ratio of the
+   *     image pixels
+   */
+  static void addDisplayedAreaSelectionSequence(
+      Attributes attributes, Attributes sourceAttributes, double[] pixelSpacing) {
 
     Sequence displayedAreaSeq = attributes.newSequence(Tag.DisplayedAreaSelectionSequence, 1);
     Attributes displayedAreaItem = new Attributes();
@@ -384,9 +393,6 @@ public class DicomPrSerializer {
     displayedAreaItem.setInt(Tag.DisplayedAreaTopLeftHandCorner, VR.SL, 1, 1);
     displayedAreaItem.setString(Tag.PresentationSizeMode, VR.CS, "SCALE TO FIT"); // NON-NLS
 
-    double[] pixelSpacing =
-        DicomUtils.getDoubleArrayFromDicomElement(
-            sourceAttributes, Tag.PresentationPixelSpacing, null);
     if (pixelSpacing == null) {
       displayedAreaItem.setInt(
           Tag.PresentationPixelAspectRatio, VR.IS, getPixelAspectRatio(sourceAttributes));
