@@ -508,12 +508,16 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
         disOpManager.setFirstNode(getSourceRenderedImage());
       }
       displayImage = disOpManager.process();
-      invalidatePaintBuffer();
+      // A pass that ran nothing gives the same image: the converted one is still right
+      if (!disOpManager.isLastPassReused()) {
+        invalidatePaintBuffer();
+      }
       fireImageChanged();
     }
   }
 
-  // An op may return the same image object with new content: the identity check is not enough
+  // A node passing through an image changed in place returns the same object with new content:
+  // the identity check is not enough
   private void invalidatePaintBuffer() {
     PaintBuffer buffer = paintBuffer;
     if (buffer != null) {

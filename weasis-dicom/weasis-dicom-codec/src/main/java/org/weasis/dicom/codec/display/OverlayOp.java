@@ -37,6 +37,9 @@ public class OverlayOp extends AbstractOp {
 
   private OverlayMask overlayMask;
 
+  // The overlay color is a preference, not a parameter: the one of the last run
+  private Color runColor;
+
   public OverlayOp() {
     setName(OP_NAME);
   }
@@ -45,6 +48,21 @@ public class OverlayOp extends AbstractOp {
     super(op);
     // Not shared: the cached mask is released by the operation that built it
     this.overlayMask = null;
+    this.runColor = null;
+  }
+
+  @Override
+  public long getRevision() {
+    if (Boolean.TRUE.equals(params.get(P_SHOW)) && !overlayColor().equals(runColor)) {
+      invalidate();
+    }
+    return super.getRevision();
+  }
+
+  private static Color overlayColor() {
+    return GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getColorProperty(OVERLAY_COLOR_KEY, Color.WHITE);
   }
 
   @Override
@@ -79,6 +97,7 @@ public class OverlayOp extends AbstractOp {
     Boolean overlay = (Boolean) params.get(P_SHOW);
 
     if (overlay != null && overlay) {
+      runColor = overlayColor();
       ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
       if (image != null && image.getMediaReader() instanceof DicomMediaIO reader) {
         DicomMetaData md = reader.getDicomMetaData();
@@ -87,10 +106,7 @@ public class OverlayOp extends AbstractOp {
           if (image.getKey() instanceof Integer frame) {
             DicomImageReadParam p = new DicomImageReadParam();
             p.setPresentationState((PrDicomObject) params.get(WindowAndPresetsOp.P_PR_ELEMENT));
-            p.setOverlayColor(
-                GuiUtils.getUICore()
-                    .getSystemPreferences()
-                    .getColorProperty(OVERLAY_COLOR_KEY, Color.WHITE));
+            p.setOverlayColor(runColor);
             ImageCV mask = getOverlayMask(reader, image, frame, source, desc, p);
             if (mask != null) {
               result = OverlayData.applyOverlayMask(source, mask, p);

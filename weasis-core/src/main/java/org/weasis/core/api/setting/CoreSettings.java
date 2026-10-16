@@ -58,5 +58,25 @@ public final class CoreSettings {
           .description("Height of the import and export footer")
           .declare();
 
+  /**
+   * Runs only the display operations whose input or parameters changed since their last run; off,
+   * every operation runs on every pass.
+   */
+  public static final Setting<Boolean> DISPLAY_OP_TRACKING =
+      Setting.builder(SettingType.BOOLEAN, GROUP, "weasis.display.op.tracking", true) // NON-NLS
+          .description("Run only the display operations that changed")
+          .since("5.0.0")
+          .declare();
+
+  /**
+   * After a pass that skipped operations, runs the whole chain on copies and logs an error when the
+   * images differ. For diagnosis: it doubles the cost of a pass.
+   */
+  public static final Setting<Boolean> DISPLAY_OP_VERIFY =
+      Setting.builder(SettingType.BOOLEAN, GROUP, "weasis.display.op.verify", false) // NON-NLS
+          .description("Check each display pass against a full run")
+          .since("5.0.0")
+          .declare();
+
   private CoreSettings() {}
 }

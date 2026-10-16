@@ -155,8 +155,19 @@ public class FusionOp extends AbstractOp {
     setName(OP_NAME);
   }
 
+  /**
+   * Whether the last run lacked something that arrives later without a parameter change (a PET
+   * slice still loading, a window taken from the series): the operation then runs on every pass.
+   */
+  private boolean provisional;
+
   public FusionOp(FusionOp op) {
     super(op);
+  }
+
+  @Override
+  public long getRevision() {
+    return provisional ? -1 : super.getRevision();
   }
 
   @Override
@@ -216,6 +227,7 @@ public class FusionOp extends AbstractOp {
 
   @SuppressWarnings("unchecked")
   private PlanarImage fusionProcess(PlanarImage baseSource) {
+    provisional = false;
     Boolean enabled = getParam(P_FUSION_ENABLED, Boolean.class);
     if (enabled == null || !enabled) {
       return baseSource;
@@ -234,8 +246,10 @@ public class FusionOp extends AbstractOp {
     }
     double baseOpacity = getParam(P_OPACITY_BASE, Double.class, DEFAULT_BASE_OPACITY);
 
+    provisional = params.get(P_FUSION_WINDOW) == null;
     PlanarImage overlayImg = getOverlay(baseImage, overlaySeries, baseSource);
     if (overlayImg == null) {
+      provisional = true;
       return baseSource;
     }
     return compositeOver(baseSource, overlayImg, baseOpacity, overlayOpacity);
@@ -588,5 +602,6 @@ public class FusionOp extends AbstractOp {
   public void clearCache() {
     sliceOverlayCache.clear();
     volumeOverlayCache.clear();
+    invalidate();
   }
 }

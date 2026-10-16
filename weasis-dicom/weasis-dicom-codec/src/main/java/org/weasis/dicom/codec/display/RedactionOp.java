@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.codec.display;
 
+import java.util.Objects;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
@@ -45,8 +46,19 @@ public class RedactionOp extends AbstractOp {
     setParam(P_SHOW, Boolean.TRUE);
   }
 
+  // The regions of the last run: they are resolved from the mask in force, not only parameters
+  private Redaction.Mask runMask;
+
   public RedactionOp(RedactionOp op) {
     super(op);
+  }
+
+  @Override
+  public long getRevision() {
+    if (!Boolean.FALSE.equals(params.get(P_SHOW)) && !Objects.equals(mask(), runMask)) {
+      invalidate();
+    }
+    return super.getRevision();
   }
 
   @Override
@@ -69,6 +81,7 @@ public class RedactionOp extends AbstractOp {
     PlanarImage source = getSourceImage();
     PlanarImage result = source;
     Redaction.Mask mask = mask();
+    runMask = mask;
     if (!Boolean.FALSE.equals(params.get(P_SHOW)) && mask != null && !mask.isEmpty()) {
       result = RedactionRenderer.burn(source.toMat(), mask);
     }

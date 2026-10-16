@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.util.Map;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
@@ -24,6 +26,8 @@ import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.cv.OpenCvTestLoader;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.setting.SettingEnvironment;
+import org.weasis.core.api.setting.Settings;
 import org.weasis.opencv.data.ImageCV;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
@@ -34,6 +38,11 @@ class RenderedImageLayerTest {
   @BeforeAll
   static void loadOpenCv() {
     assumeTrue(OpenCvTestLoader.tryLoad(), "OpenCV native library not available");
+  }
+
+  @AfterEach
+  void restoreSettings() {
+    Settings.install(SettingEnvironment.inMemory(Map.of()));
   }
 
   @Test
@@ -59,7 +68,23 @@ class RenderedImageLayerTest {
   }
 
   @Test
-  void repaint_after_an_update_shows_the_new_content_of_the_same_image_object() {
+  void an_image_changed_in_place_shows_once_the_node_reading_it_is_invalidated() {
+    var image = new ImageCV(HEIGHT, WIDTH, CvType.CV_8UC1, new Scalar(50));
+    RenderedImageLayer<ImageElement> layer = layerShowing(image);
+    assertEquals(0x323232, draw(layer).getRGB(1, 1) & 0xFFFFFF);
+
+    image.setTo(new Scalar(180));
+    layer.updateDisplayOperations();
+    assertEquals(0x323232, draw(layer).getRGB(1, 1) & 0xFFFFFF, "nothing ran: the kept image");
+
+    layer.getDisplayOpManager().getFirstNode().orElseThrow().invalidate();
+    layer.updateDisplayOperations();
+    assertEquals(0xB4B4B4, draw(layer).getRGB(1, 1) & 0xFFFFFF);
+  }
+
+  @Test
+  void without_tracking_an_update_shows_the_new_content_of_the_same_image_object() {
+    Settings.install(SettingEnvironment.inMemory(Map.of("weasis.display.op.tracking", "false")));
     var image = new ImageCV(HEIGHT, WIDTH, CvType.CV_8UC1, new Scalar(50));
     RenderedImageLayer<ImageElement> layer = layerShowing(image);
     assertEquals(0x323232, draw(layer).getRGB(1, 1) & 0xFFFFFF);

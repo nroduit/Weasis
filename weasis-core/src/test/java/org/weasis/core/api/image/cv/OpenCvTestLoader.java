@@ -43,7 +43,9 @@ public final class OpenCvTestLoader {
     try (Stream<Path> dirs = Files.list(opencvModules)) {
       List<Path> candidates =
           dirs.filter(Files::isDirectory)
-              .map(d -> d.resolve("target").resolve("classes").resolve(libFile))
+              .map(d -> d.resolve("target").resolve("classes"))
+              // The native module copies the library under natives/
+              .flatMap(c -> Stream.of(c.resolve(libFile), c.resolve("natives").resolve(libFile)))
               .filter(Files::isRegularFile)
               .toList();
       for (Path lib : candidates) {

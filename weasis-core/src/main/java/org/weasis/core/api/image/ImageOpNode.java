@@ -90,4 +90,23 @@ public interface ImageOpNode extends Copyable<ImageOpNode> {
    * @param event the event to handle
    */
   void handleImageOpEvent(ImageOpEvent event);
+
+  /**
+   * A number that changes each time something that can alter the output changes. The {@link
+   * SimpleOpManager} skips a node whose revision and input are those of its last run and reuses its
+   * output.
+   *
+   * @return the revision, or -1 when unknown: the node then runs on every pass
+   */
+  default long getRevision() {
+    return -1;
+  }
+
+  /**
+   * Tells that something the operation reads outside its parameters changed (a preference, a cache,
+   * a document), so that it runs on the next pass.
+   */
+  default void invalidate() {
+    // No revision to change: the node runs on every pass
+  }
 }
