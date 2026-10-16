@@ -702,8 +702,8 @@ public class DicomPrSerializer {
     double[] coordinates = new double[pts.size() * 2];
     for (int i = 0; i < pts.size(); i++) {
       Point2D point = pts.get(i);
-      coordinates[i * 2] = point.getX();
-      coordinates[i * 2 + 1] = point.getY();
+      coordinates[i * 2] = PrGraphicUtil.modelToPixel(point.getX());
+      coordinates[i * 2 + 1] = PrGraphicUtil.modelToPixel(point.getY());
     }
     return coordinates;
   }
@@ -732,14 +732,15 @@ public class DicomPrSerializer {
     Attributes attributes = new Attributes(7);
     attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, PIXEL);
     if (anchor != null) {
-      attributes.setFloat(Tag.AnchorPoint, VR.FL, (float) anchor.getX(), (float) anchor.getY());
+      attributes.setFloat(
+          Tag.AnchorPoint,
+          VR.FL,
+          (float) PrGraphicUtil.modelToPixel(anchor.getX()),
+          (float) PrGraphicUtil.modelToPixel(anchor.getY()));
       attributes.setString(Tag.AnchorPointVisibility, VR.CS, YES);
       attributes.setString(Tag.AnchorPointAnnotationUnits, VR.CS, PIXEL);
     }
-    attributes.setDouble(
-        Tag.BoundingBoxTopLeftHandCorner, VR.FL, bounds.getMinX(), bounds.getMinY());
-    attributes.setDouble(
-        Tag.BoundingBoxBottomRightHandCorner, VR.FL, bounds.getMaxX(), bounds.getMaxY());
+    setBoundingBox(attributes, bounds);
     attributes.setString(Tag.UnformattedTextValue, VR.ST, text);
     attributes.setString(Tag.BoundingBoxTextHorizontalJustification, VR.CS, "LEFT");
 
@@ -755,13 +756,23 @@ public class DicomPrSerializer {
   private static Attributes createLabelAttributes(Rectangle2D bounds, String text) {
     Attributes attributes = new Attributes(4);
     attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, PIXEL);
-    attributes.setDouble(
-        Tag.BoundingBoxTopLeftHandCorner, VR.FL, bounds.getMinX(), bounds.getMinY());
-    attributes.setDouble(
-        Tag.BoundingBoxBottomRightHandCorner, VR.FL, bounds.getMaxX(), bounds.getMaxY());
+    setBoundingBox(attributes, bounds);
     attributes.setString(Tag.BoundingBoxTextHorizontalJustification, VR.CS, "LEFT");
     attributes.setString(Tag.UnformattedTextValue, VR.ST, text);
     return attributes;
+  }
+
+  private static void setBoundingBox(Attributes attributes, Rectangle2D bounds) {
+    attributes.setDouble(
+        Tag.BoundingBoxTopLeftHandCorner,
+        VR.FL,
+        PrGraphicUtil.modelToPixel(bounds.getMinX()),
+        PrGraphicUtil.modelToPixel(bounds.getMinY()));
+    attributes.setDouble(
+        Tag.BoundingBoxBottomRightHandCorner,
+        VR.FL,
+        PrGraphicUtil.modelToPixel(bounds.getMaxX()),
+        PrGraphicUtil.modelToPixel(bounds.getMaxY()));
   }
 
   public static void transformShapeToContour(Graphic graphic, Sequence graphicSeq) {

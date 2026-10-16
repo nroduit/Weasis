@@ -836,8 +836,8 @@ public class PRManager {
         boolean isDisplay =
             DISPLAY_MODE.equalsIgnoreCase(textObject.getString(Tag.AnchorPointAnnotationUnits));
 
-        double x = isDisplay ? anchor[0] * context.width() : anchor[0];
-        double y = isDisplay ? anchor[1] * context.height() : anchor[1];
+        double x = PrGraphicUtil.pixelToModel(isDisplay ? anchor[0] * context.width() : anchor[0]);
+        double y = PrGraphicUtil.pixelToModel(isDisplay ? anchor[1] * context.height() : anchor[1]);
         Point2D.Double anchorPoint = new Point2D.Double(x, y);
 
         Rectangle2D boundingBox = extractBoundingBox();
@@ -915,7 +915,11 @@ public class PRManager {
                 dstPt2[1] * context.height());
           }
         }
-
+        rect.setRect(
+            PrGraphicUtil.pixelToModel(rect.getX()),
+            PrGraphicUtil.pixelToModel(rect.getY()),
+            rect.getWidth(),
+            rect.getHeight());
         return rect;
       }
 

@@ -21,6 +21,7 @@ import org.joml.Vector3d;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 
 /**
  * Projects an SCOORD3D item (PS3.3 C.18.9) onto the plane of an image slice.
@@ -265,10 +266,11 @@ final class SRScoordProjector {
     if (points.isEmpty()) {
       return null;
     }
+    // The projected points have pixel centers on whole numbers: back to DICOM PIXEL units
     float[] coords = new float[points.size() * 2];
     for (int i = 0; i < points.size(); i++) {
-      coords[2 * i] = (float) points.get(i).getX();
-      coords[2 * i + 1] = (float) points.get(i).getY();
+      coords[2 * i] = (float) PrGraphicUtil.modelToPixel(points.get(i).getX());
+      coords[2 * i + 1] = (float) PrGraphicUtil.modelToPixel(points.get(i).getY());
     }
     Attributes a = new Attributes(4);
     a.setString(Tag.GraphicAnnotationUnits, VR.CS, "PIXEL"); // NON-NLS

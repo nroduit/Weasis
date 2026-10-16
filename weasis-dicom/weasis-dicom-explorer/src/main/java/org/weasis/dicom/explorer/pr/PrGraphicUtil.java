@@ -98,6 +98,19 @@ public class PrGraphicUtil {
   private PrGraphicUtil() {}
 
   /**
+   * Converts a DICOM PIXEL coordinate to the model. DICOM puts 0\0 at the top left corner of the
+   * top left pixel (PS3.3 C.10.5.1.2 and C.18.6.1.2), the model at its center.
+   */
+  public static double pixelToModel(double coordinate) {
+    return coordinate - 0.5;
+  }
+
+  /** Converts a model coordinate to DICOM PIXEL units, see {@link #pixelToModel(double)}. */
+  public static double modelToPixel(double coordinate) {
+    return coordinate + 0.5;
+  }
+
+  /**
    * Builds a graphic from DICOM attributes.
    *
    * @param attributes DICOM graphic attributes
@@ -939,10 +952,10 @@ public class PrGraphicUtil {
         float[] src = {x, y};
         float[] dst = new float[2];
         inverse.transform(src, 0, dst, 0, 1);
-        return new Point2D.Double(dst[0], dst[1]);
+        return new Point2D.Double(pixelToModel(dst[0]), pixelToModel(dst[1]));
       }
 
-      return new Point2D.Double(x, y);
+      return new Point2D.Double(pixelToModel(x), pixelToModel(y));
     }
 
     public void applyProperties(Graphic graphic, boolean filled) {
