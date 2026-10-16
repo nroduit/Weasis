@@ -66,6 +66,12 @@ public final class PseudoColorOp extends AbstractOp {
     return new PseudoColorOp(this);
   }
 
+  // The input itself or a new image
+  @Override
+  protected boolean ownsOutput() {
+    return true;
+  }
+
   /** A presentation state carrying a palette (pseudo-color) selects it as the LUT. */
   @Override
   public void handleImageOpEvent(ImageOpEvent event) {

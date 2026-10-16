@@ -70,6 +70,12 @@ public class OverlayOp extends AbstractOp {
     return new OverlayOp(this);
   }
 
+  // The input itself or a new image
+  @Override
+  protected boolean ownsOutput() {
+    return true;
+  }
+
   @Override
   public void handleImageOpEvent(ImageOpEvent event) {
     OpEvent type = event.eventType();

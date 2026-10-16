@@ -13,6 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.awt.geom.Rectangle2D;
@@ -39,6 +41,7 @@ class SimpleOpManagerTrackingTest {
     int runs;
     boolean passThrough;
     boolean failOnce;
+    boolean owns;
     final List<PlanarImage> outputs = new ArrayList<>();
 
     CountingOp(String name) {
@@ -60,6 +63,11 @@ class SimpleOpManagerTrackingTest {
       PlanarImage output = passThrough ? getSourceImage() : image();
       outputs.add(output);
       params.put(Param.OUTPUT_IMG, output);
+    }
+
+    @Override
+    protected boolean ownsOutput() {
+      return owns;
     }
 
     @Override
@@ -266,5 +274,75 @@ class SimpleOpManagerTrackingTest {
     Settings.install(SettingEnvironment.inMemory(Map.of()));
     assertEquals(List.of(1, 1, 1), pass(), "nothing recorded while off");
     assertEquals(List.of(0, 0, 0), pass());
+  }
+
+  private void ownAll() {
+    first.owns = true;
+    middle.owns = true;
+    last.owns = true;
+  }
+
+  @Test
+  void owned_outputs_replaced_by_a_pass_are_released_except_the_last_one() {
+    ownAll();
+    PlanarImage firstOld = first.outputs.getLast();
+    PlanarImage middleOld = middle.outputs.getLast();
+    PlanarImage lastOld = last.outputs.getLast();
+    first.setParam(VALUE, 1);
+    pass();
+    verify(firstOld).release();
+    verify(middleOld).release();
+    verify(lastOld, never()).release();
+  }
+
+  @Test
+  void outputs_not_owned_are_left_to_the_garbage_collector() {
+    PlanarImage firstOld = first.outputs.getLast();
+    first.setParam(VALUE, 1);
+    pass();
+    verify(firstOld, never()).release();
+  }
+
+  @Test
+  void a_skipped_node_keeps_its_output() {
+    ownAll();
+    PlanarImage firstOld = first.outputs.getLast();
+    last.setParam(VALUE, 1);
+    pass();
+    verify(firstOld, never()).release();
+  }
+
+  @Test
+  void the_source_passed_through_is_never_released() {
+    ownAll();
+    first.passThrough = true;
+    first.invalidate();
+    pass();
+    PlanarImage oldSource = manager.getFirstNodeInputImage().orElseThrow();
+    manager.setFirstNode(image());
+    pass();
+    verify(oldSource, never()).release();
+  }
+
+  @Test
+  void an_input_passed_through_is_released_by_its_producer_only() {
+    ownAll();
+    middle.passThrough = true;
+    middle.invalidate();
+    pass();
+    PlanarImage firstOld = first.outputs.getLast();
+    first.setParam(VALUE, 1);
+    pass();
+    verify(firstOld).release();
+  }
+
+  @Test
+  void release_can_be_turned_off() {
+    Settings.install(SettingEnvironment.inMemory(Map.of("weasis.display.op.release", "false")));
+    ownAll();
+    PlanarImage firstOld = first.outputs.getLast();
+    first.setParam(VALUE, 1);
+    pass();
+    verify(firstOld, never()).release();
   }
 }

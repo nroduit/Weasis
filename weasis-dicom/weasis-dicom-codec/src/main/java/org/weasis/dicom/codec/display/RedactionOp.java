@@ -66,6 +66,12 @@ public class RedactionOp extends AbstractOp {
     return new RedactionOp(this);
   }
 
+  // The input itself or a new image
+  @Override
+  protected boolean ownsOutput() {
+    return true;
+  }
+
   @Override
   public void handleImageOpEvent(ImageOpEvent event) {
     OpEvent type = event.eventType();

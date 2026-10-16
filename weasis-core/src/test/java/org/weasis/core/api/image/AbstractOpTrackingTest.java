@@ -108,6 +108,13 @@ class AbstractOpTrackingTest {
   }
 
   @Test
+  void a_null_value_stored_under_a_key_compares_safely() {
+    assertTrue(moves(opWith(null), op -> op.setParam(KEY, 1.0)), "null to a value");
+    assertTrue(moves(opWith(1.0), op -> op.setParam(KEY, null)), "a value to null");
+    assertFalse(moves(opWith(null), op -> op.setParam(KEY, null)), "null to null");
+  }
+
+  @Test
   void the_same_mutable_object_set_again_moves_it() {
     Rectangle2D bounds = new Rectangle2D.Double(0, 0, 10, 10);
     DirectOp op = opWith(bounds);

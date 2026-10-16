@@ -78,5 +78,15 @@ public final class CoreSettings {
           .since("5.0.0")
           .declare();
 
+  /**
+   * Releases at once the intermediate display images a pass replaced, instead of leaving their
+   * native memory to the garbage collector. Only for operations that declare they own their output.
+   */
+  public static final Setting<Boolean> DISPLAY_OP_RELEASE =
+      Setting.builder(SettingType.BOOLEAN, GROUP, "weasis.display.op.release", true) // NON-NLS
+          .description("Release replaced intermediate display images at once")
+          .since("5.0.0")
+          .declare();
+
   private CoreSettings() {}
 }

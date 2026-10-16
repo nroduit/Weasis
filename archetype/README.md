@@ -8,3 +8,6 @@
 - Select the archetype:
     * weasis-plugin-base-viewer-archetype (example of a toolbar and a tool for the non DICOM viewer)
     * weasis-plugin-dicom-viewer-archetype (example of a toolbar and a tool for the DICOM viewer)
+
+## Writing an image operation ##
+- A display operation extends `AbstractOp`; its contract (revision, `invalidate()`, output ownership) is described in [Display Op Chain](../weasis-core/docs/Display-Op-Chain.md).

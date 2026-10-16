@@ -114,6 +114,7 @@ Existing docs:
 |---|---|
 | `weasis-core/docs/Animation-Export.md` | APNG / GIF / DICOM SC export of 3D rotations, cine loops and recordings |
 | `weasis-core/docs/ColorMap-Design.md` | JSON color maps for 2D, fusion and 3D |
+| `weasis-core/docs/Display-Op-Chain.md` | display op chain: nodes, passes, what makes a node run, release of replaced images, contract of an operation |
 | `weasis-core/docs/Identity-Masking.md` | display-time identity masking, masking profiles, redaction of burned-in pixels |
 | `weasis-core/docs/Measurement-Tools.md` | graphic tool registry, measurement keys, presentation XML compatibility, headless measurement service |
 | `weasis-core/docs/Memory-Management.md` | native memory arenas, budgets, caches |

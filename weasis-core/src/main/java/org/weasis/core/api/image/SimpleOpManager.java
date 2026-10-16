@@ -10,12 +10,14 @@
 package org.weasis.core.api.image;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
@@ -61,6 +63,8 @@ public class SimpleOpManager implements OpManager {
   private final List<ImageOpNode> operations;
   private final Map<ImageOpNode, LastRun> lastRuns = new IdentityHashMap<>();
   private boolean lastPassReused;
+  // The source of the last pass: owned by the image cache, never released here
+  private PlanarImage lastSource;
   private volatile String name;
 
   /** Creates a new SimpleOpManager with default name. */
@@ -253,12 +257,77 @@ public class SimpleOpManager implements OpManager {
     if (!tracking) {
       lastRuns.clear();
     }
-    int skipped = runChain(tracking);
+    Pass before = Settings.get(CoreSettings.DISPLAY_OP_RELEASE) ? snapshot() : null;
+    boolean[] ran = new boolean[operations.size()];
+    int skipped = runChain(tracking, ran);
     lastPassReused = skipped > 0 && skipped == operations.size();
     if (skipped > 0 && Settings.get(CoreSettings.DISPLAY_OP_VERIFY)) {
       lastPassReused &= verifyAgainstFullRun(source);
     }
+    if (before != null) {
+      releaseReplaced(before, ran, source);
+    }
+    lastSource = source;
     return getLastNodeOutputImage();
+  }
+
+  /** The inputs and outputs of the nodes before a pass. */
+  private record Pass(PlanarImage[] inputs, PlanarImage[] outputs) {}
+
+  private Pass snapshot() {
+    int n = operations.size();
+    PlanarImage[] inputs = new PlanarImage[n];
+    PlanarImage[] outputs = new PlanarImage[n];
+    for (int i = 0; i < n; i++) {
+      ImageOpNode node = operations.get(i);
+      // The first input was already replaced by setFirstNode: the last pass kept it
+      inputs[i] = i == 0 ? lastSource : image(node, Param.INPUT_IMG);
+      outputs[i] = image(node, Param.OUTPUT_IMG);
+    }
+    return new Pass(inputs, outputs);
+  }
+
+  private static PlanarImage image(ImageOpNode node, String key) {
+    return node.getParam(key) instanceof PlanarImage img ? img : null;
+  }
+
+  /**
+   * Releases the outputs that nodes replaced in this pass, when the node owns them and nothing
+   * refers to them anymore: not an input or output of the chain, not a source, not the image the
+   * last pass returned (the layer, a lens or an export may still read it). The output of the last
+   * node is never released here.
+   */
+  private void releaseReplaced(Pass before, boolean[] ran, PlanarImage source) {
+    int n = Math.min(ran.length, before.outputs().length);
+    if (n == 0) {
+      return;
+    }
+    Set<PlanarImage> inUse = Collections.newSetFromMap(new IdentityHashMap<>());
+    for (ImageOpNode node : operations) {
+      inUse.add(image(node, Param.INPUT_IMG));
+      inUse.add(image(node, Param.OUTPUT_IMG));
+    }
+    inUse.add(source);
+    inUse.add(lastSource);
+    inUse.add(before.outputs()[before.outputs().length - 1]);
+
+    Set<PlanarImage> released = Collections.newSetFromMap(new IdentityHashMap<>());
+    for (int i = 0; i < n - 1; i++) {
+      PlanarImage old = before.outputs()[i];
+      if (ran[i]
+          && old != null
+          && old != before.inputs()[i]
+          && operations.get(i) instanceof AbstractOp op
+          && op.ownsOutput()
+          && !inUse.contains(old)
+          && !old.isReleased()
+          && released.add(old)) {
+        old.release();
+      }
+    }
+    if (!released.isEmpty()) {
+      LOGGER.trace("{} released {} replaced images", name, released.size());
+    }
   }
 
   /**
@@ -273,9 +342,10 @@ public class SimpleOpManager implements OpManager {
   /**
    * Runs the nodes in order, skipping those with nothing new when {@code tracking}.
    *
+   * @param ran set to true at the index of each node run, when not null
    * @return the number of nodes skipped
    */
-  private int runChain(boolean tracking) {
+  private int runChain(boolean tracking, boolean[] ran) {
     StringBuilder trace = LOGGER.isDebugEnabled() ? new StringBuilder() : null;
     long passStart = System.nanoTime();
     int skipped = 0;
@@ -294,6 +364,9 @@ public class SimpleOpManager implements OpManager {
       }
       long start = System.nanoTime();
       executeOperation(current, tracking);
+      if (ran != null) {
+        ran[i] = true;
+      }
       if (trace != null) {
         trace.append(", ").append(current.getName()).append(' ').append(elapsedMs(start));
       }
@@ -359,7 +432,7 @@ public class SimpleOpManager implements OpManager {
     PlanarImage tracked = getLastNodeOutputImage().orElse(null);
     SimpleOpManager full = new SimpleOpManager(this);
     full.setFirstNode(source);
-    full.runChain(false);
+    full.runChain(false, null);
     PlanarImage expected = full.getLastNodeOutputImage().orElse(null);
     if (!isSameImage(tracked, expected)) {
       LOGGER.error(
@@ -367,7 +440,7 @@ public class SimpleOpManager implements OpManager {
           name,
           operations.stream().map(n -> n.getName() + "=" + n.getRevision()).toList());
       lastRuns.clear();
-      runChain(false);
+      runChain(false, null);
       return false;
     }
     return true;

@@ -64,6 +64,12 @@ public class ShutterOp extends AbstractOp {
     return new ShutterOp(this);
   }
 
+  // The input itself or a new image
+  @Override
+  protected boolean ownsOutput() {
+    return true;
+  }
+
   @Override
   public void handleImageOpEvent(ImageOpEvent event) {
     OpEvent type = event.eventType();

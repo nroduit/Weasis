@@ -50,6 +50,12 @@ public final class RotationOp extends AbstractOp {
     return new RotationOp(this);
   }
 
+  // The input itself or a new image
+  @Override
+  protected boolean ownsOutput() {
+    return true;
+  }
+
   @Override
   public void process() throws Exception {
     var source = getSourceImage();

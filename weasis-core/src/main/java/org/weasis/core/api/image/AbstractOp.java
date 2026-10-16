@@ -74,6 +74,15 @@ public abstract class AbstractOp implements ImageOpNode {
     revision++;
   }
 
+  /**
+   * Whether the output is either the input object or a new image that nothing but the chain holds
+   * (no cache of the operation, no image of the model). Only then may the {@link SimpleOpManager}
+   * release an output it replaced; false by default.
+   */
+  protected boolean ownsOutput() {
+    return false;
+  }
+
   @Override
   public void clearParams() {
     params.clear();
@@ -97,7 +106,7 @@ public abstract class AbstractOp implements ImageOpNode {
     if (old == value) {
       return !isImmutable(value);
     }
-    return !(isImmutable(old) && isImmutable(value) && old.equals(value));
+    return !(isImmutable(old) && isImmutable(value) && Objects.equals(old, value));
   }
 
   /**

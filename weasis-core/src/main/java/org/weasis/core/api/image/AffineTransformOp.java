@@ -60,6 +60,12 @@ public class AffineTransformOp extends AbstractOp {
     return new AffineTransformOp(this);
   }
 
+  // The input itself or a new image
+  @Override
+  protected boolean ownsOutput() {
+    return true;
+  }
+
   @Override
   public void process() throws Exception {
     PlanarImage source = getSourceImage();
