@@ -151,9 +151,11 @@ line naming the current spelling. Use the current one everywhere.
    workspace are slots: `workspace:panel` shows which tool fills each slot (explorer and tools
    sides, top and bottom), `--side tools --slot bottom --tool measure` opens a tool there,
    `--collapse` / `--expand` hide or show a side; `workspace:save` keeps the shell too.
-9. **Hanging protocols** (engine and built-in library, no UI yet): `hp:list` shows the
-   protocols of every layer, the built-in ones cover CT, MR, radiography, mammography,
-   ultrasound, angiography, PET and a last-resort one cell per series;
+9. **Hanging protocols** (engine and built-in library, no UI yet): a study loaded by any verb
+   opens already hung by its best protocol (setting `weasis.hp.open`, `PROTOCOL` by default,
+   `FIRST_SERIES` for the old behaviour). `hp:list` shows the protocols of every layer, the
+   built-in ones cover CT, MR, radiography, mammography, ultrasound, angiography, PET and a
+   last-resort one cell per series;
    `hp:match [--study <uid>]` returns the protocols that apply to a loaded study, best first,
    and the plan of the best one: per reading step the layout to hang and, per cell, the series
    chosen, how it matched (exact, preferred, fallback, shared, empty), the reasons and the

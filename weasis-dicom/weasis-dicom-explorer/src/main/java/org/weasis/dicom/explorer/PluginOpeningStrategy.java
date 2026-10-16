@@ -19,11 +19,14 @@ import java.util.Set;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.setting.Settings;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.TabFocusPolicy;
 import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
+import org.weasis.dicom.explorer.hp.HangingOpener;
+import org.weasis.dicom.explorer.hp.HpSettings;
 
 public class PluginOpeningStrategy {
 
@@ -33,16 +36,39 @@ public class PluginOpeningStrategy {
   private final Instant loadStartedAt;
 
   private final Set<MediaSeriesGroup> openPatients = Collections.synchronizedSet(new HashSet<>());
+  private final HangingOpener hanging;
 
   public PluginOpeningStrategy(OpeningViewer openingMode) {
     this(openingMode, HangingProtocols.isClosePreviousFromPreferences());
   }
 
   public PluginOpeningStrategy(OpeningViewer openingMode, boolean closePreviousViewers) {
+    this(
+        openingMode,
+        closePreviousViewers,
+        Settings.get(HpSettings.OPENING) == HpSettings.Opening.PROTOCOL);
+  }
+
+  /**
+   * @param throughProtocols whether a study is hung by its best hanging protocol once its series
+   *     are known, instead of opening on its first series
+   */
+  public PluginOpeningStrategy(
+      OpeningViewer openingMode, boolean closePreviousViewers, boolean throughProtocols) {
     this.openingMode = Objects.requireNonNullElse(openingMode, OpeningViewer.ALL_PATIENTS);
     this.closePreviousViewers = closePreviousViewers;
     this.fullImportSession = true;
     this.loadStartedAt = Instant.now();
+    this.hanging =
+        throughProtocols && this.openingMode != OpeningViewer.NONE
+            ? new HangingOpener(
+                this::containsPatient,
+                this::addPatient,
+                (patient, model, series) -> {
+                  removePatient(patient); // the opener marked it, the old path marks it again
+                  openFirstSeries(patient, model, series);
+                })
+            : null;
   }
 
   public boolean containsPatient(MediaSeriesGroup patient) {
@@ -58,6 +84,9 @@ public class PluginOpeningStrategy {
   }
 
   public void reset() {
+    if (hanging != null) {
+      hanging.finish();
+    }
     if (fullImportSession) {
       openPatients.clear();
     }
@@ -90,7 +119,14 @@ public class PluginOpeningStrategy {
     if (OpeningViewer.NONE.equals(openingMode)) {
       return;
     }
+    if (hanging != null && hanging.offer(patient, dicomModel, dicomSeries)) {
+      return; // hung by the engine once the series of the study are known
+    }
+    openFirstSeries(patient, dicomModel, dicomSeries);
+  }
 
+  /** The way before the hanging protocols: the first series of a patient opens its viewer. */
+  void openFirstSeries(MediaSeriesGroup patient, DicomModel dicomModel, Series<?> dicomSeries) {
     boolean isPatientOpen = containsPatient(patient);
     if (!isPatientOpen) {
       String mime = dicomSeries.getMimeType();
