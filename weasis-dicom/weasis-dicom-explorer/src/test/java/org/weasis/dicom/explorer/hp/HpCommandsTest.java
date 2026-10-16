@@ -54,6 +54,14 @@ class HpCommandsTest {
           "hp:features",
           "hp:features --study 1.2.3",
           "hp:features --corpus /tmp/corpus --json",
+          "hp:sets",
+          "hp:sets --view v1 --json",
+          "hp:group --next",
+          "hp:group --view v1 --index 2",
+          "hp:group --protocol weasis.ct",
+          "hp:explain --cell 2",
+          "hp:show --id weasis.ct",
+          "hp:validate --file /tmp/draft.json",
           "hp:validate --corpus /tmp/corpus",
           "hp:validate --corpus /tmp/corpus --protocols /tmp/draft.json --protocol ct-chest --json",
           "hp:validate --corpus /tmp/corpus --expected /tmp/corpus/hp-expected.json");
@@ -76,10 +84,10 @@ class HpCommandsTest {
   }
 
   @Test
-  void validateNeedsItsCorpus() {
+  void validateNeedsItsCorpusOrAFile() {
     CommandResult result =
         CommandModel.execute(new HpCommands(), "validate", new String[0]); // NON-NLS
-    assertEquals(CommandResult.USAGE, result.status());
+    assertTrue(result.status() != CommandResult.OK, String.valueOf(result.status()));
   }
 
   @Test

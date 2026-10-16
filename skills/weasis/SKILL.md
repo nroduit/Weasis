@@ -164,6 +164,12 @@ line naming the current spelling. Use the current one everywhere.
    of that plan: the 2D cells in one viewer (re-hung when a viewer of the patient is open) and
    each MPR or 3D cell in its own, and returns the cells with the view ids they went to, so the
    `view2d:` verbs can address them; empty cells are listed under `unmatched`.
+   `hp:sets [--view <id>]` is the active hanging of a viewer (protocol, step of how many, cells
+   with view ids, candidates of the study); `hp:group --next | --previous | --index <n> |
+   --protocol <id>` shows another reading step or hangs another candidate on the same viewer,
+   what the protocol bar of the viewer does; `hp:explain [--cell <n>]` gives the rules, score and
+   alternatives behind each cell; `hp:show --id <protocol-id>` prints a protocol as JSON and
+   `hp:validate --file <file>` checks a protocol file for rule errors before trying it.
    `hp:validate --corpus <dir> [--protocols <file>] [--expected <file>]` runs the matching over
    a folder of studies without any viewer and reports the counts per protocol, the protocol and
    first-step cells of each study and, with an expectations file, which studies hang as expected.

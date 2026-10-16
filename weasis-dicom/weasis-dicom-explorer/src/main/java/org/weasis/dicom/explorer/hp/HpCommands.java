@@ -35,6 +35,7 @@ import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.Since;
+import org.weasis.core.api.command.ViewId;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -44,6 +45,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.editor.ViewerPlacement;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
@@ -60,6 +62,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.StudyUid;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
@@ -69,12 +72,16 @@ import picocli.CommandLine.ParentCommand;
     name = "hp",
     description =
         "Hanging protocols: the protocols of every layer, the plan the engine computes for a "
-            + "loaded study, its hanging on live viewers, and the validation of the protocols "
-            + "over a folder of studies.",
+            + "loaded study, its hanging on live viewers, the active hanging of a viewer, and the "
+            + "validation of the protocols over a folder of studies.",
     subcommands = {
       HpCommands.ListProtocols.class,
       HpCommands.Match.class,
       HpCommands.Apply.class,
+      HpCommands.Sets.class,
+      HpCommands.Group.class,
+      HpCommands.Explain.class,
+      HpCommands.Show.class,
       HpCommands.Features.class,
       HpCommands.Validate.class
     })
@@ -488,17 +495,286 @@ public class HpCommands implements CommandExtension {
                               "The protocol " + plan.protocolId() + " has no display set");
                         }
                         MediaSeriesGroup patient = model.getParent(study, DicomModel.patient);
+                        HangingPlanApplier.Context context =
+                            new HangingPlanApplier.Context(
+                                model, patient, study, candidates, scores);
                         return parent
                             .applier
                             .get()
                             .apply(
                                 plan,
                                 index,
-                                model,
-                                patient,
-                                newTab ? ViewerPlacement.newTab() : ViewerPlacement.reuseViewer());
+                                context,
+                                newTab ? ViewerPlacement.newTab() : ViewerPlacement.reuseViewer(),
+                                null);
                       }));
       print(isJson() ? applied.toJson().toString() : applied.text());
+    }
+  }
+
+  /** The hanging of the viewer asked for, else of the selected viewer. */
+  static HangingPlanApplier.Applied activeHanging(ViewId viewId) {
+    ViewerPlugin<?> viewer = null;
+    if (viewId != null) {
+      viewer =
+          GuiUtils.getUICore()
+              .getWorkspaceManager()
+              .findView(viewId.value())
+              .filter(ViewerPlugin.class::isInstance)
+              .map(v -> (ViewerPlugin<?>) v)
+              .orElseThrow(
+                  () ->
+                      CommandFailure.unknownHandle(
+                          "Unknown viewer id: " + viewId, "workspace:list")); // NON-NLS
+    }
+    return ActiveHanging.of(viewer)
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    viewId == null
+                        ? "The selected viewer was not hung by a protocol"
+                        : "The viewer " + viewId + " was not hung by a protocol"));
+  }
+
+  /** Selects the hanging to act on: a viewer from 'workspace:list' or the selected one. */
+  static class HangingOptions {
+    @Option(
+        names = "--view",
+        paramLabel = "<view-id>",
+        description = "Viewer id from 'workspace:list' (default: the selected viewer).")
+    ViewId viewId;
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "sets",
+      description =
+          "The hanging a viewer is part of: the protocol, the reading step shown of how many, "
+              + "the display sets with their view ids, the candidates of the study.")
+  @Since("5.0")
+  static class Sets extends Verb {
+    @Mixin HangingOptions target;
+
+    @Override
+    protected void run() {
+      JsonObject result =
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                HangingPlanApplier.Applied applied = activeHanging(target.viewId);
+                JsonObjectBuilder json = Json.createObjectBuilder(applied.toJson());
+                JsonArrayBuilder candidates = Json.createArrayBuilder();
+                for (ProtocolScore score : ActiveHanging.candidates(applied)) {
+                  JsonObjectBuilder c =
+                      Json.createObjectBuilder()
+                          .add("protocol", score.document().id()) // NON-NLS
+                          .add("score", Math.round(score.score() * 1000) / 1000.0); // NON-NLS
+                  String name = score.document().protocol().getHangingProtocolName();
+                  if (name != null) {
+                    c.add("name", name); // NON-NLS
+                  }
+                  candidates.add(c);
+                }
+                return json.add("candidates", candidates).build(); // NON-NLS
+              });
+      print(isJson() ? result.toString() : text(result));
+    }
+
+    static String text(JsonObject json) {
+      StringBuilder out = new StringBuilder();
+      out.append(json.getString("protocol", "-")) // NON-NLS
+          .append(" step ") // NON-NLS
+          .append(json.getInt("step")) // NON-NLS
+          .append(" of ") // NON-NLS
+          .append(json.getInt("steps")) // NON-NLS
+          .append('\n');
+      for (JsonObject d : json.getJsonArray("displaySets").getValuesAs(JsonObject.class)) {
+        out.append("  cell ") // NON-NLS
+            .append(d.getInt("index")) // NON-NLS
+            .append(' ')
+            .append(d.getString("label", "")) // NON-NLS
+            .append(": ")
+            .append(d.getString("match")) // NON-NLS
+            .append(' ')
+            .append(d.getString("series", "-")) // NON-NLS
+            .append(d.containsKey("viewId") ? " in " + d.getString("viewId") : "") // NON-NLS
+            .append('\n');
+      }
+      for (JsonObject c : json.getJsonArray("candidates").getValuesAs(JsonObject.class)) {
+        out.append("  candidate ") // NON-NLS
+            .append(c.getString("protocol")) // NON-NLS
+            .append(' ')
+            .append(c.getJsonNumber("score").doubleValue()) // NON-NLS
+            .append('\n');
+      }
+      return out.toString().stripTrailing();
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "group",
+      description =
+          "Shows another reading step (presentation group) of the active hanging, or hangs "
+              + "another candidate protocol, on the same viewers.")
+  @Since("5.0")
+  static class Group extends Verb {
+    @Mixin HangingOptions target;
+
+    @Option(names = "--next", description = "The next step, the first one again after the last.")
+    boolean next;
+
+    @Option(names = "--previous", description = "The previous step.")
+    boolean previous;
+
+    @Option(names = "--index", paramLabel = "<step>", description = "The step to show, from 1.")
+    Integer index;
+
+    @Option(
+        names = "--protocol",
+        paramLabel = "<protocol-id>",
+        description = "Hangs this candidate of the study instead, from its first step.")
+    String protocolId;
+
+    @Override
+    protected void run() {
+      int asked = (next ? 1 : 0) + (previous ? 1 : 0) + (index != null ? 1 : 0);
+      asked += protocolId != null ? 1 : 0;
+      if (asked != 1) {
+        throw new IllegalArgumentException(
+            "Give one of --next, --previous, --index <step> or --protocol <protocol-id>");
+      }
+      HangingPlanApplier.Applied applied =
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                HangingPlanApplier.Applied current = activeHanging(target.viewId);
+                if (protocolId != null) {
+                  return ActiveHanging.protocol(current, protocolId);
+                }
+                if (next) {
+                  return ActiveHanging.next(current);
+                }
+                if (previous) {
+                  return ActiveHanging.previous(current);
+                }
+                if (index < 1 || index > current.plan().steps().size()) {
+                  throw new IllegalArgumentException(
+                      "The plan has " + current.plan().steps().size() + " steps, no step " + index);
+                }
+                return ActiveHanging.step(current, index - 1);
+              });
+      print(isJson() ? applied.toJson().toString() : applied.text());
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "explain",
+      description =
+          "Why the cells of the active hanging show what they show: per cell the rules that "
+              + "selected the series, its score and the alternatives; the why of a hanging.")
+  @Since("5.0")
+  static class Explain extends Verb {
+    @Mixin HangingOptions target;
+
+    @Option(names = "--cell", paramLabel = "<cell>", description = "Only this cell, from 1.")
+    Integer cell;
+
+    @Override
+    protected void run() {
+      JsonObject result =
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                HangingPlanApplier.Applied applied = activeHanging(target.viewId);
+                JsonObjectBuilder json = Json.createObjectBuilder();
+                if (applied.plan().protocolId() != null) {
+                  json.add("protocol", applied.plan().protocolId()); // NON-NLS
+                }
+                JsonArrayBuilder reasons = Json.createArrayBuilder();
+                applied.plan().reasons().forEach(reasons::add);
+                json.add("reasons", reasons).add("step", applied.step() + 1); // NON-NLS
+                JsonArrayBuilder cells = Json.createArrayBuilder();
+                JsonObject step =
+                    applied.plan().toJson().getJsonArray("steps").getJsonObject(applied.step());
+                for (JsonObject c : step.getJsonArray("cells").getValuesAs(JsonObject.class)) {
+                  if (cell == null || c.getInt("cell") == cell) { // NON-NLS
+                    cells.add(c);
+                  }
+                }
+                return json.add("cells", cells).build(); // NON-NLS
+              });
+      if (cell != null && result.getJsonArray("cells").isEmpty()) { // NON-NLS
+        throw new IllegalArgumentException("No cell " + cell + " in this step");
+      }
+      print(isJson() ? result.toString() : text(result));
+    }
+
+    static String text(JsonObject json) {
+      StringBuilder out = new StringBuilder();
+      out.append(json.getString("protocol", "-")) // NON-NLS
+          .append(' ')
+          .append(json.getJsonArray("reasons").getValuesAs(JsonValue::toString)) // NON-NLS
+          .append('\n');
+      for (JsonObject c : json.getJsonArray("cells").getValuesAs(JsonObject.class)) {
+        out.append("  cell ") // NON-NLS
+            .append(c.getInt("cell")) // NON-NLS
+            .append(' ')
+            .append(c.getString("label", "")) // NON-NLS
+            .append(": ")
+            .append(c.getString("match")) // NON-NLS
+            .append(' ')
+            .append(c.getString("series", "-")) // NON-NLS
+            .append(' ')
+            .append(c.getJsonArray("reasons").getValuesAs(JsonValue::toString)) // NON-NLS
+            .append('\n');
+        for (JsonObject a : c.getJsonArray("alternatives").getValuesAs(JsonObject.class)) {
+          out.append("    alternative ") // NON-NLS
+              .append(a.getString("series")) // NON-NLS
+              .append(' ')
+              .append(a.getJsonNumber("score").doubleValue()) // NON-NLS
+              .append(' ')
+              .append(a.getString("description", "")) // NON-NLS
+              .append('\n');
+        }
+      }
+      return out.toString().stripTrailing();
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "show",
+      description =
+          "A protocol of the layers as its JSON entry: the DICOM part by keyword and the Weasis "
+              + "extensions (feature selectors, viewer types, display by reference).")
+  @Since("5.0")
+  static class Show extends Verb {
+    @Option(
+        names = "--id",
+        required = true,
+        paramLabel = "<protocol-id>",
+        description = "Protocol id from 'list'.")
+    String protocolId;
+
+    @Override
+    protected void run() {
+      Candidate candidate =
+          parent.candidateSupplier.get().stream()
+              .filter(c -> protocolId.equals(c.document().id()))
+              .findFirst()
+              .orElseThrow(
+                  () ->
+                      CommandFailure.unknownHandle(
+                          "Unknown protocol id: " + protocolId, "hp:list")); // NON-NLS
+      print(
+          ProtocolJson.toJson(
+                  candidate.document().id(),
+                  candidate.document().protocol(),
+                  candidate.document().weasis())
+              .toString());
     }
   }
 
@@ -638,10 +914,18 @@ public class HpCommands implements CommandExtension {
   static class Validate extends Verb {
     @Option(
         names = "--corpus",
-        required = true,
         paramLabel = "<input-path>",
         description = "A folder of DICOM studies, walked recursively.")
     InputPath corpus;
+
+    @Option(
+        names = "--file",
+        paramLabel = "<input-path>",
+        description =
+            "A JSON file of protocol entries checked for rule errors without any study: image "
+                + "set numbers unique and referenced, selectors known, one time-based item per "
+                + "set, grids the viewer offers.")
+    InputPath file;
 
     @Option(
         names = "--protocols",
@@ -665,6 +949,14 @@ public class HpCommands implements CommandExtension {
 
     @Override
     protected void run() {
+      if (file != null) {
+        JsonObject lint = ProtocolLint.check(file.value());
+        print(isJson() ? lint.toString() : ProtocolLint.text(lint));
+        return;
+      }
+      if (corpus == null) {
+        throw new IllegalArgumentException("Give --corpus <folder> or --file <protocol file>");
+      }
       Path root = corpus.value();
       if (!Files.isDirectory(root)) {
         throw new IllegalArgumentException("Not a folder: " + root);

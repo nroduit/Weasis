@@ -337,7 +337,7 @@ Usage: `explorer:state [-h] [--json]`
 
 ## hp
 
-Hanging protocols: the protocols of every layer, the plan the engine computes for a loaded study, its hanging on live viewers, and the validation of the protocols over a folder of studies.
+Hanging protocols: the protocols of every layer, the plan the engine computes for a loaded study, its hanging on live viewers, the active hanging of a viewer, and the validation of the protocols over a folder of studies.
 
 ### hp:apply (since 5.0)
 
@@ -356,6 +356,18 @@ Needs: file read
 | --step | integer |  | The reading step to hang, from 1 (default: the first). |
 | --new-tab | boolean |  | Opens new viewers instead of re-hanging the one of the same patient. |
 
+### hp:explain (since 5.0)
+
+Why the cells of the active hanging show what they show: per cell the rules that selected the series, its score and the alternatives; the why of a hanging.
+
+Usage: `hp:explain [-h] [--json] [--cell=<cell>] [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --cell | integer |  | Only this cell, from 1. |
+
 ### hp:features (since 5.0)
 
 The series features the matching works on (modality, role, orientation, anatomy, laterality, view, contrast, MR weighting, CT kernel and family, thickness, spacing, temporal, images of interest...), per series of a loaded study or of a folder of studies: what a selector can test, and why a series matched or not.
@@ -369,6 +381,21 @@ Needs: file read
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --study | study-uid |  | Study Instance UID from 'dicom:list'. |
 | --corpus | input-path |  | A folder of DICOM studies read without a viewer, walked recursively. |
+
+### hp:group (since 5.0)
+
+Shows another reading step (presentation group) of the active hanging, or hangs another candidate protocol, on the same viewers.
+
+Usage: `hp:group [-h] [--json] [--next] [--previous] [--index=<step>] [--protocol=<protocol-id>] [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --next | boolean |  | The next step, the first one again after the last. |
+| --previous | boolean |  | The previous step. |
+| --index | integer |  | The step to show, from 1. |
+| --protocol | string |  | Hangs this candidate of the study instead, from its first step. |
 
 ### hp:list (since 5.0)
 
@@ -395,11 +422,33 @@ Needs: file read
 | --protocol | string |  | Plans this protocol from 'list' even when another one scores better. |
 | --protocols | input-path |  | A JSON file of protocol entries matched instead of the layers, to try a draft. |
 
+### hp:sets (since 5.0)
+
+The hanging a viewer is part of: the protocol, the reading step shown of how many, the display sets with their view ids, the candidates of the study.
+
+Usage: `hp:sets [-h] [--json] [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+
+### hp:show (since 5.0)
+
+A protocol of the layers as its JSON entry: the DICOM part by keyword and the Weasis extensions (feature selectors, viewer types, display by reference).
+
+Usage: `hp:show [-h] [--json] --id=<protocol-id>`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --id | string |  | Protocol id from 'list'. |
+
 ### hp:validate (since 5.0)
 
 Runs the matching over a folder of studies without a viewer and reports, per protocol, how many studies it applies to and how its cells matched (exact, preferred, fallback, shared, empty) and, per study, the protocol chosen: the regression test of a protocol library. The protocols are those of every layer, or the entries of --protocols.
 
-Usage: `hp:validate [-h] [--json] --corpus=<input-path> [--expected=<input-path>] [--protocol=<protocol-id>] [--protocols=<input-path>]`
+Usage: `hp:validate [-h] [--json] [--corpus=<input-path>] [--expected=<input-path>] [--file=<input-path>] [--protocol=<protocol-id>] [--protocols=<input-path>]`
 
 Needs: file read
 
@@ -407,6 +456,7 @@ Needs: file read
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --corpus | input-path |  | A folder of DICOM studies, walked recursively. |
+| --file | input-path |  | A JSON file of protocol entries checked for rule errors without any study: image set numbers unique and referenced, selectors known, one time-based item per set, grids the viewer offers. |
 | --protocols | input-path |  | A JSON file holding protocol entries (an array, or an object with a 'protocols' array) validated instead of the layers. |
 | --protocol | string |  | Only this protocol. |
 | --expected | input-path |  | A JSON file of expected hangings, {"studies": {"<study-uid>": {"protocol": <id>, "cells": {"1": <series-uid>}}}}: the report says per study whether the chosen protocol and the cells of its first step are the expected ones. |
@@ -952,16 +1002,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --set=<magnification> | --fit=<zoom-fit>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
 | --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
+| --fit | enum |  | default, real-size or best-fit. |
 
 
 ## view3d

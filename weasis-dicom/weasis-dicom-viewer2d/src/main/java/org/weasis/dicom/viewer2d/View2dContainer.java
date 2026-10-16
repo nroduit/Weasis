@@ -297,6 +297,15 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           preferences,
           plugInId,
           componentName,
+          InsertableUtil.getCName(HangingProtocolBar.class),
+          key,
+          true)) {
+        toolBars.add(new HangingProtocolBar(95));
+      }
+      if (InsertableUtil.getBooleanProperty(
+          preferences,
+          plugInId,
+          componentName,
           InsertableUtil.getCName(LauncherToolBar.class),
           key,
           true)) {

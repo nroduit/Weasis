@@ -60,7 +60,7 @@ class HangingOpenerTest {
     return new HangingOpener(
         scheduler,
         () -> candidates,
-        (plan, model, patient, placement) -> {
+        (plan, context, placement) -> {
           hung.add(plan);
           return HangingOpener.firstStepSeries(plan);
         },
@@ -195,7 +195,7 @@ class HangingOpenerTest {
         new HangingOpener(
             scheduler,
             HangingOpenerTest::library,
-            (plan, m, p, placement) -> {
+            (plan, context, placement) -> {
               hung.add(plan);
               return HangingOpener.firstStepSeries(plan);
             },

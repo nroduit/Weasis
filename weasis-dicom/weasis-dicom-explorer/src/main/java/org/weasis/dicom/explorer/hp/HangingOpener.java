@@ -34,10 +34,12 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.hp.HangingEngine;
 import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
+import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
 import org.weasis.dicom.codec.hp.HangingPlan;
 import org.weasis.dicom.codec.hp.HangingPlan.CellPlan;
 import org.weasis.dicom.codec.hp.StudySeries;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.hp.HangingPlanApplier.Context;
 
 /**
  * Opens a study through the hanging protocol engine instead of on its first series: the image
@@ -72,8 +74,7 @@ public final class HangingOpener {
 
   /** Hangs the first step of a plan; returns the series shown, empty when nothing was hung. */
   public interface Hanger {
-    Set<String> hang(
-        HangingPlan plan, DicomModel model, MediaSeriesGroup patient, ViewerPlacement placement);
+    Set<String> hang(HangingPlan plan, Context context, ViewerPlacement placement);
   }
 
   private static final class Pending {
@@ -237,14 +238,19 @@ public final class HangingOpener {
     boolean again = false;
     try {
       List<StudySeries> series = HpCommands.studySeries(p.model, study);
-      Optional<HangingPlan> plan = HangingEngine.match(candidates.get(), series);
+      List<Candidate> protocols = candidates.get();
+      List<ProtocolScore> ranking = HangingEngine.select(protocols, series);
+      Optional<HangingPlan> plan =
+          ranking.isEmpty()
+              ? Optional.empty()
+              : Optional.of(HangingEngine.plan(ranking.getFirst(), series));
+      Context context = new Context(p.model, p.patient, study, protocols, ranking);
       Set<String> wanted = plan.map(HangingOpener::firstStepSeries).orElse(Set.of());
       if (p.shown == null) {
         Set<String> shown =
             wanted.isEmpty()
                 ? Set.of()
-                : hanger.hang(
-                    plan.orElseThrow(), p.model, p.patient, ViewerPlacement.reuseViewer());
+                : hanger.hang(plan.orElseThrow(), context, ViewerPlacement.reuseViewer());
         if (shown.isEmpty()) {
           LOGGER.debug("No protocol hangs study {}, opening its first series", study);
           p.legacy = true;
@@ -259,8 +265,7 @@ public final class HangingOpener {
         }
       } else if (!p.shown.containsAll(wanted) && wanted.containsAll(p.shown)) {
         // a series the hanging was waiting for arrived: hang again, in the same viewer
-        Set<String> shown =
-            hanger.hang(plan.orElseThrow(), p.model, p.patient, ViewerPlacement.reuseViewer());
+        Set<String> shown = hanger.hang(plan.orElseThrow(), context, ViewerPlacement.reuseViewer());
         if (!shown.isEmpty()) {
           p.shown = shown;
         }
@@ -294,10 +299,10 @@ public final class HangingOpener {
   }
 
   private static Set<String> hangInApplication(
-      HangingPlan plan, DicomModel model, MediaSeriesGroup patient, ViewerPlacement placement) {
+      HangingPlan plan, Context context, ViewerPlacement placement) {
     HangingPlanApplier.Applied applied =
         GuiExecutor.invokeAndRethrow(
-            () -> new HangingPlanApplier().apply(plan, 0, model, patient, placement));
+            () -> new HangingPlanApplier().apply(plan, 0, context, placement, null));
     if (applied.viewers().isEmpty()) {
       return Set.of();
     }

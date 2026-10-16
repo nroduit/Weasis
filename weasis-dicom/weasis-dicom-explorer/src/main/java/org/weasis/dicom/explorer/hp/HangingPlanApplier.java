@@ -21,7 +21,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.WeakHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,8 @@ import org.weasis.core.ui.editor.image.HangingLayout;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.hp.HangingEngine;
+import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
+import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
 import org.weasis.dicom.codec.hp.HangingPlan;
 import org.weasis.dicom.codec.hp.HangingPlan.CellPlan;
 import org.weasis.dicom.codec.hp.HangingPlan.Step;
@@ -63,8 +67,41 @@ public final class HangingPlanApplier {
   private static final Map<ViewerPlugin<?>, Applied> ACTIVE =
       Collections.synchronizedMap(new WeakHashMap<>());
 
+  private static final List<Consumer<Applied>> LISTENERS = new CopyOnWriteArrayList<>();
+
+  /** Told of every hanging applied, on the thread that applied it (the event dispatch thread). */
+  public static void addListener(Consumer<Applied> listener) {
+    LISTENERS.add(Objects.requireNonNull(listener));
+  }
+
+  public static void removeListener(Consumer<Applied> listener) {
+    LISTENERS.remove(listener);
+  }
+
   /** A cell of the step and the viewer that shows it, null when nothing could show it. */
   public record Placed(CellPlan cell, ViewerPlugin<?> viewer) {}
+
+  /**
+   * What a hanging was computed from, kept with it so the protocol bar and the verbs can re-plan:
+   * another step, another candidate.
+   *
+   * @param model the explorer model holding the series
+   * @param patient the patient group the viewers belong to, may be null
+   * @param study the study the plan was matched on, may be null
+   * @param candidates the protocols the study was matched against
+   * @param ranking the candidates that apply to the study, best first
+   */
+  public record Context(
+      DataExplorerModel model,
+      MediaSeriesGroup patient,
+      MediaSeriesGroup study,
+      List<Candidate> candidates,
+      List<ProtocolScore> ranking) {
+    public Context {
+      candidates = candidates == null ? List.of() : List.copyOf(candidates);
+      ranking = ranking == null ? List.of() : List.copyOf(ranking);
+    }
+  }
 
   /**
    * What a step produced.
@@ -80,12 +117,18 @@ public final class HangingPlanApplier {
       int step,
       List<ViewerPlugin<?>> viewers,
       List<Placed> placed,
-      List<String> warnings) {
+      List<String> warnings,
+      Context context) {
 
     public Applied {
       viewers = List.copyOf(viewers);
       placed = List.copyOf(placed);
       warnings = List.copyOf(warnings);
+    }
+
+    /** The 2D container of the hanging, the one a step change re-hangs. */
+    public Optional<ViewerPlugin<?>> container() {
+      return viewers.stream().filter(v -> TYPE_2D.equals(v.typeId())).findFirst();
     }
 
     public Step stepPlan() {
@@ -102,7 +145,8 @@ public final class HangingPlanApplier {
         json.add("name", plan.name()); // NON-NLS
       }
       Step s = stepPlan();
-      json.add("step", step + 1).add("group", s.group()); // NON-NLS
+      json.add("step", step + 1).add("steps", plan.steps().size()); // NON-NLS
+      json.add("group", s.group()); // NON-NLS
       if (s.label() != null) {
         json.add("label", s.label()); // NON-NLS
       }
@@ -235,10 +279,28 @@ public final class HangingPlanApplier {
       DataExplorerModel model,
       MediaSeriesGroup group,
       ViewerPlacement placement) {
+    return apply(
+        plan, step, new Context(model, group, null, List.of(), List.of()), placement, null);
+  }
+
+  /**
+   * Hangs a step on the viewers, keeping the context with the result.
+   *
+   * @param preferred the 2D container to re-hang when the placement reuses a viewer, else the
+   *     latest one of the patient; may be null
+   */
+  public Applied apply(
+      HangingPlan plan,
+      int step,
+      Context context,
+      ViewerPlacement placement,
+      ViewerPlugin<?> preferred) {
     if (step < 0 || step >= plan.steps().size()) {
       throw new IllegalArgumentException(
           "The plan has " + plan.steps().size() + " steps, no step " + (step + 1));
     }
+    DataExplorerModel model = context.model();
+    MediaSeriesGroup group = context.patient();
     Step stepPlan = plan.steps().get(step);
     SeriesResolver resolver = SeriesResolver.ofModels(List.of(model));
     List<ViewerPlugin<?>> used = new ArrayList<>();
@@ -266,7 +328,7 @@ public final class HangingPlanApplier {
 
     if (!flat.isEmpty()) {
       ViewerPlugin<?> container =
-          hang2d(stepPlan, flat, model, group, placement, resolver, warnings);
+          hang2d(stepPlan, flat, model, group, placement, preferred, resolver, warnings);
       if (container != null) {
         used.add(container);
       }
@@ -281,8 +343,15 @@ public final class HangingPlanApplier {
     }
     placed.sort((a, b) -> Integer.compare(a.cell().cell(), b.cell().cell()));
 
-    Applied applied = new Applied(plan, step, used, placed, warnings);
+    Applied applied = new Applied(plan, step, used, placed, warnings, context);
     used.forEach(v -> ACTIVE.put(v, applied));
+    for (Consumer<Applied> listener : LISTENERS) {
+      try {
+        listener.accept(applied);
+      } catch (RuntimeException e) {
+        LOGGER.warn("A hanging listener failed", e);
+      }
+    }
     return applied;
   }
 
@@ -292,6 +361,7 @@ public final class HangingPlanApplier {
       DataExplorerModel model,
       MediaSeriesGroup group,
       ViewerPlacement placement,
+      ViewerPlugin<?> preferred,
       SeriesResolver resolver,
       List<String> warnings) {
     SeriesViewerFactory factory = factoryOf(TYPE_2D).orElse(null);
@@ -300,8 +370,12 @@ public final class HangingPlanApplier {
       return null;
     }
     ViewerPlugin<?> container = null;
-    if (placement instanceof ViewerPlacement.ReuseViewer && group != null) {
-      container = reusable(TYPE_2D, group).orElse(null);
+    if (placement instanceof ViewerPlacement.ReuseViewer) {
+      if (preferred != null && viewers.get().contains(preferred)) {
+        container = preferred;
+      } else if (group != null) {
+        container = reusable(TYPE_2D, group).orElse(null);
+      }
     }
     boolean created = container == null;
     if (created) {

@@ -1270,7 +1270,7 @@
     },
     {
       "name": "hp",
-      "description": "Hanging protocols: the protocols of every layer, the plan the engine computes for a loaded study, its hanging on live viewers, and the validation of the protocols over a folder of studies.",
+      "description": "Hanging protocols: the protocols of every layer, the plan the engine computes for a loaded study, its hanging on live viewers, the active hanging of a viewer, and the validation of the protocols over a folder of studies.",
       "since": "5.0",
       "verbs": [
         {
@@ -1349,6 +1349,45 @@
           ]
         },
         {
+          "name": "explain",
+          "description": "Why the cells of the active hanging show what they show: per cell the rules that selected the series, its score and the alternatives; the why of a hanging.",
+          "since": "5.0",
+          "usage": "hp:explain [-h] [--json] [--cell=<cell>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--cell"
+              ],
+              "label": "<cell>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Only this cell, from 1."
+            }
+          ]
+        },
+        {
           "name": "features",
           "description": "The series features the matching works on (modality, role, orientation, anatomy, laterality, view, contrast, MR weighting, CT kernel and family, thickness, spacing, temporal, images of interest...), per series of a loaded study or of a folder of studies: what a selector can test, and why a series matched or not.",
           "since": "5.0",
@@ -1390,6 +1429,75 @@
               "needs": [
                 "file-read"
               ]
+            }
+          ]
+        },
+        {
+          "name": "group",
+          "description": "Shows another reading step (presentation group) of the active hanging, or hangs another candidate protocol, on the same viewers.",
+          "since": "5.0",
+          "usage": "hp:group [-h] [--json] [--next] [--previous] [--index=<step>] [--protocol=<protocol-id>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--next"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "The next step, the first one again after the last."
+            },
+            {
+              "names": [
+                "--previous"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "The previous step."
+            },
+            {
+              "names": [
+                "--index"
+              ],
+              "label": "<step>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "The step to show, from 1."
+            },
+            {
+              "names": [
+                "--protocol"
+              ],
+              "label": "<protocol-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Hangs this candidate of the study instead, from its first step."
             }
           ]
         },
@@ -1468,10 +1576,68 @@
           ]
         },
         {
+          "name": "sets",
+          "description": "The hanging a viewer is part of: the protocol, the reading step shown of how many, the display sets with their view ids, the candidates of the study.",
+          "since": "5.0",
+          "usage": "hp:sets [-h] [--json] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "description": "A protocol of the layers as its JSON entry: the DICOM part by keyword and the Weasis extensions (feature selectors, viewer types, display by reference).",
+          "since": "5.0",
+          "usage": "hp:show [-h] [--json] --id=<protocol-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--id"
+              ],
+              "label": "<protocol-id>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Protocol id from 'list'."
+            }
+          ]
+        },
+        {
           "name": "validate",
           "description": "Runs the matching over a folder of studies without a viewer and reports, per protocol, how many studies it applies to and how its cells matched (exact, preferred, fallback, shared, empty) and, per study, the protocol chosen: the regression test of a protocol library. The protocols are those of every layer, or the entries of --protocols.",
           "since": "5.0",
-          "usage": "hp:validate [-h] [--json] --corpus=<input-path> [--expected=<input-path>] [--protocol=<protocol-id>] [--protocols=<input-path>]",
+          "usage": "hp:validate [-h] [--json] [--corpus=<input-path>] [--expected=<input-path>] [--file=<input-path>] [--protocol=<protocol-id>] [--protocols=<input-path>]",
           "needs": [
             "file-read"
           ],
@@ -1494,8 +1660,21 @@
               "label": "<input-path>",
               "type": "input-path",
               "arity": "1",
-              "required": true,
+              "required": false,
               "description": "A folder of DICOM studies, walked recursively.",
+              "needs": [
+                "file-read"
+              ]
+            },
+            {
+              "names": [
+                "--file"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": false,
+              "description": "A JSON file of protocol entries checked for rule errors without any study: image set numbers unique and referenced, selectors known, one time-based item per set, grids the viewer offers.",
               "needs": [
                 "file-read"
               ]
@@ -3857,7 +4036,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --set=<magnification> | --fit=<zoom-fit>]",
           "parameters": [],
           "options": [
             {
@@ -3892,25 +4071,6 @@
             },
             {
               "names": [
-                "--fit"
-              ],
-              "label": "<zoom-fit>",
-              "type": "enum",
-              "values": [
-                "default",
-                "real-size",
-                "best-fit"
-              ],
-              "arity": "1",
-              "required": true,
-              "description": "default, real-size or best-fit.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
                 "--by"
               ],
               "label": "<steps>",
@@ -3932,6 +4092,25 @@
               "arity": "1",
               "required": true,
               "description": "Magnification, 1 being one image pixel per canvas pixel.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--fit"
+              ],
+              "label": "<zoom-fit>",
+              "type": "enum",
+              "values": [
+                "default",
+                "real-size",
+                "best-fit"
+              ],
+              "arity": "1",
+              "required": true,
+              "description": "default, real-size or best-fit.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"

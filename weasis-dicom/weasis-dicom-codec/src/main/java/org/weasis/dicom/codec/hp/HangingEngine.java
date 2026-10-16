@@ -379,7 +379,7 @@ public final class HangingEngine {
    * The time-based items of an image set: its sequence, or, for a set the model read from a dataset
    * (weasis-dicom-tools 5.35.1 builds it on the time-based item itself), its own attributes.
    */
-  static List<Attributes> timeBasedItems(HPImageSet imageSet) {
+  public static List<Attributes> timeBasedItems(HPImageSet imageSet) {
     Sequence items = imageSet.getTimeBasedImageSetsSequence();
     if (items != null && !items.isEmpty()) {
       List<Attributes> list = new ArrayList<>();
