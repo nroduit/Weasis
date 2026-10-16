@@ -381,7 +381,8 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
      * the pane holds other data (a template) and the adapter decides: the image by slice location
      * or relative position, the explicit scale only for the same pixel size, the window values only
      * for the same modality, the preset by id when the image offers it, color map and stack order
-     * by id when known.
+     * by id when known. A template only navigates a pane that owns its presentation (see {@link
+     * ViewStateAdapter#ownsPresentation}).
      */
     public <E extends ImageElement> void applyTo(ViewCanvas<E> canvas, ViewData data) {
       applyTo(canvas, data, true);
@@ -420,6 +421,11 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
               canvas,
               new SynchCineEvent(canvas, picked.media(), picked.index() - canvas.getTileOffset()));
         }
+      }
+
+      if (!exact && adapter.ownsPresentation(canvas)) {
+        // A template keeps the zoom, orientation and rendering of a presentation state
+        return;
       }
 
       boolean sameScale = exact || samePixelSize(canvas.getImage());

@@ -49,6 +49,14 @@ public interface ViewStateAdapter<E extends ImageElement> {
     return Optional.empty();
   }
 
+  /**
+   * Whether the view shows a presentation of its own, such as a presentation state of the image,
+   * that a template must not override: its framing and rendering then stay as they are.
+   */
+  default boolean ownsPresentation(ViewCanvas<E> view) {
+    return false;
+  }
+
   /** Blends that series over the shown one with the stored parameters. */
   default void blend(ViewCanvas<E> view, MediaSeries<E> overlay, JsonObject params) {
     // viewer types without a blend ignore it

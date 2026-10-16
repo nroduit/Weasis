@@ -247,6 +247,28 @@ class ViewStateTest {
     verify(series, never()).getMedia(eq(11), any(), any());
   }
 
+  /** A presentation state sets the framing and rendering: a template only navigates the pane. */
+  @Test
+  @SuppressWarnings("unchecked")
+  void aTemplateLeavesThePresentationOwnedByThePane() {
+    ViewCanvas<ImageElement> view = mock(ViewCanvas.class);
+    MediaSeries<ImageElement> series = mock(MediaSeries.class);
+    ViewModel model = mock(ViewModel.class);
+    ViewStateAdapter<ImageElement> adapter = mock(ViewStateAdapter.class);
+    when(view.getSeries()).thenReturn(series);
+    when(view.getViewModel()).thenReturn(model);
+    when(view.getViewStateAdapter()).thenReturn(adapter);
+    when(adapter.ownsPresentation(view)).thenReturn(true);
+
+    VIEW.applyTo(view, null);
+
+    List<Map<String, Object>> sent = sent(view, 1);
+    assertAll(
+        () -> assertEquals(Boolean.TRUE, sent.getFirst().get(ActionW.INVERSE_STACK.cmd())),
+        () -> assertFalse(sent.getFirst().containsKey(ActionW.ROTATION.cmd())));
+    verify(view, never()).setActionsInView(eq(ViewCanvas.ZOOM_TYPE_CMD), any());
+  }
+
   /** The blended series is data found through the resolver; its parameters are the adapter's. */
   @Test
   @SuppressWarnings("unchecked")

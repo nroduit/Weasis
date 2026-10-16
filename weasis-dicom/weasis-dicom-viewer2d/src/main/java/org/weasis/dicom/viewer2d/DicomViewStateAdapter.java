@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import org.dcm4che3.img.lut.PresetWindowLevel;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -24,6 +25,7 @@ import org.weasis.core.ui.editor.image.ViewState;
 import org.weasis.core.ui.editor.image.ViewStateAdapter;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
@@ -64,6 +66,12 @@ final class DicomViewStateAdapter implements ViewStateAdapter<DicomImageElement>
         .filter(p -> id.equalsIgnoreCase(idOf(p)) || id.equalsIgnoreCase(p.getName()))
         .findFirst()
         .map(Object.class::cast);
+  }
+
+    /** A presentation state applied to the image sets its own zoom, orientation and rendering. */
+  @Override
+  public boolean ownsPresentation(ViewCanvas<DicomImageElement> view) {
+    return view.getActionValue(ActionW.PR_STATE.cmd()) instanceof PRSpecialElement;
   }
 
   @Override
