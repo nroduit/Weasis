@@ -19,6 +19,7 @@ import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
@@ -94,6 +95,17 @@ public class AdvancedShape implements Shape {
       Line2D line, Point2D anchorPoint, Shape invShape, Stroke stroke, boolean fixedLineWidth) {
     LinkSegmentToInvariantShape s =
         new LinkSegmentToInvariantShape(line, stroke, anchorPoint, invShape, fixedLineWidth);
+    shapeList.add(s);
+    return s;
+  }
+
+  public LinkArrowShape addLinkArrow(
+      LinkSegmentToInvariantShape link,
+      double length,
+      double width,
+      Stroke stroke,
+      boolean fixedLineWidth) {
+    LinkArrowShape s = new LinkArrowShape(link, length, width, stroke, fixedLineWidth);
     shapeList.add(s);
     return s;
   }
@@ -479,9 +491,8 @@ public class AdvancedShape implements Shape {
   }
 
   /**
-   * Invariant to all the transformations except to flip (horizontal mirror)
-   *
-   * @version $Rev$ $Date$
+   * Keeps its size and orientation on screen: only its anchor point follows the transformations of
+   * the view (zoom, rotation and flip).
    */
   public class InvariantShape extends BasicShape {
 
@@ -501,27 +512,25 @@ public class AdvancedShape implements Shape {
       if (transform == null) {
         return shape;
       }
-      AffineTransform invTransform = new AffineTransform(); // Identity transformation.
-
-      double scale = GeomUtil.extractScalingFactor(transform);
-      double angleRad = GeomUtil.extractAngleRad(transform);
-      boolean scaled = MathUtil.isDifferent(scale, 1.0);
-      boolean rotated = MathUtil.isDifferentFromZero(angleRad);
-
-      invTransform.translate(anchorPoint.getX(), anchorPoint.getY());
-
-      if (scaled) {
-        invTransform.scale(1 / scale, 1 / scale);
+      // Undo the zoom, rotation and flip around the anchor point. A shape that is not centered on
+      // it, like a label aligned on a corner, then stands where it is drawn on screen.
+      AffineTransform linear =
+          new AffineTransform(
+              transform.getScaleX(),
+              transform.getShearY(),
+              transform.getShearX(),
+              transform.getScaleY(),
+              0.0,
+              0.0);
+      try {
+        AffineTransform invTransform =
+            AffineTransform.getTranslateInstance(anchorPoint.getX(), anchorPoint.getY());
+        invTransform.concatenate(linear.createInverse());
+        invTransform.translate(-anchorPoint.getX(), -anchorPoint.getY());
+        return invTransform.createTransformedShape(shape);
+      } catch (NoninvertibleTransformException e) {
+        return shape;
       }
-      if (rotated) {
-        invTransform.rotate(-angleRad);
-      }
-      if ((transform.getType() & AffineTransform.TYPE_FLIP) != 0) {
-        invTransform.scale(-1.0, -1.0);
-      }
-      invTransform.translate(-anchorPoint.getX(), -anchorPoint.getY());
-
-      return invTransform.createTransformedShape(shape);
     }
   }
 
@@ -547,43 +556,72 @@ public class AdvancedShape implements Shape {
         return shape;
       }
       Line2D line = (Line2D) shape;
-
-      AffineTransform invTransform = new AffineTransform(); // Identity transformation.
-
-      double scale = GeomUtil.extractScalingFactor(transform);
-      double angleRad = GeomUtil.extractAngleRad(transform);
-      boolean scaled = MathUtil.isDifferent(scale, 1.0);
-      boolean rotated = MathUtil.isDifferentFromZero(angleRad);
-
-      invTransform.translate(anchorPoint.getX(), anchorPoint.getY());
-
-      if (scaled) {
-        invTransform.scale(1 / scale, 1 / scale);
-      }
-      if (rotated) {
-        invTransform.rotate(-angleRad);
-      }
-      invTransform.translate(-anchorPoint.getX(), -anchorPoint.getY());
-
-      Point2D p = null;
-      if (invShape instanceof Rectangle2D rectangle2D) {
-        // Find the intersection between the line and the text box
-        AffineTransform tr = new AffineTransform();
-        tr.translate(anchorPoint.getX(), anchorPoint.getY());
-        if (scaled) {
-          tr.scale(scale, scale);
+      if (invShape instanceof Rectangle2D box) {
+        // The text box does not scale or turn with the view: only its anchor point follows the
+        // transform. Clip the line in the view, from the center of the box as it is drawn, which
+        // is not the anchor point when the box is aligned on one of its corners.
+        Point2D anchor = transform.transform(anchorPoint, null);
+        Rectangle2D viewBox =
+            new Rectangle2D.Double(
+                anchor.getX() + box.getMinX() - anchorPoint.getX(),
+                anchor.getY() + box.getMinY() - anchorPoint.getY(),
+                box.getWidth(),
+                box.getHeight());
+        Point2D center = new Point2D.Double(viewBox.getCenterX(), viewBox.getCenterY());
+        Point2D end = transform.transform(line.getP2(), null);
+        Point2D p = GeomUtil.getIntersectPoint(new Line2D.Double(center, end), viewBox);
+        try {
+          Point2D start = transform.inverseTransform(p == null ? center : p, null);
+          return new Line2D.Double(start, line.getP2());
+        } catch (NoninvertibleTransformException e) {
+          return shape;
         }
-        if (rotated) {
-          tr.rotate(angleRad);
-        }
-        tr.translate(-anchorPoint.getX(), -anchorPoint.getY());
-
-        Point2D p2 = line.getP2();
-        tr.transform(p2, p2);
-        p = GeomUtil.getIntersectPoint(new Line2D.Double(anchorPoint, p2), rectangle2D);
       }
-      Point2D invpt = invTransform.transform(p == null ? line.getP1() : p, null);
-      return new Line2D.Double(invpt, line.getP2());
+      return shape;
+    }
+  }
+
+  /**
+   * Arrow head at the end of a link segment, with a constant size on screen and the direction of
+   * the link as it is drawn.
+   */
+  public class LinkArrowShape extends BasicShape {
+
+    final LinkSegmentToInvariantShape link;
+    final double length;
+    final double width;
+
+    public LinkArrowShape(
+        LinkSegmentToInvariantShape link,
+        double length,
+        double width,
+        Stroke stroke,
+        boolean fixedLineWidth) {
+      super(link.getShape(), stroke, fixedLineWidth);
+      this.link = link;
+      this.length = length;
+      this.width = width;
+    }
+
+    @Override
+    public Shape getRealShape() {
+      if (!(link.getRealShape() instanceof Line2D line)) {
+        return null;
+      }
+      if (transform == null) {
+        return GeomUtil.getArrowShape(line.getP2(), line.getP1(), length, width);
+      }
+      Shape arrow =
+          GeomUtil.getArrowShape(
+              transform.transform(line.getP2(), null),
+              transform.transform(line.getP1(), null),
+              length,
+              width);
+      try {
+        return arrow == null ? null : transform.createInverse().createTransformedShape(arrow);
+      } catch (NoninvertibleTransformException e) {
+        return null;
+      }
     }
   }
 }

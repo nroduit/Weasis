@@ -120,6 +120,22 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     // Do not use setSeries() because the view will be reset
     this.series = sourceView.getSeries();
     setImage(sourceView.getImage());
+    copyPreprocessing();
+  }
+
+  /**
+   * Applies the preprocessing of the source view, such as the crop of a presentation state's
+   * displayed area or the rectified aspect ratio: setting the image drops it.
+   */
+  private void copyPreprocessing() {
+    if (sourceView.getActionValue(ActionW.PREPROCESSING.cmd()) instanceof SimpleOpManager source) {
+      SimpleOpManager preprocessing = source.copy();
+      actionsInView.put(ActionW.PREPROCESSING.cmd(), preprocessing);
+      // Keeps the graphics in the coordinates of the whole image
+      imageLayer.setOffset(sourceView.getImageLayer().getOffset());
+      imageLayer.setPreprocessing(preprocessing);
+      updateCanvas(false);
+    }
   }
 
   private void applyProfile(DisplayProfile profile) {
@@ -176,8 +192,10 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     removeFocusListener(this);
     ToolTipManager.sharedInstance().unregisterComponent(this);
     imageLayer.removeLayerChangeListener(this);
-    // Unregister listener in GraphicsPane
-    removeGraphicManager(graphicManager, layerModelHandler);
+    // The graphic model is the one of the source view: only unregister the listeners of this view,
+    // removeGraphicManager() would also delete its non-serializable graphics (presentation states)
+    graphicManager.removeChangeListener(layerModelHandler);
+    graphicManager.removeGraphicChangeHandler(getGraphicsChangeHandler());
     setViewModel(null);
   }
 

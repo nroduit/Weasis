@@ -31,7 +31,7 @@ class AnnotationLabelAlignmentTest {
   }
 
   @Test
-  void label_is_centred_on_the_box_point_by_default() {
+  void label_is_centered_on_the_box_point_by_default() {
     Rectangle2D b = graphic().buildLabelBounds(new Point2D.Double(100, 50), 2);
 
     assertEquals(100, b.getCenterX(), 1e-9);
@@ -61,12 +61,39 @@ class AnnotationLabelAlignmentTest {
   }
 
   @Test
+  void upside_down_label_starts_at_the_box_point_and_runs_left() {
+    AnnotationGraphic g = graphic();
+    g.setLabelAlignment(0, 0);
+    g.setLabelRotation(2);
+    Rectangle2D b = g.buildLabelBounds(new Point2D.Double(100, 50), 1);
+
+    assertEquals(100, b.getMaxX(), 1e-9);
+    assertEquals(50, b.getMaxY(), 1e-9);
+    assertEquals(80 + 4 * G, b.getWidth(), 1e-9);
+  }
+
+  @Test
+  void label_turned_a_quarter_runs_down_from_the_box_point() {
+    AnnotationGraphic g = graphic();
+    g.setLabelAlignment(0, 0);
+    g.setLabelRotation(1);
+    Rectangle2D b = g.buildLabelBounds(new Point2D.Double(100, 50), 1);
+
+    assertEquals(100, b.getMaxX(), 1e-9);
+    assertEquals(50, b.getMinY(), 1e-9);
+    assertEquals(12 + 4 * G, b.getWidth(), 1e-9);
+    assertEquals(80 + 4 * G, b.getHeight(), 1e-9);
+  }
+
+  @Test
   void copy_keeps_the_alignment() {
     AnnotationGraphic g = graphic();
     g.setLabelAlignment(1, 0);
+    g.setLabelRotation(3);
     AnnotationGraphic copy = g.copy();
 
     assertEquals(1.0, copy.getLabelAlignX());
     assertEquals(0.0, copy.getLabelAlignY());
+    assertEquals(3, copy.getLabelRotation());
   }
 }
