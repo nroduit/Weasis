@@ -41,6 +41,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.util.LayeredEntries.Origin;
+import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
@@ -66,10 +67,12 @@ import picocli.CommandLine.ParentCommand;
     name = "hp",
     description =
         "Hanging protocols: the protocols of every layer, the plan the engine computes for a "
-            + "loaded study, and the validation of the protocols over a folder of studies.",
+            + "loaded study, its hanging on live viewers, and the validation of the protocols "
+            + "over a folder of studies.",
     subcommands = {
       HpCommands.ListProtocols.class,
       HpCommands.Match.class,
+      HpCommands.Apply.class,
       HpCommands.Validate.class
     })
 @Since("5.0")
@@ -78,6 +81,7 @@ public class HpCommands implements CommandExtension {
   private Supplier<DicomModel> modelSupplier = HpCommands::findModel;
   private Supplier<List<Candidate>> candidateSupplier = HangingEngine::candidates;
   private Supplier<List<DicomSeries>> selectionSupplier = HpCommands::explorerSelection;
+  private Supplier<HangingPlanApplier> applier = HangingPlanApplier::new;
 
   @Override
   public String getNamespace() {
@@ -97,6 +101,12 @@ public class HpCommands implements CommandExtension {
     this.modelSupplier = Objects.requireNonNull(model);
     this.candidateSupplier = Objects.requireNonNull(candidates);
     this.selectionSupplier = Objects.requireNonNull(selection);
+    return this;
+  }
+
+  /** Replaces the applier, for headless tests. */
+  HpCommands withApplier(Supplier<HangingPlanApplier> applier) {
+    this.applier = Objects.requireNonNull(applier);
     return this;
   }
 
@@ -270,29 +280,8 @@ public class HpCommands implements CommandExtension {
         ranking.add(s.add("reasons", reasons)); // NON-NLS
       }
       json.add("candidates", ranking); // NON-NLS
-      Optional<HangingPlan> plan;
-      if (protocolId != null) {
-        Candidate wanted =
-            candidates.stream()
-                .filter(c -> protocolId.equals(c.document().id()))
-                .findFirst()
-                .orElseThrow(
-                    () ->
-                        CommandFailure.unknownHandle(
-                            "Unknown protocol id: " + protocolId, "hp:list")); // NON-NLS
-        plan =
-            scores.stream()
-                .filter(s -> s.candidate() == wanted)
-                .findFirst()
-                .map(s -> HangingEngine.plan(s, series))
-                .or(() -> Optional.of(HangingEngine.plan(wanted.document(), series)));
-      } else {
-        plan =
-            scores.isEmpty()
-                ? Optional.empty()
-                : Optional.of(HangingEngine.plan(scores.getFirst(), series));
-      }
-      plan.ifPresent(p -> json.add("plan", p.toJson())); // NON-NLS
+      planOf(candidates, scores, series, protocolId)
+          .ifPresent(p -> json.add("plan", p.toJson())); // NON-NLS
       return json.build();
     }
 
@@ -395,6 +384,119 @@ public class HpCommands implements CommandExtension {
       }
     }
     return StudySeries.of(series, new SeriesFeatureExtractor());
+  }
+
+  /**
+   * The plan of the protocol asked for, planned even when it does not apply, else the plan of the
+   * best candidate, empty when none applies.
+   */
+  static Optional<HangingPlan> planOf(
+      List<Candidate> candidates,
+      List<ProtocolScore> scores,
+      List<StudySeries> series,
+      String protocolId) {
+    if (protocolId == null) {
+      return scores.isEmpty()
+          ? Optional.empty()
+          : Optional.of(HangingEngine.plan(scores.getFirst(), series));
+    }
+    Candidate wanted =
+        candidates.stream()
+            .filter(c -> protocolId.equals(c.document().id()))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    CommandFailure.unknownHandle(
+                        "Unknown protocol id: " + protocolId, "hp:list")); // NON-NLS
+    return scores.stream()
+        .filter(s -> s.candidate() == wanted)
+        .findFirst()
+        .map(s -> HangingEngine.plan(s, series))
+        .or(() -> Optional.of(HangingEngine.plan(wanted.document(), series)));
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "apply",
+      description =
+          "Hangs a protocol on a loaded study: computes its plan as 'match' does and opens the "
+              + "viewers of one reading step, the 2D cells in one viewer and each MPR or 3D cell "
+              + "in its own. A 2D viewer of the same patient is re-hung unless --new-tab. Returns "
+              + "the cells with the view ids they went to, so 'view2d:' verbs can address them.")
+  @Since("5.0")
+  static class Apply extends Verb {
+    @Option(
+        names = "--study",
+        paramLabel = "<study-uid>",
+        description = "Study Instance UID from 'dicom:list'.")
+    StudyUid studyUid;
+
+    @Option(
+        names = "--protocol",
+        paramLabel = "<protocol-id>",
+        description = "Hangs this protocol from 'list' even when another one scores better.")
+    String protocolId;
+
+    @Option(
+        names = "--protocols",
+        paramLabel = "<input-path>",
+        description = "A JSON file of protocol entries used instead of the layers, to try a draft.")
+    InputPath protocols;
+
+    @Option(
+        names = "--step",
+        paramLabel = "<step>",
+        description = "The reading step to hang, from 1 (default: the first).")
+    Integer step;
+
+    @Option(
+        names = "--new-tab",
+        description = "Opens new viewers instead of re-hanging the one of the same patient.")
+    boolean newTab;
+
+    @Override
+    protected void run() {
+      List<Candidate> candidates =
+          protocols == null
+              ? parent.candidateSupplier.get()
+              : Validate.readProtocols(protocols.value());
+      int index = step == null ? 0 : step - 1;
+      if (index < 0) {
+        throw new IllegalArgumentException("--step counts from 1");
+      }
+      HangingPlanApplier.Applied applied =
+          GuiExecutor.invokeAndRethrow(
+              () ->
+                  IdentityMask.callForCommand(
+                      () -> {
+                        DicomModel model = parent.model();
+                        MediaSeriesGroup study = parent.resolveStudy(model, studyUid);
+                        List<StudySeries> series = studySeries(model, study);
+                        List<ProtocolScore> scores = HangingEngine.select(candidates, series);
+                        HangingPlan plan =
+                            planOf(candidates, scores, series, protocolId)
+                                .orElseThrow(
+                                    () ->
+                                        new IllegalArgumentException(
+                                            "No protocol applies to this study; give --protocol"));
+                        if (plan.steps().isEmpty()) {
+                          throw new IllegalArgumentException(
+                              "The protocol " + plan.protocolId() + " has no display set");
+                        }
+                        MediaSeriesGroup patient = model.getParent(study, DicomModel.patient);
+                        return parent
+                            .applier
+                            .get()
+                            .apply(
+                                plan,
+                                index,
+                                model,
+                                patient,
+                                newTab ? ViewerPlacement.newTab() : ViewerPlacement.reuseViewer());
+                      }));
+      print(isJson() ? applied.toJson().toString() : applied.text());
+    }
   }
 
   // ---------------------------------------------------------------------------------------------

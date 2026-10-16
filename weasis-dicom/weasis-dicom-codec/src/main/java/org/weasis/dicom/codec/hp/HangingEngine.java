@@ -686,7 +686,7 @@ public final class HangingEngine {
   }
 
   /** The grid id of the 2D viewer for that many cells, rows first. */
-  static String gridFor(int cells) {
+  public static String gridFor(int cells) {
     if (cells <= 1) {
       return "1x1"; // NON-NLS
     }

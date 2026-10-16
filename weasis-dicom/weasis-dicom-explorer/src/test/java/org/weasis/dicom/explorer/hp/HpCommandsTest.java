@@ -48,6 +48,9 @@ class HpCommandsTest {
           "hp:match",
           "hp:match --study 1.2.3 --protocol ct-chest",
           "hp:match --protocols /tmp/draft.json",
+          "hp:apply",
+          "hp:apply --study 1.2.3 --protocol ct-chest --step 2 --new-tab",
+          "hp:apply --protocols /tmp/draft.json --json",
           "hp:validate --corpus /tmp/corpus",
           "hp:validate --corpus /tmp/corpus --protocols /tmp/draft.json --protocol ct-chest --json");
 

@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.2, protocol 1, application development.
+Command API 2.3, protocol 1, application development.
 
 ## config
 
@@ -261,6 +261,16 @@ Usage: `dicom:unload [-h] [--all] [--json] [--patient=<patient-handle>]... [--se
 
 The explorer panel: its filter facets, its selection and what it shows. 'dicom:' reads the data, 'explorer:' the view of it.
 
+### explorer:facets (since 5.0)
+
+The values the series filter can take for the selected patient, with the number of its series each value keeps: modalities, kinds of objects referencing the series, sources of images of interest, download states. The menu of the filter button shows the same; lets an agent choose a filter before 'explorer:filter'.
+
+Usage: `explorer:facets [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
 ### explorer:filter (since 5.0)
 
 Sets the facets of the series filter of the DICOM explorer, combined with AND: text, study, modalities, kinds of objects referencing the series, download state. Without option, prints the current filter. Returns the filter and how many series of the selected patient pass it.
@@ -278,16 +288,6 @@ Usage: `explorer:filter [-h] [--clear] [--json] [--text=<text>] [--interest=<int
 | --interest | string | [] | Keep the series with images of interest: any, or pointed at by one of ko, graphics, pr, seg (repeatable, or comma-separated). |
 | --clear | boolean |  | Clears every facet first. |
 
-### explorer:facets (since 5.0)
-
-The values the series filter can take for the selected patient, with the number of its series each value keeps: modalities, kinds of objects referencing the series, sources of images of interest, download states. The menu of the filter button shows the same; lets an agent choose a filter before 'explorer:filter'.
-
-Usage: `explorer:facets [-h] [--json]`
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-
 ### explorer:mode (since 5.0)
 
 Sets how the DICOM explorer draws the selected patient: 'thumbnails' (the column of thumbnails) or 'list' (one row per series and per object, studies as group rows). Without argument, prints the current mode.
@@ -302,17 +302,6 @@ Usage: `explorer:mode [-h] [--json] [<explorer-mode>]`
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 
-### explorer:select (since 5.0)
-
-Selects series in the DICOM explorer (and the patient they belong to), as a click would; the next 'dicom:open' without --series opens them. Returns the state.
-
-Usage: `explorer:select [-h] [--json] --series=<series-uid> [--series=<series-uid>]...`
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --series | series-uid | [] | Series Instance UID (or series id) from 'dicom:list'; repeatable. |
-
 ### explorer:reveal (since 5.0)
 
 Scrolls the DICOM explorer to a series and selects it, as a reader pointing at it: selects its patient, unfolds its study in the compact list and brings its thumbnail or row into view. Reports 'visible': false when the filter hides it (the filter is not changed).
@@ -323,6 +312,17 @@ Usage: `explorer:reveal [-h] [--json] --series=<series-uid>`
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list'. |
+
+### explorer:select (since 5.0)
+
+Selects series in the DICOM explorer (and the patient they belong to), as a click would; the next 'dicom:open' without --series opens them. Returns the state.
+
+Usage: `explorer:select [-h] [--json] --series=<series-uid> [--series=<series-uid>]...`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | series-uid | [] | Series Instance UID (or series id) from 'dicom:list'; repeatable. |
 
 ### explorer:state (since 5.0)
 
@@ -337,7 +337,24 @@ Usage: `explorer:state [-h] [--json]`
 
 ## hp
 
-Hanging protocols: the protocols of every layer, the plan the engine computes for a loaded study, and the validation of the protocols over a folder of studies.
+Hanging protocols: the protocols of every layer, the plan the engine computes for a loaded study, its hanging on live viewers, and the validation of the protocols over a folder of studies.
+
+### hp:apply (since 5.0)
+
+Hangs a protocol on a loaded study: computes its plan as 'match' does and opens the viewers of one reading step, the 2D cells in one viewer and each MPR or 3D cell in its own. A 2D viewer of the same patient is re-hung unless --new-tab. Returns the cells with the view ids they went to, so 'view2d:' verbs can address them.
+
+Usage: `hp:apply [-h] [--json] [--new-tab] [--protocol=<protocol-id>] [--protocols=<input-path>] [--step=<step>] [--study=<study-uid>]`
+
+Needs: file read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --study | study-uid |  | Study Instance UID from 'dicom:list'. |
+| --protocol | string |  | Hangs this protocol from 'list' even when another one scores better. |
+| --protocols | input-path |  | A JSON file of protocol entries used instead of the layers, to try a draft. |
+| --step | integer |  | The reading step to hang, from 1 (default: the first). |
+| --new-tab | boolean |  | Opens new viewers instead of re-hanging the one of the same patient. |
 
 ### hp:list (since 5.0)
 

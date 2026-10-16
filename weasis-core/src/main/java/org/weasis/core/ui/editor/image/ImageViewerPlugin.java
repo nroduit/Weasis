@@ -620,8 +620,13 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         return;
       }
       List<ViewCanvas<E>> canvases = typed.getAllViewCanvases();
-      for (int i = 0; i < canvases.size() && i < states.size(); i++) {
-        states.get(i).apply(canvases.get(i), resolver);
+      if (states.size() == 1 && canvases.size() > 1) {
+        // one presentation for a tiled cell: every tile takes it (a plan describes the cell once)
+        canvases.forEach(canvas -> states.getFirst().apply(canvas, resolver));
+      } else {
+        for (int i = 0; i < canvases.size() && i < states.size(); i++) {
+          states.get(i).apply(canvases.get(i), resolver);
+        }
       }
     } else {
       cellManager

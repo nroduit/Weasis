@@ -156,6 +156,10 @@ line naming the current spelling. Use the current one everywhere.
    and the plan of the best one: per reading step the layout to hang and, per cell, the series
    chosen, how it matched (exact, preferred, fallback, shared, empty), the reasons and the
    alternatives; `--protocol <id>` plans another one, `--protocols <file>` tries a draft file.
+   `hp:apply [--study <uid>] [--protocol <id>] [--step <n>] [--new-tab]` hangs one reading step
+   of that plan: the 2D cells in one viewer (re-hung when a viewer of the patient is open) and
+   each MPR or 3D cell in its own, and returns the cells with the view ids they went to, so the
+   `view2d:` verbs can address them; empty cells are listed under `unmatched`.
    `hp:validate --corpus <dir> [--protocols <file>]` runs the matching over a folder of studies
    without any viewer and reports the counts per protocol and the protocol of each study.
 8. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
