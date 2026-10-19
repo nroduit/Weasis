@@ -176,7 +176,7 @@ public class StowRS extends DicomStowRS {
     }
   }
 
-  private DicomState buildErrorMessage(Attributes error, DicomState state, int nbFile) {
+  static DicomState buildErrorMessage(Attributes error, DicomState state, int nbFile) {
     String message;
     if (error == null) {
       state.setStatus(Status.Success);
@@ -190,7 +190,7 @@ public class StowRS extends DicomStowRS {
         if (seq != null && !seq.isEmpty()) {
           Attributes cmd = Optional.ofNullable(p.getAttributes()).orElseGet(Attributes::new);
           cmd.setInt(Tag.Status, VR.US, Status.OneOrMoreFailures);
-          cmd.setInt(Tag.NumberOfCompletedSuboperations, VR.US, nbFile);
+          cmd.setInt(Tag.NumberOfCompletedSuboperations, VR.US, Math.max(0, nbFile - seq.size()));
           cmd.setInt(Tag.NumberOfFailedSuboperations, VR.US, seq.size());
           cmd.setInt(Tag.NumberOfWarningSuboperations, VR.US, 0);
           cmd.setInt(Tag.NumberOfRemainingSuboperations, VR.US, 0);
