@@ -144,9 +144,11 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
         if (!locked && selectedDragGraphList.contains(dragGraph)) {
 
-          if (selectedDragGraphList.size() > 1
-              && selectedDragGraphList.stream().noneMatch(g -> g.getLayer().getLocked())) {
-            ds = new BulkDragSequence(selectedDragGraphList, mouseEvt);
+          if (selectedDragGraphList.size() > 1) {
+            // The locked graphics of the selection stay in place
+            List<DragGraphic> movable =
+                selectedDragGraphList.stream().filter(g -> !g.getLayer().getLocked()).toList();
+            ds = new BulkDragSequence(movable, mouseEvt);
             newCursor = cursorSet.getMoveCursor();
 
           } else if (selectedDragGraphList.size() == 1) {
