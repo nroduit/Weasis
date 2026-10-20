@@ -73,6 +73,7 @@ import org.weasis.core.ui.docking.Shell;
 import org.weasis.core.ui.docking.SidePanel;
 import org.weasis.core.ui.docking.ws.Workspace;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
+import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -157,6 +158,7 @@ public final class UICore {
     this.systemPreferences = new WProperties(configData.getSystemProps());
     this.pluginPersistenceMap = new HashMap<>();
     this.localPersistence = new WProperties();
+    ScreenRoles.setStore(() -> localPersistence);
     this.viewerPlugins = Collections.synchronizedList(new ArrayList<>());
     this.explorerPlugins = Collections.synchronizedList(new ArrayList<>());
     this.explorerPluginToolbars = Collections.synchronizedList(new ArrayList<>());

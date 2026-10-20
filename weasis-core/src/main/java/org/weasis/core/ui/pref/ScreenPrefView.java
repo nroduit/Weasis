@@ -35,11 +35,13 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.weasis.core.Messages;
+import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.util.StringUtil;
 
@@ -85,6 +87,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
           });
       realZoomButton.setToolTipText(Messages.getString("ScreenPrefView.calib_real"));
       add(GuiUtils.getFlowLayoutPanel(monitorLabel, realZoomButton));
+      add(GuiUtils.getFlowLayoutPanel(roleLabel(), roleComboBox(monitor.getMonitorID())));
     }
 
     int defIndex = getDefaultMonitor();
@@ -113,6 +116,35 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             defMonitorComboBox));
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
+  }
+
+  private static JLabel roleLabel() {
+    JLabel label = new JLabel(Messages.getString("ScreenPrefView.role") + StringUtil.COLON);
+    label.setBorder(GuiUtils.getEmptyBorder(0, ITEM_SEPARATOR_LARGE, 0, 0));
+    return label;
+  }
+
+  /**
+   * The role of a monitor: automatic (derived from its place, see {@link ScreenRoles}) or one the
+   * user chooses, kept in the local settings of this workstation.
+   */
+  private static JComboBox<Object> roleComboBox(String monitorId) {
+    String automatic = Messages.getString("ScreenPrefView.role_auto");
+    JComboBox<Object> combo = new JComboBox<>();
+    combo.addItem(automatic);
+    for (ScreenRole role : ScreenRole.values()) {
+      combo.addItem(role);
+    }
+    ScreenRole current = ScreenRoles.explicitRoles().get(monitorId);
+    combo.setSelectedItem(current == null ? automatic : current);
+    combo.addItemListener(
+        e -> {
+          if (e.getStateChange() == ItemEvent.SELECTED) {
+            Object item = ((JComboBox<?>) e.getSource()).getSelectedItem();
+            ScreenRoles.setExplicitRole(monitorId, item instanceof ScreenRole role ? role : null);
+          }
+        });
+    return combo;
   }
 
   public static int getDefaultMonitor() {

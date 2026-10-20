@@ -41,17 +41,28 @@ reports the selection under `selected`.
 A screen is addressed by a role, never by a device, in what travels (sessions, protocols,
 verbs): `control` (the worklist screen, where the main window is), `diagnostic-1`,
 `diagnostic-2`, `color`, `portrait` (`ScreenRole` in the command vocabulary). `ScreenRoles`
-maps them to the monitors of the workstation; until the Screens preference page stores a
-mapping, it derives one: the main window's screen is `control`, the other screens from left to
-right are `diagnostic-1` and `diagnostic-2`, `portrait` the first other screen taller than wide,
-`color` the first other screen; a role no monitor fills resolves to the nearest one, so a
-single-screen workstation maps every role to its screen. `ExternalDisplay.onRole(role)` is the
-placement a hanging plan or a session uses (`ViewerPlacement.External`), and
-`ViewerPlugin.showDockable` detaches the viewer on that screen through the manager.
+maps them to the monitors of the workstation. A role the user gave a monitor on the Screens
+preference page wins (local setting `weasis.screen.<id>.role`, never in the remote
+preferences; `workspace:screens --id <screen> --role <role>` sets it too, `--auto` takes it
+back); the other roles are derived: the main window's screen is `control`, the other screens
+from left to right are `diagnostic-1` and `diagnostic-2`, `portrait` the first other screen
+taller than wide, `color` the first other screen. A role no monitor fills resolves to the
+nearest one, so every role resolves and a single-screen workstation maps every role to its
+screen; the mapping says which roles are *fulfilled* by a monitor of their own.
+`ExternalDisplay.onRole(role)` is the placement a hanging plan or a session uses
+(`ViewerPlacement.External`), and `ViewerPlugin.showDockable` detaches the viewer on that
+screen through the manager.
 
-Explorer and tool panels (`SidePanel`, `MiniStrip`, `PluginTool`) are plain Swing components
-outside the workspace tree; the bottom footer hosts panels contributed through the
-`FooterPanelProvider` extension point (`org.weasis.core.api.gui`).
+A snapshot window carries its monitor (device id, bounds of the monitor and the role it
+answered to), its own bounds and its state (`normal`, `maximized`; `fullscreen` reserved).
+A restore places a window by role first: on the monitor of a fulfilled role, at the saved
+bounds when it is the same device, at the same relative place and size when the role moved
+to another monitor; else on its device when it still exists; else at its bounds when a
+monitor shows them. A viewer window that none of this places folds into the main window as
+tabs, or as a split beside the main tree when the local setting `weasis.screen.fold` says
+`split`; nothing is lost. The main window goes back to its saved place and state the same
+way. `restore` returns what it folded, and `workspace:load` reports it under `folded` with the
+tool ids the shell did not offer under `skippedTools`.
 
 ## Drag and drop
 

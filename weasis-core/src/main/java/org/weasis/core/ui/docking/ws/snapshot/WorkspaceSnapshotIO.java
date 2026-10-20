@@ -50,6 +50,15 @@ public final class WorkspaceSnapshotIO {
       if (window.maximizedViewId() != null) {
         w.add("maximizedViewId", window.maximizedViewId());
       }
+      if (window.role() != null) {
+        w.add("role", window.role());
+      }
+      if (window.screenBounds() != null) {
+        w.add("screenBounds", toJson(window.screenBounds()));
+      }
+      if (window.state() != null) {
+        w.add("state", window.state());
+      }
       w.add("root", toJson(window.root()));
       windows.add(w);
     }
@@ -112,19 +121,22 @@ public final class WorkspaceSnapshotIO {
   }
 
   private static WindowSnapshot windowFromJson(JsonObject w) {
-    Rectangle bounds = null;
-    JsonObject b = w.getJsonObject("bounds");
-    if (b != null) {
-      bounds =
-          new Rectangle(
-              b.getInt("x", 0), b.getInt("y", 0), b.getInt("width", 0), b.getInt("height", 0));
-    }
     return new WindowSnapshot(
         w.getString("screenId", null),
-        bounds,
+        rectangle(w.getJsonObject("bounds")),
         w.getBoolean("main", true),
         nodeFromJson(w.getJsonObject("root")),
-        w.getString("maximizedViewId", null));
+        w.getString("maximizedViewId", null),
+        w.getString("role", null),
+        rectangle(w.getJsonObject("screenBounds")),
+        w.getString("state", null));
+  }
+
+  private static Rectangle rectangle(JsonObject b) {
+    return b == null
+        ? null
+        : new Rectangle(
+            b.getInt("x", 0), b.getInt("y", 0), b.getInt("width", 0), b.getInt("height", 0));
   }
 
   private static Node nodeFromJson(JsonObject node) {

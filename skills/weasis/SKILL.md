@@ -154,9 +154,13 @@ line naming the current spelling. Use the current one everywhere.
    Windows: `workspace:detach --view <id> --screen diagnostic-1` floats a view in a viewer
    window filling the screen of that role (`workspace:screens` lists the roles control,
    diagnostic-1, diagnostic-2, color, portrait with the monitor each resolves to; `--bounds`
-   gives pixels instead). The toolbar row follows the active window, a new viewer opens in the
+   gives pixels instead; `--id <screen> --role <role>` gives a monitor a role for good, `--auto`
+   takes it back). The toolbar row follows the active window, a new viewer opens in the
    window of the selected view, and `workspace:list` names that view under `selected`;
-   `hp:apply --screen control` hangs a reading step in a viewer window on that screen.
+   `hp:apply --screen control` hangs a reading step in a viewer window on that screen. A
+   saved layout remembers each window's screen role and state: `workspace:load` puts a window
+   back on the monitor of its role, and folds into the main window one whose monitor is
+   missing (listed under `folded`).
 9. **Hanging protocols** (engine and built-in library, no UI yet): a study loaded by any verb
    opens already hung by its best protocol (setting `weasis.hp.open`, `PROTOCOL` by default,
    `FIRST_SERIES` for the old behaviour). `hp:list` shows the protocols of every layer, the

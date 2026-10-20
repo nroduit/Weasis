@@ -12,6 +12,7 @@ package org.weasis.core.ui.docking.ws.snapshot;
 import jakarta.json.JsonObject;
 import java.awt.Rectangle;
 import java.util.List;
+import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.ui.docking.ShellState;
 
 /**
@@ -34,8 +35,31 @@ public record WorkspaceSnapshot(String version, List<WindowSnapshot> windows, Sh
     return new WorkspaceSnapshot(version, windows, state);
   }
 
+  /**
+   * One window: the monitor it was on (device id, bounds of that monitor and the {@link ScreenRole
+   * role} it answered to, which is what a restore maps first), its own bounds and state ({@link
+   * #NORMAL}, {@link #MAXIMIZED}, {@link #FULLSCREEN}), its split tree and its maximized view.
+   * Role, screen bounds and state are null in snapshots written before 5.0.
+   */
   public record WindowSnapshot(
-      String screenId, Rectangle bounds, boolean main, Node root, String maximizedViewId) {}
+      String screenId,
+      Rectangle bounds,
+      boolean main,
+      Node root,
+      String maximizedViewId,
+      String role,
+      Rectangle screenBounds,
+      String state) {
+
+    public static final String NORMAL = "normal"; // NON-NLS
+    public static final String MAXIMIZED = "maximized"; // NON-NLS
+    public static final String FULLSCREEN = "fullscreen"; // NON-NLS
+
+    public WindowSnapshot(
+        String screenId, Rectangle bounds, boolean main, Node root, String maximizedViewId) {
+      this(screenId, bounds, main, root, maximizedViewId, null, null, null);
+    }
+  }
 
   public sealed interface Node permits SplitNode, GroupNode {}
 

@@ -381,54 +381,97 @@ public class WorkspaceCommands implements CommandExtension {
       name = "screens",
       description =
           "The screens of the workstation by role (control, diagnostic-1, diagnostic-2, color, "
-              + "portrait) with the monitor each one resolves to. The main window's screen is the "
-              + "control screen; a role no monitor fills resolves to the nearest one.")
+              + "portrait) with the monitor each one resolves to: the main window's screen is "
+              + "the control screen, the others are derived left to right, and a role the user "
+              + "gave a monitor on the Screens preference page wins. A role without a monitor of "
+              + "its own resolves to the nearest one and is reported as not fulfilled. --id with "
+              + "--role gives a monitor a role, --id with --auto takes it back.")
   @Since("5.0")
   static class Screens extends Verb {
+    @Option(
+        names = "--id",
+        paramLabel = "<screen-id>",
+        description = "A screen id from the listing, to give it a role or take it back.")
+    String id;
+
+    @Option(
+        names = "--role",
+        paramLabel = "<screen-role>",
+        description = "The role of --id: ${COMPLETION-CANDIDATES}.")
+    ScreenRole role;
+
+    @Option(names = "--auto", description = "Clears the role of --id; it is derived again.")
+    boolean auto;
+
     @Override
     protected void run() {
       WorkspaceManager manager = parent.manager();
-      Map<ScreenRole, GraphicsDevice> roles =
-          GuiExecutor.invokeAndRethrow(() -> ScreenRoles.current(manager.mainWindow()));
-      GraphicsDevice main = roles.get(ScreenRole.CONTROL);
+      if (id == null && (role != null || auto)) {
+        throw new IllegalArgumentException("--role and --auto need --id");
+      }
+      if (id != null && (role == null) == !auto) {
+        throw new IllegalArgumentException("--id needs --role or --auto, not both");
+      }
+      Map<String, GraphicsDevice> devices = ScreenRoles.devices();
+      if (id != null) {
+        if (!devices.containsKey(id)) {
+          throw new IllegalArgumentException(
+              "Unknown screen id: " + id + "; the listing gives them"); // NON-NLS
+        }
+        ScreenRoles.setExplicitRole(id, auto ? null : role);
+      }
+      ScreenRoles.Mapping mapping =
+          GuiExecutor.invokeAndRethrow(() -> ScreenRoles.mapping(manager.mainWindow()));
+      ScreenRoles.Screen main = mapping.screen(ScreenRole.CONTROL);
       if (isJson()) {
         JsonArrayBuilder array = Json.createArrayBuilder();
-        roles.forEach(
-            (role, device) -> {
-              Rectangle bounds = device.getDefaultConfiguration().getBounds();
-              array.add(
-                  Json.createObjectBuilder()
-                      .add("role", role.key())
-                      .add("screen", device.getIDstring())
-                      .add(
-                          "bounds",
-                          Json.createObjectBuilder()
-                              .add("x", bounds.x)
-                              .add("y", bounds.y)
-                              .add("width", bounds.width)
-                              .add("height", bounds.height))
-                      .add("main", device == main));
-            });
+        for (ScreenRole r : ScreenRole.values()) {
+          ScreenRoles.Screen screen = mapping.screen(r);
+          if (screen == null) {
+            continue;
+          }
+          Rectangle b = screen.bounds();
+          array.add(
+              Json.createObjectBuilder()
+                  .add("role", r.key())
+                  .add("screen", screen.id())
+                  .add(
+                      "bounds",
+                      Json.createObjectBuilder()
+                          .add("x", b.x)
+                          .add("y", b.y)
+                          .add("width", b.width)
+                          .add("height", b.height))
+                  .add("main", screen.equals(main))
+                  .add("fulfilled", mapping.isFulfilled(r))
+                  .add("source", mapping.isExplicit(r) ? "explicit" : "derived")); // NON-NLS
+        }
         print(Json.createObjectBuilder().add("screens", array).build().toString());
       } else {
         StringBuilder text = new StringBuilder();
-        roles.forEach(
-            (role, device) -> {
-              Rectangle b = device.getDefaultConfiguration().getBounds();
-              text.append(role.key())
-                  .append('\t')
-                  .append(device.getIDstring())
-                  .append('\t')
-                  .append(b.x)
-                  .append(',')
-                  .append(b.y)
-                  .append(',')
-                  .append(b.width)
-                  .append(',')
-                  .append(b.height)
-                  .append(device == main ? "\t(main)" : "")
-                  .append(System.lineSeparator());
-            });
+        for (ScreenRole r : ScreenRole.values()) {
+          ScreenRoles.Screen screen = mapping.screen(r);
+          if (screen == null) {
+            continue;
+          }
+          Rectangle b = screen.bounds();
+          text.append(r.key())
+              .append('\t')
+              .append(screen.id())
+              .append('\t')
+              .append(b.x)
+              .append(',')
+              .append(b.y)
+              .append(',')
+              .append(b.width)
+              .append(',')
+              .append(b.height)
+              .append('\t')
+              .append(mapping.isExplicit(r) ? "explicit" : "derived")
+              .append(mapping.isFulfilled(r) ? "" : ", shared")
+              .append(screen.equals(main) ? "\t(main)" : "")
+              .append(System.lineSeparator());
+        }
         print(text.toString().stripTrailing());
       }
     }
@@ -490,11 +533,13 @@ public class WorkspaceCommands implements CommandExtension {
     protected void run() throws Exception {
       WorkspaceSnapshot snapshot = WorkspaceSnapshotIO.read(file.value());
       WorkspaceManager manager = parent.manager();
+      List<String> folded = new ArrayList<>();
+      List<String> skippedTools = new ArrayList<>();
       GuiExecutor.invokeAndRethrow(
           () -> {
             // open views are reused by id, closed viewers recreated; the rest is skipped
             List<WorkspaceView> pool = manager.getViews();
-            manager.restore(snapshot, new ViewerRestorer(pool));
+            folded.addAll(manager.restore(snapshot, new ViewerRestorer(pool)).folded());
             for (WorkspaceView leftover : pool) {
               if (!manager.isShowing(leftover) && leftover instanceof ViewerPlugin<?> plugin) {
                 plugin.close();
@@ -503,10 +548,22 @@ public class WorkspaceCommands implements CommandExtension {
             }
             Shell shell = parent.shell();
             if (shell != null && snapshot.shell() != null) {
-              ShellState.apply(snapshot.shell(), shell);
+              skippedTools.addAll(ShellState.apply(snapshot.shell(), shell));
             }
           });
-      printState();
+      if (isJson()) {
+        JsonObject state = JsonUtil.readObject(state(manager));
+        JsonObjectBuilder json = Json.createObjectBuilder(state);
+        json.add("folded", Json.createArrayBuilder(folded)); // NON-NLS
+        json.add("skippedTools", Json.createArrayBuilder(skippedTools)); // NON-NLS
+        print(json.build().toString());
+      } else if (!folded.isEmpty() || !skippedTools.isEmpty()) {
+        print(
+            "folded windows: "
+                + String.join(", ", folded)
+                + "; skipped tools: "
+                + String.join(", ", skippedTools)); // NON-NLS
+      }
     }
   }
 

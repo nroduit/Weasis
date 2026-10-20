@@ -35,6 +35,7 @@ import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.GroupNode;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.SplitNode;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.ViewDescriptor;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.WindowSnapshot;
+import org.weasis.core.ui.editor.ScreenRoles;
 
 class WorkspaceSnapshotTest {
 
@@ -175,6 +176,78 @@ class WorkspaceSnapshotTest {
     assertEquals(snapshot, parsed);
     assertNotNull(parsed.windows().get(1).bounds());
     assertEquals(":0.1", parsed.windows().get(1).screenId());
+    assertNull(parsed.windows().get(1).role(), "a snapshot without a role reads as none");
+  }
+
+  @Test
+  void theScreenRoleAndTheWindowStateTravelInTheJson() {
+    WindowSnapshot window =
+        new WindowSnapshot(
+            ":0.1",
+            new Rectangle(1920, 0, 1280, 1024),
+            false,
+            new GroupNode(
+                List.of(new ViewDescriptor("d", "viewer2d", JsonObject.EMPTY_JSON_OBJECT)), 0),
+            null,
+            "diagnostic-1",
+            new Rectangle(1920, 0, 2560, 1440),
+            WindowSnapshot.MAXIMIZED);
+    WorkspaceSnapshot snapshot =
+        new WorkspaceSnapshot(WorkspaceSnapshot.CURRENT_VERSION, List.of(window));
+    JsonObject json = WorkspaceSnapshotIO.toJson(snapshot);
+    JsonObject w = json.getJsonArray("windows").getJsonObject(0);
+    assertEquals("diagnostic-1", w.getString("role"));
+    assertEquals("maximized", w.getString("state"));
+    assertEquals(2560, w.getJsonObject("screenBounds").getInt("width"));
+    assertEquals(snapshot, WorkspaceSnapshotIO.fromJson(json));
+  }
+
+  @Test
+  void aWindowWhoseMonitorIsMissingFoldsIntoTheMainWindow() {
+    StubView a = new StubView("a");
+    StubView b = new StubView("b");
+    StubView c = new StubView("c");
+    List<WorkspaceView> pool = List.of(a, b, c);
+    Rectangle farAway = new Rectangle(1_000_000, 1_000_000, 800, 600);
+    WorkspaceSnapshot snapshot =
+        new WorkspaceSnapshot(
+            WorkspaceSnapshot.CURRENT_VERSION,
+            List.of(
+                new WindowSnapshot(
+                    "gone",
+                    farAway,
+                    false,
+                    new SplitNode(
+                        false,
+                        0.5,
+                        new GroupNode(List.of(descriptor(b)), 0),
+                        new GroupNode(List.of(descriptor(c)), 0)),
+                    null,
+                    "diagnostic-2",
+                    farAway,
+                    WindowSnapshot.NORMAL),
+                new WindowSnapshot(
+                    null, null, true, new GroupNode(List.of(descriptor(a)), 0), null)));
+    ViewRestorer restorer =
+        d -> pool.stream().filter(v -> v.viewId().equals(d.viewId())).findFirst();
+
+    WorkspaceManager tabs = new WorkspaceManager(null);
+    WorkspaceManager.RestoreReport report =
+        tabs.restore(snapshot, restorer, ScreenRoles.FoldMode.TABS);
+    assertEquals(List.of("diagnostic-2"), report.folded());
+    assertEquals(1, tabs.getTabGroups(null).size(), "the folded views joined the first group");
+    assertEquals(List.of(a, b, c), tabs.getViews());
+
+    WorkspaceManager split = new WorkspaceManager(null);
+    assertEquals(
+        List.of("diagnostic-2"),
+        split.restore(snapshot, restorer, ScreenRoles.FoldMode.SPLIT).folded());
+    assertEquals(3, split.getTabGroups(null).size(), "the folded tree was split beside the main");
+    assertTrue(split.isShowing(b));
+  }
+
+  private static ViewDescriptor descriptor(StubView view) {
+    return new ViewDescriptor(view.viewId(), "stub", view.saveState());
   }
 
   @Test

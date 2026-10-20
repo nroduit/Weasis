@@ -1103,16 +1103,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
+| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 
 
 ## view3d
@@ -1277,13 +1277,16 @@ Needs: file write
 
 ### workspace:screens (since 5.0)
 
-The screens of the workstation by role (control, diagnostic-1, diagnostic-2, color, portrait) with the monitor each one resolves to. The main window's screen is the control screen; a role no monitor fills resolves to the nearest one.
+The screens of the workstation by role (control, diagnostic-1, diagnostic-2, color, portrait) with the monitor each one resolves to: the main window's screen is the control screen, the others are derived left to right, and a role the user gave a monitor on the Screens preference page wins. A role without a monitor of its own resolves to the nearest one and is reported as not fulfilled. --id with --role gives a monitor a role, --id with --auto takes it back.
 
-Usage: `workspace:screens [-h] [--json]`
+Usage: `workspace:screens [-h] [--auto] [--json] [--id=<screen-id>] [--role=<screen-role>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
+| --id | string |  | A screen id from the listing, to give it a role or take it back. |
+| --role | screen-role |  | The role of --id: control, diagnostic-1, diagnostic-2, color, portrait. |
+| --auto | boolean |  | Clears the role of --id; it is derived again. |
 
 ### workspace:select
 

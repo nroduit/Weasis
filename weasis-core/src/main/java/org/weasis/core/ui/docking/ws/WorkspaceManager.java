@@ -11,16 +11,16 @@ package org.weasis.core.ui.docking.ws;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.HeadlessException;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,8 +29,12 @@ import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
+import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.ui.docking.ws.snapshot.ViewRestorer;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
+import org.weasis.core.ui.editor.ScreenRoles;
+import org.weasis.core.ui.editor.ScreenRoles.Mapping;
+import org.weasis.core.ui.editor.ScreenRoles.Screen;
 
 /**
  * The workspace engine: tab groups and splits of viewer panels in the central area of each window.
@@ -346,9 +350,13 @@ public final class WorkspaceManager {
 
   // ---- snapshots ----------------------------------------------------------
 
-  /** Captures the layout of every window: screens, bounds, split trees and view descriptors. */
+  /**
+   * Captures the layout of every window: screen (device id, bounds and role), bounds, state, split
+   * trees and view descriptors.
+   */
   public WorkspaceSnapshot capture() {
     List<WorkspaceSnapshot.WindowSnapshot> windows = new ArrayList<>();
+    Mapping mapping = ScreenRoles.mapping(mainWindow);
     for (Workspace workspace : workspaces.values()) {
       if (workspace.isEmpty()) {
         continue;
@@ -356,11 +364,22 @@ public final class WorkspaceManager {
       Window window = workspace.getWindow();
       String screenId = null;
       Rectangle bounds = null;
+      String role = null;
+      Rectangle screenBounds = null;
+      String state = null;
       if (window != null) {
         bounds = window.getBounds();
         GraphicsConfiguration gc = window.getGraphicsConfiguration();
         if (gc != null) {
           screenId = gc.getDevice().getIDstring();
+          screenBounds = gc.getBounds();
+          role = mapping.roleOf(screenId).map(ScreenRole::key).orElse(null);
+        }
+        if (window instanceof Frame frame) {
+          state =
+              (frame.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH
+                  ? WorkspaceSnapshot.WindowSnapshot.MAXIMIZED
+                  : WorkspaceSnapshot.WindowSnapshot.NORMAL;
         }
       }
       WorkspaceView maximized = workspace.getMaximizedView();
@@ -370,7 +389,10 @@ public final class WorkspaceManager {
               bounds,
               workspace == mainWorkspace,
               captureNode(workspace.getRoot()),
-              maximized != null ? maximized.viewId() : null));
+              maximized != null ? maximized.viewId() : null,
+              role,
+              screenBounds,
+              state));
     }
     return new WorkspaceSnapshot(WorkspaceSnapshot.CURRENT_VERSION, windows);
   }
@@ -398,48 +420,66 @@ public final class WorkspaceManager {
         captureNode(split.getRightComponent()));
   }
 
+  /** What a restore could not place as saved: the windows folded into the main window. */
+  public record RestoreReport(List<String> folded) {}
+
   /**
    * Rebuilds the layout from a snapshot. Every currently docked view is undocked first (not
    * disposed); the restorer resolves each descriptor to a live or recreated view, and unresolved
-   * descriptors are skipped so the layout collapses gracefully.
+   * descriptors are skipped so the layout collapses gracefully. Windows are placed by screen role
+   * first, then by device id, then by bounds; a viewer window whose monitor is missing folds into
+   * the main window (tabs, or a split by the local setting), never lost.
    */
-  public void restore(WorkspaceSnapshot snapshot, ViewRestorer restorer) {
+  public RestoreReport restore(WorkspaceSnapshot snapshot, ViewRestorer restorer) {
+    return restore(snapshot, restorer, ScreenRoles.foldMode());
+  }
+
+  /** {@link #restore(WorkspaceSnapshot, ViewRestorer)} with the fold mode given. */
+  public RestoreReport restore(
+      WorkspaceSnapshot snapshot, ViewRestorer restorer, ScreenRoles.FoldMode foldMode) {
+    List<String> folded = new ArrayList<>();
+    Mapping mapping = ScreenRoles.mapping(mainWindow);
+    Map<String, GraphicsDevice> devices = ScreenRoles.devices();
     mutate(
         () -> {
           for (WorkspaceView view : getViews()) {
             undockInternal(view);
           }
-          for (WorkspaceSnapshot.WindowSnapshot win : snapshot.windows()) {
-            Workspace target;
-            DetachedFrame frame = null;
+          // the main window first: folded windows join it
+          List<WorkspaceSnapshot.WindowSnapshot> ordered =
+              snapshot.windows().stream().sorted(Comparator.comparing(win -> !win.main())).toList();
+          for (WorkspaceSnapshot.WindowSnapshot win : ordered) {
             if (win.main()) {
-              target = mainWorkspace;
-            } else {
-              frame =
-                  new DetachedFrame(this, System.getProperty("weasis.name", "Weasis")); // NON-NLS
-              target = frame.getWorkspace();
-              addWorkspace(frame, target);
+              Component root = restoreNode(win.root(), mainWorkspace, restorer);
+              if (root != null) {
+                mainWorkspace.setRoot(root);
+              }
+              placeMainWindow(win, mapping, devices);
+              showMaximized(win, mainWorkspace);
+              continue;
             }
-            Component root = restoreNode(win.root(), target, restorer);
-            if (root == null) {
-              if (frame != null) {
-                workspaces.remove(frame);
-                frame.dispose();
+            Rectangle bounds = place(win, mapping, devices).orElse(null);
+            if (bounds == null) {
+              if (fold(win, restorer, foldMode)) {
+                folded.add(win.role() != null ? win.role() : String.valueOf(win.screenId()));
               }
               continue;
             }
+            DetachedFrame frame =
+                new DetachedFrame(this, System.getProperty("weasis.name", "Weasis")); // NON-NLS
+            Workspace target = frame.getWorkspace();
+            addWorkspace(frame, target);
+            Component root = restoreNode(win.root(), target, restorer);
+            if (root == null) {
+              workspaces.remove(frame);
+              frame.dispose();
+              continue;
+            }
             target.setRoot(root);
-            if (frame != null) {
-              frame.setBounds(mapToAvailableScreen(win));
-              frame.setVisible(true);
-            }
-            if (win.maximizedViewId() != null) {
-              target.groups().stream()
-                  .flatMap(g -> g.getViews().stream())
-                  .filter(v -> win.maximizedViewId().equals(v.viewId()))
-                  .findFirst()
-                  .ifPresent(target::showMaximized);
-            }
+            frame.setBounds(bounds);
+            frame.setVisible(true);
+            applyState(frame, win.state());
+            showMaximized(win, target);
           }
         });
     for (Workspace workspace : workspaces.values()) {
@@ -447,6 +487,148 @@ public final class WorkspaceManager {
         fireIfSelected(workspace.groups().getFirst().getSelectedView());
       }
     }
+    return new RestoreReport(List.copyOf(folded));
+  }
+
+  private static void showMaximized(WorkspaceSnapshot.WindowSnapshot win, Workspace target) {
+    if (win.maximizedViewId() != null) {
+      target.groups().stream()
+          .flatMap(g -> g.getViews().stream())
+          .filter(v -> win.maximizedViewId().equals(v.viewId()))
+          .findFirst()
+          .ifPresent(target::showMaximized);
+    }
+  }
+
+  private static void applyState(Window window, String state) {
+    if (window instanceof Frame frame && state != null) {
+      int extended = frame.getExtendedState();
+      if (WorkspaceSnapshot.WindowSnapshot.MAXIMIZED.equals(state)) {
+        frame.setExtendedState(extended | Frame.MAXIMIZED_BOTH);
+      } else if (WorkspaceSnapshot.WindowSnapshot.NORMAL.equals(state)) {
+        frame.setExtendedState(extended & ~Frame.MAXIMIZED_BOTH);
+      }
+    }
+  }
+
+  /** The main window goes back where the snapshot had it, when that place still exists. */
+  private void placeMainWindow(
+      WorkspaceSnapshot.WindowSnapshot win, Mapping mapping, Map<String, GraphicsDevice> devices) {
+    if (mainWindow == null || win.bounds() == null) {
+      return;
+    }
+    place(win, mapping, devices).ifPresent(mainWindow::setBounds);
+    applyState(mainWindow, win.state());
+  }
+
+  /**
+   * Where a saved window goes on this workstation: on the monitor of its role when that role has
+   * one (at the saved bounds, or the same place on the new monitor when it is another one), else on
+   * its device when it still exists, else at its bounds when a monitor shows them; empty when
+   * nothing of that is true and the window has to fold.
+   */
+  private Optional<Rectangle> place(
+      WorkspaceSnapshot.WindowSnapshot win, Mapping mapping, Map<String, GraphicsDevice> devices) {
+    Rectangle saved = win.bounds();
+    if (saved == null) {
+      return devices.isEmpty() ? Optional.empty() : Optional.of(defaultDetachedBounds());
+    }
+    ScreenRole role = null;
+    if (win.role() != null) {
+      try {
+        role = ScreenRole.parse(win.role());
+      } catch (IllegalArgumentException e) {
+        // a role this version does not know: place by device or bounds
+      }
+    }
+    if (role != null && mapping.isFulfilled(role)) {
+      Screen target = mapping.screen(role);
+      if (target.id().equals(win.screenId())) {
+        return Optional.of(new Rectangle(saved));
+      }
+      return Optional.of(translate(saved, win.screenBounds(), target.bounds()));
+    }
+    if (win.screenId() != null && devices.containsKey(win.screenId())) {
+      return Optional.of(new Rectangle(saved));
+    }
+    for (GraphicsDevice device : devices.values()) {
+      if (device.getDefaultConfiguration().getBounds().intersects(saved)) {
+        return Optional.of(new Rectangle(saved));
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * The same place on another monitor: the saved fractions of the old screen applied to the new.
+   */
+  static Rectangle translate(Rectangle saved, Rectangle from, Rectangle to) {
+    if (from == null || from.width <= 0 || from.height <= 0) {
+      return new Rectangle(
+          to.x, to.y, Math.min(saved.width, to.width), Math.min(saved.height, to.height));
+    }
+    double sx = (double) to.width / from.width;
+    double sy = (double) to.height / from.height;
+    return new Rectangle(
+        (int) Math.round(to.x + (saved.x - from.x) * sx),
+        (int) Math.round(to.y + (saved.y - from.y) * sy),
+        (int) Math.round(saved.width * sx),
+        (int) Math.round(saved.height * sy));
+  }
+
+  /** Folds the views of a saved window into the main window; false when none could be restored. */
+  private boolean fold(
+      WorkspaceSnapshot.WindowSnapshot win, ViewRestorer restorer, ScreenRoles.FoldMode mode) {
+    if (mode == ScreenRoles.FoldMode.SPLIT) {
+      Component root = restoreNode(win.root(), mainWorkspace, restorer);
+      if (root == null) {
+        return false;
+      }
+      Component current = mainWorkspace.getRoot();
+      mainWorkspace.setRoot(current == null ? root : newSplit(false, DEFAULT_RATIO, current, root));
+      return true;
+    }
+    TabGroup target = mainWorkspace.isEmpty() ? null : mainWorkspace.groups().getFirst();
+    boolean any = false;
+    for (WorkspaceSnapshot.ViewDescriptor descriptor : descriptorsOf(win.root())) {
+      WorkspaceView view = restorer.recreate(descriptor).orElse(null);
+      if (view == null) {
+        continue;
+      }
+      if (viewGroups.containsKey(view)) {
+        undockInternal(view);
+      }
+      if (target == null) {
+        target = newGroup(mainWorkspace);
+        mainWorkspace.setRoot(target);
+      }
+      dockInto(view, target, -1);
+      any = true;
+    }
+    return any;
+  }
+
+  private static List<WorkspaceSnapshot.ViewDescriptor> descriptorsOf(WorkspaceSnapshot.Node node) {
+    return switch (node) {
+      case WorkspaceSnapshot.GroupNode(List<WorkspaceSnapshot.ViewDescriptor> views, int s) ->
+          views;
+      case WorkspaceSnapshot.SplitNode(boolean v, double r, var first, var second) -> {
+        List<WorkspaceSnapshot.ViewDescriptor> all = new ArrayList<>(descriptorsOf(first));
+        all.addAll(descriptorsOf(second));
+        yield all;
+      }
+      case null -> List.of();
+    };
+  }
+
+  private static JSplitPane newSplit(boolean vertical, double ratio, Component a, Component b) {
+    JSplitPane split =
+        new JSplitPane(vertical ? JSplitPane.VERTICAL_SPLIT : JSplitPane.HORIZONTAL_SPLIT, a, b);
+    split.setContinuousLayout(true);
+    split.setResizeWeight(0.5);
+    split.setBorder(null);
+    SwingUtilities.invokeLater(() -> split.setDividerLocation(ratio));
+    return split;
   }
 
   private Component restoreNode(
@@ -479,39 +661,10 @@ public final class WorkspaceManager {
         if (a == null || b == null) {
           yield a != null ? a : b;
         }
-        JSplitPane split =
-            new JSplitPane(
-                vertical ? JSplitPane.VERTICAL_SPLIT : JSplitPane.HORIZONTAL_SPLIT, a, b);
-        split.setContinuousLayout(true);
-        split.setResizeWeight(0.5);
-        split.setBorder(null);
-        SwingUtilities.invokeLater(() -> split.setDividerLocation(ratio));
-        yield split;
+        yield newSplit(vertical, ratio, a, b);
       }
       case null -> null;
     };
-  }
-
-  /** Maps a saved window onto an available screen, falling back near the main window. */
-  private Rectangle mapToAvailableScreen(WorkspaceSnapshot.WindowSnapshot win) {
-    Rectangle bounds = win.bounds() != null ? new Rectangle(win.bounds()) : null;
-    if (bounds == null) {
-      return defaultDetachedBounds();
-    }
-    try {
-      for (GraphicsDevice device :
-          GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
-        if (device.getIDstring().equals(win.screenId())
-            || device.getDefaultConfiguration().getBounds().intersects(bounds)) {
-          return bounds;
-        }
-      }
-    } catch (HeadlessException e) {
-      return bounds;
-    }
-    Rectangle fallback = defaultDetachedBounds();
-    bounds.setLocation(fallback.x, fallback.y);
-    return bounds;
   }
 
   // ---- internal mechanics -------------------------------------------------
