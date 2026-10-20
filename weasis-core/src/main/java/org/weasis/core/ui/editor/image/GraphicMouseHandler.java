@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -674,10 +675,21 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
           newCursor = getCursor(mouseEvt, selectedDragGraphList, dragGraph, cursorSet);
         }
       }
+      JComponent component = vImg.getJComponent();
       if (newCursor != null) {
-        vImg.getJComponent().setCursor(newCursor);
+        component.setCursor(newCursor);
+      } else if (isGraphicCursor(component.getCursor())) {
+        // Out of any graphic: the cursor set over one must not stay
+        component.setCursor(cursorSet.getDrawingCursor());
       }
     }
+  }
+
+  /** True for the cursors this handler shows over a graphic, not those of other actions. */
+  private boolean isGraphicCursor(Cursor cursor) {
+    return cursor == cursorSet.getMoveCursor()
+        || cursor == cursorSet.getHandCursor()
+        || cursor == cursorSet.getEditCursor();
   }
 
   public static class CursorSet {
