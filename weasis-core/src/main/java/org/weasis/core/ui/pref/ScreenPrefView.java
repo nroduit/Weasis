@@ -41,6 +41,7 @@ import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.ui.editor.ExternalDisplay;
 import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.util.StringUtil;
@@ -81,7 +82,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                     title,
                     ModalityType.APPLICATION_MODAL,
                     monitor);
-            dialog.setBounds(monitor.getFullscreenBounds());
+            dialog.setBounds(ExternalDisplay.usableBounds(monitor.getGraphicsDevice()));
             dialog.setVisible(true);
             monitorLabel.setText(buildMonitorLabel(title, monitor));
           });

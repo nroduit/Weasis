@@ -64,6 +64,24 @@ tabs, or as a split beside the main tree when the local setting `weasis.screen.f
 way. `restore` returns what it folded, and `workspace:load` reports it under `folded` with the
 tool ids the shell did not offer under `skippedTools`.
 
+### Window states: maximized, fullscreen, immersive
+
+`maximize(view)` shows a view alone in its window (a card swap in the `Workspace`).
+`setFullscreen(window, on)` is a window state: the window takes the full bounds of its
+monitor without decorations (`GraphicsDevice.setFullScreenWindow`), the toolkit restores the
+previous bounds on the way back; the snapshot carries it as the window state `fullscreen` and a
+session restores it (`workspace:fullscreen [--view] [--off]`, Shift+F11 on the window of the
+selected viewer). `setImmersive(window, on)` shows the workspace of a window alone: the
+listeners that own the chrome hide it (`WorkspaceListener.immersiveChanged`: the main window
+hides its menu bar, toolbar row, both shell sides with their stripes and the strip; a viewer
+window hides its toolbar row); it is not a snapshot state.
+
+The canvas fullscreen of an image viewer (F11, double click, `workspace:fullscreen --canvas`)
+is the composition of four states, each undone on the way back only when this call set it: the
+selected canvas alone in the viewer's grid (`ImageViewerPlugin.maximizedSelectedImagePane`),
+the viewer maximized in its window, the window fullscreen and immersive. No dialog is involved
+and no canvas is reparented into another window.
+
 ## Drag and drop
 
 `drag/` implements tab dragging on the window glass pane: `TabDragController` drives the
@@ -113,7 +131,7 @@ through the `DataExplorerModel` of each explorer (`SeriesResolver.ofApplication`
 ## Commands
 
 `WorkspaceCommands` exposes the engine under the `workspace:` command namespace (list, select,
-close, maximize, unmaximize, stack, split, detach, screens, save, load, panel), so that a layout can be
+close, maximize, unmaximize, fullscreen, stack, split, detach, screens, save, load, panel), so that a layout can be
 driven from the command line, from `weasis-cli` or by an agent. The namespace is a Picocli
 command model (see the command bridge in `weasis-launcher/docs/Launcher-Overview.md`): every
 verb documents itself with `--help`, and the verbs that change the layout return the new state

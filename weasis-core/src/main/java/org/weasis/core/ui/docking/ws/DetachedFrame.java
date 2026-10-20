@@ -64,6 +64,11 @@ public final class DetachedFrame extends JFrame {
    * The row is one component that follows the active window; the caller removes it from its
    * previous host.
    */
+  /** Hides or shows the toolbar host, for the immersive presentation. */
+  public void setToolbarVisible(boolean visible) {
+    toolbarHost.setVisible(visible);
+  }
+
   public void setToolbarRow(JComponent row) {
     toolbarHost.removeAll();
     if (row != null) {

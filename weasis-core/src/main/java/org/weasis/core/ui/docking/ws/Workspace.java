@@ -93,6 +93,8 @@ public final class Workspace extends JPanel {
     // the tab keeps its slot with a placeholder while the view fills the whole workspace
     group.setComponentAt(maximizedIndex, maximizedPlaceholder);
     removeAll();
+    // the tabbed pane leaves the component it gave up invisible; a hidden child gets no layout
+    view.component().setVisible(true);
     add(view.component(), BorderLayout.CENTER);
     revalidate();
     repaint();

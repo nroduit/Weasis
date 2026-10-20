@@ -9,18 +9,15 @@
  */
 package org.weasis.core.ui.pref;
 
-import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.Rectangle;
 import java.util.List;
-import javax.swing.JFrame;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class Monitor {
   private final GraphicsDevice graphicsDevice;
   private double realScaleFactor;
-  private Rectangle fullscreenBounds;
 
   public Monitor(GraphicsDevice graphicsDevice) {
     this.realScaleFactor = 0.0;
@@ -49,31 +46,6 @@ public class Monitor {
 
   public GraphicsDevice getGraphicsDevice() {
     return graphicsDevice;
-  }
-
-  public Rectangle getFullscreenBounds() {
-    if (fullscreenBounds == null) {
-      /*
-       * As screen insets are not available on all the systems (on X11 windowing systems), the only way to get the
-       * maximum visible size desktop is to maximize a JFrame
-       */
-      JFrame frame = new JFrame(this.getGraphicsConfiguration());
-      Rectangle bound = this.getBounds();
-      frame.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
-      frame.setVisible(true);
-      frame.setExtendedState(frame.getExtendedState() | Frame.MAXIMIZED_BOTH);
-
-      try {
-        // Let time to maximize window
-        Thread.sleep(500);
-      } catch (InterruptedException e1) {
-        Thread.currentThread().interrupt();
-      }
-
-      fullscreenBounds = frame.getBounds();
-      frame.dispose();
-    }
-    return fullscreenBounds;
   }
 
   public static Monitor getMonitor(GraphicsConfiguration gconfig) {

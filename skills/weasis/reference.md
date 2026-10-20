@@ -1103,16 +1103,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
-| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 
 
 ## view3d
@@ -1204,6 +1204,19 @@ Usage: `workspace:detach [-h] [--json] [--bounds=<screen-rect>] [--screen=<scree
 | --view | view-id |  | View id from 'workspace:list'. |
 | --bounds | screen-rect |  | Screen bounds of the new window, as x,y,width,height. |
 | --screen | screen-role |  | Screen by role: control, diagnostic-1, diagnostic-2, color, portrait. |
+
+### workspace:fullscreen (since 5.0)
+
+Puts a window on the full bounds of its monitor without decorations: the window of --view, else the active window. --off ends it. A window state, kept by 'workspace:save' and restored by 'workspace:load'.
+
+Usage: `workspace:fullscreen [-h] [--canvas] [--json] [--off] [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | View id from 'workspace:list' whose window is meant (default: the active one). |
+| --off | boolean |  | Ends the fullscreen state of that window. |
+| --canvas | boolean |  | The selected pane of the view alone fills the viewer, the window and the monitor (what F11 and a double click do); --off ends it. |
 
 ### workspace:list
 

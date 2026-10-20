@@ -13,13 +13,9 @@ import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dialog;
-import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
-import java.awt.Frame;
+import java.awt.Window;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -30,8 +26,8 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.Messages;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -43,11 +39,12 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -57,7 +54,6 @@ import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
-import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
@@ -154,6 +150,13 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   protected final ImageViewerEventManager<E> eventManager;
   protected final JPanel grid;
+
+  /** The canvas shown alone by the canvas fullscreen, null otherwise. */
+  private ViewCanvas<E> maximizedCanvas;
+
+  private boolean undoViewMaximize;
+  private boolean undoWindowFullscreen;
+  private boolean undoImmersive;
   protected final MigLayout migLayout;
 
   protected ImageViewerPlugin(ImageViewerEventManager<E> eventManager, String pluginName) {
@@ -1093,36 +1096,36 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     currentLayout.applyConstraintsToLayout(grid);
   }
 
+  /** Ends the canvas fullscreen when it shows that canvas (reset, closing). */
   public void resetMaximizedSelectedImagePane(ViewCanvas<E> viewCanvas) {
-    if (grid.getComponentCount() == 1) {
-      Dialog fullscreenDialog = WinUtil.getParentDialog(grid);
-      if (fullscreenDialog != null
-          && fullscreenDialog
-              .getTitle()
-              .equals(Messages.getString("ImageViewerPlugin.fullscreen"))) {
-        maximizedSelectedImagePane(viewCanvas, null);
-      }
+    if (maximizedCanvas != null && maximizedCanvas == viewCanvas) {
+      maximizedSelectedImagePane(viewCanvas, null);
     }
   }
 
-  public void maximizedSelectedImagePane(ViewCanvas<E> defaultView2d, MouseEvent evt) {
-    if (shouldPreventMaximization(defaultView2d, evt)) {
+  /** Whether one canvas fills the viewer, its window and its monitor. */
+  public boolean isCanvasFullscreen() {
+    return maximizedCanvas != null;
+  }
+
+  /** Toggles the canvas fullscreen on the selected pane, as F11 does. */
+  public void toggleCanvasFullscreen() {
+    maximizedSelectedImagePane(getSelectedViewCanvas(), null);
+  }
+
+  /**
+   * Toggles the canvas fullscreen (F11, double click): the canvas alone fills the grid, the viewer
+   * fills its window (engine maximize) and the window fills its monitor (engine fullscreen). No
+   * dialog is involved; on the way back only the states this call set are undone.
+   */
+  public void maximizedSelectedImagePane(ViewCanvas<E> viewCanvas, MouseEvent evt) {
+    if (viewCanvas == null || shouldPreventMaximization(viewCanvas, evt)) {
       return;
     }
-
-    removeFocusListenersFromViews();
-
-    String titleDialog = Messages.getString("ImageViewerPlugin.fullscreen");
-    Dialog fullscreenDialog = WinUtil.getParentDialog(grid);
-    boolean isDetached =
-        fullscreenDialog != null && !titleDialog.equals(fullscreenDialog.getTitle());
-
-    grid.removeAll();
-
-    if (isDetached || fullscreenDialog == null) {
-      enterFullscreenMode(defaultView2d, titleDialog, fullscreenDialog, isDetached);
+    if (maximizedCanvas == null) {
+      enterCanvasFullscreen(viewCanvas);
     } else {
-      exitFullscreenMode(defaultView2d, fullscreenDialog);
+      exitCanvasFullscreen();
     }
   }
 
@@ -1159,62 +1162,58 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     getAllCanvasesIncludingPanes().forEach(v -> v.getJComponent().addFocusListener(v));
   }
 
-  /** Enters fullscreen mode by creating a modal dialog with the view. */
-  private void enterFullscreenMode(
-      ViewCanvas<E> viewCanvas, String title, Dialog existingDialog, boolean isDetached) {
-    remove(grid);
-
-    // Configure grid for single fullscreen view
+  private void enterCanvasFullscreen(ViewCanvas<E> viewCanvas) {
+    removeFocusListenersFromViews();
+    maximizedCanvas = viewCanvas;
+    // the canvas alone in the grid
+    grid.removeAll();
     grid.setLayout(new MigLayout("fill, ins 0", "[grow,fill]", "[grow,fill]"));
     grid.add(viewCanvas.getJComponent(), "grow");
     viewCanvas.getJComponent().addFocusListener(viewCanvas);
-
-    // Create and configure fullscreen dialog
-    Frame parentFrame = WinUtil.getParentFrame(this);
-    Dialog fullscreenDialog =
-        new JDialog(
-            isDetached ? existingDialog : parentFrame, title, ModalityType.APPLICATION_MODAL);
-
-    fullscreenDialog.add(grid, BorderLayout.CENTER);
-    fullscreenDialog.addWindowListener(
-        new WindowAdapter() {
-          @Override
-          public void windowClosing(WindowEvent e) {
-            maximizedSelectedImagePane(viewCanvas, null);
-          }
-        });
-
-    configureDialogBounds(fullscreenDialog, parentFrame, existingDialog, isDetached);
-  }
-
-  /** Configures dialog bounds based on parent frame state and monitor configuration. */
-  private void configureDialogBounds(
-      Dialog dialog, Frame parentFrame, Dialog existingDialog, boolean isDetached) {
-    if (!isDetached
-        && (parentFrame.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH) {
-      dialog.setBounds(parentFrame.getBounds());
-      dialog.setVisible(true);
-    } else {
-      Monitor monitor =
-          Monitor.getMonitor(
-              isDetached
-                  ? existingDialog.getGraphicsConfiguration()
-                  : parentFrame.getGraphicsConfiguration());
-      if (monitor != null) {
-        dialog.setBounds(monitor.getFullscreenBounds());
-        dialog.setVisible(true);
+    grid.revalidate();
+    grid.repaint();
+    // the viewer alone in its window, the window alone on its monitor
+    WorkspaceManager manager = GuiUtils.getUICore().getWorkspaceManager();
+    if (manager != null) {
+      undoViewMaximize = !manager.isMaximized(this);
+      if (undoViewMaximize) {
+        manager.maximize(this);
+      }
+      Window window = SwingUtilities.getWindowAncestor(this);
+      undoWindowFullscreen = window != null && !manager.isFullscreen(window);
+      if (undoWindowFullscreen) {
+        manager.setFullscreen(window, true);
+      }
+      undoImmersive = window != null && !manager.isImmersive(window);
+      if (undoImmersive) {
+        manager.setImmersive(window, true);
       }
     }
+    viewCanvas.getJComponent().requestFocusInWindow();
   }
 
-  /** Exits fullscreen mode by restoring the original grid layout. */
-  private void exitFullscreenMode(ViewCanvas<E> viewCanvas, Dialog fullscreenDialog) {
-    viewCanvas.getJComponent().removeFocusListener(viewCanvas);
-    Arrays.stream(fullscreenDialog.getWindowListeners())
-        .forEach(fullscreenDialog::removeWindowListener);
-    fullscreenDialog.removeAll();
-    fullscreenDialog.dispose();
+  private void exitCanvasFullscreen() {
+    ViewCanvas<E> viewCanvas = maximizedCanvas;
+    maximizedCanvas = null;
+    WorkspaceManager manager = GuiUtils.getUICore().getWorkspaceManager();
+    if (manager != null) {
+      Window window = SwingUtilities.getWindowAncestor(this);
+      if (undoImmersive && window != null) {
+        manager.setImmersive(window, false);
+      }
+      if (undoWindowFullscreen && window != null) {
+        manager.setFullscreen(window, false);
+      }
+      if (undoViewMaximize) {
+        manager.restore(this);
+      }
+    }
+    undoWindowFullscreen = false;
+    undoViewMaximize = false;
+    undoImmersive = false;
 
+    viewCanvas.getJComponent().removeFocusListener(viewCanvas);
+    grid.setLayout(migLayout);
     rebuildGridLayout();
     // Re-attach the maximized canvas to its owning pane (it was reparented into the
     // fullscreen grid and rebuildGridLayout only restores the outer cells)
@@ -1222,9 +1221,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     if (owning != null) {
       owning.restoreView();
     }
-    add(grid, BorderLayout.CENTER);
+    grid.revalidate();
+    grid.repaint();
     addFocusListenersToViews();
-
     viewCanvas.getJComponent().requestFocusInWindow();
   }
 

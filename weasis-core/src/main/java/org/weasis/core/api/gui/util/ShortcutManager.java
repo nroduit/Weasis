@@ -401,6 +401,7 @@ public final class ShortcutManager {
   public static final String ID_DOCKING_MAXIMIZE = "docking.maximize";
   public static final String ID_DOCKING_EXTERNALIZE = "docking.externalize";
   public static final String ID_DOCKING_NORMALIZE = "docking.normalize";
+  public static final String ID_DOCKING_FULLSCREEN = "docking.fullscreen";
   public static final String ID_DOCKING_CLOSE = "docking.close";
   public static final String ID_DOCKING_PANEL_LIST = "docking.panelList";
   public static final String ID_DOCKING_NEXT_TAB = "docking.nextTab";
@@ -899,6 +900,12 @@ public final class ShortcutManager {
         CATEGORY_DOCKING,
         KeyEvent.VK_N,
         InputEvent.CTRL_DOWN_MASK);
+    register(
+        ID_DOCKING_FULLSCREEN,
+        Messages.getString("ShortcutManager.dock_fullscreen"),
+        CATEGORY_DOCKING,
+        KeyEvent.VK_F11,
+        InputEvent.SHIFT_DOWN_MASK);
     register(
         ID_DOCKING_CLOSE,
         Messages.getString("ShortcutManager.dock_close"),

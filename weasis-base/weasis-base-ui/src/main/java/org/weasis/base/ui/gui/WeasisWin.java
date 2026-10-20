@@ -202,6 +202,8 @@ public class WeasisWin {
 
   private JComponent toolbarRow;
   private Window toolbarWindow;
+  private boolean explorerCollapsedBefore;
+  private boolean toolsCollapsedBefore;
   private final RootPaneContainer rootPaneContainer;
 
   public WeasisWin() {
@@ -256,6 +258,11 @@ public class WeasisWin {
                 if (window == toolbarWindow) {
                   moveToolbarRow(frame);
                 }
+              }
+
+              @Override
+              public void immersiveChanged(Window window, boolean immersive) {
+                setImmersive(window, immersive);
               }
             });
     KeyEventDispatcher dockingShortcutDispatcher = this::dispatchDockingShortcut;
@@ -604,6 +611,49 @@ public class WeasisWin {
   }
 
   /**
+   * The immersive presentation of a window: the workspace alone. In the main window the menu bar,
+   * the toolbar row, both shell sides with their stripes and the strip go; a viewer window hides
+   * its toolbar row. What the user had collapsed stays collapsed on the way back.
+   */
+  private void setImmersive(Window window, boolean immersive) {
+    if (window instanceof DetachedFrame viewerWindow) {
+      viewerWindow.setToolbarVisible(!immersive);
+      return;
+    }
+    if (window != frame) {
+      return;
+    }
+    JMenuBar menuBar = rootPaneContainer.getRootPane().getJMenuBar();
+    if (menuBar != null) {
+      menuBar.setVisible(!immersive);
+    }
+    toolbarHost.setVisible(!immersive);
+    SidePanel explorer = GuiUtils.getUICore().getSidePanel(SidePanel.Role.EXPLORER);
+    SidePanel tools = GuiUtils.getUICore().getSidePanel(SidePanel.Role.TOOLS);
+    MiniStrip strip = GuiUtils.getUICore().getMiniStrip();
+    if (immersive) {
+      explorerCollapsedBefore = explorer.isCollapsed();
+      toolsCollapsedBefore = tools.isCollapsed();
+      explorer.collapse();
+      tools.collapse();
+    } else {
+      if (!explorerCollapsedBefore) {
+        explorer.expand();
+      }
+      if (!toolsCollapsedBefore) {
+        tools.expand();
+      }
+    }
+    explorer.getStripe().setVisible(!immersive);
+    tools.getStripe().setVisible(!immersive);
+    if (strip != null) {
+      strip.setVisible(!immersive);
+    }
+    rootPaneContainer.getRootPane().revalidate();
+    rootPaneContainer.getRootPane().repaint();
+  }
+
+  /**
    * Moves the toolbar row to the window of the selected viewer: a viewer window shows it under its
    * title bar, the main window in its north panel. The row is one component (the viewer toolbars
    * are singletons bound to the event manager), so it leaves its previous host first.
@@ -708,6 +758,7 @@ public class WeasisWin {
     return new ShortcutTable<Consumer<ViewerPlugin<?>>>()
         .on(ShortcutManager.ID_DOCKING_MAXIMIZE, this::toggleMaximized)
         .on(ShortcutManager.ID_DOCKING_NORMALIZE, plugin -> workspace().restore(plugin))
+        .on(ShortcutManager.ID_DOCKING_FULLSCREEN, this::toggleFullscreen)
         .on(
             ShortcutManager.ID_DOCKING_EXTERNALIZE,
             plugin -> {
@@ -732,6 +783,15 @@ public class WeasisWin {
     } else {
       control.maximize(plugin);
     }
+  }
+
+  /** Toggles the fullscreen state of the window that holds the viewer. */
+  private void toggleFullscreen(ViewerPlugin<?> plugin) {
+    WorkspaceManager control = workspace();
+    control
+        .groupOf(plugin)
+        .map(group -> group.getWorkspace().getWindow())
+        .ifPresent(window -> control.setFullscreen(window, !control.isFullscreen(window)));
   }
 
   private boolean cycleViewer(int delta) {

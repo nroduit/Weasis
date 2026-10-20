@@ -15,6 +15,7 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import java.awt.GraphicsDevice;
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +74,7 @@ import picocli.CommandLine.ParentCommand;
       WorkspaceCommands.Close.class,
       WorkspaceCommands.Maximize.class,
       WorkspaceCommands.Unmaximize.class,
+      WorkspaceCommands.Fullscreen.class,
       WorkspaceCommands.Stack.class,
       WorkspaceCommands.Split.class,
       WorkspaceCommands.Detach.class,
@@ -297,6 +299,61 @@ public class WorkspaceCommands implements CommandExtension {
     @Override
     void apply(WorkspaceManager manager, WorkspaceView view) {
       manager.restore(view);
+    }
+  }
+
+  @Command(
+      name = "fullscreen",
+      description =
+          "Puts a window on the full bounds of its monitor without decorations: the window of "
+              + "--view, else the active window. --off ends it. A window state, kept by "
+              + "'workspace:save' and restored by 'workspace:load'.")
+  @Since("5.0")
+  static class Fullscreen extends Verb {
+    @Option(
+        names = "--view",
+        paramLabel = "<view-id>",
+        description =
+            "View id from 'workspace:list' whose window is meant (default: the active one).")
+    ViewId viewId;
+
+    @Option(names = "--off", description = "Ends the fullscreen state of that window.")
+    boolean off;
+
+    @Option(
+        names = "--canvas",
+        description =
+            "The selected pane of the view alone fills the viewer, the window and the monitor "
+                + "(what F11 and a double click do); --off ends it.")
+    boolean canvas;
+
+    @Override
+    protected void run() {
+      WorkspaceManager manager = parent.manager();
+      WorkspaceView view =
+          viewId != null ? parent.requireView(viewId) : manager.selectedView().orElse(null);
+      GuiExecutor.invokeAndRethrow(
+          () -> {
+            if (canvas) {
+              if (!(view instanceof ImageViewerPlugin<?> viewer)) {
+                throw new IllegalArgumentException("--canvas needs an image viewer as --view");
+              }
+              if (viewer.isCanvasFullscreen() == !off) {
+                return;
+              }
+              viewer.toggleCanvasFullscreen();
+              return;
+            }
+            Window window =
+                view != null
+                    ? manager.groupOf(view).map(g -> g.getWorkspace().getWindow()).orElse(null)
+                    : manager.activeWorkspace().getWindow();
+            if (window == null) {
+              throw new IllegalStateException("No window to put fullscreen (headless)");
+            }
+            manager.setFullscreen(window, !off);
+          });
+      printState();
     }
   }
 

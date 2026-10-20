@@ -22,4 +22,12 @@ public interface WorkspaceListener {
   default void workspaceEmptied(Window window) {
     // optional
   }
+
+  /**
+   * The window entered or left the immersive presentation: everything but the workspace (menu bar,
+   * toolbar row, shell) hidden while a canvas fills the monitor.
+   */
+  default void immersiveChanged(Window window, boolean immersive) {
+    // optional
+  }
 }

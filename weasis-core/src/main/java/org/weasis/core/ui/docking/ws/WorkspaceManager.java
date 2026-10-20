@@ -20,12 +20,14 @@ import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
@@ -52,6 +54,7 @@ public final class WorkspaceManager {
   private boolean mutating;
   private boolean dragEnabled = true;
   private WorkspaceView selectedView;
+  private final Set<Window> immersive = Collections.newSetFromMap(new IdentityHashMap<>());
 
   public WorkspaceManager(Window mainWindow) {
     this.mainWindow = mainWindow;
@@ -319,6 +322,62 @@ public final class WorkspaceManager {
     }
   }
 
+  /** Whether the window is in the fullscreen state of {@link #setFullscreen}. */
+  public boolean isFullscreen(Window window) {
+    if (window == null) {
+      return false;
+    }
+    GraphicsConfiguration gc = window.getGraphicsConfiguration();
+    return gc != null && gc.getDevice().getFullScreenWindow() == window;
+  }
+
+  /**
+   * Puts a workspace window on the full bounds of its monitor without decorations, or ends that
+   * state; the toolkit restores the previous bounds and state on the way back. A window state, so
+   * the snapshot carries it ({@code fullscreen}) and a session restores it.
+   */
+  public void setFullscreen(Window window, boolean fullscreen) {
+    if (window == null) {
+      return;
+    }
+    GraphicsConfiguration gc = window.getGraphicsConfiguration();
+    if (gc == null) {
+      return;
+    }
+    GraphicsDevice device = gc.getDevice();
+    if (fullscreen) {
+      if (device.getFullScreenWindow() != window) {
+        device.setFullScreenWindow(window);
+      }
+    } else if (device.getFullScreenWindow() == window) {
+      device.setFullScreenWindow(null);
+    }
+  }
+
+  /** Whether the window shows its workspace alone (canvas fullscreen). */
+  public boolean isImmersive(Window window) {
+    return window != null && immersive.contains(window);
+  }
+
+  /**
+   * Shows the workspace of a window alone, or everything again: the listeners that own the chrome
+   * (menu bar, toolbar row, shell) hide or show it. Not a window state of the snapshot: it is what
+   * the canvas fullscreen composes with {@link #setFullscreen} and it ends with it.
+   */
+  public void setImmersive(Window window, boolean on) {
+    if (window == null || on == immersive.contains(window)) {
+      return;
+    }
+    if (on) {
+      immersive.add(window);
+    } else {
+      immersive.remove(window);
+    }
+    for (WorkspaceListener listener : listeners) {
+      listener.immersiveChanged(window, on);
+    }
+  }
+
   /** Refreshes the tab title, icon and tooltip of the view. */
   public void updateTabInfo(WorkspaceView view) {
     TabGroup group = viewGroups.get(view);
@@ -375,7 +434,9 @@ public final class WorkspaceManager {
           screenBounds = gc.getBounds();
           role = mapping.roleOf(screenId).map(ScreenRole::key).orElse(null);
         }
-        if (window instanceof Frame frame) {
+        if (isFullscreen(window)) {
+          state = WorkspaceSnapshot.WindowSnapshot.FULLSCREEN;
+        } else if (window instanceof Frame frame) {
           state =
               (frame.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH
                   ? WorkspaceSnapshot.WindowSnapshot.MAXIMIZED
@@ -500,8 +561,16 @@ public final class WorkspaceManager {
     }
   }
 
-  private static void applyState(Window window, String state) {
-    if (window instanceof Frame frame && state != null) {
+  private void applyState(Window window, String state) {
+    if (window == null || state == null) {
+      return;
+    }
+    if (WorkspaceSnapshot.WindowSnapshot.FULLSCREEN.equals(state)) {
+      setFullscreen(window, true);
+      return;
+    }
+    setFullscreen(window, false);
+    if (window instanceof Frame frame) {
       int extended = frame.getExtendedState();
       if (WorkspaceSnapshot.WindowSnapshot.MAXIMIZED.equals(state)) {
         frame.setExtendedState(extended | Frame.MAXIMIZED_BOTH);

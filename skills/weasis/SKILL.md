@@ -160,7 +160,10 @@ line naming the current spelling. Use the current one everywhere.
    `hp:apply --screen control` hangs a reading step in a viewer window on that screen. A
    saved layout remembers each window's screen role and state: `workspace:load` puts a window
    back on the monitor of its role, and folds into the main window one whose monitor is
-   missing (listed under `folded`).
+   missing (listed under `folded`). `workspace:fullscreen [--view <id>]` puts a window on the
+   whole monitor without decorations (`--off` ends it; kept by `workspace:save`), and
+   `--canvas` shows the selected pane alone on the monitor, as F11 does, hiding the menu, the
+   toolbar and the side panels until `--canvas --off`.
 9. **Hanging protocols** (engine and built-in library, no UI yet): a study loaded by any verb
    opens already hung by its best protocol (setting `weasis.hp.open`, `PROTOCOL` by default,
    `FIRST_SERIES` for the old behaviour). `hp:list` shows the protocols of every layer, the
