@@ -12,7 +12,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>weasis-distributions</artifactId>
   <packaging>pom</packaging>
-  <name>Weasis Distributions (Standalone and WEB)</name>
+  <name>Weasis Distributions (Standalone)</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -119,25 +119,6 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <executions>
-          <execution>
-            <id>urlrewrite-regex-version-properties</id>
-            <phase>validate</phase>
-            <goals>
-              <goal>regex-properties</goal>
-            </goals>
-
-            <configuration>
-              <regexPropertySettings>
-                <regexPropertySetting>
-                  <name>regex.app.version</name>
-                  <value>${app.version}</value>
-                  <regex>[\.]</regex>
-                  <replacement>\\.</replacement>
-                  <failIfNoMatch>false</failIfNoMatch>
-                </regexPropertySetting>
-              </regexPropertySettings>
-            </configuration>
-          </execution>
           <execution>
             <id>timestamp-property</id>
             <goals>
@@ -427,12 +408,6 @@
   </build>
 
   <dependencies>
-    <dependency>
-      <!-- http://www.tuckey.org/urlrewrite/ -->
-      <groupId>org.tuckey</groupId>
-      <artifactId>urlrewritefilter</artifactId>
-      <version>5.1.3</version>
-    </dependency>
     <dependency>
       <groupId>org.weasis</groupId>
       <artifactId>weasis-i18n-dist</artifactId>
