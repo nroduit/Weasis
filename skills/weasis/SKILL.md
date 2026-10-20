@@ -151,7 +151,9 @@ line naming the current spelling. Use the current one everywhere.
    workspace are slots: `workspace:panel` shows which tool fills each slot (explorer and tools
    sides, top and bottom), `--side tools --slot bottom --tool measure` opens a tool there
    (`--side explorer --slot bottom --tool import` or `export` opens the DICOM import or export
-   under the explorer: there is no import or export dialog),
+   under the explorer: there is no import or export dialog; `--tool <id> --as-view` shows a tool
+   as a tab of the workspace, where it has the whole width, and `--tool <id> --slot <slot>`
+   brings it back; such a view is listed by `workspace:list` with `tool`),
    `--collapse` / `--expand` hide or show a side; `workspace:save` keeps the shell too.
    Windows: `workspace:detach --view <id> --screen diagnostic-1` floats a view in a viewer
    window filling the screen of that role (`workspace:screens` lists the roles control,

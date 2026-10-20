@@ -24,6 +24,9 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.ui.docking.Shell;
+import org.weasis.core.ui.docking.SidePanel;
+import org.weasis.core.ui.docking.ToolView;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
 import org.weasis.core.ui.docking.ws.snapshot.ViewRestorer;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.ViewDescriptor;
@@ -71,6 +74,9 @@ public final class ViewerRestorer implements ViewRestorer {
     if (live.isPresent()) {
       return live;
     }
+    if (ToolView.TYPE.equals(descriptor.typeId())) {
+      return toolView(descriptor);
+    }
     SeriesViewerFactory factory = factoryOf(descriptor.typeId()).orElse(null);
     if (factory == null) {
       return Optional.empty();
@@ -116,6 +122,25 @@ public final class ViewerRestorer implements ViewRestorer {
       return Optional.empty();
     }
     return Optional.of(plugin);
+  }
+
+  /** A tool shown as a view: the side that offers the tool gives it again, out of its slot. */
+  private static Optional<WorkspaceView> toolView(ViewDescriptor descriptor) {
+    Shell shell = Shell.current();
+    String toolId = ToolView.savedToolId(descriptor.state());
+    if (shell == null || toolId == null) {
+      return Optional.empty();
+    }
+    String side = ToolView.savedSide(descriptor.state());
+    for (SidePanel.Role role : SidePanel.Role.values()) {
+      if (side == null || role.key().equals(side)) {
+        Optional<ToolView> view = shell.side(role).viewForRestore(toolId);
+        if (view.isPresent()) {
+          return view.map(v -> v);
+        }
+      }
+    }
+    return Optional.empty();
   }
 
   private Optional<SeriesViewerFactory> factoryOf(String typeId) {

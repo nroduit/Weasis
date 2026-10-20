@@ -45,17 +45,26 @@ public record ShellState(ShellSide explorer, ShellSide tools, String strip) {
   private static final String RATIO = "ratio"; // NON-NLS
   private static final String COLLAPSED = "collapsed"; // NON-NLS
   private static final String STRIP = "strip"; // NON-NLS
+  private static final String VIEWS = "views"; // NON-NLS
 
   /**
    * One side: the tool id of each slot from top to bottom ({@code null} for an empty slot; a list,
    * so a third slot would not change the schema), the content width in pixels (0 = unchanged), the
-   * share of the top slot (0 = unchanged) and the collapsed flag.
+   * share of the top slot (0 = unchanged), the collapsed flag and the ids of the tools shown as
+   * central views ({@code views}, absent when none).
    */
-  public record ShellSide(List<String> slots, int width, double ratio, boolean collapsed) {
+  public record ShellSide(
+      List<String> slots, int width, double ratio, boolean collapsed, List<String> views) {
 
     public ShellSide {
       // Collections.unmodifiableList keeps null entries, List.copyOf would refuse them
       slots = Collections.unmodifiableList(new ArrayList<>(slots == null ? List.of() : slots));
+      views = views == null ? List.of() : List.copyOf(views);
+    }
+
+    /** A side without tools shown as views. */
+    public ShellSide(List<String> slots, int width, double ratio, boolean collapsed) {
+      this(slots, width, ratio, collapsed, List.of());
     }
 
     /** The tool id of a slot, or null when the slot is empty or beyond the list. */
@@ -73,12 +82,18 @@ public record ShellState(ShellSide explorer, ShellSide tools, String strip) {
           ids.add(id);
         }
       }
-      return Json.createObjectBuilder()
-          .add(SLOTS, ids)
-          .add(WIDTH, width)
-          .add(RATIO, ratio)
-          .add(COLLAPSED, collapsed)
-          .build();
+      JsonObjectBuilder json =
+          Json.createObjectBuilder()
+              .add(SLOTS, ids)
+              .add(WIDTH, width)
+              .add(RATIO, ratio)
+              .add(COLLAPSED, collapsed);
+      if (!views.isEmpty()) {
+        JsonArrayBuilder array = Json.createArrayBuilder();
+        views.forEach(array::add);
+        json.add(VIEWS, array);
+      }
+      return json.build();
     }
 
     public static ShellSide fromJson(JsonObject json) {
@@ -92,11 +107,21 @@ public record ShellState(ShellSide explorer, ShellSide tools, String strip) {
                   : null);
         }
       }
+      List<String> views = new ArrayList<>();
+      JsonArray viewArray = json.getJsonArray(VIEWS);
+      if (viewArray != null) {
+        for (JsonValue value : viewArray) {
+          if (value.getValueType() == JsonValue.ValueType.STRING) {
+            views.add(((JsonString) value).getString());
+          }
+        }
+      }
       return new ShellSide(
           ids,
           json.getInt(WIDTH, 0),
           json.containsKey(RATIO) ? json.getJsonNumber(RATIO).doubleValue() : 0,
-          json.getBoolean(COLLAPSED, false));
+          json.getBoolean(COLLAPSED, false),
+          views);
     }
   }
 

@@ -43,6 +43,7 @@ import org.weasis.core.ui.docking.Shell;
 import org.weasis.core.ui.docking.ShellState;
 import org.weasis.core.ui.docking.SidePanel;
 import org.weasis.core.ui.docking.Slot;
+import org.weasis.core.ui.docking.ToolView;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshotIO;
 import org.weasis.core.ui.editor.ExternalDisplay;
@@ -212,6 +213,10 @@ public class WorkspaceCommands implements CommandExtension {
 
   /** Adds the viewer type and, for an image viewer, its grid, synchronization and panes. */
   private static void describe(WorkspaceView live, JsonObjectBuilder view) {
+    if (live instanceof ToolView toolView) {
+      view.add("tool", toolView.tool().getToolId()); // NON-NLS
+      return;
+    }
     if (!(live instanceof SeriesViewer<?> viewer)) {
       return;
     }
@@ -681,6 +686,13 @@ public class WorkspaceCommands implements CommandExtension {
     @Option(names = "--clear", description = "Empties --slot of --side.")
     boolean clear;
 
+    @Option(
+        names = "--as-view",
+        description =
+            "Shows --tool of --side as a tab of the active window instead of a slot, where it "
+                + "gets width and floats like any view; --tool with --slot brings it back.")
+    boolean asView;
+
     @Option(names = "--collapse", description = "Hides both slots of --side (tools remembered).")
     boolean collapse;
 
@@ -730,7 +742,10 @@ public class WorkspaceCommands implements CommandExtension {
             "--side is required with "
                 + "--tool, --clear, --collapse, --expand, --width and --ratio");
       }
-      if (slotChange && slot == null) {
+      if (asView && (tool == null || clear || slot != null)) {
+        throw invalid("--as-view goes with --tool alone, without --slot or --clear");
+      }
+      if (slotChange && slot == null && !asView) {
         throw invalid("--slot is required with --tool and --clear");
       }
       if (tool != null && clear) {
@@ -751,7 +766,11 @@ public class WorkspaceCommands implements CommandExtension {
     private void apply(Shell shell) {
       if (side != null) {
         SidePanel panel = shell.side(side);
-        if (tool != null && !panel.open(tool.value(), slot)) {
+        if (asView) {
+          if (!panel.openAsView(tool.value())) {
+            throw unknownTool(tool.value(), side.key(), panel.toolIds());
+          }
+        } else if (tool != null && !panel.open(tool.value(), slot)) {
           throw unknownTool(tool.value(), side.key(), panel.toolIds());
         }
         if (clear) {
@@ -803,6 +822,7 @@ public class WorkspaceCommands implements CommandExtension {
             .append(" ratio=") // NON-NLS
             .append(String.format(java.util.Locale.ROOT, "%.2f", s.ratio()))
             .append(s.collapsed() ? " collapsed" : "") // NON-NLS
+            .append(s.views().isEmpty() ? "" : " views=" + String.join(",", s.views())) // NON-NLS
             .append(System.lineSeparator());
       }
       sb.append("strip: ").append(state.strip() == null ? "-" : state.strip()); // NON-NLS

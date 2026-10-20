@@ -93,4 +93,18 @@ class ShellStateTest {
         () -> assertNull(ShellState.capture(null)),
         () -> assertTrue(ShellState.apply(captured, null).isEmpty()));
   }
+
+  @Test
+  void theToolsShownAsViewsTravelAndAreAbsentWhenNone() {
+    ShellSide side =
+        new ShellSide(Arrays.asList("display", null), 320, 0.5, false, List.of("dicom-info"));
+    JsonObject json = side.toJson();
+    assertAll(
+        () -> assertEquals(List.of("dicom-info"), ShellSide.fromJson(json).views()),
+        () -> assertEquals(side, ShellSide.fromJson(json)),
+        () -> assertEquals(List.of(), new ShellSide(List.of("display"), 0, 0, false).views()),
+        () ->
+            assertTrue(
+                !new ShellSide(List.of("display"), 0, 0, false).toJson().containsKey("views")));
+  }
 }

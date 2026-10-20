@@ -1103,16 +1103,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --set=<magnification> | --fit=<zoom-fit>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
 | --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
+| --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
 
 
 ## view3d
@@ -1270,7 +1270,7 @@ Usage: `workspace:move [-h] [--json] --screen=<screen-role> --view=<view-id>`
 
 Shell slots around the workspace: the explorer side (leading) and the tools side (trailing), two stacked slots each, and the central strip. Without option it returns the shell state; --side selects a side, then --slot with --tool or --clear fills or empties a slot, --collapse / --expand hide or show the side, --width and --ratio size it. Tool ids are stable across viewer types; an id the side does not offer now fails and lists the ones it does.
 
-Usage: `workspace:panel [-h] [--clear] [--collapse] [--expand] [--json] [--no-strip] [--ratio=<split-ratio>] [--side=<side>] [--slot=<slot>] [--strip=<tool-id>] [--tool=<tool-id>] [--width=<pixels>]`
+Usage: `workspace:panel [-h] [--as-view] [--clear] [--collapse] [--expand] [--json] [--no-strip] [--ratio=<split-ratio>] [--side=<side>] [--slot=<slot>] [--strip=<tool-id>] [--tool=<tool-id>] [--width=<pixels>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
@@ -1279,6 +1279,7 @@ Usage: `workspace:panel [-h] [--clear] [--collapse] [--expand] [--json] [--no-st
 | --slot | enum |  | Slot of the side: TOP, BOTTOM. |
 | --tool | tool-id |  | Opens this tool in --slot of --side, replacing what was there. |
 | --clear | boolean |  | Empties --slot of --side. |
+| --as-view | boolean |  | Shows --tool of --side as a tab of the active window instead of a slot, where it gets width and floats like any view; --tool with --slot brings it back. |
 | --collapse | boolean |  | Hides both slots of --side (tools remembered). |
 | --expand | boolean |  | Shows the remembered tools of --side again. |
 | --width | integer |  | Content width of --side, in pixels. |

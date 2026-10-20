@@ -27,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
@@ -47,6 +48,7 @@ import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.ShellState.ShellSide;
+import org.weasis.core.ui.docking.ws.WorkspaceManager;
 
 /**
  * One side of the shell around the central workspace: the explorer side (sources) or the tools side
@@ -116,6 +118,11 @@ public class SidePanel extends JPanel {
   private final Map<String, JToggleButton> buttons = new LinkedHashMap<>();
   private final String[] remembered = new String[Slot.values().length];
   private final boolean[] collapsed = new boolean[Slot.values().length];
+
+  /** The tools shown as central views, by id; their slot is empty meanwhile. */
+  private final Map<String, ToolView> views = new LinkedHashMap<>();
+
+  private Supplier<WorkspaceManager> workspace = () -> GuiUtils.getUICore().getWorkspaceManager();
 
   private JSplitPane split;
   private boolean leftChild;
@@ -218,15 +225,112 @@ public class SidePanel extends JPanel {
     scheduleRelayout();
   }
 
-  /** Remove a tool; the slot memory is kept so a tool with the same id re-opens there later. */
+  /** Replaces the workspace lookup, for tests and for a shell built elsewhere. */
+  public void setWorkspace(Supplier<WorkspaceManager> supplier) {
+    this.workspace = Objects.requireNonNull(supplier);
+  }
+
+  /**
+   * Remove a tool; the slot memory is kept so a tool with the same id re-opens there later. A tool
+   * shown as a view loses its tab.
+   */
   public void hide(DockableTool tool) {
     if (tools.remove(tool)) {
+      ToolView view = views.remove(tool.getToolId());
+      if (view != null) {
+        WorkspaceManager manager = workspace.get();
+        if (manager != null) {
+          manager.close(view);
+        }
+      }
       for (SlotHost host : hosts) {
         if (host.tool == tool) {
           host.setTool(null);
         }
       }
       scheduleRelayout();
+    }
+  }
+
+  // ---- tools as views --------------------------------------------------------------------------
+
+  /**
+   * Shows a tool as a central view: a tab of the active window, where it gets width and floats like
+   * any view. Its slot empties meanwhile; the tab, its menu entry or {@link #returnFromView} bring
+   * it back.
+   *
+   * @return false when no tool of that id is offered on this side or there is no workspace
+   */
+  public boolean openAsView(String toolId) {
+    DockableTool tool = find(toolId).orElse(null);
+    WorkspaceManager manager = workspace.get();
+    if (tool == null || manager == null) {
+      return false;
+    }
+    pruneViews(manager);
+    ToolView view = views.get(toolId);
+    if (view == null) {
+      view = detachForView(tool);
+      manager.openInActive(view);
+    }
+    manager.select(view);
+    return true;
+  }
+
+  /** The view of a tool for a restore: created and taken out of its slot, not docked. */
+  public Optional<ToolView> viewForRestore(String toolId) {
+    DockableTool tool = find(toolId).orElse(null);
+    if (tool == null) {
+      return Optional.empty();
+    }
+    ToolView view = views.get(toolId);
+    return Optional.of(view != null ? view : detachForView(tool));
+  }
+
+  /** Closes the central view of a tool and shows the tool in its preferred slot again. */
+  public boolean returnFromView(String toolId) {
+    ToolView view = views.remove(toolId);
+    if (view == null) {
+      return false;
+    }
+    WorkspaceManager manager = workspace.get();
+    if (manager != null) {
+      manager.close(view);
+    }
+    find(toolId).ifPresent(tool -> open(tool, preferredSlot(tool)));
+    return true;
+  }
+
+  /** Whether the tool is shown as a central view. */
+  public boolean isView(String toolId) {
+    return views.containsKey(toolId);
+  }
+
+  /** The ids of the tools shown as central views, in opening order. */
+  public List<String> viewIds() {
+    return List.copyOf(views.keySet());
+  }
+
+  private ToolView detachForView(DockableTool tool) {
+    slotOf(tool)
+        .ifPresent(
+            slot -> {
+              host(slot).setTool(null);
+              remembered[slot.ordinal()] = null;
+            });
+    ToolView view = new ToolView(this, tool);
+    views.put(tool.getToolId(), view);
+    scheduleRelayout();
+    return view;
+  }
+
+  /** A view a restore undocked without docking again goes back to its slot. */
+  private void pruneViews(WorkspaceManager manager) {
+    for (String id : List.copyOf(views.keySet())) {
+      if (!manager.isShowing(views.get(id))) {
+        views.remove(id);
+        find(id).ifPresent(tool -> open(tool, preferredSlot(tool)));
+      }
     }
   }
 
@@ -310,12 +414,18 @@ public class SidePanel extends JPanel {
 
   /** The state of this side as a session or a UI profile records it. */
   public ShellSide captureState() {
+    if (!views.isEmpty()) {
+      WorkspaceManager manager = workspace.get();
+      if (manager != null) {
+        pruneViews(manager);
+      }
+    }
     List<String> slots = new ArrayList<>();
     for (Slot slot : Slot.values()) {
       int i = slot.ordinal();
       slots.add(collapsed[i] ? remembered[i] : toolIn(slot).orElse(null));
     }
-    return new ShellSide(slots, getContentWidth(), getRatio(), isCollapsed());
+    return new ShellSide(slots, getContentWidth(), getRatio(), isCollapsed(), viewIds());
   }
 
   /**
@@ -331,6 +441,11 @@ public class SidePanel extends JPanel {
       if (id == null) {
         clear(slot);
       } else if (!open(id, slot)) {
+        skipped.add(id);
+      }
+    }
+    for (String id : state.views()) {
+      if (!openAsView(id)) {
         skipped.add(id);
       }
     }
@@ -368,6 +483,14 @@ public class SidePanel extends JPanel {
   }
 
   private void open(DockableTool tool, Slot slot) {
+    ToolView view = views.remove(tool.getToolId());
+    if (view != null) {
+      // back from the central area into a slot
+      WorkspaceManager manager = workspace.get();
+      if (manager != null) {
+        manager.close(view);
+      }
+    }
     SlotHost other = host(slot.other());
     if (other.tool == tool) {
       other.setTool(null);
@@ -392,6 +515,16 @@ public class SidePanel extends JPanel {
     DockableTool tool = find(toolId).orElse(null);
     if (tool == null) {
       return;
+    }
+    ToolView view = views.get(toolId);
+    if (view != null) {
+      // the stripe button of a tool shown as a view brings its tab to the front
+      WorkspaceManager manager = workspace.get();
+      if (manager != null && manager.isShowing(view)) {
+        manager.select(view);
+        return;
+      }
+      views.remove(toolId);
     }
     Optional<Slot> current = slotOf(tool).filter(s -> !collapsed[s.ordinal()]);
     if (otherSlot) {
@@ -523,11 +656,19 @@ public class SidePanel extends JPanel {
     for (DockableTool tool : tools) {
       JToggleButton button = buttons.get(tool.getToolId());
       Optional<Slot> slot = slotOf(tool).filter(this::isShown);
-      button.setSelected(slot.isPresent());
+      boolean asView = views.containsKey(tool.getToolId());
+      button.setSelected(slot.isPresent() || asView);
       button.setToolTipText(
-          slot.filter(s -> s == Slot.BOTTOM)
-              .map(s -> tool.getComponentName() + " (" + Messages.getString("Docking.bottom") + ")")
-              .orElse(tool.getComponentName()));
+          asView
+              ? tool.getComponentName() + " (" + Messages.getString("Docking.tab") + ")"
+              : slot.filter(s -> s == Slot.BOTTOM)
+                  .map(
+                      s ->
+                          tool.getComponentName()
+                              + " ("
+                              + Messages.getString("Docking.bottom")
+                              + ")")
+                  .orElse(tool.getComponentName()));
     }
   }
 
@@ -657,6 +798,7 @@ public class SidePanel extends JPanel {
     final JPanel content = new JPanel(new BorderLayout());
     final JLabel title = new JLabel();
     final JButton minimize = new JButton();
+    final JButton asTab = new JButton();
     DockableTool tool;
 
     SlotHost(Slot slot) {
@@ -664,10 +806,22 @@ public class SidePanel extends JPanel {
       minimize.setToolTipText(Messages.getString("Docking.minimize"));
       minimize.setFocusable(false);
       minimize.addActionListener(e -> collapse(slot));
+      asTab.setToolTipText(Messages.getString("Docking.open_tab"));
+      asTab.setFocusable(false);
+      asTab.addActionListener(
+          e -> {
+            if (tool != null) {
+              openAsView(tool.getToolId());
+            }
+          });
       JPanel header = new JPanel(new BorderLayout());
       header.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 2));
       header.add(title, BorderLayout.CENTER);
-      header.add(minimize, BorderLayout.LINE_END);
+      JPanel actions = new JPanel();
+      actions.setLayout(new BoxLayout(actions, BoxLayout.LINE_AXIS));
+      actions.add(asTab);
+      actions.add(minimize);
+      header.add(actions, BorderLayout.LINE_END);
       panel.add(header, BorderLayout.NORTH);
       panel.add(content, BorderLayout.CENTER);
       panel.setMinimumSize(new Dimension(0, GuiUtils.getScaleLength(MIN_SLOT_HEIGHT)));
@@ -680,6 +834,7 @@ public class SidePanel extends JPanel {
         if (minimize.getIcon() == null) {
           // load lazily: the resource path is only configured after the launcher starts
           minimize.setIcon(minimizeIcon());
+          asTab.setIcon(ResourceUtil.getIcon(ActionIcon.OPEN_NEW_TAB));
         }
         title.setText(newTool.getComponentName());
         content.add(newTool.getToolComponent(), BorderLayout.CENTER);

@@ -79,6 +79,19 @@ menu of the main window lists the windows (the active one checked; choosing one 
 it), the screens by role to move the active window to, its fullscreen state and *Open in a
 new window* for the selected viewer.
 
+### A tool as a view
+
+A shell tool can leave its slot for the central area: `SidePanel.openAsView(toolId)` wraps it
+in a `ToolView` (view id `tool:<id>`, type `tool`) docked in the active window, where it gets
+width and stacks, splits and detaches like any view: one floating mechanism. The slot header
+has an *Open as a tab* button, the stripe button of the tool brings the tab to the front, and
+the tab closes or its menu entry *Return to the side panel* puts the tool back in its preferred
+slot (`returnFromView`). `ShellState` records the tools shown as views under `views` per side,
+and the snapshot tree carries the tool view, which the restorer asks the side for again
+(`viewForRestore`), so a session restores the tab in its place. `workspace:panel --side <role>
+--tool <id> --as-view` opens one, `--tool <id> --slot <slot>` brings it back; `workspace:list`
+names the tool of such a view under `tool`.
+
 ### Window states: maximized, fullscreen, immersive
 
 `maximize(view)` shows a view alone in its window (a card swap in the `Workspace`).

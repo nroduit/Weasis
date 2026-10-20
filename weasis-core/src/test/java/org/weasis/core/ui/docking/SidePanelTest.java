@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.weasis.core.ui.docking.ShellState.ShellSide;
 import org.weasis.core.ui.docking.SidePanel.Role;
 import org.weasis.core.ui.docking.SidePanel.Side;
+import org.weasis.core.ui.docking.ws.WorkspaceManager;
 
 class SidePanelTest {
 
@@ -173,5 +174,53 @@ class SidePanelTest {
         () -> assertEquals(Optional.empty(), tools.toolIn(Slot.TOP)),
         () -> assertEquals(Optional.of("display"), tools.toolIn(Slot.BOTTOM)),
         () -> assertFalse(tools.open("nope", Slot.TOP)));
+  }
+
+  @Test
+  void aToolOpensAsACentralViewAndComesBackToItsSlot() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    WorkspaceManager manager = new WorkspaceManager(null);
+    tools.setWorkspace(() -> manager);
+    FakeTool display = new FakeTool("display", 10);
+    edt(() -> tools.show(display));
+    edt(() -> tools.open("display", Slot.TOP));
+    flush();
+    assertEquals(Optional.of("display"), tools.toolIn(Slot.TOP));
+
+    edt(() -> assertTrue(tools.openAsView("display")));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.empty(), tools.toolIn(Slot.TOP), "the slot emptied"),
+        () -> assertTrue(tools.isView("display")),
+        () -> assertEquals(List.of("display"), tools.captureState().views()),
+        () ->
+            assertEquals(
+                List.of("tool:display"), manager.getViews().stream().map(v -> v.viewId()).toList()),
+        () -> assertEquals("tool", manager.getViews().getFirst().typeId()),
+        () ->
+            assertTrue(button(tools, "display").orElseThrow().isSelected(), "the stripe shows it"),
+        () -> assertFalse(tools.openAsView("nope")));
+
+    edt(() -> assertTrue(tools.returnFromView("display")));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.of("display"), tools.toolIn(Slot.TOP), "back in its slot"),
+        () -> assertFalse(tools.isView("display")),
+        () -> assertTrue(manager.getViews().isEmpty()),
+        () -> assertEquals(List.of(), tools.captureState().views()));
+
+    // a state that names the view opens it again, and a slot entry brings it back
+    edt(
+        () ->
+            tools.applyState(
+                new ShellSide(Arrays.asList(null, null), 0, 0, false, List.of("display"))));
+    flush();
+    assertTrue(tools.isView("display"));
+    edt(() -> tools.applyState(new ShellSide(Arrays.asList("display", null), 0, 0, false)));
+    flush();
+    assertAll(
+        () -> assertFalse(tools.isView("display")),
+        () -> assertEquals(Optional.of("display"), tools.toolIn(Slot.TOP)),
+        () -> assertTrue(manager.getViews().isEmpty()));
   }
 }
