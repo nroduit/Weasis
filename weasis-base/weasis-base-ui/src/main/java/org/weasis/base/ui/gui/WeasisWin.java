@@ -141,6 +141,7 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.MiniStrip;
 import org.weasis.core.ui.docking.SidePanel;
 import org.weasis.core.ui.docking.ToolContributions;
+import org.weasis.core.ui.docking.ToolVisibility;
 import org.weasis.core.ui.docking.ws.DetachedFrame;
 import org.weasis.core.ui.docking.ws.Workspace;
 import org.weasis.core.ui.docking.ws.WorkspaceListener;
@@ -1199,16 +1200,14 @@ public class WeasisWin {
 
   private static void buildSubMenu(JMenu explorerMenu, DockableTool t) {
     if (!Insertable.Type.EMPTY.equals(t.getPanelType())) {
-      JCheckBoxMenuItem item = new JCheckBoxMenuItem(t.getComponentName(), t.isComponentEnabled());
+      JCheckBoxMenuItem item =
+          new JCheckBoxMenuItem(t.getComponentName(), ToolVisibility.isVisible(t));
+      item.setEnabled(!Settings.isLocked(ToolVisibility.setting(t.getToolId())));
       item.addActionListener(
           e -> {
-            if (e.getSource() instanceof JCheckBoxMenuItem menuItem) {
-              t.setComponentEnabled(menuItem.isSelected());
-              if (t.isComponentEnabled()) {
-                t.showDockable();
-              } else {
-                t.closeDockable();
-              }
+            if (e.getSource() instanceof JCheckBoxMenuItem menuItem
+                && !ToolVisibility.setVisible(t, menuItem.isSelected())) {
+              menuItem.setSelected(ToolVisibility.isVisible(t));
             }
           });
       explorerMenu.add(item);

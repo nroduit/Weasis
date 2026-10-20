@@ -4864,7 +4864,7 @@
           "name": "panel",
           "description": "Shell slots around the workspace: the explorer side (leading) and the tools side (trailing), two stacked slots each, and the central strip. Without option it returns the shell state; --side selects a side, then --slot with --tool or --clear fills or empties a slot, --collapse / --expand hide or show the side, --width and --ratio size it. Tool ids are stable across viewer types; an id the side does not offer now fails and lists the ones it does.",
           "since": "5.0",
-          "usage": "workspace:panel [-h] [--as-view] [--clear] [--collapse] [--expand] [--json] [--no-strip] [--ratio=<split-ratio>] [--side=<side>] [--slot=<slot>] [--strip=<tool-id>] [--tool=<tool-id>] [--width=<pixels>]",
+          "usage": "workspace:panel [-h] [--as-view] [--clear] [--collapse] [--expand] [--hide] [--json] [--no-strip] [--show] [--ratio=<split-ratio>] [--side=<side>] [--slot=<slot>] [--strip=<tool-id>] [--tool=<tool-id>] [--width=<pixels>]",
           "parameters": [],
           "options": [
             {
@@ -4924,6 +4924,26 @@
               "arity": "0",
               "required": false,
               "description": "Empties --slot of --side."
+            },
+            {
+              "names": [
+                "--hide"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Hides --tool of --side for good: the user's choice, kept in the setting weasis.tool.<id>.visible (see config:setting), until --show."
+            },
+            {
+              "names": [
+                "--show"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Shows --tool of --side again after --hide."
             },
             {
               "names": [

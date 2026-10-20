@@ -24,6 +24,7 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.ExtToolFactory;
 import org.weasis.core.ui.docking.ToolContribution;
 import org.weasis.core.ui.docking.ToolContributions;
+import org.weasis.core.ui.docking.ToolVisibility;
 import org.weasis.core.ui.util.Toolbar;
 
 public class SeriesViewerUI {
@@ -73,7 +74,8 @@ public class SeriesViewerUI {
       }
       if (tool != null) {
         for (DockableTool p : tool) {
-          if (p.isComponentEnabled()) {
+          ToolVisibility.watch(p.getToolId());
+          if (ToolVisibility.isVisible(p)) {
             p.showDockable();
           }
         }

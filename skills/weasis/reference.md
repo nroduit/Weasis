@@ -1280,7 +1280,7 @@ Usage: `workspace:move [-h] [--json] --screen=<screen-role> --view=<view-id>`
 
 Shell slots around the workspace: the explorer side (leading) and the tools side (trailing), two stacked slots each, and the central strip. Without option it returns the shell state; --side selects a side, then --slot with --tool or --clear fills or empties a slot, --collapse / --expand hide or show the side, --width and --ratio size it. Tool ids are stable across viewer types; an id the side does not offer now fails and lists the ones it does.
 
-Usage: `workspace:panel [-h] [--as-view] [--clear] [--collapse] [--expand] [--json] [--no-strip] [--ratio=<split-ratio>] [--side=<side>] [--slot=<slot>] [--strip=<tool-id>] [--tool=<tool-id>] [--width=<pixels>]`
+Usage: `workspace:panel [-h] [--as-view] [--clear] [--collapse] [--expand] [--hide] [--json] [--no-strip] [--show] [--ratio=<split-ratio>] [--side=<side>] [--slot=<slot>] [--strip=<tool-id>] [--tool=<tool-id>] [--width=<pixels>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
@@ -1289,6 +1289,8 @@ Usage: `workspace:panel [-h] [--as-view] [--clear] [--collapse] [--expand] [--js
 | --slot | enum |  | Slot of the side: TOP, BOTTOM. |
 | --tool | tool-id |  | Opens this tool in --slot of --side, replacing what was there. |
 | --clear | boolean |  | Empties --slot of --side. |
+| --hide | boolean |  | Hides --tool of --side for good: the user's choice, kept in the setting weasis.tool.<id>.visible (see config:setting), until --show. |
+| --show | boolean |  | Shows --tool of --side again after --hide. |
 | --as-view | boolean |  | Shows --tool of --side as a tab of the active window instead of a slot, where it gets width and floats like any view; --tool with --slot brings it back. |
 | --collapse | boolean |  | Hides both slots of --side (tools remembered). |
 | --expand | boolean |  | Shows the remembered tools of --side again. |

@@ -38,12 +38,14 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.MiniStrip;
 import org.weasis.core.ui.docking.Shell;
 import org.weasis.core.ui.docking.ShellState;
 import org.weasis.core.ui.docking.SidePanel;
 import org.weasis.core.ui.docking.Slot;
 import org.weasis.core.ui.docking.ToolView;
+import org.weasis.core.ui.docking.ToolVisibility;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshotIO;
 import org.weasis.core.ui.editor.ExternalDisplay;
@@ -707,6 +709,16 @@ public class WorkspaceCommands implements CommandExtension {
     boolean clear;
 
     @Option(
+        names = "--hide",
+        description =
+            "Hides --tool of --side for good: the user's choice, kept in the setting "
+                + "weasis.tool.<id>.visible (see config:setting), until --show.")
+    boolean hide;
+
+    @Option(names = "--show", description = "Shows --tool of --side again after --hide.")
+    boolean show;
+
+    @Option(
         names = "--as-view",
         description =
             "Shows --tool of --side as a tab of the active window instead of a slot, where it "
@@ -765,7 +777,13 @@ public class WorkspaceCommands implements CommandExtension {
       if (asView && (tool == null || clear || slot != null)) {
         throw invalid("--as-view goes with --tool alone, without --slot or --clear");
       }
-      if (slotChange && slot == null && !asView) {
+      if (hide && show) {
+        throw invalid("--hide and --show are exclusive");
+      }
+      if ((hide || show) && (tool == null || clear || slot != null || asView)) {
+        throw invalid("--hide and --show go with --tool alone");
+      }
+      if (slotChange && slot == null && !asView && !hide && !show) {
         throw invalid("--slot is required with --tool and --clear");
       }
       if (tool != null && clear) {
@@ -786,7 +804,22 @@ public class WorkspaceCommands implements CommandExtension {
     private void apply(Shell shell) {
       if (side != null) {
         SidePanel panel = shell.side(side);
-        if (asView) {
+        if (hide || show) {
+          DockableTool target =
+              GuiUtils.getUICore()
+                  .getSelectedPlugin()
+                  .map(viewer -> viewer.getSeriesViewerUI().tools)
+                  .flatMap(
+                      tools ->
+                          tools.stream()
+                              .filter(t -> t.getToolId().equals(tool.value()))
+                              .findFirst())
+                  .orElseThrow(() -> unknownTool(tool.value(), side.key(), panel.toolIds()));
+          if (!ToolVisibility.setVisible(target, show)) {
+            throw new IllegalStateException(
+                "The site locks " + ToolVisibility.key(tool.value())); // NON-NLS
+          }
+        } else if (asView) {
           if (!panel.openAsView(tool.value())) {
             throw unknownTool(tool.value(), side.key(), panel.toolIds());
           }

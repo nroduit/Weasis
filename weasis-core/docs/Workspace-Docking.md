@@ -99,6 +99,18 @@ with `isCompatible` as its predicate on `context.properties()`) go through the s
 the context of the selected series. The built-in tools of a viewer (`SeriesViewerUI.tools`)
 stay the always-relevant set.
 
+### Tool visibility in the settings catalog
+
+Whether a tool is shown is a typed setting of the catalog, `weasis.tool.<id>.visible`
+(`ToolVisibility`): one per stable tool id, declared when the tool is first seen, contextual,
+so a hanging protocol's UI profile may override it while it is active (`Settings.applyContext`),
+and lockable by the site like any setting. The View menu and `workspace:panel --tool <id>
+--hide / --show` write the user's choice to it; `config:setting weasis.tool.<id>.visible`
+shows where the value comes from. Without a value in any layer, the flag the 4.x preferences
+set on the tool applies (`InsertableUtil`: the java preferences of the viewer and the legacy
+site keys), so an installation keeps its choices. A tool whose setting changes is shown or
+closed on the selected viewer at once.
+
 ### A tool as a view
 
 A shell tool can leave its slot for the central area: `SidePanel.openAsView(toolId)` wraps it

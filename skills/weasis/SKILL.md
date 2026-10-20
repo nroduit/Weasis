@@ -156,7 +156,8 @@ line naming the current spelling. Use the current one everywhere.
    brings it back; such a view is listed by `workspace:list` with `tool`). `workspace:context`
    says what is displayed and why (the viewer type, the selected series, the hanging protocol
    and step, the modality and anatomy of the series): read it to know which tools and verbs
-   apply before acting,
+   apply before acting. `--tool <id> --hide` / `--show` with `--side` hides or shows a tool for
+   good (the setting `weasis.tool.<id>.visible`, readable with `config:setting`),
    `--collapse` / `--expand` hide or show a side; `workspace:save` keeps the shell too.
    Windows: `workspace:detach --view <id> --screen diagnostic-1` floats a view in a viewer
    window filling the screen of that role (`workspace:screens` lists the roles control,
