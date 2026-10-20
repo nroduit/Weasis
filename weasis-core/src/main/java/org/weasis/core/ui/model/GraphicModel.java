@@ -52,6 +52,12 @@ public interface GraphicModel extends UUIDable {
 
   Optional<Graphic> getFirstGraphicIntersecting(MouseEventDouble mouseevent);
 
+  /**
+   * Every selectable graphic under the cursor, the one whose outline is nearest first. Outlines at
+   * the same distance keep the drawing order, the upper one first.
+   */
+  List<Graphic> getAllGraphicsIntersecting(MouseEventDouble mouseevent);
+
   List<DragGraphic> getSelectedDraggableGraphics();
 
   List<Graphic> getSelectedGraphics();

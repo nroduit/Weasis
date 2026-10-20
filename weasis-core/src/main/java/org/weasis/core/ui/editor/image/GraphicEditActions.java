@@ -12,18 +12,25 @@ package org.weasis.core.ui.editor.image;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.ui.dialog.MeasureDialog;
+import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicLabel;
 import org.weasis.core.ui.model.graphic.MidpointHandles;
 import org.weasis.core.ui.model.graphic.imp.PathConversion;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
@@ -64,6 +71,12 @@ public final class GraphicEditActions {
     JPopupMenu popupMenu = new JPopupMenu();
     popupMenu.add(new TitleMenuItem(Messages.getString("GraphicEditActions.selection")));
     popupMenu.addSeparator();
+
+    JMenu selectMenu = buildSelectUnderCursorMenu(popupMenu, view, evt);
+    if (selectMenu != null) {
+      popupMenu.add(selectMenu);
+      popupMenu.addSeparator();
+    }
 
     MouseEventDouble mouseEvt = imageEvent(view, evt);
     boolean graphicComplete = true;
@@ -116,6 +129,97 @@ public final class GraphicEditActions {
     JMenuItem inPlace = new JMenuItem(Messages.getString("GraphicEditActions.paste_in_place"));
     inPlace.addActionListener(_ -> clipboard.paste(view, PasteMode.IN_PLACE, null));
     popupMenu.add(inPlace);
+  }
+
+  /**
+   * Adds at the top of the menu of a right-click on the image the graphics under the cursor, when
+   * several are stacked there. Only while a drawing action is active, as a selection is otherwise
+   * of no use.
+   */
+  public static void addSelectUnderCursorMenu(
+      JPopupMenu popupMenu, ViewCanvas<?> view, MouseEvent evt) {
+    if (!view.isDrawActionActive()) {
+      return;
+    }
+    JMenu selectMenu = buildSelectUnderCursorMenu(popupMenu, view, evt);
+    if (selectMenu != null) {
+      popupMenu.insert(selectMenu, 0);
+      popupMenu.insert(new JPopupMenu.Separator(), 1);
+    }
+  }
+
+  /**
+   * The graphics under the cursor, nearest first, to reach one hidden by another. Hovering an entry
+   * previews it as the selection, and the previous selection comes back when the menu closes,
+   * unless an entry was chosen.
+   *
+   * @return the submenu, or null when less than two graphics are under the cursor
+   */
+  private static JMenu buildSelectUnderCursorMenu(
+      JPopupMenu popupMenu, ViewCanvas<?> view, MouseEvent evt) {
+    MouseEventDouble mouseEvt = imageEvent(view, evt);
+    if (mouseEvt == null) {
+      return null;
+    }
+    GraphicModel graphicManager = view.getGraphicManager();
+    List<Graphic> hits = graphicManager.getAllGraphicsIntersecting(mouseEvt);
+    if (hits.size() < 2) {
+      return null;
+    }
+    List<Graphic> previous = new ArrayList<>(graphicManager.getSelectedGraphics());
+    // A chosen item is armed again by its click once the menu is closed: that is not a preview
+    boolean[] open = {true};
+
+    JMenu menu = new JMenu(Messages.getString("GraphicEditActions.select_under"));
+    for (Graphic graphic : hits) {
+      JCheckBoxMenuItem item =
+          new JCheckBoxMenuItem(describe(graphic), graphic.getIcon(), previous.contains(graphic));
+      item.addChangeListener(
+          _ -> {
+            if (open[0]) {
+              graphicManager.setSelectedGraphic(
+                  item.isArmed() ? Collections.singletonList(graphic) : previous);
+            }
+          });
+      // The menu is already closed, and the previous selection restored, when the action runs
+      item.addActionListener(
+          _ -> {
+            graphicManager.setSelectedGraphic(Collections.singletonList(graphic));
+            graphicManager.fireGraphicsSelectionChanged(view.getMeasurableLayer());
+          });
+      menu.add(item);
+    }
+
+    popupMenu.addPopupMenuListener(
+        new PopupMenuListener() {
+          @Override
+          public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            // Nothing to prepare
+          }
+
+          @Override
+          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            open[0] = false;
+            graphicManager.setSelectedGraphic(previous);
+          }
+
+          @Override
+          public void popupMenuCanceled(PopupMenuEvent e) {
+            // Handled when the menu becomes invisible
+          }
+        });
+    return menu;
+  }
+
+  /** The tool name of a graphic, with the first line of its label to tell similar ones apart. */
+  private static String describe(Graphic graphic) {
+    String name = graphic.getUIName();
+    GraphicLabel label = graphic.getGraphicLabel();
+    String[] lines = label == null ? null : label.getLabels();
+    if (lines != null && lines.length > 0 && lines[0] != null && !lines[0].isBlank()) {
+      return name + " \u2013 " + lines[0];
+    }
+    return name;
   }
 
   // -- Actions, also reachable from the shortcuts --
