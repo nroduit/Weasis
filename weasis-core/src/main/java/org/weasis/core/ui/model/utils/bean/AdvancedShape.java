@@ -340,6 +340,10 @@ public class AdvancedShape implements Shape {
     Area pathBoundingArea = new Area();
 
     for (BasicShape item : shapeList) {
+      // A hidden shape cannot be seen, so it cannot be clicked either
+      if (!item.isVisible()) {
+        continue;
+      }
 
       // Note : if shape is invalid, like a path with an odd number of curves, creating a new Area
       // involves a

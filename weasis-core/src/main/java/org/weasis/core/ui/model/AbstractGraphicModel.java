@@ -91,6 +91,8 @@ import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
+import org.weasis.core.ui.model.utils.bean.AdvancedShape;
+import org.weasis.core.ui.model.utils.bean.AdvancedShape.BasicShape;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -621,6 +623,20 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     if (shape == null) {
       return 0;
     }
+    if (shape instanceof AdvancedShape advancedShape) {
+      // Only the visible shapes, as for the area that can be clicked
+      double min = Double.MAX_VALUE;
+      for (BasicShape item : advancedShape.getShapeList()) {
+        if (item.isVisible() && item.getRealShape() != null) {
+          min = Math.min(min, pathDistance(item.getRealShape(), pt, step));
+        }
+      }
+      return min == Double.MAX_VALUE ? 0 : min;
+    }
+    return pathDistance(shape, pt, step);
+  }
+
+  private static double pathDistance(Shape shape, Point2D pt, double step) {
     double min = Double.MAX_VALUE;
     double[] coords = new double[6];
     double startX = 0;

@@ -10,17 +10,22 @@
 package org.weasis.core.ui.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.List;
 import javax.swing.JPanel;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -85,6 +90,39 @@ class GraphicHitOrderTest {
         5,
         AbstractGraphicModel.outlineDistance(
             new Line2D.Double(0, 0, 10, 0), new Point2D.Double(15, 0), 1));
+  }
+
+  /** Paints the graphic, which decides whether the axis guide of an ellipse is shown. */
+  private static void paint(Graphic graphic) {
+    Graphics2D g2d = new BufferedImage(200, 200, BufferedImage.TYPE_INT_ARGB).createGraphics();
+    try {
+      graphic.paint(g2d, new AffineTransform());
+    } finally {
+      g2d.dispose();
+    }
+  }
+
+  @Test
+  void the_hidden_axis_of_an_ellipse_cannot_be_clicked() throws Exception {
+    GraphicModel model = new XmlGraphicModel();
+    EllipseGraphic ellipse = new EllipseGraphic();
+    // The axis A-B along y = 50 touches the ellipse in C, D sets its height of 200
+    ellipse.buildGraphic(
+        List.of(
+            new Point2D.Double(0, 50),
+            new Point2D.Double(100, 50),
+            new Point2D.Double(50, 50),
+            new Point2D.Double(50, -150)));
+    model.addGraphic(ellipse);
+    // Far from the handles and from the curve, which is about 20 above that point
+    MouseEventDouble onAxis = clickAt(15, 50);
+
+    paint(ellipse);
+    assertTrue(model.getAllGraphicsIntersecting(onAxis).isEmpty());
+
+    model.setSelectedGraphic(List.of(ellipse));
+    paint(ellipse);
+    assertEquals(List.of(ellipse), model.getAllGraphicsIntersecting(onAxis));
   }
 
   @Test
