@@ -28,6 +28,7 @@ import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape.BasicShape;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
@@ -95,11 +96,14 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
     return Messages.getString("MeasureToolBar.ellipse");
   }
 
-  /** The axis guide is only drawn when the graphic can be edited: its layer is not locked. */
+  /** The axis guide is only drawn while the graphic is selected and its layer is not locked. */
   @Override
   public void paint(Graphics2D g2d, AffineTransform transform) {
     if (axisGuide != null) {
-      axisGuide.setVisible(getLayer() == null || !Boolean.TRUE.equals(getLayer().getLocked()));
+      GraphicLayer layer = getLayer();
+      axisGuide.setVisible(
+          Boolean.TRUE.equals(getSelected())
+              && (layer == null || !Boolean.TRUE.equals(layer.getLocked())));
     }
     super.paint(g2d, transform);
   }
