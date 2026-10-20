@@ -24,8 +24,8 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.1 and protocol
-1, and answers these namespaces: acquire, dicom, image, redact, script, view2d, view3d, weasis, workspace.
+This instance runs Weasis development with command API 2.4 and protocol
+1, and answers these namespaces: config, dicom, explorer, hp, image, redact, script, state, view2d, view3d, weasis, workspace.
 
 Check the connection first:
 
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.1 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.4 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -151,6 +151,12 @@ line naming the current spelling. Use the current one everywhere.
    workspace are slots: `workspace:panel` shows which tool fills each slot (explorer and tools
    sides, top and bottom), `--side tools --slot bottom --tool measure` opens a tool there,
    `--collapse` / `--expand` hide or show a side; `workspace:save` keeps the shell too.
+   Windows: `workspace:detach --view <id> --screen diagnostic-1` floats a view in a viewer
+   window filling the screen of that role (`workspace:screens` lists the roles control,
+   diagnostic-1, diagnostic-2, color, portrait with the monitor each resolves to; `--bounds`
+   gives pixels instead). The toolbar row follows the active window, a new viewer opens in the
+   window of the selected view, and `workspace:list` names that view under `selected`;
+   `hp:apply --screen control` hangs a reading step in a viewer window on that screen.
 9. **Hanging protocols** (engine and built-in library, no UI yet): a study loaded by any verb
    opens already hung by its best protocol (setting `weasis.hp.open`, `PROTOCOL` by default,
    `FIRST_SERIES` for the old behaviour). `hp:list` shows the protocols of every layer, the

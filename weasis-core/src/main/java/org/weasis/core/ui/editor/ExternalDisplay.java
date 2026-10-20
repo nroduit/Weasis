@@ -15,6 +15,10 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.Window;
+import org.weasis.core.api.command.ScreenRole;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.ui.docking.ws.WorkspaceManager;
 
 /**
  * Describes how a viewer should be displayed in an external (detached) window.
@@ -25,6 +29,8 @@ import java.awt.Toolkit;
  *   <li>{@link #onScreen(GraphicsDevice)} – open on a specific screen device
  *   <li>{@link #onOtherScreen(Rectangle)} – automatically pick a screen that does <em>not</em>
  *       contain the given bounds (typically the main application window)
+ *   <li>{@link #onRole(ScreenRole)} – open on the screen a role resolves to on this workstation
+ *       (what a hanging protocol or a session names)
  *   <li>{@link #atBounds(Rectangle)} – open at explicit pixel coordinates (low-level escape hatch)
  * </ul>
  *
@@ -78,6 +84,44 @@ public sealed interface ExternalDisplay {
   }
 
   /**
+   * Open on the screen a role resolves to on this workstation, the main window's screen being the
+   * control one (see {@link ScreenRoles}). A role no monitor fills degrades to the nearest one, so
+   * the result is never null.
+   */
+  static ExternalDisplay onRole(ScreenRole role) {
+    return onRole(role, mainWindow());
+  }
+
+  /** {@link #onRole(ScreenRole)} with the main window given, for a shell built elsewhere. */
+  static ExternalDisplay onRole(ScreenRole role, Window mainWindow) {
+    if (role == null) {
+      throw new IllegalArgumentException("role must not be null");
+    }
+    GraphicsDevice device =
+        ScreenRoles.resolve(role, mainWindow)
+            .orElseGet(
+                () -> GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice());
+    return new OnRole(role, device);
+  }
+
+  private static Window mainWindow() {
+    WorkspaceManager manager = GuiUtils.getUICore().getWorkspaceManager();
+    return manager == null ? null : manager.mainWindow();
+  }
+
+  /** The bounds of a screen minus the system insets (taskbars), in the virtual desktop. */
+  static Rectangle usableBounds(GraphicsDevice screen) {
+    GraphicsConfiguration config = screen.getDefaultConfiguration();
+    Rectangle bounds = config.getBounds();
+    Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(config);
+    bounds.x += insets.left;
+    bounds.y += insets.top;
+    bounds.width -= (insets.left + insets.right);
+    bounds.height -= (insets.top + insets.bottom);
+    return bounds;
+  }
+
+  /**
    * Open at explicit pixel coordinates. This is a low-level escape hatch; prefer {@link
    * #onScreen(GraphicsDevice)} when possible.
    *
@@ -102,19 +146,32 @@ public sealed interface ExternalDisplay {
 
     @Override
     public Rectangle screenBounds() {
-      GraphicsConfiguration config = screen.getDefaultConfiguration();
-      Rectangle bounds = config.getBounds();
-      Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(config);
-      bounds.x += insets.left;
-      bounds.y += insets.top;
-      bounds.width -= (insets.left + insets.right);
-      bounds.height -= (insets.top + insets.bottom);
-      return bounds;
+      return usableBounds(screen);
     }
 
     @Override
     public String toString() {
       return "ExternalDisplay.OnScreen[" + screen.getIDstring() + "]";
+    }
+  }
+
+  /** Open on the screen a role resolved to; the role is what a session or a protocol records. */
+  record OnRole(ScreenRole role, GraphicsDevice screen) implements ExternalDisplay {
+
+    public OnRole {
+      if (role == null || screen == null) {
+        throw new IllegalArgumentException("role and screen must not be null");
+      }
+    }
+
+    @Override
+    public Rectangle screenBounds() {
+      return usableBounds(screen);
+    }
+
+    @Override
+    public String toString() {
+      return "ExternalDisplay.OnRole[" + role + " -> " + screen.getIDstring() + "]";
     }
   }
 

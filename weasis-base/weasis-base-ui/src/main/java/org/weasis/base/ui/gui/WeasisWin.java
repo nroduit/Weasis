@@ -33,6 +33,7 @@ import java.awt.Rectangle;
 import java.awt.Taskbar;
 import java.awt.Taskbar.Feature;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -138,9 +139,11 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.ImportExportFooter;
 import org.weasis.core.ui.docking.MiniStrip;
 import org.weasis.core.ui.docking.SidePanel;
+import org.weasis.core.ui.docking.ws.DetachedFrame;
 import org.weasis.core.ui.docking.ws.Workspace;
+import org.weasis.core.ui.docking.ws.WorkspaceListener;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
-import org.weasis.core.ui.editor.ExternalDisplay;
+import org.weasis.core.ui.docking.ws.WorkspaceView;
 import org.weasis.core.ui.editor.MediaFactory;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -193,6 +196,12 @@ public class WeasisWin {
   private final ShortcutTable<Consumer<ViewerPlugin<?>>> dockingActions = buildDockingActions();
 
   private final Frame frame;
+
+  /** The toolbar row: one component that follows the active window (main or viewer window). */
+  private final JPanel toolbarHost = new JPanel(new BorderLayout());
+
+  private JComponent toolbarRow;
+  private Window toolbarWindow;
   private final RootPaneContainer rootPaneContainer;
 
   public WeasisWin() {
@@ -233,9 +242,20 @@ public class WeasisWin {
 
     workspace()
         .addListener(
-            (view, window) -> {
-              if (view instanceof ViewerPlugin<?> viewer) {
-                setSelectedPlugin(viewer);
+            new WorkspaceListener() {
+              @Override
+              public void viewSelected(WorkspaceView view, Window window) {
+                if (view instanceof ViewerPlugin<?> viewer) {
+                  setSelectedPlugin(viewer);
+                  moveToolbarRow(window);
+                }
+              }
+
+              @Override
+              public void workspaceEmptied(Window window) {
+                if (window == toolbarWindow) {
+                  moveToolbarRow(frame);
+                }
               }
             });
     KeyEventDispatcher dockingShortcutDispatcher = this::dispatchDockingShortcut;
@@ -295,9 +315,12 @@ public class WeasisWin {
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(null);
+    toolbarRow = scrollPane;
+    toolbarHost.add(toolbarRow, BorderLayout.CENTER);
+    toolbarWindow = frame;
     rootPaneContainer
         .getContentPane()
-        .add(indicatorsInMenuBar ? scrollPane : createNorthPanel(scrollPane), BorderLayout.NORTH);
+        .add(indicatorsInMenuBar ? toolbarHost : createNorthPanel(toolbarHost), BorderLayout.NORTH);
 
     rootPaneContainer.setGlassPane(AppProperties.glassPane);
 
@@ -552,14 +575,10 @@ public class WeasisWin {
       // Apply placement-specific configuration
       boolean openInSelection = false;
       boolean registered;
-      if (placement instanceof ViewerPlacement.External ext) {
-        registered = registerDetachWindow(viewer, ext.externalDisplay());
-      } else {
-        if (placement instanceof ViewerPlacement.ReuseViewer reuse) {
-          openInSelection = reuse.openInSelection();
-        }
-        registered = registerPlugin(viewer, opts);
+      if (placement instanceof ViewerPlacement.ReuseViewer reuse) {
+        openInSelection = reuse.openInSelection();
       }
+      registered = registerPlugin(viewer, opts);
 
       if (registered) {
         boolean bringToFront = focusPolicy.shouldBringToFront();
@@ -585,19 +604,30 @@ public class WeasisWin {
   }
 
   /**
-   * Registers a viewer in its own floating window on the given external display. Mirrors {@link
-   * #registerPlugin(ViewerPlugin, ViewerOpenOptions)} but, instead of docking into the main area,
-   * detaches the viewer into a new floating window positioned over the target screen.
+   * Moves the toolbar row to the window of the selected viewer: a viewer window shows it under its
+   * title bar, the main window in its north panel. The row is one component (the viewer toolbars
+   * are singletons bound to the event manager), so it leaves its previous host first.
    */
-  private boolean registerDetachWindow(ViewerPlugin<?> plugin, ExternalDisplay extDisplay) {
-    if (plugin == null
-        || extDisplay == null
-        || GuiUtils.getUICore().getViewerPlugins().contains(plugin)) {
-      return false;
+  private void moveToolbarRow(Window window) {
+    Window target = window instanceof DetachedFrame ? window : frame;
+    if (target == toolbarWindow || toolbarRow == null) {
+      return;
     }
-    GuiUtils.getUICore().getViewerPlugins().add(plugin);
-    workspace().detach(plugin, extDisplay.screenBounds());
-    return true;
+    if (toolbarWindow instanceof DetachedFrame previous) {
+      previous.setToolbarRow(null);
+    } else {
+      toolbarHost.remove(toolbarRow);
+      toolbarHost.revalidate();
+      toolbarHost.repaint();
+    }
+    if (target instanceof DetachedFrame next) {
+      next.setToolbarRow(toolbarRow);
+    } else {
+      toolbarHost.add(toolbarRow, BorderLayout.CENTER);
+      toolbarHost.revalidate();
+      toolbarHost.repaint();
+    }
+    toolbarWindow = target;
   }
 
   public boolean registerPlugin(ViewerPlugin plugin, ViewerOpenOptions opts) {
@@ -630,6 +660,7 @@ public class WeasisWin {
       }
       selectedPlugin = null;
       GuiUtils.getUICore().setSelectedPlugin(null);
+      moveToolbarRow(frame);
       return;
     }
     if (selectedPlugin == plugin) {

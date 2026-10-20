@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.3, protocol 1, application development.
+Command API 2.4, protocol 1, application development.
 
 ## config
 
@@ -343,7 +343,7 @@ Hanging protocols: the protocols of every layer, the plan the engine computes fo
 
 Hangs a protocol on a loaded study: computes its plan as 'match' does and opens the viewers of one reading step, the 2D cells in one viewer and each MPR or 3D cell in its own. A 2D viewer of the same patient is re-hung unless --new-tab. Returns the cells with the view ids they went to, so 'view2d:' verbs can address them.
 
-Usage: `hp:apply [-h] [--json] [--new-tab] [--protocol=<protocol-id>] [--protocols=<input-path>] [--step=<step>] [--study=<study-uid>]`
+Usage: `hp:apply [-h] [--json] [--new-tab] [--protocol=<protocol-id>] [--protocols=<input-path>] [--screen=<screen-role>] [--step=<step>] [--study=<study-uid>]`
 
 Needs: file read
 
@@ -355,6 +355,7 @@ Needs: file read
 | --protocols | input-path |  | A JSON file of protocol entries used instead of the layers, to try a draft. |
 | --step | integer |  | The reading step to hang, from 1 (default: the first). |
 | --new-tab | boolean |  | Opens new viewers instead of re-hanging the one of the same patient. |
+| --screen | screen-role |  | Opens the viewers of the step in a viewer window on the screen of this role (control, diagnostic-1, diagnostic-2, color, portrait, see 'workspace:screens'). |
 
 ### hp:correct (since 5.0)
 
@@ -1102,16 +1103,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
-| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 
 
 ## view3d
@@ -1193,15 +1194,16 @@ Usage: `workspace:close [-h] [--json] --view=<view-id>`
 
 ### workspace:detach
 
-Floats a view in its own window.
+Floats a view in its own window: a viewer window, which shows the toolbar row while it is the active one. Without option the window opens near the main window; --screen fills the usable area of the screen of that role (see 'screens'), --bounds gives explicit pixels.
 
-Usage: `workspace:detach [-h] [--json] [--bounds=<screen-rect>] --view=<view-id>`
+Usage: `workspace:detach [-h] [--json] [--bounds=<screen-rect>] [--screen=<screen-role>] --view=<view-id>`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | View id from 'workspace:list'. |
 | --bounds | screen-rect |  | Screen bounds of the new window, as x,y,width,height. |
+| --screen | screen-role |  | Screen by role: control, diagnostic-1, diagnostic-2, color, portrait. |
 
 ### workspace:list
 
@@ -1272,6 +1274,16 @@ Needs: file write
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --out | output-path |  | Write the snapshot to this file and report its path. |
 | --force | boolean |  | Replace the file when it exists and was not written by this session. (since 5.0) |
+
+### workspace:screens (since 5.0)
+
+The screens of the workstation by role (control, diagnostic-1, diagnostic-2, color, portrait) with the monitor each one resolves to. The main window's screen is the control screen; a role no monitor fills resolves to the nearest one.
+
+Usage: `workspace:screens [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 ### workspace:select
 

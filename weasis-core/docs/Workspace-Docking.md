@@ -12,13 +12,42 @@ versions and has no third-party dependency.
   registration (`WorkspaceListener`: view selected, workspace emptied).
 - **`Workspace`** — the root panel of a window: a tree of `JSplitPane` whose leaves are tab
   groups, with a maximize mode that shows a single view in place of the tree. The main window
-  has one; each `DetachedFrame` has its own.
+  has one; each `DetachedFrame` has its own. It remembers the view last selected in its window.
+- **`DetachedFrame`** — a *viewer window*: a workspace plus a host for the toolbar row of the
+  application. There are two window kinds only: the main window (menu bar, shell, workspace)
+  and viewer windows. The toolbar row is one component (the viewer toolbars are singletons
+  bound to the event manager) that the main window moves into the window of the selected
+  viewer (`WeasisWin.moveToolbarRow`); the shell (explorer, tools) stays in the main window.
 - **`TabGroup`** — a group of tabs (FlatLaf closable tabs). A view belongs to exactly one group.
 - **`WorkspaceView`** — the contract a dockable content implements: a stable `viewId`, the
   component, the tab title, icon and tooltip, whether it is closable or detachable, a close
   veto (`requestClose`), the entries of its tab menu, and a `typeId` and `saveState` used by
   snapshots. `ViewerPlugin` implements it for all viewers.
 - **`DockSide`** — the side of an anchor view on which a split is made.
+
+### Selection and the active window
+
+The manager keeps the application's selection (`selectedView`): the view last reported by
+`viewSelected`, while it shows. The window of that view is the *active window*
+(`activeWorkspace`), and that is where a new view goes: `openInActive` fills it when empty, and
+`ViewerPlugin.showDockable` anchors a new tab or split on the selected viewer. Activating a
+window (focus gained) selects the view that window has selected (its last selected view, else
+the selected view of its first group), unless that view is already the selection, so a click on
+a viewer window brings its toolbar row and its tools without a click on a tab. `workspace:list`
+reports the selection under `selected`.
+
+### Screens by role
+
+A screen is addressed by a role, never by a device, in what travels (sessions, protocols,
+verbs): `control` (the worklist screen, where the main window is), `diagnostic-1`,
+`diagnostic-2`, `color`, `portrait` (`ScreenRole` in the command vocabulary). `ScreenRoles`
+maps them to the monitors of the workstation; until the Screens preference page stores a
+mapping, it derives one: the main window's screen is `control`, the other screens from left to
+right are `diagnostic-1` and `diagnostic-2`, `portrait` the first other screen taller than wide,
+`color` the first other screen; a role no monitor fills resolves to the nearest one, so a
+single-screen workstation maps every role to its screen. `ExternalDisplay.onRole(role)` is the
+placement a hanging plan or a session uses (`ViewerPlacement.External`), and
+`ViewerPlugin.showDockable` detaches the viewer on that screen through the manager.
 
 Explorer and tool panels (`SidePanel`, `MiniStrip`, `PluginTool`) are plain Swing components
 outside the workspace tree; the bottom footer hosts panels contributed through the
@@ -73,7 +102,7 @@ through the `DataExplorerModel` of each explorer (`SeriesResolver.ofApplication`
 ## Commands
 
 `WorkspaceCommands` exposes the engine under the `workspace:` command namespace (list, select,
-close, maximize, unmaximize, stack, split, detach, save, load), so that a layout can be
+close, maximize, unmaximize, stack, split, detach, screens, save, load, panel), so that a layout can be
 driven from the command line, from `weasis-cli` or by an agent. The namespace is a Picocli
 command model (see the command bridge in `weasis-launcher/docs/Launcher-Overview.md`): every
 verb documents itself with `--help`, and the verbs that change the layout return the new state
@@ -84,6 +113,11 @@ tab title resolved under the identity mask in force, whether it is selected, and
 id when a `SeriesViewerFactory` claims it; an image viewer adds its grid, its synchronization
 and one entry per pane with the series and the image the pane shows (`ViewDisplayState`, in
 `org.weasis.core.ui.editor.image`, builds both that pane description and the full display state
-the display verbs echo). A window reports the view it has maximized. View ids are durable
-handles; the window and group numbers are positions in that listing and change with the
-layout.
+the display verbs echo). A window reports the view it has maximized; the listing reports the
+application's selection under `selected`. View ids are durable handles; the window and group
+numbers are positions in that listing and change with the layout.
+
+`detach` floats a view in a viewer window near the main window, on the usable area of the
+screen of a role (`--screen diagnostic-1`) or at explicit bounds (`--bounds`); `screens` lists
+the roles with the monitor each one resolves to. `hp:apply --screen <role>` hangs a reading
+step in a viewer window on that screen.

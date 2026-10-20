@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -206,5 +207,46 @@ class WorkspaceManagerTest {
   void groupOfIsEmptyForUnknownView() {
     assertTrue(manager.groupOf(v1).isEmpty());
     assertFalse(manager.isShowing(v1));
+  }
+
+  @Test
+  void theSelectionIsTrackedWhileTheViewShows() {
+    assertTrue(manager.selectedView().isEmpty());
+    assertSame(manager.mainWorkspace(), manager.activeWorkspace());
+    manager.open(v1);
+    manager.open(v2);
+    manager.select(v2);
+    assertEquals(Optional.of(v2), manager.selectedView());
+    assertSame(manager.mainWorkspace(), manager.activeWorkspace());
+    manager.close(v2);
+    assertTrue(manager.selectedView().isEmpty());
+    assertSame(manager.mainWorkspace(), manager.activeWorkspace());
+  }
+
+  @Test
+  void openInActiveFallsBackToTheMainWorkspace() {
+    manager.openInActive(v1);
+    assertTrue(manager.isShowing(v1));
+    assertSame(manager.mainWorkspace(), manager.groupOf(v1).orElseThrow().getWorkspace());
+    manager.select(v1);
+    manager.openInActive(v2);
+    assertSame(manager.groupOf(v1).orElseThrow(), manager.groupOf(v2).orElseThrow());
+  }
+
+  @Test
+  void activatingAWindowReselectsItsLastViewOnlyWhenTheSelectionIsElsewhere() {
+    manager.open(v1);
+    manager.split(v2, v1, DockSide.RIGHT, 0.5);
+    List<WorkspaceView> selected = new ArrayList<>();
+    manager.addListener((view, window) -> selected.add(view));
+    manager.select(v2);
+    selected.clear();
+    manager.activateWindow(manager.mainWorkspace());
+    assertEquals(List.of(), selected, "the selection is already in that window");
+    manager.close(v2);
+    selected.clear();
+    manager.activateWindow(manager.mainWorkspace());
+    assertEquals(List.of(v1), selected, "the window re-selects what it shows");
+    assertEquals(Optional.of(v1), manager.selectedView());
   }
 }

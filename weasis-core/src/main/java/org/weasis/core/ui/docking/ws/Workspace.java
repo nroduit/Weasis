@@ -31,6 +31,7 @@ public final class Workspace extends JPanel {
   private TabGroup maximizedGroup;
   private int maximizedIndex;
   private final JPanel maximizedPlaceholder = new JPanel();
+  private WorkspaceView lastSelected;
 
   Workspace(Window window) {
     super(new BorderLayout());
@@ -60,6 +61,15 @@ public final class Workspace extends JPanel {
     add(newRoot != null ? newRoot : placeholder, BorderLayout.CENTER);
     revalidate();
     repaint();
+  }
+
+  /** The view last selected in this window, re-selected when the window is activated. */
+  WorkspaceView getLastSelected() {
+    return lastSelected;
+  }
+
+  void setLastSelected(WorkspaceView view) {
+    this.lastSelected = view;
   }
 
   public WorkspaceView getMaximizedView() {

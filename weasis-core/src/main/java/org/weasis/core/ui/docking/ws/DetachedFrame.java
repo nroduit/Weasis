@@ -13,13 +13,20 @@ import java.awt.BorderLayout;
 import java.awt.Frame;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-/** Secondary window hosting its own {@link Workspace} for detached (floating) views. */
+/**
+ * Secondary window hosting its own {@link Workspace} for detached (floating) views: a viewer
+ * window. Besides its workspace it hosts the toolbar row of the application while it is the active
+ * window ({@link #setToolbarRow}); the shell (explorer, tools) stays in the main window.
+ */
 public final class DetachedFrame extends JFrame {
 
   private final Workspace workspace;
+  private final JPanel toolbarHost = new JPanel(new BorderLayout());
 
   DetachedFrame(WorkspaceManager manager, String title) {
     super(title);
@@ -28,6 +35,7 @@ public final class DetachedFrame extends JFrame {
       setIconImages(mainFrame.getIconImages());
     }
     setLayout(new BorderLayout());
+    add(toolbarHost, BorderLayout.NORTH);
     add(workspace, BorderLayout.CENTER);
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     addWindowListener(
@@ -49,5 +57,19 @@ public final class DetachedFrame extends JFrame {
 
   public Workspace getWorkspace() {
     return workspace;
+  }
+
+  /**
+   * Shows the toolbar row of the application under the title bar, or empties the host with null.
+   * The row is one component that follows the active window; the caller removes it from its
+   * previous host.
+   */
+  public void setToolbarRow(JComponent row) {
+    toolbarHost.removeAll();
+    if (row != null) {
+      toolbarHost.add(row, BorderLayout.CENTER);
+    }
+    toolbarHost.revalidate();
+    toolbarHost.repaint();
   }
 }

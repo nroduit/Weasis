@@ -35,6 +35,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
+import org.weasis.core.ui.editor.ExternalDisplay;
 import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerUI;
@@ -369,16 +370,23 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
             if (!viewerPlugins.contains(ViewerPlugin.this)) {
               viewerPlugins.add(ViewerPlugin.this);
             }
-            ViewerPlugin<?> firstViewer =
-                viewerPlugins.stream().filter(manager::isShowing).findFirst().orElse(null);
-
-            if (firstViewer == null) {
-              // first viewer fills the (empty) central work area
-              manager.open(this);
-            } else if (splitLayout.isSplit()) {
-              manager.split(this, firstViewer, splitLayout.toDockSide(), splitLayout.ratio());
+            if (opts.placement() instanceof ViewerPlacement.External(ExternalDisplay display)) {
+              manager.detach(this, display.screenBounds());
             } else {
-              manager.stack(this, firstViewer);
+              // the anchor is the selected viewer, so a new viewer opens in the active window;
+              // without a selection, the first viewer showing
+              ViewerPlugin<?> anchor =
+                  manager.selectedView().orElse(null) instanceof ViewerPlugin<?> selected
+                      ? selected
+                      : viewerPlugins.stream().filter(manager::isShowing).findFirst().orElse(null);
+              if (anchor == null) {
+                // first viewer fills the (empty) work area of the active window
+                manager.openInActive(this);
+              } else if (splitLayout.isSplit()) {
+                manager.split(this, anchor, splitLayout.toDockSide(), splitLayout.ratio());
+              } else {
+                manager.stack(this, anchor);
+              }
             }
             if (focusPolicy.shouldBringToFront()) {
               setSelectedAndGetFocus();

@@ -34,6 +34,7 @@ import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.InputPath;
+import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.command.ViewId;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -45,6 +46,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.util.LayeredEntries.Origin;
+import org.weasis.core.ui.editor.ExternalDisplay;
 import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.image.HangingLayout;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -473,8 +475,19 @@ public class HpCommands implements CommandExtension {
         description = "Opens new viewers instead of re-hanging the one of the same patient.")
     boolean newTab;
 
+    @Option(
+        names = "--screen",
+        paramLabel = "<screen-role>",
+        description =
+            "Opens the viewers of the step in a viewer window on the screen of this role "
+                + "(${COMPLETION-CANDIDATES}, see 'workspace:screens').")
+    ScreenRole screen;
+
     @Override
     protected void run() {
+      if (screen != null && newTab) {
+        throw new IllegalArgumentException("--screen opens new viewers; drop --new-tab");
+      }
       List<Candidate> candidates =
           protocols == null
               ? parent.candidateSupplier.get()
@@ -506,17 +519,16 @@ public class HpCommands implements CommandExtension {
                         HangingPlanApplier.Context context =
                             new HangingPlanApplier.Context(
                                 model, patient, study, candidates, scores);
-                        return parent
-                            .applier
-                            .get()
-                            .apply(
-                                plan,
-                                index,
-                                context,
-                                newTab ? ViewerPlacement.newTab() : ViewerPlacement.reuseViewer(),
-                                null);
+                        return parent.applier.get().apply(plan, index, context, placement(), null);
                       }));
       print(isJson() ? applied.toJson().toString() : applied.text());
+    }
+
+    private ViewerPlacement placement() {
+      if (screen != null) {
+        return ViewerPlacement.external(ExternalDisplay.onRole(screen));
+      }
+      return newTab ? ViewerPlacement.newTab() : ViewerPlacement.reuseViewer();
     }
   }
 

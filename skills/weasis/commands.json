@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.3",
+  "apiVersion": "2.4",
   "protocolVersion": 1,
   "applicationVersion": "development",
   "exitCodes": {
@@ -1277,7 +1277,7 @@
           "name": "apply",
           "description": "Hangs a protocol on a loaded study: computes its plan as 'match' does and opens the viewers of one reading step, the 2D cells in one viewer and each MPR or 3D cell in its own. A 2D viewer of the same patient is re-hung unless --new-tab. Returns the cells with the view ids they went to, so 'view2d:' verbs can address them.",
           "since": "5.0",
-          "usage": "hp:apply [-h] [--json] [--new-tab] [--protocol=<protocol-id>] [--protocols=<input-path>] [--step=<step>] [--study=<study-uid>]",
+          "usage": "hp:apply [-h] [--json] [--new-tab] [--protocol=<protocol-id>] [--protocols=<input-path>] [--screen=<screen-role>] [--step=<step>] [--study=<study-uid>]",
           "needs": [
             "file-read"
           ],
@@ -1345,6 +1345,23 @@
               "arity": "0",
               "required": false,
               "description": "Opens new viewers instead of re-hanging the one of the same patient."
+            },
+            {
+              "names": [
+                "--screen"
+              ],
+              "label": "<screen-role>",
+              "type": "screen-role",
+              "values": [
+                "control",
+                "diagnostic-1",
+                "diagnostic-2",
+                "color",
+                "portrait"
+              ],
+              "arity": "1",
+              "required": false,
+              "description": "Opens the viewers of the step in a viewer window on the screen of this role (control, diagnostic-1, diagnostic-2, color, portrait, see 'workspace:screens')."
             }
           ]
         },
@@ -4345,7 +4362,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
           "parameters": [],
           "options": [
             {
@@ -4380,6 +4397,20 @@
             },
             {
               "names": [
+                "--set"
+              ],
+              "label": "<magnification>",
+              "type": "magnification",
+              "arity": "1",
+              "required": true,
+              "description": "Magnification, 1 being one image pixel per canvas pixel.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
                 "--fit"
               ],
               "label": "<zoom-fit>",
@@ -4406,20 +4437,6 @@
               "arity": "1",
               "required": true,
               "description": "Moves the zoom slider by this many steps, negative to zoom out.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
-                "--set"
-              ],
-              "label": "<magnification>",
-              "type": "magnification",
-              "arity": "1",
-              "required": true,
-              "description": "Magnification, 1 being one image pixel per canvas pixel.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"
@@ -4574,8 +4591,8 @@
         },
         {
           "name": "detach",
-          "description": "Floats a view in its own window.",
-          "usage": "workspace:detach [-h] [--json] [--bounds=<screen-rect>] --view=<view-id>",
+          "description": "Floats a view in its own window: a viewer window, which shows the toolbar row while it is the active one. Without option the window opens near the main window; --screen fills the usable area of the screen of that role (see 'screens'), --bounds gives explicit pixels.",
+          "usage": "workspace:detach [-h] [--json] [--bounds=<screen-rect>] [--screen=<screen-role>] --view=<view-id>",
           "parameters": [],
           "options": [
             {
@@ -4607,6 +4624,23 @@
               "arity": "1",
               "required": false,
               "description": "Screen bounds of the new window, as x,y,width,height."
+            },
+            {
+              "names": [
+                "--screen"
+              ],
+              "label": "<screen-role>",
+              "type": "screen-role",
+              "values": [
+                "control",
+                "diagnostic-1",
+                "diagnostic-2",
+                "color",
+                "portrait"
+              ],
+              "arity": "1",
+              "required": false,
+              "description": "Screen by role: control, diagnostic-1, diagnostic-2, color, portrait."
             }
           ]
         },
@@ -4881,6 +4915,25 @@
               "required": false,
               "description": "Replace the file when it exists and was not written by this session.",
               "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "screens",
+          "description": "The screens of the workstation by role (control, diagnostic-1, diagnostic-2, color, portrait) with the monitor each one resolves to. The main window's screen is the control screen; a role no monitor fills resolves to the nearest one.",
+          "since": "5.0",
+          "usage": "workspace:screens [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
             }
           ]
         },

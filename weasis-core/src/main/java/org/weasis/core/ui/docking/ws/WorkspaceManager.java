@@ -18,6 +18,8 @@ import java.awt.HeadlessException;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -45,11 +47,12 @@ public final class WorkspaceManager {
   private final List<WorkspaceListener> listeners = new CopyOnWriteArrayList<>();
   private boolean mutating;
   private boolean dragEnabled = true;
+  private WorkspaceView selectedView;
 
   public WorkspaceManager(Window mainWindow) {
     this.mainWindow = mainWindow;
     this.mainWorkspace = new Workspace(mainWindow);
-    workspaces.put(mainWindow, mainWorkspace);
+    addWorkspace(mainWindow, mainWorkspace);
   }
 
   public Window mainWindow() {
@@ -58,6 +61,21 @@ public final class WorkspaceManager {
 
   public Workspace mainWorkspace() {
     return mainWorkspace;
+  }
+
+  /** The view the application has selected, while it is showing. */
+  public Optional<WorkspaceView> selectedView() {
+    return selectedView != null && viewGroups.containsKey(selectedView)
+        ? Optional.of(selectedView)
+        : Optional.empty();
+  }
+
+  /**
+   * The workspace of the selected view, which is where a new view opens: the active window; the
+   * main workspace when nothing is selected.
+   */
+  public Workspace activeWorkspace() {
+    return selectedView().map(view -> viewGroups.get(view).getWorkspace()).orElse(mainWorkspace);
   }
 
   public boolean isDragEnabled() {
@@ -107,16 +125,25 @@ public final class WorkspaceManager {
    * Docks the view into the main workspace: fills an empty area, else stacks in its first group.
    */
   public void open(WorkspaceView view) {
+    openIn(mainWorkspace, view);
+  }
+
+  /** Docks the view into the {@link #activeWorkspace() active workspace} the same way. */
+  public void openInActive(WorkspaceView view) {
+    openIn(activeWorkspace(), view);
+  }
+
+  private void openIn(Workspace workspace, WorkspaceView view) {
     mutate(
         () -> {
           undockInternal(view);
-          mainWorkspace.restoreMaximized();
+          workspace.restoreMaximized();
           TabGroup target;
-          if (mainWorkspace.isEmpty()) {
-            target = newGroup(mainWorkspace);
-            mainWorkspace.setRoot(target);
+          if (workspace.isEmpty()) {
+            target = newGroup(workspace);
+            workspace.setRoot(target);
           } else {
-            target = mainWorkspace.groups().getFirst();
+            target = workspace.groups().getFirst();
           }
           dockInto(view, target, -1);
         });
@@ -235,6 +262,8 @@ public final class WorkspaceManager {
       workspace.restoreMaximized();
     }
     Window window = workspace.getWindow();
+    // the activation that toFront triggers must find this view, not the previous one
+    workspace.setLastSelected(view);
     if (window != null && !window.isFocused()) {
       window.toFront();
     }
@@ -252,7 +281,7 @@ public final class WorkspaceManager {
         () -> {
           undockInternal(view);
           Workspace workspace = frame.getWorkspace();
-          workspaces.put(frame, workspace);
+          addWorkspace(frame, workspace);
           TabGroup group = newGroup(workspace);
           workspace.setRoot(group);
           dockInto(view, group, -1);
@@ -389,7 +418,7 @@ public final class WorkspaceManager {
               frame =
                   new DetachedFrame(this, System.getProperty("weasis.name", "Weasis")); // NON-NLS
               target = frame.getWorkspace();
-              workspaces.put(frame, target);
+              addWorkspace(frame, target);
             }
             Component root = restoreNode(win.root(), target, restorer);
             if (root == null) {
@@ -574,7 +603,48 @@ public final class WorkspaceManager {
     }
   }
 
+  private void addWorkspace(Window window, Workspace workspace) {
+    workspaces.put(window, workspace);
+    if (window != null) {
+      window.addWindowFocusListener(
+          new WindowAdapter() {
+            @Override
+            public void windowGainedFocus(WindowEvent e) {
+              activateWindow(workspace);
+            }
+          });
+    }
+  }
+
+  /**
+   * Activating a window selects the view that window has selected (its last selected view, else the
+   * selected view of its first group), so that the toolbars and the tools follow the user's eyes;
+   * nothing happens when that view is already the application's selection or the window is empty.
+   */
+  void activateWindow(Workspace workspace) {
+    WorkspaceView view = workspace.getLastSelected();
+    if (view == null || !isIn(view, workspace)) {
+      view =
+          workspace.getMaximizedView() != null
+              ? workspace.getMaximizedView()
+              : workspace.isEmpty() ? null : workspace.groups().getFirst().getSelectedView();
+    }
+    if (view != null && view != selectedView) {
+      fireViewSelected(view, workspace.getWindow());
+    }
+  }
+
+  private boolean isIn(WorkspaceView view, Workspace workspace) {
+    TabGroup group = viewGroups.get(view);
+    return group != null && group.getWorkspace() == workspace;
+  }
+
   private void fireViewSelected(WorkspaceView view, Window window) {
+    selectedView = view;
+    TabGroup group = viewGroups.get(view);
+    if (group != null) {
+      group.getWorkspace().setLastSelected(view);
+    }
     for (WorkspaceListener listener : listeners) {
       listener.viewSelected(view, window);
     }

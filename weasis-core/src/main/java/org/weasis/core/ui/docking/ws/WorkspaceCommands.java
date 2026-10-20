@@ -13,8 +13,11 @@ import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import java.awt.GraphicsDevice;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
@@ -25,6 +28,7 @@ import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.ListOptions;
 import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.ScreenRect;
+import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.command.SplitRatio;
 import org.weasis.core.api.command.ToolId;
@@ -40,6 +44,8 @@ import org.weasis.core.ui.docking.SidePanel;
 import org.weasis.core.ui.docking.Slot;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshotIO;
+import org.weasis.core.ui.editor.ExternalDisplay;
+import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.ViewerRestorer;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -70,6 +76,7 @@ import picocli.CommandLine.ParentCommand;
       WorkspaceCommands.Stack.class,
       WorkspaceCommands.Split.class,
       WorkspaceCommands.Detach.class,
+      WorkspaceCommands.Screens.class,
       WorkspaceCommands.Save.class,
       WorkspaceCommands.Load.class,
       WorkspaceCommands.Panel.class
@@ -167,9 +174,10 @@ public class WorkspaceCommands implements CommandExtension {
       w.add("groups", groups);
       windows.add(w.build());
     }
-    return JsonUtil.window(Json.createObjectBuilder(), "windows", windows, bounds) // NON-NLS
-        .build()
-        .toString();
+    JsonObjectBuilder json = Json.createObjectBuilder();
+    // the application's selection: the view whose window is the active one
+    manager.selectedView().ifPresent(view -> json.add("selected", view.viewId())); // NON-NLS
+    return JsonUtil.window(json, "windows", windows, bounds).build().toString(); // NON-NLS
   }
 
   private static void appendGroups(
@@ -336,7 +344,13 @@ public class WorkspaceCommands implements CommandExtension {
     }
   }
 
-  @Command(name = "detach", description = "Floats a view in its own window.")
+  @Command(
+      name = "detach",
+      description =
+          "Floats a view in its own window: a viewer window, which shows the toolbar row while "
+              + "it is the active one. Without option the window opens near the main window; "
+              + "--screen fills the usable area of the screen of that role (see 'screens'), "
+              + "--bounds gives explicit pixels.")
   static class Detach extends ViewVerb {
     @Option(
         names = "--bounds",
@@ -344,9 +358,79 @@ public class WorkspaceCommands implements CommandExtension {
         description = "Screen bounds of the new window, as x,y,width,height.")
     ScreenRect bounds;
 
+    @Option(
+        names = "--screen",
+        paramLabel = "<screen-role>",
+        description = "Screen by role: ${COMPLETION-CANDIDATES}.")
+    ScreenRole screen;
+
     @Override
     void apply(WorkspaceManager manager, WorkspaceView view) {
-      manager.detach(view, bounds == null ? null : bounds.toRectangle());
+      if (bounds != null && screen != null) {
+        throw new IllegalArgumentException("--bounds and --screen are exclusive");
+      }
+      Rectangle target = bounds == null ? null : bounds.toRectangle();
+      if (screen != null) {
+        target = ExternalDisplay.onRole(screen, manager.mainWindow()).screenBounds();
+      }
+      manager.detach(view, target);
+    }
+  }
+
+  @Command(
+      name = "screens",
+      description =
+          "The screens of the workstation by role (control, diagnostic-1, diagnostic-2, color, "
+              + "portrait) with the monitor each one resolves to. The main window's screen is the "
+              + "control screen; a role no monitor fills resolves to the nearest one.")
+  @Since("5.0")
+  static class Screens extends Verb {
+    @Override
+    protected void run() {
+      WorkspaceManager manager = parent.manager();
+      Map<ScreenRole, GraphicsDevice> roles =
+          GuiExecutor.invokeAndRethrow(() -> ScreenRoles.current(manager.mainWindow()));
+      GraphicsDevice main = roles.get(ScreenRole.CONTROL);
+      if (isJson()) {
+        JsonArrayBuilder array = Json.createArrayBuilder();
+        roles.forEach(
+            (role, device) -> {
+              Rectangle bounds = device.getDefaultConfiguration().getBounds();
+              array.add(
+                  Json.createObjectBuilder()
+                      .add("role", role.key())
+                      .add("screen", device.getIDstring())
+                      .add(
+                          "bounds",
+                          Json.createObjectBuilder()
+                              .add("x", bounds.x)
+                              .add("y", bounds.y)
+                              .add("width", bounds.width)
+                              .add("height", bounds.height))
+                      .add("main", device == main));
+            });
+        print(Json.createObjectBuilder().add("screens", array).build().toString());
+      } else {
+        StringBuilder text = new StringBuilder();
+        roles.forEach(
+            (role, device) -> {
+              Rectangle b = device.getDefaultConfiguration().getBounds();
+              text.append(role.key())
+                  .append('\t')
+                  .append(device.getIDstring())
+                  .append('\t')
+                  .append(b.x)
+                  .append(',')
+                  .append(b.y)
+                  .append(',')
+                  .append(b.width)
+                  .append(',')
+                  .append(b.height)
+                  .append(device == main ? "\t(main)" : "")
+                  .append(System.lineSeparator());
+            });
+        print(text.toString().stripTrailing());
+      }
     }
   }
 
