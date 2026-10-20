@@ -21,7 +21,6 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Paint;
-import java.awt.Rectangle;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
@@ -66,6 +65,10 @@ public class AnnotationGraphic extends AbstractDragGraphic {
   protected Rectangle2D labelBounds;
   protected Double labelWidth;
   protected Double labelHeight;
+  // Position of the box point in the label, as a fraction of its width and height: centre by
+  // default
+  protected Double labelAlignX;
+  protected Double labelAlignY;
 
   public AnnotationGraphic() {
     super(POINTS_NUMBER);
@@ -86,6 +89,8 @@ public class AnnotationGraphic extends AbstractDragGraphic {
               .orElse(null);
       labelWidth = annotationGraphic.labelWidth;
       labelHeight = annotationGraphic.labelHeight;
+      labelAlignX = annotationGraphic.labelAlignX;
+      labelAlignY = annotationGraphic.labelAlignY;
     }
   }
 
@@ -159,6 +164,42 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     this.labelHeight = labelHeight;
   }
 
+  @XmlAttribute(name = "labelAlignX")
+  public Double getLabelAlignX() {
+    return labelAlignX;
+  }
+
+  public void setLabelAlignX(Double labelAlignX) {
+    this.labelAlignX = labelAlignX;
+  }
+
+  @XmlAttribute(name = "labelAlignY")
+  public Double getLabelAlignY() {
+    return labelAlignY;
+  }
+
+  public void setLabelAlignY(Double labelAlignY) {
+    this.labelAlignY = labelAlignY;
+  }
+
+  /**
+   * Places the label around the box point: 0, 0 puts the point at the top left corner of the label,
+   * 1, 1 at the bottom right and 0.5, 0.5 (the default) at its centre.
+   */
+  public void setLabelAlignment(double alignX, double alignY) {
+    this.labelAlignX = alignX;
+    this.labelAlignY = alignY;
+  }
+
+  /** Bounds of the label, in units that do not scale with the view, around the box point. */
+  protected Rectangle2D buildLabelBounds(Point2D pos, int lines) {
+    double w = labelWidth + 4.0 * GraphicLabel.GROWING_BOUND;
+    double h = labelHeight * lines + 4.0 * GraphicLabel.GROWING_BOUND;
+    double ax = labelAlignX == null ? 0.5 : labelAlignX;
+    double ay = labelAlignY == null ? 0.5 : labelAlignY;
+    return new Rectangle2D.Double(pos.getX() - ax * w, pos.getY() - ay * h, w, h);
+  }
+
   @Override
   public void updateLabel(ViewCanvas<?> view2d, Point2D pos, boolean releasedEvent) {
     if (releasedEvent) {
@@ -199,15 +240,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
       if (lineABvalid) {
         line = new Line2D.Double(ptBox, ptAnchor);
       }
-      labelBounds = new Rectangle.Double();
-      labelBounds.setFrameFromCenter(
-          ptBox.getX(),
-          ptBox.getY(),
-          ptBox.getX() + labelWidth / 2.0 + GraphicLabel.GROWING_BOUND,
-          ptBox.getY()
-              + labelHeight * (labels == null ? 1 : labels.length) / 2.0
-              + GraphicLabel.GROWING_BOUND);
-      GeomUtil.growRectangle(labelBounds, GraphicLabel.GROWING_BOUND);
+      labelBounds = buildLabelBounds(ptBox, labels == null ? 1 : labels.length);
       if (line != null) {
         newShape.addLinkSegmentToInvariantShape(
             line, ptBox, labelBounds, getDashStroke(lineThickness), false);
@@ -242,14 +275,17 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     if (labelVisible && labels != null && labelBounds != null) {
       Paint oldPaint = g2d.getPaint();
 
+      // The label does not scale with the view: only its box point follows the transform
       Rectangle2D rect = labelBounds;
-      Point2D pt = new Point2D.Double(rect.getCenterX(), rect.getCenterY());
+      Point2D origin =
+          ptBox == null ? new Point2D.Double(rect.getCenterX(), rect.getCenterY()) : ptBox;
+      Point2D pt = new Point2D.Double(origin.getX(), origin.getY());
       if (transform != null) {
         transform.transform(pt, pt);
       }
 
-      float px = (float) (pt.getX() - rect.getWidth() / 2 + GraphicLabel.GROWING_BOUND);
-      float py = (float) (pt.getY() - rect.getHeight() / 2 + GraphicLabel.GROWING_BOUND);
+      float px = (float) (pt.getX() + rect.getMinX() - origin.getX() + GraphicLabel.GROWING_BOUND);
+      float py = (float) (pt.getY() + rect.getMinY() - origin.getY() + GraphicLabel.GROWING_BOUND);
       float height = labelHeight.floatValue();
 
       g2d.setFont(MeasureTool.viewSetting.getFont());
@@ -323,13 +359,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
           g2d == null ? new FontRenderContext(null, false, false) : g2d.getFontRenderContext();
       updateBoundsSize(defaultFont, fontRenderContext);
 
-      labelBounds = new Rectangle.Double();
-      labelBounds.setFrameFromCenter(
-          pos.getX(),
-          pos.getY(),
-          ptBox.getX() + labelWidth / 2.0 + GraphicLabel.GROWING_BOUND,
-          ptBox.getY() + labelHeight * this.labels.length / 2.0 + GraphicLabel.GROWING_BOUND);
-      GeomUtil.growRectangle(labelBounds, GraphicLabel.GROWING_BOUND);
+      labelBounds = buildLabelBounds(pos, this.labels.length);
     }
     buildShape(null);
   }

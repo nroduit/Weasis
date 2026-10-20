@@ -218,7 +218,8 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
 
   @Override
   public Point2D viewToModel(Double viewX, Double viewY) {
-    Point2D p = getViewCoordinatesOffset();
+    // The affine transform already holds the part of the image outside the view
+    Point2D p = getClipViewCoordinatesOffset();
     p.setLocation(viewX - p.getX(), viewY - p.getY());
     inverseTransform.transform(p, p);
     return p;
@@ -234,7 +235,7 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
     Point2D p2 = new Point2D.Double(modelX, modelY);
     affineTransform.transform(p2, p2);
 
-    Point2D p = getViewCoordinatesOffset();
+    Point2D p = getClipViewCoordinatesOffset();
     p2.setLocation(p2.getX() + p.getX(), p2.getY() + p.getY());
     return p2;
   }
@@ -273,8 +274,10 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
     ViewModel m = getViewModel();
     double viewOffsetX = (viewportWidth - b.getWidth()) * 0.5;
     double viewOffsetY = (viewportHeight - b.getHeight()) * 0.5;
-    double offsetX = viewOffsetX - m.getModelOffsetX() * m.getViewScale();
-    double offsetY = viewOffsetY - m.getModelOffsetY() * m.getViewScale();
+    // Whole pixels: Java2D draws the image raster at the nearest pixel, so the graphics and the
+    // mouse mapping must use the same origin. A fraction left here shifts them by up to 0.5 pixel.
+    double offsetX = Math.floor(viewOffsetX - m.getModelOffsetX() * m.getViewScale() + 0.5);
+    double offsetY = Math.floor(viewOffsetY - m.getModelOffsetY() * m.getViewScale() + 0.5);
     b.setRect(offsetX, offsetY, b.getWidth(), b.getHeight());
     return b;
   }

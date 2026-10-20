@@ -105,8 +105,9 @@ class SRGraphicTest {
     Graphic onTile = g.build(frame(tiledImage(false, 12), 6), false);
     assertNotNull(onTile);
     Rectangle2D b = onTile.getShape().getBounds2D();
-    assertEquals(550 - 2 * TILE, b.getX(), 1e-6);
-    assertEquals(300 - TILE, b.getY(), 1e-6);
+    // DICOM PIXEL units put 0\0 at the corner of the first pixel, the model at its centre
+    assertEquals(550 - 2 * TILE - 0.5, b.getX(), 1e-6);
+    assertEquals(300 - TILE - 0.5, b.getY(), 1e-6);
     assertEquals(50, b.getWidth(), 1e-6);
 
     assertNull(g.build(frame(tiledImage(false, 12), 0), false), "the first tile does not overlap");
@@ -134,8 +135,8 @@ class SRGraphicTest {
             .build(frame(tiledImage(false, 12), 6), false);
     assertNotNull(explicit);
     assertNotNull(implicit);
-    assertEquals(10, explicit.getShape().getBounds2D().getCenterX(), 1e-6);
-    assertEquals(10, implicit.getShape().getBounds2D().getCenterX(), 1e-6);
+    assertEquals(9.5, explicit.getShape().getBounds2D().getCenterX(), 1e-6);
+    assertEquals(9.5, implicit.getShape().getBounds2D().getCenterX(), 1e-6);
   }
 
   @Test
@@ -146,7 +147,7 @@ class SRGraphicTest {
         new SRGraphic("1.1", scoord("VOLUME", "POINT", 100, 120), false)
             .build(frame(plain, 0), false);
     assertNotNull(g);
-    assertEquals(100, g.getShape().getBounds2D().getCenterX(), 1e-6);
+    assertEquals(99.5, g.getShape().getBounds2D().getCenterX(), 1e-6);
   }
 
   @Test

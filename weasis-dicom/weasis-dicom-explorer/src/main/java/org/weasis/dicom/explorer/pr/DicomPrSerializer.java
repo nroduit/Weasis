@@ -15,6 +15,7 @@ import java.awt.Color;
 import java.awt.Shape;
 import java.awt.color.ColorSpace;
 import java.awt.color.ICC_ColorSpace;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.FlatteningPathIterator;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
@@ -22,6 +23,7 @@ import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -66,6 +68,7 @@ import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.utils.GraphicOutline;
 import org.weasis.core.ui.serialize.XmlSerializer;
+import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -82,6 +85,7 @@ public class DicomPrSerializer {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrSerializer.class);
 
   private static final String PIXEL = "PIXEL";
+  private static final double ASPECT_PRECISION = 1e6;
   private static final String GSPS = "GSPS"; // NON-NLS
   private static final String DESCRIPTION = "Weasis Graphics and Annotations"; // NON-NLS
   private static final String YES = "Y"; // NON-NLS
@@ -131,6 +135,29 @@ public class DicomPrSerializer {
       String seriesInstanceUID,
       String sopInstanceUID,
       Point2D offset) {
+    double[] spacing =
+        DicomUtils.getDoubleArrayFromDicomElement(
+            parentAttributes, Tag.PresentationPixelSpacing, null);
+    return writePresentation(
+        model,
+        parentAttributes,
+        outputFile,
+        seriesInstanceUID,
+        sopInstanceUID,
+        offset,
+        null,
+        spacing);
+  }
+
+  private static Attributes writePresentation(
+      GraphicModel model,
+      Attributes parentAttributes,
+      File outputFile,
+      String seriesInstanceUID,
+      String sopInstanceUID,
+      Point2D offset,
+      AffineTransform pixelToImage,
+      double[] presentationPixelSpacing) {
     Objects.requireNonNull(model, "GraphicModel cannot be null");
     Objects.requireNonNull(outputFile, "Output file cannot be null");
 
@@ -140,7 +167,14 @@ public class DicomPrSerializer {
     }
     try {
       return createPresentationState(
-          model, parentAttributes, outputFile, seriesInstanceUID, sopInstanceUID, offset);
+          model,
+          parentAttributes,
+          outputFile,
+          seriesInstanceUID,
+          sopInstanceUID,
+          offset,
+          pixelToImage,
+          presentationPixelSpacing);
     } catch (Exception e) {
       LOGGER.error("Cannot write Presentation State to file: {}", outputFile.getAbsolutePath(), e);
       return null;
@@ -148,25 +182,22 @@ public class DicomPrSerializer {
   }
 
   /**
-   * Set Presentation Spacial Calibration related attribute, according to <a
+   * The Presentation Pixel Spacing of a calibration made by the user, according to <a
    * href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.4.html#table_C.10-4">DICOM
    * standard</a>
    *
    * @param img DICOM image element containing pixel spacing information
-   * @param attributes DICOM attributes to modify
+   * @return the row and column spacing in mm, or null when the image is not calibrated by the user
    */
-  private static void writeCalibration(DicomImageElement img, Attributes attributes) {
-    if (img != null
-        && Unit.PIXEL != img.getPixelSpacingUnit()
-        && attributes != null
-        && img.isPixelSizeModifiedByUser()) {
+  private static double[] getCalibration(DicomImageElement img) {
+    if (img != null && Unit.PIXEL != img.getPixelSpacingUnit() && img.isPixelSizeModifiedByUser()) {
       double unitRatio =
           img.getPixelSize()
               * Unit.MILLIMETER.getConversionRatio(img.getPixelSpacingUnit().getFactorToMeters());
-      attributes.setDouble(Tag.PresentationPixelSpacing, VR.DS, unitRatio, unitRatio);
-    } else if (attributes != null && attributes.containsValue(Tag.PresentationPixelSpacing)) {
-      attributes.remove(Tag.PresentationPixelSpacing);
+      // The pixel size is the one of the image stretched to square pixels: row then column spacing
+      return new double[] {unitRatio * img.getRescaleY(), unitRatio * img.getRescaleX()};
     }
+    return null;
   }
 
   /**
@@ -185,10 +216,16 @@ public class DicomPrSerializer {
       File outputFile,
       String seriesInstanceUID,
       String sopInstanceUID) {
-    Attributes imgAttributes = extractImageAttributes(img);
-    writeCalibration(img, imgAttributes);
+    // The calibration goes to the presentation state only: the image keeps its own attributes
     return writePresentation(
-        model, imgAttributes, outputFile, seriesInstanceUID, sopInstanceUID, null);
+        model,
+        extractImageAttributes(img),
+        outputFile,
+        seriesInstanceUID,
+        sopInstanceUID,
+        null,
+        PrGraphicUtil.pixelToImage(img),
+        getCalibration(img));
   }
 
   private static Attributes createPresentationState(
@@ -197,18 +234,23 @@ public class DicomPrSerializer {
       File outputFile,
       String seriesInstanceUID,
       String sopInstanceUID,
-      Point2D offset)
+      Point2D offset,
+      AffineTransform pixelToImage,
+      double[] presentationPixelSpacing)
       throws Exception {
 
     GraphicModel serializedModel = getModelForSerialization(model, offset);
     Attributes attributes = createDicomPR(parentAttributes, seriesInstanceUID, sopInstanceUID);
 
-    addDisplayedAreaSelectionSequence(attributes, parentAttributes);
+    addDisplayedAreaSelectionSequence(attributes, parentAttributes, presentationPixelSpacing);
     addGraphicAnnotationSequence(attributes);
 
     writeCommonTags(attributes);
     writeReferences(attributes, serializedModel, parentAttributes.getString(Tag.SOPClassUID));
     writeGraphics(serializedModel, attributes);
+    if (pixelToImage != null) {
+      toSourcePixels(attributes, pixelToImage.createInverse());
+    }
     writePrivateTags(serializedModel, attributes);
 
     if (saveToFile(outputFile, attributes)) {
@@ -334,8 +376,12 @@ public class DicomPrSerializer {
    * href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.4.html#table_C.10-4">C.10-4.
    * Displayed Area Module Attributes</a>
    */
-  private static void addDisplayedAreaSelectionSequence(
-      Attributes attributes, Attributes sourceAttributes) {
+  /**
+   * @param pixelSpacing the Presentation Pixel Spacing, or null to give the aspect ratio of the
+   *     image pixels
+   */
+  static void addDisplayedAreaSelectionSequence(
+      Attributes attributes, Attributes sourceAttributes, double[] pixelSpacing) {
 
     Sequence displayedAreaSeq = attributes.newSequence(Tag.DisplayedAreaSelectionSequence, 1);
     Attributes displayedAreaItem = new Attributes();
@@ -347,16 +393,69 @@ public class DicomPrSerializer {
     displayedAreaItem.setInt(Tag.DisplayedAreaTopLeftHandCorner, VR.SL, 1, 1);
     displayedAreaItem.setString(Tag.PresentationSizeMode, VR.CS, "SCALE TO FIT"); // NON-NLS
 
-    double[] pixelSpacing =
-        DicomUtils.getDoubleArrayFromDicomElement(
-            sourceAttributes, Tag.PresentationPixelSpacing, null);
     if (pixelSpacing == null) {
-      displayedAreaItem.setInt(Tag.PresentationPixelAspectRatio, VR.IS, new int[] {1, 1});
+      displayedAreaItem.setInt(
+          Tag.PresentationPixelAspectRatio, VR.IS, getPixelAspectRatio(sourceAttributes));
     } else {
       displayedAreaItem.setDouble(Tag.PresentationPixelSpacing, VR.DS, pixelSpacing);
     }
 
     displayedAreaSeq.add(displayedAreaItem);
+  }
+
+  /**
+   * The aspect ratio of the image pixels, vertical then horizontal: from Pixel Aspect Ratio, else
+   * from the row and column spacing, else 1\1.
+   */
+  static int[] getPixelAspectRatio(Attributes image) {
+    int[] ratio = DicomUtils.getIntArrayFromDicomElement(image, Tag.PixelAspectRatio, null);
+    if (ratio != null && ratio.length == 2 && ratio[0] > 0 && ratio[1] > 0) {
+      return ratio;
+    }
+    double[] spacing = DicomUtils.getDoubleArrayFromDicomElement(image, Tag.PixelSpacing, null);
+    if (spacing == null) {
+      spacing = DicomUtils.getDoubleArrayFromDicomElement(image, Tag.ImagerPixelSpacing, null);
+    }
+    if (spacing == null
+        || spacing.length != 2
+        || spacing[0] <= 0
+        || spacing[1] <= 0
+        || MathUtil.isEqual(spacing[0], spacing[1])) {
+      return new int[] {1, 1};
+    }
+    long vertical = Math.round(spacing[0] * ASPECT_PRECISION);
+    long horizontal = Math.round(spacing[1] * ASPECT_PRECISION);
+    long gcd = BigInteger.valueOf(vertical).gcd(BigInteger.valueOf(horizontal)).longValue();
+    return new int[] {(int) (vertical / gcd), (int) (horizontal / gcd)};
+  }
+
+  /**
+   * Converts the PIXEL coordinates written from the model, where the image is stretched to square
+   * pixels, to the pixels of the source image.
+   */
+  static void toSourcePixels(Attributes pr, AffineTransform imageToPixel) {
+    for (Attributes annotation : pr.getSequence(Tag.GraphicAnnotationSequence)) {
+      Sequence graphics = annotation.getSequence(Tag.GraphicObjectSequence);
+      if (graphics != null) {
+        graphics.forEach(g -> transformPoints(g, Tag.GraphicData, imageToPixel));
+      }
+      Sequence texts = annotation.getSequence(Tag.TextObjectSequence);
+      if (texts != null) {
+        for (Attributes text : texts) {
+          transformPoints(text, Tag.AnchorPoint, imageToPixel);
+          transformPoints(text, Tag.BoundingBoxTopLeftHandCorner, imageToPixel);
+          transformPoints(text, Tag.BoundingBoxBottomRightHandCorner, imageToPixel);
+        }
+      }
+    }
+  }
+
+  private static void transformPoints(Attributes item, int tag, AffineTransform t) {
+    float[] points = item.getFloats(tag);
+    if (points != null) {
+      t.transform(points, 0, points, 0, points.length / 2);
+      item.setFloat(tag, VR.FL, points);
+    }
   }
 
   private static void addGraphicAnnotationSequence(Attributes attributes) {
@@ -702,8 +801,8 @@ public class DicomPrSerializer {
     double[] coordinates = new double[pts.size() * 2];
     for (int i = 0; i < pts.size(); i++) {
       Point2D point = pts.get(i);
-      coordinates[i * 2] = point.getX();
-      coordinates[i * 2 + 1] = point.getY();
+      coordinates[i * 2] = PrGraphicUtil.modelToPixel(point.getX());
+      coordinates[i * 2 + 1] = PrGraphicUtil.modelToPixel(point.getY());
     }
     return coordinates;
   }
@@ -732,14 +831,15 @@ public class DicomPrSerializer {
     Attributes attributes = new Attributes(7);
     attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, PIXEL);
     if (anchor != null) {
-      attributes.setFloat(Tag.AnchorPoint, VR.FL, (float) anchor.getX(), (float) anchor.getY());
+      attributes.setFloat(
+          Tag.AnchorPoint,
+          VR.FL,
+          (float) PrGraphicUtil.modelToPixel(anchor.getX()),
+          (float) PrGraphicUtil.modelToPixel(anchor.getY()));
       attributes.setString(Tag.AnchorPointVisibility, VR.CS, YES);
       attributes.setString(Tag.AnchorPointAnnotationUnits, VR.CS, PIXEL);
     }
-    attributes.setDouble(
-        Tag.BoundingBoxTopLeftHandCorner, VR.FL, bounds.getMinX(), bounds.getMinY());
-    attributes.setDouble(
-        Tag.BoundingBoxBottomRightHandCorner, VR.FL, bounds.getMaxX(), bounds.getMaxY());
+    setBoundingBox(attributes, bounds);
     attributes.setString(Tag.UnformattedTextValue, VR.ST, text);
     attributes.setString(Tag.BoundingBoxTextHorizontalJustification, VR.CS, "LEFT");
 
@@ -755,13 +855,23 @@ public class DicomPrSerializer {
   private static Attributes createLabelAttributes(Rectangle2D bounds, String text) {
     Attributes attributes = new Attributes(4);
     attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, PIXEL);
-    attributes.setDouble(
-        Tag.BoundingBoxTopLeftHandCorner, VR.FL, bounds.getMinX(), bounds.getMinY());
-    attributes.setDouble(
-        Tag.BoundingBoxBottomRightHandCorner, VR.FL, bounds.getMaxX(), bounds.getMaxY());
+    setBoundingBox(attributes, bounds);
     attributes.setString(Tag.BoundingBoxTextHorizontalJustification, VR.CS, "LEFT");
     attributes.setString(Tag.UnformattedTextValue, VR.ST, text);
     return attributes;
+  }
+
+  private static void setBoundingBox(Attributes attributes, Rectangle2D bounds) {
+    attributes.setDouble(
+        Tag.BoundingBoxTopLeftHandCorner,
+        VR.FL,
+        PrGraphicUtil.modelToPixel(bounds.getMinX()),
+        PrGraphicUtil.modelToPixel(bounds.getMinY()));
+    attributes.setDouble(
+        Tag.BoundingBoxBottomRightHandCorner,
+        VR.FL,
+        PrGraphicUtil.modelToPixel(bounds.getMaxX()),
+        PrGraphicUtil.modelToPixel(bounds.getMaxY()));
   }
 
   public static void transformShapeToContour(Graphic graphic, Sequence graphicSeq) {
