@@ -10,7 +10,6 @@
 package org.weasis.dicom.explorer.imp;
 
 import java.awt.Component;
-import java.awt.Window;
 import java.io.File;
 import java.util.List;
 import javax.swing.JButton;
@@ -18,22 +17,18 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.AbstractWizardDialog;
+import org.weasis.core.api.gui.util.EmbeddedWizardPanel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.WtoolBar;
-import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.LoadDicomDir;
 import org.weasis.dicom.explorer.Messages;
-import org.weasis.dicom.explorer.exp.DicomExport;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
@@ -49,7 +44,7 @@ public class ImportToolBar extends WtoolBar {
     if (preferences.getBooleanProperty("weasis.import.dicom", true)) {
       final JButton btnImport = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.IMPORT_DICOM));
       btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm"));
-      btnImport.addActionListener(e -> showAction(ImportToolBar.this, model, null, false));
+      btnImport.addActionListener(e -> ImportTool.open(null));
       add(btnImport);
     }
 
@@ -77,7 +72,7 @@ public class ImportToolBar extends WtoolBar {
               JOptionPane.WARNING_MESSAGE);
 
       if (response == JOptionPane.YES_OPTION) {
-        showAction(parent, model, Messages.getString("DicomDirImport.dicomdir"), false);
+        ImportTool.open(Messages.getString("DicomDirImport.dicomdir"));
       }
     } else {
       List<LoadSeries> loadSeries = DicomDirImport.loadDicomDir(file, model, true);
@@ -96,28 +91,13 @@ public class ImportToolBar extends WtoolBar {
                 JOptionPane.WARNING_MESSAGE);
 
         if (response == JOptionPane.YES_OPTION) {
-          AbstractWizardDialog dialog =
-              showAction(parent, model, Messages.getString("LocalImport.local_dev"), false);
-          AbstractItemDialogPage page = dialog.getCurrentPage();
-          if (page instanceof LocalImport localImport) {
+          EmbeddedWizardPanel wizard = ImportTool.open(Messages.getString("LocalImport.local_dev"));
+          if (wizard != null && wizard.getSelectedPage() instanceof LocalImport localImport) {
             localImport.setImportPath(file.getParent());
           }
         }
       }
     }
-  }
-
-  public static AbstractWizardDialog showAction(
-      Component parent, DicomModel model, String pageName, boolean export) {
-    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(parent);
-    Window win = SwingUtilities.getWindowAncestor(parent);
-    AbstractWizardDialog dialog =
-        export ? new DicomExport(win, model) : new DicomImport(win, model);
-    if (StringUtil.hasText(pageName)) {
-      dialog.showPage(pageName);
-    }
-    ColorLayerUI.showCenterScreen(dialog, layer);
-    return dialog;
   }
 
   public static DefaultAction buildImportAction(
@@ -126,10 +106,8 @@ public class ImportToolBar extends WtoolBar {
         actionName,
         ResourceUtil.getIcon(ActionIcon.IMPORT_DICOM),
         event -> {
-          if (GuiUtils.getUICore()
-              .getSystemPreferences()
-              .getBooleanProperty("weasis.import.dicom", true)) {
-            showAction(parent, model, null, false);
+          if (ImportTool.isAllowed()) {
+            ImportTool.open(null);
           } else {
             JOptionPane.showMessageDialog(
                 (Component) event.getSource(), Messages.getString("DicomExplorer.export_perm"));

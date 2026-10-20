@@ -138,7 +138,6 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.LogoIcon;
 import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.docking.ImportExportFooter;
 import org.weasis.core.ui.docking.MiniStrip;
 import org.weasis.core.ui.docking.SidePanel;
 import org.weasis.core.ui.docking.ws.DetachedFrame;
@@ -475,21 +474,10 @@ public class WeasisWin {
     explorerSplit.setBorder(null);
     explorer.attachTo(explorerSplit);
 
-    // bottom footer (import/export): its panel spans the full window width under the three zones
-    ImportExportFooter footer = new ImportExportFooter();
-    JSplitPane footerSplit =
-        new JSplitPane(JSplitPane.VERTICAL_SPLIT, explorerSplit, footer.getPanelHost());
-    footerSplit.setResizeWeight(1.0); // the viewing area absorbs resizing, the footer stays fixed
-    footerSplit.setContinuousLayout(true);
-    footerSplit.setBorder(null);
-    footer.attachTo(footerSplit);
-
-    JPanel explorerEdge = oriented(new JPanel(new BorderLayout()), orientation);
-    explorerEdge.add(explorer.getStripe(), BorderLayout.CENTER);
-    explorerEdge.add(footer, BorderLayout.SOUTH);
+    // the explorer stripe on the leading edge; import and export are tools of the explorer side
     JPanel mainPanel = oriented(new JPanel(new BorderLayout()), orientation);
-    mainPanel.add(explorerEdge, BorderLayout.LINE_START);
-    mainPanel.add(footerSplit, BorderLayout.CENTER);
+    mainPanel.add(explorer.getStripe(), BorderLayout.LINE_START);
+    mainPanel.add(explorerSplit, BorderLayout.CENTER);
 
     rootPaneContainer.getContentPane().add(mainPanel, BorderLayout.CENTER);
 

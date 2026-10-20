@@ -676,7 +676,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       String message = Messages.getString("DicomQrView.msg_empty_query");
       int response =
           JOptionPane.showOptionDialog(
-              WinUtil.getValidComponent(WinUtil.getParentDialog(this)),
+              WinUtil.getValidComponent(WinUtil.getParentWindow(this)),
               message,
               getTitle(),
               JOptionPane.YES_NO_OPTION,

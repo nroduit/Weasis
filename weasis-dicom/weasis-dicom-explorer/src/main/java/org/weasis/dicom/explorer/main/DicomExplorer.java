@@ -62,7 +62,9 @@ import org.weasis.dicom.explorer.*;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
+import org.weasis.dicom.explorer.exp.ExportTool;
 import org.weasis.dicom.explorer.exp.ExportToolBar;
+import org.weasis.dicom.explorer.imp.ImportTool;
 import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.items.FacetCounts;
 import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
@@ -92,6 +94,8 @@ public class DicomExplorer extends PluginTool
   }
 
   private final DicomModel model;
+  private final ImportTool importTool;
+  private final ExportTool exportTool;
   private final DicomPaneManager paneManager;
   private final SplitSeriesManager splitSeriesManager;
   private final DicomTaskManager taskManager;
@@ -187,6 +191,8 @@ public class DicomExplorer extends PluginTool
     setupFilterBar();
     setupThumbnailView();
     this.model.addPropertyChangeListener(this);
+    this.importTool = new ImportTool(this.model);
+    this.exportTool = new ExportTool(this.model);
   }
 
   @Override
@@ -1741,6 +1747,33 @@ public class DicomExplorer extends PluginTool
     return model;
   }
 
+  public ImportTool getImportTool() {
+    return importTool;
+  }
+
+  public ExportTool getExportTool() {
+    return exportTool;
+  }
+
+  /** Shows the explorer and, when the site allows them, the import and export tools beside it. */
+  @Override
+  public void showDockable() {
+    super.showDockable();
+    if (ImportTool.isAllowed()) {
+      importTool.showDockable();
+    }
+    if (ExportTool.isAllowed()) {
+      exportTool.showDockable();
+    }
+  }
+
+  @Override
+  public void closeDockable() {
+    importTool.closeDockable();
+    exportTool.closeDockable();
+    super.closeDockable();
+  }
+
   @Override
   public List<Action> getOpenImportDialogAction() {
     ArrayList<Action> actions = new ArrayList<>(2);
@@ -1890,6 +1923,8 @@ public class DicomExplorer extends PluginTool
       splitSeriesManager.dispose();
     }
 
+    importTool.closeDockable();
+    exportTool.closeDockable();
     super.closeDockable();
     LOGGER.info("DicomExplorer disposed");
   }

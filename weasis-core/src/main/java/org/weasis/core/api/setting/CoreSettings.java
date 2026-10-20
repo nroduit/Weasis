@@ -51,13 +51,6 @@ public final class CoreSettings {
           .description("Share of the top slot of the tools side")
           .declare();
 
-  /** Height of the expanded import / export footer, in pixels; scaled default if unset. */
-  public static final Setting<Integer> FOOTER_HEIGHT =
-      Setting.builder(SettingType.INTEGER, GROUP, "weasis.footer.split.height", 0) // NON-NLS
-          .scope(Scope.MACHINE)
-          .description("Height of the import and export footer")
-          .declare();
-
   /**
    * Runs only the display operations whose input or parameters changed since their last run; off,
    * every operation runs on every pass.

@@ -37,7 +37,7 @@ is read; `UICore` does it for `CoreSettings`.
 
 ```java
 boolean confirm = Settings.get(CoreSettings.CONFIRM_CLOSING);
-int height = Settings.get(CoreSettings.FOOTER_HEIGHT, () -> GuiUtils.getScaleLength(350));
+int width = Settings.get(CoreSettings.SIDE_PANEL_LEFT_WIDTH, () -> GuiUtils.getScaleLength(300));
 Settings.set(CoreSettings.CONFIRM_CLOSING, true);   // false when refused (site setting, locked)
 Settings.reset(CoreSettings.CONFIRM_CLOSING);       // back to the site value or the default
 Settings.addListener(CoreSettings.CONFIRM_CLOSING, value -> ...);

@@ -9,13 +9,17 @@
  */
 package org.weasis.dicom.explorer.pr;
 
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Window;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -24,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.util.tree.TreeCheckingModel;
@@ -31,20 +36,89 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.exp.CheckTreeModel;
-import org.weasis.dicom.explorer.exp.DicomExport;
 import org.weasis.dicom.explorer.exp.DicomExportFactory;
 import org.weasis.dicom.explorer.exp.ExportDicom;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 
-public class DicomExportPR extends DicomExport {
+public class DicomExportPR extends AbstractWizardDialog {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomExportPR.class);
 
   private boolean containsPR;
 
+  private final DicomModel dicomModel;
+  private final CheckTreeModel treeModel;
+
+  /**
+   * The export of the presentation states drawn in Weasis, as a dialog of its own: the only export
+   * left as a dialog, with the send page of the send plugin as its single page.
+   */
   public DicomExportPR(Window parent, DicomModel dicomModel) {
-    super(parent, dicomModel);
+    super(
+        parent,
+        Messages.getString("DicomExport.exp_dicom"),
+        ModalityType.APPLICATION_MODAL,
+        new Dimension(650, 500));
+    this.dicomModel = dicomModel;
+    this.treeModel = new CheckTreeModel(dicomModel);
+    JButton exportAndClose = new JButton(Messages.getString("DicomExport.exp_close"));
+    exportAndClose.addActionListener(
+        _ -> {
+          exportSelection();
+          cancel();
+        });
+    JButton exportButton = new JButton(Messages.getString("DicomExport.exp"));
+    exportButton.addActionListener(_ -> exportSelection());
+    JButton jButtonHelp = GuiUtils.createHelpButton("dicom-export/#exporting"); // NON-NLS
+    jPanelBottom.removeAll();
+    jPanelBottom.add(
+        GuiUtils.getFlowLayoutPanel(
+            FlowLayout.TRAILING,
+            HORIZONTAL_GAP,
+            VERTICAL_GAP,
+            jButtonHelp,
+            exportButton,
+            exportAndClose,
+            jButtonClose));
+    initializePages();
+    pack();
+  }
+
+  public DicomModel getDicomModel() {
+    return dicomModel;
+  }
+
+  public CheckTreeModel getTreeModel() {
+    return treeModel;
+  }
+
+  private void exportSelection() {
+    Object object = null;
+    try {
+      object = jScrollPanePage.getViewport().getComponent(0);
+    } catch (Exception e) {
+      LOGGER.debug("Failed to extract DICOM export", e);
+    }
+    if (object instanceof final ExportDicom selectedPage) {
+      try {
+        selectedPage.exportDICOM(treeModel, null);
+      } catch (IOException e) {
+        LOGGER.error("DICOM export failed", e);
+      }
+    }
+  }
+
+  @Override
+  public void cancel() {
+    dispose();
+  }
+
+  @Override
+  public void dispose() {
+    closeAllPages();
+    super.dispose();
   }
 
   @Override

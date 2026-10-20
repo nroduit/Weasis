@@ -11,7 +11,6 @@ package org.weasis.dicom.explorer.imp;
 
 import com.formdev.flatlaf.util.SystemFileChooser;
 import com.formdev.flatlaf.util.SystemInfo;
-import java.awt.Dialog;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -26,9 +25,11 @@ import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.api.gui.util.EmbeddedWizardPanel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.net.URIUtils;
@@ -183,12 +184,13 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
                 JOptionPane.WARNING_MESSAGE);
 
         if (response == JOptionPane.YES_OPTION) {
-          Dialog dialog = WinUtil.getParentDialog(this);
-          if (dialog instanceof DicomImport dcmImport) {
-            dcmImport.setCancelVeto(true); // Invalidate if closing the dialog
-            dcmImport.showPage(Messages.getString("DicomImport.imp_dicom"));
-            AbstractItemDialogPage page = dcmImport.getCurrentPage();
-            if (page instanceof LocalImport localImport) {
+          // the local page of the same wizard, on the folder of the DICOMDIR
+          EmbeddedWizardPanel wizard =
+              (EmbeddedWizardPanel)
+                  SwingUtilities.getAncestorOfClass(EmbeddedWizardPanel.class, this);
+          if (wizard != null) {
+            wizard.selectPage(Messages.getString("LocalImport.local_dev"));
+            if (wizard.getSelectedPage() instanceof LocalImport localImport) {
               localImport.setImportPath(file.getParent());
             }
           }

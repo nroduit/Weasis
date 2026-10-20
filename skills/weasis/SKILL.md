@@ -149,7 +149,9 @@ line naming the current spelling. Use the current one everywhere.
    no argument returns the current one); `view2d:viewport --tiled 2x2` shows successive images
    of one series on tiles, `--stack` goes back to one image. The tool panels around the
    workspace are slots: `workspace:panel` shows which tool fills each slot (explorer and tools
-   sides, top and bottom), `--side tools --slot bottom --tool measure` opens a tool there,
+   sides, top and bottom), `--side tools --slot bottom --tool measure` opens a tool there
+   (`--side explorer --slot bottom --tool import` or `export` opens the DICOM import or export
+   under the explorer: there is no import or export dialog),
    `--collapse` / `--expand` hide or show a side; `workspace:save` keeps the shell too.
    Windows: `workspace:detach --view <id> --screen diagnostic-1` floats a view in a viewer
    window filling the screen of that role (`workspace:screens` lists the roles control,

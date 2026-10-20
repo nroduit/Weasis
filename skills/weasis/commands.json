@@ -4362,7 +4362,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --set=<magnification> | --fit=<zoom-fit>]",
           "parameters": [],
           "options": [
             {
@@ -4397,6 +4397,20 @@
             },
             {
               "names": [
+                "--by"
+              ],
+              "label": "<steps>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
                 "--set"
               ],
               "label": "<magnification>",
@@ -4423,20 +4437,6 @@
               "arity": "1",
               "required": true,
               "description": "default, real-size or best-fit.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
-                "--by"
-              ],
-              "label": "<steps>",
-              "type": "integer",
-              "arity": "1",
-              "required": true,
-              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"
