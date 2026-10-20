@@ -1429,9 +1429,24 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public void zoom(Double viewScale) {
+    zoom(viewScale, null);
+  }
+
+  /**
+   * Zooms around an anchor, see {@link GraphicsPane#zoomAt(double, Point2D)}.
+   *
+   * @param viewScale the scale, or 0.0 for the scale of the zoom type (best fit, real size)
+   * @param anchor the anchor as an offset from the center of the view, in view pixels; null zooms
+   *     around the center
+   */
+  public void zoom(Double viewScale, Point2D anchor) {
     double ratio = getZoomRatioFromType(viewScale);
     actionsInView.put(ActionW.ZOOM.cmd(), ratio);
-    super.zoom(Math.abs(ratio));
+    if (anchor == null || MathUtil.isEqualToZero(viewScale)) {
+      super.zoom(Math.abs(ratio));
+    } else {
+      zoomAt(Math.abs(ratio), anchor);
+    }
     if (MathUtil.isEqualToZero(viewScale)) {
       /*
        * If the view has not been repainted once (the width and the height of the view is 0), it will be done
@@ -1750,8 +1765,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         double val = (Double) entry.getValue();
         // Special values: -200.0 => best fit, -100.0 => real world size
         if (MathUtil.isDifferent(val, -200.0) && MathUtil.isDifferent(val, -100.0)) {
-          // Standard zoom value
-          zoom(val);
+          // Standard zoom value, around the pointer when the mouse zooms and cursor zoom is on
+          zoom(val, ZoomChangeListener.getAnchor(synch, this, issuerSyncData, synchData));
         } else {
           // Apply special zoom type
           Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);

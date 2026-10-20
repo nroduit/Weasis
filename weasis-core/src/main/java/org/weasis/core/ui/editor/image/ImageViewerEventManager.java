@@ -231,7 +231,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
   protected SliderChangeListener newZoomAction() {
 
-    return new SliderChangeListener(
+    return new ZoomChangeListener(
         ActionW.ZOOM, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX, 1.0, true, 0.3, 300) {
 
       @Override
@@ -239,8 +239,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         firePropertyChange(
             ActionW.SYNCH.cmd(),
             null,
-            new SynchEvent(
-                getSelectedViewPane(), getActionW().cmd(), toModelValue(model.getValue())));
+            withAnchor(
+                new SynchEvent(
+                    getSelectedViewPane(), getActionW().cmd(), toModelValue(model.getValue()))));
       }
 
       @Override

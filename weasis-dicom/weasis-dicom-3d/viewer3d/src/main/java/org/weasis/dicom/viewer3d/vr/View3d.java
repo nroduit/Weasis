@@ -2562,7 +2562,8 @@ public class View3d extends VolumeCanvas
           double value = (Double) val;
           // Special Cases: -200.0 => best fit, -100.0 => real world size
           if (value != -200.0 && value != -100.0) {
-            zoom(value);
+            // Around the pointer when the mouse zooms and cursor zoom is on
+            zoom(value, ZoomChangeListener.getAnchor(synch, this, issuerSyncData, synchData));
           } else {
             Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
             actionsInView.put(

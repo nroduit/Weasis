@@ -35,6 +35,8 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -58,6 +60,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
   private final JComboBox<Feature<?>> comboBox = new JComboBox<>();
   private final JSlider slider = new JSlider(-100, 100, 0);
   private JComboBox<ZoomOp.Interpolation> comboBoxInterpolation;
+  private JCheckBox checkBoxZoomCursor;
   private JCheckBox checkBoxWLcolor;
   private JCheckBox checkBoxLevelInverse;
   private JCheckBox checkBoxApplyPR;
@@ -130,14 +133,23 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     comboBoxInterpolation.setSelectedIndex(eventManager.getZoomSetting().getInterpolation());
 
     int shiftX = ITEM_SEPARATOR - ITEM_SEPARATOR_SMALL;
-    JPanel panel1 =
+    checkBoxZoomCursor =
+        new JCheckBox(
+            Messages.getString("ViewerPrefView.zoom_cursor"),
+            Settings.get(CoreSettings.ZOOM_AT_CURSOR));
+    checkBoxZoomCursor.setToolTipText(Messages.getString("ViewerPrefView.zoom_cursor_tip"));
+    checkBoxZoomCursor.setEnabled(!Settings.isLocked(CoreSettings.ZOOM_AT_CURSOR));
+    JPanel panel1 = GuiUtils.getVerticalBoxLayoutPanel();
+    panel1.add(
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING,
             ITEM_SEPARATOR_SMALL,
             ITEM_SEPARATOR,
             GuiUtils.boxHorizontalStrut(shiftX),
             lblInterpolation,
-            comboBoxInterpolation);
+            comboBoxInterpolation));
+    panel1.add(
+        GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkBoxZoomCursor));
     panel1.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.zoom")));
     add(panel1);
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
@@ -191,6 +203,9 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
     int interpolationPosition = comboBoxInterpolation.getSelectedIndex();
     eventManager.getZoomSetting().setInterpolation(interpolationPosition);
+    if (!Settings.isLocked(CoreSettings.ZOOM_AT_CURSOR)) {
+      Settings.set(CoreSettings.ZOOM_AT_CURSOR, checkBoxZoomCursor.isSelected());
+    }
     boolean applyWLcolor = checkBoxWLcolor.isSelected();
     eventManager.getOptions().putBooleanProperty(WindowOp.P_APPLY_WL_COLOR, applyWLcolor);
 
@@ -230,6 +245,9 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     slider.setValue(map.get((Feature<?>) comboBox.getSelectedItem()));
 
     comboBoxInterpolation.setSelectedItem(Interpolation.BILINEAR);
+    if (!Settings.isLocked(CoreSettings.ZOOM_AT_CURSOR)) {
+      checkBoxZoomCursor.setSelected(CoreSettings.ZOOM_AT_CURSOR.defaultValue());
+    }
 
     // Get the default server configuration and if no value take the default value in parameter.
     WProperties properties = EventManager.getInstance().getOptions();

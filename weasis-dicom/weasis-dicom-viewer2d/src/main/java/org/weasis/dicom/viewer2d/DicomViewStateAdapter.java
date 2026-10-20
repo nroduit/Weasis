@@ -68,7 +68,7 @@ final class DicomViewStateAdapter implements ViewStateAdapter<DicomImageElement>
         .map(Object.class::cast);
   }
 
-    /** A presentation state applied to the image sets its own zoom, orientation and rendering. */
+  /** A presentation state applied to the image sets its own zoom, orientation and rendering. */
   @Override
   public boolean ownsPresentation(ViewCanvas<DicomImageElement> view) {
     return view.getActionValue(ActionW.PR_STATE.cmd()) instanceof PRSpecialElement;

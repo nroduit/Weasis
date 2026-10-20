@@ -42,6 +42,7 @@ import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.util.LangUtil;
+import org.weasis.core.util.MathUtil;
 
 /**
  * The Class GraphicsPane.
@@ -61,6 +62,7 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
   protected final HashMap<String, Object> actionsInView = new HashMap<>();
   protected final AffineTransform affineTransform = new AffineTransform();
   protected final AffineTransform inverseTransform = new AffineTransform();
+  private ZoomGesture zoomGesture;
 
   protected final PropertyChangeListener graphicsChangeHandler;
 
@@ -198,6 +200,104 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
     getViewModel()
         .setModelOffset(
             viewModel.getModelOffsetX(), viewModel.getModelOffsetY(), cropViewScale(viewScale));
+  }
+
+  /**
+   * Zooms keeping in place the model point shown at {@code anchor}. The model offset is in view
+   * axes (after rotation and flip) and in model units: a point {@code q} of these axes is shown at
+   * the anchor when the offset is {@code q − anchor / s}, whatever the rotation, the flip or the
+   * crop.
+   *
+   * <p>The point kept is the one displayed under the anchor, with the image origin on a whole pixel
+   * (see {@link #getImageViewBounds(double, double)}), so that the rounding is not multiplied by
+   * the zoom ratio. It is kept for the whole gesture (successive zooms at the same anchor with no
+   * other change of the view): it then stays within half a pixel of the anchor at every step,
+   * without drifting.
+   *
+   * @param viewScale the new scale, cropped to the limits of the view model
+   * @param anchor the anchor as an offset from the center of the view, in view pixels; null zooms
+   *     around the center
+   */
+  public void zoomAt(double viewScale, Point2D anchor) {
+    double scale = cropViewScale(viewScale);
+    ViewModel m = getViewModel();
+    double oldScale = m.getViewScale();
+    if (anchor == null || oldScale <= 0.0 || MathUtil.isEqual(oldScale, scale)) {
+      m.setModelOffset(m.getModelOffsetX(), m.getModelOffsetY(), scale);
+      return;
+    }
+    Point2D offset = new Point2D.Double(m.getModelOffsetX(), m.getModelOffsetY());
+    ZoomGesture gesture = zoomGesture;
+    Point2D point;
+    if (gesture != null && gesture.continues(anchor, offset, oldScale, affineTransform)) {
+      point = gesture.point();
+    } else {
+      point = anchorPoint(offset, oldScale, anchor, getOriginRounding());
+    }
+    Point2D newOffset = offsetShowing(point, scale, anchor);
+    m.setModelOffset(newOffset.getX(), newOffset.getY(), scale);
+    zoomGesture = new ZoomGesture(anchor, point, newOffset, scale, linearPart(affineTransform));
+  }
+
+  /**
+   * The point of the view axes displayed at {@code anchor}.
+   *
+   * @param rounding how far the image origin is displayed from its exact position, in view pixels
+   */
+  static Point2D anchorPoint(Point2D offset, double scale, Point2D anchor, Point2D rounding) {
+    return new Point2D.Double(
+        offset.getX() + (anchor.getX() - rounding.getX()) / scale,
+        offset.getY() + (anchor.getY() - rounding.getY()) / scale);
+  }
+
+  /** The model offset showing the point of the view axes {@code point} at {@code anchor}. */
+  static Point2D offsetShowing(Point2D point, double scale, Point2D anchor) {
+    return new Point2D.Double(
+        point.getX() - anchor.getX() / scale, point.getY() - anchor.getY() / scale);
+  }
+
+  /** How far the image origin is displayed from its exact position, in view pixels. */
+  private Point2D getOriginRounding() {
+    Rectangle2D b = affineTransform.createTransformedShape(viewModel.getModelArea()).getBounds2D();
+    ViewModel m = getViewModel();
+    double x = (getWidth() - b.getWidth()) * 0.5 - m.getModelOffsetX() * m.getViewScale();
+    double y = (getHeight() - b.getHeight()) * 0.5 - m.getModelOffsetY() * m.getViewScale();
+    return new Point2D.Double(Math.floor(x + 0.5) - x, Math.floor(y + 0.5) - y);
+  }
+
+  /** The rotation and flip of a transform: its linear part divided by its scale. */
+  private static double[] linearPart(AffineTransform t) {
+    double scale = Math.hypot(t.getScaleX(), t.getShearY());
+    if (scale <= 0.0) {
+      return new double[4];
+    }
+    return new double[] {
+      t.getScaleX() / scale, t.getShearX() / scale, t.getShearY() / scale, t.getScaleY() / scale
+    };
+  }
+
+  /**
+   * The point kept by an anchored zoom, valid while the next zoom has the same anchor and finds the
+   * offset, the scale and the orientation it left.
+   */
+  private record ZoomGesture(
+      Point2D anchor, Point2D point, Point2D offset, double scale, double[] orientation) {
+    boolean continues(Point2D anchor, Point2D offset, double scale, AffineTransform transform) {
+      return this.anchor.equals(anchor)
+          && !MathUtil.isDifferent(this.offset.getX(), offset.getX())
+          && !MathUtil.isDifferent(this.offset.getY(), offset.getY())
+          && !MathUtil.isDifferent(this.scale, scale)
+          && sameOrientation(this.orientation, linearPart(transform));
+    }
+
+    private static boolean sameOrientation(double[] a, double[] b) {
+      for (int i = 0; i < a.length; i++) {
+        if (Math.abs(a[i] - b[i]) > 1e-9) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
 
   public void zoom(Rectangle2D zoomRect) {

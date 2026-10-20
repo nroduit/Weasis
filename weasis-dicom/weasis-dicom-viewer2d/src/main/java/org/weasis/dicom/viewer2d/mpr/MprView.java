@@ -602,8 +602,8 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
   }
 
   @Override
-  public void zoom(Double viewScale) {
-    super.zoom(viewScale);
+  public void zoom(Double viewScale, Point2D anchor) {
+    super.zoom(viewScale, anchor);
     computeCrosslines(0);
   }
 

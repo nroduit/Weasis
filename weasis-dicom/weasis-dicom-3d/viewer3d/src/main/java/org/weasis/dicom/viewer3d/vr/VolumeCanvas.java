@@ -23,6 +23,7 @@ import java.util.Optional;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import org.joml.Vector2d;
 import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,7 @@ import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.util.LangUtil;
+import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.geometry.Camera;
@@ -237,8 +239,29 @@ public class VolumeCanvas extends JPanel implements Canvas {
 
   @Override
   public void zoom(Double viewScale) {
+    zoom(viewScale, null);
+  }
+
+  /**
+   * Zooms around an anchor, see {@link Camera#zoomAt}.
+   *
+   * @param viewScale the zoom factor, or 0.0 for the one of the zoom type (best fit, real size)
+   * @param anchor the anchor as an offset from the center of the view, in view pixels; null zooms
+   *     around the center
+   */
+  public void zoom(Double viewScale, Point2D anchor) {
     double ratio = getZoomRatioFromType(viewScale);
-    camera.setZoomFactor(ratio);
+    if (anchor == null
+        || MathUtil.isEqualToZero(viewScale)
+        || getWidth() <= 0
+        || getHeight() <= 0) {
+      camera.setZoomFactor(ratio);
+    } else {
+      // From the center offset: does not depend on the scale of the display
+      Vector2d ndc =
+          new Vector2d(2.0 * anchor.getX() / getWidth(), -2.0 * anchor.getY() / getHeight());
+      camera.zoomAt(ndc, Math.abs(ratio));
+    }
   }
 
   @Override

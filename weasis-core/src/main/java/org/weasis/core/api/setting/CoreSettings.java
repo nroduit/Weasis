@@ -99,5 +99,15 @@ public final class CoreSettings {
           .since("5.0.0")
           .declare();
 
+  /**
+   * Zooms with the mouse (wheel or drag) around the pointer instead of the center of the view, as
+   * most viewers do; the slider, the keyboard and the commands keep zooming around the center.
+   */
+  public static final Setting<Boolean> ZOOM_AT_CURSOR =
+      Setting.builder(SettingType.BOOLEAN, GROUP, "weasis.zoom.cursor", true) // NON-NLS
+          .description("Zoom with the mouse around the pointer")
+          .since("5.0.0")
+          .declare();
+
   private CoreSettings() {}
 }

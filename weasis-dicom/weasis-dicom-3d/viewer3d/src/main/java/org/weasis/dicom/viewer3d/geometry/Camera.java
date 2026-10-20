@@ -22,6 +22,7 @@ import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Quaterniondc;
 import org.joml.Vector2d;
+import org.joml.Vector2dc;
 import org.joml.Vector2i;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
@@ -297,6 +298,12 @@ public class Camera {
         new Vector2d(screenCoordToNDC(p)).sub(screenCoordToNDC(prevMousePos));
     prevMousePos.x = p.getX();
     prevMousePos.y = p.getY();
+    moveInView(translationNDC);
+    updateCameraTransform();
+  }
+
+  /** Moves the volume in the view plane by a shift in normalized device coordinates. */
+  private void moveInView(Vector2dc ndc) {
     double hh;
     if (orthographicProjection) {
       hh = 2.0 / zoomFactor;
@@ -308,13 +315,67 @@ public class Camera {
     Vector4d invTransform =
         new Matrix4d(getViewMatrix())
             .invert()
-            .transform(new Vector4d(translationNDC.x() * hw, translationNDC.y() * hh, 0.0, 0));
+            .transform(new Vector4d(ndc.x() * hw, ndc.y() * hh, 0.0, 0));
 
     position.x += invTransform.x;
     position.y += invTransform.y;
     position.z += invTransform.z;
+    resetTransformation();
+  }
 
+  /**
+   * Zooms keeping in place the point shown at {@code ndc}, taken on the plane through the center of
+   * rotation. After the zoom, the volume moves in the view plane until that point is back on the
+   * ray the renderer casts through {@code ndc} (see {@link #rayInView}): exact for the perspective
+   * and the orthographic projections, at the depth of the center of rotation.
+   *
+   * @param ndc the anchor in normalized device coordinates (x right, y up, from -1 to 1)
+   * @param zoomFactor the new zoom factor
+   */
+  public void zoomAt(Vector2dc ndc, double zoomFactor) {
+    Vector3d anchor = unprojectOnCenterPlane(ndc);
+    setZoomFactor(zoomFactor, false);
+    if (anchor != null) {
+      Vector4d v = getViewMatrix().transform(new Vector4d(anchor, 1.0));
+      Vector3d dir = rayInView(ndc);
+      if (Math.abs(dir.z) > 1e-12) {
+        // Same depth on the ray: a move in the view plane does not change the depth
+        Vector3d target = dir.mul(v.z / dir.z);
+        Vector4d shift =
+            getViewMatrix()
+                .invert()
+                .transform(new Vector4d(target.x - v.x, target.y - v.y, 0.0, 0.0));
+        position.add(shift.x, shift.y, shift.z);
+      }
+    }
     updateCameraTransform();
+  }
+
+  /**
+   * Direction, in view space, of the ray the renderer casts through {@code ndc}: the inverse
+   * projection of (x, y, 0, 1) without the division by w, as {@code CreateCameraRay} does. The rays
+   * start at the camera, for the perspective and the orthographic projections alike.
+   */
+  Vector3d rayInView(Vector2dc ndc) {
+    Vector4d d = getProjectionMatrix().invert().transform(new Vector4d(ndc.x(), ndc.y(), 0.0, 1.0));
+    return new Vector3d(d.x, d.y, d.z);
+  }
+
+  /** The point of the plane through the center of rotation that the ray through ndc reaches. */
+  Vector3d unprojectOnCenterPlane(Vector2dc ndc) {
+    Vector3d dir = rayInView(ndc);
+    // The view matrix maps -position to the center of rotation, on the axis of the view
+    Vector4d center =
+        getViewMatrix().transform(new Vector4d(-position.x, -position.y, -position.z, 1.0));
+    if (Math.abs(dir.z) < 1e-12) {
+      return null;
+    }
+    double t = center.z / dir.z;
+    if (t <= 0.0) {
+      return null;
+    }
+    Vector4d world = getViewMatrix().invert().transform(new Vector4d(dir.mul(t), 1.0));
+    return new Vector3d(world.x, world.y, world.z);
   }
 
   public void rotate(Point2D p) {

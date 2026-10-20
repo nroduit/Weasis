@@ -54,6 +54,7 @@ import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewSynchData;
+import org.weasis.core.ui.editor.image.ZoomChangeListener;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
@@ -218,7 +219,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
   @Override
   protected SliderChangeListener newZoomAction() {
 
-    return new SliderChangeListener(
+    return new ZoomChangeListener(
         ActionW.ZOOM,
         Camera.SCALE_MIN,
         Camera.SCALE_MAX,
@@ -232,11 +233,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         firePropertyChange(
             ActionW.SYNCH.cmd(),
             null,
-            new SynchEvent(
-                getSelectedViewPane(),
-                getActionW().cmd(),
-                toModelValue(model.getValue()),
-                model.getValueIsAdjusting()));
+            withAnchor(
+                new SynchEvent(
+                    getSelectedViewPane(),
+                    getActionW().cmd(),
+                    toModelValue(model.getValue()),
+                    model.getValueIsAdjusting())));
       }
 
       @Override
@@ -245,7 +247,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
       }
 
       @Override
-      public void mouseWheelMoved(MouseWheelEvent e) {
+      protected void wheel(MouseWheelEvent e) {
         if (basicState.isActionEnabled() && !e.isConsumed()) {
           setSliderValue(getSliderValue() - e.getWheelRotation() * e.getScrollAmount());
         }
