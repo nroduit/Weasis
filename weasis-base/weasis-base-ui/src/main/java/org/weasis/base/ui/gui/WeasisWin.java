@@ -84,6 +84,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JRootPane;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
@@ -99,6 +100,7 @@ import org.semver4j.Semver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
+import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
@@ -146,6 +148,7 @@ import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
 import org.weasis.core.ui.editor.MediaFactory;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
+import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerUI;
@@ -177,6 +180,14 @@ public class WeasisWin {
   private final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file"));
   private final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display"));
   private final JMenu menuTools = new JMenu(Messages.getString("WeasisWin.tools"));
+  private final DynamicMenu menuWindow =
+      new DynamicMenu(Messages.getString("WeasisWin.window")) {
+
+        @Override
+        public void popupMenuWillBecomeVisible() {
+          buildMenuWindow(this);
+        }
+      };
   private JCheckBoxMenuItem anonymizeMenuItem;
   private final DynamicMenu menuSelectedPlugin =
       new DynamicMenu("") {
@@ -425,7 +436,8 @@ public class WeasisWin {
     // middle, and the plugin tools on the right. The side panels are NOT part of the workspace
     // tree, so viewers can only be tabbed/split within the centre.
     Workspace centerArea = GuiUtils.getUICore().getCenterWorkspace();
-    centerArea.setTransferHandler(new SeriesHandler());
+    // every workspace window accepts a series drop and opens it there
+    workspace().setDropHandler(SeriesHandler::new);
 
     // The shell is named by role: the explorer side leads, the tools side trails, and the
     // orientation of the locale decides which one is on the left. The canvas never mirrors.
@@ -893,6 +905,8 @@ public class WeasisWin {
     menuBar.add(menuTools);
     menuBar.add(menuSelectedPlugin);
     menuSelectedPlugin.addPopupMenuListener();
+    menuBar.add(menuWindow);
+    menuWindow.addPopupMenuListener();
 
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
@@ -1295,6 +1309,75 @@ public class WeasisWin {
     menuView.add(explorerMenu);
   }
 
+  /** The window of the selected viewer, else the main window. */
+  private Window activeWindow() {
+    WorkspaceManager control = workspace();
+    return control.selectedView().flatMap(control::windowOf).orElse(frame);
+  }
+
+  /**
+   * The Window menu: every window (the main one and the viewer windows, the active one checked),
+   * the screens by role to move the active window to, its fullscreen state, and the selected viewer
+   * in a new window.
+   */
+  private void buildMenuWindow(JMenu menu) {
+    menu.removeAll();
+    WorkspaceManager control = workspace();
+    Window active = activeWindow();
+    for (Window window : control.getWindows()) {
+      if (window == null) {
+        continue;
+      }
+      String title =
+          window instanceof Frame f && !f.getTitle().isBlank()
+              ? f.getTitle()
+              : Messages.getString("WeasisWin.main_window");
+      JRadioButtonMenuItem item = new JRadioButtonMenuItem(title, window == active);
+      item.addActionListener(
+          e -> {
+            Workspace target = control.workspaceOf(window);
+            if (target != null) {
+              control.activate(target);
+            }
+            window.toFront();
+          });
+      menu.add(item);
+    }
+    menu.addSeparator();
+    JMenu screens = new JMenu(Messages.getString("WeasisWin.move_to_screen"));
+    ScreenRoles.Mapping mapping = ScreenRoles.mapping(frame);
+    for (ScreenRole role : ScreenRole.values()) {
+      ScreenRoles.Screen screen = mapping.screen(role);
+      if (screen == null) {
+        continue;
+      }
+      JMenuItem item =
+          new JMenuItem(
+              ScreenRoles.label(role)
+                  + (mapping.isFulfilled(role) ? "" : " *")
+                  + " ("
+                  + screen.id()
+                  + ")");
+      item.addActionListener(e -> control.moveToScreen(active, role));
+      screens.add(item);
+    }
+    menu.add(screens);
+    JCheckBoxMenuItem fullscreen =
+        new JCheckBoxMenuItem(
+            Messages.getString("WeasisWin.win_fullscreen"), control.isFullscreen(active));
+    fullscreen.setAccelerator(
+        ShortcutManager.getInstance().getKeyStroke(ShortcutManager.ID_DOCKING_FULLSCREEN));
+    fullscreen.addActionListener(e -> control.setFullscreen(active, !control.isFullscreen(active)));
+    menu.add(fullscreen);
+    ViewerPlugin<?> plugin = getSelectedPlugin();
+    JMenuItem newWindow = new JMenuItem(Messages.getString("WeasisWin.new_window"));
+    newWindow.setAccelerator(
+        ShortcutManager.getInstance().getKeyStroke(ShortcutManager.ID_DOCKING_EXTERNALIZE));
+    newWindow.setEnabled(plugin != null && plugin.isDetachable());
+    newWindow.addActionListener(e -> control.detach(plugin, null));
+    menu.add(newWindow);
+  }
+
   private void buildMenuTools() {
     menuTools.removeAll();
 
@@ -1484,6 +1567,10 @@ public class WeasisWin {
       try {
         Transferable transferable = support.getTransferable();
         Series<?> seq = (Series<?>) transferable.getTransferData(Series.sequenceDataFlavor);
+        if (support.getComponent() instanceof Workspace target) {
+          // the series opens in the window it was dropped on
+          workspace().activate(target);
+        }
         openSeriesInViewer(seq);
         return true;
       } catch (Exception e) {

@@ -29,11 +29,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
 import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.ui.docking.ws.snapshot.ViewRestorer;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
+import org.weasis.core.ui.editor.ExternalDisplay;
 import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.ScreenRoles.Mapping;
 import org.weasis.core.ui.editor.ScreenRoles.Screen;
@@ -54,7 +57,9 @@ public final class WorkspaceManager {
   private boolean mutating;
   private boolean dragEnabled = true;
   private WorkspaceView selectedView;
+  private Workspace activeOverride;
   private final Set<Window> immersive = Collections.newSetFromMap(new IdentityHashMap<>());
+  private Supplier<TransferHandler> dropHandlers;
 
   public WorkspaceManager(Window mainWindow) {
     this.mainWindow = mainWindow;
@@ -82,7 +87,76 @@ public final class WorkspaceManager {
    * main workspace when nothing is selected.
    */
   public Workspace activeWorkspace() {
+    if (activeOverride != null && workspaces.containsValue(activeOverride)) {
+      return activeOverride;
+    }
     return selectedView().map(view -> viewGroups.get(view).getWorkspace()).orElse(mainWorkspace);
+  }
+
+  /**
+   * Makes a workspace the active one, as a drop on its window does: its selected view becomes the
+   * application's selection; an empty workspace stays the target of the next open until a view is
+   * selected elsewhere.
+   */
+  public void activate(Workspace workspace) {
+    if (workspace == null || !workspaces.containsValue(workspace)) {
+      return;
+    }
+    WorkspaceView view = viewToSelect(workspace);
+    if (view != null) {
+      activeOverride = null;
+      if (view != selectedView) {
+        fireViewSelected(view, workspace.getWindow());
+      }
+    } else {
+      activeOverride = workspace;
+    }
+  }
+
+  /** The workspace of a window, or null when the window hosts none. */
+  public Workspace workspaceOf(Window window) {
+    return workspaces.get(window);
+  }
+
+  /** The window of a docked view, empty when it is not showing or runs headless. */
+  public Optional<Window> windowOf(WorkspaceView view) {
+    TabGroup group = viewGroups.get(view);
+    return group == null ? Optional.empty() : Optional.ofNullable(group.getWorkspace().getWindow());
+  }
+
+  /**
+   * The series drop handler every workspace window gets (the main one and every viewer window), so
+   * a series dragged from the explorer opens where it is dropped.
+   */
+  public void setDropHandler(Supplier<TransferHandler> handlers) {
+    this.dropHandlers = handlers;
+    if (handlers != null) {
+      for (Workspace workspace : workspaces.values()) {
+        workspace.setTransferHandler(handlers.get());
+      }
+    }
+  }
+
+  /** Moves a window to the screen of a role (its usable area); ends its fullscreen state. */
+  public void moveToScreen(Window window, ScreenRole role) {
+    if (window == null || role == null) {
+      return;
+    }
+    setFullscreen(window, false);
+    Rectangle bounds = ExternalDisplay.onRole(role, mainWindow).screenBounds();
+    if (window instanceof Frame frame
+        && (frame.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH) {
+      // the window manager restores the normal bounds after the state change, so ours come next
+      frame.setExtendedState(frame.getExtendedState() & ~Frame.MAXIMIZED_BOTH);
+      SwingUtilities.invokeLater(
+          () -> {
+            window.setBounds(bounds);
+            window.toFront();
+          });
+      return;
+    }
+    window.setBounds(bounds);
+    window.toFront();
   }
 
   public boolean isDragEnabled() {
@@ -383,6 +457,7 @@ public final class WorkspaceManager {
     TabGroup group = viewGroups.get(view);
     if (group != null) {
       group.updateTabInfo(view);
+      refreshTitle(group.getWorkspace());
     }
   }
 
@@ -537,6 +612,7 @@ public final class WorkspaceManager {
               continue;
             }
             target.setRoot(root);
+            refreshTitle(target);
             frame.setBounds(bounds);
             frame.setVisible(true);
             applyState(frame, win.state());
@@ -827,6 +903,9 @@ public final class WorkspaceManager {
 
   private void addWorkspace(Window window, Workspace workspace) {
     workspaces.put(window, workspace);
+    if (dropHandlers != null) {
+      workspace.setTransferHandler(dropHandlers.get());
+    }
     if (window != null) {
       window.addWindowFocusListener(
           new WindowAdapter() {
@@ -844,6 +923,14 @@ public final class WorkspaceManager {
    * nothing happens when that view is already the application's selection or the window is empty.
    */
   void activateWindow(Workspace workspace) {
+    WorkspaceView view = viewToSelect(workspace);
+    if (view != null && view != selectedView) {
+      fireViewSelected(view, workspace.getWindow());
+    }
+  }
+
+  /** The view a window stands for: its last selected view, else the selected one of its tree. */
+  private WorkspaceView viewToSelect(Workspace workspace) {
     WorkspaceView view = workspace.getLastSelected();
     if (view == null || !isIn(view, workspace)) {
       view =
@@ -851,8 +938,15 @@ public final class WorkspaceManager {
               ? workspace.getMaximizedView()
               : workspace.isEmpty() ? null : workspace.groups().getFirst().getSelectedView();
     }
-    if (view != null && view != selectedView) {
-      fireViewSelected(view, workspace.getWindow());
+    return view;
+  }
+
+  /** A viewer window is titled after the view it shows, under the identity mask in force. */
+  private void refreshTitle(Workspace workspace) {
+    if (workspace.getWindow() instanceof DetachedFrame frame) {
+      WorkspaceView view = viewToSelect(workspace);
+      frame.setTitle(
+          view != null ? view.tabTitle() : System.getProperty("weasis.name", "Weasis")); // NON-NLS
     }
   }
 
@@ -863,9 +957,11 @@ public final class WorkspaceManager {
 
   private void fireViewSelected(WorkspaceView view, Window window) {
     selectedView = view;
+    activeOverride = null;
     TabGroup group = viewGroups.get(view);
     if (group != null) {
       group.getWorkspace().setLastSelected(view);
+      refreshTitle(group.getWorkspace());
     }
     for (WorkspaceListener listener : listeners) {
       listener.viewSelected(view, window);

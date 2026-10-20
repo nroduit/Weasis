@@ -79,6 +79,7 @@ import picocli.CommandLine.ParentCommand;
       WorkspaceCommands.Split.class,
       WorkspaceCommands.Detach.class,
       WorkspaceCommands.Screens.class,
+      WorkspaceCommands.Move.class,
       WorkspaceCommands.Save.class,
       WorkspaceCommands.Load.class,
       WorkspaceCommands.Panel.class
@@ -431,6 +432,30 @@ public class WorkspaceCommands implements CommandExtension {
         target = ExternalDisplay.onRole(screen, manager.mainWindow()).screenBounds();
       }
       manager.detach(view, target);
+    }
+  }
+
+  @Command(
+      name = "move",
+      description =
+          "Moves the window of a view to the screen of a role (its usable area, see 'screens'); "
+              + "the main window moves too. Ends the fullscreen state of that window.")
+  @Since("5.0")
+  static class Move extends ViewVerb {
+    @Option(
+        names = "--screen",
+        required = true,
+        paramLabel = "<screen-role>",
+        description = "Screen by role: ${COMPLETION-CANDIDATES}.")
+    ScreenRole screen;
+
+    @Override
+    void apply(WorkspaceManager manager, WorkspaceView view) {
+      Window window =
+          manager
+              .windowOf(view)
+              .orElseThrow(() -> new IllegalStateException("The view has no window (headless)"));
+      manager.moveToScreen(window, screen);
     }
   }
 

@@ -1254,6 +1254,18 @@ Usage: `workspace:maximize [-h] [--json] --view=<view-id>`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | View id from 'workspace:list'. |
 
+### workspace:move (since 5.0)
+
+Moves the window of a view to the screen of a role (its usable area, see 'screens'); the main window moves too. Ends the fullscreen state of that window.
+
+Usage: `workspace:move [-h] [--json] --screen=<screen-role> --view=<view-id>`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | View id from 'workspace:list'. |
+| --screen | screen-role |  | Screen by role: control, diagnostic-1, diagnostic-2, color, portrait. |
+
 ### workspace:panel (since 5.0)
 
 Shell slots around the workspace: the explorer side (leading) and the tools side (trailing), two stacked slots each, and the central strip. Without option it returns the shell state; --side selects a side, then --slot with --tool or --clear fills or empties a slot, --collapse / --expand hide or show the side, --width and --ratio size it. Tool ids are stable across viewer types; an id the side does not offer now fails and lists the ones it does.

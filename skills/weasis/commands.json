@@ -4796,6 +4796,52 @@
           ]
         },
         {
+          "name": "move",
+          "description": "Moves the window of a view to the screen of a role (its usable area, see 'screens'); the main window moves too. Ends the fullscreen state of that window.",
+          "since": "5.0",
+          "usage": "workspace:move [-h] [--json] --screen=<screen-role> --view=<view-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": true,
+              "description": "View id from 'workspace:list'."
+            },
+            {
+              "names": [
+                "--screen"
+              ],
+              "label": "<screen-role>",
+              "type": "screen-role",
+              "values": [
+                "control",
+                "diagnostic-1",
+                "diagnostic-2",
+                "color",
+                "portrait"
+              ],
+              "arity": "1",
+              "required": true,
+              "description": "Screen by role: control, diagnostic-1, diagnostic-2, color, portrait."
+            }
+          ]
+        },
+        {
           "name": "panel",
           "description": "Shell slots around the workspace: the explorer side (leading) and the tools side (trailing), two stacked slots each, and the central strip. Without option it returns the shell state; --side selects a side, then --slot with --tool or --clear fills or empties a slot, --collapse / --expand hide or show the side, --width and --ratio size it. Tool ids are stable across viewer types; an id the side does not offer now fails and lists the ones it does.",
           "since": "5.0",

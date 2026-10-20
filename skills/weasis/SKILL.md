@@ -163,7 +163,8 @@ line naming the current spelling. Use the current one everywhere.
    missing (listed under `folded`). `workspace:fullscreen [--view <id>]` puts a window on the
    whole monitor without decorations (`--off` ends it; kept by `workspace:save`), and
    `--canvas` shows the selected pane alone on the monitor, as F11 does, hiding the menu, the
-   toolbar and the side panels until `--canvas --off`.
+   toolbar and the side panels until `--canvas --off`. `workspace:move --view <id> --screen
+   <role>` moves the window of a view (the main window too) to the screen of that role.
 9. **Hanging protocols** (engine and built-in library, no UI yet): a study loaded by any verb
    opens already hung by its best protocol (setting `weasis.hp.open`, `PROTOCOL` by default,
    `FIRST_SERIES` for the old behaviour). `hp:list` shows the protocols of every layer, the

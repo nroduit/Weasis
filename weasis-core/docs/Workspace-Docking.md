@@ -64,6 +64,21 @@ tabs, or as a split beside the main tree when the local setting `weasis.screen.f
 way. `restore` returns what it folded, and `workspace:load` reports it under `folded` with the
 tool ids the shell did not offer under `skippedTools`.
 
+### Viewer windows: title, series drop, Window menu
+
+A viewer window is titled after the view it stands for (its last selected view, else the
+selected view of its first group), through `tabTitle()`, so the title is masked like the tab
+and follows the selection and the identity mask (`updateTabInfo` refreshes it). Every
+workspace window accepts a series drop from the explorer: the main window registers its drop
+handler once (`setDropHandler`), the manager gives it to every workspace, and the handler
+activates the workspace it was dropped on (`activate`: its view becomes the selection, an
+empty workspace stays the target of the next open) before opening the series, so the series
+opens where it was dropped. `moveToScreen(window, role)` puts a window on the usable area of
+the screen of a role (`workspace:move --view --screen`), the main window included. The Window
+menu of the main window lists the windows (the active one checked; choosing one activates
+it), the screens by role to move the active window to, its fullscreen state and *Open in a
+new window* for the selected viewer.
+
 ### Window states: maximized, fullscreen, immersive
 
 `maximize(view)` shows a view alone in its window (a card swap in the `Workspace`).
@@ -131,7 +146,7 @@ through the `DataExplorerModel` of each explorer (`SeriesResolver.ofApplication`
 ## Commands
 
 `WorkspaceCommands` exposes the engine under the `workspace:` command namespace (list, select,
-close, maximize, unmaximize, fullscreen, stack, split, detach, screens, save, load, panel), so that a layout can be
+close, maximize, unmaximize, fullscreen, stack, split, detach, move, screens, save, load, panel), so that a layout can be
 driven from the command line, from `weasis-cli` or by an agent. The namespace is a Picocli
 command model (see the command bridge in `weasis-launcher/docs/Launcher-Overview.md`): every
 verb documents itself with `--help`, and the verbs that change the layout return the new state

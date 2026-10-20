@@ -12,7 +12,9 @@ package org.weasis.core.ui.docking.ws;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -248,5 +250,24 @@ class WorkspaceManagerTest {
     manager.activateWindow(manager.mainWorkspace());
     assertEquals(List.of(v1), selected, "the window re-selects what it shows");
     assertEquals(Optional.of(v1), manager.selectedView());
+  }
+
+  @Test
+  void activatingAWorkspaceSelectsItsViewOrKeepsItAsTheOpenTarget() {
+    manager.open(v1);
+    manager.open(v2);
+    manager.select(v2);
+    manager.activate(manager.mainWorkspace());
+    assertEquals(Optional.of(v2), manager.selectedView(), "its selected view stays");
+    assertSame(manager.mainWorkspace(), manager.activeWorkspace());
+    assertEquals(Optional.empty(), manager.windowOf(v3), "not docked");
+    assertTrue(manager.windowOf(v1).isEmpty(), "headless: no window");
+  }
+
+  @Test
+  void theDropHandlerReachesEveryWorkspace() {
+    assertNull(manager.mainWorkspace().getTransferHandler());
+    manager.setDropHandler(() -> new javax.swing.TransferHandler("name"));
+    assertNotNull(manager.mainWorkspace().getTransferHandler());
   }
 }

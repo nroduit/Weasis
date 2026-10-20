@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+import org.weasis.core.Messages;
 import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.service.WProperties;
 
@@ -116,6 +117,11 @@ public final class ScreenRoles {
   private static volatile Supplier<WProperties> store = () -> null;
 
   private ScreenRoles() {}
+
+  /** The localized name of a role for menus and pages: "Diagnostic screen 1". */
+  public static String label(ScreenRole role) {
+    return Messages.getString("ScreenRoles." + role.key());
+  }
 
   /** The local settings the explicit roles and the fold mode live in; set once by the UI core. */
   public static void setStore(Supplier<WProperties> localPersistence) {
