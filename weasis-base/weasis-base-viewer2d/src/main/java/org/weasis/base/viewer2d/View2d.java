@@ -195,6 +195,8 @@ public class View2d extends DefaultView2d<ImageElement> {
 
     GraphicEditActions.addPasteItems(popupMenu, this, evt);
     count = addSeparatorToPopupMenu(popupMenu, count);
+    GraphicEditActions.addSelectUnderCursorMenu(popupMenu, this, evt);
+    count = popupMenu.getComponentCount();
 
     if (eventManager instanceof EventManager manager) {
       GuiUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
