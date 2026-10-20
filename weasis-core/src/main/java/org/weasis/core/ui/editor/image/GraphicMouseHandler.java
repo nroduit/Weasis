@@ -42,6 +42,10 @@ import org.weasis.core.ui.model.utils.imp.DefaultDragSequence;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdapter {
+
+  /** Screen pixels the cursor may travel between press and release for a click. */
+  private static final double CLICK_TOLERANCE = 3.0;
+
   private final ViewCanvas<E> vImg;
   private Draggable ds;
 
@@ -52,6 +56,15 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
   private Graphic drawing;
 
   private final CursorSet cursorSet;
+
+  /**
+   * The graphic that was the only selection when the button went down on it, away from its
+   * handles and its label. If the button comes up without the mouse having moved, the click goes
+   * through it to the next graphic under the cursor.
+   */
+  private Graphic cycleFrom;
+
+  private final Point pressPoint = new Point();
 
   public GraphicMouseHandler(ViewCanvas<E> vImg) {
     this(
@@ -110,6 +123,9 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
     boolean vertexGesture = false;
 
     GraphicModel graphicList = vImg.getGraphicManager();
+    cycleFrom = findCycleOrigin(graphicList, mouseEvt);
+    pressPoint.setLocation(e.getX(), e.getY());
+
     // Avoid any dragging on selection when Shift Button is Down
     if (!mouseEvt.isShiftDown()) {
       // Evaluates if mouse is on a dragging position, creates a DragSequence and changes cursor
@@ -214,6 +230,11 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
     vImg.getJComponent()
         .setCursor(Optional.ofNullable(newCursor).orElse(cursorSet.getDrawingCursor()));
 
+    if (created != null && !(created instanceof SelectGraphic)) {
+      // The press started a new drawing, it did not go through the selection
+      cycleFrom = null;
+    }
+
     if (ds != null) {
       ds.startDrag(mouseEvt);
     } else if (!vertexGesture) {
@@ -222,6 +243,47 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
     // Throws to the tool listener the current graphic selection.
     vImg.getGraphicManager().fireGraphicsSelectionChanged(vImg.getMeasurableLayer());
+  }
+
+  /**
+   * The selected graphic a click can go through: the only selection, under the cursor, and not
+   * where the press edits it (a handle, a segment midpoint, the label). Shift and Alt have their
+   * own meaning on a click.
+   */
+  private static Graphic findCycleOrigin(GraphicModel graphicList, MouseEventDouble mouseEvt) {
+    if (mouseEvt.isShiftDown() || mouseEvt.isAltDown()) {
+      return null;
+    }
+    List<Graphic> selected = graphicList.getSelectedGraphics();
+    if (selected.size() != 1) {
+      return null;
+    }
+    Graphic graphic = selected.getFirst();
+    Optional<Graphic> hit = graphicList.getFirstGraphicIntersecting(mouseEvt);
+    if (hit.isEmpty() || hit.get() != graphic || graphic.isOnGraphicLabel(mouseEvt)) {
+      return null;
+    }
+    if (graphic instanceof DragGraphic dragGraph
+        && !graphic.getLayer().getLocked()
+        && (dragGraph.getHandlePointIndex(mouseEvt) >= 0
+            || MidpointHandles.hitTest(dragGraph, mouseEvt) >= 0)) {
+      return null;
+    }
+    return graphic;
+  }
+
+  /**
+   * Selects the graphic under the cursor that comes after the given one, wrapping around, so that
+   * repeated clicks at the same place reach every graphic stacked there.
+   */
+  private void selectNextUnderCursor(Graphic from, MouseEventDouble mouseEvt) {
+    GraphicModel graphicList = vImg.getGraphicManager();
+    List<Graphic> hits = graphicList.getAllGraphicsIntersecting(mouseEvt);
+    if (hits.size() > 1) {
+      int index = hits.indexOf(from);
+      graphicList.setSelectedGraphic(
+          Collections.singletonList(hits.get((index + 1) % hits.size())));
+    }
   }
 
   /** True for the first or the last vertex of an open path, where a path can be continued. */
@@ -416,6 +478,8 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
     if (!isBoundButton(e)) {
       return;
     }
+    Graphic cycleOrigin = cycleFrom;
+    cycleFrom = null;
 
     // Do nothing and return if no dragSequence exist
     if (ds == null) {
@@ -486,6 +550,10 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
                     .ifPresent(c -> c.setSelectedItem(BuiltinGraphicTools.SELECTION));
               });
       ds = null;
+    }
+
+    if (cycleOrigin != null && pressPoint.distance(e.getX(), e.getY()) < CLICK_TOLERANCE) {
+      selectNextUnderCursor(cycleOrigin, mouseEvt);
     }
 
     // Throws to the tool listener the current graphic selection.
