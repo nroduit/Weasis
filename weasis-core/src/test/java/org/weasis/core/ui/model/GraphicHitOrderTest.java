@@ -1,0 +1,99 @@
+/*
+ * Copyright (c) 2026 Weasis Team and other contributors.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
+package org.weasis.core.ui.model;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.awt.event.MouseEvent;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.List;
+import javax.swing.JPanel;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
+import org.junit.jupiter.api.Test;
+import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
+import org.weasis.core.ui.model.imp.XmlGraphicModel;
+import org.weasis.core.ui.util.MouseEventDouble;
+
+@DisplayNameGeneration(ReplaceUnderscores.class)
+class GraphicHitOrderTest {
+
+  private static PolylineGraphic line(double y) throws Exception {
+    PolylineGraphic graphic = new PolylineGraphic();
+    graphic.buildGraphic(List.of(new Point2D.Double(0, y), new Point2D.Double(100, y)));
+    return graphic;
+  }
+
+  /** A click in image coordinates, on a component without transform: one pixel per unit. */
+  private static MouseEventDouble clickAt(double x, double y) {
+    MouseEventDouble event =
+        new MouseEventDouble(
+            new JPanel(), MouseEvent.MOUSE_PRESSED, 0, 0, (int) x, (int) y, 0, 0, 1, false, 1);
+    event.setImageCoordinates(x, y);
+    return event;
+  }
+
+  @Test
+  void the_nearest_outline_comes_first_even_below_another_graphic() throws Exception {
+    GraphicModel model = new XmlGraphicModel();
+    PolylineGraphic near = line(3);
+    PolylineGraphic upper = line(0);
+    model.addGraphic(near);
+    model.addGraphic(upper);
+
+    assertEquals(List.of(near, upper), model.getAllGraphicsIntersecting(clickAt(50, 2.5)));
+  }
+
+  @Test
+  void outlines_at_the_same_distance_keep_the_upper_graphic_first() throws Exception {
+    GraphicModel model = new XmlGraphicModel();
+    PolylineGraphic lower = line(0);
+    PolylineGraphic upper = line(0);
+    model.addGraphic(lower);
+    model.addGraphic(upper);
+
+    assertEquals(List.of(upper, lower), model.getAllGraphicsIntersecting(clickAt(50, 1)));
+  }
+
+  @Test
+  void the_selected_graphic_wins_over_a_nearer_one() throws Exception {
+    GraphicModel model = new XmlGraphicModel();
+    PolylineGraphic near = line(3);
+    PolylineGraphic selected = line(0);
+    model.addGraphic(near);
+    model.addGraphic(selected);
+    model.setSelectedGraphic(List.of(selected));
+
+    assertEquals(selected, model.getFirstGraphicIntersecting(clickAt(50, 2.5)).orElse(null));
+  }
+
+  @Test
+  void the_outline_distance_ignores_the_inside_of_a_closed_shape() {
+    Rectangle2D square = new Rectangle2D.Double(0, 0, 40, 40);
+    assertEquals(10, AbstractGraphicModel.outlineDistance(square, new Point2D.Double(10, 20), 1));
+    assertEquals(
+        5,
+        AbstractGraphicModel.outlineDistance(
+            new Line2D.Double(0, 0, 10, 0), new Point2D.Double(15, 0), 1));
+  }
+
+  @Test
+  void graphics_away_from_the_cursor_are_not_hit() throws Exception {
+    GraphicModel model = new XmlGraphicModel();
+    Graphic far = line(60);
+    model.addGraphic(far);
+    model.addGraphic(line(0));
+
+    assertEquals(1, model.getAllGraphicsIntersecting(clickAt(50, 1)).size());
+  }
+}

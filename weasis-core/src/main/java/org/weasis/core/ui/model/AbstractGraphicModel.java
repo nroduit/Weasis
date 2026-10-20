@@ -26,11 +26,14 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
+import java.awt.geom.Line2D;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -45,7 +48,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
@@ -99,6 +104,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   public static final String CURRENT_VERSION = "2.7"; // NON-NLS
 
   public static final String LEGACY_VERSION = "2.5"; // NON-NLS
+
+  /** Screen pixels within which two outlines are as near to the cursor. */
+  private static final double NEAREST_OUTLINE_STEP = 1.0;
 
   private List<ReferencedSeries> referencedSeries;
   private List<GraphicLayer> layers;
@@ -553,43 +561,87 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
   /**
    * @param mouseEvent
-   * @return first selected graphic intersecting if existed, otherwise simply first graphic
-   *     intersecting, or null
+   * @return the selected graphic under the cursor if there is one, so that it can be dragged even
+   *     where it overlaps another, otherwise the graphic whose outline is nearest
    */
   @Override
   public Optional<Graphic> getFirstGraphicIntersecting(MouseEventDouble mouseEvent) {
+    List<Graphic> hits = getAllGraphicsIntersecting(mouseEvent);
+    return hits.stream()
+        .filter(g -> Boolean.TRUE.equals(g.getSelected()))
+        .findFirst()
+        .or(() -> hits.stream().findFirst());
+  }
+
+  @Override
+  public List<Graphic> getAllGraphicsIntersecting(MouseEventDouble mouseEvent) {
     final Point2D mousePt = mouseEvent.getImageCoordinates();
-    Graphic firstSelectedGraph = null;
+    AffineTransform transform =
+        mouseEvent.getSource() instanceof Image2DViewer<?> viewer
+            ? viewer.getAffineTransform()
+            : null;
+    // Distances are compared by steps of one screen pixel, within which the upper graphic wins
+    double step = NEAREST_OUTLINE_STEP / GeomUtil.extractScalingFactor(transform);
+    List<Hit> hits = new ArrayList<>();
     synchronized (models) {
       for (int i = models.size() - 1; i >= 0; i--) {
         Graphic g = models.get(i);
         GraphicLayer l = g.getLayer();
         if (l.getVisible() && l.getSelectable()) {
+          double distance = -1;
           if (g.isOnGraphicLabel(mouseEvent)) {
-            if (g.getSelected()) {
-              return Optional.of(g);
-            } else if (firstSelectedGraph == null) {
-              firstSelectedGraph = g;
+            // A label is drawn over the graphics, so the cursor is on it rather than near it
+            distance = 0;
+          } else {
+            // Improve speed by checking if mousePoint is inside repaintBound before checking if
+            // inside Area
+            Rectangle2D repaintBound = g.getRepaintBounds(mouseEvent);
+            if (repaintBound != null
+                && repaintBound.contains(mousePt)
+                && (g.getHandlePointIndex(mouseEvent) >= 0
+                    || g.getArea(mouseEvent).contains(mousePt))) {
+              distance = outlineDistance(g.getShape(), mousePt, step);
             }
           }
-
-          // Improve speed by checking if mousePoint is inside repaintBound before checking if
-          // inside Area
-          Rectangle2D repaintBound = g.getRepaintBounds(mouseEvent);
-          if (repaintBound != null && repaintBound.contains(mousePt)) {
-            if ((g.getHandlePointIndex(mouseEvent) >= 0)
-                || (g.getArea(mouseEvent).contains(mousePt))) {
-              if (g.getSelected()) {
-                return Optional.of(g);
-              } else if (firstSelectedGraph == null) {
-                firstSelectedGraph = g;
-              }
-            }
+          if (distance >= 0) {
+            hits.add(new Hit(g, (long) Math.floor(distance / step)));
           }
         }
       }
     }
-    return Optional.ofNullable(firstSelectedGraph);
+    // The stable sort keeps the drawing order, from the top, between equal steps
+    hits.sort(Comparator.comparingLong(Hit::step));
+    return hits.stream().map(Hit::graphic).collect(Collectors.toList());
+  }
+
+  private record Hit(Graphic graphic, long step) {}
+
+  /** The distance from a point to the nearest outline of a shape, flattened at the given step. */
+  static double outlineDistance(Shape shape, Point2D pt, double step) {
+    if (shape == null) {
+      return 0;
+    }
+    double min = Double.MAX_VALUE;
+    double[] coords = new double[6];
+    double startX = 0;
+    double startY = 0;
+    double lastX = 0;
+    double lastY = 0;
+    for (PathIterator it = shape.getPathIterator(null, step / 4.0); !it.isDone(); it.next()) {
+      int type = it.currentSegment(coords);
+      if (type == PathIterator.SEG_MOVETO) {
+        startX = lastX = coords[0];
+        startY = lastY = coords[1];
+        min = Math.min(min, pt.distance(lastX, lastY));
+      } else {
+        double x = type == PathIterator.SEG_CLOSE ? startX : coords[0];
+        double y = type == PathIterator.SEG_CLOSE ? startY : coords[1];
+        min = Math.min(min, Line2D.ptSegDist(lastX, lastY, x, y, pt.getX(), pt.getY()));
+        lastX = x;
+        lastY = y;
+      }
+    }
+    return min == Double.MAX_VALUE ? 0 : min;
   }
 
   // @Override
