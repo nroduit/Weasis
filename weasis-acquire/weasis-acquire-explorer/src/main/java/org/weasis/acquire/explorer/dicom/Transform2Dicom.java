@@ -29,8 +29,10 @@ import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup.Type;
+import org.weasis.core.api.image.ColorProfileOp;
 import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
@@ -42,6 +44,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
+import org.weasis.dicom.codec.utils.IccProfileModule;
 import org.weasis.dicom.explorer.pr.DicomPrSerializer;
 import org.weasis.dicom.ref.AnatomicRegion;
 import org.weasis.dicom.tool.Dicomizer;
@@ -170,6 +173,7 @@ public final class Transform2Dicom {
       if (originalFile != null) {
         Dicomizer.addExifAttributes(attrs, originalFile, !removeJpegMetadata);
       }
+      writeIccProfile(attrs, imageElement);
 
       // Spatial calibration
       if (Unit.PIXEL != imageElement.getPixelSpacingUnit()) {
@@ -199,6 +203,21 @@ public final class Transform2Dicom {
     }
 
     return true;
+  }
+
+  /**
+   * ICC Profile module (PS3.3 C.11.15, CP-1736 maps the EXIF InterColorProfile to it), independent
+   * of the metadata removal option. The pixels are written as read, in the colors of the original
+   * file on both the kept and the re-encoded paths, so its profile describes them; the re-encoded
+   * JPEG carries no embedded profile that could contradict it.
+   */
+  static void writeIccProfile(Attributes attrs, ImageElement imageElement) {
+    // Reading the image also reads its embedded profile
+    PlanarImage image = imageElement.getImage();
+    if (image != null && image.channels() >= 3) {
+      IccProfile profile = ColorProfileOp.profileOf(imageElement);
+      IccProfileModule.write(attrs, profile != null && profile.isRgb() ? profile : null);
+    }
   }
 
   private static void processDicomPR(

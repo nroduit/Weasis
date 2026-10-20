@@ -1,0 +1,181 @@
+/*
+ * Copyright (c) 2026 Weasis Team and other contributors.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
+package org.weasis.core.api.image;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.awt.color.ICC_Profile;
+import java.nio.ByteBuffer;
+import java.util.Map;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
+import org.junit.jupiter.api.Test;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Rect;
+import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.image.ImageOpEvent.OpEvent;
+import org.weasis.core.api.image.ImageOpNode.Param;
+import org.weasis.core.api.image.color.ColorManagement;
+import org.weasis.core.api.image.color.ColorTransform;
+import org.weasis.core.api.image.color.IccProfile;
+import org.weasis.core.api.image.cv.OpenCvTestLoader;
+import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.Taggable;
+import org.weasis.opencv.data.ImageCV;
+import org.weasis.opencv.data.PlanarImage;
+
+@DisplayNameGeneration(ReplaceUnderscores.class)
+class ColorProfileOpTest {
+
+  private static IccProfile wide;
+
+  @BeforeAll
+  static void loadOpenCV() {
+    assumeTrue(OpenCvTestLoader.tryLoad(), "OpenCV native library unavailable, skipping");
+    ICC_Profile profile = ICC_Profile.getInstance(IccProfile.SRGB.data());
+    profile.setData(ICC_Profile.icSigRedColorantTag, xyz(0.6097, 0.3111, 0.0195));
+    profile.setData(ICC_Profile.icSigGreenColorantTag, xyz(0.2053, 0.6257, 0.0609));
+    profile.setData(ICC_Profile.icSigBlueColorantTag, xyz(0.1492, 0.0632, 0.7446));
+    wide = IccProfile.of(profile.getData()).orElseThrow();
+  }
+
+  @Test
+  void untagged_color_on_an_srgb_display_is_passed_through() throws Exception {
+    ImageCV src = color(64, 48);
+    assertSame(src, run(new ColorProfileOp(), src));
+  }
+
+  @Test
+  void grayscale_is_never_converted() throws Exception {
+    ImageCV gray = new ImageCV(8, 8, CvType.CV_8UC1);
+    ColorProfileOp op = new ColorProfileOp();
+    op.setParam(ColorProfileOp.P_SOURCE_PROFILE, wide);
+    assertSame(gray, run(op, gray));
+  }
+
+  @Test
+  void tagged_color_is_converted_into_a_new_image() throws Exception {
+    ImageCV src = color(37, 23);
+    byte[] before = pixels(src);
+    ColorProfileOp op = new ColorProfileOp();
+    op.setParam(ColorProfileOp.P_SOURCE_PROFILE, wide);
+
+    PlanarImage out = run(op, src);
+
+    assertNotSame(src, out);
+    assertArrayEquals(before, pixels(src), "the input is not modified");
+    ColorTransform transform = ColorManagement.toDisplay(wide);
+    byte[] expected = new byte[before.length];
+    transform.convertRow(before, expected, before.length);
+    assertArrayEquals(expected, pixels(out.toImageCV()));
+  }
+
+  @Test
+  void a_region_of_a_larger_image_is_converted_row_by_row() throws Exception {
+    ImageCV parent = color(200, 120);
+    ImageCV roi = new ImageCV(parent, new Rect(13, 7, 101, 77));
+    ColorProfileOp op = new ColorProfileOp();
+    op.setParam(ColorProfileOp.P_SOURCE_PROFILE, wide);
+
+    PlanarImage out = run(op, roi);
+
+    byte[] in = pixels(roi);
+    byte[] expected = new byte[in.length];
+    ColorManagement.toDisplay(wide).convertRow(in, expected, in.length);
+    assertArrayEquals(expected, pixels(out.toImageCV()));
+  }
+
+  @Test
+  void an_export_targets_srgb() throws Exception {
+    ImageCV src = color(16, 16);
+    ColorProfileOp op = ColorProfileOp.toSrgb(taggable(wide));
+    assertEquals(wide, op.getParam(ColorProfileOp.P_SOURCE_PROFILE));
+    assertNotSame(src, run(op, src));
+  }
+
+  @Test
+  void the_profile_follows_the_image_and_the_presentation_state() {
+    ImageElement image = mock(ImageElement.class);
+    when(image.getTagValue(TagW.IccProfile)).thenReturn(wide);
+    Taggable pr = taggable(IccProfile.SRGB);
+    ColorProfileOp op = new ColorProfileOp();
+
+    op.handleImageOpEvent(new ImageOpEvent(OpEvent.IMAGE_CHANGE, null, image, null));
+    assertEquals(wide, op.getParam(ColorProfileOp.P_SOURCE_PROFILE));
+
+    op.handleImageOpEvent(
+        new ImageOpEvent(OpEvent.APPLY_PR, null, image, Map.of(ActionW.PR_STATE.cmd(), pr)));
+    assertEquals(IccProfile.SRGB, op.getParam(ColorProfileOp.P_SOURCE_PROFILE));
+
+    op.handleImageOpEvent(
+        new ImageOpEvent(
+            OpEvent.APPLY_PR, null, image, Map.of(ActionW.PR_STATE.cmd(), taggable(null))));
+    assertEquals(wide, op.getParam(ColorProfileOp.P_SOURCE_PROFILE), "PS without the module");
+
+    op.handleImageOpEvent(ImageOpEvent.of(OpEvent.RESET_DISPLAY));
+    assertNull(op.getParam(ColorProfileOp.P_SOURCE_PROFILE));
+  }
+
+  @Test
+  void setting_the_same_profile_again_does_not_rerun() {
+    ColorProfileOp op = new ColorProfileOp();
+    op.setParam(ColorProfileOp.P_SOURCE_PROFILE, wide);
+    long revision = op.getRevision();
+    op.setParam(ColorProfileOp.P_SOURCE_PROFILE, IccProfile.of(wide.data()).orElseThrow());
+    assertEquals(revision, op.getRevision());
+  }
+
+  private static Taggable taggable(IccProfile profile) {
+    Taggable t = mock(Taggable.class);
+    when(t.getTagValue(TagW.IccProfile)).thenReturn(profile);
+    return t;
+  }
+
+  private static PlanarImage run(ColorProfileOp op, PlanarImage src) throws Exception {
+    op.setParam(Param.INPUT_IMG, src);
+    op.process();
+    return (PlanarImage) op.getParam(Param.OUTPUT_IMG);
+  }
+
+  private static ImageCV color(int width, int height) {
+    ImageCV img = new ImageCV(height, width, CvType.CV_8UC3);
+    Core.randu(img, 0, 256);
+    return img;
+  }
+
+  private static byte[] pixels(ImageCV img) {
+    ImageCV continuous = img;
+    if (!img.isContinuous()) {
+      continuous = new ImageCV();
+      img.copyTo(continuous);
+    }
+    byte[] data = new byte[(int) (continuous.total() * continuous.channels())];
+    continuous.get(0, 0, data);
+    return data;
+  }
+
+  private static byte[] xyz(double x, double y, double z) {
+    ByteBuffer buf = ByteBuffer.allocate(20);
+    buf.put(new byte[] {'X', 'Y', 'Z', ' '}).putInt(0);
+    buf.putInt((int) Math.round(x * 65536)).putInt((int) Math.round(y * 65536));
+    buf.putInt((int) Math.round(z * 65536));
+    return buf.array();
+  }
+}

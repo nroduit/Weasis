@@ -28,8 +28,9 @@ source ──▶ node 1 ──▶ node 2 ──▶ … ──▶ node n ──�
 | `RenderedImageLayer` | Owns the display chain of a view, sets its source with `setFirstNode` and triggers a pass with `updateDisplayOperations()`; keeps the Java2D copy of the display image for painting. |
 
 The DICOM view orders its chain as Window/Presets → Filter → PseudoColor → Shutter → Overlay →
-Redaction → Fusion → AffineTransform. Geometry comes last, so panning, zooming and rotating touch
-only the last node.
+Redaction → Fusion → AffineTransform → ColorProfile. Geometry comes last but one, so panning,
+zooming and rotating touch only the last two nodes; the color conversion to the display profile
+works on the displayed pixels (see [Color Management](Color-Management.md)).
 
 ## A pass
 

@@ -9,6 +9,8 @@
  */
 package org.weasis.core.ui.pref;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -23,11 +25,13 @@ import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.Window;
 import java.awt.event.ItemEvent;
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
@@ -40,9 +44,14 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.image.color.ColorManagement;
+import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.Settings;
 import org.weasis.core.ui.editor.ExternalDisplay;
 import org.weasis.core.ui.editor.ScreenRoles;
+import org.weasis.core.ui.editor.image.DisplayColor;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.util.StringUtil;
 
@@ -116,7 +125,79 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             presetsLabel,
             defMonitorComboBox));
 
+    add(colorManagementPanel());
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
+  }
+
+  /** The switch and the display profile, applied at once through {@link DisplayColor}. */
+  private JPanel colorManagementPanel() {
+    JCheckBox enabled = new JCheckBox(Messages.getString("ScreenPrefView.color_convert"));
+    enabled.setSelected(ColorManagement.isEnabled());
+    enabled.setEnabled(!Settings.isLocked(CoreSettings.COLOR_MANAGEMENT));
+    enabled.addActionListener(e -> DisplayColor.setEnabled(enabled.isSelected()));
+
+    JLabel profileLabel = new JLabel(displayProfileText());
+    boolean locked = Settings.isLocked(CoreSettings.DISPLAY_PROFILE);
+    JButton choose = new JButton(Messages.getString("ScreenPrefView.choose_profile"));
+    choose.setEnabled(!locked);
+    choose.addActionListener(
+        e -> {
+          chooseDisplayProfile((Component) e.getSource());
+          profileLabel.setText(displayProfileText());
+        });
+    JButton srgb = new JButton(Messages.getString("ScreenPrefView.profile_srgb"));
+    srgb.setEnabled(!locked);
+    srgb.addActionListener(
+        e -> {
+          DisplayColor.resetDisplayProfile();
+          profileLabel.setText(displayProfileText());
+        });
+
+    JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
+    panel.add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, enabled));
+    panel.add(
+        GuiUtils.getFlowLayoutPanel(
+            new JLabel(Messages.getString("ScreenPrefView.display_profile") + StringUtil.COLON),
+            profileLabel,
+            choose,
+            srgb));
+    panel.setBorder(
+        GuiUtils.getTitledBorder(Messages.getString("ScreenPrefView.color_management")));
+    return panel;
+  }
+
+  private static String displayProfileText() {
+    if (!ColorManagement.hasDisplayProfile()) {
+      return Messages.getString("ScreenPrefView.profile_none");
+    }
+    IccProfile profile = ColorManagement.displayProfile();
+    return profile
+        .description()
+        .orElseGet(
+            () ->
+                ColorManagement.displayProfileFile()
+                    .map(p -> p.getFileName().toString())
+                    .orElse(""));
+  }
+
+  private static void chooseDisplayProfile(Component parent) {
+    SystemFileChooser chooser =
+        new SystemFileChooser(
+            ColorManagement.displayProfileFile().map(p -> p.getParent().toString()).orElse(""));
+    chooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
+    chooser.setFileFilter(new FileNameExtensionFilter("ICC profile", "icc", "icm")); // NON-NLS
+    if (chooser.showOpenDialog(parent) == SystemFileChooser.APPROVE_OPTION
+        && chooser.getSelectedFile() != null) {
+      try {
+        DisplayColor.setDisplayProfile(chooser.getSelectedFile().toPath());
+      } catch (IOException ex) {
+        JOptionPane.showMessageDialog(
+            WinUtil.getValidComponent(parent),
+            ex.getMessage(),
+            Messages.getString("ScreenPrefView.display_profile"),
+            JOptionPane.ERROR_MESSAGE);
+      }
+    }
   }
 
   private static JLabel roleLabel() {

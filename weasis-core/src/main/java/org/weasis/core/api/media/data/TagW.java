@@ -186,6 +186,12 @@ public class TagW {
   public static final TagW PRLUTsExplanation = new TagW("PRLUTsExplanation", TagType.STRING);
   public static final TagW PrDicomObject = new TagW("PrDicomObject", TagType.OBJECT);
 
+  /**
+   * ICC profile describing the colors of the pixels; value is an {@code
+   * org.weasis.core.api.image.color.IccProfile}. Absent means sRGB.
+   */
+  public static final TagW IccProfile = new TagW("IccProfile", TagType.OBJECT);
+
   public static final TagW MonoChrome = new TagW("MonoChrome", TagType.BOOLEAN);
 
   public static TagW AnatomicRegion = new TagW("AnatomicRegion", TagType.OBJECT);

@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
@@ -512,6 +513,7 @@ public class DicomMediaIO implements DcmMediaReader {
     writeImageValues(md);
     writeSharedFunctionalGroupsSequence(header, md);
     DicomMediaUtils.writeFrameGeometry(this, md, 0);
+    setTagNoNull(TagW.IccProfile, readIccProfile(header));
 
     boolean pr = SERIES_PR_MIMETYPE.equals(mimeType);
     boolean ko = SERIES_KO_MIMETYPE.equals(mimeType);
@@ -532,6 +534,36 @@ public class DicomMediaIO implements DcmMediaReader {
     DicomMediaUtils.computeSlicePosition(this);
     DicomMediaUtils.setShutter(this, header);
     DicomMediaUtils.computeSUVFactor(header, this, 0);
+  }
+
+  /**
+   * ICC Profile (0028,2000) of the ICC Profile module (PS3.3 C.11.15): at the top level for images
+   * and presentation states, in the first item of the Optical Path Sequence for whole slide images.
+   */
+  private IccProfile readIccProfile(Attributes header) {
+    byte[] bytes = iccBytes(header);
+    if (bytes == null) {
+      Attributes opticalPath = header.getNestedDataset(Tag.OpticalPathSequence);
+      bytes = opticalPath == null ? null : iccBytes(opticalPath);
+    }
+    // Lenient: an empty value (Type 1 attribute left empty by some writers) is no profile, sRGB
+    if (bytes == null || bytes.length == 0) {
+      return null;
+    }
+    IccProfile profile = IccProfile.of(bytes).orElse(null);
+    if (profile == null) {
+      LOGGER.warn("Invalid ICC Profile (0028,2000) in {}, ignored", uri);
+    }
+    return profile;
+  }
+
+  // Bulk data of the file itself is read; a remote bulk data URI is not fetched with the header
+  private static byte[] iccBytes(Attributes attrs) {
+    if (attrs.getValue(Tag.ICCProfile) instanceof BulkData bulk
+        && !bulk.getURI().startsWith("file:")) { // NON-NLS
+      return null;
+    }
+    return attrs.getSafeBytes(Tag.ICCProfile);
   }
 
   private void writeSharedFunctionalGroupsSequence(Attributes header, DicomMetaData md) {

@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.4",
+  "apiVersion": "2.5",
   "protocolVersion": 1,
   "applicationVersion": "development",
   "exitCodes": {
@@ -12,6 +12,113 @@
     "6": "not permitted remotely"
   },
   "namespaces": [
+    {
+      "name": "color",
+      "description": "Color management of the display: switch, display profile, view conversion.",
+      "since": "5.0",
+      "verbs": [
+        {
+          "name": "set",
+          "description": "Switches color management or sets the display profile, then prints the status.",
+          "usage": "color:set [-h] [--json] [--enabled=<true|false>] [--display-profile=<icc-file> | --srgb]",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--enabled"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "1",
+              "required": false,
+              "description": "Convert color images to the display profile."
+            },
+            {
+              "names": [
+                "--display-profile"
+              ],
+              "label": "<icc-file>",
+              "type": "input-path",
+              "arity": "1",
+              "required": true,
+              "description": "ICC profile file (.icc, .icm) of the display of this workstation.",
+              "needs": [
+                "file-read"
+              ],
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--srgb"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": true,
+              "description": "No display profile: the display is sRGB.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "description": "Whether color management is on, the display profile, and the profile and conversion of a view.",
+          "usage": "color:status [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "config",
       "description": "Site configuration documents and declared settings.",

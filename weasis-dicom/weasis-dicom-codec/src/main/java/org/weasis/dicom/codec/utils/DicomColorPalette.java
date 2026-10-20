@@ -145,8 +145,7 @@ public final class DicomColorPalette {
     ds.setBytes(Tag.RedPaletteColorLookupTableData, VR.OW, bgr[2]);
     ds.setBytes(Tag.GreenPaletteColorLookupTableData, VR.OW, bgr[1]);
     ds.setBytes(Tag.BluePaletteColorLookupTableData, VR.OW, bgr[0]);
-    ds.setBytes(Tag.ICCProfile, VR.OB, SrgbInputProfile.data());
-    ds.setString(Tag.ColorSpace, VR.CS, "SRGB"); // NON-NLS
+    IccProfileModule.write(ds, null);
     return ds;
   }
 

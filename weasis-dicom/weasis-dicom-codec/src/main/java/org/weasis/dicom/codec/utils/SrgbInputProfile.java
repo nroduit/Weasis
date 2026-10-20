@@ -166,11 +166,11 @@ final class SrgbInputProfile {
     return value.getBytes(StandardCharsets.US_ASCII);
   }
 
-  private static void signature(byte[] profile, int offset, String value) {
+  static void signature(byte[] profile, int offset, String value) {
     System.arraycopy(ascii(value), 0, profile, offset, 4);
   }
 
-  private static byte[] md5(byte[] data) {
+  static byte[] md5(byte[] data) {
     try {
       return MessageDigest.getInstance("MD5").digest(data); // NOSONAR ICC profile fingerprint
     } catch (NoSuchAlgorithmException e) {

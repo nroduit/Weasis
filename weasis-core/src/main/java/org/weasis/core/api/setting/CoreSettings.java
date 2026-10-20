@@ -81,5 +81,23 @@ public final class CoreSettings {
           .since("5.0.0")
           .declare();
 
+  /**
+   * Converts the colors of the displayed color images from the ICC profile they declare (sRGB when
+   * none) to the profile of the display.
+   */
+  public static final Setting<Boolean> COLOR_MANAGEMENT =
+      Setting.builder(SettingType.BOOLEAN, GROUP, "weasis.color.management", true) // NON-NLS
+          .description("Convert color images from their ICC profile to the display profile")
+          .since("5.0.0")
+          .declare();
+
+  /** ICC profile file of the display of this workstation; empty means sRGB. */
+  public static final Setting<String> DISPLAY_PROFILE =
+      Setting.builder(SettingType.STRING, GROUP, "weasis.color.display.profile", "") // NON-NLS
+          .scope(Scope.MACHINE)
+          .description("ICC profile file of the display (empty: sRGB)")
+          .since("5.0.0")
+          .declare();
+
   private CoreSettings() {}
 }

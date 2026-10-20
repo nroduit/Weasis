@@ -45,6 +45,8 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.image.color.IccImageFiles;
+import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.service.WProperties;
@@ -213,6 +215,11 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
         e -> {
           boolean mustBeReleased = false;
           PlanarImage result = null;
+          // What is painted holds the values sent to the display; a rendered export is sRGB
+          IccProfile profile = null;
+          if (!isView2d() || viewRadio.isSelected()) {
+            profile = IccImageFiles.displayedProfile().orElse(null);
+          }
           if (!isView2d()) {
             BufferedImage captured = captureDisplayed();
             result = captured == null ? null : ImageConversion.toMat(captured);
@@ -248,7 +255,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
               }
             }
           }
-          saveImageFile(result, mustBeReleased);
+          saveImageFile(result, mustBeReleased, profile);
         });
 
     panel.add(
@@ -301,7 +308,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     return grabber.grab();
   }
 
-  private void saveImageFile(PlanarImage image, boolean mustBeReleased) {
+  private void saveImageFile(PlanarImage image, boolean mustBeReleased, IccProfile profile) {
     if (image != null) {
       WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
       String targetDirectoryPath = localPersistence.getProperty(P_LAST_DIR, "");
@@ -331,7 +338,13 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
             file.getName().endsWith(extFile) ? file.getPath() : file.getPath() + extFile;
 
         File destinationFile = new File(filename);
-        if (Format.PNG.extension.equals(extension)) {
+        if (profile != null && IccImageFiles.canEmbed(destinationFile.toPath(), profile)) {
+          MatOfInt map =
+              Format.PNG.extension.equals(extension)
+                  ? new MatOfInt(Imgcodecs.IMWRITE_PNG_COMPRESSION, 6)
+                  : new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 90);
+          IccImageFiles.write(image.toMat(), destinationFile.toPath(), map, profile);
+        } else if (Format.PNG.extension.equals(extension)) {
           ImageIOHandler.writePNG(image.toMat(), destinationFile.toPath());
         } else {
           MatOfInt map = new MatOfInt();

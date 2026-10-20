@@ -54,6 +54,7 @@ import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.AffineTransformOp;
+import org.weasis.core.api.image.ColorProfileOp;
 import org.weasis.core.api.image.FilterOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpNode;
@@ -176,8 +177,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     manager.addImageOperationAction(new FusionOp());
     // Report PET SUV statistics for area measurements drawn on the fused CT image.
     imageLayer.setSecondaryLayersSupplier(this::getFusionStatsLayers);
-    // Zoom and Rotation must be the last operations for the lens
+    // Zoom and Rotation must be the last geometric operations for the lens
     manager.addImageOperationAction(new AffineTransformOp());
+    // Color management works on the displayed pixels only
+    manager.addImageOperationAction(new ColorProfileOp());
 
     this.contextMenuHandler = new ContextMenuHandler(this);
     this.infoLayer = new InfoLayer(this);

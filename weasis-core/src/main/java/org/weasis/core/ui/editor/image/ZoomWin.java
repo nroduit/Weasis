@@ -35,6 +35,7 @@ import javax.swing.UIManager;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.AffineTransformOp;
+import org.weasis.core.api.image.ColorProfileOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.ImageOpNode.Param;
@@ -88,6 +89,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
     this.imageLayer = new RenderedImageLayer<>();
     SimpleOpManager operations = imageLayer.getDisplayOpManager();
     operations.addImageOperationAction(new AffineTransformOp());
+    operations.addImageOperationAction(new ColorProfileOp());
 
     manager
         .getAction(ActionW.LENS_ZOOM)
@@ -279,6 +281,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
         imageLayer.getDisplayOpManager().getNode(AffineTransformOp.OP_NAME);
     if (img != null && node.isPresent()) {
       node.get().setParam(Param.INPUT_IMG, getSourceImage());
+      syncColorProfile();
       actionsInView.put(ActionW.ZOOM.cmd(), viewScale);
       super.zoom(Math.abs(viewScale));
       updateAffineTransform();
@@ -301,6 +304,17 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
             ? view2d.getViewModel().getViewScale()
             : (Double) actionsInView.get(ActionW.ZOOM.cmd());
     zoom(zoomFactor);
+  }
+
+  // The lens shows the colors of its view, whose source image it magnifies
+  private void syncColorProfile() {
+    Object profile =
+        view2d
+            .getDisplayOpManager()
+            .getParamValue(ColorProfileOp.OP_NAME, ColorProfileOp.P_SOURCE_PROFILE)
+            .orElse(null);
+    getDisplayOpManager()
+        .setParamValue(ColorProfileOp.OP_NAME, ColorProfileOp.P_SOURCE_PROFILE, profile);
   }
 
   protected PlanarImage getSourceImage() {

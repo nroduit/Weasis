@@ -26,6 +26,7 @@ import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.image.ColorProfileOp;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
@@ -440,6 +441,7 @@ public class ImageElement extends MediaElement {
         manager.setParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), padding);
       }
       manager.addImageOperationAction(buildZoomOp(ratio));
+      manager.addImageOperationAction(ColorProfileOp.toSrgb(this));
       manager.setFirstNode(image);
     }
     return manager;

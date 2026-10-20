@@ -38,6 +38,7 @@ import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.image.ColorProfileOp;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
@@ -656,6 +657,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
         manager.setParamValue(OverlayOp.OP_NAME, OverlayOp.P_SHOW, true);
       }
       manager.addImageOperationAction(buildZoomOp(ratio));
+      manager.addImageOperationAction(ColorProfileOp.toSrgb(this));
       manager.setFirstNode(image);
     }
     return manager;

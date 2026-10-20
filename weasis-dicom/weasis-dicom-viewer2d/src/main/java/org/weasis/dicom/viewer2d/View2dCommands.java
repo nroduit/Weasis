@@ -76,6 +76,8 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.image.color.IccImageFiles;
+import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaElement;
@@ -123,6 +125,8 @@ import org.weasis.dicom.codec.PixelAttestation;
 import org.weasis.dicom.codec.PixelPrivacy;
 import org.weasis.dicom.codec.Redaction;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.opencv.data.ImageCV;
+import org.weasis.opencv.op.ImageConversion;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ITypeConverter;
@@ -1166,9 +1170,7 @@ public class View2dCommands implements CommandExtension {
       if (file.getParent() != null) {
         Files.createDirectories(file.getParent());
       }
-      if (!ImageIO.write(result, format, file.toFile())) {
-        throw new IOException("No image writer for " + format);
-      }
+      writeCapture(result, format, file);
       CommandContext.current().addFile(file);
 
       int dx = cropped == null ? 0 : cropped.x;
@@ -1212,6 +1214,26 @@ public class View2dCommands implements CommandExtension {
                 .add("height", cropped.height)); // NON-NLS
       }
       print(json.build().toString());
+    }
+
+    /** A canvas capture holds the values sent to the display: it carries the display profile. */
+    private static void writeCapture(BufferedImage image, String format, Path file)
+        throws IOException {
+      IccProfile profile = IccImageFiles.displayedProfile().orElse(null);
+      if (profile != null
+          && image.getRaster().getNumBands() == 3
+          && IccImageFiles.canEmbed(file, profile)) {
+        ImageCV mat = ImageConversion.toMat(image);
+        try {
+          if (!IccImageFiles.write(mat, file, null, profile)) {
+            throw new IOException("Cannot write " + file);
+          }
+        } finally {
+          mat.release();
+        }
+      } else if (!ImageIO.write(image, format, file.toFile())) {
+        throw new IOException("No image writer for " + format);
+      }
     }
 
     private String format(Path file) {

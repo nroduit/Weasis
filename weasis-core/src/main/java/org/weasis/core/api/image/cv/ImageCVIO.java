@@ -36,7 +36,10 @@ import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
 import org.opencv.core.Core;
 import org.opencv.core.Core.MinMaxLocResult;
+import org.opencv.core.CvException;
 import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +48,7 @@ import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
@@ -61,6 +65,8 @@ import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.FileRawImage;
+import org.weasis.opencv.data.ImageCV;
+import org.weasis.opencv.data.MetadataParser;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageAnalyzer;
 import org.weasis.opencv.op.ImageConversion;
@@ -277,17 +283,51 @@ public class ImageCVIO implements MediaReader<ImageElement> {
     return readWithImageIO(path);
   }
 
-  private PlanarImage readWithOpenCV(Path path) throws Exception {
-    List<String> exifTags = new ArrayList<>();
-    PlanarImage img = ImageIOHandler.readImageWithCvException(path, exifTags);
-
-    if (img != null) {
-      applyExifTags(getSingleImage(), exifTags);
+  private PlanarImage readWithOpenCV(Path path) {
+    ImageIOHandler.validateReadablePath(path);
+    MatOfInt metadataTypes = new MatOfInt();
+    List<Mat> metadata = new ArrayList<>();
+    try {
+      Mat mat =
+          Imgcodecs.imreadWithMetadata(path.toAbsolutePath().toString(), metadataTypes, metadata);
+      ImageCV img;
+      try {
+        if (mat.empty()) {
+          throw new CvException("Failed to read image or unsupported format: " + path);
+        }
+        img = ImageCV.fromMat(mat);
+      } finally {
+        mat.release();
+      }
+      ImageElement element = getSingleImage();
+      applyExifTags(element, MetadataParser.parseExifParseMetadata(metadata, metadataTypes));
+      if (element != null) {
+        element.setTagNoNull(TagW.IccProfile, iccProfile(metadata, metadataTypes, path));
+      }
       updateImageDimensions(img);
       return img;
+    } finally {
+      metadataTypes.release();
+      metadata.forEach(Mat::release);
     }
+  }
 
-    return readWithImageIO(path);
+  /** The embedded profile (PNG iCCP, JPEG APP2, WebP, AVIF), shown converted by the display. */
+  private static IccProfile iccProfile(List<Mat> metadata, MatOfInt types, Path path) {
+    int[] values = types.empty() ? new int[0] : types.toArray();
+    for (int i = 0; i < values.length && i < metadata.size(); i++) {
+      Mat blob = metadata.get(i);
+      if (values[i] == Imgcodecs.IMAGE_METADATA_ICCP && !blob.empty()) {
+        byte[] bytes = new byte[(int) (blob.total() * blob.elemSize())];
+        blob.get(0, 0, bytes);
+        IccProfile profile = IccProfile.of(bytes).orElse(null);
+        if (profile == null) {
+          LOGGER.warn("Invalid embedded ICC profile in {}, ignored", path);
+        }
+        return profile;
+      }
+    }
+    return null;
   }
 
   private PlanarImage readWithImageIO(Path path) throws IOException {
