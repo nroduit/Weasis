@@ -127,6 +127,9 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
     cycleFrom = findCycleOrigin(graphicList, mouseEvt);
     pressPoint.setLocation(e.getX(), e.getY());
 
+    // Shift + click on a graphic changed the selection, so the press draws nothing
+    boolean toggled = false;
+
     // Avoid any dragging on selection when Shift Button is Down
     if (!mouseEvt.isShiftDown()) {
       // Evaluates if mouse is on a dragging position, creates a DragSequence and changes cursor
@@ -202,28 +205,24 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
           vImg.getGraphicManager().setSelectedGraphic(Collections.singletonList(dragGraph));
         }
       }
+    } else if (ds == null && !(getCurrentTool(e) instanceof SelectGraphic)) {
+      // The selection tool toggles on release, after its rectangle. Any other tool would draw a
+      // new graphic over the one clicked, where Shift + click is meant to add or remove it.
+      // On the image itself, Shift still draws (an upright shape), and a drawing in progress
+      // keeps its click.
+      toggled = toggleNearestGraphic(graphicList, mouseEvt);
     }
 
-    if (ds == null) {
-      ImageViewerEventManager<E> eventManager = vImg.getEventManager();
-      Optional<Feature<? extends ActionState>> action =
-          eventManager.getMouseAction(e.getModifiersEx());
-      if (action.isPresent() && action.get().isDrawingAction()) {
-        Optional<ComboItemListener> items =
-            eventManager.getActionFromActionKey(
-                ActionW.DRAW_CMD_PREFIX + action.get().cmd(), ComboItemListener.class);
-        if (items.isPresent()) {
-          Object item = items.get().getSelectedItem();
-          Graphic graph =
-              AbstractGraphicModel.drawFromCurrentGraphic(
-                  vImg, (Graphic) (item instanceof Graphic ? item : null));
-          if (graph instanceof DragGraphic dragGraphic) {
-            created = graph;
-            drawing = graph;
-            ds = dragGraphic.createResizeDrag();
-            if (!(graph instanceof SelectGraphic)) {
-              vImg.getGraphicManager().setSelectedGraphic(Collections.singletonList(graph));
-            }
+    if (ds == null && !toggled) {
+      Graphic item = getCurrentTool(e);
+      if (item != null) {
+        Graphic graph = AbstractGraphicModel.drawFromCurrentGraphic(vImg, item);
+        if (graph instanceof DragGraphic dragGraphic) {
+          created = graph;
+          drawing = graph;
+          ds = dragGraphic.createResizeDrag();
+          if (!(graph instanceof SelectGraphic)) {
+            vImg.getGraphicManager().setSelectedGraphic(Collections.singletonList(graph));
           }
         }
       }
@@ -238,12 +237,55 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
     if (ds != null) {
       ds.startDrag(mouseEvt);
-    } else if (!vertexGesture) {
+    } else if (!vertexGesture && !toggled) {
       vImg.getGraphicManager().setSelectedGraphic(null);
     }
 
     // Throws to the tool listener the current graphic selection.
     vImg.getGraphicManager().fireGraphicsSelectionChanged(vImg.getMeasurableLayer());
+  }
+
+  /**
+   * The tool of the drawing action bound to the pressed button, the selection when its item is not
+   * a graphic, or null when the button has no drawing action.
+   */
+  private Graphic getCurrentTool(MouseEvent e) {
+    ImageViewerEventManager<E> eventManager = vImg.getEventManager();
+    Optional<Feature<? extends ActionState>> action =
+        eventManager.getMouseAction(e.getModifiersEx());
+    if (action.isEmpty() || !action.get().isDrawingAction()) {
+      return null;
+    }
+    return eventManager
+        .getActionFromActionKey(
+            ActionW.DRAW_CMD_PREFIX + action.get().cmd(), ComboItemListener.class)
+        .map(
+            items ->
+                items.getSelectedItem() instanceof Graphic graphic
+                    ? graphic
+                    : BuiltinGraphicTools.SELECTION)
+        .orElse(null);
+  }
+
+  /**
+   * Adds the graphic nearest to the cursor to the selection, or removes it from it. The nearest
+   * one, not a selected one in front of it, otherwise a graphic next to a selection could not be
+   * added.
+   *
+   * @return true when a graphic was under the cursor
+   */
+  private static boolean toggleNearestGraphic(GraphicModel graphicList, MouseEventDouble mouseEvt) {
+    List<Graphic> hits = graphicList.getAllGraphicsIntersecting(mouseEvt);
+    if (hits.isEmpty()) {
+      return false;
+    }
+    Graphic graphic = hits.getFirst();
+    List<Graphic> selection = new ArrayList<>(graphicList.getSelectedGraphics());
+    if (!selection.remove(graphic)) {
+      selection.add(graphic);
+    }
+    graphicList.setSelectedGraphic(selection);
+    return true;
   }
 
   /**
@@ -503,8 +545,11 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
       final List<Graphic> newSelectedGraphList = new ArrayList<>();
       if (isSelectionSingleClick) {
-        vImg.getGraphicManager()
-            .getFirstGraphicIntersecting(mouseEvt)
+        // With Shift the click adds or removes the nearest graphic, as with the other tools
+        GraphicModel graphicList = vImg.getGraphicManager();
+        (mouseEvt.isShiftDown()
+                ? graphicList.getAllGraphicsIntersecting(mouseEvt).stream().findFirst()
+                : graphicList.getFirstGraphicIntersecting(mouseEvt))
             .ifPresent(newSelectedGraphList::add);
       } else {
         newSelectedGraphList.addAll(
