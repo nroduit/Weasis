@@ -406,13 +406,20 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
           setLocation(getX() + dx, getY() + dy);
           updateAffineTransform();
         }
-        setCursor(Cursor.getPredefinedCursor(cursor));
+        setCursor(toCursor(cursor));
       }
     }
 
     @Override
     public void mouseMoved(MouseEvent me) {
-      setCursor(Cursor.getPredefinedCursor(getCursor(me)));
+      setCursor(toCursor(getCursor(me)));
+    }
+
+    /** The cursor to show for a type, the move one being drawn by the view as everywhere else. */
+    private static Cursor toCursor(int type) {
+      return type == Cursor.MOVE_CURSOR
+          ? DefaultView2d.MOVE_CURSOR
+          : Cursor.getPredefinedCursor(type);
     }
 
     @Override

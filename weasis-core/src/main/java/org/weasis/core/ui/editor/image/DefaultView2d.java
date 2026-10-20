@@ -145,7 +145,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       Feature.getSvgCursor("hand.svg", "hand", 0.5f, 0.5f); // NON-NLS
   public static final Cursor WAIT_CURSOR = DefaultView2d.getNewCursor(Cursor.WAIT_CURSOR);
   public static final Cursor CROSS_CURSOR = DefaultView2d.getNewCursor(Cursor.CROSSHAIR_CURSOR);
-  public static final Cursor MOVE_CURSOR = DefaultView2d.getNewCursor(Cursor.MOVE_CURSOR);
+  /**
+   * Not the platform move cursor, which is not displayed on some systems (seen on macOS): the
+   * pointer would vanish over a graphic that can be moved.
+   */
+  public static final Cursor MOVE_CURSOR = HAND_CURSOR;
   public static final Cursor DEFAULT_CURSOR = DefaultView2d.getNewCursor(Cursor.DEFAULT_CURSOR);
 
   protected final FocusHandler<E> focusHandler;
