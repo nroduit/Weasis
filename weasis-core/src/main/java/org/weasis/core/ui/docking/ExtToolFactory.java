@@ -16,9 +16,16 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.ViewContext;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 
-public abstract class ExtToolFactory<E extends ImageElement> implements InsertableFactory {
+/**
+ * A tool of the 4.x era created on demand from a property map; also a {@link ToolContribution},
+ * with {@link #isCompatible} as its relevance predicate on the properties of the {@link
+ * ViewContext}, so the two registrations behave the same.
+ */
+public abstract class ExtToolFactory<E extends ImageElement>
+    implements InsertableFactory, ToolContribution {
 
   protected final String name;
   protected Insertable toolPane = null;
@@ -32,6 +39,36 @@ public abstract class ExtToolFactory<E extends ImageElement> implements Insertab
   protected abstract boolean isCompatible(Map<String, Object> properties);
 
   protected abstract Insertable getInstance(Map<String, Object> properties);
+
+  @Override
+  public String toolId() {
+    return toolPane instanceof DockableTool dockableTool ? dockableTool.getToolId() : name;
+  }
+
+  /** A factory belongs to the viewers whose UI lists it among their dynamic tools. */
+  @Override
+  public boolean appliesTo(ViewContext context) {
+    return context.viewer() != null
+        && context.viewer().getSeriesViewerUI().dynamicTools.contains(this);
+  }
+
+  @Override
+  public boolean isRelevant(ViewContext context) {
+    return isCompatible(context.properties());
+  }
+
+  @Override
+  public DockableTool tool(ViewContext context) {
+    Insertable instance = toolPane != null ? toolPane : createInstance(context.properties());
+    return instance instanceof DockableTool dockableTool ? dockableTool : null;
+  }
+
+  @Override
+  public void dispose() {
+    if (toolPane != null) {
+      dispose(toolPane);
+    }
+  }
 
   public void hideTool() {
     if (toolPane instanceof DockableTool dockableTool) {

@@ -140,6 +140,7 @@ import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.MiniStrip;
 import org.weasis.core.ui.docking.SidePanel;
+import org.weasis.core.ui.docking.ToolContributions;
 import org.weasis.core.ui.docking.ws.DetachedFrame;
 import org.weasis.core.ui.docking.ws.Workspace;
 import org.weasis.core.ui.docking.ws.WorkspaceListener;
@@ -152,6 +153,8 @@ import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.TabFocusPolicy;
+import org.weasis.core.ui.editor.ViewContext;
+import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -275,6 +278,7 @@ public class WeasisWin {
                 setImmersive(window, immersive);
               }
             });
+    ToolContributions.follow();
     KeyEventDispatcher dockingShortcutDispatcher = this::dispatchDockingShortcut;
     KeyboardFocusManager.getCurrentKeyboardFocusManager()
         .addKeyEventDispatcher(dockingShortcutDispatcher);
@@ -711,6 +715,7 @@ public class WeasisWin {
       selectedPlugin = null;
       GuiUtils.getUICore().setSelectedPlugin(null);
       moveToolbarRow(frame);
+      ViewContexts.publish(ViewContext.empty());
       return;
     }
     if (selectedPlugin == plugin) {
@@ -728,6 +733,8 @@ public class WeasisWin {
 
     SeriesViewerUI.updateTools(oldPlugin, selectedPlugin, false);
     SeriesViewerUI.updateToolbars(oldPlugin, selectedPlugin, false);
+    // what is displayed and why, for the tools of the plugins and the commands
+    ViewContexts.publish(selectedPlugin);
 
     selectedPlugin.setSelected(true);
   }

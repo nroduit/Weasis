@@ -10,14 +10,17 @@
 package org.weasis.dicom.explorer.internal;
 
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.setting.SettingCatalog;
 import org.weasis.core.api.setting.SettingsFileStore;
 import org.weasis.core.api.util.LegacyConverters;
+import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LocalPersistence;
 import org.weasis.dicom.explorer.UISegmentationVolumeBuildExecutor;
+import org.weasis.dicom.explorer.hp.HangingPlanApplier;
 import org.weasis.dicom.explorer.hp.HpSettings;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
@@ -45,6 +48,15 @@ public class Activator extends WeasisPlugin {
 
     AbstractDicomNode.registerLegacyConversions();
     SettingCatalog.declare(HpSettings.class);
+    // a hanging lands after the viewer was selected: the view context learns the protocol then
+    HangingPlanApplier.addListener(
+        applied ->
+            GuiExecutor.execute(
+                () ->
+                    GuiUtils.getUICore()
+                        .getSelectedPlugin()
+                        .filter(applied.viewers()::contains)
+                        .ifPresent(ViewContexts::publish)));
 
     // Surface canonical segmentation volume builds in the explorer's bottom loading panel,
     // so the user can monitor and cancel long-running SEG volume builds.

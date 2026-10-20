@@ -1192,6 +1192,16 @@ Usage: `workspace:close [-h] [--json] --view=<view-id>`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | View id from 'workspace:list'. |
 
+### workspace:context (since 5.0)
+
+What is displayed and why, as the tools of the plugins see it: the type of the selected viewer, its selected series and the facts the plugins contribute about them (the hanging protocol and its step, the series features). An agent reads it to know which tools and verbs apply.
+
+Usage: `workspace:context [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
 ### workspace:detach
 
 Floats a view in its own window: a viewer window, which shows the toolbar row while it is the active one. Without option the window opens near the main window; --screen fills the usable area of the screen of that role (see 'screens'), --bounds gives explicit pixels.

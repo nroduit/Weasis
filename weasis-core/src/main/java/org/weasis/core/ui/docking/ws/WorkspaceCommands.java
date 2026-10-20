@@ -49,6 +49,8 @@ import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshotIO;
 import org.weasis.core.ui.editor.ExternalDisplay;
 import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.SeriesViewer;
+import org.weasis.core.ui.editor.ViewContext;
+import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.core.ui.editor.ViewerRestorer;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewDisplayState;
@@ -83,7 +85,8 @@ import picocli.CommandLine.ParentCommand;
       WorkspaceCommands.Move.class,
       WorkspaceCommands.Save.class,
       WorkspaceCommands.Load.class,
-      WorkspaceCommands.Panel.class
+      WorkspaceCommands.Panel.class,
+      WorkspaceCommands.Context.class
     })
 @Since("5.0")
 public class WorkspaceCommands implements CommandExtension {
@@ -651,6 +654,23 @@ public class WorkspaceCommands implements CommandExtension {
                 + "; skipped tools: "
                 + String.join(", ", skippedTools)); // NON-NLS
       }
+    }
+  }
+
+  @Command(
+      name = "context",
+      description =
+          "What is displayed and why, as the tools of the plugins see it: the type of the "
+              + "selected viewer, its selected series and the facts the plugins contribute about "
+              + "them (the hanging protocol and its step, the series features). An agent reads "
+              + "it to know which tools and verbs apply.")
+  @Since("5.0")
+  static class Context extends Verb {
+    @Override
+    protected void run() {
+      ViewContext context = GuiExecutor.invokeAndRethrow(ViewContexts::current);
+      JsonObject json = IdentityMask.callForCommand(context::toJson);
+      print(isJson() ? json.toString() : json.toString());
     }
   }
 

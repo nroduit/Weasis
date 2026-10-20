@@ -9,18 +9,21 @@
  */
 package org.weasis.core.ui.editor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.InsertableFactory;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.ExtToolFactory;
+import org.weasis.core.ui.docking.ToolContribution;
+import org.weasis.core.ui.docking.ToolContributions;
 import org.weasis.core.ui.util.Toolbar;
 
 public class SeriesViewerUI {
@@ -97,24 +100,34 @@ public class SeriesViewerUI {
     }
   }
 
+  /**
+   * The selected series of the viewer changed: the dynamic tools of the viewer follow the new
+   * {@link ViewContext}, and the context is published for the contributions of the plugins.
+   */
   public void updateDynamicTools(MediaSeries<?> series) {
-    if (dynamicTools.isEmpty()) {
-      return;
-    }
-
-    Map<String, Object> properties = new HashMap<>();
-    if (series != null) {
-      properties.put(MediaSeries.class.getName(), series);
-      properties.put("class.container", clazz.getName());
-    }
-
+    SeriesViewer<?> viewer = GuiUtils.getUICore().getSelectedPlugin().orElse(null);
+    ViewContext context =
+        viewer != null && clazz.isInstance(viewer)
+            ? ViewContexts.of(viewer, series)
+            : legacyContext(series);
+    List<ToolContribution> contributions = new ArrayList<>();
     for (InsertableFactory factory : dynamicTools) {
-      Insertable instance = factory.createInstance(properties);
-      if (instance instanceof DockableTool dockableTool) {
-        dockableTool.showDockable();
-      } else if (factory instanceof ExtToolFactory<?> extToolFactory) {
-        extToolFactory.hideTool();
+      if (factory instanceof ToolContribution contribution) {
+        contributions.add(contribution);
       }
     }
+    ToolContributions.apply(contributions, context);
+    if (!context.isEmpty()) {
+      ViewContexts.publish(context);
+    }
+  }
+
+  /** A context without a viewer, carrying only the 4.x keys the factories read. */
+  private ViewContext legacyContext(MediaSeries<?> series) {
+    Map<String, Object> facts = new HashMap<>();
+    if (series != null) {
+      facts.put(ViewContext.CONTAINER_KEY, clazz.getName());
+    }
+    return new ViewContext(null, null, series, facts);
   }
 }

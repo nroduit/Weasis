@@ -4590,6 +4590,25 @@
           ]
         },
         {
+          "name": "context",
+          "description": "What is displayed and why, as the tools of the plugins see it: the type of the selected viewer, its selected series and the facts the plugins contribute about them (the hanging protocol and its step, the series features). An agent reads it to know which tools and verbs apply.",
+          "since": "5.0",
+          "usage": "workspace:context [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
           "name": "detach",
           "description": "Floats a view in its own window: a viewer window, which shows the toolbar row while it is the active one. Without option the window opens near the main window; --screen fills the usable area of the screen of that role (see 'screens'), --bounds gives explicit pixels.",
           "usage": "workspace:detach [-h] [--json] [--bounds=<screen-rect>] [--screen=<screen-role>] --view=<view-id>",

@@ -79,6 +79,26 @@ menu of the main window lists the windows (the active one checked; choosing one 
 it), the screens by role to move the active window to, its fullscreen state and *Open in a
 new window* for the selected viewer.
 
+### The view context and the tool contributions
+
+`ViewContext` (`org.weasis.core.ui.editor`) says what is displayed and why: the selected viewer
+and its type, its selected series, and the facts the plugins contribute about them through the
+`ViewContextContributor` extension point under dotted names (the DICOM explorer adds
+`hp.protocol`, `hp.protocolName`, `hp.step`, `hp.steps`, `hp.features`, `hp.modality`,
+`hp.anatomy`). `ViewContexts` builds it when the selection changes (`WeasisWin`) and when the
+selected series of the viewer changes (`SeriesViewerUI.updateDynamicTools`), publishes it to
+its listeners and keeps the last one (`workspace:context` prints it).
+
+`ToolContribution` (`org.weasis.core.ui.docking`) is the extension point of a tool with a
+relevance predicate: `appliesTo(context)` names the viewers it belongs to, `isRelevant(context)`
+says whether what the viewer shows calls for it, `tool(context)` gives the one instance.
+`ToolContributions.apply` shows the tools of the contributions that apply and are relevant and
+hides the ones it had shown; the plugin contributions follow every published context
+(`follow`), and the dynamic tools of a viewer (`ExtToolFactory`, which is a `ToolContribution`
+with `isCompatible` as its predicate on `context.properties()`) go through the same call with
+the context of the selected series. The built-in tools of a viewer (`SeriesViewerUI.tools`)
+stay the always-relevant set.
+
 ### A tool as a view
 
 A shell tool can leave its slot for the central area: `SidePanel.openAsView(toolId)` wraps it
@@ -159,7 +179,7 @@ through the `DataExplorerModel` of each explorer (`SeriesResolver.ofApplication`
 ## Commands
 
 `WorkspaceCommands` exposes the engine under the `workspace:` command namespace (list, select,
-close, maximize, unmaximize, fullscreen, stack, split, detach, move, screens, save, load, panel), so that a layout can be
+close, maximize, unmaximize, fullscreen, stack, split, detach, move, screens, save, load, panel, context), so that a layout can be
 driven from the command line, from `weasis-cli` or by an agent. The namespace is a Picocli
 command model (see the command bridge in `weasis-launcher/docs/Launcher-Overview.md`): every
 verb documents itself with `--help`, and the verbs that change the layout return the new state
