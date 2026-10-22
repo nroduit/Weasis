@@ -260,8 +260,7 @@ public class UpsCommands {
     long timeout = timeout(opt);
     // Shared with the future UPS UI: any code that needs a poll interval reads the same option.
     long poll = poll(opt);
-    Attributes filter = new Attributes();
-    filter.setString(Tag.StudyInstanceUID, VR.UI, studyUid.get());
+    Attributes filter = studyFilter(studyUid.get());
     CountDownLatch first = new CountDownLatch(1);
     // The push channel is established in two independent steps, and either can fail on an origin
     // that does not service it: the Subscribe transaction (dcm4chee-arc answers 403, surfaced as an
@@ -505,6 +504,28 @@ public class UpsCommands {
           return token == null ? null : token.accessToken();
         },
         method::resetToken);
+  }
+
+  /**
+   * The Filtered Worklist filter that subscribes to one study's workitems (PS3.18 11.10.1.2).
+   *
+   * <p>The Study Instance UID is keyed inside the Referenced Request Sequence, not at the top
+   * level. Both spellings are valid matching keys in PS3.4 Table CC.2.5-3 (top-level O, nested
+   * inside a sequence typed R), but only the nested one is required to be indexed by an origin, and
+   * it is the key {@code UpsService.search} already uses for the same study. One key, both verbs: a
+   * subscribe and a search that name the study differently are two filters that can disagree about
+   * which workitems belong to a study.
+   *
+   * <p>It is a sequence ITEM holding the UID, which is the shape the wire form {@code
+   * ReferencedRequestSequence.StudyInstanceUID=<uid>} denotes (PS3.18 8.3.4.1 names a nested
+   * attribute by the sequence and the inner attribute joined with a dot).
+   */
+  static Attributes studyFilter(String studyUid) {
+    Attributes filter = new Attributes();
+    Attributes request = new Attributes();
+    request.setString(Tag.StudyInstanceUID, VR.UI, studyUid);
+    filter.newSequence(Tag.ReferencedRequestSequence, 1).add(request);
+    return filter;
   }
 
   private static Attributes study(String studyUid, String patientId, String accessionNumber) {

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -356,6 +357,50 @@ class UpsCommandsTest {
     return requests.stream()
         .filter(request -> request.startsWith("GET ") && request.contains("/workitems?"))
         .count();
+  }
+
+  /** The Subscribe transaction as it appeared on the wire, or {@code ""} if none was made. */
+  private String subscribeRequest() {
+    return requests.stream()
+        .filter(request -> request.contains("/subscribers/"))
+        .findFirst()
+        .orElse("");
+  }
+
+  /**
+   * The subscribe filter names the study through the Referenced Request Sequence, the same key the
+   * search uses.
+   *
+   * <p>PS3.4 Table CC.2.5-3 lists Study Instance UID as a matching key both at the top level (O)
+   * and inside the Referenced Request Sequence (typed R), so the bare spelling was conformant - but
+   * the module's own search already keys the study through the sequence, and a subscribe that names
+   * it differently from the search is a second filter that can disagree about which workitems
+   * belong to the study. The assertion is on the request line, not the Java object: the bug class
+   * is the KEY SPELLING ON THE WIRE, and an assertion on the Attributes would pass with either
+   * spelling.
+   */
+  @Test
+  void watch_subscribes_with_the_sequence_qualified_study_key() throws Exception {
+    subscribeStatus = 403;
+    new UpsCommands()
+        .watch(new String[] {"--url", url(), "--ae", "WEASIS", "--poll", "0", STUDY_UID});
+
+    String request = subscribeRequest();
+    // The query is percent-encoded on the wire (the filter parameter carries a "=" of its own), so
+    // the assertion is made against the decoded form rather than against an encoding the client is
+    // free to choose.
+    String decoded = URLDecoder.decode(request, StandardCharsets.UTF_8);
+    assertAll(
+        () -> assertFalse(request.isEmpty(), "a subscribe was made: " + requests),
+        () ->
+            assertTrue(
+                decoded.contains("ReferencedRequestSequence.StudyInstanceUID=" + STUDY_UID),
+                "the study is keyed inside the sequence: " + decoded),
+        // The regression this pins: the bare top-level spelling, which the search does not use.
+        () ->
+            assertFalse(
+                decoded.contains("filter=StudyInstanceUID=" + STUDY_UID),
+                "the bare top-level key must not be sent: " + decoded));
   }
 
   @Test
