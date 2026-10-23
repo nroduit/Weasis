@@ -56,6 +56,10 @@ class TagClassificationTest {
         () -> assertEquals(TagCategory.DIRECT_ID, categoryOf(Tag.AccessionNumber)),
         () -> assertEquals(TagCategory.DIRECT_ID, categoryOf(Tag.StudyID)),
         () -> assertEquals(TagCategory.DIRECT_ID, categoryOf(Tag.ReferringPhysicianName)),
+        () -> assertEquals(TagCategory.DIRECT_ID, categoryOf(Tag.OperatorsName)),
+        () -> assertEquals(TagCategory.DIRECT_ID, categoryOf(Tag.PerformingPhysicianName)),
+        () -> assertEquals(TagCategory.DIRECT_ID, categoryOf(Tag.OtherPatientIDs)),
+        () -> assertEquals(TagCategory.DIRECT_ID, categoryOf(Tag.PatientAddress)),
         () -> assertEquals(TagCategory.DIRECT_ID, TagW.PatientPseudoUID.getCategory()));
   }
 
@@ -107,6 +111,7 @@ class TagClassificationTest {
   void institutionDeviceAndFreeText() {
     assertAll(
         () -> assertEquals(TagCategory.INSTITUTION, categoryOf(Tag.InstitutionName)),
+        () -> assertEquals(TagCategory.INSTITUTION, categoryOf(Tag.InstitutionAddress)),
         () -> assertEquals(TagCategory.INSTITUTION, categoryOf(Tag.InstitutionalDepartmentName)),
         () -> assertEquals(TagCategory.DEVICE, categoryOf(Tag.StationName)),
         () -> assertEquals(TagCategory.FREE_TEXT, categoryOf(Tag.PatientComments)),
@@ -137,15 +142,15 @@ class TagClassificationTest {
   void configurationAddsTags() {
     MaskingModelRegistry registry = MaskingModelRegistry.getInstance();
     List<TagRule> rules = new ArrayList<>(registry.tags().entries());
-    rules.add(new TagRule(MaskingModel.normalizeKey("(0008,1070)", null), TagCategory.DIRECT_ID));
+    rules.add(new TagRule(MaskingModel.normalizeKey("(0008,1090)", null), TagCategory.DEVICE));
     rules.add(
         new TagRule(MaskingModel.normalizeKey("(0009,1010)", "ACME_SITE"), TagCategory.DIRECT_ID));
     try {
       DicomMediaUtils.applyClassification(rules);
-      TagW operators = DicomMediaUtils.maskingTag(Tag.OperatorsName, null);
+      TagW model = DicomMediaUtils.maskingTag(Tag.ManufacturerModelName, null);
       TagW privateTag = DicomMediaUtils.maskingTag(0x00091010, "ACME_SITE");
       assertAll(
-          () -> assertEquals(TagCategory.DIRECT_ID, operators.getCategory()),
+          () -> assertEquals(TagCategory.DEVICE, model.getCategory()),
           () -> assertNotNull(privateTag, "a private tag named by the configuration is kept"),
           () -> assertEquals(TagCategory.DIRECT_ID, privateTag.getCategory()),
           () ->
@@ -157,7 +162,7 @@ class TagClassificationTest {
     }
     assertEquals(
         TagCategory.OTHER,
-        DicomMediaUtils.maskingTag(Tag.OperatorsName, null).getCategory(),
+        DicomMediaUtils.maskingTag(Tag.ManufacturerModelName, null).getCategory(),
         "a tag no longer named is reset");
   }
 

@@ -1,0 +1,620 @@
+# DICOM PS3.15 Table E.1-1, Application Level Confidentiality Profile Attributes.
+# Extracted from the Innolitics DICOM standard data of the table, as bundled by Karnak.
+# tag;basic profile action;options that retain or clean the attribute (option=action);name
+00080050;Z;;Accession Number
+00184000;X;cleanDescriptors=C;Acquisition Comments
+00400555;X/Z;cleanStructuredContent=C;Acquisition Context Sequence
+00080022;X/Z;fullDates=K,modifiedDates=C;Acquisition Date
+0008002A;X/Z/D;fullDates=K,modifiedDates=C;Acquisition DateTime
+00181400;X/D;cleanDescriptors=C;Acquisition Device Processing Description
+001811BB;D;cleanDescriptors=C;Acquisition Field Of View Label
+00189424;X;cleanDescriptors=C;Acquisition Protocol Description
+00080032;X/Z;fullDates=K,modifiedDates=C;Acquisition Time
+00080017;U;uids=K;Acquisition UID
+00404035;X;;Actual Human Performers Sequence
+001021B0;X;cleanDescriptors=C;Additional Patient History
+0040A353;X;;Address (Trial)
+00380010;X;;Admission ID
+00380020;X;fullDates=K,modifiedDates=C;Admitting Date
+00081084;X;cleanDescriptors=C;Admitting Diagnoses Code Sequence
+00081080;X;cleanDescriptors=C;Admitting Diagnoses Description
+00380021;X;fullDates=K,modifiedDates=C;Admitting Time
+00001000;X;uids=K;Affected SOP Instance UID
+00102110;X;patientCharacteristics=C,cleanDescriptors=C;Allergies
+006A0006;X;cleanDescriptors=C;Annotation Group Description
+006A0005;D;cleanDescriptors=C;Annotation Group Label
+006A0003;D;uids=K;Annotation Group UID
+00440004;X;fullDates=K,modifiedDates=C;Approval Status DateTime
+40000010;X;;Arbitrary
+00440104;D;fullDates=K,modifiedDates=C;Assertion DateTime
+00440105;X;fullDates=K,modifiedDates=C;Assertion Expiration DateTime
+04000562;D;fullDates=K,modifiedDates=C;Attribute Modification DateTime
+0040A078;X;;Author Observer Sequence
+22000005;X/Z;;Barcode Value
+300A00C3;X;cleanDescriptors=C;Beam Description
+300C0127;D;fullDates=K,modifiedDates=C,deviceIdentity=K;Beam Hold Transition DateTime
+300A00DD;X;cleanDescriptors=C;Bolus Description
+00101081;X;;Branch of Service
+0014407E;X;fullDates=K,modifiedDates=C,deviceIdentity=K;Calibration Date
+00181203;Z;fullDates=K,modifiedDates=C,deviceIdentity=K;Calibration DateTime
+0014407C;X;fullDates=K,modifiedDates=C,deviceIdentity=K;Calibration Time
+0016004D;X;;Camera Owner Name
+00181007;X;deviceIdentity=K;Cassette ID
+04000115;D;;Certificate of Signer
+04000310;X;fullDates=K,modifiedDates=C;Certified Timestamp
+00120060;Z;institutionIdentity=K;Clinical Trial Coordinating Center Name
+00120082;X;;Clinical Trial Protocol Ethics Committee Approval Number
+00120081;D;institutionIdentity=K;Clinical Trial Protocol Ethics Committee Name
+00120020;D;;Clinical Trial Protocol ID
+00120021;Z;;Clinical Trial Protocol Name
+00120072;X;cleanDescriptors=C;Clinical Trial Series Description
+00120071;X;;Clinical Trial Series ID
+00120030;Z;institutionIdentity=K;Clinical Trial Site ID
+00120031;Z;institutionIdentity=K;Clinical Trial Site Name
+00120010;D;;Clinical Trial Sponsor Name
+00120040;D;;Clinical Trial Subject ID
+00120042;D;;Clinical Trial Subject Reading ID
+00120051;X;cleanDescriptors=C;Clinical Trial Time Point Description
+00120050;Z;;Clinical Trial Time Point ID
+00400310;X;cleanDescriptors=C;Comments on Radiation Dose
+00400280;X;cleanDescriptors=C;Comments on the Performed Procedure Step
+300A02EB;X;cleanDescriptors=C;Compensator Description
+00209161;U;uids=K;Concatenation UID
+3010000F;Z;cleanDescriptors=C;Conceptual Volume Combination Description
+30100017;Z;cleanDescriptors=C;Conceptual Volume Description
+30100006;U;uids=K;Conceptual Volume UID
+00403001;X;;Confidentiality Constraint on Patient Data Description
+30100013;U;uids=K;Constituent Conceptual Volume UID
+0008009C;Z;;Consulting Physician's Name
+0008009D;X;;Consulting Physician Identification Sequence
+0050001B;X;;Container Component ID
+0040051A;X;cleanDescriptors=C;Container Description
+00400512;D;;Container Identifier
+00700086;X;;Content Creator's Identification Code Sequence
+00700084;Z/D;;Content Creator's Name
+00080023;Z/D;fullDates=K,modifiedDates=C;Content Date
+0040A730;D;cleanStructuredContent=C;Content Sequence
+00080033;Z/D;fullDates=K,modifiedDates=C;Content Time
+00080107;D;fullDates=K,modifiedDates=C;Context Group Local Version
+00080106;D;fullDates=K,modifiedDates=C;Context Group Version
+00180010;Z/D;cleanDescriptors=C;Contrast/Bolus Agent
+00181042;X;fullDates=K,modifiedDates=C;Contrast/Bolus Start Time
+00181043;X;fullDates=K,modifiedDates=C;Contrast/Bolus Stop Time
+0018A002;X;fullDates=K,modifiedDates=C;Contribution DateTime
+0018A003;X;cleanDescriptors=C;Contribution Description
+00102150;X;;Country of Residence
+21000040;X;fullDates=K,modifiedDates=C;Creation Date
+21000050;X;fullDates=K,modifiedDates=C;Creation Time
+0040A307;X;;Current Observer (Trial)
+00380300;X;;Current Patient Location
+00080025;X;fullDates=K,modifiedDates=C;Curve Date
+00080035;X;fullDates=K,modifiedDates=C;Curve Time
+0040A07C;X;;Custodial Organization Sequence
+FFFCFFFC;X;;Data Set Trailing Padding
+0040A121;D;fullDates=K,modifiedDates=C;Date
+0040A110;X;fullDates=K,modifiedDates=C;Date of Document or Verbal Transaction (Trial)
+00181205;X;fullDates=K,modifiedDates=C,deviceIdentity=K;Date of Installation
+00181200;X;fullDates=K,modifiedDates=C,deviceIdentity=K;Date of Last Calibration
+0018700C;X/D;fullDates=K,modifiedDates=C,deviceIdentity=K;Date of Last Detector Calibration
+00181204;X;fullDates=K,modifiedDates=C,deviceIdentity=K;Date of Manufacture
+00181012;X;fullDates=K,modifiedDates=C;Date of Secondary Capture
+0040A120;D;fullDates=K,modifiedDates=C;DateTime
+00181202;X;fullDates=K,modifiedDates=C,deviceIdentity=K;DateTime of Last Calibration
+00189701;D;fullDates=K,modifiedDates=C;Decay Correction DateTime
+0018937F;X;cleanDescriptors=C;Decomposition Description
+00082111;X;cleanDescriptors=C;Derivation Description
+21000140;D;deviceIdentity=C;Destination AE
+0018700A;X/D;deviceIdentity=K;Detector ID
+3010001B;Z;;Device Alternate Identifier
+00500020;X;deviceIdentity=K;Device Description
+3010002D;D;deviceIdentity=K;Device Label
+00181000;X/Z/D;deviceIdentity=K;Device Serial Number
+0016004B;X;cleanDescriptors=C;Device Setting Description
+00181002;U;deviceIdentity=K,uids=K;Device UID
+04000105;D;fullDates=K,modifiedDates=C;Digital Signature DateTime
+FFFAFFFA;X;;Digital Signatures Sequence
+04000100;U;;Digital Signature UID
+00209164;U;uids=K;Dimension Organization UID
+00380030;X;fullDates=K,modifiedDates=C;Discharge Date
+00380040;X;cleanDescriptors=C;Discharge Diagnosis Description
+00380032;X;fullDates=K,modifiedDates=C;Discharge Time
+300A079A;X;cleanDescriptors=C;Displacement Reference Label
+4008011A;X;;Distribution Address
+40080119;X;;Distribution Name
+300A0016;X;cleanDescriptors=C;Dose Reference Description
+300A0013;U;uids=K;Dose Reference UID
+3010006E;U;uids=K;Dosimetric Objective UID
+00686226;D;fullDates=K,modifiedDates=C;Effective DateTime
+00420011;D;;Encapsulated Document
+00189517;X/D;fullDates=K,modifiedDates=C;End Acquisition DateTime
+30100037;X;cleanDescriptors=C;Entity Description
+30100035;D;cleanDescriptors=C;Entity Label
+30100038;D;cleanDescriptors=C;Entity Long Label
+30100036;X;cleanDescriptors=C;Entity Name
+300A0676;X;cleanDescriptors=C;Equipment Frame of Reference Description
+00120087;X;fullDates=K,modifiedDates=C;Ethics Committee Approval Effectiveness End Date
+00120086;X;fullDates=K,modifiedDates=C;Ethics Committee Approval Effectiveness Start Date
+00102160;X;patientCharacteristics=K;Ethnic Group
+00189804;D;fullDates=K,modifiedDates=C;Exclusion Start DateTime
+00404011;X;fullDates=K,modifiedDates=C;Expected Completion DateTime
+00080058;U;uids=K;Failed SOP Instance UID List
+0070031A;U;uids=K;Fiducial UID
+00402017;Z;;Filler Order Number / Imaging Service Request
+003A032B;X;cleanDescriptors=C;Filter Lookup Table Description
+0040A023;X;fullDates=K,modifiedDates=C;Findings Group Recording Date (Trial)
+0040A024;X;fullDates=K,modifiedDates=C;Findings Group Recording Time (Trial)
+30080054;X/D;fullDates=K,modifiedDates=C;First Treatment Date
+300A0196;X;cleanDescriptors=C;Fixation Device Description
+00340002;D;;Flow Identifier
+00340001;D;;Flow Identifier Sequence
+3010007F;Z;cleanDescriptors=C;Fractionation Notes
+300A0072;X;cleanDescriptors=C;Fraction Group Description
+00189074;D;fullDates=K,modifiedDates=C;Frame Acquisition DateTime
+00209158;X;cleanDescriptors=C;Frame Comments
+00200052;U;uids=K;Frame of Reference UID
+00340007;D;fullDates=K,modifiedDates=C;Frame Origin Timestamp
+00189151;D;fullDates=K,modifiedDates=C;Frame Reference DateTime
+00189623;D;fullDates=K,modifiedDates=C;Functional Sync Pulse
+00181008;X;deviceIdentity=K;Gantry ID
+00181005;X;deviceIdentity=K;Generator ID
+00160076;X;;GPS Altitude
+00160075;X;;GPS Altitude Ref
+0016008C;X;;GPS Area Information
+0016008D;X;fullDates=K,modifiedDates=C;GPS Date Stamp
+00160088;X;;GPS Dest Bearing
+00160087;X;;GPS Dest Bearing Ref
+0016008A;X;;GPS Dest Distance
+00160089;X;;GPS Dest Distance Ref
+00160084;X;;GPS Dest Latitude
+00160083;X;;GPS Dest Latitude Ref
+00160086;X;;GPS Dest Longitude
+00160085;X;;GPS Dest Longitude Ref
+0016008E;X;;GPS Differential
+0016007B;X;;GPS DOP
+00160081;X;;GPS Img Direction
+00160080;X;;GPS Img Direction Ref
+00160072;X;;GPS Latitude
+00160071;X;;GPS Latitude Ref
+00160074;X;;GPS Longitude
+00160073;X;;GPS Longitude Ref
+00160082;X;;GPS Map Datum
+0016007A;X;;GPS Measure Mode
+0016008B;X;;GPS Processing Method
+00160078;X;;GPS Satellites
+0016007D;X;;GPS Speed
+0016007C;X;;GPS Speed Ref
+00160079;X;;GPS Status
+00160077;X;;GPS Time Stamp
+0016007F;X;;GPS Track
+0016007E;X;;GPS Track Ref
+00160070;X;;GPS Version ID
+00700001;D;cleanGraphics=C;Graphic Annotation Sequence
+0072000A;D;fullDates=K,modifiedDates=C;Hanging Protocol Creation DateTime
+0040E004;X;fullDates=K,modifiedDates=C;HL7 Document Effective Time
+00404037;X;;Human Performer's Name
+00404036;X;;Human Performer's Organization
+00880200;X;;Icon Image Sequence
+00084000;X;cleanDescriptors=C;Identifying Comments
+00204000;X;cleanDescriptors=C;Image Comments
+00284000;X;;Image Presentation Comments
+00402400;X;cleanDescriptors=C;Imaging Service Request Comments
+003A0314;D;fullDates=K,modifiedDates=C;Impedance Measurement DateTime
+40080300;X;cleanDescriptors=C;Impressions
+00686270;D;fullDates=K,modifiedDates=C;Information Issue DateTime
+00080015;X;fullDates=K,modifiedDates=C;Instance Coercion DateTime
+00080012;X/D;fullDates=K,modifiedDates=C;Instance Creation Date
+00080013;X/Z/D;fullDates=K,modifiedDates=C;Instance Creation Time
+00080014;U;uids=K;Instance Creator UID
+04000600;X;;Instance Origin Status
+00080081;X;institutionIdentity=K;Institution Address
+00081040;X;institutionIdentity=K;Institutional Department Name
+00081041;X;institutionIdentity=K;Institutional Department Type Code Sequence
+00080082;X/Z/D;institutionIdentity=K;Institution Code Sequence
+00080080;X/Z/D;institutionIdentity=K;Institution Name
+00189919;Z/D;fullDates=K,modifiedDates=C;Instruction Performed DateTime
+00101050;X;;Insurance Plan Identification
+30100085;X;fullDates=K,modifiedDates=C;Intended Fraction Start Time
+3010004D;X/D;fullDates=K,modifiedDates=C;Intended Phase End Date
+3010004C;X/D;fullDates=K,modifiedDates=C;Intended Phase Start Date
+00401011;X;;Intended Recipients of Results Identification Sequence
+300A0741;D;fullDates=K,modifiedDates=C;Interlock DateTime
+300A0742;D;cleanDescriptors=C;Interlock Description
+300A0783;D;cleanDescriptors=C;Interlock Origin Description
+40080112;X;fullDates=K,modifiedDates=C;Interpretation Approval Date
+40080113;X;fullDates=K,modifiedDates=C;Interpretation Approval Time
+40080111;X;;Interpretation Approver Sequence
+4008010C;X;;Interpretation Author
+40080115;X;cleanDescriptors=C;Interpretation Diagnosis Description
+40080200;X;;Interpretation ID
+40080202;X;;Interpretation ID Issuer
+40080100;X;fullDates=K,modifiedDates=C;Interpretation Recorded Date
+40080101;X;fullDates=K,modifiedDates=C;Interpretation Recorded Time
+40080102;X;;Interpretation Recorder
+4008010B;X;cleanDescriptors=C;Interpretation Text
+4008010A;X;;Interpretation Transcriber
+40080108;X;fullDates=K,modifiedDates=C;Interpretation Transcription Date
+40080109;X;fullDates=K,modifiedDates=C;Interpretation Transcription Time
+00180035;X;fullDates=K,modifiedDates=C;Intervention Drug Start Time
+00180027;X;fullDates=K,modifiedDates=C;Intervention Drug Stop Time
+00083010;U;uids=K;Irradiation Event UID
+00402004;X;fullDates=K,modifiedDates=C;Issue Date of Imaging Service Request
+00380011;X;;Issuer of Admission ID
+00380014;X;;Issuer of Admission ID Sequence
+00120022;X;;Issuer of Clinical Trial Protocol ID
+00120073;X;;Issuer of Clinical Trial Series ID
+00120032;X;;Issuer of Clinical Trial Site ID
+00120041;X;;Issuer of Clinical Trial Subject ID
+00120043;X;;Issuer of Clinical Trial Subject Reading ID
+00120055;X;;Issuer of Clinical Trial Time Point ID
+00100021;X;;Issuer of Patient ID
+00380061;X;;Issuer of Service Episode ID
+00380064;X;;Issuer of Service Episode ID Sequence
+00400513;Z;;Issuer of the Container Identifier Sequence
+00400562;Z;;Issuer of the Specimen Identifier Sequence
+00402005;X;fullDates=K,modifiedDates=C;Issue Time of Imaging Service Request
+22000002;X/Z;cleanDescriptors=C;Label Text
+00281214;U;uids=K;Large Palette Color Lookup Table UID
+001021D0;X;fullDates=K,modifiedDates=C;Last Menstrual Date
+0016004F;X;deviceIdentity=K;Lens Make
+00160050;X;deviceIdentity=K;Lens Model
+00160051;X;deviceIdentity=K;Lens Serial Number
+0016004E;X;deviceIdentity=K;Lens Specification
+00500021;X;cleanDescriptors=C;Long Device Description
+04000404;X;;MAC
+0016002B;X;cleanDescriptors=C;Maker Note
+0018100B;U;deviceIdentity=K,uids=K;Manufacturer's Device Class UID
+30100043;Z;deviceIdentity=K;Manufacturer's Device Identifier
+00020003;U;uids=K;Media Storage SOP Instance UID
+00102000;X;cleanDescriptors=C;Medical Alerts
+00101090;X;;Medical Record Locator
+00101080;X;;Military Rank
+04000550;X;;Modified Attributes Sequence
+00203403;X;fullDates=K,modifiedDates=C;Modified Image Date
+00203406;X;;Modified Image Description
+00203405;X;fullDates=K,modifiedDates=C;Modified Image Time
+00203401;X;deviceIdentity=K;Modifying Device ID
+04000563;D;deviceIdentity=K;Modifying System
+30080056;X/D;fullDates=K,modifiedDates=C;Most Recent Treatment Date
+0018937B;X;cleanDescriptors=C;Multi-energy Acquisition Description
+003A0310;U;uids=K;Multiplex Group UID
+00081060;X;;Name of Physician(s) Reading Study
+00401010;X;;Names of Intended Recipients of Results
+00081000;X;deviceIdentity=C;Network ID
+04000552;X;;Nonconforming Data Element Value
+04000551;X;;Nonconforming Modified Attributes Sequence
+0040A192;X;fullDates=K,modifiedDates=C;Observation Date (Trial)
+0040A032;X/D;fullDates=K,modifiedDates=C;Observation DateTime
+0040A033;X;fullDates=K,modifiedDates=C;Observation Start DateTime
+0040A402;U;uids=K;Observation Subject UID (Trial)
+0040A193;X;fullDates=K,modifiedDates=C;Observation Time (Trial)
+0040A171;U;uids=K;Observation UID
+00102180;X;cleanDescriptors=C;Occupation
+00081072;X/D;;Operator Identification Sequence
+00081070;X/Z/D;;Operators' Name
+00402010;X;;Order Callback Phone Number
+00402011;X;;Order Callback Telecom Information
+00402008;X;;Order Entered By
+00402009;X;;Order Enterer's Location
+04000561;X;;Original Attributes Sequence
+21000070;X;deviceIdentity=C;Originator
+00120023;X;;Other Clinical Trial Protocol IDs Sequence
+00101000;X;;Other Patient IDs
+00101002;X;;Other Patient IDs Sequence
+00101001;X;;Other Patient Names
+00080024;X;fullDates=K,modifiedDates=C;Overlay Date
+00080034;X;fullDates=K,modifiedDates=C;Overlay Time
+300A0760;D;fullDates=K,modifiedDates=C;Override DateTime
+00281199;U;uids=K;Palette Color Lookup Table UID
+0040A07A;X;;Participant Sequence
+0040A082;Z;fullDates=K,modifiedDates=C;Participation DateTime
+00101040;X;;Patient's Address
+00101010;X;patientCharacteristics=K;Patient's Age
+00100030;Z;;Patient's Birth Date
+00101005;X;;Patient's Birth Name
+00100032;X;;Patient's Birth Time
+00380400;X;;Patient's Institution Residence
+00100050;X;;Patient's Insurance Plan Code Sequence
+00101060;X;;Patient's Mother's Birth Name
+00100010;Z;;Patient's Name
+00100101;X;;Patient's Primary Language Code Sequence
+00100102;X;;Patient's Primary Language Modifier Code Sequence
+001021F0;X;;Patient's Religious Preference
+00100040;Z;patientCharacteristics=K;Patient's Sex
+00102203;X/Z;patientCharacteristics=K;Patient's Sex Neutered
+00101020;X;patientCharacteristics=K;Patient's Size
+00102155;X;;Patient's Telecom Information
+00102154;X;;Patient's Telephone Numbers
+00101030;X;patientCharacteristics=K;Patient's Weight
+00104000;X;cleanDescriptors=C;Patient Comments
+00100020;Z/D;;Patient ID
+300A0794;X;cleanDescriptors=C;Patient Setup Photo Description
+300A0650;U;uids=K;Patient Setup UID
+00380500;X;patientCharacteristics=C,cleanDescriptors=C;Patient State
+00401004;X;;Patient Transport Arrangements
+300A0792;X;cleanDescriptors=C;Patient Treatment Preparation Method Description
+300A078E;X;cleanDescriptors=C;Patient Treatment Preparation Procedure Parameter Description
+00400243;X;;Performed Location
+00400254;X;cleanDescriptors=C;Performed Procedure Step Description
+00400250;X;fullDates=K,modifiedDates=C;Performed Procedure Step End Date
+00404051;X;fullDates=K,modifiedDates=C;Performed Procedure Step End DateTime
+00400251;X;fullDates=K,modifiedDates=C;Performed Procedure Step End Time
+00400253;X;;Performed Procedure Step ID
+00400244;X;fullDates=K,modifiedDates=C;Performed Procedure Step Start Date
+00404050;X;fullDates=K,modifiedDates=C;Performed Procedure Step Start DateTime
+00400245;X;fullDates=K,modifiedDates=C;Performed Procedure Step Start Time
+00400241;X;deviceIdentity=C;Performed Station AE Title
+00404030;X;deviceIdentity=K;Performed Station Geographic Location Code Sequence
+00400242;X;deviceIdentity=K;Performed Station Name
+00404028;X;deviceIdentity=K;Performed Station Name Code Sequence
+00081050;X;;Performing Physician's Name
+00081052;X;;Performing Physician Identification Sequence
+00401102;X;;Person's Address
+00401104;X;;Person's Telecom Information
+00401103;X;;Person's Telephone Numbers
+00401101;D;;Person Identification Code Sequence
+0040A123;D;;Person Name
+00081048;X;;Physician(s) of Record
+00081049;X;;Physician(s) of Record Identification Sequence
+00081062;X;;Physician(s) Reading Study Identification Sequence
+40080114;X;;Physician Approving Interpretation
+00402016;Z;;Placer Order Number / Imaging Service Request
+00181004;X;deviceIdentity=K;Plate ID
+30020123;X;cleanDescriptors=C;Position Acquisition Template Description
+30020121;X;cleanDescriptors=C;Position Acquisition Template Name
+001021C0;X;patientCharacteristics=K;Pregnancy Status
+00400012;X;patientCharacteristics=C;Pre-Medication
+300A000E;X;cleanDescriptors=C;Prescription Description
+3010007B;Z;cleanDescriptors=C;Prescription Notes
+30100081;Z;cleanDescriptors=C;Prescription Notes Sequence
+00700082;X;fullDates=K,modifiedDates=C;Presentation Creation Date
+00700083;X;fullDates=K,modifiedDates=C;Presentation Creation Time
+00701101;U;uids=K;Presentation Display Collection UID
+00701102;U;uids=K;Presentation Sequence Collection UID
+30100061;X;cleanDescriptors=C;Prior Treatment Dose Description
+00404052;X;fullDates=K,modifiedDates=C;Procedure Step Cancellation DateTime
+0044000B;X;fullDates=K,modifiedDates=C;Product Expiration DateTime
+00181030;X/D;cleanDescriptors=C;Protocol Name
+00081088;X;cleanDescriptors=C;Pyramid Description
+00200027;X;cleanDescriptors=C;Pyramid Label
+00080019;U;uids=K;Pyramid UID
+300A0619;D;cleanDescriptors=C;Radiation Dose Identification Label
+300A0623;D;cleanDescriptors=C;Radiation Dose In-Vivo Measurement Label
+300A067D;Z;cleanDescriptors=C;Radiation Generation Mode Description
+300A067C;D;cleanDescriptors=C;Radiation Generation Mode Label
+00181078;X;fullDates=K,modifiedDates=C;Radiopharmaceutical Start DateTime
+00181072;X;fullDates=K,modifiedDates=C;Radiopharmaceutical Start Time
+00181079;X;fullDates=K,modifiedDates=C;Radiopharmaceutical Stop DateTime
+00181073;X;fullDates=K,modifiedDates=C;Radiopharmaceutical Stop Time
+300C0113;X;cleanDescriptors=C;Reason for Omission Description
+0040100A;X;cleanDescriptors=C;Reason for Requested Procedure Code Sequence
+00321030;X;cleanDescriptors=C;Reason for Study
+3010005C;Z;cleanDescriptors=C;Reason for Superseding
+04000565;D;cleanDescriptors=C;Reason for the Attribute Modification
+00402001;X;cleanDescriptors=C;Reason for the Imaging Service Request
+00401002;X;cleanDescriptors=C;Reason for the Requested Procedure
+00321066;X;cleanDescriptors=C;Reason for Visit
+00321067;X;cleanDescriptors=C;Reason for Visit Code Sequence
+00741234;X;deviceIdentity=C;Receiving AE
+300A073A;D;fullDates=K,modifiedDates=C;Recorded RT Control Point DateTime
+3010000B;U;uids=K;Referenced Conceptual Volume UID
+0040A13A;D;fullDates=K,modifiedDates=C;Referenced DateTime
+04000402;X;;Referenced Digital Signature Sequence
+300A0083;U;uids=K;Referenced Dose Reference UID
+3010006F;U;uids=K;Referenced Dosimetric Objective UID
+30100031;U;uids=K;Referenced Fiducials UID
+30060024;U;uids=K;Referenced Frame of Reference UID
+00404023;U;uids=K;Referenced General Purpose Scheduled Procedure Step Transaction UID
+00081140;X/Z/U*;uids=K;Referenced Image Sequence
+0040A172;U;uids=K;Referenced Observation UID (Trial)
+00380004;X;;Referenced Patient Alias Sequence
+00101100;X;;Referenced Patient Photo Sequence
+00081120;X;uids=K;Referenced Patient Sequence
+00081111;X/Z/D;uids=K;Referenced Performed Procedure Step Sequence
+04000403;X;;Referenced SOP Instance MAC Sequence
+00081155;U;uids=K;Referenced SOP Instance UID
+00041511;U;uids=K;Referenced SOP Instance UID in File
+00081110;X/Z;uids=K;Referenced Study Sequence
+300A0785;U;uids=K;Referenced Treatment Position Group UID
+00080092;X;;Referring Physician's Address
+00080090;Z;;Referring Physician's Name
+00080094;X;;Referring Physician's Telephone Numbers
+00080096;X;;Referring Physician Identification Sequence
+00102152;X;;Region of Residence
+300600C2;U;uids=K;Related Frame of Reference UID
+00400275;X;cleanDescriptors=C;Request Attributes Sequence
+00321070;X;cleanDescriptors=C;Requested Contrast Agent
+00401400;X;cleanDescriptors=C;Requested Procedure Comments
+00321060;X/Z;cleanDescriptors=C;Requested Procedure Description
+00401001;X;;Requested Procedure ID
+00401005;X;;Requested Procedure Location
+00189937;X;cleanDescriptors=C;Requested Series Description
+00001001;U;uids=K;Requested SOP Instance UID
+00741236;X;deviceIdentity=C;Requesting AE
+00321032;X;;Requesting Physician
+00321033;X;;Requesting Service
+00189185;X;cleanDescriptors=C;Respiratory Motion Compensation Technique Description
+00102299;X;;Responsible Organization
+00102297;X;;Responsible Person
+40084000;X;cleanDescriptors=C;Results Comments
+40080118;X;;Results Distribution List Sequence
+40080040;X;;Results ID
+40080042;X;;Results ID Issuer
+00080054;X;deviceIdentity=C;Retrieve AE Title
+300E0004;Z;fullDates=K,modifiedDates=C;Review Date
+300E0008;X/Z;;Reviewer Name
+300E0005;Z;fullDates=K,modifiedDates=C;Review Time
+3006004D;X;;ROI Creator Sequence
+3006002D;X;fullDates=K,modifiedDates=C;ROI DateTime
+30060028;X;cleanDescriptors=C;ROI Description
+30060038;X;cleanDescriptors=C;ROI Generation Description
+300600A6;Z;;ROI Interpreter
+3006004E;X;;ROI Interpreter Sequence
+30060026;Z;cleanDescriptors=C;ROI Name
+3006002E;X;fullDates=K,modifiedDates=C;ROI Observation DateTime
+30060088;X;cleanDescriptors=C;ROI Observation Description
+30060085;X;cleanDescriptors=C;ROI Observation Label
+300A0615;Z;;RT Accessory Device Slot ID
+300A0611;Z;;RT Accessory Holder Slot ID
+3010005A;Z;cleanDescriptors=C;RT Physician Intent Narrative
+300A0006;X/D;fullDates=K,modifiedDates=C;RT Plan Date
+300A0004;X;cleanDescriptors=C;RT Plan Description
+300A0002;D;cleanDescriptors=C;RT Plan Label
+300A0003;X;cleanDescriptors=C;RT Plan Name
+300A0007;X/D;fullDates=K,modifiedDates=C;RT Plan Time
+30100054;D;cleanDescriptors=C;RT Prescription Label
+300A062A;D;cleanDescriptors=C;RT Tolerance Set Label
+30100056;X/D;cleanDescriptors=C;RT Treatment Approach Label
+3010003B;U;uids=K;RT Treatment Phase UID
+30080162;D;fullDates=K,modifiedDates=C;Safe Position Exit Date
+30080164;D;fullDates=K,modifiedDates=C;Safe Position Exit Time
+30080166;D;fullDates=K,modifiedDates=C;Safe Position Return Date
+30080168;D;fullDates=K,modifiedDates=C;Safe Position Return Time
+0038001A;X;fullDates=K,modifiedDates=C;Scheduled Admission Date
+0038001B;X;fullDates=K,modifiedDates=C;Scheduled Admission Time
+0038001C;X;fullDates=K,modifiedDates=C;Scheduled Discharge Date
+0038001D;X;fullDates=K,modifiedDates=C;Scheduled Discharge Time
+00404034;X;;Scheduled Human Performers Sequence
+0038001E;X;;Scheduled Patient Institution Residence
+00400006;X;;Scheduled Performing Physician's Name
+0040000B;X;;Scheduled Performing Physician Identification Sequence
+00400007;X;cleanDescriptors=C;Scheduled Procedure Step Description
+00400004;X;fullDates=K,modifiedDates=C;Scheduled Procedure Step End Date
+00400005;X;fullDates=K,modifiedDates=C;Scheduled Procedure Step End Time
+00404008;X;fullDates=K,modifiedDates=C;Scheduled Procedure Step Expiration DateTime
+00400009;X;;Scheduled Procedure Step ID
+00400011;X;deviceIdentity=K;Scheduled Procedure Step Location
+00404010;X;fullDates=K,modifiedDates=C;Scheduled Procedure Step Modification DateTime
+00400002;X;fullDates=K,modifiedDates=C;Scheduled Procedure Step Start Date
+00404005;X;fullDates=K,modifiedDates=C;Scheduled Procedure Step Start DateTime
+00400003;X;fullDates=K,modifiedDates=C;Scheduled Procedure Step Start Time
+00400001;X;deviceIdentity=C;Scheduled Station AE Title
+00404027;X;deviceIdentity=K;Scheduled Station Geographic Location Code Sequence
+00400010;X;deviceIdentity=K;Scheduled Station Name
+00404025;X;deviceIdentity=K;Scheduled Station Name Code Sequence
+00321020;X;deviceIdentity=K;Scheduled Study Location
+00321021;X;deviceIdentity=C;Scheduled Study Location AE Title
+00321000;X;fullDates=K,modifiedDates=C;Scheduled Study Start Date
+00321001;X;fullDates=K,modifiedDates=C;Scheduled Study Start Time
+00321010;X;fullDates=K,modifiedDates=C;Scheduled Study Stop Date
+00321011;X;fullDates=K,modifiedDates=C;Scheduled Study Stop Time
+0072005E;D;deviceIdentity=C;Selector AE Value
+0072005F;D;patientCharacteristics=K;Selector AS Value
+00720061;D;fullDates=K,modifiedDates=C;Selector DA Value
+00720063;D;fullDates=K,modifiedDates=C;Selector DT Value
+00720066;D;cleanDescriptors=C;Selector LO Value
+00720068;D;cleanDescriptors=C;Selector LT Value
+00720065;D;;Selector OB Value
+0072006A;D;;Selector PN Value
+0072006C;D;cleanDescriptors=C;Selector SH Value
+0072006E;D;cleanDescriptors=C;Selector ST Value
+0072006B;D;fullDates=K,modifiedDates=C;Selector TM Value
+0072006D;D;;Selector UN Value
+00720071;D;;Selector UR Value
+00720070;D;cleanDescriptors=C;Selector UT Value
+00080021;X/D;fullDates=K,modifiedDates=C;Series Date
+0008103E;X;cleanDescriptors=C;Series Description
+0020000E;U;uids=K;Series Instance UID
+00080031;X/D;fullDates=K,modifiedDates=C;Series Time
+00380062;X;cleanDescriptors=C;Service Episode Description
+00380060;X;;Service Episode ID
+300A01B2;X;cleanDescriptors=C;Setup Technique Description
+300A01A6;X;cleanDescriptors=C;Shielding Device Description
+004006FA;X;;Slide Identifier
+001021A0;X;patientCharacteristics=K;Smoking Status
+01000420;X;fullDates=K,modifiedDates=C;SOP Authorization DateTime
+00080018;U;uids=K;SOP Instance UID
+30100015;U;uids=K;Source Conceptual Volume UID
+0018936A;D;fullDates=K,modifiedDates=C;Source End DateTime
+00640003;U;uids=K;Source Frame of Reference UID
+00340005;D;;Source Identifier
+00082112;X/Z/U*;uids=K;Source Image Sequence
+300A0216;X;deviceIdentity=K;Source Manufacturer
+04000564;Z;institutionIdentity=K;Source of Previous Values
+30080105;X/Z;deviceIdentity=K;Source Serial Number
+00189369;D;fullDates=K,modifiedDates=C;Source Start DateTime
+300A022C;D;fullDates=K,modifiedDates=C;Source Strength Reference Date
+300A022E;D;fullDates=K,modifiedDates=C;Source Strength Reference Time
+00380050;X;patientCharacteristics=C;Special Needs
+0040050A;X;;Specimen Accession Number
+00400602;X;cleanDescriptors=C;Specimen Detailed Description
+00400551;D;;Specimen Identifier
+00400610;Z;cleanStructuredContent=C;Specimen Preparation Sequence
+00400600;X;cleanDescriptors=C;Specimen Short Description
+00400554;U;uids=K;Specimen UID
+00189516;X/D;fullDates=K,modifiedDates=C;Start Acquisition DateTime
+00080055;X;deviceIdentity=C;Station AE Title
+00081010;X/Z/D;deviceIdentity=K;Station Name
+00880140;U;uids=K;Storage Media File-set UID
+30060008;Z;fullDates=K,modifiedDates=C;Structure Set Date
+30060006;X;cleanDescriptors=C;Structure Set Description
+30060002;D;cleanDescriptors=C;Structure Set Label
+30060004;X;cleanDescriptors=C;Structure Set Name
+30060009;Z;fullDates=K,modifiedDates=C;Structure Set Time
+00321040;X;fullDates=K,modifiedDates=C;Study Arrival Date
+00321041;X;fullDates=K,modifiedDates=C;Study Arrival Time
+00324000;X;cleanDescriptors=C;Study Comments
+00321050;X;fullDates=K,modifiedDates=C;Study Completion Date
+00321051;X;fullDates=K,modifiedDates=C;Study Completion Time
+00080020;Z;fullDates=K,modifiedDates=C;Study Date
+00081030;X;cleanDescriptors=C;Study Description
+00200010;Z;;Study ID
+00320012;X;;Study ID Issuer
+0020000D;U;uids=K;Study Instance UID
+00320034;X;fullDates=K,modifiedDates=C;Study Read Date
+00320035;X;fullDates=K,modifiedDates=C;Study Read Time
+00080030;Z;fullDates=K,modifiedDates=C;Study Time
+00320032;X;fullDates=K,modifiedDates=C;Study Verified Date
+00320033;X;fullDates=K,modifiedDates=C;Study Verified Time
+00440010;X;fullDates=K,modifiedDates=C;Substance Administration DateTime
+00200200;U;uids=K;Synchronization Frame of Reference UID
+00182042;U;uids=K;Target UID
+0040A354;X;;Telephone Number (Trial)
+0040DB0D;U;uids=K;Template Extension Creator UID
+0040DB0C;U;uids=K;Template Extension Organization UID
+0040DB07;X;fullDates=K,modifiedDates=C;Template Local Version
+0040DB06;X;fullDates=K,modifiedDates=C;Template Version
+40004000;X;;Text Comments
+20300020;X;;Text String
+0040A122;D;fullDates=K,modifiedDates=C;Time
+0040A112;X;fullDates=K,modifiedDates=C;Time of Document Creation or Verbal Transaction (Trial)
+00181201;X;fullDates=K,modifiedDates=C,deviceIdentity=K;Time of Last Calibration
+0018700E;X/D;fullDates=K,modifiedDates=C,deviceIdentity=K;Time of Last Detector Calibration
+00181014;X;fullDates=K,modifiedDates=C;Time of Secondary Capture
+00080201;X;fullDates=K,modifiedDates=C;Timezone Offset From UTC
+00880910;X;;Topic Author
+00880912;X;;Topic Keywords
+00880906;X;;Topic Subject
+00880904;X;;Topic Title
+00620021;U;uids=K;Tracking UID
+00081195;U;uids=K;Transaction UID
+00185011;X;deviceIdentity=K;Transducer Identification Sequence
+30080024;D;fullDates=K,modifiedDates=C;Treatment Control Point Date
+30080025;D;fullDates=K,modifiedDates=C;Treatment Control Point Time
+30080250;X/D;fullDates=K,modifiedDates=C;Treatment Date
+300A00B2;X/Z;deviceIdentity=K;Treatment Machine Name
+300A0608;D;cleanDescriptors=C;Treatment Position Group Label
+300A0609;U;uids=K;Treatment Position Group UID
+300A0700;U;uids=K;Treatment Session UID
+30100077;X/D;cleanDescriptors=C;Treatment Site
+300A000B;X;cleanDescriptors=C;Treatment Sites
+3010007A;Z;cleanDescriptors=C;Treatment Technique Notes
+30080251;X/D;fullDates=K,modifiedDates=C;Treatment Time
+300A0736;D;fullDates=K,modifiedDates=C;Treatment Tolerance Violation DateTime
+300A0734;D;cleanDescriptors=C;Treatment Tolerance Violation Description
+0018100A;X;deviceIdentity=K;UDI Sequence
+0040A124;U;;UID
+00181009;X;deviceIdentity=K;Unique Device Identifier
+30100033;D;cleanDescriptors=C;User Content Label
+30100034;D;cleanDescriptors=C;User Content Long Label
+0040A352;X;;Verbal Source (Trial)
+0040A358;X;;Verbal Source Identifier Code Sequence (Trial)
+0040A030;D;fullDates=K,modifiedDates=C;Verification DateTime
+0040A088;Z;;Verifying Observer Identification Code Sequence
+0040A075;D;;Verifying Observer Name
+0040A073;D;;Verifying Observer Sequence
+0040A027;D;;Verifying Organization
+00384000;X;cleanDescriptors=C;Visit Comments
+003A0329;X;cleanDescriptors=C;Waveform Filter Description
+00189371;D;deviceIdentity=K;X-Ray Detector ID
+00189373;X;deviceIdentity=K;X-Ray Detector Label
+00189367;D;deviceIdentity=K;X-Ray Source ID
