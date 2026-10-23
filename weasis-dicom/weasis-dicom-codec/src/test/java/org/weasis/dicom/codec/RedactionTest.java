@@ -12,7 +12,6 @@ package org.weasis.dicom.codec;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.awt.Rectangle;
@@ -36,6 +37,7 @@ import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Taggable;
@@ -145,29 +147,53 @@ class RedactionTest {
         () -> assertFalse(mask.isEmpty()));
   }
 
-  @Test
-  @DisplayName("no mask means no operations to apply")
-  void opManagerIsNullWithoutMask() {
-    assertAll(
-        () -> assertNull(Redaction.opManagerFor(null)),
-        () -> assertNull(Redaction.opManagerFor(taggable(ImageElement.class))),
-        () ->
-            assertNull(
-                Redaction.opManagerFor(withMask(new Mask(List.of()))),
-                "an empty region list is nothing to burn"));
+  @SuppressWarnings("unchecked")
+  private static MediaSeries<ImageElement> seriesWithThumbnail(ImageElement middle) {
+    MediaSeries<ImageElement> series = taggable(MediaSeries.class);
+    when(series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null)).thenReturn(middle);
+    SeriesThumbnail thumbnail = mock(SeriesThumbnail.class);
+    SimpleOpManager ops = Redaction.thumbnailOps(series);
+    when(thumbnail.getOpManager()).thenReturn(ops);
+    series.setTag(TagW.Thumbnail, thumbnail);
+    return series;
+  }
+
+  private static SeriesThumbnail thumbnailOf(MediaSeries<?> series) {
+    return (SeriesThumbnail) series.getTagValue(TagW.Thumbnail);
   }
 
   @Test
-  @DisplayName("a mask yields operations carrying it")
-  void opManagerCarriesTheMask() {
-    Mask mask = mask(3);
-    SimpleOpManager manager = Redaction.opManagerFor(withMask(mask));
+  @DisplayName("a thumbnail resolves its regions from the middle image of the series")
+  void thumbnailOpsNameTheSeries() {
+    MediaSeries<ImageElement> series = seriesWithThumbnail(taggable(ImageElement.class));
+    SimpleOpManager manager = Redaction.thumbnailOps(series);
 
     assertAll(
-        () -> assertNotNull(manager),
         () ->
             assertEquals(
-                Optional.of(mask), manager.getParamValue(RedactionOp.OP_NAME, RedactionOp.P_MASK)));
+                Optional.of(series),
+                manager.getParamValue(RedactionOp.OP_NAME, RedactionOp.P_SERIES)),
+        () ->
+            assertEquals(
+                Optional.empty(), manager.getParamValue(RedactionOp.OP_NAME, RedactionOp.P_IMAGE)));
+  }
+
+  @Test
+  @DisplayName("only the thumbnails whose regions may change are rebuilt")
+  void refreshThumbnailsSkipsUnmaskedSeries() {
+    MediaSeries<ImageElement> plain = seriesWithThumbnail(taggable(ImageElement.class));
+    MediaSeries<ImageElement> masked = seriesWithThumbnail(withMask(mask(2)));
+    MediaSeries<ImageElement> wasMasked = seriesWithThumbnail(taggable(ImageElement.class));
+    thumbnailOf(wasMasked)
+        .getOpManager()
+        .setParamValue(RedactionOp.OP_NAME, RedactionOp.P_APPLIED, mask(4));
+
+    Redaction.refreshThumbnails(List.of(plain, masked, wasMasked));
+
+    assertAll(
+        () -> verify(thumbnailOf(plain), never()).reBuildThumbnail(),
+        () -> verify(thumbnailOf(masked)).reBuildThumbnail(),
+        () -> verify(thumbnailOf(wasMasked)).reBuildThumbnail());
   }
 
   @Test

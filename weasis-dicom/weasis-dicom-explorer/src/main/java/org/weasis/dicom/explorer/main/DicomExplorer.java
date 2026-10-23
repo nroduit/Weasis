@@ -95,7 +95,7 @@ public class DicomExplorer extends PluginTool
   private final DicomTaskManager taskManager;
 
   private final PatientPane selectedPatient;
-  private final Runnable maskListener = () -> GuiExecutor.execute(this::refreshIdentityLabels);
+  private final Runnable maskListener = () -> GuiExecutor.execute(this::onMaskingChanged);
   private final JScrollPane thumbnailView;
   private final LoadingPanel loadingPanel;
   private final SeriesSelectionModel selectionList;
@@ -1063,6 +1063,30 @@ public class DicomExplorer extends PluginTool
   // ========== Thumbnail Size Management ==========
 
   /** Re-resolves every cached identity label after {@link IdentityMask} session masking changed. */
+  /** The mask in force decides both the labels and the regions burned over the thumbnails. */
+  private void onMaskingChanged() {
+    refreshIdentityLabels();
+    refreshRedactedThumbnails();
+  }
+
+  /**
+   * A thumbnail is cached pixels: the ones whose regions follow the mask in force are rebuilt, so
+   * the explorer and the export dialog hide what the views hide.
+   */
+  private void refreshRedactedThumbnails() {
+    List<MediaSeries<?>> seriesList = new ArrayList<>();
+    for (MediaSeriesGroup patient : model.getChildren(MediaSeriesGroupNode.rootNode)) {
+      for (MediaSeriesGroup study : model.getChildren(patient)) {
+        for (MediaSeriesGroup item : model.getChildren(study)) {
+          if (item instanceof MediaSeries<?> series) {
+            seriesList.add(series);
+          }
+        }
+      }
+    }
+    Redaction.refreshThumbnails(seriesList);
+  }
+
   public void refreshIdentityLabels() {
     selectedPatient.refreshIdentityLabels();
     refreshComboEditor(patientCombobox);

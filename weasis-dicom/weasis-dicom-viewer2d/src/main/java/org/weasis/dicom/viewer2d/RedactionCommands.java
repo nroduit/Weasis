@@ -113,7 +113,7 @@ public class RedactionCommands {
           if (scope == Scope.SERIES) {
             Redaction.unsuppressFrames(view.getSeries());
           }
-          refreshViews(view, scope);
+          refreshViews(view);
           list();
         });
   }
@@ -139,7 +139,7 @@ public class RedactionCommands {
           }
           Scope scope = scope(opt);
           Redaction.reset(view.getImage(), view.getSeries(), scope);
-          refreshViews(view, scope);
+          refreshViews(view);
           list();
         });
   }
@@ -235,18 +235,17 @@ public class RedactionCommands {
     }
     Scope scope = scope(opt);
     Redaction.apply(view.getImage(), view.getSeries(), scope, mask);
-    refreshViews(view, scope);
+    refreshViews(view);
     return describe(entry.get(), registry).build();
   }
 
   /**
-   * The thumbnail is built outside the view pipeline and cached, so a series change has to say so.
+   * The thumbnail is built outside the view pipeline and cached, so a change has to say so: an
+   * image change counts too, since the thumbnail shows the middle image with its own regions.
    */
-  private static void refreshViews(ViewCanvas<DicomImageElement> view, Scope scope) {
+  private static void refreshViews(ViewCanvas<DicomImageElement> view) {
     RedactionToolBar.refreshOpenViews();
-    if (scope == Scope.SERIES) {
-      Redaction.refreshThumbnail(view.getSeries());
-    }
+    Redaction.refreshThumbnail(view.getSeries());
   }
 
   private static JsonObject librarySave(Option opt) {

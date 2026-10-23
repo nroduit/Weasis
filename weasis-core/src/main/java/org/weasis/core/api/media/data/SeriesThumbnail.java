@@ -185,6 +185,11 @@ public class SeriesThumbnail extends Thumbnail
     dragSource.addDragSourceMotionListener(this);
   }
 
+  /** The operations applied when the thumbnail is built; may be null. */
+  public OpManager getOpManager() {
+    return opManager;
+  }
+
   /** Changes the operations applied when the thumbnail is next built. */
   public void setOpManager(OpManager opManager) {
     this.opManager = opManager;

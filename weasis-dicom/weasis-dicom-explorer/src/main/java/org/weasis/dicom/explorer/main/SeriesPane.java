@@ -253,7 +253,7 @@ public class SeriesPane extends JPanel {
     Function<String, Set<ResourceUtil.ResourceIconPath>> drawIcons =
         HiddenSeriesManager::getRelatedIcons;
     SeriesThumbnail thumb =
-        new SeriesThumbnail(series, thumbnailSize, drawIcons, Redaction.opManagerFor(series));
+        new SeriesThumbnail(series, thumbnailSize, drawIcons, Redaction.thumbnailOps(series));
 
     // Set progress bar if series is being loaded
     if (series.getSeriesLoader() instanceof LoadSeries loader) {

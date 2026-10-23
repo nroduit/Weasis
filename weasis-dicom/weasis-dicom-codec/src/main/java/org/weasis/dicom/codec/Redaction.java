@@ -11,6 +11,7 @@ package org.weasis.dicom.codec;
 
 import java.awt.Shape;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -289,16 +290,15 @@ public final class Redaction {
   }
 
   /**
-   * Operations that burn the mask of {@code taggable}, or {@code null} when there is none. Lets a
-   * consumer outside the viewer — an explorer thumbnail — render the same pixels as the view.
+   * Operations that burn, on the thumbnail of {@code series}, what a view of its middle image
+   * burns: the regions are resolved when the thumbnail is built, so they include those stored on
+   * the image and the proposal of the device library under the mask in force, like the view.
    */
-  public static SimpleOpManager opManagerFor(Taggable taggable) {
-    Mask mask = read(taggable);
-    if (mask == null || mask.isEmpty()) {
-      return null;
-    }
+  public static SimpleOpManager thumbnailOps(MediaSeries<?> series) {
+    RedactionOp op = new RedactionOp();
+    op.setParam(RedactionOp.P_SERIES, series);
     SimpleOpManager manager = new SimpleOpManager();
-    manager.addImageOperationAction(operationFor(mask));
+    manager.addImageOperationAction(op);
     return manager;
   }
 
@@ -309,19 +309,49 @@ public final class Redaction {
   }
 
   /**
-   * Rebuilds the series thumbnail so it stops showing pixels the mask now hides. The thumbnail is
-   * cached both in memory and as a temporary file keyed on the media, so both have to go.
+   * Rebuilds the series thumbnail so it shows the pixels the view shows. The thumbnail is cached
+   * both in memory and as a temporary file keyed on the media, so both have to go, and a new
+   * operation manager is set because the old one keeps its last output for the same source image.
    */
-  public static void refreshThumbnail(MediaSeries<? extends MediaElement> series) {
+  public static void refreshThumbnail(MediaSeries<?> series) {
     if (series == null
         || !(series.getTagValue(TagW.Thumbnail) instanceof SeriesThumbnail thumbnail)) {
       return;
     }
-    MediaElement media = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
-    if (media != null) {
+    if (series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null)
+        instanceof MediaElement media) {
       media.setTag(TagW.ThumbnailPath, null);
     }
-    thumbnail.setOpManager(opManagerFor(series));
+    thumbnail.setOpManager(thumbnailOps(series));
     thumbnail.reBuildThumbnail();
+  }
+
+  /**
+   * Rebuilds the thumbnails that may show other regions after the mask in force or the masking
+   * document changed: those that burned regions when last built, and those that would now. The
+   * others are left alone, so switching session masking does not rebuild the whole explorer.
+   */
+  public static void refreshThumbnails(Collection<? extends MediaSeries<?>> seriesList) {
+    for (MediaSeries<?> series : seriesList) {
+      if (series.getTagValue(TagW.Thumbnail) instanceof SeriesThumbnail thumbnail
+          && (burned(thumbnail) || burnsNow(series))) {
+        refreshThumbnail(series);
+      }
+    }
+  }
+
+  private static boolean burned(SeriesThumbnail thumbnail) {
+    return thumbnail.getOpManager() instanceof SimpleOpManager manager
+        && manager.getParamValue(RedactionOp.OP_NAME, RedactionOp.P_APPLIED).orElse(null)
+            instanceof Mask mask
+        && !mask.isEmpty();
+  }
+
+  private static boolean burnsNow(MediaSeries<?> series) {
+    Mask mask =
+        series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null) instanceof ImageElement image
+            ? effective(image, series)
+            : null;
+    return mask != null && !mask.isEmpty();
   }
 }

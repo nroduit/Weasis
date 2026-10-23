@@ -37,8 +37,14 @@ public class RedactionOp extends AbstractOp {
   /** The image the regions belong to, used to resolve them again at each pass. */
   public static final String P_IMAGE = "image"; // NON-NLS
 
-  /** The series of that image. */
+  /**
+   * The series of that image. Without an image, the regions are those of the middle image of the
+   * series, which is the one a series thumbnail shows.
+   */
   public static final String P_SERIES = "series"; // NON-NLS
+
+  /** The regions burned by the last pass, read back to tell whether a thumbnail is out of date. */
+  public static final String P_APPLIED = "applied"; // NON-NLS
 
   public RedactionOp() {
     setName(OP_NAME);
@@ -71,7 +77,10 @@ public class RedactionOp extends AbstractOp {
     Redaction.Mask mask = mask();
     if (!Boolean.FALSE.equals(params.get(P_SHOW)) && mask != null && !mask.isEmpty()) {
       result = RedactionRenderer.burn(source.toMat(), mask);
+    } else {
+      mask = null;
     }
+    params.put(P_APPLIED, mask);
     params.put(Param.OUTPUT_IMG, result);
   }
 
@@ -81,9 +90,14 @@ public class RedactionOp extends AbstractOp {
    * export under a stricter profile must hide what that profile hides, not what the screen hid.
    */
   private Redaction.Mask mask() {
+    MediaSeries<?> series = params.get(P_SERIES) instanceof MediaSeries<?> s ? s : null;
     if (params.get(P_IMAGE) instanceof ImageElement image) {
-      return Redaction.effective(
-          image, params.get(P_SERIES) instanceof MediaSeries<?> series ? series : null);
+      return Redaction.effective(image, series);
+    }
+    if (series != null
+        && series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null)
+            instanceof ImageElement image) {
+      return Redaction.effective(image, series);
     }
     return params.get(P_MASK) instanceof Redaction.Mask mask ? mask : null;
   }
