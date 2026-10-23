@@ -10,6 +10,7 @@
 package org.weasis.dicom.viewer2d;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.io.IOException;
@@ -19,12 +20,12 @@ import java.util.function.UnaryOperator;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.event.PopupMenuEvent;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -42,6 +43,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicArea;
+import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PixelMaskMatcher;
@@ -61,14 +63,17 @@ import org.weasis.dicom.codec.display.RedactionOp;
  * scope is exactly the decision worth pausing on.
  *
  * <p>Regions already kept for a machine are picked from the device library instead of being
- * redrawn, and what is displayed is saved back into it.
+ * redrawn, and what is displayed is saved back into it. Those actions sit in one menu with labeled
+ * items next to the main action, and the menu button shows itself selected while the image in view
+ * hides something, its tooltip saying what.
  */
 public class RedactionToolBar extends WtoolBar implements SeriesViewerListener {
 
   private final ImageViewerEventManager<DicomImageElement> eventManager;
+  private static final int SCOPE_MAX_WIDTH = 150;
+
   private final JComboBox<Scope> scopeCombo = new JComboBox<>(Scope.values());
-  private final JButton saveButton;
-  private final JLabel originLabel = new JLabel();
+  private final DropDownButton menuButton;
 
   public RedactionToolBar(ImageViewerEventManager<DicomImageElement> eventManager, int index) {
     super(Messages.getString("RedactionToolBar.title"), index);
@@ -77,32 +82,23 @@ public class RedactionToolBar extends WtoolBar implements SeriesViewerListener {
     }
     this.eventManager = eventManager;
 
-    scopeCombo.setRenderer(labelRenderer(v -> v instanceof Scope scope ? scopeLabel(scope) : v));
-    scopeCombo.setToolTipText(Messages.getString("RedactionToolBar.scope.tip"));
-    GuiUtils.setPreferredWidth(scopeCombo, 100);
-    add(scopeCombo);
-
-    saveButton =
-        iconButton(
-            ActionIcon.REDACT_SAVE,
-            "RedactionToolBar.save", // NON-NLS
-            "RedactionToolBar.save.tip", // NON-NLS
-            this::saveForDevice);
-    add(saveButton);
-    add(
-        iconButton(
-            ActionIcon.REDACT_CLEAR,
-            "RedactionToolBar.clear", // NON-NLS
-            "RedactionToolBar.clear.tip", // NON-NLS
-            this::clear));
-    add(libraryButton());
+    // In the order of the workflow: redact the selected shapes, for the image or the series
     add(
         iconButton(
             ActionIcon.REDACT,
             "RedactionToolBar.apply", // NON-NLS
             "RedactionToolBar.apply.tip", // NON-NLS
             this::applySelection));
-    add(originLabel);
+    scopeCombo.setRenderer(labelRenderer(v -> v instanceof Scope scope ? scopeLabel(scope) : v));
+    scopeCombo.setToolTipText(Messages.getString("RedactionToolBar.scope.tip"));
+    // As wide as its longest label, up to a cap that keeps a long translation from crowding the bar
+    Dimension size = scopeCombo.getPreferredSize();
+    size.width = Math.min(size.width, GuiUtils.getScaleLength(SCOPE_MAX_WIDTH));
+    scopeCombo.setPreferredSize(size);
+    scopeCombo.setMaximumSize(size);
+    add(scopeCombo);
+    menuButton = menuButton();
+    add(menuButton);
     refreshState();
     // What the toolbar tells depends on the image in view: it has to follow the selection
     eventManager.addSeriesViewerListener(this);
@@ -121,8 +117,7 @@ public class RedactionToolBar extends WtoolBar implements SeriesViewerListener {
   }
 
   private void refreshState() {
-    updateSaveState();
-    updateOrigin(currentView());
+    updateState(currentView());
   }
 
   /** An icon-only button; its label stays available to screen readers. */
@@ -194,7 +189,7 @@ public class RedactionToolBar extends WtoolBar implements SeriesViewerListener {
       Redaction.unsuppressFrames(view.getSeries());
     }
     used.forEach(Graphic::fireRemoveAndRepaintAction);
-    refresh(view, scope);
+    refresh(view);
   }
 
   /** Takes back what the chosen scope hides; {@link Redaction#reset} says what that means. */
@@ -204,52 +199,90 @@ public class RedactionToolBar extends WtoolBar implements SeriesViewerListener {
       return;
     }
     Redaction.reset(view.getImage(), view.getSeries(), selectedScope());
-    refresh(view, selectedScope());
+    refresh(view);
   }
 
-  /** A menu of the device entries the image in view can take, built when it is opened. */
-  private DropDownButton libraryButton() {
+  /** The menu of the other redaction actions, built when it is opened. */
+  private DropDownButton menuButton() {
     DropDownButton button =
         new DropDownButton(
-            "redact.library", // NON-NLS
+            "redact.menu", // NON-NLS
             DropButtonIcon.createDropButtonIcon(
                 ResourceUtil.getToolBarIcon(ActionIcon.REDACT_DEVICE)),
             null) {
           @Override
           protected JPopupMenu getPopupMenu() {
-            JPopupMenu menu = libraryMenu();
+            JPopupMenu menu = redactionMenu();
             menu.setInvoker(this);
             return menu;
           }
+
+          /** Closing the menu unselects the button, which also says that regions are burned. */
+          @Override
+          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            super.popupMenuWillBecomeInvisible(e);
+            updateState(currentView());
+          }
         };
-    button.setToolTipText(Messages.getString("RedactionToolBar.library.tip"));
-    button.getAccessibleContext().setAccessibleName(Messages.getString("RedactionToolBar.library"));
+    button.getAccessibleContext().setAccessibleName(Messages.getString("RedactionToolBar.menu"));
     return button;
   }
 
   /**
-   * The entries that accept the device and the shape of the image in view, the one in force ticked.
-   * An entry the image cannot take — another device, another layout, disabled — is left out: its
-   * regions would land on the anatomy rather than on the text they were drawn over.
+   * The device entries that accept the device and the shape of the image in view, the one in force
+   * ticked, then what can be done with the regions shown. An entry the image cannot take — another
+   * device, another layout, disabled — is left out: its regions would land on the anatomy rather
+   * than on the text they were drawn over.
    */
-  private JPopupMenu libraryMenu() {
+  private JPopupMenu redactionMenu() {
     JPopupMenu menu = new JPopupMenu();
     ViewCanvas<DicomImageElement> view = currentView();
     MaskingModelRegistry registry = MaskingModelRegistry.getInstance();
+    Mask current =
+        view == null || view.getImage() == null
+            ? null
+            : Redaction.effective(view.getImage(), view.getSeries());
+    menu.add(new TitleMenuItem(Messages.getString("RedactionToolBar.library")));
+    int entries = menu.getComponentCount();
     if (view != null && view.getImage() != null) {
-      Mask current = Redaction.effective(view.getImage(), view.getSeries());
       String origin = current == null ? null : current.origin();
       PixelMaskMatcher.evaluate(view.getSeries(), view.getImage(), registry.sessionProfile().id())
           .stream()
           .filter(RedactionToolBar::selectable)
           .forEach(candidate -> menu.add(libraryItem(candidate, origin)));
     }
-    if (menu.getComponentCount() == 0) {
+    if (menu.getComponentCount() == entries) {
       JMenuItem none = new JMenuItem(Messages.getString("RedactionToolBar.library.none"));
       none.setEnabled(false);
       menu.add(none);
     }
+    menu.addSeparator();
+    boolean burning = current != null && !current.isEmpty();
+    JMenuItem clear =
+        menuItem(
+            selectedScope() == Scope.SERIES
+                ? "RedactionToolBar.clear.series" // NON-NLS
+                : "RedactionToolBar.clear.image", // NON-NLS
+            "RedactionToolBar.clear.tip", // NON-NLS
+            this::clear);
+    clear.setEnabled(burning);
+    menu.add(clear);
+    JMenuItem save =
+        menuItem(
+            "RedactionToolBar.save", // NON-NLS
+            "RedactionToolBar.save.tip", // NON-NLS
+            this::saveForDevice);
+    // A locked configuration is read-only
+    save.setEnabled(burning && !registry.isLocked());
+    menu.add(save);
     return menu;
+  }
+
+  private static JMenuItem menuItem(String nameKey, String tipKey, Runnable action) {
+    JMenuItem item = new JMenuItem(Messages.getString(nameKey));
+    item.setToolTipText(Messages.getString(tipKey));
+    item.addActionListener(_ -> action.run());
+    return item;
   }
 
   /**
@@ -299,7 +332,7 @@ public class RedactionToolBar extends WtoolBar implements SeriesViewerListener {
       return;
     }
     Redaction.apply(view.getImage(), view.getSeries(), selectedScope(), mask);
-    refresh(view, selectedScope());
+    refresh(view);
   }
 
   /**
@@ -337,25 +370,37 @@ public class RedactionToolBar extends WtoolBar implements SeriesViewerListener {
             });
   }
 
-  /** Whether a device entry can still be saved: a locked configuration is read-only. */
-  private void updateSaveState() {
-    saveButton.setEnabled(!MaskingModelRegistry.getInstance().isLocked());
-  }
-
-  /** Names the device entry whose regions the view is hiding, so it is never a silent change. */
-  private void updateOrigin(ViewCanvas<DicomImageElement> view) {
+  /**
+   * Says what the image in view hides, so it is never a silent change: the menu button shows itself
+   * selected while regions are burned, and its tooltip names the device entry they come from or
+   * tells that they were drawn by hand.
+   */
+  private void updateState(ViewCanvas<DicomImageElement> view) {
     Mask mask = view == null ? null : Redaction.effective(view.getImage(), view.getSeries());
-    String name =
-        mask == null || !mask.fromLibrary()
-            ? null
-            : MaskingModelRegistry.getInstance()
-                .pixelMask(mask.origin())
-                .map(PixelMask::name)
-                .orElse(mask.origin());
-    originLabel.setText(
-        name == null ? "" : Messages.getString("RedactionToolBar.applied").formatted(name));
-    originLabel.setToolTipText(
-        name == null ? null : Messages.getString("RedactionToolBar.applied.tip"));
+    boolean burning = mask != null && !mask.isEmpty();
+    String state = null;
+    if (burning && mask.fromLibrary()) {
+      String name =
+          MaskingModelRegistry.getInstance()
+              .pixelMask(mask.origin())
+              .map(PixelMask::name)
+              .orElse(mask.origin());
+      state = Messages.getString("RedactionToolBar.state.device").formatted(name);
+    } else if (burning) {
+      state = Messages.getString("RedactionToolBar.state.drawn");
+    }
+    menuButton.setSelected(burning);
+    String tip = Messages.getString("RedactionToolBar.menu.tip");
+    menuButton.setToolTipText(
+        state == null
+            ? tip
+            : GuiUtils.HTML_START
+                + tip
+                + GuiUtils.HTML_BR
+                + "<b>"
+                + state
+                + "</b>" // NON-NLS
+                + GuiUtils.HTML_END);
   }
 
   /**
@@ -398,13 +443,12 @@ public class RedactionToolBar extends WtoolBar implements SeriesViewerListener {
    * A series is shown in more than one view, and in more than one container: the regions are pushed
    * everywhere, not only where the change was made.
    */
-  private void refresh(ViewCanvas<DicomImageElement> view, Scope scope) {
+  private void refresh(ViewCanvas<DicomImageElement> view) {
     refreshOpenViews();
-    if (scope == Scope.SERIES) {
-      // The explorer thumbnail is built outside the view pipeline and cached: rebuild it, or it
-      // keeps showing the pixels the mask now hides.
-      Redaction.refreshThumbnail(view.getSeries());
-    }
+    // The explorer thumbnail is built outside the view pipeline and cached: rebuild it, or it
+    // keeps showing the pixels the mask now hides. It shows the middle image, whose own regions
+    // count as much as those of the series.
+    Redaction.refreshThumbnail(view.getSeries());
   }
 
   private ViewCanvas<DicomImageElement> currentView() {
