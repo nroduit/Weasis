@@ -9,6 +9,8 @@
  */
 package org.weasis.core.ui.editor.image.lut;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -46,7 +48,6 @@ import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -896,26 +897,41 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
     }
   }
 
-  private JFileChooser chooser(boolean write) {
-    JFileChooser chooser = new JFileChooser();
+  private List<ColorMapFormat> formats(boolean write) {
+    return host.formats().stream().filter(f -> !write || f.canWrite()).toList();
+  }
+
+  /** One extension filter per format, in the order of {@code formats}. */
+  private static SystemFileChooser chooser(List<ColorMapFormat> formats) {
+    SystemFileChooser chooser = new SystemFileChooser();
     chooser.setAcceptAllFileFilterUsed(false);
-    for (ColorMapFormat format : host.formats()) {
-      if (!write || format.canWrite()) {
-        chooser.addChoosableFileFilter(new FormatFilter(format));
-      }
+    for (ColorMapFormat format : formats) {
+      chooser.addChoosableFileFilter(
+          new FileNameExtensionFilter(
+              format.description() + " (" + String.join(", ", format.extensions()) + ")",
+              format.extensions().toArray(String[]::new)));
     }
     return chooser;
   }
 
+  /** The format of the filter selected in the dialog, or null. */
+  private static ColorMapFormat selectedFormat(
+      SystemFileChooser chooser, List<ColorMapFormat> formats) {
+    int index = List.of(chooser.getChoosableFileFilters()).indexOf(chooser.getFileFilter());
+    return index < 0 || index >= formats.size() ? null : formats.get(index);
+  }
+
   private void importTable() {
-    JFileChooser chooser = chooser(false);
-    if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+    List<ColorMapFormat> formats = formats(false);
+    SystemFileChooser chooser = chooser(formats);
+    if (chooser.showOpenDialog(this) != SystemFileChooser.APPROVE_OPTION) {
       return;
     }
     Path file = chooser.getSelectedFile().toPath();
+    ColorMapFormat selected = selectedFormat(chooser, formats);
     ColorMapFormat format =
-        chooser.getFileFilter() instanceof FormatFilter f && f.format.matches(file)
-            ? f.format
+        selected != null && selected.matches(file)
+            ? selected
             : host.formats().stream()
                 .filter(x -> x.matches(file))
                 .findFirst()
@@ -932,13 +948,14 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
   }
 
   private void exportJson() {
-    JFileChooser chooser = chooser(true);
+    List<ColorMapFormat> formats = formats(true);
+    SystemFileChooser chooser = chooser(formats);
     chooser.setSelectedFile(new java.io.File(ColorMapFormats.JSON.fileName(current.name())));
-    if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+    if (chooser.showSaveDialog(this) != SystemFileChooser.APPROVE_OPTION) {
       return;
     }
     ColorMapFormat format =
-        chooser.getFileFilter() instanceof FormatFilter f ? f.format : ColorMapFormats.JSON;
+        Objects.requireNonNullElse(selectedFormat(chooser, formats), ColorMapFormats.JSON);
     Path file = chooser.getSelectedFile().toPath();
     if (!format.matches(file)) {
       file = file.resolveSibling(format.fileName(file.getFileName().toString()));
@@ -951,24 +968,6 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot export color map", e);
       statusLabel.setText(e.getMessage());
-    }
-  }
-
-  private static final class FormatFilter extends javax.swing.filechooser.FileFilter {
-    private final ColorMapFormat format;
-
-    FormatFilter(ColorMapFormat format) {
-      this.format = format;
-    }
-
-    @Override
-    public boolean accept(java.io.File f) {
-      return f.isDirectory() || format.matches(f.toPath());
-    }
-
-    @Override
-    public String getDescription() {
-      return format.description() + " (" + String.join(", ", format.extensions()) + ")";
     }
   }
 

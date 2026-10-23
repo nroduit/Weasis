@@ -10,6 +10,8 @@
 package org.weasis.core.ui.pref;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
@@ -33,7 +35,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
@@ -49,7 +50,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.Scrollable;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import net.miginfocom.swing.MigLayout;
@@ -666,11 +666,11 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   // Whole document
 
   private void importDocument() {
-    JFileChooser chooser = new JFileChooser();
+    SystemFileChooser chooser = new SystemFileChooser();
     chooser.setFileFilter(
         new FileNameExtensionFilter(
             Messages.getString("MaskingPrefView.files"), "json")); // NON-NLS
-    if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+    if (chooser.showOpenDialog(this) != SystemFileChooser.APPROVE_OPTION) {
       return;
     }
     try {
@@ -686,9 +686,9 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   }
 
   private void exportDocument() {
-    JFileChooser chooser = new JFileChooser();
+    SystemFileChooser chooser = new SystemFileChooser();
     chooser.setSelectedFile(new File(MaskingModelRegistry.USER_FILE));
-    if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+    if (chooser.showSaveDialog(this) != SystemFileChooser.APPROVE_OPTION) {
       return;
     }
     try {

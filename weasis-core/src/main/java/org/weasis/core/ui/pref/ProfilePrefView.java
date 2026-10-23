@@ -9,6 +9,8 @@
  */
 package org.weasis.core.ui.pref;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -28,7 +30,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
@@ -41,7 +42,6 @@ import javax.swing.JTextField;
 import javax.swing.JViewport;
 import javax.swing.Scrollable;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -687,16 +687,16 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
     return id;
   }
 
-  private JFileChooser chooser() {
-    JFileChooser chooser = new JFileChooser();
+  private SystemFileChooser chooser() {
+    SystemFileChooser chooser = new SystemFileChooser();
     chooser.setFileFilter(
         new FileNameExtensionFilter(Messages.getString("ProfilePrefView.json"), "json")); // NON-NLS
     return chooser;
   }
 
   private void importProfiles() {
-    JFileChooser chooser = chooser();
-    if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+    SystemFileChooser chooser = chooser();
+    if (chooser.showOpenDialog(this) == SystemFileChooser.APPROVE_OPTION) {
       try {
         commitEditor();
         List<MeasurementProfile> imported = registry.importFrom(chooser.getSelectedFile().toPath());
@@ -714,9 +714,9 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
     if (profile == null) {
       return;
     }
-    JFileChooser chooser = chooser();
+    SystemFileChooser chooser = chooser();
     chooser.setSelectedFile(Path.of(profile.id() + ".json").toFile()); // NON-NLS
-    if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+    if (chooser.showSaveDialog(this) == SystemFileChooser.APPROVE_OPTION) {
       try {
         registry.exportTo(
             chooser.getSelectedFile().toPath(),
