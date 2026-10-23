@@ -832,12 +832,20 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
       if (series != null) {
         @SuppressWarnings("unchecked")
         Filter<E> filter = (Filter<E>) canvas.getActionValue(ActionW.FILTERED_SERIES.cmd());
-        int maxShift = series.size(filter) - selectedPane.getAllViewCanvases().size();
+        int max = tiledScrollMax(series.size(filter), selectedPane.getAllViewCanvases().size());
         int value = Math.max(1, canvas.getFrameIndex() - canvas.getTileOffset() + 1);
         getAction(ActionW.SCROLL_SERIES)
-            .ifPresent(a -> a.setSliderMinMaxValue(1, Math.max(maxShift, 1), value, false));
+            .ifPresent(a -> a.setSliderMinMaxValue(1, max, value, false));
       }
     }
+  }
+
+  /**
+   * The last position of the scroll slider (from 1) of a tiled pane: the first tile shows the image
+   * at that position and the last tile the last image of the series.
+   */
+  static int tiledScrollMax(int imageCount, int tileCount) {
+    return Math.max(imageCount - tileCount + 1, 1);
   }
 
   protected boolean commonDisplayShortcuts(KeyEvent e) {
