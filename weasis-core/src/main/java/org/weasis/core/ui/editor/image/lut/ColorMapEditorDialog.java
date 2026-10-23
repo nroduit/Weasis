@@ -945,6 +945,9 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
     }
     try {
       format.write(file, current);
+      String note = format.exportNote(current);
+      statusLabel.setText(note == null ? " " : note);
+      statusLabel.setToolTipText(note);
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot export color map", e);
       statusLabel.setText(e.getMessage());
