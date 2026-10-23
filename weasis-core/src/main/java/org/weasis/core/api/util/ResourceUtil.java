@@ -102,6 +102,7 @@ public class ResourceUtil {
     EXPORT_ANNOTATIONS("svg/action/exportAnnotations.svg"), // NON-NLS
     FILTER("svg/action/filter.svg"), // NON-NLS
     FLIP("svg/action/flip.svg"), // NON-NLS
+    FUZZY("svg/action/fuzzy.svg"), // NON-NLS
     HAND("svg/action/hand.svg"), // NON-NLS
     HELP("svg/action/help.svg"), // NON-NLS
     IMPORT_CD("svg/action/importCd.svg"), // NON-NLS

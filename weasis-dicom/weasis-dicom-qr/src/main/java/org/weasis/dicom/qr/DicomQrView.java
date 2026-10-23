@@ -35,7 +35,6 @@ import java.util.stream.Stream;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -46,6 +45,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeListener;
@@ -77,6 +77,8 @@ import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.tp.raven.datetime.DatePicker;
@@ -226,7 +228,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final JComboBox<AbstractDicomNode> comboDestinationNode = new JComboBox<>();
   private final JComboBox<SearchParameters> templateComboBox = new JComboBox<>();
   private final JTextField tfSearch = new JTextField(25);
-  private final JCheckBox fuzzyCheckBox = new JCheckBox(Messages.getString("DicomQrView.fuzzy"));
+  private final JToggleButton fuzzyButton =
+      new JToggleButton(ResourceUtil.getIcon(ActionIcon.FUZZY));
   private final JLabel searchWarning = new JLabel();
   private final RetrieveTree tree = new RetrieveTree();
 
@@ -517,12 +520,16 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                 Messages.getString("DicomQrView.tips_question"));
     tfSearch.setToolTipText(buf);
     tfSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
-    fuzzyCheckBox.setToolTipText(Messages.getString("DicomQrView.fuzzy_tip"));
+    fuzzyButton.setToolTipText(Messages.getString("DicomQrView.fuzzy_tip"));
+    fuzzyButton.setFocusable(false);
+    fuzzyButton.putClientProperty(
+        FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+    // Fuzzy matching sits inside the field, as a toggle of how the value is matched
+    tfSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, fuzzyButton);
     comboTags.addItemListener(_ -> updateFuzzyOption());
     updateFuzzyOption();
     JPanel panel2 =
-        GuiUtils.getFlowLayoutPanel(
-            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, comboTags, tfSearch, fuzzyCheckBox);
+        GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, comboTags, tfSearch);
 
     JButton clearBtn = new JButton(Messages.getString("DicomQrView.clear"));
     clearBtn.setToolTipText(Messages.getString("DicomQrView.clear_search"));
@@ -591,25 +598,35 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   /** Fuzzy matching only applies to Person Name values (PS3.4 C.2.2.2.1.1). */
   private void updateFuzzyOption() {
     TagW tag = (TagW) comboTags.getSelectedItem();
-    fuzzyCheckBox.setEnabled(tag != null && tag.getType() == TagType.DICOM_PERSON_NAME);
+    fuzzyButton.setEnabled(tag != null && tag.getType() == TagType.DICOM_PERSON_NAME);
   }
 
   private boolean isFuzzyMatching() {
-    return fuzzyCheckBox.isEnabled() && fuzzyCheckBox.isSelected();
+    return fuzzyButton.isEnabled() && fuzzyButton.isSelected();
   }
 
+  /** Shows a short warning next to the search button, with the full messages in the tooltip. */
   private void showSearchWarning(boolean fuzzyRejected, List<HttpWarning> warnings) {
+    List<String> lines = new ArrayList<>();
     String text = null;
     if (fuzzyRejected) {
-      text = Messages.getString("DicomQrView.fuzzy_unsupported");
+      text = Messages.getString("DicomQrView.fuzzy_literal");
+      lines.add(Messages.getString("DicomQrView.fuzzy_unsupported"));
     } else if (!warnings.isEmpty()) {
-      text = Messages.getString("DicomQrView.server_warning").formatted(warnings.getFirst().text());
+      text = Messages.getString("DicomQrView.server_warning");
     }
+    warnings.forEach(w -> lines.add(w.text()));
     searchWarning.setText(text);
     searchWarning.setToolTipText(
-        warnings.isEmpty()
+        lines.isEmpty()
             ? null
-            : warnings.stream().map(HttpWarning::text).collect(Collectors.joining("\n")));
+            : lines.stream()
+                .map(DicomQrView::escapeHtml)
+                .collect(Collectors.joining("<br>", "<html>", "</html>"))); // NON-NLS
+  }
+
+  private static String escapeHtml(String s) {
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"); // NON-NLS
   }
 
   /** Whether a warning of the origin server reports that fuzzy matching was not performed. */

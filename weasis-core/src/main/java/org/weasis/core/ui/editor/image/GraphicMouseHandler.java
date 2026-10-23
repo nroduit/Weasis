@@ -59,9 +59,9 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
   private final CursorSet cursorSet;
 
   /**
-   * The graphic that was the only selection when the button went down on it, away from its
-   * handles and its label. If the button comes up without the mouse having moved, the click goes
-   * through it to the next graphic under the cursor.
+   * The graphic that was the only selection when the button went down on it, away from its handles
+   * and its label. If the button comes up without the mouse having moved, the click goes through it
+   * to the next graphic under the cursor.
    */
   private Graphic cycleFrom;
 
