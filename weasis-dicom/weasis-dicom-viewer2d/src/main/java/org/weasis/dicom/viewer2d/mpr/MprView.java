@@ -172,6 +172,7 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     this.plane = Plane.AXIAL;
     this.mprController = Objects.requireNonNull(controller);
     infoLayer.setDisplayPreferencesValue(LayerItem.PRELOADING_BAR, false);
+    removeRedaction();
 
     // Remove PR and KO buttons
     getViewButtons().clear();

@@ -148,7 +148,7 @@ public class RedactionCommands implements CommandExtension {
 
     @Override
     protected void run() {
-      print(GuiExecutor.invokeAndRethrow(() -> regions(target.withImage())));
+      print(GuiExecutor.invokeAndRethrow(() -> regions(redactable(target.withImage()))));
     }
   }
 
@@ -214,7 +214,7 @@ public class RedactionCommands implements CommandExtension {
       print(
           GuiExecutor.invokeAndRethrow(
               () -> {
-                Target resolved = target.withImage();
+                Target resolved = redactable(target.withImage());
                 DefaultView2d<DicomImageElement> view = resolved.view();
                 Scope value = scope.scope;
                 Taggable owner = value == Scope.SERIES ? view.getSeries() : view.getImage();
@@ -241,7 +241,7 @@ public class RedactionCommands implements CommandExtension {
       print(
           GuiExecutor.invokeAndRethrow(
               () -> {
-                Target resolved = target.withImage();
+                Target resolved = redactable(target.withImage());
                 DefaultView2d<DicomImageElement> view = resolved.view();
                 Redaction.reset(view.getImage(), view.getSeries(), scope.scope);
                 refreshViews(view);
@@ -286,7 +286,7 @@ public class RedactionCommands implements CommandExtension {
       print(
           GuiExecutor.invokeAndRethrow(
               () -> {
-                Target resolved = target.withImage();
+                Target resolved = redactable(target.withImage());
                 DefaultView2d<DicomImageElement> view = resolved.view();
                 Taggable owner = scope.scope == Scope.SERIES ? view.getSeries() : view.getImage();
                 if (withdraw) {
@@ -346,7 +346,7 @@ public class RedactionCommands implements CommandExtension {
       print(
           GuiExecutor.invokeAndRethrow(
               () -> {
-                Target resolved = target.withImage();
+                Target resolved = redactable(target.withImage());
                 DefaultView2d<DicomImageElement> view = resolved.view();
                 MaskingModelRegistry registry = MaskingModelRegistry.getInstance();
                 String profileId = registry.sessionProfile().id();
@@ -394,7 +394,7 @@ public class RedactionCommands implements CommandExtension {
       print(
           GuiExecutor.invokeAndRethrow(
               () -> {
-                Target resolved = target.withImage();
+                Target resolved = redactable(target.withImage());
                 DefaultView2d<DicomImageElement> view = resolved.view();
                 MaskingModelRegistry registry = MaskingModelRegistry.getInstance();
                 PixelMask entry =
@@ -616,6 +616,18 @@ public class RedactionCommands implements CommandExtension {
         paramLabel = "<scope>",
         description = "Where it applies: ${COMPLETION-CANDIDATES}.")
     Scope scope = Scope.IMAGE;
+  }
+
+  /**
+   * The resolved pane when its view burns redaction regions. A reconstruction (MPR) does not: its
+   * planes are not those the regions were drawn on, so nothing is shown or stored there.
+   */
+  private static Target redactable(Target resolved) {
+    if (RedactionToolBar.redactable(resolved.view()) == null) {
+      throw new IllegalStateException(
+          "The view does not hide regions (a reconstruction never does)"); // NON-NLS
+    }
+    return resolved;
   }
 
   private static String regions(Target resolved) {

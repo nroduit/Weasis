@@ -376,50 +376,34 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
       PathIterator pathIt = pathArea.getPathIterator(null);
 
       double[] coords = new double[6];
-      Double curX = NaN;
-      Double curY = NaN;
+      double curX = NaN;
+      double curY = NaN;
+      double startX = NaN;
+      double startY = NaN;
 
       Set<Point2D> ptSet = HashSet.newHashSet(pts.size() * 2);
 
       while (!pathIt.isDone()) {
 
         int segType = pathIt.currentSegment(coords);
-        Double lastX = coords[0];
-        Double lastY = coords[1];
 
         switch (segType) {
           case PathIterator.SEG_CLOSE:
+            // The Area iterator leaves the edge back to the start of the subpath implicit
+            addSegment(lineSegmentList, ptSet, curX, curY, startX, startY);
+            curX = startX;
+            curY = startY;
             break;
           case PathIterator.SEG_LINETO:
-            Point2D ptP1 = new Point2D.Double(curX, curY);
-            Point2D ptP2 = new Point2D.Double(lastX, lastY);
-
-            BigDecimal dist =
-                BigDecimal.valueOf(ptP1.distance(ptP2)).setScale(10, RoundingMode.DOWN);
-            if (dist.compareTo(BigDecimal.ZERO) != 0) {
-              for (Point2D pt : new Point2D[] {ptP1, ptP2}) {
-                boolean newPt = true;
-                for (Point2D p : ptSet) {
-                  dist = BigDecimal.valueOf(p.distance(pt)).setScale(10, RoundingMode.DOWN);
-                  if (dist.compareTo(BigDecimal.ZERO) == 0) {
-                    pt.setLocation(p);
-                    newPt = false;
-                    break;
-                  }
-                }
-                if (newPt) {
-                  ptSet.add(pt);
-                }
-              }
-              lineSegmentList.add(new Line2D.Double(ptP1, ptP2));
-            }
-
-            curX = lastX;
-            curY = lastY;
+            addSegment(lineSegmentList, ptSet, curX, curY, coords[0], coords[1]);
+            curX = coords[0];
+            curY = coords[1];
             break;
           case PathIterator.SEG_MOVETO:
-            curX = lastX;
-            curY = lastY;
+            curX = coords[0];
+            curY = coords[1];
+            startX = curX;
+            startY = curY;
             break;
 
           default:
@@ -430,6 +414,37 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     }
 
     return lineSegmentList;
+  }
+
+  /** Adds the segment unless it is empty, sharing the end points already in the set. */
+  private static void addSegment(
+      List<Line2D.Double> lineSegmentList,
+      Set<Point2D> ptSet,
+      double x1,
+      double y1,
+      double x2,
+      double y2) {
+    Point2D ptP1 = new Point2D.Double(x1, y1);
+    Point2D ptP2 = new Point2D.Double(x2, y2);
+
+    BigDecimal dist = BigDecimal.valueOf(ptP1.distance(ptP2)).setScale(10, RoundingMode.DOWN);
+    if (dist.compareTo(BigDecimal.ZERO) != 0) {
+      for (Point2D pt : new Point2D[] {ptP1, ptP2}) {
+        boolean newPt = true;
+        for (Point2D p : ptSet) {
+          dist = BigDecimal.valueOf(p.distance(pt)).setScale(10, RoundingMode.DOWN);
+          if (dist.compareTo(BigDecimal.ZERO) == 0) {
+            pt.setLocation(p);
+            newPt = false;
+            break;
+          }
+        }
+        if (newPt) {
+          ptSet.add(pt);
+        }
+      }
+      lineSegmentList.add(new Line2D.Double(ptP1, ptP2));
+    }
   }
 
   /**

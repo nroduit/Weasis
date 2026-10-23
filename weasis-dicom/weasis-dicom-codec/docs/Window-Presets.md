@@ -38,11 +38,12 @@ place:
 | Layer | Source |
 |---|---|
 | Built-in | `windowPresets.json` resource (CT presets) |
-| Site | path or URL of the launcher preference `weasis.wl.presets.config` |
+| Site | `config/windowPresets.json` of the resources package (`SiteDocuments`) |
 | User | `customWindowPresets.json` in the preference folder, written by the preferences page |
 
-The site and user documents are read on configuration and on `reload()`, the site URL outside the
-registry lock; saving a user preset only writes the user document and merges in memory. A document
+The site and user documents are read on configuration and on `reload()`; the site document is a
+local file, delivered with the installation or unpacked from the server's `resources.zip`, and is
+read again when the site configuration is reloaded (`SiteDocuments.reloadAll`). Saving a user preset only writes the user document and merges in memory. A document
 that cannot be read leaves its layer unchanged, and an unreadable user document is kept aside
 (`.bak`) before the next write replaces it.
 
