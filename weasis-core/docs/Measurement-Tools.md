@@ -50,7 +50,8 @@ graphics (style, whether a plain drag draws an upright or an oblique rectangle, 
 of the measured values), which
 measurements are labelled on the image and which pixel statistics are computed;
 sections left out keep the current settings. `MeasurementProfileRegistry` merges the bundled
-profiles, an optional site document (`weasis.measure.profiles.config`, file or URL) and the
+profiles, an optional site document (`config/measurementProfiles.json` of the resources package,
+see `SiteDocuments`) and the
 user's own (`measurementProfiles.json` in the preference folder), later documents overriding by
 id, and holds the active choice: an explicit profile, or the automatic one for the modality of
 the selected series with the default profile as fallback. When several profiles name a modality

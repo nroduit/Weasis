@@ -86,7 +86,7 @@ The model is data, merged by `MaskingModelRegistry` from several JSON documents 
 1. the bundled `identityMasking.json` of weasis-core (profiles, Weasis-internal tags);
 2. documents contributed by other bundles, such as the DICOM tag classification of the DICOM codec
    (`identityMasking-dicom.json`, applied by `DicomMediaUtils.classifyTags`);
-3. a site document given by the launcher preference `weasis.masking.config` (path or URL);
+3. the site document `config/identityMasking.json` of the resources package (`SiteDocuments`);
 4. a user document `identityMasking.json` in the preference directory, ignored when the site
    document is locked.
 
