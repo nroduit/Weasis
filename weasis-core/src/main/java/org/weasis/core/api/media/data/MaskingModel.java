@@ -217,9 +217,6 @@ public record MaskingModel(
     Map<String, String> tagActions = new LinkedHashMap<>();
     profile.tagActions().forEach((tag, action) -> tagActions.put(tag, action.name()));
     addMap(entry, "tagActions", tagActions); // NON-NLS
-    if (profile.shiftsDates()) {
-      entry.add("shiftsDates", true); // NON-NLS
-    }
     if (profile.offerInExport()) {
       entry.add("offerInExport", true); // NON-NLS
     }
@@ -427,7 +424,6 @@ public record MaskingModel(
             JsonUtil.getStringMap(entry, "label"), // NON-NLS
             actions,
             tagActions,
-            JsonUtil.getBoolean(entry, "shiftsDates", false), // NON-NLS
             JsonUtil.getBoolean(entry, "offerInExport", false), // NON-NLS
             JsonUtil.getBoolean(entry, "locked", false))); // NON-NLS
   }

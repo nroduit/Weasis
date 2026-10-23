@@ -70,7 +70,6 @@ public final class MaskingModelRegistry {
                   TagCategory.BIRTH_DATE, AnonymizationAction.REMOVE,
                   TagCategory.FREE_TEXT, AnonymizationAction.REMOVE)),
           Map.of(),
-          false,
           true);
 
   private static volatile MaskingModelRegistry instance; // NOSONAR double-checked locking

@@ -27,7 +27,6 @@ import org.weasis.core.api.util.LayeredEntries;
  * @param labels display name per language code
  * @param actions action per category; a missing category is {@link AnonymizationAction#KEEP}
  * @param tagActions action per normalized tag key, overriding the category of that tag
- * @param shiftsDates whether {@link TagCategory#DATE} uses the mask's date offset
  * @param offerInExport whether export dialogs offer this profile
  * @param locked set by a site document: the user document may not replace this profile
  */
@@ -37,7 +36,6 @@ public record MaskingProfile(
     Map<String, String> labels,
     Map<TagCategory, AnonymizationAction> actions,
     Map<String, AnonymizationAction> tagActions,
-    boolean shiftsDates,
     boolean offerInExport,
     boolean locked)
     implements IdentityMask.TagPolicy, LayeredEntries.Entry {
@@ -49,9 +47,8 @@ public record MaskingProfile(
       Map<String, String> labels,
       Map<TagCategory, AnonymizationAction> actions,
       Map<String, AnonymizationAction> tagActions,
-      boolean shiftsDates,
       boolean offerInExport) {
-    this(id, name, labels, actions, tagActions, shiftsDates, offerInExport, false);
+    this(id, name, labels, actions, tagActions, offerInExport, false);
   }
 
   public static final String DISPLAY_ID = "display"; // NON-NLS
@@ -113,6 +110,15 @@ public record MaskingProfile(
       }
     }
     return actionFor(tag.getCategory());
+  }
+
+  /**
+   * Whether dates move by the session offset: a profile shifts them as soon as one category or one
+   * tag asks for {@link AnonymizationAction#SHIFT}, so the action cannot be chosen without effect.
+   */
+  public boolean shiftsDates() {
+    return actions.containsValue(AnonymizationAction.SHIFT)
+        || tagActions.containsValue(AnonymizationAction.SHIFT);
   }
 
   /** Whether names and identifiers are masked; a profile that keeps them is refused on load. */

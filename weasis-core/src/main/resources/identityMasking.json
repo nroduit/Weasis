@@ -8,7 +8,6 @@
       "id": "display",
       "name": "Display",
       "offerInExport": true,
-      "shiftsDates": false,
       "actions": {
         "DIRECT_ID": "PSEUDONYMIZE",
         "BIRTH_DATE": "REMOVE",
@@ -20,7 +19,6 @@
       "id": "teaching",
       "name": "Teaching",
       "offerInExport": true,
-      "shiftsDates": true,
       "actions": {
         "DIRECT_ID": "PSEUDONYMIZE",
         "DATE": "SHIFT",
@@ -33,7 +31,6 @@
       "id": "publication",
       "name": "Publication",
       "offerInExport": true,
-      "shiftsDates": false,
       "actions": {
         "DIRECT_ID": "PSEUDONYMIZE",
         "DATE": "REMOVE",
@@ -47,7 +44,6 @@
       "id": "ai-request",
       "name": "AI request",
       "offerInExport": false,
-      "shiftsDates": true,
       "actions": {
         "DIRECT_ID": "PSEUDONYMIZE",
         "DATE": "SHIFT",

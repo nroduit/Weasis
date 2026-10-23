@@ -11,11 +11,15 @@ package org.weasis.core.api.media.data;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.weasis.core.api.media.data.TagW.TagType;
@@ -119,5 +123,34 @@ class MaskingProfileTest {
   @DisplayName("a non-shifting profile leaves dates where they are")
   void displayProfileDoesNotShift() {
     assertEquals(0, IdentityMask.forProfile(DISPLAY).dateShiftDays());
+  }
+
+  @Test
+  @DisplayName("a SHIFT action always moves the date, even from a document that said otherwise")
+  void shiftActionDecidesTheOffset() {
+    String json =
+        """
+        {"profiles": [{"id": "old", "shiftsDates": false,
+          "actions": {"DIRECT_ID": "PSEUDONYMIZE", "BIRTH_DATE": "SHIFT"}}]}
+        """;
+    MaskingProfile old =
+        MaskingModel.read(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)))
+            .profiles()
+            .getFirst();
+    MaskingProfile byTag =
+        new MaskingProfile(
+            "by-tag",
+            "By tag",
+            Map.of(),
+            Map.of(TagCategory.DIRECT_ID, AnonymizationAction.PSEUDONYMIZE),
+            Map.of("StudyDate", AnonymizationAction.SHIFT),
+            false);
+
+    assertAll(
+        () -> assertTrue(old.shiftsDates()),
+        () -> assertTrue(IdentityMask.forProfile(old).dateShiftDays() > 0),
+        () -> assertTrue(byTag.shiftsDates(), "a tag action counts as much as a category"),
+        () -> assertFalse(DISPLAY.shiftsDates()),
+        () -> assertFalse(MaskingModel.toJson(old).containsKey("shiftsDates")));
   }
 }

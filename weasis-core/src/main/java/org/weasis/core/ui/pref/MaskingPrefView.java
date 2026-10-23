@@ -90,7 +90,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   private final JComboBox<MaskingProfile> profileCombo = new JComboBox<>();
   private final JTextField nameField = new JTextField(16);
   private final JCheckBox exportCheck = new JCheckBox(Messages.getString("MaskingPrefView.offer"));
-  private final JCheckBox datesCheck = new JCheckBox(Messages.getString("MaskingPrefView.shift"));
   private final JComboBox<MaskingProfile> sessionCombo = new JComboBox<>();
   private final JComboBox<MaskingProfile> aiCombo = new JComboBox<>();
   private final JLabel readOnlyLabel = new JLabel();
@@ -157,7 +156,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
     profileCombo.addActionListener(e -> showSelected());
     nameField.getDocument().addDocumentListener(onEdit(this::commitProfile));
     exportCheck.addActionListener(e -> commitProfile());
-    datesCheck.addActionListener(e -> commitProfile());
     sessionCombo.addActionListener(e -> commitDefaults());
     aiCombo.addActionListener(e -> commitDefaults());
     return panel;
@@ -201,8 +199,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
     panel.add(nameField, SHRINKABLE);
     exportCheck.setToolTipText(Messages.getString("MaskingPrefView.offer.tip"));
     panel.add(exportCheck, "skip 1"); // NON-NLS
-    datesCheck.setToolTipText(Messages.getString("MaskingPrefView.shift.tip"));
-    panel.add(datesCheck, "skip 1"); // NON-NLS
     return panel;
   }
 
@@ -345,7 +341,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   private void show(MaskingProfile profile) {
     nameField.setText(profile == null ? "" : profile.name());
     exportCheck.setSelected(profile != null && profile.offerInExport());
-    datesCheck.setSelected(profile != null && profile.shiftsDates());
     actionCombos.forEach(
         (category, combo) ->
             combo.setSelectedItem(
@@ -355,7 +350,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   private void enableEditor(boolean editable) {
     nameField.setEnabled(editable);
     exportCheck.setEnabled(editable);
-    datesCheck.setEnabled(editable);
     actionCombos.values().forEach(c -> c.setEnabled(editable));
   }
 
@@ -382,7 +376,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
             profile.labels(),
             actions,
             profile.tagActions(),
-            datesCheck.isSelected(),
             exportCheck.isSelected()));
     profileCombo.repaint();
   }
@@ -433,7 +426,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
             Map.of(),
             source.actions(),
             source.tagActions(),
-            source.shiftsDates(),
             source.offerInExport());
     replaceProfile(copy);
     fillProfiles(copy.id());
