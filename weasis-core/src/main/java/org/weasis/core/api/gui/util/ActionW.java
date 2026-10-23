@@ -116,7 +116,8 @@ public class ActionW {
       new BasicActionStateValue(
           Messages.getString("ActionW.show_header"), "show_header", 0, 0, null); // NON-NLS
   public static final BasicActionStateValue EXPORT_VIEW =
-      new BasicActionStateValue(Messages.getString("exporting.view"), "exportImage", 0, 0, null);
+      new BasicActionStateValue(
+          Messages.getString("capture.screenshot"), "exportImage", 0, 0, null);
   public static final PannerListenerValue PAN =
       new PannerListenerValue(
           Messages.getString("ActionW.pan"),

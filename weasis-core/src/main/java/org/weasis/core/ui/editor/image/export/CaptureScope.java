@@ -9,7 +9,11 @@
  */
 package org.weasis.core.ui.editor.image.export;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.weasis.core.Messages;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 
 /**
  * What area of the interface each captured frame covers. The scope also decides how the frame is
@@ -24,6 +28,19 @@ public enum CaptureScope {
 
   CaptureScope(String key) {
     this.key = key;
+  }
+
+  /** The scopes that can be captured, narrowest first: a missing view or layout is left out. */
+  public static CaptureScope[] available(ViewCanvas<?> view, ImageViewerPlugin<?> container) {
+    List<CaptureScope> scopes = new ArrayList<>();
+    if (view != null) {
+      scopes.add(VIEW);
+    }
+    if (container != null) {
+      scopes.add(CONTAINER);
+    }
+    scopes.add(APPLICATION_WINDOW);
+    return scopes.toArray(new CaptureScope[0]);
   }
 
   @Override

@@ -99,6 +99,11 @@ public class RotationSourceBuilder extends PullSourceBuilder {
   }
 
   @Override
+  public String helpTopic() {
+    return "capture/#rotation"; // NON-NLS
+  }
+
+  @Override
   public String defaultFileName() {
     return "rotation"; // NON-NLS
   }

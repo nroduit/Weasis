@@ -22,7 +22,6 @@ import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.DefaultListCellRenderer;
@@ -97,24 +96,11 @@ public class AnimationExportDialog extends JDialog {
     this.builder = Objects.requireNonNull(builder);
     this.view = view;
     this.container = container;
-    this.scopeCombo = new JComboBox<>(availableScopes(view, container));
+    this.scopeCombo = new JComboBox<>(CaptureScope.available(view, container));
     this.formatCombo = new JComboBox<>(sinks.toArray(new FrameSinkFactory[0]));
     this.displayProfile = new DisplayProfileSelector(() -> view);
     initComponents();
     pack();
-  }
-
-  private static CaptureScope[] availableScopes(
-      ViewCanvas<?> view, ImageViewerPlugin<?> container) {
-    List<CaptureScope> scopes = new ArrayList<>();
-    if (view != null) {
-      scopes.add(CaptureScope.VIEW);
-    }
-    if (container != null) {
-      scopes.add(CaptureScope.CONTAINER);
-    }
-    scopes.add(CaptureScope.APPLICATION_WINDOW);
-    return scopes.toArray(new CaptureScope[0]);
   }
 
   private void initComponents() {
@@ -177,7 +163,12 @@ public class AnimationExportDialog extends JDialog {
 
     JPanel buttons =
         GuiUtils.getFlowLayoutPanel(
-            FlowLayout.TRAILING, BLOCK_SEPARATOR, ITEM_SEPARATOR_LARGE, exportButton, closeButton);
+            FlowLayout.TRAILING,
+            BLOCK_SEPARATOR,
+            ITEM_SEPARATOR_LARGE,
+            GuiUtils.createHelpButton(builder.helpTopic()),
+            exportButton,
+            closeButton);
     form.getPanel().setAlignmentX(Component.LEFT_ALIGNMENT);
     buttons.setAlignmentX(Component.LEFT_ALIGNMENT);
     JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
@@ -314,7 +305,8 @@ public class AnimationExportDialog extends JDialog {
     fileChooser.setAcceptAllFileFilterUsed(false);
     String extension = factory.extension();
     fileChooser.addChoosableFileFilter(new FileNameExtensionFilter(factory.title(), extension));
-    fileChooser.setSelectedFile(new File(builder.defaultFileName() + "." + extension));
+    fileChooser.setSelectedFile(
+        new File(CaptureFileName.of(builder.defaultFileName()) + "." + extension));
     if (fileChooser.showSaveDialog(this) != SystemFileChooser.APPROVE_OPTION
         || fileChooser.getSelectedFile() == null) {
       return null;

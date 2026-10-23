@@ -39,8 +39,16 @@ public interface FrameSourceBuilder {
    */
   void run(Window parent, FrameGrabber grabber, int frameDurationMs, FrameSink sink);
 
-  /** Base name proposed in the file chooser, without an extension. */
+  /**
+   * Base name proposed in the file chooser, without an extension; the dialog appends the date and
+   * time.
+   */
   String defaultFileName();
+
+  /** Topic of the online documentation opened by the help button of the dialog. */
+  default String helpTopic() {
+    return "capture/#options"; // NON-NLS
+  }
 
   default AnimationFormat preferredFormat() {
     return AnimationFormat.APNG;

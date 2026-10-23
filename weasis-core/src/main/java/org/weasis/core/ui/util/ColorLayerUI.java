@@ -58,10 +58,20 @@ public class ColorLayerUI {
   }
 
   public static void showCenterScreen(Window window, ColorLayerUI layer) {
+    showCenterScreen(window, layer, null);
+  }
+
+  /**
+   * Shows a modal window over the layer, then fades the layer out and runs {@code afterHidden} once
+   * it is gone, so what runs then sees the interface without the shade.
+   */
+  public static void showCenterScreen(Window window, ColorLayerUI layer, Runnable afterHidden) {
     Container container = getContentPane(layer);
     GuiUtils.showCenterScreen(window, container);
     if (layer != null) {
-      layer.hideUI();
+      layer.hideUI(afterHidden);
+    } else if (afterHidden != null) {
+      afterHidden.run();
     }
   }
 
@@ -122,7 +132,17 @@ public class ColorLayerUI {
   }
 
   public synchronized void hideUI() {
-    if (glassPane == null) return;
+    hideUI(null);
+  }
+
+  /** Fades the layer out and runs {@code onHidden}, if any, once the layer is removed. */
+  public synchronized void hideUI(Runnable onHidden) {
+    if (glassPane == null) {
+      if (onHidden != null) {
+        onHidden.run();
+      }
+      return;
+    }
 
     if (animationTimer != null && animationTimer.isRunning()) {
       animationTimer.stop();
@@ -149,6 +169,9 @@ public class ColorLayerUI {
                 animationTimer.stop();
                 animationTimer = null;
                 uninstallGlassPane();
+                if (onHidden != null) {
+                  onHidden.run();
+                }
               }
             });
     animationTimer.setRepeats(true);
