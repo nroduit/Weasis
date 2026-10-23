@@ -8,7 +8,8 @@ Animation export writes a sequence of rendered frames to one file: an animated i
 - **Recording** — what happens in a 2D or MPR layout while the user works.
 
 Unlike `ScreenshotDialog`, which produces a single image, every frame goes through the same display
-pipeline, overlays and identity masking as the view on screen.
+pipeline, overlays and identity masking as the view on screen. The screenshot shares the capture
+scopes and the `FrameGrabber` for everything but the original image (see [Capture scope](#capture-scope)).
 
 ## Table of Contents
 
@@ -27,7 +28,7 @@ composes with any output.
 
 | Abstraction | Responsibility |
 |---|---|
-| `FrameSourceBuilder` | One kind of animation in the dialog: its own rows in the `AnimationForm`, its frame count and default file name, and how the export runs (`run`). |
+| `FrameSourceBuilder` | One kind of animation in the dialog: its own rows in the `AnimationForm`, its frame count, default file name and help topic, and how the export runs (`run`). |
 | `PullSourceBuilder` | The common case: builds a `FrameSource` and hands it to `AnimationExportTask`. |
 | `FrameSource` | A deterministic animation: frame count, show frame *i*, report how far its rendering has come, capture it, duration of frame *i*. |
 | `FrameSink` | Consumes frames and produces one file (`open` / `write` / `close`, `abort` on cancel or failure). |
@@ -75,7 +76,8 @@ Durations are carried per frame: a recording's real sampling intervals survive i
 
 ## Capture scope
 
-`CaptureScope` sets the area each frame covers:
+`CaptureScope` sets the area each frame covers; `CaptureScope.available(view, container)` gives the
+scopes a dialog can offer, leaving out a missing view or layout:
 
 | Scope | Covers |
 |---|---|
@@ -100,6 +102,16 @@ profile for the time of the one synchronous paint of a capture (through
 other case paints the live component, which is the only way to
 include OpenGL content (the 3D view) and the window chrome. A 3D view is never re-rendered as a 2D
 image.
+
+`ScreenshotDialog` offers the same three scopes. The selected view keeps its two modes, as
+displayed or the original image; the layout and the window are captured as displayed by a
+`FrameGrabber` under the selected masking profile. That capture runs after the dialog is closed
+and its `ColorLayerUI` shade has faded (`showCenterScreen(window, layer, afterHidden)`), so that
+neither appears in a window capture, which paints the owned windows that are showing.
+
+Every capture dialog proposes `CaptureFileName.of(base)` as file name: the kind of capture and the
+date and time (`screenshot_20261023-083012`), never patient data, which would leave with the file
+whatever masking the pixels had.
 
 Painting the window rather than reading the screen means captures are unaffected by other
 windows on top and need no screen-capture permission. It also means menus and tooltips shown as

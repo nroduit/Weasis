@@ -42,7 +42,6 @@ class MaskingModelWriterTest {
             Map.of("fr", "Démonstration"),
             actions,
             Map.of("StudyDescription", AnonymizationAction.KEEP),
-            true,
             true);
     return new MaskingModel(
         List.of(

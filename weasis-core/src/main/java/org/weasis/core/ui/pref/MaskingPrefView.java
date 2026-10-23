@@ -10,6 +10,8 @@
 package org.weasis.core.ui.pref;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
@@ -33,7 +35,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
@@ -49,7 +50,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.Scrollable;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import net.miginfocom.swing.MigLayout;
@@ -90,7 +90,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   private final JComboBox<MaskingProfile> profileCombo = new JComboBox<>();
   private final JTextField nameField = new JTextField(16);
   private final JCheckBox exportCheck = new JCheckBox(Messages.getString("MaskingPrefView.offer"));
-  private final JCheckBox datesCheck = new JCheckBox(Messages.getString("MaskingPrefView.shift"));
   private final JComboBox<MaskingProfile> sessionCombo = new JComboBox<>();
   private final JComboBox<MaskingProfile> aiCombo = new JComboBox<>();
   private final JLabel readOnlyLabel = new JLabel();
@@ -157,7 +156,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
     profileCombo.addActionListener(e -> showSelected());
     nameField.getDocument().addDocumentListener(onEdit(this::commitProfile));
     exportCheck.addActionListener(e -> commitProfile());
-    datesCheck.addActionListener(e -> commitProfile());
     sessionCombo.addActionListener(e -> commitDefaults());
     aiCombo.addActionListener(e -> commitDefaults());
     return panel;
@@ -201,8 +199,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
     panel.add(nameField, SHRINKABLE);
     exportCheck.setToolTipText(Messages.getString("MaskingPrefView.offer.tip"));
     panel.add(exportCheck, "skip 1"); // NON-NLS
-    datesCheck.setToolTipText(Messages.getString("MaskingPrefView.shift.tip"));
-    panel.add(datesCheck, "skip 1"); // NON-NLS
     return panel;
   }
 
@@ -345,7 +341,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   private void show(MaskingProfile profile) {
     nameField.setText(profile == null ? "" : profile.name());
     exportCheck.setSelected(profile != null && profile.offerInExport());
-    datesCheck.setSelected(profile != null && profile.shiftsDates());
     actionCombos.forEach(
         (category, combo) ->
             combo.setSelectedItem(
@@ -355,7 +350,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   private void enableEditor(boolean editable) {
     nameField.setEnabled(editable);
     exportCheck.setEnabled(editable);
-    datesCheck.setEnabled(editable);
     actionCombos.values().forEach(c -> c.setEnabled(editable));
   }
 
@@ -382,7 +376,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
             profile.labels(),
             actions,
             profile.tagActions(),
-            datesCheck.isSelected(),
             exportCheck.isSelected()));
     profileCombo.repaint();
   }
@@ -433,7 +426,6 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
             Map.of(),
             source.actions(),
             source.tagActions(),
-            source.shiftsDates(),
             source.offerInExport());
     replaceProfile(copy);
     fillProfiles(copy.id());
@@ -674,11 +666,11 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   // Whole document
 
   private void importDocument() {
-    JFileChooser chooser = new JFileChooser();
+    SystemFileChooser chooser = new SystemFileChooser();
     chooser.setFileFilter(
         new FileNameExtensionFilter(
             Messages.getString("MaskingPrefView.files"), "json")); // NON-NLS
-    if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+    if (chooser.showOpenDialog(this) != SystemFileChooser.APPROVE_OPTION) {
       return;
     }
     try {
@@ -694,9 +686,9 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   }
 
   private void exportDocument() {
-    JFileChooser chooser = new JFileChooser();
+    SystemFileChooser chooser = new SystemFileChooser();
     chooser.setSelectedFile(new File(MaskingModelRegistry.USER_FILE));
-    if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+    if (chooser.showSaveDialog(this) != SystemFileChooser.APPROVE_OPTION) {
       return;
     }
     try {

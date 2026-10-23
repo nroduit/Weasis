@@ -10,6 +10,8 @@
 package org.weasis.dicom.viewer2d.pref;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.io.File;
@@ -29,7 +31,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
@@ -39,7 +40,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -697,11 +697,11 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
   }
 
   private void importPresets() {
-    JFileChooser chooser = new JFileChooser();
+    SystemFileChooser chooser = new SystemFileChooser();
     chooser.setFileFilter(
         new FileNameExtensionFilter(
             Messages.getString("WindowPresetPrefView.files"), "json")); // NON-NLS
-    if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+    if (chooser.showOpenDialog(this) != SystemFileChooser.APPROVE_OPTION) {
       return;
     }
     File file = chooser.getSelectedFile();
@@ -715,9 +715,9 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
   }
 
   private void exportPresets() {
-    JFileChooser chooser = new JFileChooser();
+    SystemFileChooser chooser = new SystemFileChooser();
     chooser.setSelectedFile(new File(WindowPresetRegistry.USER_FILE));
-    if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+    if (chooser.showSaveDialog(this) != SystemFileChooser.APPROVE_OPTION) {
       return;
     }
     try {

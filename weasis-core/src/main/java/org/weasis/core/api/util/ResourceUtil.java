@@ -102,6 +102,7 @@ public class ResourceUtil {
     EXPORT_ANNOTATIONS("svg/action/exportAnnotations.svg"), // NON-NLS
     FILTER("svg/action/filter.svg"), // NON-NLS
     FLIP("svg/action/flip.svg"), // NON-NLS
+    FUZZY("svg/action/fuzzy.svg"), // NON-NLS
     HAND("svg/action/hand.svg"), // NON-NLS
     HELP("svg/action/help.svg"), // NON-NLS
     IMPORT_CD("svg/action/importCd.svg"), // NON-NLS
@@ -134,7 +135,6 @@ public class ResourceUtil {
     PRINT("svg/action/print.svg"), // NON-NLS
     PREVIOUS("svg/action/previous.svg"), // NON-NLS
     REDACT("svg/action/redact.svg"), // NON-NLS
-    REDACT_CLEAR("svg/action/redactClear.svg"), // NON-NLS
     REDACT_DEVICE("svg/action/redactDevice.svg"), // NON-NLS
     REDACT_SAVE("svg/action/redactSave.svg"), // NON-NLS
     RESET("svg/action/reset.svg"), // NON-NLS

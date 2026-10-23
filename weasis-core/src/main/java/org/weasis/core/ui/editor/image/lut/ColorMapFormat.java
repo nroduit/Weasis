@@ -33,6 +33,14 @@ public interface ColorMapFormat {
     throw new UnsupportedOperationException(description());
   }
 
+  /**
+   * What other software reading the exported file will not show of {@code map}, or null when the
+   * file renders the same everywhere; the editor shows it after an export.
+   */
+  default String exportNote(ColorMap map) {
+    return null;
+  }
+
   default boolean matches(Path file) {
     String name = file.getFileName().toString().toLowerCase(java.util.Locale.ROOT);
     return extensions().stream().anyMatch(ext -> name.endsWith("." + ext));

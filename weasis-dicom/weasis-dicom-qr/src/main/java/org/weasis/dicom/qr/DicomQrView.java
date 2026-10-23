@@ -21,6 +21,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
@@ -44,6 +45,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeListener;
@@ -53,6 +55,7 @@ import javax.swing.tree.TreePath;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.util.DicomObjectUtil;
+import org.dcm4che3.net.QueryOption;
 import org.dcm4che3.net.Status;
 import org.dcm4che3.net.service.QueryRetrieveLevel;
 import org.slf4j.Logger;
@@ -70,9 +73,12 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.tp.raven.datetime.DatePicker;
@@ -106,6 +112,7 @@ import org.weasis.dicom.param.DicomParam;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.tool.DicomListener;
+import org.weasis.dicom.web.HttpWarning;
 
 public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
@@ -221,6 +228,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final JComboBox<AbstractDicomNode> comboDestinationNode = new JComboBox<>();
   private final JComboBox<SearchParameters> templateComboBox = new JComboBox<>();
   private final JTextField tfSearch = new JTextField(25);
+  private final JToggleButton fuzzyButton =
+      new JToggleButton(ResourceUtil.getIcon(ActionIcon.FUZZY));
+  private final JLabel searchWarning = new JLabel();
   private final RetrieveTree tree = new RetrieveTree();
 
   private final JComboBox<TagW> comboTags =
@@ -444,7 +454,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
         progressBar,
         GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
-        searchBtn);
+        searchBtn,
+        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
+        searchWarning);
   }
 
   public JPanel getSearchPanel() {
@@ -508,6 +520,14 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                 Messages.getString("DicomQrView.tips_question"));
     tfSearch.setToolTipText(buf);
     tfSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+    fuzzyButton.setToolTipText(Messages.getString("DicomQrView.fuzzy_tip"));
+    fuzzyButton.setFocusable(false);
+    fuzzyButton.putClientProperty(
+        FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+    // Fuzzy matching sits inside the field, as a toggle of how the value is matched
+    tfSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, fuzzyButton);
+    comboTags.addItemListener(_ -> updateFuzzyOption());
+    updateFuzzyOption();
     JPanel panel2 =
         GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, comboTags, tfSearch);
 
@@ -573,6 +593,46 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     JPanel searchPanel = GuiUtils.getVerticalBoxLayoutPanel(panel1, panel2, panel3);
     searchPanel.setBorder(GuiUtils.getEmptyBorder(ITEM_SEPARATOR));
     return searchPanel;
+  }
+
+  /** Fuzzy matching only applies to Person Name values (PS3.4 C.2.2.2.1.1). */
+  private void updateFuzzyOption() {
+    TagW tag = (TagW) comboTags.getSelectedItem();
+    fuzzyButton.setEnabled(tag != null && tag.getType() == TagType.DICOM_PERSON_NAME);
+  }
+
+  private boolean isFuzzyMatching() {
+    return fuzzyButton.isEnabled() && fuzzyButton.isSelected();
+  }
+
+  /** Shows a short warning next to the search button, with the full messages in the tooltip. */
+  private void showSearchWarning(boolean fuzzyRejected, List<HttpWarning> warnings) {
+    List<String> lines = new ArrayList<>();
+    String text = null;
+    if (fuzzyRejected) {
+      text = Messages.getString("DicomQrView.fuzzy_literal");
+      lines.add(Messages.getString("DicomQrView.fuzzy_unsupported"));
+    } else if (!warnings.isEmpty()) {
+      text = Messages.getString("DicomQrView.server_warning");
+    }
+    warnings.forEach(w -> lines.add(w.text()));
+    searchWarning.setText(text);
+    searchWarning.setToolTipText(
+        lines.isEmpty()
+            ? null
+            : lines.stream()
+                .map(DicomQrView::escapeHtml)
+                .collect(Collectors.joining("<br>", "<html>", "</html>"))); // NON-NLS
+  }
+
+  private static String escapeHtml(String s) {
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"); // NON-NLS
+  }
+
+  /** Whether a warning of the origin server reports that fuzzy matching was not performed. */
+  private static boolean isFuzzyRejected(List<HttpWarning> warnings) {
+    return warnings.stream()
+        .anyMatch(w -> w.text().toLowerCase(Locale.ROOT).contains("fuzzy")); // NON-NLS
   }
 
   private void applyParametersFromSelected() {
@@ -669,6 +729,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private void dicomQuery() {
     stopCurrentProcess();
+    showSearchWarning(false, List.of());
+    boolean fuzzy = isFuzzyMatching();
     SearchParameters searchParams = buildCurrentSearchParameters("custom"); // NON-NLS
     List<DicomParam> p = searchParams.getParameters();
 
@@ -724,6 +786,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       connectOptions.setConnectTimeout(3000);
       connectOptions.setAcceptTimeout(5000);
       params.setConnectOptions(connectOptions);
+      if (fuzzy) {
+        params.setQueryOptions(EnumSet.of(QueryOption.FUZZY));
+      }
 
       Runnable runnable =
           () -> {
@@ -747,6 +812,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                     progressBar.setEnabled(false);
                     progressBar.setIndeterminate(false);
                     displayResult(state);
+                    showSearchWarning(
+                        state.getRejectedQueryOptions().contains(QueryOption.FUZZY), List.of());
                     if (state.getStatus() != Status.Success) {
                       int limit = (Integer) limitSpinner.getValue();
                       String message =
@@ -791,6 +858,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       this.retrieveNode = node;
       // Detached model: the query results feed this dialog's own tree, not the DICOM Explorer
       RsQuery rsquery = new RsQuery(new DicomModel(), props, p, authMethod, node.getHeaders());
+      rsquery.setFuzzyMatching(fuzzy);
       Runnable runnable =
           () -> {
             try {
@@ -808,6 +876,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                       tree.setRetrieveTreeModel(new RetrieveTreeModel(rsquery.getDicomModel()));
                       tree.revalidate();
                       tree.repaint();
+                      List<HttpWarning> warnings = rsquery.getWarnings();
+                      showSearchWarning(fuzzy && isFuzzyRejected(warnings), warnings);
                     });
               }
             } catch (Exception e) {

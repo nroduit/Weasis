@@ -55,6 +55,7 @@ import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
 import org.weasis.dicom.web.MultipartConstants;
 import org.weasis.dicom.web.MultipartConstants.DicomContentType;
+import org.weasis.dicom.web.SearchResponse;
 
 public class RsQueryResult extends AbstractQueryResult {
   private static final Logger LOGGER = LoggerFactory.getLogger(RsQueryResult.class);
@@ -165,10 +166,24 @@ public class RsQueryResult extends AbstractQueryResult {
 
   public static List<Attributes> parseJSON(
       String url, AuthMethod authMethod, URLParameters urlParameters) throws Exception {
+    return search(url, authMethod, urlParameters).matches();
+  }
+
+  /**
+   * Runs a QIDO-RS query, with the {@code Warning} header of the origin server (PS3.18 §8.6.1.2),
+   * e.g. when fuzzy matching was requested but literal matching was performed.
+   */
+  public static SearchResponse search(
+      String url, AuthMethod authMethod, URLParameters urlParameters) throws Exception {
     List<Attributes> items = new ArrayList<>();
+    String warning;
     try (HttpStream response = HttpUtils.getHttpResponse(url, urlParameters, authMethod);
         InputStreamReader instream =
             new InputStreamReader(response.getInputStream(), StandardCharsets.UTF_8)) {
+      warning = response.getHeaderField("Warning"); // NON-NLS
+      if (warning != null) {
+        LOGGER.warn("QIDO-RS {}: {}", url, warning);
+      }
       int code = response.getResponseCode();
       if (code == HttpURLConnection.HTTP_OK || code == HttpURLConnection.HTTP_PARTIAL) {
         JSONReader reader = new JSONReader(Json.createParser(instream));
@@ -183,7 +198,7 @@ public class RsQueryResult extends AbstractQueryResult {
         authMethod.getToken();
       }
     }
-    return items;
+    return new SearchResponse(items, warning == null ? List.of() : List.of(warning));
   }
 
   /**

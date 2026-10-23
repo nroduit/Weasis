@@ -9,19 +9,16 @@
  */
 package org.weasis.dicom.qr;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.StringJoiner;
 import java.util.concurrent.Callable;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -39,6 +36,9 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.rs.RsQueryParams;
 import org.weasis.dicom.explorer.rs.RsQueryResult;
 import org.weasis.dicom.param.DicomParam;
+import org.weasis.dicom.web.HttpWarning;
+import org.weasis.dicom.web.QidoQuery;
+import org.weasis.dicom.web.SearchResponse;
 
 public class RsQuery implements Callable<Boolean> {
   private static final Logger LOGGER = LoggerFactory.getLogger(RsQuery.class);
@@ -48,6 +48,8 @@ public class RsQuery implements Callable<Boolean> {
   private final Map<String, String> queryHeaders;
   protected final List<DicomParam> queries;
   private final AuthMethod authMethod;
+  private boolean fuzzyMatching;
+  private volatile List<HttpWarning> warnings = List.of();
 
   public RsQuery(
       DicomModel dicomModel,
@@ -78,57 +80,59 @@ public class RsQuery implements Callable<Boolean> {
     return properties.getProperty(RsQueryParams.P_DICOMWEB_URL);
   }
 
+  /** Requests fuzzy matching of Person Name values (PS3.18 §8.3.4.2). */
+  public void setFuzzyMatching(boolean fuzzyMatching) {
+    this.fuzzyMatching = fuzzyMatching;
+  }
+
+  /** The warnings of the origin server on the last query, e.g. a literal matching fallback. */
+  public List<HttpWarning> getWarnings() {
+    return warnings;
+  }
+
   @Override
   public Boolean call() throws Exception {
-    StringBuilder buf = new StringBuilder(getBaseUrl());
-    buf.append("/studies?"); // NON-NLS
-
-    for (int i = 0; i < queries.size(); i++) {
-      DicomParam query = queries.get(i);
-      StringJoiner joiner = new StringJoiner(",");
-      if (query.getValues() != null) {
-        for (String v : query.getValues()) {
-          if (StringUtil.hasText(v)) {
-            String encode = URLEncoder.encode(v, StandardCharsets.UTF_8);
-            joiner.add(encode);
-          }
-        }
-      }
-      String value = joiner.toString();
-      if (StringUtil.hasText(value)) {
-        buf.append(TagUtils.toHexString(query.getTag()));
-        buf.append("=");
-        if (Tag.PatientID == query.getTag()) {
-          // IssuerOfPatientID filter ( syntax like in HL7 with extension^^^root)
-          int beginIndex = value.indexOf("^^^");
-          String patientVal = beginIndex <= 0 ? value : value.substring(0, beginIndex);
-          buf.append(patientVal);
-          if (beginIndex > 0) {
-            buf.append("&00100021=");
-            buf.append(value.substring(beginIndex + 3));
-          }
-        } else {
-          buf.append(value);
-        }
-        if (i + 1 < queries.size()) {
-          buf.append("&");
-        }
-      }
-    }
-    buildQueries(buf);
+    buildQueries(queryString(queries, fuzzyMatching));
     return true;
   }
 
-  public void buildQueries(StringBuilder buf) {
-    try {
-      buf.append(RsQueryResult.STUDY_QUERY);
-      buf.append(properties.getProperty(RsQueryParams.P_QUERY_EXT, ""));
-      buf.append(properties.getProperty(RsQueryParams.P_PAGE_EXT, ""));
+  /** The QIDO-RS matching keys of the parameters that have a value. */
+  static String queryString(List<DicomParam> queries, boolean fuzzyMatching) {
+    QidoQuery query = new QidoQuery().fuzzyMatching(fuzzyMatching);
+    for (DicomParam param : queries) {
+      String[] values = param.getValues();
+      if (values == null || Arrays.stream(values).noneMatch(StringUtil::hasText)) {
+        continue;
+      }
+      if (Tag.PatientID == param.getTag()) {
+        // IssuerOfPatientID filter (syntax like in HL7 with extension^^^root)
+        String value = values[0];
+        int beginIndex = value.indexOf("^^^");
+        if (beginIndex > 0) {
+          query.match(Tag.PatientID, value.substring(0, beginIndex));
+          query.match(Tag.IssuerOfPatientID, value.substring(beginIndex + 3));
+          continue;
+        }
+      }
+      query.match(param.getTag(), values);
+    }
+    return query.toQueryString();
+  }
 
+  private void buildQueries(String queryString) {
+    StringBuilder buf = new StringBuilder(getBaseUrl());
+    buf.append("/studies?"); // NON-NLS
+    buf.append(queryString);
+    String includeFields = RsQueryResult.STUDY_QUERY;
+    buf.append(queryString.isEmpty() ? includeFields.substring(1) : includeFields);
+    buf.append(properties.getProperty(RsQueryParams.P_QUERY_EXT, ""));
+    buf.append(properties.getProperty(RsQueryParams.P_PAGE_EXT, ""));
+    try {
       LOGGER.debug(RsQueryResult.QIDO_REQUEST, buf);
-      List<Attributes> studies =
-          RsQueryResult.parseJSON(buf.toString(), authMethod, new URLParameters(queryHeaders));
-      for (Attributes studyDataSet : studies) {
+      SearchResponse response =
+          RsQueryResult.search(buf.toString(), authMethod, new URLParameters(queryHeaders));
+      warnings = HttpWarning.parse(response.warnings());
+      for (Attributes studyDataSet : response.matches()) {
         fillSeries(studyDataSet);
       }
     } catch (Exception e) {

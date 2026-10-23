@@ -67,7 +67,6 @@ class IdentityMaskSessionTest {
             Map.of(),
             Map.of(TagCategory.DIRECT_ID, AnonymizationAction.REMOVE),
             Map.of(),
-            false,
             false);
 
     IdentityMask.setSessionMasking(true, unknown);

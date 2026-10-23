@@ -44,6 +44,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.Redaction;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.main.InterestBadge;
@@ -501,7 +502,9 @@ public record ThumbnailManager(
     if (thumbnail == null) {
       int thumbnailSize = SeriesThumbnail.getThumbnailSizeFromPreferences();
       Function<String, Set<ResourceIconPath>> drawIcons = HiddenSeriesManager::getRelatedIcons;
-      thumbnail = new SeriesThumbnail(dicomSeries, thumbnailSize, drawIcons);
+      thumbnail =
+          new SeriesThumbnail(
+              dicomSeries, thumbnailSize, drawIcons, Redaction.thumbnailOps(dicomSeries));
       InterestBadge.attach(thumbnail, dicomSeries);
     }
     return thumbnail;

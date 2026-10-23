@@ -46,7 +46,7 @@ class MaskingModelRegistryWriteTest {
   private static MaskingProfile profile(String id, AnonymizationAction directId) {
     Map<TagCategory, AnonymizationAction> actions = new EnumMap<>(TagCategory.class);
     actions.put(TagCategory.DIRECT_ID, directId);
-    return new MaskingProfile(id, id, Map.of(), actions, Map.of(), false, true);
+    return new MaskingProfile(id, id, Map.of(), actions, Map.of(), true);
   }
 
   @Test

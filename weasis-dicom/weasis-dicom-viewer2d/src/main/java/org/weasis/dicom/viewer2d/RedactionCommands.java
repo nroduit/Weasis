@@ -223,7 +223,7 @@ public class RedactionCommands implements CommandExtension {
                 if (value == Scope.SERIES) {
                   Redaction.unsuppressFrames(view.getSeries());
                 }
-                refreshViews(view, value);
+                refreshViews(view);
                 return regions(resolved);
               }));
     }
@@ -244,7 +244,7 @@ public class RedactionCommands implements CommandExtension {
                 Target resolved = target.withImage();
                 DefaultView2d<DicomImageElement> view = resolved.view();
                 Redaction.reset(view.getImage(), view.getSeries(), scope.scope);
-                refreshViews(view, scope.scope);
+                refreshViews(view);
                 return regions(resolved);
               }));
     }
@@ -410,7 +410,7 @@ public class RedactionCommands implements CommandExtension {
                   throw new IllegalStateException("This entry has no region for this image");
                 }
                 Redaction.apply(view.getImage(), view.getSeries(), scope.scope, mask);
-                refreshViews(view, scope.scope);
+                refreshViews(view);
                 return regions(resolved);
               }));
     }
@@ -647,13 +647,12 @@ public class RedactionCommands implements CommandExtension {
   }
 
   /**
-   * The thumbnail is built outside the view pipeline and cached, so a series change has to say so.
+   * The thumbnail is built outside the view pipeline and cached, so a change has to say so: an
+   * image change counts too, since the thumbnail shows the middle image with its own regions.
    */
-  private static void refreshViews(DefaultView2d<DicomImageElement> view, Scope scope) {
+  private static void refreshViews(DefaultView2d<DicomImageElement> view) {
     RedactionToolBar.refreshOpenViews();
-    if (scope == Scope.SERIES) {
-      Redaction.refreshThumbnail(view.getSeries());
-    }
+    Redaction.refreshThumbnail(view.getSeries());
   }
 
   private static JsonObjectBuilder describe(PixelMask mask, MaskingModelRegistry registry) {

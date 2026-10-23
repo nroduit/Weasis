@@ -24,9 +24,11 @@ import java.awt.image.RenderedImage;
 import java.io.File;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -50,6 +52,7 @@ import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.ui.editor.image.export.CaptureFileName;
 import org.weasis.core.ui.editor.image.export.CaptureScope;
 import org.weasis.core.ui.editor.image.export.FrameGrabber;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -60,6 +63,11 @@ import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageIOHandler;
 
+/**
+ * One image of the selected view, of the whole layout or of the application window. The view can
+ * also be exported as its original image, without the display pipeline. A layout or window capture
+ * runs once the dialog is closed and its shade has faded, so neither shows in the image.
+ */
 public class ScreenshotDialog<I extends ImageElement> extends JDialog {
   public static final String P_LAST_DIR = "screenshot.last.dir";
   static final String DICOM = "DICOM"; // NON-NLS
@@ -94,6 +102,8 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
   }
 
   private final ViewCanvas<I> viewCanvas;
+  private final transient ImageViewerPlugin<?> container;
+  private final JComboBox<CaptureScope> scopeCombo;
   private final ButtonGroup buttonGroup = new ButtonGroup();
   private final JRadioButton viewRadio = new JRadioButton(Messages.getString("current.view"));
   private final JRadioButton imageRadio = new JRadioButton(Messages.getString("original.image"));
@@ -118,8 +128,14 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
       new JLabel(Messages.getString("size") + " (%)" + StringUtil.COLON);
   private final JSpinner spinner = new JSpinner();
   private final JLabel labelSizePix = new JLabel();
+  private transient Runnable deferredCapture;
 
   public ScreenshotDialog(Window parent, String title, ViewCanvas<I> viewCanvas) {
+    this(parent, title, viewCanvas, null);
+  }
+
+  public ScreenshotDialog(
+      Window parent, String title, ViewCanvas<I> viewCanvas, ImageViewerPlugin<?> container) {
     super(parent, title, ModalityType.APPLICATION_MODAL);
     setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     spinner.setModel(new SpinnerNumberModel(100, 5, 200, 5));
@@ -128,6 +144,8 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
         .addChangeListener(
             e -> setImageSize((Integer) ((SpinnerNumberModel) e.getSource()).getValue()));
     this.viewCanvas = Objects.requireNonNull(viewCanvas);
+    this.container = container;
+    this.scopeCombo = new JComboBox<>(CaptureScope.available(viewCanvas, container));
     this.displayProfile = new DisplayProfileSelector(() -> viewCanvas);
     initComponents();
     pack();
@@ -159,6 +177,13 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
 
     setImageSize(100);
     boolean dicom = viewCanvas.getPanner() == null;
+    scopeCombo.setSelectedItem(CaptureScope.VIEW);
+    scopeCombo.addActionListener(_ -> updateScope());
+    JLabel scopeLabel = new JLabel(Messages.getString("capture.scope") + StringUtil.COLON);
+    scopeLabel.setLabelFor(scopeCombo);
+    panel.add(
+        GuiUtils.getFlowLayoutPanel(
+            FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, scopeLabel, scopeCombo));
     if (isView2d()) {
       panel.add(
           GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, viewRadio));
@@ -174,7 +199,13 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     JButton clipButton = new JButton(Messages.getString("clipboard"));
     clipButton.addActionListener(
         e -> {
-          if (!isView2d()) {
+          if (!isViewScope()) {
+            captureAfterClose(
+                captured ->
+                    Toolkit.getDefaultToolkit()
+                        .getSystemClipboard()
+                        .setContents(ViewTransferHandler.transferable(captured), null));
+          } else if (!isView2d()) {
             BufferedImage captured = captureDisplayed();
             if (captured != null) {
               Toolkit.getDefaultToolkit()
@@ -217,10 +248,15 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
           PlanarImage result = null;
           // What is painted holds the values sent to the display; a rendered export is sRGB
           IccProfile profile = null;
-          if (!isView2d() || viewRadio.isSelected()) {
+          if (!isViewScope() || !isView2d() || viewRadio.isSelected()) {
             profile = IccImageFiles.displayedProfile().orElse(null);
           }
-          if (!isView2d()) {
+          if (!isViewScope()) {
+            IccProfile displayed = profile;
+            captureAfterClose(
+                captured -> saveImageFile(ImageConversion.toMat(captured), false, displayed));
+            return;
+          } else if (!isView2d()) {
             BufferedImage captured = captureDisplayed();
             result = captured == null ? null : ImageConversion.toMat(captured);
           } else if (viewRadio.isSelected()) {
@@ -270,10 +306,60 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     saveButton.addActionListener(evt -> doClose());
     panel.add(
         GuiUtils.getFlowLayoutPanel(
-            FlowLayout.TRAILING, BLOCK_SEPARATOR, ITEM_SEPARATOR_LARGE, saveButton, clipButton));
+            FlowLayout.TRAILING,
+            BLOCK_SEPARATOR,
+            ITEM_SEPARATOR_LARGE,
+            GuiUtils.createHelpButton("capture/#screenshot"), // NON-NLS
+            saveButton,
+            clipButton));
     panel.add(GuiUtils.boxYLastElement(ITEM_SEPARATOR));
 
     this.setContentPane(panel);
+    updateScope();
+  }
+
+  private CaptureScope getScope() {
+    return (CaptureScope) scopeCombo.getSelectedItem();
+  }
+
+  private boolean isViewScope() {
+    return getScope() == CaptureScope.VIEW;
+  }
+
+  /** A layout or the window is only captured as displayed: the original image does not apply. */
+  private void updateScope() {
+    boolean view = isViewScope();
+    if (!view) {
+      viewRadio.setSelected(true);
+    }
+    viewRadio.setEnabled(view);
+    imageRadio.setEnabled(view);
+    setImageRadioAction(view && imageRadio.isSelected());
+    displayProfile.setEnabled(view && !imageRadio.isSelected());
+  }
+
+  /**
+   * Closes the dialog and leaves the capture to {@link #showDialog}, which runs it once the shade
+   * over the window has faded.
+   */
+  private void captureAfterClose(Consumer<BufferedImage> target) {
+    CaptureScope scope = getScope();
+    MaskingProfile profile = maskingProfile.getSelectedProfile();
+    deferredCapture =
+        () -> {
+          FrameGrabber grabber = new FrameGrabber(scope, viewCanvas, container, profile, 1.0);
+          grabber.prepare();
+          BufferedImage captured;
+          try {
+            captured = grabber.grab();
+          } finally {
+            grabber.release();
+          }
+          if (captured != null) {
+            target.accept(captured);
+          }
+        };
+    doClose();
   }
 
   /**
@@ -327,6 +413,8 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
       fileChooser.addChoosableFileFilter(
           new FileNameExtensionFilter(Format.TIFF.title, Format.TIFF.extension));
       fileChooser.setFileFilter(filter);
+      // Without an extension, the one of the chosen filter is appended below
+      fileChooser.setSelectedFile(new File(CaptureFileName.of("screenshot"))); // NON-NLS
 
       if (fileChooser.showSaveDialog(null) == SystemFileChooser.APPROVE_OPTION
           && fileChooser.getSelectedFile() != null) {
@@ -421,8 +509,16 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
           new ScreenshotDialog<>(
               SwingUtilities.getWindowAncestor(selView.getJComponent()),
               ActionW.EXPORT_VIEW.getTitle(),
-              selView);
-      ColorLayerUI.showCenterScreen(dialog, layer);
+              selView,
+              selView.getEventManager().getSelectedView2dContainer());
+      ColorLayerUI.showCenterScreen(
+          dialog,
+          layer,
+          () -> {
+            if (dialog.deferredCapture != null) {
+              dialog.deferredCapture.run();
+            }
+          });
     }
   }
 }

@@ -10,6 +10,8 @@
 package org.weasis.dicom.viewer2d.pref;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -24,7 +26,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -32,7 +33,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.UIManager;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import net.miginfocom.swing.MigLayout;
 import org.dcm4che3.data.Tag;
@@ -229,11 +229,11 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
     if (registry.isLocked()) {
       return;
     }
-    JFileChooser chooser = new JFileChooser();
+    SystemFileChooser chooser = new SystemFileChooser();
     chooser.setFileFilter(
         new FileNameExtensionFilter(
             Messages.getString("DeviceMaskPrefView.files"), "json", "yml", "yaml")); // NON-NLS
-    if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+    if (chooser.showOpenDialog(this) != SystemFileChooser.APPROVE_OPTION) {
       return;
     }
     Path file = chooser.getSelectedFile().toPath();
@@ -307,9 +307,9 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
       return;
     }
     boolean karnak = format == 1;
-    JFileChooser chooser = new JFileChooser();
+    SystemFileChooser chooser = new SystemFileChooser();
     chooser.setSelectedFile(new File(karnak ? "karnak-masks.yml" : "deviceMasks.json")); // NON-NLS
-    if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+    if (chooser.showSaveDialog(this) != SystemFileChooser.APPROVE_OPTION) {
       return;
     }
     Path file = chooser.getSelectedFile().toPath();

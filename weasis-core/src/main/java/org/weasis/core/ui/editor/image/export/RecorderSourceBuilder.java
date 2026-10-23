@@ -82,6 +82,11 @@ public class RecorderSourceBuilder implements FrameSourceBuilder {
   }
 
   @Override
+  public String helpTopic() {
+    return "capture/#record"; // NON-NLS
+  }
+
+  @Override
   public String defaultFileName() {
     return "recording"; // NON-NLS
   }
