@@ -132,9 +132,10 @@ public final class UICore {
   private final HashMap<String, WProperties> pluginPersistenceMap;
   private final File propsFile;
 
-  private static final class Holder {
-    private static final UICore INSTANCE = new UICore();
-  }
+  // Not a holder class: a failed initializer, e.g. asked for before the main window publishes its
+  // configuration, would leave the class unusable for the life of the JVM
+  private static volatile UICore instance;
+  private static boolean creating;
 
   /** Do not instantiate UICore, get the singleton service from GuiUtils.getUICore() */
   private UICore() {
@@ -382,12 +383,31 @@ public final class UICore {
   }
 
   /**
-   * Thread safe singleton instance.
+   * Thread safe singleton instance, created on first use. A creation that fails is not kept: the
+   * next call tries again.
    *
    * @return a thread safe singleton instance with a lazy initialization.
+   * @throws IllegalStateException when the main window has not published its configuration yet
    */
   public static UICore getInstance() {
-    return Holder.INSTANCE;
+    UICore core = instance;
+    if (core != null) {
+      return core;
+    }
+    synchronized (UICore.class) {
+      if (instance == null) {
+        if (creating) {
+          throw new IllegalStateException("UICore is asked for while it is being created");
+        }
+        creating = true;
+        try {
+          instance = new UICore();
+        } finally {
+          creating = false;
+        }
+      }
+      return instance;
+    }
   }
 
   public WeasisPluginManager getPluginManager() {
