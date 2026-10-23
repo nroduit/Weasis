@@ -56,13 +56,17 @@ public class RedactionCommands {
           "clear", // NON-NLS
           "library"); // NON-NLS
 
+  private static final String NO_VIEW =
+      "No selected view that hides regions (a reconstruction never does)"; // NON-NLS
+
   /** The regions burned over the pixels of the selected view. */
   public void list() {
     GuiExecutor.execute(
         () -> {
-          ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+          ViewCanvas<DicomImageElement> view =
+              RedactionToolBar.redactable(EventManager.getInstance().getSelectedViewPane());
           if (view == null) {
-            print(error("No selected view"));
+            print(error(NO_VIEW));
             return;
           }
           Mask mask = Redaction.effective(view.getImage(), view.getSeries());
@@ -96,9 +100,10 @@ public class RedactionCommands {
     }
     GuiExecutor.execute(
         () -> {
-          ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+          ViewCanvas<DicomImageElement> view =
+              RedactionToolBar.redactable(EventManager.getInstance().getSelectedViewPane());
           if (view == null) {
-            print(error("No selected view"));
+            print(error(NO_VIEW));
             return;
           }
           Shape shape = shape(opt);
@@ -132,9 +137,10 @@ public class RedactionCommands {
     }
     GuiExecutor.execute(
         () -> {
-          ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+          ViewCanvas<DicomImageElement> view =
+              RedactionToolBar.redactable(EventManager.getInstance().getSelectedViewPane());
           if (view == null) {
-            print(error("No selected view"));
+            print(error(NO_VIEW));
             return;
           }
           Scope scope = scope(opt);
@@ -190,9 +196,10 @@ public class RedactionCommands {
   }
 
   private static JsonObject libraryMatch() {
-    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+    ViewCanvas<DicomImageElement> view =
+        RedactionToolBar.redactable(EventManager.getInstance().getSelectedViewPane());
     if (view == null) {
-      return error("No selected view");
+      return error(NO_VIEW);
     }
     MaskingModelRegistry registry = MaskingModelRegistry.getInstance();
     String profileId = registry.sessionProfile().id();
@@ -220,9 +227,10 @@ public class RedactionCommands {
     if (!opt.isSet("id")) { // NON-NLS
       return error("An id is required");
     }
-    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+    ViewCanvas<DicomImageElement> view =
+        RedactionToolBar.redactable(EventManager.getInstance().getSelectedViewPane());
     if (view == null) {
-      return error("No selected view");
+      return error(NO_VIEW);
     }
     MaskingModelRegistry registry = MaskingModelRegistry.getInstance();
     Optional<PixelMask> entry = registry.pixelMask(opt.get("id")); // NON-NLS
@@ -249,9 +257,10 @@ public class RedactionCommands {
   }
 
   private static JsonObject librarySave(Option opt) {
-    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+    ViewCanvas<DicomImageElement> view =
+        RedactionToolBar.redactable(EventManager.getInstance().getSelectedViewPane());
     if (view == null) {
-      return error("No selected view");
+      return error(NO_VIEW);
     }
     Mask mask = Redaction.effective(view.getImage(), view.getSeries());
     if (mask == null || mask.isEmpty()) {

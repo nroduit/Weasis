@@ -42,6 +42,7 @@ public class CurvedMprView extends View2d {
 
   public CurvedMprView(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
+    removeRedaction();
     getViewButtons().clear();
     ViewButton settings =
         new ViewButton(

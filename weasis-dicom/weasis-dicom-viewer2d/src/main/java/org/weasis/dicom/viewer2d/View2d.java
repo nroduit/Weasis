@@ -278,6 +278,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
   }
 
+  /**
+   * For a view showing reconstructed planes (MPR, curved MPR): redaction regions belong to the
+   * plane of the acquired images, which has the burned-in text. Stretched over another plane they
+   * would hide anatomy instead.
+   */
+  protected void removeRedaction() {
+    SimpleOpManager manager = imageLayer.getDisplayOpManager();
+    manager.getNode(RedactionOp.OP_NAME).ifPresent(manager::removeImageOperationAction);
+  }
+
   @Override
   protected void initActionWState() {
     super.initActionWState();

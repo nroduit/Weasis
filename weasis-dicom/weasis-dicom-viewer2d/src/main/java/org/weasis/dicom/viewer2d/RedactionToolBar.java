@@ -452,6 +452,16 @@ public class RedactionToolBar extends WtoolBar implements SeriesViewerListener {
   }
 
   private ViewCanvas<DicomImageElement> currentView() {
-    return eventManager.getSelectedViewPane();
+    return redactable(eventManager.getSelectedViewPane());
+  }
+
+  /**
+   * The view when it burns redaction regions, else null. A reconstruction (MPR) does not: its
+   * planes are not those the regions were drawn on, so nothing is shown or stored there.
+   */
+  static ViewCanvas<DicomImageElement> redactable(ViewCanvas<DicomImageElement> view) {
+    return view != null && view.getDisplayOpManager().getNode(RedactionOp.OP_NAME).isPresent()
+        ? view
+        : null;
   }
 }
