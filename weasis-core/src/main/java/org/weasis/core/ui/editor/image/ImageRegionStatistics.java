@@ -453,27 +453,36 @@ public class ImageRegionStatistics {
     return Collections.emptyList();
   }
 
+  /**
+   * The median of a histogram as a bin index: the bin of the middle entry, or the mean of the bins
+   * of the two middle entries when the count is even. Each bin holds one level (one value for
+   * integer images), so the median is a level of the region and never leaves [min, max].
+   *
+   * @param bin the entries per bin
+   * @param halfEntries half of the total entries
+   * @return the bin index of the median, 0 when the histogram does not hold that many entries
+   */
   public static double medianBin(final float[] bin, double halfEntries) {
     if (bin == null || bin.length < 1) {
       return 0.0;
-    } else {
-      double sumBin = 0.0;
-      double sum;
-      for (int i = 0; i < bin.length; i++) {
-        sum = sumBin + bin[i];
-        // Check if bin crosses halfTotal point
-        if (sum >= halfEntries) {
-          // Scale linearly across the bin
-          double dif = halfEntries - sumBin;
-          double frac = 0.0;
-          if (bin[i] > 0) {
-            frac = (dif) / bin[i];
-          }
-          return (i + frac);
-        }
-        sumBin = sum;
+    }
+    int lower = binOfRank(bin, Math.max(1.0, Math.ceil(halfEntries)));
+    int upper = binOfRank(bin, Math.floor(halfEntries) + 1.0);
+    if (lower < 0 || upper < 0) {
+      return 0.0;
+    }
+    return (lower + upper) / 2.0;
+  }
+
+  // The bin holding the entry of that rank (from 1), or -1 when there are fewer entries
+  private static int binOfRank(float[] bin, double rank) {
+    double sum = 0.0;
+    for (int i = 0; i < bin.length; i++) {
+      sum += bin[i];
+      if (sum >= rank) {
+        return i;
       }
     }
-    return 0.0;
+    return -1;
   }
 }

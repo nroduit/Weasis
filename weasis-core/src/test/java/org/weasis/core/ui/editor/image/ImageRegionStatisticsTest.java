@@ -67,13 +67,13 @@ class ImageRegionStatisticsTest {
   @Test
   void getStatistics_distributedHistogramProducesExpectedMeasures() {
     // Symmetric distribution over stored levels 0..6 (binFactor 1), identity modality LUT.
-    // sum=16; mean=48/16=3; m2=40 -> var=40/15, std=sqrt(40/15); median (from medianBin)=3.5.
+    // sum=16; mean=48/16=3; m2=40 -> var=40/15, std=sqrt(40/15); median (8th and 9th entries)=3.
     Map<Measurement, Double> s = statsFor(new float[] {1, 2, 3, 4, 3, 2, 1}, 0.0, 6.0, 0.0);
     assertEquals(16.0, s.get(IMAGE_PIXELS), EPS);
     assertEquals(0.0, s.get(IMAGE_MIN), EPS);
     assertEquals(6.0, s.get(IMAGE_MAX), EPS);
     assertEquals(3.0, s.get(IMAGE_MEAN), EPS);
-    assertEquals(3.5, s.get(IMAGE_MEDIAN), EPS);
+    assertEquals(3.0, s.get(IMAGE_MEDIAN), EPS);
     assertEquals(Math.sqrt(40.0 / 15.0), s.get(IMAGE_STD), 1.0e-6);
     assertEquals(0.0, s.get(IMAGE_SKEW), EPS); // symmetric -> zero skew
     assertTrue(Double.isFinite(s.get(IMAGE_KURTOSIS)));
@@ -87,7 +87,7 @@ class ImageRegionStatisticsTest {
     assertEquals(-1024.0, s.get(IMAGE_MIN), EPS);
     assertEquals(-1018.0, s.get(IMAGE_MAX), EPS);
     assertEquals(-1021.0, s.get(IMAGE_MEAN), EPS);
-    assertEquals(-1020.5, s.get(IMAGE_MEDIAN), EPS);
+    assertEquals(-1021.0, s.get(IMAGE_MEDIAN), EPS);
   }
 
   @Test
@@ -129,48 +129,48 @@ class ImageRegionStatisticsTest {
   }
 
   @Test
-  void medianBin_singleBinReturnsLinearInterpolationFraction() {
-    // halfEntries lands at 50% of the bin's mass -> fractional position 0.5 within bin 0.
-    assertEquals(0.5, ImageRegionStatistics.medianBin(new float[] {10.0f}, 5.0), EPS);
+  void medianBin_singleBinIsThatBin() {
+    // A uniform region (e.g. all zero) has its median at its only level, not half a bin above.
+    assertEquals(0.0, ImageRegionStatistics.medianBin(new float[] {10.0f}, 5.0), EPS);
   }
 
   @Test
-  void medianBin_singleBinHalfEntriesAtBinEdgeReturnsFullBin() {
-    // halfEntries equals the bin's total mass — interpolation reaches the right edge of bin 0.
-    assertEquals(1.0, ImageRegionStatistics.medianBin(new float[] {10.0f}, 10.0), EPS);
+  void medianBin_oddCountTakesTheMiddleEntry() {
+    // [3, 1, 3], 7 entries: the 4th is in bin 1.
+    assertEquals(1.0, ImageRegionStatistics.medianBin(new float[] {3.0f, 1.0f, 3.0f}, 3.5), EPS);
   }
 
   @Test
-  void medianBin_twoBinsHalfEntriesExactlyAtBoundary() {
-    // [5, 5], halfEntries=5: i=0 sum=5 ≥ 5 → dif=5, frac=5/5=1.0 → returns 1.0
-    assertEquals(1.0, ImageRegionStatistics.medianBin(new float[] {5.0f, 5.0f}, 5.0), EPS);
-  }
-
-  @Test
-  void medianBin_twoBinsHalfEntriesInsideSecondBin() {
-    // [5, 5], halfEntries=6: dif=1, frac=1/5=0.2 → returns 1.2
-    assertEquals(1.2, ImageRegionStatistics.medianBin(new float[] {5.0f, 5.0f}, 6.0), EPS);
+  void medianBin_evenCountSplitBetweenTwoBinsAveragesThem() {
+    // [5, 5]: the 5th entry is in bin 0, the 6th in bin 1.
+    assertEquals(0.5, ImageRegionStatistics.medianBin(new float[] {5.0f, 5.0f}, 5.0), EPS);
   }
 
   @Test
   void medianBin_symmetricHistogramReturnsCenter() {
-    // [1,2,3,4,3,2,1], total=16, halfEntries=8: cumulative reaches 6 at idx 2, then idx 3 (sum=10).
-    // dif = 8 - 6 = 2, frac = 2/4 = 0.5 → returns 3.5 (true center of the symmetric distribution).
-    assertEquals(3.5, ImageRegionStatistics.medianBin(new float[] {1, 2, 3, 4, 3, 2, 1}, 8.0), EPS);
+    // [1,2,3,4,3,2,1], 16 entries: the 8th and 9th are both in bin 3, the center.
+    assertEquals(3.0, ImageRegionStatistics.medianBin(new float[] {1, 2, 3, 4, 3, 2, 1}, 8.0), EPS);
   }
 
   @Test
   void medianBin_asymmetricHistogramShiftsToHeavySide() {
-    // Heavy mass in bin 0: 10 entries; bin 1 has 2. halfEntries=6 → bin 0 carries it.
-    // dif=6, frac=6/10=0.6 → returns 0.6
-    assertEquals(0.6, ImageRegionStatistics.medianBin(new float[] {10.0f, 2.0f}, 6.0), EPS);
+    // Heavy mass in bin 0: 10 entries; bin 1 has 2. The 6th and 7th entries are in bin 0.
+    assertEquals(0.0, ImageRegionStatistics.medianBin(new float[] {10.0f, 2.0f}, 6.0), EPS);
   }
 
   @Test
   void medianBin_leadingZeroBinsAreSkipped() {
-    // [0, 0, 10], halfEntries=5 → cumulative is 0,0,10; halfway reached in bin 2.
-    // dif = 5 - 0 = 5, frac = 5/10 = 0.5 → returns 2.5
-    assertEquals(2.5, ImageRegionStatistics.medianBin(new float[] {0, 0, 10.0f}, 5.0), EPS);
+    // [0, 0, 10]: every entry is in bin 2.
+    assertEquals(2.0, ImageRegionStatistics.medianBin(new float[] {0, 0, 10.0f}, 5.0), EPS);
+  }
+
+  @Test
+  void medianBin_takesTheMiddleEntriesAcrossEmptyBins() {
+    // Even count split in two clusters: the mean of the 4th (bin 1) and 5th (bin 5) entries.
+    // Odd count: the 5th entry (bin 1), whatever the empty bins after it.
+    float[] bin = {0, 4, 0, 0, 0, 4, 0};
+    assertEquals(3.0, ImageRegionStatistics.medianBin(bin, 4.0), EPS);
+    assertEquals(1.0, ImageRegionStatistics.medianBin(new float[] {0, 5, 0, 4}, 4.5), EPS);
   }
 
   @Test
@@ -182,15 +182,13 @@ class ImageRegionStatisticsTest {
 
   @Test
   void medianBin_zeroHalfEntriesReturnsZero() {
-    // halfEntries=0 satisfies sum>=0 at idx 0; dif=0, frac=0/10=0 → returns 0.
+    // halfEntries=0: the first entry, in bin 0.
     assertEquals(0.0, ImageRegionStatistics.medianBin(new float[] {10.0f}, 0.0), EPS);
   }
 
   @Test
   void medianBin_zeroMassBinDoesNotDivideByZero() {
-    // Reaching the half-entries point inside a zero-mass bin: code uses frac=0 fallback
-    // when bin value is not > 0, avoiding division-by-zero -> NaN propagation.
-    // [5, 0, 5], halfEntries=5: i=0 sum=5 ≥ 5 → dif=5, frac=5/5=1.0 → returns 1.0
+    // [5, 0, 5]: the 5th entry is in bin 0, the 6th in bin 2; the empty bin adds nothing.
     assertEquals(1.0, ImageRegionStatistics.medianBin(new float[] {5.0f, 0.0f, 5.0f}, 5.0), EPS);
   }
 
@@ -199,8 +197,8 @@ class ImageRegionStatisticsTest {
     // CT-bone-window-like distribution: small left tail, peak in the middle, light right tail.
     // Total mass = 100, halfEntries=50.
     // Cumulative: 5, 15, 35, 65, 85, 95, 100
-    // Half (50) crosses at bin 3: dif=50-35=15, frac=15/30=0.5 → returns 3.5
+    // The 50th and 51st entries are both in bin 3.
     float[] bin = {5, 10, 20, 30, 20, 10, 5};
-    assertEquals(3.5, ImageRegionStatistics.medianBin(bin, 50.0), EPS);
+    assertEquals(3.0, ImageRegionStatistics.medianBin(bin, 50.0), EPS);
   }
 }
