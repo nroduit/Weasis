@@ -55,6 +55,24 @@ class DicomCalibrationRestoreTest {
   }
 
   @Test
+  void the_magnification_correction_leaves_the_imager_pixel_spacing_at_the_detector() {
+    double[] imager = {0.1, 0.1};
+    DcmMediaReader reader = mock(DcmMediaReader.class);
+    when(reader.getTagValue(TagD.get(Tag.Modality))).thenReturn("MG"); // NON-NLS
+    when(reader.getTagValue(TagD.get(Tag.ImagerPixelSpacing))).thenReturn(imager);
+    when(reader.getTagValue(TagD.get(Tag.EstimatedRadiographicMagnificationFactor)))
+        .thenReturn(1.25);
+    DicomImageElement image = new DicomImageElement(reader, 0);
+    image.initPixelConfiguration();
+    image.initPixelConfiguration(); // again, as a calibration restore does
+    assertAll(
+        () -> assertEquals(0.08, image.getPixelSize(), 1e-9, "corrected once"),
+        () -> assertEquals("Magnified", image.getPixelSizeCalibrationDescription()), // NON-NLS
+        () -> assertEquals(0.1, imager[0], 1e-9, "the tag value is not touched"),
+        () -> assertEquals(0.1, imager[1], 1e-9));
+  }
+
+  @Test
   void a_file_without_spacing_goes_back_to_pixels() {
     DicomImageElement image = image(null, null);
     calibrateByHand(image);
