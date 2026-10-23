@@ -90,6 +90,8 @@ public record HangingPlan(
    * @param viewer the viewer the display set asks for
    * @param reasons the rules that selected the series, or what an empty cell expected
    * @param alternatives the other candidates of the image set, best first
+   * @param study the Study Instance UID of the series, null when unknown or for an empty cell
+   * @param prior 0 for the current study, else the rank of the prior study (1 the most recent)
    */
   public record CellPlan(
       int cell,
@@ -101,10 +103,44 @@ public record HangingPlan(
       double score,
       ViewerType viewer,
       List<String> reasons,
-      List<Alternative> alternatives) {
+      List<Alternative> alternatives,
+      String study,
+      int prior) {
     public CellPlan {
       reasons = reasons == null ? List.of() : List.copyOf(reasons);
       alternatives = alternatives == null ? List.of() : List.copyOf(alternatives);
+    }
+
+    /** A cell of the current study, or whose study is not known. */
+    public CellPlan(
+        int cell,
+        int displaySet,
+        String label,
+        int imageSet,
+        String series,
+        Match match,
+        double score,
+        ViewerType viewer,
+        List<String> reasons,
+        List<Alternative> alternatives) {
+      this(
+          cell,
+          displaySet,
+          label,
+          imageSet,
+          series,
+          match,
+          score,
+          viewer,
+          reasons,
+          alternatives,
+          null,
+          0);
+    }
+
+    /** Whether the series comes from a prior study. */
+    public boolean isPrior() {
+      return prior > 0;
     }
 
     public boolean isEmpty() {
@@ -168,6 +204,12 @@ public record HangingPlan(
         }
         if (cell.series() != null) {
           c.add("series", cell.series()); // NON-NLS
+        }
+        if (cell.study() != null) {
+          c.add("study", cell.study()); // NON-NLS
+        }
+        if (cell.isPrior()) {
+          c.add("prior", cell.prior()); // NON-NLS
         }
         if (cell.viewer() != null) {
           c.add("viewer", cell.viewer().name().toLowerCase()); // NON-NLS

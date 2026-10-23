@@ -77,6 +77,16 @@ public interface ViewCanvas<E extends ImageElement>
         KeyListener {
 
   String ZOOM_TYPE_CMD = "zoom.type";
+
+  /** The {@link Justification} of the image in the view, null when centered. */
+  String JUSTIFY_CMD = "justify";
+
+  /**
+   * The id of a scale group: the views of one container sharing it show their images at the same
+   * physical scale under a zoom type, the largest that fits every image; null for none.
+   */
+  String SCALE_GROUP_CMD = "scale.group";
+
   int CENTER_POINTER = 1 << 1;
   int HIGHLIGHTED_POINTER = 1 << 2;
 

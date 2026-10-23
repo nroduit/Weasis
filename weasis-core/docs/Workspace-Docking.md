@@ -54,7 +54,7 @@ screen; the mapping says which roles are *fulfilled* by a monitor of their own.
 screen through the manager.
 
 A snapshot window carries its monitor (device id, bounds of the monitor and the role it
-answered to), its own bounds and its state (`normal`, `maximized`; `fullscreen` reserved).
+answered to), its own bounds and its state (`normal`, `maximized`, `fullscreen`).
 A restore places a window by role first: on the monitor of a fulfilled role, at the saved
 bounds when it is the same device, at the same relative place and size when the role moved
 to another monitor; else on its device when it still exists; else at its bounds when a

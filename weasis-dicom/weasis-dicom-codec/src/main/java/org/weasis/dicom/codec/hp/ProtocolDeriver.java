@@ -185,6 +185,16 @@ public final class ProtocolDeriver {
       if (view.invert()) {
         displaySet.setShowGrayscaleInverted("Y"); // NON-NLS
       }
+      if (view.justify() != null) {
+        displaySet
+            .getAttributes()
+            .setString(
+                Tag.DisplaySetHorizontalJustification, VR.CS, view.justify().horizontal().name());
+        displaySet
+            .getAttributes()
+            .setString(
+                Tag.DisplaySetVerticalJustification, VR.CS, view.justify().vertical().name());
+      }
       hp.addDisplaySet(displaySet);
       shown.add(displaySet);
       displaySets.put(
@@ -358,7 +368,8 @@ public final class ProtocolDeriver {
         null,
         null,
         zoom,
-        synch == null || "none".equalsIgnoreCase(synch) ? null : synch); // NON-NLS
+        synch == null || "none".equalsIgnoreCase(synch) ? null : synch, // NON-NLS
+        view.scaleGroup());
   }
 
   /** The id of a user protocol from its name: {@code user.<name>} in kebab case. */

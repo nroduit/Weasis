@@ -59,6 +59,7 @@ import org.weasis.dicom.codec.hp.HangingEngine;
 import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
 import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
 import org.weasis.dicom.codec.hp.HangingPlan;
+import org.weasis.dicom.codec.hp.PriorStudy;
 import org.weasis.dicom.codec.hp.ProtocolDeriver;
 import org.weasis.dicom.codec.hp.ProtocolJson;
 import org.weasis.dicom.codec.hp.SeriesFeatureExtractor;
@@ -269,7 +270,13 @@ public class HpCommands implements CommandExtension {
                         DicomModel model = parent.model();
                         MediaSeriesGroup study = parent.resolveStudy(model, studyUid);
                         List<StudySeries> series = studySeries(model, study);
-                        JsonObject result = match(candidates, study, series, protocolId);
+                        JsonObject result =
+                            match(
+                                candidates,
+                                study,
+                                series,
+                                priorsOf(model, study, series),
+                                protocolId);
                         return isJson() ? result.toString() : text(result);
                       })));
     }
@@ -278,12 +285,25 @@ public class HpCommands implements CommandExtension {
         List<Candidate> candidates,
         MediaSeriesGroup study,
         List<StudySeries> series,
+        List<PriorStudy> priors,
         String protocolId) {
-      List<ProtocolScore> scores = HangingEngine.select(candidates, series);
+      List<ProtocolScore> scores = HangingEngine.select(candidates, series, priors);
       JsonObjectBuilder json =
           Json.createObjectBuilder()
               .add("study", String.valueOf(study.getTagValue(study.getTagID()))) // NON-NLS
               .add("series", series.size()); // NON-NLS
+      JsonArrayBuilder priorsJson = Json.createArrayBuilder();
+      for (PriorStudy prior : priors) {
+        JsonObjectBuilder p = Json.createObjectBuilder().add("rank", prior.rank()); // NON-NLS
+        if (prior.uid() != null) {
+          p.add("study", prior.uid()); // NON-NLS
+        }
+        if (prior.date() != null) {
+          p.add("date", prior.date().toString()); // NON-NLS
+        }
+        priorsJson.add(p.add("series", prior.series().size())); // NON-NLS
+      }
+      json.add("priors", priorsJson); // NON-NLS
       JsonArrayBuilder ranking = Json.createArrayBuilder();
       for (ProtocolScore score : scores) {
         JsonObjectBuilder s =
@@ -300,7 +320,7 @@ public class HpCommands implements CommandExtension {
         ranking.add(s.add("reasons", reasons)); // NON-NLS
       }
       json.add("candidates", ranking); // NON-NLS
-      planOf(candidates, scores, series, protocolId)
+      planOf(candidates, scores, series, priors, protocolId)
           .ifPresent(p -> json.add("plan", p.toJson())); // NON-NLS
       return json.build();
     }
@@ -407,6 +427,25 @@ public class HpCommands implements CommandExtension {
   }
 
   /**
+   * The priors of a study: the older loaded studies of its patient, most recent first, for the
+   * time-based image sets.
+   */
+  static List<PriorStudy> priorsOf(
+      DicomModel model, MediaSeriesGroup study, List<StudySeries> current) {
+    MediaSeriesGroup patient = model.getParent(study, DicomModel.patient);
+    if (patient == null) {
+      return List.of();
+    }
+    List<List<StudySeries>> others = new ArrayList<>();
+    for (MediaSeriesGroup other : model.getChildren(patient)) {
+      if (other != study) {
+        others.add(studySeries(model, other));
+      }
+    }
+    return PriorStudy.of(current, others);
+  }
+
+  /**
    * The plan of the protocol asked for, planned even when it does not apply, else the plan of the
    * best candidate, empty when none applies.
    */
@@ -414,11 +453,12 @@ public class HpCommands implements CommandExtension {
       List<Candidate> candidates,
       List<ProtocolScore> scores,
       List<StudySeries> series,
+      List<PriorStudy> priors,
       String protocolId) {
     if (protocolId == null) {
       return scores.isEmpty()
           ? Optional.empty()
-          : Optional.of(HangingEngine.plan(scores.getFirst(), series));
+          : Optional.of(HangingEngine.plan(scores.getFirst(), series, priors));
     }
     Candidate wanted =
         candidates.stream()
@@ -431,8 +471,8 @@ public class HpCommands implements CommandExtension {
     return scores.stream()
         .filter(s -> s.candidate() == wanted)
         .findFirst()
-        .map(s -> HangingEngine.plan(s, series))
-        .or(() -> Optional.of(HangingEngine.plan(wanted.document(), series)));
+        .map(s -> HangingEngine.plan(s, series, priors))
+        .or(() -> Optional.of(HangingEngine.plan(wanted.document(), series, priors)));
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -504,9 +544,11 @@ public class HpCommands implements CommandExtension {
                         DicomModel model = parent.model();
                         MediaSeriesGroup study = parent.resolveStudy(model, studyUid);
                         List<StudySeries> series = studySeries(model, study);
-                        List<ProtocolScore> scores = HangingEngine.select(candidates, series);
+                        List<PriorStudy> priors = priorsOf(model, study, series);
+                        List<ProtocolScore> scores =
+                            HangingEngine.select(candidates, series, priors);
                         HangingPlan plan =
-                            planOf(candidates, scores, series, protocolId)
+                            planOf(candidates, scores, series, priors, protocolId)
                                 .orElseThrow(
                                     () ->
                                         new IllegalArgumentException(

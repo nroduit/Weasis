@@ -35,6 +35,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagReadable;
+import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontItem;
@@ -65,6 +66,7 @@ import org.weasis.dicom.codec.hp.HangingPlan.Match;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.hp.ActiveHanging;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier;
+import org.weasis.dicom.explorer.hp.PriorMarker;
 import org.weasis.dicom.viewer2d.fusion.FusionColorBar;
 import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
@@ -477,7 +479,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     drawY =
         paintTopRightCorner(
             g2, modality, patient, study, series, image, bound, fontHeight, hideMin);
-    drawY = paintHangingIndicator(g2, bound, fontHeight, drawY);
+    drawY = paintHangingIndicator(g2, bound, fontHeight, drawY, study);
     setPosition(
         Position.TopRight,
         (double) bound.width - border,
@@ -519,9 +521,12 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
   /**
    * The cell indicator of a hanging protocol: how the series of this cell matched its image set
-   * (exact, preferred, fallback, shared, empty, corrected), under the top-right corner.
+   * (exact, preferred, fallback, shared, empty, corrected), under the top-right corner; for a cell
+   * showing a prior, a colored strip along the top edge and the rank, date and interval of the
+   * prior below.
    */
-  private float paintHangingIndicator(Graphics2D g2, Rectangle bound, int fontHeight, float drawY) {
+  private float paintHangingIndicator(
+      Graphics2D g2, Rectangle bound, int fontHeight, float drawY, MediaSeriesGroup study) {
     ImageViewerPlugin<?> container =
         (ImageViewerPlugin<?>)
             javax.swing.SwingUtilities.getAncestorOfClass(
@@ -545,18 +550,54 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         "\u25CF " // NON-NLS
             + Messages.getString(
                 "InfoLayer.hp." + match.name().toLowerCase(Locale.ROOT)); // NON-NLS
-    Color old = g2.getColor();
-    g2.setColor(
+    Color color =
         switch (match) {
           case EXACT -> IconColor.ACTIONS_GREEN.color;
           case PREFERRED -> IconColor.ACTIONS_BLUE.color;
           case FALLBACK, SHARED -> IconColor.ACTIONS_YELLOW.color;
           case EMPTY -> IconColor.ACTIONS_RED.color;
           case CORRECTED -> Color.WHITE;
-        });
-    FontTools.paintFontOutline(
-        g2, text, bound.width - g2.getFontMetrics().stringWidth(text) - (float) border, drawY);
+        };
+    FontTools.paintColorFontOutline(
+        g2,
+        text,
+        bound.width - g2.getFontMetrics().stringWidth(text) - (float) border,
+        drawY,
+        color);
+    drawY += fontHeight;
+
+    Optional<PriorMarker> prior = PriorMarker.ofCell(active.get(), study, cell.get());
+    if (prior.isPresent()) {
+      drawY = paintPriorMarker(g2, bound, fontHeight, drawY, prior.get());
+    }
+    return drawY;
+  }
+
+  /** The color that tells a prior from the current study, in the strip and the text. */
+  private static final Color PRIOR_COLOR = IconColor.ACTIONS_YELLOW.color;
+
+  private float paintPriorMarker(
+      Graphics2D g2, Rectangle bound, int fontHeight, float drawY, PriorMarker prior) {
+    Color old = g2.getColor();
+    g2.setColor(PRIOR_COLOR);
+    g2.fillRect(0, 0, bound.width, GuiUtils.getScaleLength(4));
+    PriorMarker.Interval interval = prior.interval();
+    String text =
+        (prior.rank() > 0
+                ? Messages.getString("InfoLayer.hp.prior.rank").formatted(prior.rank()) // NON-NLS
+                : Messages.getString("InfoLayer.hp.prior")) // NON-NLS
+            + " \u00B7 " // NON-NLS
+            + TagUtil.formatDateTime(prior.date())
+            + " \u00B7 " // NON-NLS
+            + Messages.getString("InfoLayer.hp.earlier." + interval.unit()) // NON-NLS
+                .formatted(interval.count());
     g2.setColor(old);
+    FontTools.paintColorFontOutline(
+        g2,
+        text,
+        bound.width - g2.getFontMetrics().stringWidth(text) - (float) border,
+        drawY,
+        PRIOR_COLOR);
     return drawY + fontHeight;
   }
 

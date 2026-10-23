@@ -73,6 +73,35 @@ final class ExplorerFixtures {
     return series;
   }
 
+  /** A one-image mammography series of a dated study: laterality and view code. */
+  static DicomSeries mgSeries(String study, String date, String laterality, String view) {
+    String uid = study + "." + laterality + view;
+    Attributes a = new Attributes();
+    a.setString(Tag.SOPClassUID, VR.UI, "1.2.840.10008.5.1.4.1.1.1.2"); // NON-NLS
+    a.setString(Tag.SOPInstanceUID, VR.UI, uid + ".1"); // NON-NLS
+    a.setString(Tag.StudyInstanceUID, VR.UI, study);
+    a.setString(Tag.StudyDate, VR.DA, date);
+    a.setString(Tag.SeriesInstanceUID, VR.UI, uid);
+    a.setString(Tag.Modality, VR.CS, "MG"); // NON-NLS
+    a.setInt(Tag.InstanceNumber, VR.IS, 1);
+    a.setString(Tag.ImageLaterality, VR.CS, laterality);
+    a.setString(Tag.PatientOrientation, VR.CS, "R".equals(laterality) ? "P" : "A", "F"); // NON-NLS
+    Attributes code = new Attributes();
+    code.setString(Tag.CodeValue, VR.SH, "CC".equals(view) ? "R-10242" : "R-10226"); // NON-NLS
+    code.setString(Tag.CodingSchemeDesignator, VR.SH, "SRT"); // NON-NLS
+    a.newSequence(Tag.ViewCodeSequence, 1).add(code);
+    DicomSeries series = new DicomSeries(uid);
+    for (int tag : SERIES_TAGS) {
+      TagW key = TagD.get(tag);
+      Object value = key.getValue(a);
+      if (value != null) {
+        series.setTag(key, value);
+      }
+    }
+    series.addMedia(element(a));
+    return series;
+  }
+
   private static DicomImageElement element(Attributes a) {
     Map<TagW, Object> tags = new HashMap<>();
     for (int tag : IMAGE_TAGS) {

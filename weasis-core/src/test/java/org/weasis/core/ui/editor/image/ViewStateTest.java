@@ -104,6 +104,60 @@ class ViewStateTest {
   }
 
   @Test
+  void theJustificationAndTheScaleGroupTravelInTheJson() {
+    ViewPresentation justified =
+        new ViewPresentation(
+            Position.START,
+            Context.UNKNOWN,
+            ZoomType.BEST_FIT,
+            0,
+            0,
+            0,
+            0,
+            true,
+            null,
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            false,
+            Justification.of("RIGHT", null), // NON-NLS
+            "views"); // NON-NLS
+    JsonObject json = justified.toJson();
+    ViewPresentation read = ViewPresentation.fromJson(json);
+    assertAll(
+        () -> assertEquals(justified, read),
+        () -> assertEquals(Justification.Horizontal.RIGHT, read.justify().horizontal()),
+        () -> assertEquals("views", read.scaleGroup()), // NON-NLS
+        () -> assertFalse(VIEW.toJson().containsKey("justify"), "centered: nothing written"),
+        () ->
+            assertNull(
+                new ViewPresentation(
+                        Position.START,
+                        Context.UNKNOWN,
+                        null,
+                        0,
+                        0,
+                        0,
+                        0,
+                        false,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        false,
+                        null,
+                        false,
+                        Justification.CENTER,
+                        null)
+                    .justify(),
+                "a centered justification is no justification"));
+  }
+
+  @Test
   void missingKeysTakeTheirDefaults() {
     ViewState state = ViewState.fromJson(Json.createObjectBuilder().build());
     assertAll(

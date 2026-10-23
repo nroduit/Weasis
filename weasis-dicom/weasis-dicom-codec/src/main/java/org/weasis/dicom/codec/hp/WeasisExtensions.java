@@ -128,6 +128,8 @@ public record WeasisExtensions(
    * @param measurementProfile measurement profile id
    * @param zoomMode zoom mode name, as a {@code ZoomType}
    * @param synch synchronization rule, as a {@code SynchView} command
+   * @param scaleGroup the cells of a step sharing it show their images at the same physical scale
+   *     (e.g. current and prior mammograms), the largest that fits all of them
    */
   public record Display(
       String preset,
@@ -138,7 +140,32 @@ public record WeasisExtensions(
       Mpr mpr,
       String measurementProfile,
       String zoomMode,
-      String synch) {}
+      String synch,
+      String scaleGroup) {
+
+    public Display(
+        String preset,
+        String colorMap,
+        String lutShape,
+        String preset3d,
+        Fusion fusion,
+        Mpr mpr,
+        String measurementProfile,
+        String zoomMode,
+        String synch) {
+      this(
+          preset,
+          colorMap,
+          lutShape,
+          preset3d,
+          fusion,
+          mpr,
+          measurementProfile,
+          zoomMode,
+          synch,
+          null);
+    }
+  }
 
   /**
    * @param base image set number of the base series
@@ -356,6 +383,7 @@ public record WeasisExtensions(
     JsonUtil.addIfPresent(json, "measurementProfile", d.measurementProfile()); // NON-NLS
     JsonUtil.addIfPresent(json, "zoomMode", d.zoomMode()); // NON-NLS
     JsonUtil.addIfPresent(json, "synch", d.synch()); // NON-NLS
+    JsonUtil.addIfPresent(json, "scaleGroup", d.scaleGroup()); // NON-NLS
     return json;
   }
 
@@ -390,7 +418,8 @@ public record WeasisExtensions(
         mpr,
         json.getString("measurementProfile", null), // NON-NLS
         json.getString("zoomMode", null), // NON-NLS
-        json.getString("synch", null)); // NON-NLS
+        json.getString("synch", null), // NON-NLS
+        json.getString("scaleGroup", null)); // NON-NLS
   }
 
   private static JsonObjectBuilder loading(Loading l) {

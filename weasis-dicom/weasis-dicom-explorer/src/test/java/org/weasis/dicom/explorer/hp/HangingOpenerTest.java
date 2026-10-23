@@ -186,6 +186,51 @@ class HangingOpenerTest {
   }
 
   @Test
+  void aPatientOpensOnItsMostRecentStudyWithTheOlderOneAsPrior() throws InterruptedException {
+    MediaSeriesGroup patient = mock(MediaSeriesGroup.class);
+    MediaSeriesGroup older = mock(MediaSeriesGroup.class);
+    MediaSeriesGroup recent = mock(MediaSeriesGroup.class);
+    List<DicomSeries> priorViews = new ArrayList<>();
+    List<DicomSeries> currentViews = new ArrayList<>();
+    for (String view : List.of("CC", "MLO")) { // NON-NLS
+      for (String lat : List.of("R", "L")) { // NON-NLS
+        priorViews.add(ExplorerFixtures.mgSeries("6.1", "20060118", lat, view)); // NON-NLS
+        currentViews.add(ExplorerFixtures.mgSeries("6.2", "20070119", lat, view)); // NON-NLS
+      }
+    }
+    DicomModel model = mock(DicomModel.class);
+    when(model.getChildren(older)).thenReturn(new ArrayList<>(priorViews));
+    when(model.getChildren(recent)).thenReturn(new ArrayList<>(currentViews));
+    when(model.getChildren(patient)).thenReturn(List.of(older, recent));
+    when(model.getParent(older, DicomModel.patient)).thenReturn(patient);
+    when(model.getParent(recent, DicomModel.patient)).thenReturn(patient);
+    priorViews.forEach(s -> when(model.getParent(s, DicomModel.study)).thenReturn(older));
+    currentViews.forEach(s -> when(model.getParent(s, DicomModel.study)).thenReturn(recent));
+    HangingOpener opener = opener(library());
+
+    // the prior arrives first
+    priorViews.forEach(s -> opener.offer(patient, model, s));
+    currentViews.forEach(s -> opener.offer(patient, model, s));
+    await(() -> !hung.isEmpty());
+
+    HangingPlan plan = hung.getFirst();
+    assertAll(
+        () -> assertEquals(1, hung.size(), "one hanging for the patient"),
+        () -> assertEquals("weasis.mg", plan.protocolId()), // NON-NLS
+        () ->
+            assertEquals(
+                Set.of("6.2.RCC", "6.2.LCC", "6.2.RMLO", "6.2.LMLO"), // NON-NLS
+                HangingOpener.firstStepSeries(plan)),
+        () ->
+            assertEquals(
+                List.of("6.2.RCC", "6.2.LCC", "6.1.RCC", "6.1.LCC"), // NON-NLS
+                plan.steps().get(1).cells().stream().map(c -> c.series()).toList()),
+        () -> assertEquals(1, plan.steps().get(1).cells().get(2).prior()),
+        () -> assertTrue(opener.handles(older) && opener.handles(recent)),
+        () -> assertTrue(legacy.isEmpty()));
+  }
+
+  @Test
   void finishingHangsTheWaitingStudiesAtOnce() throws InterruptedException {
     MediaSeriesGroup patient = mock(MediaSeriesGroup.class);
     MediaSeriesGroup study = mock(MediaSeriesGroup.class);

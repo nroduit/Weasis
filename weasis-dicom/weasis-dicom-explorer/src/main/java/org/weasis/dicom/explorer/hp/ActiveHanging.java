@@ -32,6 +32,7 @@ import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
 import org.weasis.dicom.codec.hp.HangingPlan;
 import org.weasis.dicom.codec.hp.HangingPlan.CellPlan;
 import org.weasis.dicom.codec.hp.HangingPlan.Match;
+import org.weasis.dicom.codec.hp.PriorStudy;
 import org.weasis.dicom.codec.hp.ProtocolDeriver;
 import org.weasis.dicom.codec.hp.ProtocolJson;
 import org.weasis.dicom.codec.hp.StudySeries;
@@ -108,7 +109,9 @@ public final class ActiveHanging {
       throw new IllegalArgumentException("No cell " + (cell + 1) + " in this hanging");
     }
     CellPlan previous = cells.get(cell);
-    List<StudySeries> study = HpCommands.studySeries(model, context.study());
+    List<StudySeries> study = new ArrayList<>(HpCommands.studySeries(model, context.study()));
+    // a cell of a prior is corrected with a series of a prior
+    HpCommands.priorsOf(model, context.study(), study).forEach(p -> study.addAll(p.series()));
     StudySeries chosen =
         study.stream()
             .filter(s -> seriesUid.equals(s.uid()))
@@ -252,10 +255,11 @@ public final class ActiveHanging {
       Map<Integer, String> bindings) {
     List<HangingEngine.Candidate> candidates = HangingEngine.candidates();
     List<StudySeries> series = HpCommands.studySeries(model, study);
-    List<ProtocolScore> ranking = HangingEngine.select(candidates, series);
+    List<PriorStudy> priors = HpCommands.priorsOf(model, study, series);
+    List<ProtocolScore> ranking = HangingEngine.select(candidates, series, priors);
     Optional<HangingPlan> plan;
     try {
-      plan = HpCommands.planOf(candidates, ranking, series, protocolId);
+      plan = HpCommands.planOf(candidates, ranking, series, priors, protocolId);
     } catch (RuntimeException e) {
       return Optional.empty(); // the protocol is gone
     }
@@ -307,9 +311,10 @@ public final class ActiveHanging {
       throw new IllegalArgumentException("The hanging keeps no study to re-plan");
     }
     List<StudySeries> series = HpCommands.studySeries(model, context.study());
-    List<ProtocolScore> ranking = HangingEngine.select(context.candidates(), series);
+    List<PriorStudy> priors = HpCommands.priorsOf(model, context.study(), series);
+    List<ProtocolScore> ranking = HangingEngine.select(context.candidates(), series, priors);
     HangingPlan plan =
-        HpCommands.planOf(context.candidates(), ranking, series, protocolId)
+        HpCommands.planOf(context.candidates(), ranking, series, priors, protocolId)
             .orElseThrow(() -> new IllegalArgumentException("Unknown protocol " + protocolId));
     if (plan.steps().isEmpty()) {
       throw new IllegalArgumentException("The protocol " + protocolId + " has no display set");

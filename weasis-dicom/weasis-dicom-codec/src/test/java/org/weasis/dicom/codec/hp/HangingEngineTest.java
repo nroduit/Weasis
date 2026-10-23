@@ -221,8 +221,7 @@ class HangingEngineTest {
                         r -> r.startsWith("prefer smallest sliceThickness: 1.25"))), // NON-NLS
         () -> assertEquals(ViewerType.VIEWER_2D, soft.viewer()),
         () -> assertEquals(List.of(3), plan.unresolved().stream().map(u -> u.imageSet()).toList()),
-        () ->
-            assertEquals(HangingEngine.PRIORS_NOT_RESOLVED, plan.unresolved().getFirst().reason()));
+        () -> assertEquals(HangingEngine.NO_PRIOR, plan.unresolved().getFirst().reason()));
   }
 
   @Test
@@ -252,7 +251,7 @@ class HangingEngineTest {
         () -> assertTrue(maintain.cells().get(0).isEmpty()),
         () ->
             assertEquals(
-                List.of("expected: " + HangingEngine.PRIORS_NOT_RESOLVED),
+                List.of("expected: " + HangingEngine.NO_PRIOR),
                 maintain.cells().get(0).reasons()), // NON-NLS
         () -> assertEquals("1x2", maintain.layout().grid()), // NON-NLS
         () -> assertTrue(maintain.layout().cells().get(0).seriesId().isEmpty()),

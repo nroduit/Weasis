@@ -16,6 +16,7 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonValue;
 import java.beans.PropertyChangeEvent;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import org.weasis.core.api.gui.util.ActionW;
@@ -238,6 +239,9 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
    * @param invert whether the LUT is inverted
    * @param sort key of the stack order, {@code null} for the default
    * @param inverseStack whether the stack order is reversed
+   * @param justify where the image sits when it does not fill the view, null to center it
+   * @param scaleGroup the scale group of the pane (see {@link ViewCanvas#SCALE_GROUP_CMD}), null
+   *     for none
    */
   public record ViewPresentation(
       Position position,
@@ -255,7 +259,9 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
       String colorMap,
       boolean invert,
       String sort,
-      boolean inverseStack) {
+      boolean inverseStack,
+      Justification justify,
+      String scaleGroup) {
 
     public static final ViewPresentation DEFAULT =
         new ViewPresentation(
@@ -289,6 +295,48 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
       if (zoomType == null) {
         zoomType = ZoomType.BEST_FIT;
       }
+      if (justify != null && justify.isCentered()) {
+        justify = null;
+      }
+    }
+
+    /** A presentation centered in its pane and outside any scale group. */
+    public ViewPresentation(
+        Position position,
+        Context context,
+        ZoomType zoomType,
+        double zoom,
+        double panX,
+        double panY,
+        int rotation,
+        boolean flip,
+        Double window,
+        Double level,
+        String preset,
+        String lutShape,
+        String colorMap,
+        boolean invert,
+        String sort,
+        boolean inverseStack) {
+      this(
+          position,
+          context,
+          zoomType,
+          zoom,
+          panX,
+          panY,
+          rotation,
+          flip,
+          window,
+          level,
+          preset,
+          lutShape,
+          colorMap,
+          invert,
+          sort,
+          inverseStack,
+          null,
+          null);
     }
 
     @SuppressWarnings("unchecked")
@@ -349,7 +397,9 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
           canvas.getActionValue(ActionW.SORT_STACK.cmd()) instanceof Comparator<?> comparator
               ? adapter.sortKey(comparator).orElse(null)
               : null,
-          Boolean.TRUE.equals(canvas.getActionValue(ActionW.INVERSE_STACK.cmd())));
+          Boolean.TRUE.equals(canvas.getActionValue(ActionW.INVERSE_STACK.cmd())),
+          canvas.getActionValue(ViewCanvas.JUSTIFY_CMD) instanceof Justification j ? j : null,
+          canvas.getActionValue(ViewCanvas.SCALE_GROUP_CMD) instanceof String g ? g : null);
     }
 
     @SuppressWarnings("unchecked")
@@ -430,6 +480,8 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
 
       boolean sameScale = exact || samePixelSize(canvas.getImage());
       canvas.setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, zoomType);
+      canvas.setActionsInView(ViewCanvas.JUSTIFY_CMD, justify);
+      canvas.setActionsInView(ViewCanvas.SCALE_GROUP_CMD, scaleGroup);
       SynchEvent framing = new SynchEvent(canvas);
       // zoom(0) derives the scale from the zoom type; an explicit scale is applied as such
       framing.put(ActionW.ZOOM.cmd(), zoom > 0 && sameScale ? zoom : 0.0);
@@ -440,6 +492,9 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
         // the model keeps the offsets of a view not laid out yet; setCenter refreshes a shown one
         canvas.getViewModel().setModelOffset(panX, panY);
         canvas.setCenter(panX, panY);
+      } else if (justify != null || rotation != 0) {
+        // the zoom centered the image before the rotation: place it again on the rotated bounds
+        canvas.center();
       }
 
       // the preset first (it also carries the LUT shape and stays the named preset of the pane),
@@ -470,8 +525,18 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
     /** An image of the stack and its index in the current order. */
     private record Picked<E extends ImageElement>(E media, int index) {}
 
+    /** The image of the instance when the data names one and the stack holds it, else by index. */
     private static <E extends ImageElement> Picked<E> exactImage(
         ViewCanvas<E> canvas, MediaSeries<E> series, ViewData data, Filter<E> filter) {
+      if (data.instance() != null) {
+        List<E> images = series.copyOfMedias(filter, canvas.getCurrentSortComparator());
+        for (int i = 0; i < images.size(); i++) {
+          Object sop = tagValue(images.get(i), "SOPInstanceUID"); // NON-NLS
+          if (sop != null && data.instance().equals(sop.toString())) {
+            return new Picked<>(images.get(i), i);
+          }
+        }
+      }
       int index = data.image() - 1;
       E media = series.getMedia(index, filter, canvas.getCurrentSortComparator());
       return media == null ? null : new Picked<>(media, index);
@@ -577,7 +642,14 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
         stack.add("sort", sort); // NON-NLS
       }
       stack.add("inverse", inverseStack); // NON-NLS
-      return json.add("stack", stack).build(); // NON-NLS
+      json.add("stack", stack); // NON-NLS
+      if (justify != null) {
+        json.add("justify", justify.toJson()); // NON-NLS
+      }
+      if (scaleGroup != null) {
+        json.add("scaleGroup", scaleGroup); // NON-NLS
+      }
+      return json.build();
     }
 
     public static ViewPresentation fromJson(JsonObject json) {
@@ -607,7 +679,11 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
           json.getString("colorMap", null), // NON-NLS
           json.getBoolean("invert", false), // NON-NLS
           stack == null ? null : stack.getString("sort", null), // NON-NLS
-          stack != null && stack.getBoolean("inverse", false)); // NON-NLS
+          stack != null && stack.getBoolean("inverse", false), // NON-NLS
+          json.get("justify") instanceof JsonObject j // NON-NLS
+              ? Justification.fromJson(j)
+              : null,
+          json.getString("scaleGroup", null)); // NON-NLS
     }
 
     private static ZoomType zoomType(String name) {

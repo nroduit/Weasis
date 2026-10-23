@@ -213,6 +213,23 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   }
 
   /**
+   * The detector plane when the image has an Imager Pixel Spacing, so that a scale group compares
+   * projection images (a current and a prior mammogram) at the same plane whatever magnification
+   * correction each calibration applies; the pixel size otherwise.
+   */
+  @Override
+  protected double metersPerPixel(ImageElement image) {
+    double[] imager =
+        image instanceof DicomImageElement dicom && dicom.getMediaReader() != null
+            ? TagD.getTagValue(dicom.getMediaReader(), Tag.ImagerPixelSpacing, double[].class)
+            : null;
+    if (imager != null && imager.length == 2 && imager[0] > 0.0 && imager[1] > 0.0) {
+      return imager[1] / 1000.0; // millimeters, along a row (the column spacing)
+    }
+    return super.metersPerPixel(image);
+  }
+
+  /**
    * The calibration of the file, then the Presentation Pixel Spacing of the presentation state
    * applied to this view when it covers the displayed image (PS3.3 C.10.4).
    */

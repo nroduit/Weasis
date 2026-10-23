@@ -10,6 +10,8 @@
 package org.weasis.dicom.codec.hp;
 
 import jakarta.json.JsonObject;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -32,6 +34,7 @@ import org.weasis.core.api.util.LayeredDocument;
 import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
 import org.weasis.core.ui.editor.image.HangingLayout;
+import org.weasis.core.ui.editor.image.Justification;
 import org.weasis.core.ui.editor.image.ViewState;
 import org.weasis.core.ui.editor.image.ViewState.ViewData;
 import org.weasis.core.ui.editor.image.ViewState.ViewPresentation;
@@ -45,6 +48,7 @@ import org.weasis.dicom.codec.hp.WeasisExtensions.Display;
 import org.weasis.dicom.codec.hp.WeasisExtensions.DisplaySet;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ImageSet;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ViewerType;
+import org.weasis.dicom.hp.AbstractPriorValue;
 import org.weasis.dicom.hp.HPComparator;
 import org.weasis.dicom.hp.HPDefinition;
 import org.weasis.dicom.hp.HPDisplaySet;
@@ -54,7 +58,9 @@ import org.weasis.dicom.hp.HPScrollingGroup;
 import org.weasis.dicom.hp.HPSelector;
 import org.weasis.dicom.hp.HPTimeBasedImageSet;
 import org.weasis.dicom.hp.HangingProtocol;
+import org.weasis.dicom.hp.RelativeTime;
 import org.weasis.dicom.hp.enums.ImageBoxLayoutType;
+import org.weasis.dicom.macro.Code;
 
 /**
  * Matches hanging protocols against the series of a study, in the three steps of the specification,
@@ -73,7 +79,13 @@ import org.weasis.dicom.hp.enums.ImageBoxLayoutType;
  *       its cell as a placeholder ({@code MAINTAIN_LAYOUT}) or is removed ({@code ADAPT_LAYOUT}).
  * </ol>
  *
- * <p>Time-based image sets of priors are not resolved yet: they are reported as unresolved.
+ * <p>The time-based image sets bind each image set to one study of the patient: the current study,
+ * or a {@link PriorStudy} chosen by a relative time window from the current study date or by an
+ * abstract prior rank; within the studies a set accepts, the most recent one with a matching series
+ * wins.
+ *
+ * <p>A display set with a Display Set Patient Orientation gets the rotation and flip that turn the
+ * Patient Orientation of its first image into the requested one (e.g. mirrored mammography views).
  */
 public final class HangingEngine {
 
@@ -82,8 +94,8 @@ public final class HangingEngine {
   /** The key of a protocol entry that disables it; absent means enabled. */
   public static final String ENABLED = "enabled"; // NON-NLS
 
-  /** The reason of an image set only priors fill. */
-  static final String PRIORS_NOT_RESOLVED = "priors are not resolved yet"; // NON-NLS
+  /** The reason of a prior image set when the patient has no prior study the set accepts. */
+  static final String NO_PRIOR = "no prior study of the patient fits"; // NON-NLS
 
   /** A protocol the engine may apply, with the layer it comes from. */
   public record Candidate(Document document, Origin origin, boolean enabled) {
@@ -110,8 +122,17 @@ public final class HangingEngine {
   /** The score of one series for one image set. */
   record Scored(StudySeries series, double score, Match match, List<String> reasons) {}
 
-  /** The candidates of one image set, best first, or why there are none. */
-  record Resolution(HPImageSet imageSet, List<Scored> candidates, String unresolved) {
+  /**
+   * The candidates of one image set, best first, or why there are none.
+   *
+   * @param prior the prior study the candidates come from, null for the current study
+   */
+  record Resolution(
+      HPImageSet imageSet, List<Scored> candidates, String unresolved, PriorStudy prior) {
+    Resolution(HPImageSet imageSet, List<Scored> candidates, String unresolved) {
+      this(imageSet, candidates, unresolved, null);
+    }
+
     boolean isResolved() {
       return !candidates.isEmpty();
     }
@@ -149,18 +170,30 @@ public final class HangingEngine {
    * everything with the lowest specificity.
    */
   public static List<ProtocolScore> select(List<Candidate> protocols, List<StudySeries> study) {
+    return select(protocols, study, List.of());
+  }
+
+  /**
+   * The enabled protocols that apply to the study, best first, the time-based image sets drawing
+   * from the given priors of the patient.
+   *
+   * @param priors the prior studies of the patient, most recent first (see {@link PriorStudy#of})
+   */
+  public static List<ProtocolScore> select(
+      List<Candidate> protocols, List<StudySeries> study, List<PriorStudy> priors) {
     List<ProtocolScore> scores = new ArrayList<>();
     for (Candidate candidate : protocols) {
       if (!candidate.enabled()) {
         continue;
       }
-      score(candidate, study).ifPresent(scores::add);
+      score(candidate, study, priors).ifPresent(scores::add);
     }
     scores.sort(Comparator.comparingDouble(ProtocolScore::score).reversed());
     return scores;
   }
 
-  static Optional<ProtocolScore> score(Candidate candidate, List<StudySeries> study) {
+  static Optional<ProtocolScore> score(
+      Candidate candidate, List<StudySeries> study, List<PriorStudy> priors) {
     HangingProtocol protocol = candidate.document().protocol();
     List<String> reasons = new ArrayList<>();
     double specificity = -1;
@@ -184,17 +217,30 @@ public final class HangingEngine {
       reasons.add("definition applies, specificity " + (int) specificity); // NON-NLS
     }
 
-    Map<Integer, Resolution> resolutions = resolveImageSets(candidate.document(), study);
-    long current =
-        resolutions.values().stream()
-            .filter(r -> r.unresolved() == null || !r.unresolved().equals(PRIORS_NOT_RESOLVED))
-            .count();
-    long resolved = resolutions.values().stream().filter(Resolution::isResolved).count();
+    Map<Integer, Resolution> resolutions = resolveImageSets(candidate.document(), study, priors);
+    long current = 0;
+    long resolved = 0;
+    long priorSets = 0;
+    long priorsResolved = 0;
+    for (Resolution r : resolutions.values()) {
+      if (isCurrent(r.imageSet())) {
+        current++;
+        resolved += r.isResolved() ? 1 : 0;
+      } else {
+        priorSets++;
+        priorsResolved += r.isResolved() ? 1 : 0;
+      }
+    }
     if (current > 0 && resolved == 0) {
       return Optional.empty(); // it would hang nothing
     }
     double share = current == 0 ? 1 : (double) resolved / current;
     reasons.add(resolved + " of " + current + " image sets resolve"); // NON-NLS
+    // available priors favour a comparison protocol; missing ones cost nothing
+    double priorBonus = priorSets == 0 ? 0 : 0.5 * priorsResolved / priorSets;
+    if (priorSets > 0) {
+      reasons.add(priorsResolved + " of " + priorSets + " prior image sets resolve"); // NON-NLS
+    }
     double levelBonus = levelBonus(candidate.origin(), protocol.getHangingProtocolLevel());
     if (levelBonus > 0) {
       reasons.add("level " + levelName(candidate.origin(), protocol)); // NON-NLS
@@ -203,6 +249,7 @@ public final class HangingEngine {
     // a last resort scores below any protocol whose definition applies (specificity >= 1)
     double score =
         (lastResort ? share : specificity + 3 * share)
+            + priorBonus
             + levelBonus
             - (screens != null && screens > 1 ? 0.05 : 0);
     return Optional.of(new ProtocolScore(candidate, score, reasons));
@@ -244,20 +291,113 @@ public final class HangingEngine {
   // ---- step 2: image set resolution ----------------------------------------------------------
 
   /** The candidates of every image set of the protocol, by Image Set Number. */
-  static Map<Integer, Resolution> resolveImageSets(Document document, List<StudySeries> study) {
+  static Map<Integer, Resolution> resolveImageSets(
+      Document document, List<StudySeries> study, List<PriorStudy> priors) {
     Map<Integer, Resolution> result = new LinkedHashMap<>();
     for (HPImageSet imageSet : document.protocol().getImageSets()) {
       int number = imageSet.getImageSetNumber();
       ImageSet extension = document.weasis().imageSets().get(number);
-      result.put(number, resolve(imageSet, extension, study));
+      result.put(number, resolve(imageSet, extension, study, priors));
     }
     return result;
   }
 
-  static Resolution resolve(HPImageSet imageSet, ImageSet extension, List<StudySeries> study) {
-    if (!isCurrent(imageSet)) {
-      return new Resolution(imageSet, List.of(), PRIORS_NOT_RESOLVED);
+  /**
+   * Resolves an image set on the studies its time-based items accept, the most recent first: the
+   * first study with a matching series binds the set.
+   */
+  static Resolution resolve(
+      HPImageSet imageSet, ImageSet extension, List<StudySeries> study, List<PriorStudy> priors) {
+    if (isCurrent(imageSet)) {
+      return resolve(imageSet, extension, study);
     }
+    LocalDateTime now = PriorStudy.dateOf(study);
+    List<Attributes> items = timeBasedItems(imageSet);
+    if (items.stream().anyMatch(HangingEngine::acceptsCurrent)) {
+      Resolution resolution = resolve(imageSet, extension, study);
+      if (resolution.isResolved()) {
+        return resolution;
+      }
+    }
+    String unresolved = NO_PRIOR;
+    for (PriorStudy prior : priors) {
+      if (items.stream().noneMatch(i -> accepts(i, prior, priors.size(), now))) {
+        continue;
+      }
+      Resolution resolution = resolve(imageSet, extension, prior.series());
+      if (resolution.isResolved()) {
+        return new Resolution(imageSet, resolution.candidates(), null, prior);
+      }
+      unresolved =
+          resolution.unresolved()
+              + " in the prior of " // NON-NLS
+              + (prior.date() == null ? prior.uid() : prior.date().toLocalDate());
+    }
+    return new Resolution(imageSet, List.of(), unresolved);
+  }
+
+  /** Whether a time-based item accepts the current study (a window starting at 0). */
+  private static boolean acceptsCurrent(Attributes item) {
+    HPTimeBasedImageSet timeBased = new HPTimeBasedImageSet(item);
+    if (timeBased.hasAbstractPriorValue() || timeBased.hasAbstractPriorCode()) {
+      return false;
+    }
+    // Relative Time (0072,0038) is US: 0 as the start of the window means now
+    return !timeBased.hasRelativeTime() || item.getInt(Tag.RelativeTime, 0) == 0;
+  }
+
+  /**
+   * Whether a time-based item accepts a prior: an Abstract Prior Value range of ranks (1 the most
+   * recent prior, -1 the oldest), an Abstract Prior Code read by its meaning (most recent, oldest
+   * or first, else any prior), or a Relative Time window before the current study date.
+   */
+  static boolean accepts(Attributes item, PriorStudy prior, int count, LocalDateTime now) {
+    HPTimeBasedImageSet timeBased = new HPTimeBasedImageSet(item);
+    if (timeBased.hasAbstractPriorValue()) {
+      AbstractPriorValue value = timeBased.getAbstractPriorValue();
+      int start = absoluteRank(value.getStart(), count);
+      int end = absoluteRank(value.getEnd(), count);
+      return prior.rank() >= Math.min(start, end) && prior.rank() <= Math.max(start, end);
+    }
+    if (timeBased.hasAbstractPriorCode()) {
+      Code code = timeBased.getAbstractPriorCode();
+      String meaning =
+          code == null || code.getCodeMeaning() == null
+              ? ""
+              : code.getCodeMeaning().toLowerCase(Locale.ROOT);
+      if (meaning.contains("recent")) { // NON-NLS
+        return prior.rank() == 1;
+      }
+      if (meaning.contains("oldest") || meaning.contains("first")) { // NON-NLS
+        return prior.rank() == count;
+      }
+      return true;
+    }
+    if (timeBased.hasRelativeTime()) {
+      if (now == null || prior.date() == null) {
+        return false;
+      }
+      RelativeTime window;
+      try {
+        window = timeBased.getRelativeTime();
+      } catch (RuntimeException e) {
+        return false; // no or unknown Relative Time Units
+      }
+      ChronoUnit unit =
+          window.getUnits() == null ? ChronoUnit.DAYS : window.getUnits().getChronoUnit();
+      LocalDateTime latest = now.minus(window.getStart(), unit);
+      LocalDateTime earliest = now.minus(window.getEnd(), unit);
+      return !prior.date().isAfter(latest) && !prior.date().isBefore(earliest);
+    }
+    return false;
+  }
+
+  /** A rank from the most recent prior (1); a negative rank counts from the oldest (-1). */
+  private static int absoluteRank(int rank, int count) {
+    return rank < 0 ? count + 1 + rank : rank;
+  }
+
+  static Resolution resolve(HPImageSet imageSet, ImageSet extension, List<StudySeries> study) {
     List<FeatureSelector> selectors = extension == null ? List.of() : extension.selectors();
     List<FeatureSelector> preferences = selectors.stream().filter(s -> !s.isFilter()).toList();
 
@@ -451,28 +591,50 @@ public final class HangingEngine {
 
   /** Matches the best protocol and plans it, empty when no protocol applies. */
   public static Optional<HangingPlan> match(List<Candidate> protocols, List<StudySeries> study) {
-    List<ProtocolScore> scores = select(protocols, study);
+    return match(protocols, study, List.of());
+  }
+
+  /** Matches the best protocol with the priors of the patient and plans it. */
+  public static Optional<HangingPlan> match(
+      List<Candidate> protocols, List<StudySeries> study, List<PriorStudy> priors) {
+    List<ProtocolScore> scores = select(protocols, study, priors);
     if (scores.isEmpty()) {
       return Optional.empty();
     }
     ProtocolScore best = scores.getFirst();
-    return Optional.of(plan(best, study));
+    return Optional.of(plan(best, study, priors));
   }
 
   /** The plan of a scored protocol. */
   public static HangingPlan plan(ProtocolScore scored, List<StudySeries> study) {
-    return plan(scored.document(), study, scored.score(), scored.reasons());
+    return plan(scored, study, List.of());
+  }
+
+  /** The plan of a scored protocol, the prior image sets drawing from the given priors. */
+  public static HangingPlan plan(
+      ProtocolScore scored, List<StudySeries> study, List<PriorStudy> priors) {
+    return plan(scored.document(), study, priors, scored.score(), scored.reasons());
   }
 
   /** The plan of a protocol, whether it applies to the study or not. */
   public static HangingPlan plan(Document document, List<StudySeries> study) {
-    return plan(document, study, 0, List.of());
+    return plan(document, study, List.of());
+  }
+
+  /** The plan of a protocol with the priors of the patient, whether it applies or not. */
+  public static HangingPlan plan(
+      Document document, List<StudySeries> study, List<PriorStudy> priors) {
+    return plan(document, study, priors, 0, List.of());
   }
 
   private static HangingPlan plan(
-      Document document, List<StudySeries> study, double score, List<String> reasons) {
+      Document document,
+      List<StudySeries> study,
+      List<PriorStudy> priors,
+      double score,
+      List<String> reasons) {
     HangingProtocol protocol = document.protocol();
-    Map<Integer, Resolution> resolutions = resolveImageSets(document, study);
+    Map<Integer, Resolution> resolutions = resolveImageSets(document, study, priors);
     boolean adapt =
         "ADAPT_LAYOUT".equalsIgnoreCase(protocol.getPartialDataDisplayHandling()); // NON-NLS
     Set<HPDisplaySet> scrolled = new HashSet<>();
@@ -563,7 +725,10 @@ public final class HangingEngine {
                 0,
                 viewer,
                 List.of("expected: " + expected), // NON-NLS
-                List.of()));
+                List.of(),
+                null,
+                0),
+            null);
         continue;
       }
 
@@ -595,7 +760,10 @@ public final class HangingEngine {
                 shared.score(),
                 viewer,
                 reasons,
-                alternatives(resolution, shared)));
+                alternatives(resolution, shared),
+                studyOf(shared.series(), resolution),
+                rankOf(resolution)),
+            shared.series());
         continue;
       }
       int shown = 0;
@@ -619,7 +787,10 @@ public final class HangingEngine {
                 chosen.score(),
                 viewer,
                 chosen.reasons(),
-                alternatives(resolution, chosen)));
+                alternatives(resolution, chosen),
+                studyOf(chosen.series(), resolution),
+                rankOf(resolution)),
+            chosen.series());
       }
     }
     layout.grid(gridFor(cells.size())).synch(synch).select(cells.isEmpty() ? 0 : 1);
@@ -633,13 +804,27 @@ public final class HangingEngine {
       HangingLayout.Builder layout,
       HPDisplaySet displaySet,
       DisplaySet extension,
-      CellPlan cell) {
+      CellPlan cell,
+      StudySeries series) {
     layout.cell(
         new HangingLayout.Cell(
             cell.cell(),
             tiling(displaySet),
-            List.of(viewState(cell.series(), displaySet, extension))));
+            List.of(viewState(cell.series(), series, displaySet, extension))));
     cells.add(cell);
+  }
+
+  /** The Study Instance UID of a cell's series, from its dataset or the prior it comes from. */
+  private static String studyOf(StudySeries series, Resolution resolution) {
+    String uid = series.dataset().getString(Tag.StudyInstanceUID);
+    if (uid == null && resolution.prior() != null) {
+      uid = resolution.prior().uid();
+    }
+    return uid;
+  }
+
+  private static int rankOf(Resolution resolution) {
+    return resolution.prior() == null ? 0 : resolution.prior().rank();
   }
 
   /** The other candidates of the image set, best first. */
@@ -689,6 +874,17 @@ public final class HangingEngine {
 
   /** The presentation of a cell: the display state by reference and the DICOM intent. */
   static ViewState viewState(String seriesUid, HPDisplaySet displaySet, DisplaySet extension) {
+    return viewState(seriesUid, null, displaySet, extension);
+  }
+
+  /**
+   * The presentation of a cell, with the rotation and flip that give the first image of the series
+   * (may be null) the Display Set Patient Orientation; one view of a multi-view series starts on
+   * its own image.
+   */
+  static ViewState viewState(
+      String seriesUid, StudySeries series, HPDisplaySet displaySet, DisplaySet extension) {
+    Attributes dataset = series == null ? null : series.dataset();
     Display display = extension == null ? null : extension.display();
     String sort = null;
     boolean inverse = false;
@@ -720,6 +916,12 @@ public final class HangingEngine {
     } else if ("Y".equalsIgnoreCase(displaySet.getShowImageTrueSizeFlag())) { // NON-NLS
       zoomType = ZoomType.REAL;
     }
+    DisplayOrientation.Framing framing =
+        dataset == null
+            ? DisplayOrientation.Framing.NONE
+            : DisplayOrientation.framing(
+                dataset.getStrings(Tag.PatientOrientation),
+                displaySet.getAttributes().getStrings(Tag.DisplaySetPatientOrientation));
     ViewPresentation view =
         new ViewPresentation(
             null,
@@ -728,8 +930,8 @@ public final class HangingEngine {
             0,
             0,
             0,
-            0,
-            false,
+            framing.rotation(),
+            framing.flip(),
             null,
             null,
             display == null ? null : display.preset(),
@@ -737,8 +939,17 @@ public final class HangingEngine {
             display == null ? null : display.colorMap(),
             "Y".equalsIgnoreCase(displaySet.getShowGrayscaleInverted()), // NON-NLS
             sort,
-            inverse);
-    ViewData data = seriesUid == null ? ViewData.NONE : new ViewData(seriesUid, 0, null, null);
+            inverse,
+            Justification.of(
+                displaySet.getAttributes().getString(Tag.DisplaySetHorizontalJustification),
+                displaySet.getAttributes().getString(Tag.DisplaySetVerticalJustification)),
+            display == null ? null : display.scaleGroup());
+    ViewData data =
+        seriesUid == null
+            ? ViewData.NONE
+            : series != null && series.isView()
+                ? new ViewData(seriesUid, series.image(), series.instance(), null)
+                : new ViewData(seriesUid, 0, null, null);
     return new ViewState(data, view);
   }
 

@@ -154,6 +154,29 @@ public record SeriesFeatures(
     public static final Interest NONE = new Interest(0, Set.of());
   }
 
+  /** The same features for the images of one view of a multi-view series. */
+  public SeriesFeatures withView(String laterality, String view, int imageCount) {
+    return new SeriesFeatures(
+        modality,
+        sopClass,
+        role,
+        orientation,
+        anatomy,
+        laterality,
+        view,
+        contrast,
+        mrWeighting,
+        ctKernel,
+        sliceThickness,
+        spacing,
+        petCorrection,
+        temporal,
+        frameOfReference,
+        descriptionTokens,
+        interest,
+        imageCount);
+  }
+
   /** True when the series is a stack of images of one plane that MPR and 3D can use. */
   public boolean isVolume() {
     return imageCount > 2

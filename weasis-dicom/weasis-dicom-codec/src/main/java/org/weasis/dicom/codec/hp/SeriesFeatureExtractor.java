@@ -271,6 +271,11 @@ public final class SeriesFeatureExtractor {
     return new Anatomy(notation, item.getCodeValue(), item.getCodeMeaning(), groups);
   }
 
+  /** The laterality of one image, from its dataset and the series. */
+  static String laterality(MediaSeries<DicomImageElement> series, Attributes dcm) {
+    return laterality(series, dcm, shared(dcm));
+  }
+
   static String laterality(
       MediaSeries<DicomImageElement> series, Attributes dcm, Attributes shared) {
     // Image Laterality (0020,0062) is the per-image value, Laterality (0020,0060) the series one;

@@ -1275,6 +1275,90 @@
                 "RelativeTimeUnits": "DAYS"
               }
             ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 10,
+                "ImageSetSelectorCategory": "ABSTRACT_PRIOR",
+                "AbstractPriorValue": [
+                  1,
+                  1
+                ]
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 11,
+                "ImageSetSelectorCategory": "ABSTRACT_PRIOR",
+                "AbstractPriorValue": [
+                  1,
+                  1
+                ]
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 12,
+                "ImageSetSelectorCategory": "ABSTRACT_PRIOR",
+                "AbstractPriorValue": [
+                  1,
+                  1
+                ]
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MG"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 13,
+                "ImageSetSelectorCategory": "ABSTRACT_PRIOR",
+                "AbstractPriorValue": [
+                  1,
+                  1
+                ]
+              }
+            ]
           }
         ],
         "DisplaySetsSequence": [
@@ -1287,7 +1371,12 @@
               {
                 "ImageBoxNumber": 1
               }
-            ]
+            ],
+            "DisplaySetPatientOrientation": [
+              "P",
+              "L"
+            ],
+            "DisplaySetHorizontalJustification": "RIGHT"
           },
           {
             "ImageSetNumber": 2,
@@ -1298,7 +1387,12 @@
               {
                 "ImageBoxNumber": 1
               }
-            ]
+            ],
+            "DisplaySetPatientOrientation": [
+              "A",
+              "R"
+            ],
+            "DisplaySetHorizontalJustification": "LEFT"
           },
           {
             "ImageSetNumber": 3,
@@ -1309,7 +1403,12 @@
               {
                 "ImageBoxNumber": 1
               }
-            ]
+            ],
+            "DisplaySetPatientOrientation": [
+              "P",
+              "F"
+            ],
+            "DisplaySetHorizontalJustification": "RIGHT"
           },
           {
             "ImageSetNumber": 4,
@@ -1320,57 +1419,210 @@
               {
                 "ImageBoxNumber": 1
               }
-            ]
+            ],
+            "DisplaySetPatientOrientation": [
+              "A",
+              "F"
+            ],
+            "DisplaySetHorizontalJustification": "LEFT"
+          },
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 5,
+            "DisplaySetLabel": "RCC",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ],
+            "DisplaySetPatientOrientation": [
+              "P",
+              "L"
+            ],
+            "DisplaySetHorizontalJustification": "RIGHT"
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 6,
+            "DisplaySetLabel": "LCC",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ],
+            "DisplaySetPatientOrientation": [
+              "A",
+              "R"
+            ],
+            "DisplaySetHorizontalJustification": "LEFT"
+          },
+          {
+            "ImageSetNumber": 10,
+            "DisplaySetNumber": 7,
+            "DisplaySetLabel": "Prior RCC",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ],
+            "DisplaySetPatientOrientation": [
+              "P",
+              "L"
+            ],
+            "DisplaySetHorizontalJustification": "RIGHT"
+          },
+          {
+            "ImageSetNumber": 11,
+            "DisplaySetNumber": 8,
+            "DisplaySetLabel": "Prior LCC",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ],
+            "DisplaySetPatientOrientation": [
+              "A",
+              "R"
+            ],
+            "DisplaySetHorizontalJustification": "LEFT"
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 9,
+            "DisplaySetLabel": "RMLO",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ],
+            "DisplaySetPatientOrientation": [
+              "P",
+              "F"
+            ],
+            "DisplaySetHorizontalJustification": "RIGHT"
+          },
+          {
+            "ImageSetNumber": 4,
+            "DisplaySetNumber": 10,
+            "DisplaySetLabel": "LMLO",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ],
+            "DisplaySetPatientOrientation": [
+              "A",
+              "F"
+            ],
+            "DisplaySetHorizontalJustification": "LEFT"
+          },
+          {
+            "ImageSetNumber": 12,
+            "DisplaySetNumber": 11,
+            "DisplaySetLabel": "Prior RMLO",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ],
+            "DisplaySetPatientOrientation": [
+              "P",
+              "F"
+            ],
+            "DisplaySetHorizontalJustification": "RIGHT"
+          },
+          {
+            "ImageSetNumber": 13,
+            "DisplaySetNumber": 12,
+            "DisplaySetLabel": "Prior LMLO",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ],
+            "DisplaySetPatientOrientation": [
+              "A",
+              "F"
+            ],
+            "DisplaySetHorizontalJustification": "LEFT"
           },
           {
             "ImageSetNumber": 5,
-            "DisplaySetNumber": 5,
+            "DisplaySetNumber": 13,
             "DisplaySetLabel": "RCC tomosynthesis",
-            "DisplaySetPresentationGroup": 2,
+            "DisplaySetPresentationGroup": 4,
             "ImageBoxesSequence": [
               {
                 "ImageBoxNumber": 1
               }
-            ]
+            ],
+            "DisplaySetPatientOrientation": [
+              "P",
+              "L"
+            ],
+            "DisplaySetHorizontalJustification": "RIGHT"
           },
           {
             "ImageSetNumber": 6,
-            "DisplaySetNumber": 6,
+            "DisplaySetNumber": 14,
             "DisplaySetLabel": "LCC tomosynthesis",
-            "DisplaySetPresentationGroup": 2,
+            "DisplaySetPresentationGroup": 4,
             "ImageBoxesSequence": [
               {
                 "ImageBoxNumber": 1
               }
-            ]
+            ],
+            "DisplaySetPatientOrientation": [
+              "A",
+              "R"
+            ],
+            "DisplaySetHorizontalJustification": "LEFT"
           },
           {
             "ImageSetNumber": 7,
-            "DisplaySetNumber": 7,
+            "DisplaySetNumber": 15,
             "DisplaySetLabel": "RMLO tomosynthesis",
-            "DisplaySetPresentationGroup": 2,
+            "DisplaySetPresentationGroup": 4,
             "ImageBoxesSequence": [
               {
                 "ImageBoxNumber": 1
               }
-            ]
+            ],
+            "DisplaySetPatientOrientation": [
+              "P",
+              "F"
+            ],
+            "DisplaySetHorizontalJustification": "RIGHT"
           },
           {
             "ImageSetNumber": 8,
-            "DisplaySetNumber": 8,
+            "DisplaySetNumber": 16,
             "DisplaySetLabel": "LMLO tomosynthesis",
-            "DisplaySetPresentationGroup": 2,
+            "DisplaySetPresentationGroup": 4,
             "ImageBoxesSequence": [
               {
                 "ImageBoxNumber": 1
               }
-            ]
+            ],
+            "DisplaySetPatientOrientation": [
+              "A",
+              "F"
+            ],
+            "DisplaySetHorizontalJustification": "LEFT"
           },
           {
             "ImageSetNumber": 9,
-            "DisplaySetNumber": 9,
+            "DisplaySetNumber": 17,
             "DisplaySetLabel": "Other views",
-            "DisplaySetPresentationGroup": 3,
+            "DisplaySetPresentationGroup": 5,
             "ImageBoxesSequence": [
               {
                 "ImageBoxNumber": 1
@@ -1382,17 +1634,18 @@
         "SynchronizedScrollingSequence": [
           {
             "DisplaySetScrollingGroup": [
-              5,
-              6
+              13,
+              14
             ]
           },
           {
             "DisplaySetScrollingGroup": [
-              7,
-              8
+              15,
+              16
             ]
           }
-        ]
+        ],
+        "NumberOfPriorsReferenced": 1
       },
       "weasis": {
         "imageSets": {
@@ -1712,10 +1965,238 @@
                 ]
               }
             ]
+          },
+          "10": {
+            "label": "Prior R CC",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "laterality",
+                "usage": "MATCH",
+                "values": [
+                  "R"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "CC"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "NO_MATCH",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.13.1.3"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "PREFER",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.1.2"
+                ],
+                "weight": 1
+              }
+            ]
+          },
+          "11": {
+            "label": "Prior L CC",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "laterality",
+                "usage": "MATCH",
+                "values": [
+                  "L"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "CC"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "NO_MATCH",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.13.1.3"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "PREFER",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.1.2"
+                ],
+                "weight": 1
+              }
+            ]
+          },
+          "12": {
+            "label": "Prior R MLO",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "laterality",
+                "usage": "MATCH",
+                "values": [
+                  "R"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "MLO"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "NO_MATCH",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.13.1.3"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "PREFER",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.1.2"
+                ],
+                "weight": 1
+              }
+            ]
+          },
+          "13": {
+            "label": "Prior L MLO",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "DOCUMENT",
+                  "SCREENSHOT"
+                ]
+              },
+              {
+                "feature": "laterality",
+                "usage": "MATCH",
+                "values": [
+                  "L"
+                ]
+              },
+              {
+                "feature": "view",
+                "usage": "MATCH",
+                "values": [
+                  "MLO"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "NO_MATCH",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.13.1.3"
+                ]
+              },
+              {
+                "feature": "sopClass",
+                "usage": "PREFER",
+                "values": [
+                  "1.2.840.10008.5.1.4.1.1.1.2"
+                ],
+                "weight": 1
+              }
+            ]
           }
         },
         "displaySets": {
+          "1": {
+            "display": {
+              "scaleGroup": "views"
+            }
+          },
+          "2": {
+            "display": {
+              "scaleGroup": "views"
+            }
+          },
+          "3": {
+            "display": {
+              "scaleGroup": "views"
+            }
+          },
+          "4": {
+            "display": {
+              "scaleGroup": "views"
+            }
+          },
+          "5": {
+            "display": {
+              "scaleGroup": "views"
+            }
+          },
+          "6": {
+            "display": {
+              "scaleGroup": "views"
+            }
+          },
+          "7": {
+            "display": {
+              "scaleGroup": "views"
+            }
+          },
+          "8": {
+            "display": {
+              "scaleGroup": "views"
+            }
+          },
           "9": {
+            "display": {
+              "scaleGroup": "views"
+            }
+          },
+          "10": {
+            "display": {
+              "scaleGroup": "views"
+            }
+          },
+          "11": {
+            "display": {
+              "scaleGroup": "views"
+            }
+          },
+          "12": {
+            "display": {
+              "scaleGroup": "views"
+            }
+          },
+          "17": {
             "repeat": 8
           }
         }

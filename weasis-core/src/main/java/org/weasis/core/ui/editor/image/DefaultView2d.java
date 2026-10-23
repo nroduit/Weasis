@@ -247,6 +247,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
     actionsInView.put(ActionW.FLIP.cmd(), false);
     actionsInView.put(ActionW.ROTATION.cmd(), 0);
+    actionsInView.put(JUSTIFY_CMD, null);
+    actionsInView.put(SCALE_GROUP_CMD, null);
 
     OpManager disOp = getDisplayOpManager();
 
@@ -1172,7 +1174,95 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public double getBestFitViewScale() {
-    return adjustViewScale(super.getBestFitViewScale());
+    return adjustViewScale(scaleGroupFit().orElseGet(super::getBestFitViewScale));
+  }
+
+  /** The best fit of this view alone, before the scale group and the zoom slider range. */
+  protected double getOwnBestFitViewScale() {
+    return super.getBestFitViewScale();
+  }
+
+  /**
+   * The best fit shared by the scale group of the view: the largest physical scale (view pixels per
+   * meter) at which the image of every view of the group fits, given back in this image's pixels.
+   * Empty without a group, a laid out container or a calibrated image in every member.
+   */
+  private Optional<Double> scaleGroupFit() {
+    Object group = actionsInView.get(SCALE_GROUP_CMD);
+    double mine = metersPerPixel(getImage());
+    if (group == null || mine <= 0.0 || getWidth() == 0 || getHeight() == 0) {
+      return Optional.empty();
+    }
+    double physical = getOwnBestFitViewScale() / mine;
+    for (DefaultView2d<?> other : scaleGroupMembers(group)) {
+      double meters = metersPerPixel(other.getImage());
+      if (meters <= 0.0) {
+        return Optional.empty(); // a member without calibration: each one fits on its own
+      }
+      physical = Math.min(physical, other.getOwnBestFitViewScale() / meters);
+    }
+    return Optional.of(physical * mine);
+  }
+
+  /** The other laid out views of the container showing an image in the same scale group. */
+  private List<DefaultView2d<?>> scaleGroupMembers(Object group) {
+    ImageViewerPlugin<?> container =
+        (ImageViewerPlugin<?>)
+            SwingUtilities.getAncestorOfClass(ImageViewerPlugin.class, getJComponent());
+    if (container == null) {
+      return List.of();
+    }
+    List<DefaultView2d<?>> members = new ArrayList<>();
+    for (ViewCanvas<?> view : container.getImagePanels()) {
+      if (view != this
+          && view instanceof DefaultView2d<?> other
+          && group.equals(other.getActionValue(SCALE_GROUP_CMD))
+          && other.getImage() != null
+          && other.getWidth() > 0
+          && other.getHeight() > 0) {
+        members.add(other);
+      }
+    }
+    return members;
+  }
+
+  /**
+   * The size of a pixel the scale group compares, in meters; 0 when the image is not calibrated.
+   * The pixel size of the image here; a modality may prefer a plane every image shares (the
+   * detector for projection radiography).
+   */
+  protected double metersPerPixel(ImageElement image) {
+    if (image == null) {
+      return 0.0;
+    }
+    Unit unit = image.getPixelSpacingUnit();
+    if (unit == null || Unit.PIXEL.equals(unit)) {
+      return 0.0;
+    }
+    return image.getPixelSize() * unit.getFactorToMeters();
+  }
+
+  /** Set while the members of a scale group are zoomed again, so that they do not cascade. */
+  private static boolean refreshingScaleGroup;
+
+  /** Zooms again the members of the scale group whose shared fit changed with this view. */
+  private void refreshScaleGroup() {
+    Object group = actionsInView.get(SCALE_GROUP_CMD);
+    if (group == null || refreshingScaleGroup) {
+      return;
+    }
+    refreshingScaleGroup = true;
+    try {
+      for (DefaultView2d<?> other : scaleGroupMembers(group)) {
+        if (other.getActionValue(ActionW.ZOOM.cmd()) instanceof Double zoom
+            && zoom <= 0.0
+            && MathUtil.isDifferent(Math.abs(zoom), Math.abs(other.getZoomRatioFromType(0.0)))) {
+          other.zoom(0.0);
+        }
+      }
+    } finally {
+      refreshingScaleGroup = false;
+    }
   }
 
   @Override
@@ -1252,7 +1342,29 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public final void center() {
-    setCenter(0.0, 0.0);
+    Point2D offset = justifiedOffset();
+    setCenter(offset.getX(), offset.getY());
+  }
+
+  /** The model offset of the {@link Justification} of the view; the center without one. */
+  private Point2D justifiedOffset() {
+    if (!(actionsInView.get(JUSTIFY_CMD) instanceof Justification justify)
+        || justify.isCentered()) {
+      return new Point2D.Double();
+    }
+    Rectangle2D area = getViewModel().getModelArea();
+    double scale = getViewModel().getViewScale();
+    double width = area.getWidth() * scale;
+    double height = area.getHeight() * scale;
+    if (actionsInView.get(ActionW.ROTATION.cmd()) instanceof Integer degrees && degrees != 0) {
+      double radians = Math.toRadians(degrees);
+      double cos = Math.abs(Math.cos(radians));
+      double sin = Math.abs(Math.sin(radians));
+      double w = width * cos + height * sin;
+      height = width * sin + height * cos;
+      width = w;
+    }
+    return justify.modelOffset(getWidth(), getHeight(), width, height, scale);
   }
 
   @Override
@@ -1464,6 +1576,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     updateAffineTransform();
     if (panner != null) {
       panner.updateImageSize();
+    }
+    if (MathUtil.isEqualToZero(viewScale)) {
+      refreshScaleGroup();
     }
   }
 

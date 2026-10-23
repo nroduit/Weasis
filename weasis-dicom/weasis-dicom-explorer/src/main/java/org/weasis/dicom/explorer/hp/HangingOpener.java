@@ -9,9 +9,11 @@
  */
 package org.weasis.dicom.explorer.hp;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,17 +39,19 @@ import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
 import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
 import org.weasis.dicom.codec.hp.HangingPlan;
 import org.weasis.dicom.codec.hp.HangingPlan.CellPlan;
+import org.weasis.dicom.codec.hp.PriorStudy;
 import org.weasis.dicom.codec.hp.StudySeries;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier.Context;
 
 /**
  * Opens a study through the hanging protocol engine instead of on its first series: the image
- * series of a study are collected while they arrive, and once they stop arriving for a quiet period
- * (or a maximum wait is reached) the best protocol is matched and its first step hung. A series
- * arriving later re-checks the plan: a cell the hanging left empty is filled by re-hanging the same
- * viewer; a series already shown is never replaced. When no protocol applies, or nothing could be
- * hung, the study opens on its first series as before.
+ * series of a patient are collected while they arrive, and once they stop arriving for a quiet
+ * period (or a maximum wait is reached) the best protocol is matched on the most recent study of
+ * the patient, the older ones being its priors, and its first step hung. A series arriving later
+ * re-checks the plan: a cell the hanging left empty is filled by re-hanging the same viewer; a
+ * series already shown is never replaced. When no protocol applies, or nothing could be hung, the
+ * study opens on its first series as before.
  */
 public final class HangingOpener {
 
@@ -81,6 +85,7 @@ public final class HangingOpener {
     final MediaSeriesGroup patient;
     final DicomModel model;
     final Series<?> first;
+    final Set<MediaSeriesGroup> studies = new LinkedHashSet<>();
     final long firstAt = System.currentTimeMillis();
     ScheduledFuture<?> scheduled;
     boolean evaluating;
@@ -168,21 +173,22 @@ public final class HangingOpener {
       return false;
     }
     synchronized (this) {
-      Pending p = pending.get(study);
+      Pending p = pending.get(patient);
       if (p == null) {
         if (patientOpen.test(patient) || finished) {
           return false;
         }
         p = new Pending(patient, model, series);
-        pending.put(study, p);
+        pending.put(patient, p);
         markOpen.accept(patient);
       } else if (p.legacy) {
-        return true; // the study opened the old way, nothing more to do
+        return true; // the patient opened the old way, nothing more to do
       }
+      p.studies.add(study);
       if (p.evaluating) {
         p.arrivedWhileEvaluating = true;
       } else {
-        schedule(study, p, false);
+        schedule(patient, p, false);
       }
     }
     return true;
@@ -202,17 +208,17 @@ public final class HangingOpener {
         }
       }
     }
-    for (MediaSeriesGroup study : waiting) {
-      scheduler.execute(() -> evaluate(study));
+    for (MediaSeriesGroup patient : waiting) {
+      scheduler.execute(() -> evaluate(patient));
     }
   }
 
   /** Whether a study is waiting for its series or has been hung by this opener. */
   public synchronized boolean handles(MediaSeriesGroup study) {
-    return pending.containsKey(study);
+    return pending.values().stream().anyMatch(p -> p.studies.contains(study));
   }
 
-  private void schedule(MediaSeriesGroup study, Pending p, boolean now) {
+  private void schedule(MediaSeriesGroup patient, Pending p, boolean now) {
     if (p.scheduled != null) {
       p.scheduled.cancel(false);
     }
@@ -221,29 +227,54 @@ public final class HangingOpener {
       long remaining = maxWaitMillis - (System.currentTimeMillis() - p.firstAt);
       delay = Math.max(0, Math.min(delay, remaining));
     }
-    p.scheduled = scheduler.schedule(() -> evaluate(study), delay, TimeUnit.MILLISECONDS);
+    p.scheduled = scheduler.schedule(() -> evaluate(patient), delay, TimeUnit.MILLISECONDS);
   }
 
-  private void evaluate(MediaSeriesGroup study) {
+  /**
+   * The study to hang: the most recent dated study of the patient, among the studies that arrived
+   * and those already loaded; the first study that arrived when none has a date.
+   */
+  static MediaSeriesGroup currentStudy(
+      DicomModel model, MediaSeriesGroup patient, Set<MediaSeriesGroup> arrived) {
+    Set<MediaSeriesGroup> studies = new LinkedHashSet<>(arrived);
+    studies.addAll(model.getChildren(patient));
+    MediaSeriesGroup current = arrived.iterator().next();
+    LocalDateTime latest = null;
+    for (MediaSeriesGroup study : studies) {
+      LocalDateTime date = PriorStudy.dateOf(HpCommands.studySeries(model, study));
+      if (date != null && (latest == null || date.isAfter(latest))) {
+        latest = date;
+        current = study;
+      }
+    }
+    return current;
+  }
+
+  private void evaluate(MediaSeriesGroup patient) {
     Pending p;
+    Set<MediaSeriesGroup> arrived;
     synchronized (this) {
-      p = pending.get(study);
+      p = pending.get(patient);
       if (p == null || p.legacy || p.evaluating) {
         return;
       }
       p.evaluating = true;
       p.arrivedWhileEvaluating = false;
       p.scheduled = null;
+      arrived = new LinkedHashSet<>(p.studies);
     }
     boolean again = false;
+    MediaSeriesGroup study = null;
     try {
+      study = currentStudy(p.model, patient, arrived);
       List<StudySeries> series = HpCommands.studySeries(p.model, study);
+      List<PriorStudy> priors = HpCommands.priorsOf(p.model, study, series);
       List<Candidate> protocols = candidates.get();
-      List<ProtocolScore> ranking = HangingEngine.select(protocols, series);
+      List<ProtocolScore> ranking = HangingEngine.select(protocols, series, priors);
       Optional<HangingPlan> plan =
           ranking.isEmpty()
               ? Optional.empty()
-              : Optional.of(HangingEngine.plan(ranking.getFirst(), series));
+              : Optional.of(HangingEngine.plan(ranking.getFirst(), series, priors));
       Context context = new Context(p.model, p.patient, study, protocols, ranking);
       Set<String> wanted = plan.map(HangingOpener::firstStepSeries).orElse(Set.of());
       if (p.shown == null) {
@@ -277,7 +308,7 @@ public final class HangingOpener {
       synchronized (this) {
         p.evaluating = false;
         if (!p.legacy && (p.arrivedWhileEvaluating || again) && !finished) {
-          schedule(study, p, false);
+          schedule(patient, p, false);
         }
       }
     }
