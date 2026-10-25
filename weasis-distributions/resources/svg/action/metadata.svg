@@ -1,8 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="16" height="16" fill="none" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
- <g clip-rule="evenodd" fill-rule="evenodd">
-  <path d="m8 15c-3.866 0-7-3.134-7-7s3.134-7 7-7 7 3.134 7 7-3.134 7-7 7z" fill="none" stroke="#6e6e6e"/>
-  <path transform="translate(-.45016)" d="m5.9043 4.4043-3.3535 3.3535a0.34177 0.34177 0 0 0 0 0.48438l3.3535 3.3535a0.34177 0.34177 0 0 0 0.48438 0l0.70703-0.70703a0.34177 0.34177 0 0 0 0-0.48438l-2.4043-2.4043 2.4043-2.4043a0.34177 0.34177 0 0 0 0-0.48438l-0.70703-0.70703a0.34177 0.34177 0 0 0-0.48438 0z" fill="#389fd6" style="paint-order:markers stroke fill"/>
-  <path transform="rotate(180,8.2252,8)" d="m5.9043 4.4043-3.3535 3.3535a0.34177 0.34177 0 0 0 0 0.48438l3.3535 3.3535a0.34177 0.34177 0 0 0 0.48438 0l0.70703-0.70703a0.34177 0.34177 0 0 0 0-0.48438l-2.4043-2.4043 2.4043-2.4043a0.34177 0.34177 0 0 0 0-0.48438l-0.70703-0.70703a0.34177 0.34177 0 0 0-0.48438 0z" fill="#389fd6" style="paint-order:markers stroke fill"/>
- </g>
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <path d="M4.5 2.5h5.2L12.5 5.3V13.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z" stroke="#6E6E6E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M9.5 2.5v3h3" stroke="#6E6E6E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M5.5 8.5h5M5.5 11h3.5" stroke="#6E6E6E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>

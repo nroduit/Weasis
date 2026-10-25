@@ -9,7 +9,8 @@ PACKAGE=YES
 
 # The JDK modules and the launch options are defined in launch-options.sh, shared with the
 # GitHub workflow building the macOS and Windows installers.
-NAME="Weasis"
+# Filesystem-safe name for jpackage output dirs; UI title comes from weasis.name ("Auramed Weasis").
+NAME="AuramedWeasis"
 IDENTIFIER="org.weasis.launcher"
 
 # Aux functions:
@@ -271,12 +272,12 @@ fi
 
 
 if [ "$PACKAGE" = "YES" ] ; then
-  VENDOR="Weasis Team"
-  COPYRIGHT="© 2009-2026 Weasis Team"
+  VENDOR="Auramed"
+  COPYRIGHT="© Auramed · based on Weasis © 2009-2026 Weasis Team"
   if [ "$machine" = "windows" ] ; then
     [ "$arc" = "aarch64" ]  && UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383c" || UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383a"
     $JPKGCMD --type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES/msi/${arc}" \
-    --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" --win-upgrade-uuid "$UPGRADE_UID"  \
+    --license-file "$INPUT_PATH\Licence.txt" --description "Auramed Weasis DICOM viewer" --win-upgrade-uuid "$UPGRADE_UID"  \
     --win-menu --win-menu-group "$NAME" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
     --vendor "$VENDOR" --file-associations "${curPath}\file-associations.properties" "${tmpArgs[@]}" --verbose
     mv "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION.msi" "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION-${arc}.msi"
@@ -298,7 +299,7 @@ if [ "$PACKAGE" = "YES" ] ; then
       $JPKGCMD --type "$installerType" --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
       --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "$JDK_MODULES" \
       --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES" \
-      --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \
+      --license-file "$INPUT_PATH/Licence.txt" --description "Auramed Weasis DICOM viewer" --vendor "$VENDOR" \
       --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "${curPath}/file-associations.properties" \
       --linux-app-release "$REVISON_INC" --linux-package-name "weasis" \
       "${typeArgs[@]}" \

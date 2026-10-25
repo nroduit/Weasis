@@ -291,7 +291,7 @@
     },
     {
       "code": "weasis.name",
-      "value": "Weasis",
+      "value": "Auramed Weasis",
       "description": "Change the name of the application everywhere in UI",
       "type": "AP",
       "category": "LAUNCH"
@@ -379,7 +379,7 @@
     },
     {
       "code": "weasis.copyrights",
-      "value": "© 2009-${build.year} Weasis Team",
+      "value": "© Auramed · based on Weasis © 2009-${build.year} Weasis Team",
       "description": "Copyrights",
       "type": "A",
       "category": "DOC"

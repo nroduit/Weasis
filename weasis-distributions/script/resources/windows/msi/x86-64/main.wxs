@@ -76,7 +76,7 @@
         <Component Id="URIHandlerRegistry" Guid="D99D1C53-7173-414B-81F8-AFC94641B3C0">
             <!-- Register weasis protocol -->
 		        <RegistryKey Key="weasis" Root="HKCR">
-		          <RegistryValue Type="string" Value="Weasis URI handler"/>
+		          <RegistryValue Type="string" Value="Auramed Weasis URI handler"/>
 		          <RegistryValue Name="URL Protocol" Type="string" Value=""/>
 		          <RegistryValue Name="DefaultIcon" Type="string" Value="&quot;[INSTALLDIR]Weasis.ico&quot;,1"/>
 		          <RegistryKey Key="shell\open\command">

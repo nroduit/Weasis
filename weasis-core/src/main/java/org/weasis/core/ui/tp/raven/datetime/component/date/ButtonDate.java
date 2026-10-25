@@ -99,19 +99,22 @@ public class ButtonDate extends JButton {
             }
           }
         });
+    // Do not inherit Button.foreground (Auramed sets it black for orange buttons): day
+    // numbers must stay readable on the dark calendar panel.
     if (enable) {
       putClientProperty(
           FlatClientProperties.STYLE,
           "margin:7,7,7,7;"
               + "focusWidth:2;"
-              + "selectedForeground:contrast($Component.accentColor,$Button.background,#fff)");
+              + "foreground:$Label.foreground;"
+              + "selectedForeground:contrast($Component.accentColor,$Label.foreground,#0f172a)");
     } else {
       putClientProperty(
           FlatClientProperties.STYLE,
           "margin:7,7,7,7;"
               + "focusWidth:2;"
-              + "selectedForeground:contrast($Component.accentColor,$Button.background,#fff);"
-              + "foreground:$Button.disabledText");
+              + "foreground:$Label.disabledForeground;"
+              + "selectedForeground:contrast($Component.accentColor,$Label.foreground,#0f172a)");
     }
   }
 

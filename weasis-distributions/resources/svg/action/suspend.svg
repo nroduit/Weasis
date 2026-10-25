@@ -1,3 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <rect width="10" height="10" x="3" y="3" fill="#DB5860" fill-rule="evenodd"/>
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <rect x="3.5" y="2.5" width="3" height="11" rx="0.8" stroke="#6E6E6E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <rect x="9.5" y="2.5" width="3" height="11" rx="0.8" stroke="#6E6E6E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>

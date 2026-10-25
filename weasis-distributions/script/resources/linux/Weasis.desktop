@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Name=APPLICATION_NAME
-Comment=Medical DICOM viewer
+Comment=Auramed Weasis DICOM viewer
 Exec=APPLICATION_LAUNCHER %U
 StartupWMClass=org-weasis-launcher-AppLauncher
 Icon=APPLICATION_ICON

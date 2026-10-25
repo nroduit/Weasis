@@ -73,7 +73,8 @@ public class ButtonMonthYear extends JButton {
     putClientProperty(
         FlatClientProperties.STYLE,
         "margin:6,6,6,6;"
-            + "selectedForeground:contrast($Component.accentColor,$Button.background,#fff);");
+            + "foreground:$Label.foreground;"
+            + "selectedForeground:contrast($Component.accentColor,$Label.foreground,#0f172a);");
   }
 
   public int getValue() {

@@ -11,12 +11,17 @@ package org.weasis.launcher;
 
 import com.formdev.flatlaf.FlatIconColors;
 import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
 import com.formdev.flatlaf.intellijthemes.FlatAllIJThemes;
 import com.formdev.flatlaf.util.ColorFunctions;
 import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.swing.AbstractButton;
+import javax.swing.JToolBar;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import org.slf4j.Logger;
@@ -52,7 +57,7 @@ public final class LookAndFeels {
             "Core Light - FlatIntelliJ", "com.formdev.flatlaf.FlatIntelliJLaf", false); // NON-NLS
     defaultDarkTheme =
         new ReadableLookAndFeelInfo(
-            "Core Dark - Flat Weasis", // NON-NLS
+            "Core Dark - Auramed", // NON-NLS
             "org.weasis.launcher.FlatWeasisTheme",
             true);
     lookAndFeels = buildFlatLookAndFeels();
@@ -94,6 +99,17 @@ public final class LookAndFeels {
     return lookAndFeels;
   }
 
+  /** Auramed portal nav-active orange (`--nav-active-bg`). */
+  private static final Color AURAMED_SELECTION_ORANGE = new Color(0xfb923c);
+
+  private static final Color AURAMED_SELECTION_FG = new Color(0x0f172a);
+
+  /** IntelliJ action-icon grey used in Weasis SVGs (`fill`/`stroke`). */
+  private static final Color SVG_ICON_GREY = new Color(0x6e6e6e);
+
+  /** Light glyph color for outline icons on dark-blue chrome (toolbar). */
+  private static final Color SVG_ICON_ON_DARK = new Color(0xf8fafc);
+
   /** Changes the look and feel for the whole GUI */
   public String setLookAndFeel(ReadableLookAndFeelInfo look) {
     ReadableLookAndFeelInfo info = look == null ? defaultDarkTheme : look;
@@ -101,6 +117,8 @@ public final class LookAndFeels {
     try {
       UIManager.setLookAndFeel(info.getClassName());
       increaseToolbarSeparatorContrast(dark);
+      applyAuramedSelectionColors();
+      applyAuramedIconColors(dark);
 
       // TODO set as preference: preserve the default color action
       applyDefaultColor(FlatIconColors.ACTIONS_RED, dark);
@@ -113,6 +131,117 @@ public final class LookAndFeels {
       LOGGER.error("Unable to set the Look&Feel", e);
     }
     return info.getClassName();
+  }
+
+  /**
+   * Auramed branding colors: orange app buttons (readable on dark blue) and orange menu
+   * selection with black text. FlatLaf otherwise only lightens the blue button background.
+   */
+  private static void applyAuramedSelectionColors() {
+    Color hover = new Color(0xf97316);
+    Color pressed = new Color(0xea580c);
+
+    UIManager.put("Button.background", AURAMED_SELECTION_ORANGE);
+    UIManager.put("Button.foreground", AURAMED_SELECTION_FG);
+    UIManager.put("Button.hoverBackground", hover);
+    UIManager.put("Button.pressedBackground", pressed);
+    UIManager.put("Button.borderColor", AURAMED_SELECTION_ORANGE);
+    UIManager.put("Button.selectedBackground", hover);
+    UIManager.put("Button.selectedForeground", AURAMED_SELECTION_FG);
+    UIManager.put("Button.default.background", AURAMED_SELECTION_ORANGE);
+    UIManager.put("Button.default.foreground", AURAMED_SELECTION_FG);
+    UIManager.put("Button.default.hoverBackground", hover);
+    UIManager.put("Button.default.pressedBackground", pressed);
+
+    UIManager.put("Button.toolbar.selectedBackground", AURAMED_SELECTION_ORANGE);
+    UIManager.put("Button.toolbar.selectedForeground", AURAMED_SELECTION_FG);
+    UIManager.put("ToggleButton.selectedBackground", AURAMED_SELECTION_ORANGE);
+    UIManager.put("ToggleButton.selectedForeground", AURAMED_SELECTION_FG);
+    UIManager.put("ToggleButton.toolbar.selectedBackground", AURAMED_SELECTION_ORANGE);
+    UIManager.put("ToggleButton.toolbar.selectedForeground", AURAMED_SELECTION_FG);
+
+    UIManager.put("Menu.selectionBackground", AURAMED_SELECTION_ORANGE);
+    UIManager.put("Menu.selectionForeground", AURAMED_SELECTION_FG);
+    UIManager.put("MenuBar.selectionBackground", AURAMED_SELECTION_ORANGE);
+    UIManager.put("MenuBar.selectionForeground", AURAMED_SELECTION_FG);
+    UIManager.put("MenuItem.selectionBackground", AURAMED_SELECTION_ORANGE);
+    UIManager.put("MenuItem.selectionForeground", AURAMED_SELECTION_FG);
+    UIManager.put("CheckBoxMenuItem.selectionBackground", AURAMED_SELECTION_ORANGE);
+    UIManager.put("CheckBoxMenuItem.selectionForeground", AURAMED_SELECTION_FG);
+    UIManager.put("RadioButtonMenuItem.selectionBackground", AURAMED_SELECTION_ORANGE);
+    UIManager.put("RadioButtonMenuItem.selectionForeground", AURAMED_SELECTION_FG);
+
+    UIManager.put("TabbedPane.tabType", "card");
+    UIManager.put("TabbedPane.selectedBackground", AURAMED_SELECTION_ORANGE);
+    UIManager.put("TabbedPane.selectedForeground", AURAMED_SELECTION_FG);
+    UIManager.put("TabbedPane.underlineColor", AURAMED_SELECTION_ORANGE);
+    UIManager.put("ToggleButton.tab.selectedBackground", AURAMED_SELECTION_ORANGE);
+    UIManager.put("ToggleButton.tab.selectedForeground", AURAMED_SELECTION_FG);
+    UIManager.put("ToggleButton.tab.underlineColor", AURAMED_SELECTION_ORANGE);
+  }
+
+  /**
+   * Outline SVGs use {@code #6E6E6E}. On dark chrome they must lighten; on orange Auramed buttons
+   * (import, image tools, selected measure/draw) they must go black so strokes stay visible.
+   */
+  private static void applyAuramedIconColors(boolean dark) {
+    ColorFilter global = FlatSVGIcon.ColorFilter.getInstance();
+    global.remove(SVG_ICON_GREY);
+    global.add(SVG_ICON_GREY, SVG_ICON_GREY, SVG_ICON_ON_DARK);
+    global.setMapperEx(LookAndFeels::mapAuramedIconColor);
+  }
+
+  private static Color mapAuramedIconColor(Component c, Color color) {
+    if (color == null || (color.getRGB() & 0xffffff) != 0x6e6e6e) {
+      // After light/dark map, grey may already be SVG_ICON_ON_DARK — still check orange buttons.
+      if (color != null
+          && (color.getRGB() & 0xffffff) == (SVG_ICON_ON_DARK.getRGB() & 0xffffff)
+          && needsDarkGlyphOnOrange(c)) {
+        return AURAMED_SELECTION_FG;
+      }
+      return color;
+    }
+    if (needsDarkGlyphOnOrange(c)) {
+      return AURAMED_SELECTION_FG;
+    }
+    return FlatLaf.isLafDark() ? SVG_ICON_ON_DARK : color;
+  }
+
+  private static boolean needsDarkGlyphOnOrange(Component c) {
+    if (!(c instanceof AbstractButton button)) {
+      return false;
+    }
+    // Toolbars keep a transparent/dark chrome; FlatLaf still reports Button.background
+    // (orange) on getBackground(), so only flip to black when the tool is selected.
+    if (isInToolBar(button)) {
+      return button.isSelected();
+    }
+    if (button.isSelected()) {
+      return true;
+    }
+    // Filled app buttons (import, image tools, etc.) use orange Button.background.
+    return button.isContentAreaFilled()
+        && (isAuramedOrange(UIManager.getColor("Button.background"))
+            || isAuramedOrange(button.getBackground()));
+  }
+
+  private static boolean isInToolBar(Component c) {
+    for (Component p = c; p != null; p = p.getParent()) {
+      if (p instanceof JToolBar) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isAuramedOrange(Color c) {
+    if (c == null || c.getAlpha() < 200) {
+      return false;
+    }
+    int r = c.getRed();
+    int g = c.getGreen();
+    int b = c.getBlue();
+    return r > 200 && g > 90 && g < 190 && b < 120;
   }
 
   private static void increaseToolbarSeparatorContrast(boolean dark) {

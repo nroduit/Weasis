@@ -12,9 +12,14 @@ package org.weasis.base.ui.gui;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Frame;
+import java.awt.Image;
 import java.awt.event.WindowEvent;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.Properties;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -30,6 +35,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.util.SimpleTableModel;
+import org.weasis.core.util.StringUtil;
 
 public class WeasisAboutBox extends JDialog {
 
@@ -104,7 +110,7 @@ public class WeasisAboutBox extends JDialog {
 
     jTextPane1.setText(html);
     JLabel jLabel1 = new JLabel();
-    jLabel1.setIcon(ResourceUtil.getIcon(ResourceUtil.LogoIcon.LARGE).derive(0.8f));
+    jLabel1.setIcon(loadAboutLogoIcon());
     JPanel jPanel3 = new JPanel();
     jPanel3.setLayout(new BorderLayout());
 
@@ -140,6 +146,24 @@ public class WeasisAboutBox extends JDialog {
 
   private void close() {
     dispose();
+  }
+
+  /**
+   * Prefer the local Auramed PNG banner; fall back to the SVG logo if the raster asset is missing.
+   */
+  private static Icon loadAboutLogoIcon() {
+    String resourcesPath = System.getProperty("weasis.resources.path");
+    if (StringUtil.hasText(resourcesPath)) {
+      Path aboutPng = Path.of(resourcesPath, "images", "about.png");
+      if (Files.isRegularFile(aboutPng)) {
+        ImageIcon source = new ImageIcon(aboutPng.toAbsolutePath().toString());
+        Image image = source.getImage();
+        int width = Math.max(1, (int) Math.round(image.getWidth(null) * 0.8d));
+        int height = Math.max(1, (int) Math.round(image.getHeight(null) * 0.8d));
+        return new ImageIcon(image.getScaledInstance(width, height, Image.SCALE_SMOOTH));
+      }
+    }
+    return ResourceUtil.getIcon(ResourceUtil.LogoIcon.LARGE).derive(0.8f);
   }
 
   private static Object[][] createSysInfo() {

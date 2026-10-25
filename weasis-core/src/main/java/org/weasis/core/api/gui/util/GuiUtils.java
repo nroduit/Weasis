@@ -196,10 +196,14 @@ public class GuiUtils {
 
   public static ColorFilter getSelectedColorFilter(JComponent c) {
     ColorFilter colorFilter = new ColorFilter();
-    Color color = IconColor.ACTIONS_BLUE.color;
-    if (c instanceof JMenuItem) {
-      color = FlatUIUtils.getUIColor("MenuItem.selectionForeground", color);
-    }
+    // Follow the selected control foreground (Auramed: black on orange) so outline SVG
+    // strokes stay visible on the orange selected background.
+    Color color =
+        c instanceof JMenuItem
+            ? FlatUIUtils.getUIColor(
+                "MenuItem.selectionForeground", IconColor.ACTIONS_BLUE.color) // NON-NLS
+            : FlatUIUtils.getUIColor(
+                "ToggleButton.selectedForeground", IconColor.ACTIONS_BLUE.color); // NON-NLS
 
     colorFilter.add(new Color(0x6E6E6E), color);
     return colorFilter;

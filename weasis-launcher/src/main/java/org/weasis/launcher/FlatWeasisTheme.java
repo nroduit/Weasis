@@ -26,7 +26,7 @@ public class FlatWeasisTheme extends ThemeLaf {
 
   @Override
   public String getName() {
-    return "Weasis"; // NON-NLS
+    return "Auramed"; // NON-NLS
   }
 
   static IntelliJTheme loadTheme(String name) {
