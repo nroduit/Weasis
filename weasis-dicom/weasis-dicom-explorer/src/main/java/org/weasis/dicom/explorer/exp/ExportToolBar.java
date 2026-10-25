@@ -39,6 +39,13 @@ public class ExportToolBar extends WtoolBar {
       btnExport.addActionListener(
           e -> ImportToolBar.showAction(ExportToolBar.this, model, null, true));
       add(btnExport);
+
+      final JButton btnStudyExport =
+          new JButton(ResourceUtil.getToolBarIcon(ActionIcon.EXPORT_IMAGE));
+      btnStudyExport.setToolTipText(Messages.getString("StudyFolderExport.title"));
+      btnStudyExport.addActionListener(
+          e -> StudyFolderExport.exportSelectedStudy(ExportToolBar.this, model, explorer));
+      add(btnStudyExport);
     }
 
     if (GuiUtils.getUICore()
@@ -85,5 +92,13 @@ public class ExportToolBar extends WtoolBar {
                 (Component) event.getSource(), Messages.getString("DicomExplorer.export_perm"));
           }
         });
+  }
+
+  public static DefaultAction buildStudyFolderExportAction(
+      Component parent, DicomModel model, DicomExplorer explorer) {
+    return new DefaultAction(
+        Messages.getString("StudyFolderExport.title"),
+        ResourceUtil.getIcon(ActionIcon.EXPORT_IMAGE),
+        event -> StudyFolderExport.exportSelectedStudy(parent, model, explorer));
   }
 }

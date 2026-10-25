@@ -9,16 +9,21 @@
  */
 package org.weasis.dicom.explorer.pref.download;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
+import java.io.File;
 import java.util.List;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerListModel;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.WProperties;
@@ -27,7 +32,9 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.DicomSorter;
 import org.weasis.dicom.explorer.DicomSorter.SortingTime;
 import org.weasis.dicom.explorer.LoadDicom;
+import org.weasis.dicom.explorer.LocalPersistence;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.exp.StudyFolderExport;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.main.SeriesFilter;
 
@@ -48,9 +55,15 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
   private final JCheckBox showUnsupportedSopInfoCheckbox =
       new JCheckBox(Messages.getString("dicom.unsupported.sop.notify"));
 
+  private final JTextField studyExportRootField = new JTextField(28);
+  private final JComboBox<String> studyExportFormatComboBox =
+      new JComboBox<>(
+          new String[] {StudyFolderExport.FORMAT_JPEG, StudyFolderExport.FORMAT_PNG});
+
   public DicomExplorerPrefView() {
     super(Messages.getString("DicomExplorer.title"), 607);
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    WProperties localPref = LocalPersistence.getProperties();
 
     JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
     int thumbnailSize = SeriesThumbnail.getThumbnailSizeFromPreferences();
@@ -102,6 +115,27 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
             ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, showUnsupportedSopInfoCheckbox));
     panel3.setBorder(GuiUtils.getTitledBorder(Messages.getString("notifications")));
     add(panel3);
+    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
+
+    JPanel panelExport = GuiUtils.getVerticalBoxLayoutPanel();
+    studyExportRootField.setText(localPref.getProperty(StudyFolderExport.STUDY_EXPORT_ROOT, ""));
+    JLabel rootLabel =
+        new JLabel(Messages.getString("StudyFolderExport.root") + StringUtil.COLON);
+    JButton browseRoot = new JButton(Messages.getString("StudyFolderExport.browse"));
+    browseRoot.addActionListener(e -> browseStudyExportRoot());
+    panelExport.add(GuiUtils.getFlowLayoutPanel(rootLabel, studyExportRootField, browseRoot));
+
+    JLabel formatLabel =
+        new JLabel(Messages.getString("StudyFolderExport.format") + StringUtil.COLON);
+    String format =
+        localPref.getProperty(StudyFolderExport.STUDY_EXPORT_FORMAT, StudyFolderExport.FORMAT_JPEG);
+    studyExportFormatComboBox.setSelectedItem(
+        StudyFolderExport.FORMAT_PNG.equalsIgnoreCase(format)
+            ? StudyFolderExport.FORMAT_PNG
+            : StudyFolderExport.FORMAT_JPEG);
+    panelExport.add(GuiUtils.getFlowLayoutPanel(formatLabel, studyExportFormatComboBox));
+    panelExport.setBorder(GuiUtils.getTitledBorder(Messages.getString("StudyFolderExport.section")));
+    add(panelExport);
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
 
@@ -132,6 +166,23 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
     preferences.resetProperty(LoadDicom.SHOW_UNSUPPORTED_SOP_CLASS_INFO, Boolean.TRUE.toString());
     showUnsupportedSopInfoCheckbox.setSelected(
         preferences.getBooleanProperty(LoadDicom.SHOW_UNSUPPORTED_SOP_CLASS_INFO, true));
+
+    studyExportRootField.setText("");
+    studyExportFormatComboBox.setSelectedItem(StudyFolderExport.FORMAT_JPEG);
+  }
+
+  private void browseStudyExportRoot() {
+    SystemFileChooser chooser = new SystemFileChooser(studyExportRootField.getText());
+    chooser.setFileSelectionMode(SystemFileChooser.DIRECTORIES_ONLY);
+    chooser.setMultiSelectionEnabled(false);
+    if (chooser.showOpenDialog(WinUtil.getParentWindow(this)) == SystemFileChooser.APPROVE_OPTION
+        && chooser.getSelectedFile() != null) {
+      File selected = chooser.getSelectedFile();
+      File root = selected.isDirectory() ? selected : selected.getParentFile();
+      if (root != null) {
+        studyExportRootField.setText(root.getAbsolutePath());
+      }
+    }
   }
 
   @Override
@@ -158,6 +209,14 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
 
     preferences.putBooleanProperty(
         LoadDicom.SHOW_UNSUPPORTED_SOP_CLASS_INFO, showUnsupportedSopInfoCheckbox.isSelected());
+
+    WProperties localPref = LocalPersistence.getProperties();
+    localPref.setProperty(
+        StudyFolderExport.STUDY_EXPORT_ROOT, studyExportRootField.getText().trim());
+    Object format = studyExportFormatComboBox.getSelectedItem();
+    localPref.setProperty(
+        StudyFolderExport.STUDY_EXPORT_FORMAT,
+        format == null ? StudyFolderExport.FORMAT_JPEG : format.toString());
 
     GuiUtils.getUICore().saveSystemPreferences();
   }

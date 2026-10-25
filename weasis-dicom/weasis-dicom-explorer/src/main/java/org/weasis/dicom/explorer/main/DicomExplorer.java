@@ -1426,7 +1426,10 @@ public class DicomExplorer extends PluginTool
 
   @Override
   public List<Action> getOpenExportDialogAction() {
-    return Collections.singletonList(ExportToolBar.buildExportAction(this, model, BUTTON_NAME));
+    ArrayList<Action> actions = new ArrayList<>(2);
+    actions.add(ExportToolBar.buildExportAction(this, model, BUTTON_NAME));
+    actions.add(ExportToolBar.buildStudyFolderExportAction(this, model, this));
+    return actions;
   }
 
   @Override
