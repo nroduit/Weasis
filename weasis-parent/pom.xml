@@ -94,7 +94,8 @@
     </repository>
     <repository>
       <snapshots>
-        <enabled>false</enabled>
+        <enabled>true</enabled>
+        <updatePolicy>daily</updatePolicy>
       </snapshots>
       <id>mvn-repo-master</id>
       <url>https://raw.githubusercontent.com/nroduit/mvn-repo/master/</url>

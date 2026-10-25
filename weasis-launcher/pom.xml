@@ -134,10 +134,42 @@
           </archive>
         </configuration>
       </plugin>
+      <plugin>
+        <!-- Unpack language packs next to the IDE/local launcher (target/bundle-i18n) -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unpack-i18n</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.weasis</groupId>
+                  <artifactId>weasis-i18n-dist</artifactId>
+                  <version>${i18n.version}</version>
+                  <type>zip</type>
+                  <outputDirectory>${project.build.directory}/bundle-i18n</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>org.weasis</groupId>
+      <artifactId>weasis-i18n-dist</artifactId>
+      <version>${i18n.version}</version>
+      <type>zip</type>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.apache.felix</groupId>
       <artifactId>org.apache.felix.framework</artifactId>

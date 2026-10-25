@@ -401,7 +401,7 @@
     },
     {
       "code": "locale.lang.code",
-      "value": "en",
+      "value": "es",
       "description": "Specifies the language code (see Java Locale: https://www.oracle.com/java/technologies/javase/jdk20-suported-locales.html). Default value is \"en\".",
       "type": "F",
       "category": "GENERAL"
