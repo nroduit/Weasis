@@ -18,10 +18,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.api.io.TempDir;
@@ -29,10 +33,14 @@ import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.CommandModel;
 import org.weasis.core.api.command.CommandResult;
 import org.weasis.core.api.command.CommandVocabulary;
+import org.weasis.core.api.hp.HangingProtocolDocuments;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
+import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.hp.BuiltInProtocols;
 import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
+import org.weasis.dicom.codec.hp.ProtocolExchange;
 import org.weasis.dicom.codec.hp.ProtocolJson;
 import org.weasis.dicom.codec.hp.WeasisExtensions;
 import org.weasis.dicom.explorer.DicomModel;
@@ -71,7 +79,11 @@ class HpCommandsTest {
           "hp:validate --file /tmp/draft.json",
           "hp:validate --corpus /tmp/corpus",
           "hp:validate --corpus /tmp/corpus --protocols /tmp/draft.json --protocol ct-chest --json",
-          "hp:validate --corpus /tmp/corpus --expected /tmp/corpus/hp-expected.json");
+          "hp:validate --corpus /tmp/corpus --expected /tmp/corpus/hp-expected.json",
+          "hp:export --id weasis.ct --out /tmp/ct.json",
+          "hp:export --id weasis.ct --out /tmp/ct.dcm --dicom --plain --json",
+          "hp:import --file /tmp/ct.dcm",
+          "hp:import --file /tmp/ct.json --id user.ct --json");
 
   @Test
   void documentedCommandLinesParse() {
@@ -83,6 +95,54 @@ class HpCommandsTest {
                     (Executable)
                         () -> assertDoesNotThrow(() -> CommandModel.parse(model, line), line))
             .toList());
+  }
+
+  @Test
+  void importStoresInTheUserLayerAndExportWritesItBack(@TempDir Path dir) throws IOException {
+    HangingProtocolDocuments.protocols()
+        .configure(Optional.empty(), dir.resolve(HangingProtocolDocuments.PROTOCOLS));
+    try {
+      Path source = dir.resolve("ct.json"); // NON-NLS
+      Files.writeString(source, BuiltInProtocols.entries().getFirst().toString());
+      CommandResult imported =
+          CommandModel.execute(
+              new HpCommands(),
+              "import", // NON-NLS
+              new String[] {"--file", source.toString(), "--id", "user.ct"}); // NON-NLS
+      JsonObject body = Json.createReader(new StringReader(imported.body())).readObject();
+      assertAll(
+          () -> assertEquals(CommandResult.OK, imported.status(), imported.error()),
+          () ->
+              assertEquals(
+                  "user.ct", body.getJsonArray("imported").getJsonObject(0).getString("protocol")),
+          () -> assertTrue(body.getJsonArray("warnings").isEmpty()),
+          () ->
+              assertEquals(
+                  Origin.USER,
+                  HangingProtocolDocuments.protocols().find("user.ct").orElseThrow().origin()));
+
+      Path dicom = dir.resolve("ct.dcm"); // NON-NLS
+      CommandResult exported =
+          CommandModel.execute(
+              new HpCommands(),
+              "export", // NON-NLS
+              new String[] {"--id", "user.ct", "--out", dicom.toString()}); // NON-NLS
+      JsonObject report = Json.createReader(new StringReader(exported.body())).readObject();
+      assertAll(
+          () -> assertEquals(CommandResult.OK, exported.status(), exported.error()),
+          () -> assertEquals("dicom", report.getString("format"), "by the extension"),
+          () -> assertTrue(ProtocolExchange.isDicom(dicom)),
+          () -> assertEquals("user.ct", ProtocolExchange.readDicom(dicom).document().id()));
+      assertTrue(
+          CommandModel.execute(
+                      new HpCommands(),
+                      "import", // NON-NLS
+                      new String[] {"--file", dir.resolve("none.dcm").toString()}) // NON-NLS
+                  .status()
+              != CommandResult.OK);
+    } finally {
+      HangingProtocolDocuments.protocols().configure(Optional.empty(), dir.resolve("x.json"));
+    }
   }
 
   @Test

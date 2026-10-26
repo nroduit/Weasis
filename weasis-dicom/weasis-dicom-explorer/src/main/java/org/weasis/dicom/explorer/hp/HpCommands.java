@@ -34,6 +34,7 @@ import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.InputPath;
+import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.command.ViewId;
@@ -61,7 +62,10 @@ import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
 import org.weasis.dicom.codec.hp.HangingPlan;
 import org.weasis.dicom.codec.hp.PriorStudy;
 import org.weasis.dicom.codec.hp.ProtocolDeriver;
+import org.weasis.dicom.codec.hp.ProtocolExchange;
+import org.weasis.dicom.codec.hp.ProtocolExchange.Imported;
 import org.weasis.dicom.codec.hp.ProtocolJson;
+import org.weasis.dicom.codec.hp.ProtocolJson.Document;
 import org.weasis.dicom.codec.hp.SeriesFeatureExtractor;
 import org.weasis.dicom.codec.hp.StudySeries;
 import org.weasis.dicom.codec.hp.ValidationReport;
@@ -94,7 +98,9 @@ import picocli.CommandLine.ParentCommand;
       HpCommands.Save.class,
       HpCommands.Delete.class,
       HpCommands.Features.class,
-      HpCommands.Validate.class
+      HpCommands.Validate.class,
+      HpCommands.Export.class,
+      HpCommands.Import.class
     })
 @Since("5.0")
 public class HpCommands implements CommandExtension {
@@ -1425,6 +1431,137 @@ public class HpCommands implements CommandExtension {
                 entry.getBoolean(HangingEngine.ENABLED, true)));
       }
       return candidates;
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "export",
+      description =
+          "Writes a protocol of any layer to a file: its JSON entry, or with --dicom a DICOM "
+              + "Hanging Protocol Storage object (also when the file ends with .dcm). The Weasis "
+              + "extensions (feature selectors, viewer types, display by reference, UI profile) "
+              + "travel in a private block of the object, or are dropped with --plain for a "
+              + "reader that must not see them.")
+  @Since("5.0")
+  static class Export extends Verb {
+    @Option(
+        names = "--id",
+        required = true,
+        paramLabel = "<protocol-id>",
+        description = "Protocol id from 'list'.")
+    String protocolId;
+
+    @Option(
+        names = "--out",
+        required = true,
+        paramLabel = "<output-path>",
+        description = "Target file.")
+    OutputPath out;
+
+    @Option(names = "--dicom", description = "Writes a DICOM object instead of JSON.")
+    boolean dicom;
+
+    @Option(names = "--plain", description = "Leaves the Weasis extensions out.")
+    boolean plain;
+
+    @Override
+    protected void run() throws IOException {
+      Candidate candidate =
+          parent.candidateSupplier.get().stream()
+              .filter(c -> protocolId.equals(c.document().id()))
+              .findFirst()
+              .orElseThrow(
+                  () ->
+                      CommandFailure.unknownHandle(
+                          "Unknown protocol id: " + protocolId, "hp:list")); // NON-NLS
+      Path target = out.value();
+      boolean asDicom =
+          dicom || target.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".dcm");
+      if (asDicom) {
+        ProtocolExchange.writeDicom(candidate.document(), target, !plain);
+      } else {
+        ProtocolExchange.writeJson(candidate.document(), target, !plain);
+      }
+      JsonArrayBuilder warnings = Json.createArrayBuilder();
+      if (plain && !candidate.document().weasis().toJson().isEmpty()) {
+        warnings.add(
+            "The Weasis extensions were left out: another Weasis imports the DICOM selectors "
+                + "alone");
+      }
+      print(
+          Json.createObjectBuilder()
+              .add("protocol", protocolId) // NON-NLS
+              .add("file", target.toAbsolutePath().toString()) // NON-NLS
+              .add("format", asDicom ? "dicom" : "json") // NON-NLS
+              .add("warnings", warnings) // NON-NLS
+              .build()
+              .toString());
+    }
+  }
+
+  @Command(
+      name = "import",
+      description =
+          "Reads a protocol file, a DICOM Hanging Protocol Storage object or a JSON entry (one, "
+              + "an array, or an object with 'protocols'), and stores the protocols in the user "
+              + "layer with their level; a protocol of the same id in the built-in or site layer "
+              + "is overridden by it. An object without the Weasis private block imports with its "
+              + "DICOM selectors alone, with a warning.")
+  @Since("5.0")
+  static class Import extends Verb {
+    @Option(
+        names = "--file",
+        required = true,
+        paramLabel = "<input-path>",
+        description = "Source file.")
+    InputPath file;
+
+    @Option(
+        names = "--id",
+        paramLabel = "<protocol-id>",
+        description = "The id to store a single imported protocol under.")
+    String protocolId;
+
+    @Override
+    protected void run() throws IOException {
+      Path source = file.value();
+      if (!Files.isRegularFile(source)) {
+        throw invalid("No such file: " + source);
+      }
+      List<Imported> imported = ProtocolExchange.read(source);
+      if (protocolId != null && imported.size() != 1) {
+        throw invalid(
+            "--id applies to a file holding one protocol, this one holds " + imported.size());
+      }
+      JsonArrayBuilder list = Json.createArrayBuilder();
+      JsonArrayBuilder warnings = Json.createArrayBuilder();
+      for (Imported item : imported) {
+        Document document =
+            protocolId == null
+                ? item.document()
+                : new Document(protocolId, item.document().protocol(), item.document().weasis());
+        HangingProtocolDocuments.protocols().put(ProtocolJson.toJson(document));
+        JsonObjectBuilder entry =
+            Json.createObjectBuilder().add("protocol", document.id()); // NON-NLS
+        String name = document.protocol().getHangingProtocolName();
+        if (name != null) {
+          entry.add("name", name); // NON-NLS
+        }
+        String level = document.protocol().getHangingProtocolLevel();
+        if (level != null) {
+          entry.add("level", level); // NON-NLS
+        }
+        list.add(entry);
+        item.warnings().forEach(w -> warnings.add(document.id() + ": " + w));
+      }
+      print(
+          Json.createObjectBuilder()
+              .add("imported", list) // NON-NLS
+              .add("warnings", warnings) // NON-NLS
+              .build()
+              .toString());
     }
   }
 

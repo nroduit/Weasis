@@ -24,7 +24,7 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.8 and protocol
+This instance runs Weasis development with command API 2.9 and protocol
 1, and answers these namespaces: color, config, dicom, explorer, hp, image, redact, script, state, view2d, view3d, weasis, workspace.
 
 Check the connection first:
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.8 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.9 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -197,6 +197,11 @@ line naming the current spelling. Use the current one everywhere.
    out among the study, plus preset, inversion, sort, tiling and synchronization), reports the
    rules and which loaded studies it applies to, and stores it in the user layer unless
    `--dry-run`; `hp:delete --id <protocol-id>` removes a user protocol.
+   `hp:export --id <protocol-id> --out <file> [--dicom] [--plain]` writes a protocol of any
+   layer as its JSON entry or as a DICOM Hanging Protocol Storage object (the Weasis extensions
+   travel in a private block unless `--plain`), and `hp:import --file <file> [--id <id>]` reads
+   either form into the user layer, returning the ids, names and levels stored and the warnings
+   (an object without the private block keeps its DICOM selectors alone).
    Each hung cell shows an indicator of how its series matched (exact, preferred, fallback,
    shared, nothing matched, corrected) and the *Why* tool of the bottom slot (`workspace:panel
    --side tools --slot bottom --tool hp-why`) lists the rules and the alternatives of the
