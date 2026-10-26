@@ -76,6 +76,7 @@ class HpCommandsTest {
           "hp:correct --view v1 --cell 1 --series 1.2.3.4 --apply --json",
           "hp:corrections",
           "hp:corrections --protocol weasis.ct --json",
+          "hp:corrections --stats",
           "hp:validate --file /tmp/draft.json",
           "hp:validate --corpus /tmp/corpus",
           "hp:validate --corpus /tmp/corpus --protocols /tmp/draft.json --protocol ct-chest --json",

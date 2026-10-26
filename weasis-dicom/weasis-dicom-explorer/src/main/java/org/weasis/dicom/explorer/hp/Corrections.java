@@ -16,8 +16,12 @@ import jakarta.json.JsonObjectBuilder;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.setting.Scope;
@@ -125,6 +129,78 @@ public final class Corrections {
   static synchronized void install(Path file) {
     LOG.configure(Optional.empty(), file);
     configured = true;
+  }
+
+  /**
+   * The anonymous statistics of a log, what an administrator or the Viewer Hub reads to see which
+   * rules fail most: per protocol the number of corrections, by cell, by display set and by the
+   * rule the corrections propose (the feature, its usage and values); no study, series or feature
+   * value of a patient.
+   */
+  public static JsonObject statistics(List<Correction> corrections) {
+    Map<String, List<Correction>> byProtocol = new TreeMap<>();
+    for (Correction c : corrections) {
+      byProtocol
+          .computeIfAbsent(c.protocol() == null ? "" : c.protocol(), k -> new ArrayList<>())
+          .add(c);
+    }
+    JsonArrayBuilder protocols = Json.createArrayBuilder();
+    byProtocol.forEach(
+        (protocol, list) -> {
+          Map<String, Integer> cells = new TreeMap<>();
+          Map<String, Integer> displaySets = new TreeMap<>();
+          Map<String, Integer> rules = new TreeMap<>();
+          String last = null;
+          for (Correction c : list) {
+            cells.merge(String.valueOf(c.cell()), 1, Integer::sum);
+            displaySets.merge(String.valueOf(c.displaySet()), 1, Integer::sum);
+            if (!c.proposal().isEmpty()) {
+              rules.merge(ruleOf(c.proposal()), 1, Integer::sum);
+            }
+            if (last == null || c.id().compareTo(last) > 0) {
+              last = c.id();
+            }
+          }
+          JsonObjectBuilder entry =
+              Json.createObjectBuilder()
+                  .add("protocol", protocol) // NON-NLS
+                  .add("corrections", list.size()) // NON-NLS
+                  .add("cells", counts(cells)) // NON-NLS
+                  .add("displaySets", counts(displaySets)) // NON-NLS
+                  .add("rules", counts(rules)); // NON-NLS
+          if (last != null) {
+            entry.add("last", last); // NON-NLS
+          }
+          protocols.add(entry);
+        });
+    return Json.createObjectBuilder()
+        .add("corrections", corrections.size()) // NON-NLS
+        .add("protocols", protocols) // NON-NLS
+        .build();
+  }
+
+  /** A rule as a line: {@code feature=values (usage)} per selector, joined. */
+  static String ruleOf(List<FeatureSelector> proposal) {
+    StringBuilder rule = new StringBuilder();
+    for (FeatureSelector s : proposal) {
+      if (!rule.isEmpty()) {
+        rule.append(" & ");
+      }
+      rule.append(s.feature().id());
+      if (!s.values().isEmpty()) {
+        rule.append('=').append(String.join("|", new TreeSet<>(s.values())));
+      }
+      if (s.usage() != FeatureSelector.Usage.MATCH) {
+        rule.append(" (").append(s.usage().name()).append(')');
+      }
+    }
+    return rule.toString();
+  }
+
+  private static JsonObjectBuilder counts(Map<String, Integer> counts) {
+    JsonObjectBuilder json = Json.createObjectBuilder();
+    counts.forEach(json::add);
+    return json;
   }
 
   /** A new id: the instant of the correction. */

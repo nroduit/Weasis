@@ -894,7 +894,9 @@ public class HpCommands implements CommandExtension {
       name = "corrections",
       description =
           "The correction log: what users put in the cells instead of what the protocols chose, "
-              + "with the rule each correction proposes; which rules fail most.")
+              + "with the rule each correction proposes; --stats gives the anonymous counts per "
+              + "protocol, cell, display set and proposed rule (no study or series), the figures "
+              + "an administrator or the Viewer Hub collects to see which rules fail most.")
   @Since("5.0")
   static class CorrectionLog extends Verb {
     @Option(
@@ -903,10 +905,17 @@ public class HpCommands implements CommandExtension {
         description = "Only the corrections of this protocol.")
     String protocolId;
 
+    @Option(names = "--stats", description = "The anonymous statistics instead of the log.")
+    boolean stats;
+
     @Override
     protected void run() {
       List<Corrections.Correction> list =
           protocolId == null ? Corrections.all() : Corrections.of(protocolId);
+      if (stats) {
+        print(Corrections.statistics(list).toString());
+        return;
+      }
       JsonArrayBuilder array = Json.createArrayBuilder();
       list.forEach(c -> array.add(c.toJson()));
       JsonObject result = Json.createObjectBuilder().add("corrections", array).build(); // NON-NLS
