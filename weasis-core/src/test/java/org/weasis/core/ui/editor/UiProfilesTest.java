@@ -277,7 +277,8 @@ class UiProfilesTest {
     UiProfile profile = UiProfiles.apply(context(null, "test.ct"));
     container.applyContext(context(null, "test.ct"), profile);
     assertEquals(List.of(measure, viewer), container.shownBars(), "listed bars, profile order");
-    assertEquals(2, container.getComponentCount());
+    assertEquals(3, container.getComponentCount(), "the two bars and the overflow");
+    assertEquals(List.of(cine), container.hiddenBars(), "not in the profile");
 
     container.displayToolbar(cine, true);
     assertAll(

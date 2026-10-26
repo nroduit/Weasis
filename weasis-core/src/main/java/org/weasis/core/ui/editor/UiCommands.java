@@ -27,6 +27,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.LayeredDocument;
 import org.weasis.core.api.util.LayeredDocument.Entry;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.Shell;
 import org.weasis.core.ui.docking.ShellState;
 import org.weasis.core.ui.util.ToolBarContainer;
@@ -42,10 +43,14 @@ import picocli.CommandLine.ParentCommand;
     description =
         "The workspace around the viewers: the UI profiles (shell slots, toolbars, menus, mouse "
             + "bindings, measurement profile) that a hanging protocol or a reading step lays over "
-            + "it. Profile ids come from 'ui:profiles'.",
-    subcommands = {UiCommands.Profiles.class, UiCommands.Profile.class})
+            + "it, and the overflow of what the selected view hides. Profile ids come from "
+            + "'ui:profiles'.",
+    subcommands = {UiCommands.Profiles.class, UiCommands.Profile.class, UiCommands.Reveal.class})
 @Since("5.0")
 public class UiCommands implements CommandExtension {
+
+  static final String HIDDEN = "hidden"; // NON-NLS
+  static final String TOOLS = "tools"; // NON-NLS
 
   private Supplier<Optional<? extends SeriesViewer<?>>> selectedViewer =
       () -> GuiUtils.getUICore().getSelectedPlugin();
@@ -77,7 +82,7 @@ public class UiCommands implements CommandExtension {
     return this;
   }
 
-  /** The active profile and what the shell shows now. */
+  /** The active profile, what the shell shows now and what the selected view hides. */
   JsonObject state() {
     JsonObjectBuilder json = Json.createObjectBuilder();
     String active = UiProfiles.activeId();
@@ -88,12 +93,21 @@ public class UiCommands implements CommandExtension {
     if (current != null) {
       json.add(ShellState.SHELL, ShellState.capture(current).toJson());
     }
+    JsonObjectBuilder hidden = Json.createObjectBuilder();
     ToolBarContainer container = toolbars.get();
     if (container != null) {
       JsonArrayBuilder row = Json.createArrayBuilder();
       container.shownBars().stream().map(Toolbar::getToolbarId).forEach(row::add);
       json.add(UiProfile.TOOLBARS, row);
+      JsonArrayBuilder out = Json.createArrayBuilder();
+      container.hiddenBars().stream().map(Toolbar::getToolbarId).forEach(out::add);
+      hidden.add(UiProfile.TOOLBARS, out);
     }
+    JsonArrayBuilder tools = Json.createArrayBuilder();
+    Relevance.hiddenTools(ViewContexts.current()).stream()
+        .map(DockableTool::getToolId)
+        .forEach(tools::add);
+    json.add(HIDDEN, hidden.add(TOOLS, tools));
     return json.build();
   }
 
@@ -215,6 +229,55 @@ public class UiCommands implements CommandExtension {
               .add("profile", profile.toJson()) // NON-NLS
               .build();
       print(json.toString());
+    }
+  }
+
+  @Command(
+      name = "reveal",
+      description =
+          "Shows again, for the selected view only, a toolbar or a tool panel that the view's "
+              + "context or the UI profile hides (the overflow 'More tools...' of the toolbar row); "
+              + "the next view hides it again. The hidden ids are under 'hidden' in the state the "
+              + "verbs of this namespace return.")
+  @Since("5.0")
+  static class Reveal extends Verb {
+    @Option(
+        names = "--toolbar",
+        paramLabel = "<toolbar-id>",
+        description = "Toolbar id from 'hidden.toolbars'.")
+    String toolbar;
+
+    @Option(
+        names = "--tool",
+        paramLabel = "<tool-id>",
+        description = "Tool id from 'hidden.tools'.")
+    String tool;
+
+    @Override
+    protected void run() {
+      if ((toolbar == null) == (tool == null)) {
+        throw invalid("one of --toolbar or --tool is required");
+      }
+      GuiExecutor.invokeAndRethrow(
+          () -> {
+            if (toolbar != null) {
+              ToolBarContainer container = parent.toolbars.get();
+              if (container == null || !container.reveal(toolbar)) {
+                throw CommandFailure.unknownHandle("Unknown toolbar id: " + toolbar, "ui:profiles");
+              }
+            } else {
+              Relevance.hiddenTools(ViewContexts.current()).stream()
+                  .filter(t -> t.getToolId().equals(tool))
+                  .findFirst()
+                  .ifPresentOrElse(
+                      Relevance::reveal,
+                      () -> {
+                        throw CommandFailure.unknownHandle(
+                            "No hidden tool with id: " + tool, "ui:profiles");
+                      });
+            }
+          });
+      print(parent.state().toString());
     }
   }
 }

@@ -138,6 +138,22 @@ profile, under the same id, so the site or built-in profile stays untouched and 
 version wins next time. `ui:profiles` lists the layers, `ui:profile` shows, applies or
 releases one.
 
+### Rendering by context
+
+Nothing becomes unreachable. The toolbar row keeps a stable order (the insertable positions,
+or the profile's order) and ends with an overflow, *More tools…*, whenever the context or the
+profile hides something: it lists the hidden toolbars and the hidden tool panels of the
+selected viewer, each with the reason as tooltip, and the *Show all tools* toggle (the setting
+`weasis.ui.contextual`). Choosing an item reveals it for the selected view only
+(`ToolBarContainer.reveal`, `Relevance.reveal`); the next view, another series in the same
+viewer, hides it again (`ViewContext.sameView`). `ui:reveal --toolbar <id> | --tool <id>` is
+the same action for an agent, and the state the `ui:` verbs return lists the hidden ids. An
+item that is relevant but not applicable now is not hidden: it stays disabled with the reason
+as tooltip (`Relevance.notApplicable`, as the calibration entry of a graphic that is not a
+finished line). The contexts published in a burst, a keyboard walk across the cells, are
+applied once, debounced on the event thread (`Relevance.follow`); the stripe is diffed by tool
+id, so a switch changes the tools without resizing the viewers.
+
 ### A tool as a view
 
 A shell tool can leave its slot for the central area: `SidePanel.openAsView(toolId)` wraps it
@@ -233,7 +249,7 @@ the display verbs echo). A window reports the view it has maximized; the listing
 application's selection under `selected`. View ids are durable handles; the window and group
 numbers are positions in that listing and change with the layout.
 
-`UiCommands` exposes the UI profiles under the `ui:` namespace (profiles, profile).
+`UiCommands` exposes the UI profiles and the overflow under the `ui:` namespace (profiles, profile, reveal).
 
 `detach` floats a view in a viewer window near the main window, on the usable area of the
 screen of a role (`--screen diagnostic-1`) or at explicit bounds (`--bounds`); `screens` lists

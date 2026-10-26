@@ -389,12 +389,15 @@ public final class GraphicEditActions {
     }
     addSeparator(popupMenu, count);
 
-    // calibration is for images without a reliable pixel spacing
-    if (graphic instanceof LineGraphic lineGraphic
-        && CalibrationView.accepts(lineGraphic)
-        && Relevance.applies(Relevance.CALIBRATION, ViewContexts.current())) {
+    // calibration is for images without a reliable pixel spacing; it needs a line to be done
+    if (Relevance.applies(Relevance.CALIBRATION, ViewContexts.current())) {
       JMenuItem calibrate = new JMenuItem(Messages.getString("GraphicEditActions.calibrate"));
-      calibrate.addActionListener(_ -> CalibrationView.showDialog(lineGraphic, view));
+      if (graphic instanceof LineGraphic lineGraphic && CalibrationView.accepts(lineGraphic)) {
+        calibrate.addActionListener(_ -> CalibrationView.showDialog(lineGraphic, view));
+      } else {
+        Relevance.notApplicable(
+            calibrate, Messages.getString("GraphicEditActions.calibrate_needs_line"));
+      }
       popupMenu.add(calibrate);
       popupMenu.add(new JSeparator());
     }

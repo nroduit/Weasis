@@ -9,20 +9,29 @@
  */
 package org.weasis.core.ui.editor;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.setting.SettingEnvironment;
 import org.weasis.core.api.setting.Settings;
 import org.weasis.core.ui.docking.DockableTool;
@@ -250,12 +259,13 @@ class RelevanceTest {
     container.registerToolBar(List.of(cine, volume, viewer));
     assertEquals(
         List.of(viewer), container.shownBars(), "no context: the capabilities are unknown");
-    assertEquals(1, container.getComponentCount());
+    assertEquals(2, container.getComponentCount(), "the viewer bar and the overflow");
+    assertEquals(List.of(volume, cine), container.hiddenBars());
 
     container.applyContext(
         context(Map.of(ContextFacts.VOLUME, true, ContextFacts.TEMPORAL, "CINE")));
     assertEquals(List.of(viewer, volume, cine), container.shownBars(), "sorted by position");
-    assertEquals(3, container.getComponentCount());
+    assertEquals(3, container.getComponentCount(), "nothing hidden: no overflow");
 
     container.applyContext(context(Map.of(ContextFacts.VOLUME, true)));
     assertEquals(List.of(viewer, volume), container.shownBars());
@@ -275,5 +285,100 @@ class RelevanceTest {
     assertEquals(List.of(ToolBarContainer.EMPTY), container.shownBars());
     List<Toolbar> registered = container.getRegisteredToolBars();
     assertEquals(1, registered.size());
+  }
+
+  @Test
+  void aHiddenToolbarRevealedFromTheOverflowStaysForTheSameViewOnly() {
+    ToolBarContainer container = new ToolBarContainer();
+    PredicateBar viewer = new PredicateBar("viewer", 10, Relevance.ALWAYS);
+    PredicateBar cine = new PredicateBar("cine", 80, Relevance.TEMPORAL);
+    container.registerToolBar(List.of(viewer, cine));
+    MediaSeries<?> series = mock(MediaSeries.class);
+    ViewContext still =
+        new ViewContext(null, "2d", series, Map.of(ContextFacts.TEMPORAL, "STATIC"));
+    container.applyContext(still);
+    assertEquals(List.of(cine), container.hiddenBars());
+
+    assertFalse(container.reveal("nope"));
+    assertTrue(container.reveal(cine.getToolbarId()));
+    assertAll(
+        () -> assertEquals(List.of(viewer, cine), container.shownBars()),
+        () -> assertTrue(container.hiddenBars().isEmpty()),
+        () -> assertEquals(2, container.getComponentCount(), "no overflow left"));
+
+    container.applyContext(
+        new ViewContext(null, "2d", series, Map.of(ContextFacts.TEMPORAL, "STATIC", "x", 1)));
+    assertEquals(List.of(viewer, cine), container.shownBars(), "same view, new facts: kept");
+
+    container.applyContext(context(Map.of(ContextFacts.TEMPORAL, "STATIC")));
+    assertEquals(List.of(viewer), container.shownBars(), "another view: hidden again");
+  }
+
+  @Test
+  void aHiddenToolRevealedFromTheOverflowStaysUntilAnotherView() {
+    PredicateTool why = new PredicateTool("hp-why", Relevance.PROTOCOL);
+    PredicateTool hiddenByUser = new PredicateTool("measure", Relevance.PROTOCOL);
+    assertTrue(ToolVisibility.setVisible(hiddenByUser, false));
+    SeriesViewer<?> viewer = mock(SeriesViewer.class);
+    when(viewer.getSeriesViewerUI())
+        .thenReturn(new SeriesViewerUI(Object.class, null, List.of(why, hiddenByUser), null));
+    MediaSeries<?> series = mock(MediaSeries.class);
+    ViewContext plain = new ViewContext(viewer, "2d", series, Map.of());
+
+    Relevance.apply(plain);
+    assertEquals(List.of(why), Relevance.hiddenTools(plain), "what the user hid is not offered");
+    assertEquals(List.of("close"), why.events);
+
+    Relevance.reveal(why);
+    assertAll(
+        () -> assertTrue(Relevance.isRevealed(why)),
+        () -> assertTrue(Relevance.hiddenTools(plain).isEmpty()),
+        () -> assertEquals(List.of("close", "show"), why.events));
+    Relevance.apply(new ViewContext(viewer, "2d", series, Map.of("x", 1)));
+    assertEquals(List.of("close", "show", "show"), why.events, "same view: still shown");
+
+    Relevance.apply(new ViewContext(viewer, "2d", mock(MediaSeries.class), Map.of()));
+    assertAll(
+        () -> assertFalse(Relevance.isRevealed(why)),
+        () -> assertEquals(List.of("close", "show", "show", "close"), why.events));
+    assertTrue(Relevance.hiddenTools(ViewContext.empty()).isEmpty());
+  }
+
+  @Test
+  void anItemRelevantButNotApplicableIsDisabledWithTheReason() {
+    JMenuItem item = new JMenuItem("Calibrate");
+    Relevance.notApplicable(item, "Needs a line");
+    assertFalse(item.isEnabled());
+    assertEquals("Needs a line", item.getToolTipText());
+  }
+
+  @Test
+  void aBurstOfContextsIsAppliedOnceWithTheLastOne() throws InterruptedException {
+    AtomicInteger applications = new AtomicInteger();
+    AtomicReference<ViewContext> last = new AtomicReference<>();
+    CountDownLatch applied = new CountDownLatch(1);
+    ToolBarContainer counting =
+        new ToolBarContainer() {
+          @Override
+          public void applyContext(ViewContext context, UiProfile profile) {
+            applications.incrementAndGet();
+            last.set(context);
+            applied.countDown();
+          }
+        };
+    Relevance.setToolbarContainer(() -> counting);
+    try {
+      ViewContext first = context(Map.of("n", 1));
+      ViewContext third = context(Map.of("n", 3));
+      Relevance.schedule(first);
+      Relevance.schedule(context(Map.of("n", 2)));
+      Relevance.schedule(third);
+      assertTrue(applied.await(5, TimeUnit.SECONDS), "applied on the event thread");
+      Thread.sleep(Relevance.DEBOUNCE_MS * 2L);
+      assertEquals(1, applications.get(), "coalesced");
+      assertEquals(third, last.get());
+    } finally {
+      Relevance.setToolbarContainer(() -> null);
+    }
   }
 }

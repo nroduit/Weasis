@@ -51,6 +51,11 @@ public record ViewContext(
     return viewer == null;
   }
 
+  /** Whether both contexts describe the same series in the same viewer (the facts may differ). */
+  public boolean sameView(ViewContext other) {
+    return other != null && viewer == other.viewer && series == other.series;
+  }
+
   /** A fact by name, empty when the plugins said nothing under it. */
   public Optional<Object> fact(String name) {
     return Optional.ofNullable(facts.get(name));

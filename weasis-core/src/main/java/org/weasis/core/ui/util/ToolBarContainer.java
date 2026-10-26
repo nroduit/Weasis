@@ -16,27 +16,46 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.Relevance;
 import org.weasis.core.ui.editor.UiProfile;
 import org.weasis.core.ui.editor.UiProfiles;
 import org.weasis.core.ui.editor.ViewContext;
 
+/**
+ * The toolbar row of the selected viewer. It shows the toolbars the user keeps enabled, the {@link
+ * ViewContext} makes relevant and the active {@link UiProfile} lists, in a stable order; what the
+ * context or the profile hides stays reachable in an overflow at the end of the row (<i>More
+ * tools…</i>), together with the hidden tool panels of the viewer and the <i>Show all tools</i>
+ * toggle.
+ */
 public class ToolBarContainer extends JPanel {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ToolBarContainer.class);
+
   public static final Toolbar EMPTY = buildEmptyToolBar("empty");
   private final List<Toolbar> bars = new ArrayList<>();
+  private final Set<String> revealed = new HashSet<>();
   private ViewContext context = ViewContext.empty();
   private UiProfile profile;
+  private WtoolBar more;
 
   public ToolBarContainer() {
     setLayout(new FlowLayout(FlowLayout.LEADING, 0, 0));
@@ -76,23 +95,28 @@ public class ToolBarContainer extends JPanel {
   /**
    * The context of the selected view changed, with the UI profile in force: the toolbars the
    * context makes relevant and the profile lists are shown, in the profile's order; the user's
-   * enabled flag of each toolbar is untouched.
+   * enabled flag of each toolbar is untouched. The toolbars revealed from the overflow stay while
+   * the same view is selected.
    *
    * @param profile the active profile, null when none
    */
   public void applyContext(ViewContext context, UiProfile profile) {
     ViewContext next = context == null ? ViewContext.empty() : context;
     List<Toolbar> before = shownBars();
+    boolean overflowBefore = hasOverflow();
+    if (!next.sameView(this.context)) {
+      revealed.clear();
+    }
     this.context = next;
     this.profile = profile;
-    if (!before.equals(shownBars())) {
+    if (!before.equals(shownBars()) || overflowBefore != hasOverflow()) {
       rebuild();
     }
   }
 
   /**
    * The toolbars in the row: enabled by the user, relevant for the current context and listed by
-   * the active profile, in the profile's order when it lists them.
+   * the active profile (or revealed from the overflow), in the profile's order when it lists them.
    */
   public List<Toolbar> shownBars() {
     List<Toolbar> shown = new ArrayList<>();
@@ -107,16 +131,56 @@ public class ToolBarContainer extends JPanel {
     return shown;
   }
 
+  /** The toolbars the user keeps enabled but the context or the profile hides: the overflow. */
+  public List<Toolbar> hiddenBars() {
+    List<Toolbar> hidden = new ArrayList<>();
+    for (Toolbar bar : bars) {
+      if (bar.isComponentEnabled() && !isShown(bar)) {
+        hidden.add(bar);
+      }
+    }
+    return hidden;
+  }
+
   private boolean isShown(Toolbar bar) {
-    return bar.isComponentEnabled()
-        && Relevance.isRelevant(bar, context)
-        && (profile == null || profile.showsToolbar(bar.getToolbarId()));
+    if (!bar.isComponentEnabled()) {
+      return false;
+    }
+    String id = bar.getToolbarId();
+    return revealed.contains(id)
+        || (Relevance.isRelevant(bar, context) && (profile == null || profile.showsToolbar(id)));
+  }
+
+  /**
+   * Shows a hidden toolbar for the selected view; the next view hides it again.
+   *
+   * @return false when no registered toolbar has that id
+   */
+  public boolean reveal(String toolbarId) {
+    for (Toolbar bar : bars) {
+      if (bar.getToolbarId().equals(toolbarId)) {
+        revealed.add(toolbarId);
+        rebuild();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Whether the row ends with the overflow: something is hidden, or the filtering is off. */
+  private boolean hasOverflow() {
+    return !Relevance.contextual()
+        || !hiddenBars().isEmpty()
+        || !Relevance.hiddenTools(context).isEmpty();
   }
 
   private void rebuild() {
     removeAll();
     for (Toolbar bar : shownBars()) {
       add(bar.getComponent());
+    }
+    if (hasOverflow()) {
+      add(moreBar());
     }
     revalidate();
     repaint();
@@ -144,6 +208,7 @@ public class ToolBarContainer extends JPanel {
 
   private void unregisterAll() {
     bars.clear();
+    revealed.clear();
     removeAll();
   }
 
@@ -154,6 +219,37 @@ public class ToolBarContainer extends JPanel {
    */
   public List<Toolbar> getRegisteredToolBars() {
     return new ArrayList<>(bars);
+  }
+
+  private WtoolBar moreBar() {
+    if (more == null) {
+      String title = Messages.getString("ToolBarContainer.more");
+      more = new WtoolBar(title, Integer.MAX_VALUE);
+      Icon icon = moreIcon();
+      JButton button = icon == null ? new JButton("…") : new JButton(icon);
+      button.setName("more-tools"); // NON-NLS
+      button.setToolTipText(title);
+      button.setFocusable(false);
+      button.addActionListener(e -> new MoreToolsMenu().show(button, 0, button.getHeight()));
+      more.add(button);
+    }
+    return more;
+  }
+
+  private static Icon moreIcon() {
+    try {
+      return ResourceUtil.getToolBarIcon(ActionIcon.MORE_H);
+    } catch (RuntimeException e) {
+      LOGGER.debug("No icon for the overflow", e);
+      return null;
+    }
+  }
+
+  /** The reason a toolbar is out of the row, for a tooltip. */
+  private String reasonHidden(Toolbar bar) {
+    return Relevance.isRelevant(bar, context)
+        ? Messages.getString("ToolBarContainer.not_in_profile")
+        : Messages.getString("ToolBarContainer.irrelevant");
   }
 
   private class PopClickListener extends MouseAdapter {
@@ -179,8 +275,7 @@ public class ToolBarContainer extends JPanel {
         if (!Insertable.Type.EMPTY.equals(bar.getPanelType())) {
           var item = new JCheckBoxMenuItem(bar.getComponentName(), isShown(bar));
           if (!Relevance.isRelevant(bar, context)) {
-            item.setEnabled(false);
-            item.setToolTipText(Messages.getString("ToolBarContainer.irrelevant"));
+            Relevance.notApplicable(item, Messages.getString("ToolBarContainer.irrelevant"));
           }
           item.addActionListener(
               e -> {
@@ -191,6 +286,38 @@ public class ToolBarContainer extends JPanel {
           add(item);
         }
       }
+    }
+  }
+
+  /** The overflow: the hidden toolbars and tools, each shown again for the selected view. */
+  private class MoreToolsMenu extends JPopupMenu {
+    MoreToolsMenu() {
+      for (Toolbar bar : hiddenBars()) {
+        JMenuItem item = new JMenuItem(bar.getComponentName());
+        item.setToolTipText(reasonHidden(bar));
+        item.addActionListener(e -> reveal(bar.getToolbarId()));
+        add(item);
+      }
+      List<DockableTool> tools = Relevance.hiddenTools(context);
+      if (getComponentCount() > 0 && !tools.isEmpty()) {
+        addSeparator();
+      }
+      for (DockableTool tool : tools) {
+        JMenuItem item = new JMenuItem(tool.getComponentName());
+        item.setToolTipText(Messages.getString("ToolBarContainer.irrelevant"));
+        item.addActionListener(
+            e -> {
+              Relevance.reveal(tool);
+              rebuild();
+            });
+        add(item);
+      }
+      addSeparator();
+      var all =
+          new JCheckBoxMenuItem(
+              Messages.getString("ToolBarContainer.show_all"), !Relevance.contextual());
+      all.addActionListener(e -> Settings.set(Relevance.CONTEXTUAL, !all.isSelected()));
+      add(all);
     }
   }
 

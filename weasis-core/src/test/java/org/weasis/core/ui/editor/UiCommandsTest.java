@@ -35,6 +35,8 @@ import org.weasis.core.api.setting.Settings;
 import org.weasis.core.ui.docking.Shell;
 import org.weasis.core.ui.model.graphic.profile.MeasurementProfile;
 import org.weasis.core.ui.model.graphic.profile.MeasurementProfileRegistry;
+import org.weasis.core.ui.util.ToolBarContainer;
+import org.weasis.core.ui.util.WtoolBar;
 
 class UiCommandsTest {
 
@@ -132,5 +134,28 @@ class UiCommandsTest {
     assertEquals("CT", UiProfiles.find("cmd.ct").orElseThrow().name(), "the built-in again");
     assertNotEquals(
         CommandResult.OK, run("profile", "--id", "cmd.ct", "--apply", "--clear").status());
+  }
+
+  @Test
+  void revealShowsAHiddenToolbarAgainAndReportsWhatStaysHidden() {
+    ToolBarContainer container = new ToolBarContainer();
+    WtoolBar cine = new WtoolBar("cine", 80); // id "w" (WtoolBar), not in the profile
+    container.registerToolBar(List.of(cine));
+    container.applyContext(ViewContext.empty(), UiProfiles.find("cmd.ct").orElseThrow());
+    commands.withToolbars(() -> container);
+
+    JsonObject before = json(run("profiles", "--json").body());
+    assertEquals("w", before.getJsonObject("hidden").getJsonArray("toolbars").getString(0));
+
+    assertNotEquals(CommandResult.OK, run("reveal").status(), "one option is required");
+    assertNotEquals(CommandResult.OK, run("reveal", "--toolbar", "nope").status());
+    assertNotEquals(CommandResult.OK, run("reveal", "--tool", "measure").status());
+    CommandResult result = run("reveal", "--toolbar", "w");
+    JsonObject after = json(result.body());
+    assertAll(
+        () -> assertEquals(CommandResult.OK, result.status()),
+        () -> assertEquals("w", after.getJsonArray("toolbars").getString(0)),
+        () -> assertTrue(after.getJsonObject("hidden").getJsonArray("toolbars").isEmpty()),
+        () -> assertTrue(after.getJsonObject("hidden").getJsonArray("tools").isEmpty()));
   }
 }
