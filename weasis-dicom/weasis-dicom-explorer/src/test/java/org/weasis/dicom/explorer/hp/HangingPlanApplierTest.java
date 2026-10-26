@@ -349,4 +349,28 @@ class HangingPlanApplierTest {
         () -> assertEquals(1, whole.viewers().size()),
         () -> assertTrue(whole.warnings().isEmpty(), whole.warnings().toString()));
   }
+
+  @Test
+  void thePriorsOfAnotherFrameOfReferenceAreSynchronizedManuallyWithTheCurrentStudy() {
+    List<String> studies = java.util.Arrays.asList("cur", "cur", "prior", "prior", null); // NON-NLS
+    List<String> frames = java.util.Arrays.asList("f1", "f1", "f1", "f2", null); // NON-NLS
+    List<int[]> pairs = HangingPlanApplier.manualSynchPairs(studies, frames, "cur"); // NON-NLS
+    assertAll(
+        () -> assertEquals(1, pairs.size(), "the prior of the same frame scrolls by itself"),
+        () -> assertEquals(3, pairs.getFirst()[0]),
+        () -> assertEquals(0, pairs.getFirst()[1]),
+        () ->
+            assertTrue(
+                HangingPlanApplier.manualSynchPairs(studies, frames, "none").isEmpty(), // NON-NLS
+                "no current pane"),
+        () ->
+            assertEquals(
+                2,
+                HangingPlanApplier.manualSynchPairs(
+                        studies,
+                        java.util.Arrays.asList(null, null, "f1", "f2", null),
+                        "cur") // NON-NLS
+                    .size(),
+                "a current pane without a frame synchronizes every prior"));
+  }
 }

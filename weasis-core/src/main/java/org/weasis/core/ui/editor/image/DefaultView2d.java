@@ -743,6 +743,19 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
   }
 
+  @Override
+  public void synchManuallyWith(ViewCanvas<?> other) {
+    if (other == null
+        || other == this
+        || getImage() == null
+        || other.getImage() == null
+        || getImage().getTagValue(TagW.SlicePosition) == null
+        || other.getImage().getTagValue(TagW.SlicePosition) == null) {
+      return;
+    }
+    setupManualSync(this, other);
+  }
+
   private void setupManualSync(ViewCanvas<?> source, ViewCanvas<?> target) {
     if (source == target) {
       return;

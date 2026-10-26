@@ -27,13 +27,16 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.editor.ExternalDisplay;
 import org.weasis.core.ui.editor.ScreenRoles;
@@ -45,8 +48,10 @@ import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.image.HangingLayout;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewState;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.hp.HangingEngine;
 import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
 import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
@@ -54,6 +59,7 @@ import org.weasis.dicom.codec.hp.HangingPlan;
 import org.weasis.dicom.codec.hp.HangingPlan.CellPlan;
 import org.weasis.dicom.codec.hp.HangingPlan.Step;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ViewerType;
+import org.weasis.dicom.explorer.DicomModel;
 
 /**
  * Hangs one step of a {@link HangingPlan} on live viewers, headlessly: the 2D cells of the step
@@ -303,6 +309,9 @@ public final class HangingPlanApplier {
       return reasons.isEmpty() ? label : label + ": " + String.join(", ", reasons);
     }
   }
+
+  /** The synchronization command of a layout whose synchronization is off. */
+  static final String NO_SYNCH = "none"; // NON-NLS
 
   private Predicate<ScreenRole> monitors = HangingPlanApplier::hasMonitor;
   private final Supplier<List<SeriesViewerFactory>> factories;
@@ -575,8 +584,72 @@ public final class HangingPlanApplier {
     }
     if (!hung) {
       warnings.add("the viewer " + container.viewId() + " did not take the layout"); // NON-NLS
+    } else if (layout.synch() != null && !NO_SYNCH.equalsIgnoreCase(layout.synch())) {
+      synchAcrossStudies(container, cells, model);
     }
     return container;
+  }
+
+  /**
+   * Scrolling across studies: the panes of a prior study whose frame of reference differs from the
+   * current study's are synchronized manually with a pane of the current study, from the images the
+   * plan put them on (a shared frame of reference scrolls together by itself).
+   */
+  static void synchAcrossStudies(
+      ViewerPlugin<?> container, List<CellPlan> cells, DataExplorerModel model) {
+    if (!(container instanceof ImageViewerPlugin<?> image)) {
+      return;
+    }
+    String current =
+        cells.stream()
+            .filter(c -> c.prior() == 0 && c.study() != null)
+            .map(CellPlan::study)
+            .findFirst()
+            .orElse(null);
+    if (current == null || cells.stream().noneMatch(c -> c.prior() > 0)) {
+      return;
+    }
+    List<ViewCanvas<?>> panes = new ArrayList<>();
+    List<String> studies = new ArrayList<>();
+    List<String> frames = new ArrayList<>();
+    for (ViewCanvas<?> pane : image.getImagePanels()) {
+      MediaSeries<?> series = pane.getSeries();
+      if (series == null) {
+        continue;
+      }
+      MediaSeriesGroup study =
+          model instanceof DicomModel dicom ? dicom.getParent(series, DicomModel.study) : null;
+      panes.add(pane);
+      studies.add(
+          study == null ? null : TagD.getTagValue(study, Tag.StudyInstanceUID, String.class));
+      frames.add(
+          series.getTagValue(TagW.get("FrameOfReferenceUID")) instanceof String f ? f : null);
+    }
+    for (int[] pair : manualSynchPairs(studies, frames, current)) {
+      panes.get(pair[0]).synchManuallyWith(panes.get(pair[1]));
+    }
+  }
+
+  /**
+   * The pairs (prior pane, current pane) to synchronize manually: every pane of another study whose
+   * frame of reference is not the one of the first pane of the current study.
+   */
+  static List<int[]> manualSynchPairs(List<String> studies, List<String> frames, String current) {
+    int reference = studies.indexOf(current);
+    List<int[]> pairs = new ArrayList<>();
+    if (reference < 0) {
+      return pairs;
+    }
+    String frame = frames.get(reference);
+    for (int i = 0; i < studies.size(); i++) {
+      String study = studies.get(i);
+      if (study != null
+          && !study.equals(current)
+          && (frame == null || !frame.equals(frames.get(i)))) {
+        pairs.add(new int[] {i, reference});
+      }
+    }
+    return pairs;
   }
 
   private ViewerPlugin<?> hangOwn(

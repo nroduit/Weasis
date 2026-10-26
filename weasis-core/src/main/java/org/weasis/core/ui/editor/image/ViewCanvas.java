@@ -129,6 +129,15 @@ public interface ViewCanvas<E extends ImageElement>
     }
   }
 
+  /**
+   * Scrolls this pane and another one together from their current images on, the manual
+   * synchronization a user sets between series of different frames of reference (two studies of the
+   * patient); nothing happens when a pane has no slice position. Default: unsupported.
+   */
+  default void synchManuallyWith(ViewCanvas<?> other) {
+    // a canvas that cannot synchronize manually ignores the request
+  }
+
   default void resetMouseAdapter() {
     for (ActionState adapter : getEventManager().getAllActionValues()) {
       if (adapter instanceof MouseActionAdapter mouseActionAdapter) {
