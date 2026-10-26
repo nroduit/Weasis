@@ -300,29 +300,34 @@ public final class ActiveHanging {
    * step, else for the whole protocol; empty when the protocol names none or is gone.
    */
   public static Optional<String> uiProfileOf(Applied current) {
-    String id = current.plan().protocolId();
-    if (id == null) {
+    return documentOf(current.context(), current.plan().protocolId())
+        .flatMap(d -> d.weasis().uiProfileOf(current.stepPlan().group()));
+  }
+
+  /** The protocol of a hanging: among the candidates of its context, else from the layers. */
+  static Optional<ProtocolJson.Document> documentOf(
+      HangingPlanApplier.Context context, String protocolId) {
+    if (protocolId == null) {
       return Optional.empty();
     }
     Optional<ProtocolJson.Document> document =
-        current.context().candidates().stream()
+        context.candidates().stream()
             .map(HangingEngine.Candidate::document)
-            .filter(d -> id.equals(d.id()))
+            .filter(d -> protocolId.equals(d.id()))
             .findFirst();
-    if (document.isEmpty()) {
-      document =
-          HangingProtocolDocuments.protocols()
-              .find(id)
-              .map(
-                  entry -> {
-                    try {
-                      return ProtocolJson.fromJson(entry.json());
-                    } catch (RuntimeException e) {
-                      return null;
-                    }
-                  });
+    if (document.isPresent()) {
+      return document;
     }
-    return document.flatMap(d -> d.weasis().uiProfileOf(current.stepPlan().group()));
+    return HangingProtocolDocuments.protocols()
+        .find(protocolId)
+        .map(
+            entry -> {
+              try {
+                return ProtocolJson.fromJson(entry.json());
+              } catch (RuntimeException e) {
+                return null;
+              }
+            });
   }
 
   /**

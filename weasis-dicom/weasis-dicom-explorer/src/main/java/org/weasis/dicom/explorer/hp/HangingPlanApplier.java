@@ -15,6 +15,7 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -24,13 +25,18 @@ import java.util.WeakHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.ui.docking.ws.WorkspaceManager;
+import org.weasis.core.ui.editor.ExternalDisplay;
+import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -298,6 +304,7 @@ public final class HangingPlanApplier {
     }
   }
 
+  private Predicate<ScreenRole> monitors = HangingPlanApplier::hasMonitor;
   private final Supplier<List<SeriesViewerFactory>> factories;
   private final Supplier<List<ViewerPlugin<?>>> viewers;
   private final BiConsumer<ViewerPlugin<?>, ViewerOpenOptions> show;
@@ -396,13 +403,18 @@ public final class HangingPlanApplier {
     List<Placed> placed = new ArrayList<>();
     List<String> warnings = new ArrayList<>();
 
-    List<CellPlan> flat = new ArrayList<>();
-    List<CellPlan> own = new ArrayList<>();
+    // the cells by the screen their display set asks for: "" for the screen of the step
+    Map<String, List<CellPlan>> flatByScreen = new LinkedHashMap<>();
+    Map<String, List<CellPlan>> ownByScreen = new LinkedHashMap<>();
+    Map<Integer, String> screens =
+        placement instanceof ViewerPlacement.External ? Map.of() : screensOf(context, plan);
     for (CellPlan cell : stepPlan.cells()) {
       ViewerType type = cell.viewer() == null ? ViewerType.VIEWER_2D : cell.viewer();
+      String screen = screens.getOrDefault(cell.displaySet(), "");
       switch (type) {
-        case VIEWER_2D -> flat.add(cell);
-        case MPR, VOLUME_3D -> own.add(cell);
+        case VIEWER_2D -> flatByScreen.computeIfAbsent(screen, k -> new ArrayList<>()).add(cell);
+        case MPR, VOLUME_3D ->
+            ownByScreen.computeIfAbsent(screen, k -> new ArrayList<>()).add(cell);
         default -> {
           warnings.add(
               "cell "
@@ -414,22 +426,40 @@ public final class HangingPlanApplier {
         }
       }
     }
+    Map<String, ViewerPlacement> placements = new LinkedHashMap<>();
+    for (String screen : screens.values()) {
+      placements.computeIfAbsent(screen, s -> placementOn(s, placement, warnings));
+    }
 
-    if (!flat.isEmpty()) {
-      ViewerPlugin<?> container =
-          hang2d(stepPlan, flat, model, group, placement, preferred, resolver, warnings);
-      if (container != null) {
-        used.add(container);
-      }
-      flat.forEach(cell -> placed.add(new Placed(cell, container)));
-    }
-    for (CellPlan cell : own) {
-      ViewerPlugin<?> viewer = hangOwn(cell, model, group, placement, resolver, warnings);
-      if (viewer != null) {
-        used.add(viewer);
-      }
-      placed.add(new Placed(cell, viewer));
-    }
+    flatByScreen.forEach(
+        (screen, flat) -> {
+          boolean onStep = screen.isEmpty();
+          ViewerPlugin<?> container =
+              hang2d(
+                  stepPlan,
+                  flat,
+                  model,
+                  group,
+                  onStep ? placement : placements.get(screen),
+                  onStep ? preferred : null,
+                  resolver,
+                  warnings);
+          if (container != null) {
+            used.add(container);
+          }
+          flat.forEach(cell -> placed.add(new Placed(cell, container)));
+        });
+    ownByScreen.forEach(
+        (screen, own) -> {
+          ViewerPlacement where = screen.isEmpty() ? placement : placements.get(screen);
+          for (CellPlan cell : own) {
+            ViewerPlugin<?> viewer = hangOwn(cell, model, group, where, resolver, warnings);
+            if (viewer != null) {
+              used.add(viewer);
+            }
+            placed.add(new Placed(cell, viewer));
+          }
+        });
     placed.sort((a, b) -> Integer.compare(a.cell().cell(), b.cell().cell()));
 
     Applied applied = new Applied(plan, step, used, placed, warnings, context);
@@ -443,6 +473,56 @@ public final class HangingPlanApplier {
       }
     }
     return applied;
+  }
+
+  /** The screen role each display set of the plan's protocol asks for, by display set number. */
+  static Map<Integer, String> screensOf(Context context, HangingPlan plan) {
+    Map<Integer, String> screens = new LinkedHashMap<>();
+    ActiveHanging.documentOf(context, plan.protocolId())
+        .ifPresent(
+            document ->
+                document
+                    .weasis()
+                    .displaySets()
+                    .forEach(
+                        (number, ds) -> {
+                          if (ds.screen() != null && !ds.screen().isBlank()) {
+                            screens.put(number, ds.screen());
+                          }
+                        }));
+    return screens;
+  }
+
+  /**
+   * Where the display sets of a screen role open: a viewer window on the monitor of that role, or,
+   * when no monitor fills it, folded into the main window as a tab ({@code ADAPT_LAYOUT}), with a
+   * warning; an unknown role is reported and takes the placement of the step.
+   */
+  private ViewerPlacement placementOn(
+      String screen, ViewerPlacement fallback, List<String> warnings) {
+    ScreenRole role;
+    try {
+      role = ScreenRole.parse(screen);
+    } catch (IllegalArgumentException e) {
+      warnings.add("screen " + screen + " is not a screen role, the step's screen is used");
+      return fallback;
+    }
+    if (monitors.test(role)) {
+      return ViewerPlacement.external(ExternalDisplay.onRole(role));
+    }
+    warnings.add("no monitor for the screen " + role.key() + ", shown as a tab"); // NON-NLS
+    return ViewerPlacement.newTab();
+  }
+
+  /** Replaces the monitor lookup, for tests. */
+  HangingPlanApplier withMonitors(Predicate<ScreenRole> monitors) {
+    this.monitors = Objects.requireNonNull(monitors);
+    return this;
+  }
+
+  private static boolean hasMonitor(ScreenRole role) {
+    WorkspaceManager manager = GuiUtils.getUICore().getWorkspaceManager();
+    return ScreenRoles.resolve(role, manager == null ? null : manager.mainWindow()).isPresent();
   }
 
   private ViewerPlugin<?> hang2d(

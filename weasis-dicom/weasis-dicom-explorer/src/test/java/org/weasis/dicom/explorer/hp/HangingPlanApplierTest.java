@@ -267,4 +267,86 @@ class HangingPlanApplierTest {
         () -> assertEquals(1, reduced.selected(), "the selected cell left: the first is selected"),
         () -> assertSame(full, HangingPlanApplier.layoutOf(step, step.cells())));
   }
+
+  @Test
+  void aDisplaySetOnAnotherScreenGetsItsOwnViewerOrFoldsIntoATab() {
+    ViewerPlugin<MediaElement> first = viewer("v-1", true); // NON-NLS
+    ViewerPlugin<MediaElement> second = viewer("v-2", true); // NON-NLS
+    MediaSeriesGroup patient = mock(MediaSeriesGroup.class);
+    DataExplorerModel model = model();
+    jakarta.json.JsonObject extensions =
+        jakarta.json.Json.createObjectBuilder()
+            .add(
+                "displaySets", // NON-NLS
+                jakarta.json.Json.createObjectBuilder()
+                    .add(
+                        "2", jakarta.json.Json.createObjectBuilder().add("screen", "diagnostic-2")))
+            .build();
+    org.weasis.dicom.codec.hp.ProtocolJson.Document document =
+        new org.weasis.dicom.codec.hp.ProtocolJson.Document(
+            "ct-chest", // NON-NLS
+            new org.weasis.dicom.hp.HangingProtocol(),
+            org.weasis.dicom.codec.hp.WeasisExtensions.fromJson(extensions));
+    HangingPlanApplier.Context context =
+        new HangingPlanApplier.Context(
+            model,
+            patient,
+            null,
+            List.of(
+                new org.weasis.dicom.codec.hp.HangingEngine.Candidate(
+                    document, org.weasis.core.api.util.LayeredEntries.Origin.USER, true)),
+            List.of());
+    HangingLayout layout =
+        HangingLayout.builder().grid("1x2").series(0, SOFT).series(1, LUNG).build(); // NON-NLS
+    HangingPlan plan =
+        new HangingPlan(
+            "ct-chest", // NON-NLS
+            "CT chest", // NON-NLS
+            "USER", // NON-NLS
+            1,
+            List.of(),
+            List.of(
+                new Step(
+                    1,
+                    "reading", // NON-NLS
+                    layout,
+                    List.of(
+                        cell(0, SOFT, ViewerType.VIEWER_2D, Match.EXACT),
+                        cell(1, LUNG, ViewerType.VIEWER_2D, Match.EXACT)))),
+            List.of());
+    SeriesViewerFactory factory = mock(SeriesViewerFactory.class);
+    when(factory.getViewerTypeId()).thenReturn("2d"); // NON-NLS
+    doReturn(first, second).when(factory).createSeriesViewer(any(), any());
+
+    // no monitor for diagnostic-2: the second display set folds into a tab, with a warning
+    Applied folded =
+        applier(factory)
+            .withMonitors(role -> false)
+            .apply(plan, 0, context, ViewerPlacement.reuseViewer(), null);
+    assertAll(
+        () -> assertEquals(2, folded.viewers().size(), "one viewer per screen"),
+        () -> assertEquals(1, folded.warnings().size(), folded.warnings().toString()),
+        () -> assertTrue(folded.warnings().getFirst().contains("diagnostic-2")),
+        () -> assertTrue(folded.warnings().getFirst().contains("tab")));
+    assertEquals(java.util.Map.of(2, "diagnostic-2"), HangingPlanApplier.screensOf(context, plan));
+
+    // an explicit screen for the whole step wins over the display sets' screens
+    shown.clear();
+    open.clear();
+    doReturn(viewer("v-3", true)).when(factory).createSeriesViewer(any(), any()); // NON-NLS
+    Applied whole =
+        applier(factory)
+            .withMonitors(role -> false)
+            .apply(
+                plan,
+                0,
+                context,
+                ViewerPlacement.external(
+                    org.weasis.core.ui.editor.ExternalDisplay.atBounds(
+                        new java.awt.Rectangle(0, 0, 10, 10))),
+                null);
+    assertAll(
+        () -> assertEquals(1, whole.viewers().size()),
+        () -> assertTrue(whole.warnings().isEmpty(), whole.warnings().toString()));
+  }
 }

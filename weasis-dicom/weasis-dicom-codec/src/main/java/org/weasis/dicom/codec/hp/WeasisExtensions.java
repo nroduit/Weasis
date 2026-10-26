@@ -122,11 +122,26 @@ public record WeasisExtensions(
    *     with the cells. One cell per series, the Weasis way of hanging a study whose series are all
    *     to be seen (radiographs, cine runs, ultrasound clips)
    */
+  /**
+   * @param screen the role of the screen the display set opens on ({@code diagnostic-2}, {@code
+   *     color}...), null for the screen of the step; a role no monitor fills folds the display set
+   *     into the main window
+   */
   public record DisplaySet(
-      ViewerType viewerType, Display display, List<Cell> cells, Loading loading, Integer repeat) {
+      ViewerType viewerType,
+      Display display,
+      List<Cell> cells,
+      Loading loading,
+      Integer repeat,
+      String screen) {
+
+    public DisplaySet(
+        ViewerType viewerType, Display display, List<Cell> cells, Loading loading, Integer repeat) {
+      this(viewerType, display, cells, loading, repeat, null);
+    }
 
     public DisplaySet(ViewerType viewerType, Display display, List<Cell> cells, Loading loading) {
-      this(viewerType, display, cells, loading, null);
+      this(viewerType, display, cells, loading, null, null);
     }
   }
 
@@ -341,6 +356,9 @@ public record WeasisExtensions(
     if (ds.repeat() != null) {
       json.add("repeat", ds.repeat()); // NON-NLS
     }
+    if (ds.screen() != null) {
+      json.add("screen", ds.screen()); // NON-NLS
+    }
     return json;
   }
 
@@ -358,7 +376,8 @@ public record WeasisExtensions(
         json.get("display") instanceof JsonObject d ? display(d) : null, // NON-NLS
         cells,
         json.get("loading") instanceof JsonObject l ? loading(l) : null, // NON-NLS
-        integer(json, "repeat")); // NON-NLS
+        integer(json, "repeat"), // NON-NLS
+        json.getString("screen", null)); // NON-NLS
   }
 
   private static JsonObjectBuilder display(Display d) {
