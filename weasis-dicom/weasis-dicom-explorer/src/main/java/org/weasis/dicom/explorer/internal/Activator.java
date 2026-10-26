@@ -22,6 +22,7 @@ import org.weasis.dicom.explorer.LocalPersistence;
 import org.weasis.dicom.explorer.UISegmentationVolumeBuildExecutor;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier;
 import org.weasis.dicom.explorer.hp.HpSettings;
+import org.weasis.dicom.explorer.hp.SessionActions;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AuthenticationPersistence;
@@ -48,6 +49,7 @@ public class Activator extends WeasisPlugin {
 
     AbstractDicomNode.registerLegacyConversions();
     SettingCatalog.declare(HpSettings.class);
+    GuiUtils.getUICore().addClosingHook(SessionActions::keepOnClose);
     // a hanging lands after the viewer was selected: the view context learns the protocol then
     HangingPlanApplier.addListener(
         applied ->

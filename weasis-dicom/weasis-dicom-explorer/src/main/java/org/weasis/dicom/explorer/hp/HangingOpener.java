@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -62,6 +63,9 @@ public final class HangingOpener {
 
   /** The longest wait from the first series, so a slow source still gets a display. */
   public static final long MAX_WAIT_MILLIS = 2500;
+
+  /** What a patient shows when its kept session was restored instead of a protocol. */
+  static final String RESTORED_SESSION = "session"; // NON-NLS
 
   private static final ScheduledExecutorService SCHEDULER =
       Executors.newSingleThreadScheduledExecutor(
@@ -103,6 +107,10 @@ public final class HangingOpener {
   private final ScheduledExecutorService scheduler;
   private final Supplier<List<Candidate>> candidates;
   private final Hanger hanger;
+
+  /** Tried before planning: true when it restored a kept session, so no protocol is hung. */
+  private final BiPredicate<DicomModel, MediaSeriesGroup> restorer;
+
   private final Legacy legacy;
   private final Predicate<MediaSeriesGroup> patientOpen;
   private final Consumer<MediaSeriesGroup> markOpen;
@@ -129,7 +137,8 @@ public final class HangingOpener {
         patientOpen,
         markOpen,
         QUIET_MILLIS,
-        MAX_WAIT_MILLIS);
+        MAX_WAIT_MILLIS,
+        SessionActions::restoreAutomatically);
   }
 
   HangingOpener(
@@ -141,6 +150,29 @@ public final class HangingOpener {
       Consumer<MediaSeriesGroup> markOpen,
       long quietMillis,
       long maxWaitMillis) {
+    this(
+        scheduler,
+        candidates,
+        hanger,
+        legacy,
+        patientOpen,
+        markOpen,
+        quietMillis,
+        maxWaitMillis,
+        (model, study) -> false);
+  }
+
+  HangingOpener(
+      ScheduledExecutorService scheduler,
+      Supplier<List<Candidate>> candidates,
+      Hanger hanger,
+      Legacy legacy,
+      Predicate<MediaSeriesGroup> patientOpen,
+      Consumer<MediaSeriesGroup> markOpen,
+      long quietMillis,
+      long maxWaitMillis,
+      BiPredicate<DicomModel, MediaSeriesGroup> restorer) {
+    this.restorer = Objects.requireNonNull(restorer);
     this.scheduler = Objects.requireNonNull(scheduler);
     this.candidates = Objects.requireNonNull(candidates);
     this.hanger = Objects.requireNonNull(hanger);
@@ -267,6 +299,11 @@ public final class HangingOpener {
     MediaSeriesGroup study = null;
     try {
       study = currentStudy(p.model, patient, arrived);
+      if (p.shown == null && restorer.test(p.model, study)) {
+        p.shown = Set.of(RESTORED_SESSION);
+        LOGGER.info("Study {} restored from its kept session", study);
+        return;
+      }
       List<StudySeries> series = HpCommands.studySeries(p.model, study);
       List<PriorStudy> priors = HpCommands.priorsOf(p.model, study, series);
       List<Candidate> protocols = candidates.get();

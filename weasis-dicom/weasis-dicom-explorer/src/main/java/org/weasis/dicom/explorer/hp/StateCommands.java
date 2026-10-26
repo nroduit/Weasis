@@ -18,14 +18,12 @@ import jakarta.json.JsonString;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import org.dcm4che3.data.Tag;
@@ -42,8 +40,6 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.docking.Shell;
-import org.weasis.core.ui.docking.ShellState;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
@@ -52,10 +48,8 @@ import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.Node;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.SplitNode;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.ViewDescriptor;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.WindowSnapshot;
-import org.weasis.core.ui.editor.ViewerRestorer;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.hp.HangingPlan.CellPlan;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.StudyUid;
 import org.weasis.dicom.mf.WadoParameters;
@@ -225,45 +219,7 @@ public class StateCommands implements CommandExtension {
           GuiExecutor.invokeAndRethrow(
               () ->
                   IdentityMask.callForCommand(
-                      () -> {
-                        DicomModel model = parent.model();
-                        WorkspaceManager manager = manager();
-                        WorkspaceSnapshot snapshot = manager.capture();
-                        Shell shell = Shell.current();
-                        if (shell != null) {
-                          snapshot = snapshot.withShell(ShellState.capture(shell));
-                        }
-                        List<Session.Source> sources = sourcesOf(model, snapshot);
-                        if (sources.isEmpty()) {
-                          throw new IllegalStateException("No loaded study is displayed");
-                        }
-                        String protocol = null;
-                        int step = 0;
-                        Map<Integer, String> bindings = new LinkedHashMap<>();
-                        Optional<HangingPlanApplier.Applied> active =
-                            GuiUtils.getUICore().getSelectedPlugin().flatMap(ActiveHanging::of);
-                        if (active.isPresent()) {
-                          protocol = active.get().plan().protocolId();
-                          step = active.get().step() + 1;
-                          for (CellPlan cell : active.get().stepPlan().cells()) {
-                            if (cell.series() != null) {
-                              bindings.put(cell.displaySet(), cell.series());
-                            }
-                          }
-                        }
-                        Instant now = Instant.now();
-                        return new Session(
-                            now.toString(),
-                            label,
-                            pin,
-                            now,
-                            now,
-                            sources,
-                            protocol,
-                            step,
-                            bindings,
-                            snapshot);
-                      }));
+                      () -> SessionActions.capture(parent.model(), manager(), label, pin)));
       List<String> forbidden = Session.forbiddenKeys(session.toJson());
       if (!forbidden.isEmpty()) {
         throw new IllegalStateException("The session would hold " + forbidden + ", not kept");
@@ -349,31 +305,8 @@ public class StateCommands implements CommandExtension {
                               : "No session shows the study " + studyUid,
                           "state:list")); // NON-NLS
       DicomModel model = parent.model();
-      List<String> missing =
-          session.studies().stream().filter(uid -> model.getStudyNode(uid) == null).toList();
-      if (!missing.isEmpty()) {
-        throw new IllegalStateException(
-            "Not loaded, load them first: " + String.join(", ", missing)); // NON-NLS
-      }
       List<String> views =
-          GuiExecutor.invokeAndRethrow(
-              () -> {
-                WorkspaceManager manager = manager();
-                List<WorkspaceView> pool = manager.getViews();
-                manager.restore(session.workspace(), new ViewerRestorer(pool));
-                for (WorkspaceView leftover : pool) {
-                  if (!manager.isShowing(leftover) && leftover instanceof ViewerPlugin<?> plugin) {
-                    plugin.close();
-                    plugin.handleFocusAfterClosing();
-                  }
-                }
-                Shell shell = Shell.current();
-                if (shell != null && session.workspace().shell() != null) {
-                  ShellState.apply(session.workspace().shell(), shell);
-                }
-                reattach(session, model, manager);
-                return manager.getViews().stream().map(WorkspaceView::viewId).toList();
-              });
+          GuiExecutor.invokeAndRethrow(() -> SessionActions.restore(session, model, manager()));
       try {
         store.touch(session);
       } catch (IOException e) {

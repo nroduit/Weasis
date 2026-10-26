@@ -271,6 +271,7 @@ public class DicomPaneManager {
     StudyPane studyPane = getStudyPane(study);
     if (studyPane != null) {
       SwingUtilities.invokeLater(studyPane::refreshLayout);
+      StudyHints.refresh(studyPane, explorer.getDataExplorerModel());
     }
   }
 

@@ -44,6 +44,7 @@ public class StudyPane extends JPanel {
   private final MediaSeriesGroup dicomStudy;
   private final TitledBorder titleBorder;
   private final ComponentResizeHandler resizeHandler;
+  private String hint;
 
   /**
    * Creates a new StudyPane for the specified DICOM study.
@@ -255,9 +256,24 @@ public class StudyPane extends JPanel {
   /** Updates the title text of this study pane. */
   public void updateText() {
     if (titleBorder != null) {
-      titleBorder.setTitle(dicomStudy.toString());
+      titleBorder.setTitle(hint == null ? dicomStudy.toString() : dicomStudy + "  \u2022  " + hint);
       repaint();
     }
+  }
+
+  /**
+   * What the hanging protocols say of the study, shown after its title: the protocol that would
+   * hang it and the kept session offered; null for nothing.
+   */
+  public void setHint(String hint) {
+    if (!Objects.equals(this.hint, hint)) {
+      this.hint = hint;
+      updateText();
+    }
+  }
+
+  public String getHint() {
+    return hint;
   }
 
   /** Re-resolves this study's title and its series captions after session masking changed. */

@@ -32,6 +32,32 @@ public final class HpSettings {
               "How a study opens: hung by its best hanging protocol, or on its first series")
           .declare();
 
+  /** What happens when a study with a kept session is opened again. */
+  public enum Restore {
+    /** The latest session of the study is restored instead of hanging a protocol. */
+    AUTO,
+    /** The session is offered: a hint on the study row and an entry of the protocol bar. */
+    OFFER,
+    /** Sessions are restored on request only ({@code state:restore}). */
+    NEVER
+  }
+
+  /** Whether the display is kept as a session when Weasis closes. */
+  public static final Setting<Boolean> KEEP_ON_CLOSE =
+      Setting.builder(SettingType.BOOLEAN, GROUP, "weasis.hp.keepOnClose", false) // NON-NLS
+          .since("5.0") // NON-NLS
+          .description("Keep the display as a session when Weasis closes")
+          .declare();
+
+  /** How a study with a kept session opens again. */
+  public static final Setting<Restore> RESTORE =
+      Setting.builder(SettingType.of(Restore.class), GROUP, "weasis.hp.restore", Restore.OFFER)
+          .since("5.0") // NON-NLS
+          .description(
+              "When a study with a kept session is opened again: restore it automatically, offer "
+                  + "it, or never")
+          .declare();
+
   /** The sessions kept per user, the oldest unpinned ones purged beyond it; 0 for no limit. */
   public static final Setting<Integer> SESSIONS_MAX =
       Setting.builder(SettingType.INTEGER, GROUP, "weasis.hp.sessions.max", 100) // NON-NLS

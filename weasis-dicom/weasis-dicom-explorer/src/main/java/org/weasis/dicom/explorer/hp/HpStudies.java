@@ -16,10 +16,16 @@ import java.util.Optional;
 import java.util.Set;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.image.HangingLayout;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.hp.DerivationTables;
+import org.weasis.dicom.codec.hp.HangingEngine;
+import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
+import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
+import org.weasis.dicom.codec.hp.HangingPlan;
+import org.weasis.dicom.codec.hp.PriorStudy;
 import org.weasis.dicom.codec.hp.SeriesFeatureExtractor;
 import org.weasis.dicom.codec.hp.SeriesFeatures;
 import org.weasis.dicom.codec.hp.StudySeries;
@@ -56,6 +62,34 @@ public final class HpStudies {
     return series instanceof DicomSeries dicom
         ? toFeature(Interest.of(dicom))
         : SeriesFeatures.Interest.NONE;
+  }
+
+  /** The protocols that apply to a loaded study, best first, with its loaded priors. */
+  public static List<ProtocolScore> candidates(DicomModel model, MediaSeriesGroup study) {
+    List<StudySeries> series = HpCommands.studySeries(model, study);
+    List<PriorStudy> priors = HpCommands.priorsOf(model, study, series);
+    return HangingEngine.select(HangingEngine.candidates(), series, priors);
+  }
+
+  /**
+   * Hangs the first step of a protocol on a loaded study, re-hanging the viewer of the patient; on
+   * the event dispatch thread.
+   *
+   * @throws IllegalArgumentException when the protocol id is unknown
+   */
+  public static HangingPlanApplier.Applied hang(
+      DicomModel model, MediaSeriesGroup study, String protocolId) {
+    List<Candidate> candidates = HangingEngine.candidates();
+    List<StudySeries> series = HpCommands.studySeries(model, study);
+    List<PriorStudy> priors = HpCommands.priorsOf(model, study, series);
+    List<ProtocolScore> scores = HangingEngine.select(candidates, series, priors);
+    HangingPlan plan =
+        HpCommands.planOf(candidates, scores, series, priors, protocolId)
+            .orElseThrow(() -> new IllegalArgumentException("Unknown protocol: " + protocolId));
+    HangingPlanApplier.Context context =
+        new HangingPlanApplier.Context(
+            model, model.getParent(study, DicomModel.patient), study, candidates, scores);
+    return new HangingPlanApplier().apply(plan, 0, context, ViewerPlacement.reuseViewer(), null);
   }
 
   /** The explorer's interest as a feature: the count and the source ids, upper case. */

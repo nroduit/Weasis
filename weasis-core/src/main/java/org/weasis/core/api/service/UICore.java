@@ -33,9 +33,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.prefs.Preferences;
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
@@ -113,6 +115,7 @@ public final class UICore {
   public static final String P_SYNC_DOCUMENTS = "weasis.pref.sync.documents"; // NON-NLS
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UICore.class);
+  private final List<Runnable> closingHooks = new CopyOnWriteArrayList<>();
   private final ToolBarContainer toolbarContainer;
   private final List<Launcher> dicomLaunchers;
   private final List<Launcher> otherLaunchers;
@@ -332,7 +335,19 @@ public final class UICore {
     }
   }
 
+  /** Registers what runs when the application closes, before the preferences are saved. */
+  public void addClosingHook(Runnable hook) {
+    closingHooks.add(Objects.requireNonNull(hook));
+  }
+
   public void savePreferences() {
+    for (Runnable hook : closingHooks) {
+      try {
+        hook.run();
+      } catch (RuntimeException e) {
+        LOGGER.warn("Closing hook failed", e);
+      }
+    }
     try {
       saveSystemPreferences();
 

@@ -33,6 +33,7 @@ import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
 import org.weasis.dicom.explorer.hp.ActiveHanging;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier.Applied;
+import org.weasis.dicom.explorer.hp.SessionActions;
 
 /**
  * The protocol bar: the protocol that hung the selected viewer with the other candidates of the
@@ -52,6 +53,9 @@ public class HangingProtocolBar extends WtoolBar {
     }
   }
 
+  /** The id prefix of the choice that restores the kept session of the study. */
+  private static final String SESSION = "session:"; // NON-NLS
+
   private final JComboBox<Choice> protocols = new JComboBox<>();
   private final JLabel step = new JLabel();
   private final JButton previous = new JButton();
@@ -69,7 +73,12 @@ public class HangingProtocolBar extends WtoolBar {
     protocols.addActionListener(
         e -> {
           if (!updating && protocols.getSelectedItem() instanceof Choice choice) {
-            act(current -> ActiveHanging.protocol(current, choice.id()));
+            if (choice.id() != null && choice.id().startsWith(SESSION)) {
+              SessionActions.restore(choice.id().substring(SESSION.length()));
+              refresh(GuiUtils.getUICore().getSelectedPlugin().orElse(null));
+            } else {
+              act(current -> ActiveHanging.protocol(current, choice.id()));
+            }
           }
         });
     add(protocols);
@@ -176,6 +185,15 @@ public class HangingProtocolBar extends WtoolBar {
                 applied.plan().protocolId(), name == null ? applied.plan().protocolId() : name);
         choices.addFirst(selected);
       }
+      SessionActions.offerFor(applied.context().study())
+          .ifPresent(
+              session ->
+                  choices.add(
+                      new Choice(
+                          SESSION + session.id(),
+                          String.format(
+                              Messages.getString("HangingProtocolBar.session"),
+                              SessionActions.label(session)))));
       protocols.setModel(new DefaultComboBoxModel<>(choices.toArray(Choice[]::new)));
       protocols.setSelectedItem(selected);
       protocols.setEnabled(choices.size() > 1);

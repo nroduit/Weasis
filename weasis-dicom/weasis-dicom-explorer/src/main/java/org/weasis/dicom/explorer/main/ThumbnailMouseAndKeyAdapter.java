@@ -48,11 +48,14 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
+import org.weasis.dicom.explorer.hp.HpStudies;
+import org.weasis.dicom.explorer.hp.SessionActions;
 import org.weasis.dicom.explorer.items.Interest;
 import org.weasis.dicom.explorer.tag.DicomFieldsView;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -148,6 +151,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
     List<MediaSeries<? extends MediaElement>> seriesList = getFilteredSeriesList(selList);
 
     addViewerMenuItems(popupMenu, seriesList);
+    addProtocolMenuItems(popupMenu);
     addInterestMenuItem(popupMenu);
     addSelectionMenuItems(popupMenu, selList);
     addLoadSeriesMenuItems(popupMenu, selList);
@@ -157,6 +161,42 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
     addThumbnailMenuItems(popupMenu, selList);
 
     popupMenu.show(e.getComponent(), e.getX() - 5, e.getY() - 5);
+  }
+
+  /** Hangs the study with one of the protocols that apply to it, or restores its kept session. */
+  private void addProtocolMenuItems(JPopupMenu popupMenu) {
+    MediaSeriesGroup study = dicomModel.getParent(series, DicomModel.study);
+    if (study == null) {
+      return;
+    }
+    List<ProtocolScore> candidates;
+    try {
+      candidates = HpStudies.candidates(dicomModel, study);
+    } catch (RuntimeException e) {
+      candidates = List.of();
+    }
+    if (!candidates.isEmpty()) {
+      JMenu menu = new JMenu(Messages.getString("DicomExplorer.hang_with"));
+      for (ProtocolScore score : candidates) {
+        String id = score.document().id();
+        String name = score.document().protocol().getHangingProtocolName();
+        JMenuItem item = new JMenuItem(name == null ? id : name);
+        item.addActionListener(_ -> HpStudies.hang(dicomModel, study, id));
+        menu.add(item);
+      }
+      popupMenu.add(menu);
+    }
+    SessionActions.offerFor(study)
+        .ifPresent(
+            session -> {
+              JMenuItem item =
+                  new JMenuItem(
+                      MessageFormat.format(
+                          Messages.getString("DicomExplorer.restore_session"),
+                          SessionActions.label(session)));
+              item.addActionListener(_ -> SessionActions.restore(session.id()));
+              popupMenu.add(item);
+            });
   }
 
   /** Opens the series on its images of interest only, when it has some. */
