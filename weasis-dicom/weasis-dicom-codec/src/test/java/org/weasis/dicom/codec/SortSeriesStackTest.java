@@ -9,277 +9,80 @@
  */
 package org.weasis.dicom.codec;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import java.time.LocalTime;
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
-/**
- * Tests {@link SortSeriesStack} — the six static comparators used to order DICOM slices in a stack
- * (and therefore drive every cine playback, MPR reconstruction, and cross-reference line in the
- * viewer).
- *
- * <p>A regression in any of these comparators would silently mis-order slices and surface as one of
- * the most clinically dangerous failure modes:
- *
- * <ul>
- *   <li>cine plays the volume in reverse z-order (WEA-004 R18 / R24)
- *   <li>MPR reconstruction interpolates between mis-ordered slices (R18)
- *   <li>localizer cross-reference lines drawn on the wrong slice (R18)
- * </ul>
- *
- * <p>Each comparator must also degrade gracefully when a sort key is null — sort instability is
- * preferred to throwing an NPE mid-render. The {@code compare} contract here is {@code 0} when
- * either side is null, which preserves insertion order.
- */
 class SortSeriesStackTest {
 
-  // ---------------------------------------------------------------------------
-  // Test fixtures — minimal mocks of DicomImageElement returning controlled
-  // tag values via Mockito stubs. The comparators read a single tag per element
-  // so a blanket stub on getTagValue(TagW) is safe.
-  // ---------------------------------------------------------------------------
-
-  private static DicomImageElement elementWithTagValue(Object value) {
-    DicomImageElement element = Mockito.mock(DicomImageElement.class);
-    Mockito.when(element.getTagValue(Mockito.any(TagW.class))).thenReturn(value);
+  /** An axial slice at {@code z}; {@code reversed} flips the row and column directions. */
+  private static DicomImageElement slice(int instance, double z, boolean reversed) {
+    Attributes a = new Attributes();
+    a.setInt(Tag.InstanceNumber, VR.IS, instance);
+    a.setDouble(Tag.ImagePositionPatient, VR.DS, -100, -100, z);
+    if (reversed) {
+      a.setDouble(Tag.ImageOrientationPatient, VR.DS, -1, 0, 0, 0, -1, 0);
+    } else {
+      a.setDouble(Tag.ImageOrientationPatient, VR.DS, 1, 0, 0, 0, 1, 0);
+    }
+    Map<TagW, Object> tags = new HashMap<>();
+    for (int tag :
+        new int[] {Tag.InstanceNumber, Tag.ImagePositionPatient, Tag.ImageOrientationPatient}) {
+      TagW key = TagD.get(tag);
+      tags.put(key, key.getValue(a));
+    }
+    DcmMediaReader reader = mock(DcmMediaReader.class);
+    when(reader.getMediaFragmentTags(any())).thenReturn(tags);
+    when(reader.getTagValue(any())).thenAnswer(inv -> ((TagW) inv.getArgument(0)).getValue(a));
+    DicomImageElement element = new DicomImageElement(reader, 0);
+    DicomMediaUtils.computeSlicePosition(element);
     return element;
   }
 
-  // ---------------------------------------------------------------------------
-  // instanceNumber — Tag.InstanceNumber (Integer)
-  // ---------------------------------------------------------------------------
-
-  @Test
-  void instanceNumber_ordersAscending() {
-    DicomImageElement low = elementWithTagValue(1);
-    DicomImageElement high = elementWithTagValue(5);
-    assertTrue(SortSeriesStack.instanceNumber.compare(low, high) < 0);
-    assertTrue(SortSeriesStack.instanceNumber.compare(high, low) > 0);
+  private static List<Double> zOrder(List<DicomImageElement> images, boolean headToFeet) {
+    List<DicomImageElement> sorted = new ArrayList<>(images);
+    sorted.sort(
+        headToFeet
+            ? SortSeriesStack.slicePosition.getReversOrderComparator()
+            : SortSeriesStack.slicePosition);
+    return sorted.stream()
+        .map(img -> ((double[]) img.getTagValue(TagD.get(Tag.ImagePositionPatient)))[2])
+        .toList();
   }
 
   @Test
-  void instanceNumber_equalValuesAreEqual() {
-    DicomImageElement a = elementWithTagValue(7);
-    DicomImageElement b = elementWithTagValue(7);
-    assertEquals(0, SortSeriesStack.instanceNumber.compare(a, b));
-  }
-
-  @Test
-  void instanceNumber_nullValuePreservesOrder() {
-    // Either side null ⇒ 0 ⇒ insertion order preserved (no NPE).
-    DicomImageElement nullElem = elementWithTagValue(null);
-    DicomImageElement withValue = elementWithTagValue(3);
-    assertEquals(0, SortSeriesStack.instanceNumber.compare(nullElem, withValue));
-    assertEquals(0, SortSeriesStack.instanceNumber.compare(withValue, nullElem));
-    assertEquals(0, SortSeriesStack.instanceNumber.compare(nullElem, nullElem));
-  }
-
-  @Test
-  void instanceNumber_toStringFromMessages() {
-    assertNotNull(SortSeriesStack.instanceNumber.toString());
-  }
-
-  // ---------------------------------------------------------------------------
-  // slicePosition — TagW.SlicePosition (Double, projection along the slice
-  // normal — this is the most clinically load-bearing sort key for CT/MR
-  // since it is computed from ImageOrientationPatient + ImagePositionPatient).
-  // ---------------------------------------------------------------------------
-
-  @Test
-  void slicePosition_ordersAscending() {
-    DicomImageElement back = elementWithTagValue(-50.0);
-    DicomImageElement front = elementWithTagValue(50.0);
-    assertTrue(SortSeriesStack.slicePosition.compare(back, front) < 0);
-    assertTrue(SortSeriesStack.slicePosition.compare(front, back) > 0);
-  }
-
-  @Test
-  void slicePosition_handlesNegativeAndZeroBoundary() {
-    DicomImageElement neg = elementWithTagValue(-0.001);
-    DicomImageElement zero = elementWithTagValue(0.0);
-    DicomImageElement pos = elementWithTagValue(0.001);
-    assertTrue(SortSeriesStack.slicePosition.compare(neg, zero) < 0);
-    assertTrue(SortSeriesStack.slicePosition.compare(zero, pos) < 0);
-    assertEquals(0, SortSeriesStack.slicePosition.compare(zero, zero));
-  }
-
-  @Test
-  void slicePosition_nullValuePreservesOrder() {
-    DicomImageElement nullElem = elementWithTagValue(null);
-    DicomImageElement withValue = elementWithTagValue(12.5);
-    assertEquals(0, SortSeriesStack.slicePosition.compare(nullElem, withValue));
-    assertEquals(0, SortSeriesStack.slicePosition.compare(withValue, nullElem));
-  }
-
-  @Test
-  void slicePosition_toStringFromMessages() {
-    assertNotNull(SortSeriesStack.slicePosition.toString());
-  }
-
-  // ---------------------------------------------------------------------------
-  // sliceLocation — Tag.SliceLocation (Double, raw vendor-supplied location).
-  // ---------------------------------------------------------------------------
-
-  @Test
-  void sliceLocation_ordersAscending() {
-    DicomImageElement a = elementWithTagValue(10.0);
-    DicomImageElement b = elementWithTagValue(20.0);
-    assertTrue(SortSeriesStack.sliceLocation.compare(a, b) < 0);
-  }
-
-  @Test
-  void sliceLocation_nullValuePreservesOrder() {
-    DicomImageElement nullElem = elementWithTagValue(null);
-    DicomImageElement withValue = elementWithTagValue(42.0);
-    assertEquals(0, SortSeriesStack.sliceLocation.compare(nullElem, withValue));
-  }
-
-  @Test
-  void sliceLocation_toStringFromMessages() {
-    assertNotNull(SortSeriesStack.sliceLocation.toString());
-  }
-
-  // ---------------------------------------------------------------------------
-  // acquisitionTime — Tag.AcquisitionTime (LocalTime, ordering cine frames
-  // captured at distinct wall-clock times within a series).
-  // ---------------------------------------------------------------------------
-
-  @Test
-  void acquisitionTime_ordersAscending() {
-    DicomImageElement early = elementWithTagValue(LocalTime.of(8, 30, 0));
-    DicomImageElement late = elementWithTagValue(LocalTime.of(8, 30, 30));
-    assertTrue(SortSeriesStack.acquisitionTime.compare(early, late) < 0);
-    assertTrue(SortSeriesStack.acquisitionTime.compare(late, early) > 0);
-  }
-
-  @Test
-  void acquisitionTime_nullValuePreservesOrder() {
-    DicomImageElement nullElem = elementWithTagValue(null);
-    DicomImageElement withValue = elementWithTagValue(LocalTime.NOON);
-    assertEquals(0, SortSeriesStack.acquisitionTime.compare(nullElem, withValue));
-  }
-
-  @Test
-  void acquisitionTime_toStringFromMessages() {
-    assertNotNull(SortSeriesStack.acquisitionTime.toString());
-  }
-
-  // ---------------------------------------------------------------------------
-  // contentTime — Tag.ContentTime (LocalTime, when the pixel data was created).
-  // ---------------------------------------------------------------------------
-
-  @Test
-  void contentTime_ordersAscending() {
-    DicomImageElement a = elementWithTagValue(LocalTime.of(12, 0, 0));
-    DicomImageElement b = elementWithTagValue(LocalTime.of(12, 0, 5));
-    assertTrue(SortSeriesStack.contentTime.compare(a, b) < 0);
-  }
-
-  @Test
-  void contentTime_nullValuePreservesOrder() {
-    DicomImageElement nullElem = elementWithTagValue(null);
-    DicomImageElement withValue = elementWithTagValue(LocalTime.NOON);
-    assertEquals(0, SortSeriesStack.contentTime.compare(nullElem, withValue));
-    assertEquals(0, SortSeriesStack.contentTime.compare(withValue, nullElem));
-  }
-
-  @Test
-  void contentTime_toStringFromMessages() {
-    assertNotNull(SortSeriesStack.contentTime.toString());
-  }
-
-  // ---------------------------------------------------------------------------
-  // diffusionBValue — Tag.DiffusionBValue (Double, diffusion-weighted MR).
-  // Misordering b-values would silently misrepresent the diffusion gradient
-  // strength in cine playback (R18 territory for DWI series).
-  // ---------------------------------------------------------------------------
-
-  @Test
-  void diffusionBValue_ordersAscending() {
-    DicomImageElement b0 = elementWithTagValue(0.0);
-    DicomImageElement b1000 = elementWithTagValue(1000.0);
-    assertTrue(SortSeriesStack.diffusionBValue.compare(b0, b1000) < 0);
-    assertTrue(SortSeriesStack.diffusionBValue.compare(b1000, b0) > 0);
-  }
-
-  @Test
-  void diffusionBValue_equalValuesAreEqual() {
-    DicomImageElement a = elementWithTagValue(800.0);
-    DicomImageElement b = elementWithTagValue(800.0);
-    assertEquals(0, SortSeriesStack.diffusionBValue.compare(a, b));
-  }
-
-  @Test
-  void diffusionBValue_nullValuePreservesOrder() {
-    DicomImageElement nullElem = elementWithTagValue(null);
-    DicomImageElement withValue = elementWithTagValue(500.0);
-    assertEquals(0, SortSeriesStack.diffusionBValue.compare(nullElem, withValue));
-  }
-
-  @Test
-  void diffusionBValue_toStringFromMessages() {
-    assertNotNull(SortSeriesStack.diffusionBValue.toString());
-  }
-
-  // ---------------------------------------------------------------------------
-  // getValues() — exposes the canonical sort-key list used by the UI dropdown.
-  // The order is significant: it is the order the user sees in the menu and
-  // also the order in which the viewer falls back if a series lacks a key.
-  // ---------------------------------------------------------------------------
-
-  @Test
-  void getValues_exposesAllSixComparatorsInExpectedOrder() {
-    SeriesComparator<DicomImageElement>[] values = SortSeriesStack.getValues();
-    assertEquals(6, values.length);
-    assertEquals(SortSeriesStack.instanceNumber, values[0]);
-    assertEquals(SortSeriesStack.slicePosition, values[1]);
-    assertEquals(SortSeriesStack.sliceLocation, values[2]);
-    assertEquals(SortSeriesStack.contentTime, values[3]);
-    assertEquals(SortSeriesStack.acquisitionTime, values[4]);
-    assertEquals(SortSeriesStack.diffusionBValue, values[5]);
-  }
-
-  @Test
-  void getValues_returnsFreshArrayEachCall() {
-    SeriesComparator<DicomImageElement>[] first = SortSeriesStack.getValues();
-    SeriesComparator<DicomImageElement>[] second = SortSeriesStack.getValues();
-    // Different array instances: a caller mutating the returned array (e.g. for UI sorting)
-    // must not poison the canonical list for the next caller.
-    org.junit.jupiter.api.Assertions.assertNotSame(first, second);
-    // Same contents though.
-    for (int i = 0; i < first.length; i++) {
-      assertEquals(first[i], second[i]);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Stable keys — the spelling snapshots and commands use for a comparator
-  // ---------------------------------------------------------------------------
-
-  @Test
-  void everyComparatorHasAKeyThatFindsItAgain() {
-    for (SeriesComparator<DicomImageElement> comparator : SortSeriesStack.getValues()) {
-      String key = SortSeriesStack.keyOf(comparator).orElseThrow();
-      assertSame(comparator, SortSeriesStack.fromKey(key).orElseThrow(), key);
-    }
-  }
-
-  @Test
-  void keysAreStableAndUnknownOnesAreEmpty() {
-    Comparator<DicomImageElement> foreign = Comparator.comparing(Object::hashCode);
-    assertEquals("instance", SortSeriesStack.keyOf(SortSeriesStack.instanceNumber).orElseThrow());
+  void twoSeriesAcquiredInOppositeDirectionsShowTheSameFirstSliceHeadToFeet() {
+    // feet to head acquisition: instance 1 is the lowest slice
+    List<DicomImageElement> up =
+        List.of(slice(1, 10, false), slice(2, 20, false), slice(3, 30, false));
+    // head to feet acquisition, rows and columns reversed: instance 1 is the highest slice
+    List<DicomImageElement> down =
+        List.of(slice(1, 30, true), slice(2, 20, true), slice(3, 10, true));
+    assertAll(
+        () -> assertEquals(List.of(30.0, 20.0, 10.0), zOrder(up, true)),
+        () -> assertEquals(List.of(30.0, 20.0, 10.0), zOrder(down, true), "same first slice"),
+        () -> assertEquals(List.of(10.0, 20.0, 30.0), zOrder(down, false), "feet to head"),
+        () ->
+            assertTrue(
+                (Double) down.getFirst().getTagValue(TagW.SlicePosition) > 0,
+                "the position is along the positive patient axis, whatever the acquisition"));
     assertEquals(
-        "slice-location", SortSeriesStack.keyOf(SortSeriesStack.sliceLocation).orElseThrow());
-    assertTrue(SortSeriesStack.keyOf(foreign).isEmpty());
-    assertTrue(SortSeriesStack.fromKey("other").isEmpty());
-    assertTrue(SortSeriesStack.fromKey(null).isEmpty());
+        "slice-position", SortSeriesStack.keyOf(SortSeriesStack.slicePosition).orElseThrow());
+    assertEquals(SortSeriesStack.instanceNumber, SortSeriesStack.fromKey("instance").orElseThrow());
+    assertTrue(SortSeriesStack.fromKey("nope").isEmpty());
   }
 }

@@ -126,6 +126,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PixelAttestation;
 import org.weasis.dicom.codec.PixelPrivacy;
 import org.weasis.dicom.codec.Redaction;
+import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.op.ImageConversion;
@@ -150,6 +151,7 @@ import picocli.CommandLine.TypeConversionException;
       View2dCommands.WindowLevelVerb.class,
       View2dCommands.Pan.class,
       View2dCommands.Scroll.class,
+      View2dCommands.Sort.class,
       View2dCommands.Grid.class,
       View2dCommands.Viewport.class,
       View2dCommands.Hang.class,
@@ -1953,6 +1955,55 @@ public class View2dCommands implements CommandExtension {
       SliderChangeListener rotation = action(ActionW.ROTATION);
       int value = degrees != null ? degrees.value() : rotation.getSliderValue() + by;
       rotation.setSliderValue(new Degrees(value).value());
+    }
+  }
+
+  @Command(
+      name = "sort",
+      description =
+          "Orders the images of the stack a pane shows, by a sort key and a direction, and returns "
+              + "the display state ('sort', 'inverseStack'); with no argument the state is "
+              + "returned unchanged. 'slice-position' orders along the positive patient axis "
+              + "whatever the acquisition direction (feet to head for an axial stack, right to "
+              + "left, front to back), so --inverse true reads head to feet.")
+  @Since("5.0")
+  static class Sort extends DisplayVerb {
+    @Option(
+        names = "--by",
+        paramLabel = "<sort-key>",
+        description =
+            "instance, slice-position, slice-location, content-time, acquisition-time, b-value.")
+    String by;
+
+    @Option(
+        names = "--inverse",
+        paramLabel = "<true|false>",
+        arity = "1",
+        description = "Reads the stack backwards.")
+    Boolean inverse;
+
+    @Override
+    boolean hasChange() {
+      return by != null || inverse != null;
+    }
+
+    @Override
+    void validate() {
+      if (by != null && SortSeriesStack.fromKey(by).isEmpty()) {
+        throw invalid("Unknown sort key: " + by);
+      }
+    }
+
+    @Override
+    void apply(Target target) {
+      if (by != null) {
+        ComboItemListener<?> sort = action(ActionW.SORT_STACK);
+        sort.setSelectedItem(SortSeriesStack.fromKey(by).orElseThrow());
+      }
+      if (inverse != null) {
+        ToggleButtonListener direction = action(ActionW.INVERSE_STACK);
+        direction.setSelected(inverse);
+      }
     }
   }
 

@@ -15,6 +15,7 @@ import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import java.awt.Component;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -70,7 +71,18 @@ public final class ViewDisplayState {
             .add("grid", container.getLayoutModel().getId()) // NON-NLS
             .add("sync", sync(container, view)); // NON-NLS
     windowLevel(view).ifPresent(wl -> json.add("windowLevel", wl)); // NON-NLS
+    sortKey(view).ifPresent(key -> json.add("sort", key)); // NON-NLS
+    json.add("inverseStack", Boolean.TRUE.equals(view.getActionValue(ActionW.INVERSE_STACK.cmd())));
     return json.build();
+  }
+
+  /**
+   * The stable key of the stack sort of a pane, as the snapshots and {@code view2d:sort} name it.
+   */
+  private static Optional<String> sortKey(ViewCanvas<?> view) {
+    return view.getActionValue(ActionW.SORT_STACK.cmd()) instanceof Comparator<?> comparator
+        ? view.getViewStateAdapter().sortKey(comparator)
+        : Optional.empty();
   }
 
   /** What a pane shows, for the workspace listing: series, image and selection. */
@@ -167,6 +179,8 @@ public final class ViewDisplayState {
         .append(state.getString("grid")) // NON-NLS
         .append(" sync=") // NON-NLS
         .append(state.getString("sync")) // NON-NLS
+        .append(state.containsKey("sort") ? " sort=" + state.getString("sort") : "") // NON-NLS
+        .append(state.getBoolean("inverseStack", false) ? " inverse" : "") // NON-NLS
         .toString();
   }
 
