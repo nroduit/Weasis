@@ -1234,6 +1234,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       }
       synchAction.ifPresent(
           a -> a.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getSynchView()));
+      // a viewer restored or hung while another was selected kept its synch view without its
+      // listeners; they are registered against this event manager now
+      updateAllListeners(selectedView2dContainer, selectedView2dContainer.getSynchView());
       layoutAction.ifPresent(
           a ->
               a.setSelectedItemWithoutTriggerAction(

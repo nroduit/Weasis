@@ -73,7 +73,14 @@ public final class ViewDisplayState {
     windowLevel(view).ifPresent(wl -> json.add("windowLevel", wl)); // NON-NLS
     sortKey(view).ifPresent(key -> json.add("sort", key)); // NON-NLS
     json.add("inverseStack", Boolean.TRUE.equals(view.getActionValue(ActionW.INVERSE_STACK.cmd())));
+    blend(view).ifPresent(blend -> json.add("blend", blend.toJson())); // NON-NLS
     return json.build();
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static Optional<ViewState.Blend> blend(ViewCanvas<?> view) {
+    ViewStateAdapter adapter = view.getViewStateAdapter();
+    return adapter == null ? Optional.empty() : adapter.blend(view);
   }
 
   /**
@@ -81,6 +88,7 @@ public final class ViewDisplayState {
    */
   private static Optional<String> sortKey(ViewCanvas<?> view) {
     return view.getActionValue(ActionW.SORT_STACK.cmd()) instanceof Comparator<?> comparator
+            && view.getViewStateAdapter() != null
         ? view.getViewStateAdapter().sortKey(comparator)
         : Optional.empty();
   }

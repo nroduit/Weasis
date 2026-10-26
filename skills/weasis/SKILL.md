@@ -24,7 +24,7 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.12 and protocol
+This instance runs Weasis development with command API 2.13 and protocol
 1, and answers these namespaces: color, config, dicom, explorer, hp, image, redact, script, state, view2d, view3d, weasis, workspace.
 
 Check the connection first:
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.12 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.13 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -115,9 +115,10 @@ line naming the current spelling. Use the current one everywhere.
    --level 40` (or `--window-by` / `--level-by` in slider steps), `view2d:preset` (lists the
    presets with their ids) then `--preset <id>`,
    `view2d:zoom --set 2` or `--fit best-fit`, `view2d:rotate --degrees 90`, `view2d:flip on`,
-   `view2d:sort --by slice-position --inverse true` (head to feet whatever the acquisition
+   `view2d:sort --key slice-position --inverse true` (head to feet whatever the acquisition
    direction; keys instance, slice-position, slice-location, content-time, acquisition-time,
-   b-value), `view2d:grid --panes 2`. Each of them returns the new state, so a capture is only needed to
+   b-value), `view2d:fusion --series <series-uid> [--color-map <id>] [--opacity 0.5]` to blend
+   a PET or SPECT series over the pane (`--off` removes it), `view2d:grid --panes 2`. Each of them returns the new state, so a capture is only needed to
    *see* the image, not to check what you changed.
 5. **Measure** with the viewer, not with your eyes:
    - `view2d:measure --type line --points x1,y1,x2,y2` draws and returns the length;

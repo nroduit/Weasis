@@ -385,4 +385,72 @@ class ViewStateTest {
     assertEquals(expected, maps.size());
     return maps;
   }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void aRestoredPositionIsSoughtAgainWhileImagesArrive() {
+    java.util.Map<String, Object> actions = new java.util.HashMap<>();
+    ViewCanvas<ImageElement> canvas = org.mockito.Mockito.mock(ViewCanvas.class);
+    org.mockito.Mockito.doAnswer(
+            inv -> {
+              actions.put(inv.getArgument(0), inv.getArgument(1));
+              return null;
+            })
+        .when(canvas)
+        .setActionsInView(
+            org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any());
+    org.mockito.Mockito.when(canvas.getActionValue(org.mockito.ArgumentMatchers.anyString()))
+        .thenAnswer(inv -> actions.get(inv.getArgument(0)));
+    org.mockito.Mockito.when(canvas.getViewStateAdapter())
+        .thenReturn(
+            org.mockito.Mockito.mock(
+                ViewStateAdapter.class,
+                org.mockito.Mockito.withSettings()
+                    .defaultAnswer(org.mockito.Mockito.CALLS_REAL_METHODS)));
+    org.weasis.core.api.media.data.MediaSeries<ImageElement> series =
+        org.mockito.Mockito.mock(org.weasis.core.api.media.data.MediaSeries.class);
+    org.mockito.Mockito.when(canvas.getSeries()).thenReturn(series);
+    ImageElement first = org.mockito.Mockito.mock(ImageElement.class);
+    ImageElement third = org.mockito.Mockito.mock(ImageElement.class);
+    org.mockito.Mockito.when(canvas.getImage()).thenReturn(first);
+    List<ImageElement> fired = new java.util.ArrayList<>();
+    org.mockito.Mockito.doAnswer(
+            inv -> {
+              java.beans.PropertyChangeEvent evt = inv.getArgument(0);
+              if (evt.getNewValue() instanceof SynchCineEvent cine) {
+                fired.add((ImageElement) cine.getMedia());
+              }
+              return null;
+            })
+        .when(canvas)
+        .propertyChange(org.mockito.ArgumentMatchers.any());
+
+    // two images loaded of a series restored on its third one: nothing to show yet
+    ViewData data = new ViewData("1.2.3", 3, "1.2.3.3", null);
+    ViewPresentation.DEFAULT.applyTo(canvas, data, true);
+    assertAll(
+        () -> assertTrue(fired.isEmpty()),
+        () -> assertTrue(actions.get(ViewState.PENDING_CMD) != null, "the restore is pending"));
+
+    // the third image arrives: the pane moves to it, the restore stays pending until the end
+    org.mockito.Mockito.when(series.getMedia(2, null, null)).thenReturn(third);
+    ViewState.repositionPending(canvas, false);
+    assertEquals(List.of(third), fired);
+    assertTrue(actions.get(ViewState.PENDING_CMD) != null);
+
+    // the loading ends on the same image: nothing fired, nothing pending
+    org.mockito.Mockito.when(canvas.getImage()).thenReturn(third);
+    ViewState.repositionPending(canvas, true);
+    assertAll(
+        () -> assertEquals(1, fired.size()),
+        () -> assertTrue(actions.get(ViewState.PENDING_CMD) == null));
+
+    // a user who moved elsewhere is not pulled back
+    ViewPresentation.DEFAULT.applyTo(canvas, data, true);
+    org.mockito.Mockito.when(canvas.getImage()).thenReturn(first);
+    ViewState.repositionPending(canvas, false);
+    assertAll(
+        () -> assertEquals(1, fired.size(), "nothing fired"),
+        () -> assertTrue(actions.get(ViewState.PENDING_CMD) == null, "dropped"));
+  }
 }

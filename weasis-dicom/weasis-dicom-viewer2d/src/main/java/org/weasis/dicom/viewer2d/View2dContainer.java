@@ -68,6 +68,7 @@ import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewState;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
@@ -506,6 +507,11 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
 
           if (SeriesEvent.Action.ADD_IMAGE.equals(action2)) {
             if (source instanceof DicomSeries series) {
+              for (ViewCanvas<DicomImageElement> v : cellManager) {
+                if (v.getSeries() == series) {
+                  ViewState.repositionPending(v, false); // a restore waiting for its slice
+                }
+              }
               ViewCanvas<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
               if (view2DPane != null) {
                 DicomImageElement img = view2DPane.getImage();
@@ -569,6 +575,10 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
               eventManager.updateComponentsListener(view);
             }
           }
+        }
+      } else if (ObservableEvent.BasicAction.LOADING_STOP.equals(action)) {
+        for (ViewCanvas<DicomImageElement> v : cellManager) {
+          ViewState.repositionPending(v, true);
         }
       } else if (ObservableEvent.BasicAction.ADD.equals(action)
           && newVal instanceof Series<?> addedSeries) {

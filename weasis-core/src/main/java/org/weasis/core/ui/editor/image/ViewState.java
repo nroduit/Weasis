@@ -54,6 +54,17 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
   public static final ViewState EMPTY =
       new ViewState(ViewData.NONE, ViewPresentation.DEFAULT, null);
 
+  /**
+   * The key under which a pane keeps the position a restore asked for while its series is still
+   * loading, so that the images arriving after the restore do not leave it on the wrong slice.
+   */
+  public static final String PENDING_CMD = "view.pending"; // NON-NLS
+
+  /**
+   * What a pane remembers of a restore until its series is loaded: the state and the image picked.
+   */
+  private record Pending(ViewPresentation view, ViewData data, ImageElement shown) {}
+
   public ViewState {
     if (data == null) {
       data = ViewData.NONE;
@@ -124,6 +135,43 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
         data == null ? ViewData.NONE : ViewData.fromJson(data),
         view == null ? ViewPresentation.DEFAULT : ViewPresentation.fromJson(view),
         blend == null ? null : Blend.fromJson(blend));
+  }
+
+  /**
+   * Seeks again the image a restore asked for, after images joined the series of the pane: the rule
+   * (exact image, slice location, relative position) is applied on the stack as it is now. Nothing
+   * happens once the user moved to another image, and nothing is remembered after the loading
+   * finished.
+   *
+   * @param finished whether the loading of the series is over
+   */
+  @SuppressWarnings("unchecked")
+  public static <E extends ImageElement> void repositionPending(
+      ViewCanvas<E> canvas, boolean finished) {
+    if (!(canvas.getActionValue(PENDING_CMD) instanceof Pending pending)) {
+      return;
+    }
+    MediaSeries<E> series = canvas.getSeries();
+    if (series == null || (pending.shown() != null && pending.shown() != canvas.getImage())) {
+      canvas.setActionsInView(PENDING_CMD, null);
+      return;
+    }
+    Filter<E> filter = (Filter<E>) canvas.getActionValue(ActionW.FILTERED_SERIES.cmd());
+    ViewData data = pending.data();
+    ViewPresentation.Picked<E> picked =
+        data != null && data.image() > 0
+            ? pending.view().exactImage(canvas, series, data, filter)
+            : pending.view().positionedImage(canvas, series, filter);
+    if (picked != null && picked.media() != canvas.getImage()) {
+      fire(
+          canvas,
+          new SynchCineEvent(canvas, picked.media(), picked.index() - canvas.getTileOffset()));
+    }
+    canvas.setActionsInView(
+        PENDING_CMD,
+        finished
+            ? null
+            : new Pending(pending.view(), data, picked == null ? pending.shown() : picked.media()));
   }
 
   // ---- blend part --------------------------------------------------------------------------
@@ -466,6 +514,8 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
             exact
                 ? exactImage(canvas, series, data, filter)
                 : positionedImage(canvas, series, filter);
+        canvas.setActionsInView(
+            PENDING_CMD, new Pending(this, data, picked == null ? null : picked.media()));
         if (picked != null && picked.media() != canvas.getImage()) {
           fire(
               canvas,

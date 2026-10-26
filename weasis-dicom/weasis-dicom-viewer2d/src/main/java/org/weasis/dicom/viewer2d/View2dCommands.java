@@ -76,6 +76,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.color.IccImageFiles;
 import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.core.api.image.util.Unit;
@@ -98,6 +99,7 @@ import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewDisplayState;
+import org.weasis.core.ui.editor.image.ViewState;
 import org.weasis.core.ui.editor.image.ViewTransferHandler;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ViewportPane;
@@ -128,6 +130,10 @@ import org.weasis.dicom.codec.PixelPrivacy;
 import org.weasis.dicom.codec.Redaction;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.explorer.SeriesUid;
+import org.weasis.dicom.viewer2d.fusion.FusionController;
+import org.weasis.dicom.viewer2d.fusion.FusionOp;
+import org.weasis.dicom.viewer2d.fusion.FusionState;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.op.ImageConversion;
 import picocli.CommandLine.ArgGroup;
@@ -152,6 +158,7 @@ import picocli.CommandLine.TypeConversionException;
       View2dCommands.Pan.class,
       View2dCommands.Scroll.class,
       View2dCommands.Sort.class,
+      View2dCommands.Fusion.class,
       View2dCommands.Grid.class,
       View2dCommands.Viewport.class,
       View2dCommands.Hang.class,
@@ -1969,11 +1976,11 @@ public class View2dCommands implements CommandExtension {
   @Since("5.0")
   static class Sort extends DisplayVerb {
     @Option(
-        names = "--by",
+        names = "--key",
         paramLabel = "<sort-key>",
         description =
             "instance, slice-position, slice-location, content-time, acquisition-time, b-value.")
-    String by;
+    String key;
 
     @Option(
         names = "--inverse",
@@ -1984,26 +1991,115 @@ public class View2dCommands implements CommandExtension {
 
     @Override
     boolean hasChange() {
-      return by != null || inverse != null;
+      return key != null || inverse != null;
     }
 
     @Override
     void validate() {
-      if (by != null && SortSeriesStack.fromKey(by).isEmpty()) {
-        throw invalid("Unknown sort key: " + by);
+      if (key != null && SortSeriesStack.fromKey(key).isEmpty()) {
+        throw invalid("Unknown sort key: " + key);
       }
     }
 
     @Override
     void apply(Target target) {
-      if (by != null) {
+      if (key != null) {
         ComboItemListener<?> sort = action(ActionW.SORT_STACK);
-        sort.setSelectedItem(SortSeriesStack.fromKey(by).orElseThrow());
+        sort.setSelectedItem(SortSeriesStack.fromKey(key).orElseThrow());
       }
       if (inverse != null) {
         ToggleButtonListener direction = action(ActionW.INVERSE_STACK);
         direction.setSelected(inverse);
       }
+    }
+  }
+
+  @Command(
+      name = "fusion",
+      description =
+          "Blends another series of the study over the one a pane shows (PET over CT, SPECT over "
+              + "MR...): --series starts or replaces the overlay, --color-map and --opacity change "
+              + "the blend, --off removes it; the display state returns the blend under 'blend'. "
+              + "With no argument the state is returned unchanged.")
+  @Since("5.0")
+  static class Fusion extends DisplayVerb {
+    @Option(
+        names = "--series",
+        paramLabel = "<series-uid>",
+        description =
+            "The overlay series, from 'dicom:list'; it must share the frame of reference.")
+    SeriesUid series;
+
+    @Option(
+        names = "--color-map",
+        paramLabel = "<color-map-id>",
+        description = "Color map of the overlay, from 'color:maps'.")
+    String colorMap;
+
+    @Option(
+        names = "--opacity",
+        paramLabel = "<0-1>",
+        description = "Opacity of the overlay, 0 transparent to 1 opaque.")
+    Double opacity;
+
+    @Option(names = "--off", description = "Removes the overlay.")
+    boolean off;
+
+    @Override
+    boolean hasChange() {
+      return series != null || colorMap != null || opacity != null || off;
+    }
+
+    @Override
+    void validate() {
+      if (off && (series != null || colorMap != null || opacity != null)) {
+        throw invalid("--off cannot be combined with the other options");
+      }
+      if (opacity != null && (opacity < 0 || opacity > 1)) {
+        throw invalid("--opacity is between 0 and 1");
+      }
+      if (colorMap != null && ViewState.colorMapOf(colorMap).isEmpty()) {
+        throw invalid("Unknown color map: " + colorMap);
+      }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    void apply(Target target) {
+      ViewCanvas<DicomImageElement> view = target.view();
+      if (off) {
+        OpManager disOp = view.getDisplayOpManager();
+        disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_ENABLED, Boolean.FALSE);
+        disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES, null);
+        view.getImageLayer().updateDisplayOperations();
+        EventManager.getInstance().refreshFusionWindowControl();
+        return;
+      }
+      FusionState current = FusionController.snapshot(view);
+      if (series == null && current == null) {
+        throw new IllegalStateException("No overlay on the pane: give --series");
+      }
+      MediaSeries<DicomImageElement> overlay =
+          series == null
+              ? current.series()
+              : (MediaSeries<DicomImageElement>)
+                  SeriesResolver.ofApplication()
+                      .resolve(series.value())
+                      .orElseThrow(
+                          () ->
+                              CommandFailure.unknownHandle(
+                                  "Unknown series id: " + series, "dicom:list")); // NON-NLS
+      JsonObjectBuilder params = Json.createObjectBuilder();
+      if (current != null && series == null) {
+        view.getViewStateAdapter().blend(view).ifPresent(b -> b.params().forEach(params::add));
+      }
+      if (colorMap != null) {
+        params.add("colorMap", colorMap); // NON-NLS
+      }
+      if (opacity != null) {
+        params.add("overlayOpacity", opacity); // NON-NLS
+      }
+      view.getViewStateAdapter().blend(view, overlay, params.build());
     }
   }
 
