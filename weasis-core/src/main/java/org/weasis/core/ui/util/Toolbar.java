@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.util;
 
+import java.util.Locale;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.ui.editor.Relevant;
 
@@ -22,4 +23,24 @@ public interface Toolbar extends Insertable, Relevant {
   Type getPanelType();
 
   WtoolBar getComponent();
+
+  /**
+   * A stable lowercase token naming the toolbar across sessions and locales, the one a UI profile
+   * lists: by default the class name without its {@code ToolBar} suffix in kebab case ({@code
+   * ViewerToolBar} gives {@code viewer}, {@code KeyObjectToolBar} gives {@code key-object}).
+   */
+  default String getToolbarId() {
+    return idOf(getClass());
+  }
+
+  /** The default toolbar id of a class, see {@link #getToolbarId()}. */
+  static String idOf(Class<?> type) {
+    String name = type.getSimpleName();
+    if (name.isEmpty()) {
+      name = type.getSuperclass().getSimpleName();
+    }
+    name = name.replaceFirst("(?i)toolbar$|bar$", ""); // NON-NLS
+    return name.replaceAll("(?<=[a-z])(?=[A-Z0-9])|(?<=[A-Z])(?=[A-Z][a-z])", "-")
+        .toLowerCase(Locale.ROOT);
+  }
 }

@@ -22,6 +22,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.util.LayeredDocument;
 import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.editor.SeriesResolver;
+import org.weasis.core.ui.editor.UiProfiles;
 import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.image.HangingLayout;
 import org.weasis.core.ui.editor.image.ViewState;
@@ -292,6 +293,52 @@ public final class ActiveHanging {
     }
     HangingPlanApplier.replace(applied);
     return Optional.of(applied);
+  }
+
+  /**
+   * The UI profile a hanging asks for: the one its protocol names for the presentation group of the
+   * step, else for the whole protocol; empty when the protocol names none or is gone.
+   */
+  public static Optional<String> uiProfileOf(Applied current) {
+    String id = current.plan().protocolId();
+    if (id == null) {
+      return Optional.empty();
+    }
+    Optional<ProtocolJson.Document> document =
+        current.context().candidates().stream()
+            .map(HangingEngine.Candidate::document)
+            .filter(d -> id.equals(d.id()))
+            .findFirst();
+    if (document.isEmpty()) {
+      document =
+          HangingProtocolDocuments.protocols()
+              .find(id)
+              .map(
+                  entry -> {
+                    try {
+                      return ProtocolJson.fromJson(entry.json());
+                    } catch (RuntimeException e) {
+                      return null;
+                    }
+                  });
+    }
+    return document.flatMap(d -> d.weasis().uiProfileOf(current.stepPlan().group()));
+  }
+
+  /**
+   * A derivation ({@code Save as protocol}) completed with the UI profile in force, the one the
+   * display was read with; unchanged when none is active or the protocol names one already.
+   */
+  public static ProtocolDeriver.Derivation withUiProfile(ProtocolDeriver.Derivation derivation) {
+    String active = UiProfiles.activeId();
+    ProtocolJson.Document document = derivation.document();
+    if (active == null || document.weasis().uiProfile() != null) {
+      return derivation;
+    }
+    return new ProtocolDeriver.Derivation(
+        new ProtocolJson.Document(
+            document.id(), document.protocol(), document.weasis().withUiProfile(active)),
+        derivation.rules());
   }
 
   /** The candidates of the study, best first, empty when the hanging kept none. */

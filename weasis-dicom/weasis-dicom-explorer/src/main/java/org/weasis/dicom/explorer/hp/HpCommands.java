@@ -1002,7 +1002,8 @@ public class HpCommands implements CommandExtension {
                         MediaSeriesGroup study = studyOf(model, layout);
                         List<StudySeries> series = studySeries(model, study);
                         ProtocolDeriver.Derivation derivation =
-                            ProtocolDeriver.derive(id, name, "SINGLE_USER", layout, series);
+                            ActiveHanging.withUiProfile(
+                                ProtocolDeriver.derive(id, name, "SINGLE_USER", layout, series));
                         JsonObject entry = ProtocolJson.toJson(derivation.document());
                         JsonObjectBuilder json =
                             Json.createObjectBuilder().add("protocol", id).add("name", name);

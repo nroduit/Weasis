@@ -19,6 +19,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.hp.HangingProtocolDocuments;
+import org.weasis.core.api.util.ListDocument;
+import org.weasis.core.ui.editor.UiProfiles;
 
 /**
  * The built-in hanging protocol library: the entries of the resource {@value #RESOURCE}, one per
@@ -30,6 +32,7 @@ public final class BuiltInProtocols {
   private static final Logger LOGGER = LoggerFactory.getLogger(BuiltInProtocols.class);
 
   public static final String RESOURCE = "/hp.protocols.json"; // NON-NLS
+  public static final String UI_PROFILES = "/uiProfiles.json"; // NON-NLS
 
   private BuiltInProtocols() {}
 
@@ -50,10 +53,22 @@ public final class BuiltInProtocols {
     }
   }
 
-  /** Installs the library as the built-in layer of the protocol document. */
+  /** The UI profiles of the bundled library, one per imaging type, empty when unreadable. */
+  public static List<JsonObject> uiProfiles() {
+    try (InputStream in = BuiltInProtocols.class.getResourceAsStream(UI_PROFILES)) {
+      return in == null ? List.of() : ListDocument.read(in, UiProfiles.ENTRIES).entries();
+    } catch (IOException | RuntimeException e) {
+      LOGGER.error("Cannot read the built-in UI profiles", e);
+      return List.of();
+    }
+  }
+
+  /** Installs the library as the built-in layer of the protocol and UI profile documents. */
   public static void install() {
     List<JsonObject> entries = entries();
     HangingProtocolDocuments.protocols().setBuiltIn(entries);
-    LOGGER.info("{} built-in hanging protocols", entries.size());
+    List<JsonObject> profiles = uiProfiles();
+    UiProfiles.document().setBuiltIn(profiles);
+    LOGGER.info("{} built-in hanging protocols, {} UI profiles", entries.size(), profiles.size());
   }
 }

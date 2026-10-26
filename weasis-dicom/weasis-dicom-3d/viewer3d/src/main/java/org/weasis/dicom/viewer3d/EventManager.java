@@ -845,7 +845,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   public JMenu getResetMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       ButtonGroup group = new ButtonGroup();
       menu = new JMenu(ActionW.RESET.getTitle());
       menu.setIcon(ResourceUtil.getIcon(ActionIcon.RESET));
@@ -870,7 +870,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   public JMenu getLutShapeMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<? extends ComboItemListener<?>> lutShapeAction = getAction(ActionW.LUT_SHAPE);
       if (lutShapeAction.isPresent()) {
         menu = lutShapeAction.get().createUnregisteredRadioMenu(ActionW.LUT_SHAPE.getTitle());
@@ -881,7 +881,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   public JMenu getZoomMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<SliderChangeListener> zoomAction = getAction(ActionW.ZOOM);
       if (zoomAction.isPresent()) {
         menu = new JMenu(ActionW.ZOOM.getTitle());
@@ -901,7 +901,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   public JMenu getOrientationMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<SliderChangeListener> rotateAction = getAction(ActionW.ROTATION);
       if (rotateAction.isPresent()) {
         menu = new JMenu(Messages.getString("View2dContainer.orientation"));
@@ -940,7 +940,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   public JMenu getLutMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ComboItemListener<Preset>> action = getAction(ActionVol.VOL_PRESET);
       if (action.isPresent()) {
         Modality curModality = Modality.DEFAULT;
@@ -959,7 +959,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   public JMenu getViewTypeMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ComboItemListener<RenderingType>> viewTypeAction =
           getAction(ActionVol.RENDERING_TYPE);
       if (viewTypeAction.isPresent()) {
@@ -972,7 +972,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   public JCheckBoxMenuItem getShadingMenu(String prop) {
     JCheckBoxMenuItem menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ToggleButtonListener> shadingAction = getAction(ActionVol.VOL_SHADING);
       if (shadingAction.isPresent()) {
         menu =
@@ -986,7 +986,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   public JCheckBoxMenuItem getCinematicMenu(String prop) {
     JCheckBoxMenuItem menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ToggleButtonListener> cinematicAction = getAction(ActionVol.VOL_CINEMATIC);
       if (cinematicAction.isPresent()) {
         menu =
@@ -1000,7 +1000,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   public JCheckBoxMenuItem getSProjectionMenu(String prop) {
     JCheckBoxMenuItem menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ToggleButtonListener> shadingAction = getAction(ActionVol.VOL_PROJECTION);
       if (shadingAction.isPresent()) {
         menu =
@@ -1016,7 +1016,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   public JMenu getMprCutMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ComboItemListener<CrosshairCutMode>> crosshairCutModeAction =
           getAction(ActionVol.CROSSHAIR_CUT_MODE);
       if (crosshairCutModeAction.isPresent()) {

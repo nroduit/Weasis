@@ -12,7 +12,6 @@ package org.weasis.dicom.explorer.hp;
 import java.util.Map;
 import org.pf4j.Extension;
 import org.weasis.core.api.media.data.MediaSeries;
-
 import org.weasis.core.ui.editor.ContextFacts;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.ViewContextContributor;
@@ -46,6 +45,8 @@ public class HangingContextContributor implements ViewContextContributor {
                 facts.put(PROTOCOL_NAME, applied.plan().name());
                 facts.put(STEP, applied.step() + 1);
                 facts.put(STEPS, applied.plan().steps().size());
+                ActiveHanging.uiProfileOf(applied)
+                    .ifPresent(id -> facts.put(ContextFacts.UI_PROFILE, id));
               });
     }
     SeriesFeatures features = ContentContextContributor.featuresOf(series);

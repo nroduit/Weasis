@@ -528,7 +528,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   public JMenu getResetMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       ButtonGroup group = new ButtonGroup();
       menu = new JMenu(Messages.getString("ResetTools.reset"));
       menu.setIcon(ResourceUtil.getIcon(ActionIcon.RESET));
@@ -551,7 +551,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   public JMenu getZoomMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<SliderChangeListener> zoomAction = getAction(ActionW.ZOOM);
       if (zoomAction.isPresent()) {
         menu = new JMenu(ActionW.ZOOM.getTitle());
@@ -571,7 +571,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   public JMenu getOrientationMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<SliderChangeListener> rotateAction = getAction(ActionW.ROTATION);
       if (rotateAction.isPresent()) {
         menu = new JMenu(Messages.getString("View2dContainer.orientation"));
@@ -630,7 +630,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   // public JMenu getSortStackMenu(String prop) {
   // JMenu menu = null;
-  // if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+  // if (isMenuEnabled(prop)) {
   // menu =
   // sortStackAction.createUnregisteredRadioMenu(Messages.getString("View2dContainer.sort_stack"));
   //
@@ -643,7 +643,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   // }
 
   public JMenu getLutMenu(String prop) {
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ComboItemListener<ByteLut>> lutAction = getAction(ActionW.LUT);
       if (lutAction.isPresent()) {
         ColorMapRadioMenu radioMenu = new ColorMapRadioMenu();
@@ -671,7 +671,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   public JCheckBoxMenuItem getLutInverseMenu(String prop) {
     JCheckBoxMenuItem menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ToggleButtonListener> inverseLutAction = getAction(ActionW.INVERT_LUT);
       if (inverseLutAction.isPresent()) {
         menu =
@@ -685,7 +685,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   }
 
   public JMenu getFilterMenu(String prop) {
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ComboItemListener<KernelData>> filterAction = getAction(ActionW.FILTER);
       if (filterAction.isPresent()) {
         return filterAction

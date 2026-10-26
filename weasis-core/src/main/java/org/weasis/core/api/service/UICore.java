@@ -76,6 +76,7 @@ import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.UiProfiles;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.launcher.Launcher;
@@ -180,6 +181,7 @@ public final class UICore {
         AppProperties.WEASIS_PATH.resolve("data")); // NON-NLS
     startRemoteSettings(prefDir);
     HangingProtocolDocuments.configure();
+    UiProfiles.configure();
     this.propsFile =
         new File(systemPreferences.getProperty("weasis.pref.dir"), "weasis.properties");
     if (!propsFile.canRead()) {

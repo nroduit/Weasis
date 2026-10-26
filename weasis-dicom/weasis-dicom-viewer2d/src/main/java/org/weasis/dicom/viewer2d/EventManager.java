@@ -1727,7 +1727,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getResetMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       ButtonGroup group = new ButtonGroup();
       menu = new JMenu(ActionW.RESET.getTitle());
       menu.setIcon(ResourceUtil.getIcon(ActionIcon.RESET));
@@ -1751,7 +1751,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getPresetMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<? extends ComboItemListener<?>> presetAction = getAction(ActionW.PRESET);
       if (presetAction.isPresent()) {
         menu =
@@ -1775,7 +1775,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getLutShapeMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<? extends ComboItemListener<?>> lutShapeAction = getAction(ActionW.LUT_SHAPE);
       if (lutShapeAction.isPresent()) {
         menu = lutShapeAction.get().createUnregisteredRadioMenu(ActionW.LUT_SHAPE.getTitle());
@@ -1786,7 +1786,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getZoomMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<SliderChangeListener> zoomAction = getAction(ActionW.ZOOM);
       if (zoomAction.isPresent()) {
         menu = new JMenu(ActionW.ZOOM.getTitle());
@@ -1806,7 +1806,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getOrientationMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<SliderChangeListener> rotateAction = getAction(ActionW.ROTATION);
       if (rotateAction.isPresent()) {
         menu = new JMenu(Messages.getString("View2dContainer.orientation"));
@@ -1868,7 +1868,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getCineMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<SliderCineListener> scrollAction = getAction(ActionW.SCROLL_SERIES);
       if (scrollAction.isPresent()) {
         menu = new JMenu(Messages.getString("cine"));
@@ -1911,7 +1911,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getSortStackMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ComboItemListener<SeriesComparator<?>>> sortStackAction =
           getAction(ActionW.SORT_STACK);
       if (sortStackAction.isPresent()) {
@@ -1935,7 +1935,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getLutMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ComboItemListener<ByteLut>> lutAction = getAction(ActionW.LUT);
       if (lutAction.isPresent()) {
         ViewCanvas<DicomImageElement> view = getSelectedViewPane();
@@ -1956,7 +1956,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JCheckBoxMenuItem getLutInverseMenu(String prop) {
     JCheckBoxMenuItem menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ToggleButtonListener> inverseLutAction = getAction(ActionW.INVERT_LUT);
       if (inverseLutAction.isPresent()) {
         menu =
@@ -1971,7 +1971,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getFilterMenu(String prop) {
     JMenu menu = null;
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+    if (isMenuEnabled(prop)) {
       Optional<ComboItemListener<KernelData>> filterAction = getAction(ActionW.FILTER);
       if (filterAction.isPresent()) {
         menu =

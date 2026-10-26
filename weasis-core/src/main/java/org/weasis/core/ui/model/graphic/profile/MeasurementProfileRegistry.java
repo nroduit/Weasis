@@ -73,6 +73,7 @@ public final class MeasurementProfileRegistry {
   private final Map<String, MeasurementProfile> user = new LinkedHashMap<>();
   private String selectedId;
   private String modality;
+  private volatile String overrideId; // NOSONAR laid over the selection by a UI profile
 
   /**
    * @param siteFile the site document, or null
@@ -391,7 +392,31 @@ public final class MeasurementProfileRegistry {
   }
 
   /** The explicit profile, else the first matching the modality, else the default one. */
+  /**
+   * Lays a profile over the user's selection, as a UI profile does, until called with null; the
+   * selection itself is untouched and comes back then.
+   */
+  public void override(String id) {
+    String value = id == null || profile(id).isEmpty() ? null : id;
+    if (!Objects.equals(overrideId, value)) {
+      overrideId = value;
+      fireChanged();
+    }
+  }
+
+  /** The id a UI profile lays over the selection, null when none. */
+  public String overrideId() {
+    return overrideId;
+  }
+
   public MeasurementProfile active() {
+    String over = overrideId;
+    if (over != null) {
+      Optional<MeasurementProfile> p = profile(over);
+      if (p.isPresent()) {
+        return p.get();
+      }
+    }
     if (selectedId != null) {
       Optional<MeasurementProfile> p = profile(selectedId);
       if (p.isPresent()) {

@@ -55,6 +55,12 @@ public final class ContextFacts {
   /** String: the id of the hanging protocol that hung the viewer, absent when none did. */
   public static final String HANGING_PROTOCOL = "hp.protocol"; // NON-NLS
 
+  /**
+   * String: the id of the UI profile the view asks for (the one of its protocol or reading step),
+   * absent when nothing proposes one; {@code UiProfiles} applies it to the shell.
+   */
+  public static final String UI_PROFILE = "ui.profile"; // NON-NLS
+
   private ContextFacts() {}
 
   /** The fact name of the count of the objects of a modality referencing the series. */

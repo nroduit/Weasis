@@ -30,11 +30,11 @@ import org.weasis.core.ui.docking.ToolVisibility;
 import org.weasis.core.ui.util.ToolBarContainer;
 
 /**
- * Evaluates the relevance of the parts of the workspace against a {@link ViewContext} and applies it
- * to the selected viewer: a tool panel or a toolbar that is not relevant leaves the shell while the
- * view is selected, a menu entry is not built, an action is reported as not relevant to the
- * commands. The content capabilities are the common predicates ({@link #VOLUME}, {@link
- * #TEMPORAL}, ...), read from the {@link ContextFacts}; an item declares its own through {@link
+ * Evaluates the relevance of the parts of the workspace against a {@link ViewContext} and applies
+ * it to the selected viewer: a tool panel or a toolbar that is not relevant leaves the shell while
+ * the view is selected, a menu entry is not built, an action is reported as not relevant to the
+ * commands. The content capabilities are the common predicates ({@link #VOLUME}, {@link #TEMPORAL},
+ * ...), read from the {@link ContextFacts}; an item declares its own through {@link
  * Relevant#isRelevant}. The setting {@code weasis.ui.contextual} turns the filtering off and shows
  * every tool again, whatever the predicates say.
  */
@@ -158,13 +158,18 @@ public final class Relevance {
     }
   }
 
-  /** Shows the tools and toolbars of the context's viewer that are visible and relevant. */
+  /**
+   * Applies a context to the shell: the tools of its viewer that are visible and relevant are
+   * shown, the UI profile it asks for is laid over the workspace ({@link UiProfiles#apply}), then
+   * the toolbar row is rebuilt from the relevant bars the profile lists.
+   */
   public static void apply(ViewContext context) {
     ViewContext current = context == null ? ViewContext.empty() : context;
     SeriesViewer<?> viewer = current.viewer();
     if (viewer != null) {
       applyTools(viewer.getSeriesViewerUI().tools, current);
     }
+    UiProfile profile = UiProfiles.apply(current);
     ToolBarContainer container;
     try {
       container = toolbars.get();
@@ -172,7 +177,7 @@ public final class Relevance {
       container = null;
     }
     if (container != null) {
-      container.applyContext(current);
+      container.applyContext(current, profile);
     }
   }
 

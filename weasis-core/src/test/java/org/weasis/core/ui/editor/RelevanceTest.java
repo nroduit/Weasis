@@ -140,10 +140,14 @@ class RelevanceTest {
     ViewContext ct =
         context(
             Map.of(
-                ContextFacts.VOLUME, true,
-                ContextFacts.TEMPORAL, "STATIC",
-                ContextFacts.CALIBRATED, true,
-                ContextFacts.objects("SEG"), 2));
+                ContextFacts.VOLUME,
+                true,
+                ContextFacts.TEMPORAL,
+                "STATIC",
+                ContextFacts.CALIBRATED,
+                true,
+                ContextFacts.objects("SEG"),
+                2));
     assertTrue(Relevance.VOLUME.test(ct));
     assertFalse(Relevance.TEMPORAL.test(ct));
     assertFalse(Relevance.SUV.test(ct));
@@ -156,10 +160,14 @@ class RelevanceTest {
     ViewContext cine =
         context(
             Map.of(
-                ContextFacts.TEMPORAL, "CINE",
-                ContextFacts.SUV, true,
-                ContextFacts.FUSION, true,
-                ContextFacts.HANGING_PROTOCOL, "weasis.ct"));
+                ContextFacts.TEMPORAL,
+                "CINE",
+                ContextFacts.SUV,
+                true,
+                ContextFacts.FUSION,
+                true,
+                ContextFacts.HANGING_PROTOCOL,
+                "weasis.ct"));
     assertTrue(Relevance.TEMPORAL.test(cine));
     assertTrue(Relevance.SUV.test(cine));
     assertTrue(Relevance.FUSION.test(cine));
@@ -201,7 +209,8 @@ class RelevanceTest {
     Relevance.registerAction("test.cine", Relevance.TEMPORAL);
     ViewContext still = context(Map.of(ContextFacts.TEMPORAL, "STATIC"));
     assertFalse(Relevance.isActionRelevant("test.cine", still));
-    assertTrue(Relevance.isActionRelevant("test.cine", context(Map.of(ContextFacts.TEMPORAL, "CINE"))));
+    assertTrue(
+        Relevance.isActionRelevant("test.cine", context(Map.of(ContextFacts.TEMPORAL, "CINE"))));
     assertTrue(Relevance.isActionRelevant("test.unknown", still));
     assertTrue(Relevance.isActionRelevant(null, still));
     assertTrue(Relevance.actions().containsKey("test.cine"));
@@ -239,10 +248,12 @@ class RelevanceTest {
     PredicateBar volume = new PredicateBar("3d", 50, Relevance.VOLUME);
     PredicateBar cine = new PredicateBar("cine", 80, Relevance.TEMPORAL);
     container.registerToolBar(List.of(cine, volume, viewer));
-    assertEquals(List.of(viewer), container.shownBars(), "no context: the capabilities are unknown");
+    assertEquals(
+        List.of(viewer), container.shownBars(), "no context: the capabilities are unknown");
     assertEquals(1, container.getComponentCount());
 
-    container.applyContext(context(Map.of(ContextFacts.VOLUME, true, ContextFacts.TEMPORAL, "CINE")));
+    container.applyContext(
+        context(Map.of(ContextFacts.VOLUME, true, ContextFacts.TEMPORAL, "CINE")));
     assertEquals(List.of(viewer, volume, cine), container.shownBars(), "sorted by position");
     assertEquals(3, container.getComponentCount());
 

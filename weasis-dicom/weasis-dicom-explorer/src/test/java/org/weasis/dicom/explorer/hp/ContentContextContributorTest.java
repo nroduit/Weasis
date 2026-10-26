@@ -110,7 +110,9 @@ class ContentContextContributorTest {
 
     DicomModel withPet = model(study, ct, pet);
     assertEquals(
-        true, facts(new ContentContextContributor(() -> Optional.of(withPet)), ct).get(ContextFacts.FUSION));
+        true,
+        facts(new ContentContextContributor(() -> Optional.of(withPet)), ct)
+            .get(ContextFacts.FUSION));
 
     DicomModel twoCt = model(study, ct, bone);
     assertEquals(
@@ -129,7 +131,9 @@ class ContentContextContributorTest {
         facts(new ContentContextContributor(() -> Optional.of(ctMr)), ct).get(ContextFacts.FUSION),
         "CT and MR are both anatomical");
     assertEquals(
-        false, facts(new ContentContextContributor(() -> Optional.of(model(study, ct))), ct).get(ContextFacts.FUSION));
+        false,
+        facts(new ContentContextContributor(() -> Optional.of(model(study, ct))), ct)
+            .get(ContextFacts.FUSION));
   }
 
   @Test
@@ -152,6 +156,7 @@ class ContentContextContributorTest {
     assertTrue(Relevance.objects("SEG").test(context));
     assertTrue(Relevance.objects("rtstruct").test(context));
     assertFalse(Relevance.objects("KO").test(context));
-    assertEquals(Map.of(), ContentContextContributor.objectsOf(ExplorerFixtures.ctSeries("6.1", "B30f")));
+    assertEquals(
+        Map.of(), ContentContextContributor.objectsOf(ExplorerFixtures.ctSeries("6.1", "B30f")));
   }
 }

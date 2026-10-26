@@ -85,7 +85,7 @@ new window* for the selected viewer.
 and its type, its selected series, and the facts the plugins contribute about them through the
 `ViewContextContributor` extension point under dotted names (the DICOM explorer adds
 `hp.protocol`, `hp.protocolName`, `hp.step`, `hp.steps`, `hp.features`, `hp.modality`,
-`hp.anatomy`). `ViewContexts` builds it when the selection changes (`WeasisWin`) and when the
+`hp.anatomy`, and `ui.profile` for the UI profile the protocol or its reading step names). `ViewContexts` builds it when the selection changes (`WeasisWin`) and when the
 selected series of the viewer changes (`SeriesViewerUI.updateDynamicTools`), publishes it to
 its listeners and keeps the last one (`workspace:context` prints it).
 
@@ -110,6 +110,33 @@ shows where the value comes from. Without a value in any layer, the flag the 4.x
 set on the tool applies (`InsertableUtil`: the java preferences of the viewer and the legacy
 site keys), so an installation keeps its choices. A tool whose setting changes is shown or
 closed on the selected viewer at once.
+
+### UI profiles
+
+A `UiProfile` (`org.weasis.core.ui.editor`) is what a reading needs around the viewers: a
+`ShellState` template (the tool id of each slot by role, widths and ratios left to the user),
+the toolbar ids shown and their order, the context-menu entries, the mouse bindings and the
+measurement profile id; a section it leaves out states nothing. The profiles are a layered
+JSON document, `uiProfiles.json` (built-in, site, user), read by `UiProfiles`; the DICOM codec
+ships one per protocol of the built-in library, and a protocol names its profile per reading
+step or for the whole protocol in its Weasis extensions.
+
+`Relevance.apply` is the one applier on the shell: for each published context it shows the
+tools of the viewer that are visible and relevant, lays over the workspace the profile the
+context asks for (`UiProfiles.apply`), then rebuilds the toolbar row from the relevant bars
+the profile lists. The profile narrows, never widens: a bar the user disabled or the content
+makes irrelevant stays out, and the setting `weasis.ui.contextual` off (*Show all tools*)
+ignores the profiles. The mouse bindings and the measurement profile are laid over the user's
+and come back when the profile is released, so a profile never becomes the user's choice.
+Toolbars carry a stable id for this (`Toolbar.getToolbarId()`, derived from the class name),
+as tools carry a tool id, and the context-menu entries are named by their site switch
+(`ImageViewerEventManager.isMenuEnabled`).
+
+A change the user makes while a profile is active is kept with that context: a tool opened in
+a slot from the stripe or a toolbar toggled in the row is written to the user layer of the
+profile, under the same id, so the site or built-in profile stays untouched and the user's
+version wins next time. `ui:profiles` lists the layers, `ui:profile` shows, applies or
+releases one.
 
 ### A tool as a view
 
@@ -205,6 +232,8 @@ and one entry per pane with the series and the image the pane shows (`ViewDispla
 the display verbs echo). A window reports the view it has maximized; the listing reports the
 application's selection under `selected`. View ids are durable handles; the window and group
 numbers are positions in that listing and change with the layout.
+
+`UiCommands` exposes the UI profiles under the `ui:` namespace (profiles, profile).
 
 `detach` floats a view in a viewer window near the main window, on the usable area of the
 screen of a role (`--screen diagnostic-1`) or at explicit bounds (`--bounds`); `screens` lists

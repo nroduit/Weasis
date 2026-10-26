@@ -91,7 +91,9 @@ import org.weasis.core.ui.editor.image.DisplayProfile;
 import org.weasis.core.ui.editor.image.HangingLayout;
 import org.weasis.core.ui.editor.image.ImageRegionStatistics;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.MouseActionType;
 import org.weasis.core.ui.editor.image.MouseActions;
+import org.weasis.core.ui.editor.image.MouseButton;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -744,69 +746,6 @@ public class View2dCommands implements CommandExtension {
      */
     static List<MigLayoutModel> layouts(ImageViewerPlugin<DicomImageElement> container) {
       return container.getLayoutList();
-    }
-  }
-
-  /** A mouse button of a view, as the preferences name them. */
-  enum MouseButton {
-    LEFT(MouseActions.T_LEFT),
-    MIDDLE(MouseActions.T_MIDDLE),
-    RIGHT(MouseActions.T_RIGHT),
-    WHEEL(MouseActions.T_WHEEL);
-
-    private final String key;
-
-    MouseButton(String key) {
-      this.key = key;
-    }
-
-    String key() {
-      return key;
-    }
-
-    @Override
-    public String toString() {
-      return key;
-    }
-  }
-
-  /** What a mouse button does in a view. */
-  enum MouseActionType {
-    SEQUENCE(ActionW.SCROLL_SERIES.cmd()),
-    WINDOW_LEVEL(ActionW.WINLEVEL.cmd()),
-    ZOOM(ActionW.ZOOM.cmd()),
-    PAN(ActionW.PAN.cmd()),
-    ROTATION(ActionW.ROTATION.cmd()),
-    CROSSHAIR(ActionW.CROSSHAIR.cmd()),
-    MEASURE(ActionW.MEASURE.cmd()),
-    DRAW(ActionW.DRAW.cmd()),
-    CONTEXT_MENU(ActionW.CONTEXTMENU.cmd()),
-    NONE(ActionW.NO_ACTION.cmd());
-
-    private final String command;
-
-    MouseActionType(String command) {
-      this.command = command;
-    }
-
-    String command() {
-      return command;
-    }
-
-    /** The action of a command, whatever spelling the caller used. */
-    static MouseActionType ofCommand(String value) {
-      for (MouseActionType action : values()) {
-        if (action.command.equalsIgnoreCase(value) || action.toString().equalsIgnoreCase(value)) {
-          return action;
-        }
-      }
-      throw new IllegalArgumentException(
-          "expected one of " + Stream.of(values()).map(Object::toString).toList());
-    }
-
-    @Override
-    public String toString() {
-      return name().toLowerCase(Locale.ROOT).replace('_', '-');
     }
   }
 

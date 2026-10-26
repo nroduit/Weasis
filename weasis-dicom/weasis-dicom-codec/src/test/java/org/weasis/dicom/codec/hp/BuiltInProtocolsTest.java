@@ -23,6 +23,7 @@ import org.dcm4che3.data.VR;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.weasis.core.api.util.LayeredEntries.Origin;
+import org.weasis.core.ui.editor.UiProfile;
 import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
 import org.weasis.dicom.codec.hp.HangingPlan.Match;
 import org.weasis.dicom.codec.hp.ProtocolJson.Document;
@@ -35,6 +36,27 @@ class BuiltInProtocolsTest {
     return BuiltInProtocols.entries().stream()
         .map(e -> new Candidate(ProtocolJson.fromJson(e), Origin.BUILT_IN, true))
         .toList();
+  }
+
+  @Test
+  void everyProtocolNamesABuiltInUiProfileAndEveryProfileParses() {
+    Set<String> profiles = new HashSet<>();
+    for (JsonObject entry : BuiltInProtocols.uiProfiles()) {
+      UiProfile profile = UiProfile.fromJson(entry);
+      assertTrue(profiles.add(profile.id()), "duplicate " + profile.id());
+      assertTrue(profile.shell() != null && profile.shell().tools() != null, profile.id());
+    }
+    assertAll(
+        library().stream()
+            .map(
+                c ->
+                    (Executable)
+                        () -> {
+                          String id = c.document().weasis().uiProfile();
+                          assertTrue(
+                              id != null && profiles.contains(id),
+                              c.document().id() + " names the UI profile " + id);
+                        }));
   }
 
   @Test

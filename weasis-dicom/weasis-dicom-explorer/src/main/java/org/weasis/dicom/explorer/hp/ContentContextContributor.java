@@ -37,10 +37,11 @@ import org.weasis.dicom.explorer.DicomModel;
 
 /**
  * The content capabilities of the selected series, as {@link ContextFacts} every plugin can read
- * without knowing DICOM: whether it is a volume ({@code series.volume}), its temporal kind and image
- * count, whether SUV can be computed, whether its pixel spacing is reliable, which objects reference
- * it ({@code series.objects.<modality>}) and whether the study holds a fusion partner ({@code
- * study.fusion}). The relevance predicates of the toolbars, tools and menu entries read them.
+ * without knowing DICOM: whether it is a volume ({@code series.volume}), its temporal kind and
+ * image count, whether SUV can be computed, whether its pixel spacing is reliable, which objects
+ * reference it ({@code series.objects.<modality>}) and whether the study holds a fusion partner
+ * ({@code study.fusion}). The relevance predicates of the toolbars, tools and menu entries read
+ * them.
  */
 @Extension
 public class ContentContextContributor implements ViewContextContributor {
@@ -62,7 +63,8 @@ public class ContentContextContributor implements ViewContextContributor {
   @Override
   public void contribute(SeriesViewer<?> viewer, MediaSeries<?> series, Map<String, Object> facts) {
     if (series == null
-        || !(series.getMedia(MEDIA_POSITION.FIRST, null, null) instanceof DicomImageElement image)) {
+        || !(series.getMedia(MEDIA_POSITION.FIRST, null, null)
+            instanceof DicomImageElement image)) {
       return;
     }
     SeriesFeatures features = featuresOf(series);
@@ -77,7 +79,8 @@ public class ContentContextContributor implements ViewContextContributor {
           features.petCorrection() != null && features.petCorrection().suvCapable());
     }
     facts.put(ContextFacts.CALIBRATED, isCalibrated(image));
-    objectsOf(series).forEach((modality, count) -> facts.put(ContextFacts.objects(modality), count));
+    objectsOf(series)
+        .forEach((modality, count) -> facts.put(ContextFacts.objects(modality), count));
     facts.put(ContextFacts.FUSION, hasFusionPartner(series, features, model.get().orElse(null)));
   }
 
@@ -196,7 +199,8 @@ public class ContentContextContributor implements ViewContextContributor {
 
   private static String frameOf(MediaSeries<?> series) {
     String frame = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
-    if (frame == null && series.getMedia(MEDIA_POSITION.FIRST, null, null) instanceof TagReadable first) {
+    if (frame == null
+        && series.getMedia(MEDIA_POSITION.FIRST, null, null) instanceof TagReadable first) {
       frame = TagD.getTagValue(first, Tag.FrameOfReferenceUID, String.class);
     }
     return frame;

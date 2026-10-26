@@ -70,6 +70,20 @@ public record WeasisExtensions(
     steps = steps == null ? Map.of() : Map.copyOf(steps);
   }
 
+  /** These extensions with another UI profile for the whole protocol. */
+  public WeasisExtensions withUiProfile(String profileId) {
+    return new WeasisExtensions(
+        imageSets, displaySets, steps, placement, maskingProfile, loading, profileId, extra);
+  }
+
+  /**
+   * The UI profile of a reading step: the one named for its presentation group, else the
+   * protocol's.
+   */
+  public Optional<String> uiProfileOf(int presentationGroup) {
+    return Optional.ofNullable(steps.getOrDefault(presentationGroup, uiProfile));
+  }
+
   /**
    * The extension of one image set: selectors on the normalized series features next to the DICOM
    * selectors on raw attributes, filters and weighted preferences alike.

@@ -15,6 +15,7 @@ import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -22,17 +23,20 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.InsertableUtil;
-import org.weasis.core.ui.editor.Relevance;
-import org.weasis.core.ui.editor.ViewContext;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.ui.editor.Relevance;
+import org.weasis.core.ui.editor.UiProfile;
+import org.weasis.core.ui.editor.UiProfiles;
+import org.weasis.core.ui.editor.ViewContext;
 
 public class ToolBarContainer extends JPanel {
   public static final Toolbar EMPTY = buildEmptyToolBar("empty");
   private final List<Toolbar> bars = new ArrayList<>();
   private ViewContext context = ViewContext.empty();
+  private UiProfile profile;
 
   public ToolBarContainer() {
     setLayout(new FlowLayout(FlowLayout.LEADING, 0, 0));
@@ -66,15 +70,30 @@ public class ToolBarContainer extends JPanel {
    * leave the row; the user's enabled flag of each toolbar is untouched.
    */
   public void applyContext(ViewContext context) {
+    applyContext(context, profile);
+  }
+
+  /**
+   * The context of the selected view changed, with the UI profile in force: the toolbars the
+   * context makes relevant and the profile lists are shown, in the profile's order; the user's
+   * enabled flag of each toolbar is untouched.
+   *
+   * @param profile the active profile, null when none
+   */
+  public void applyContext(ViewContext context, UiProfile profile) {
     ViewContext next = context == null ? ViewContext.empty() : context;
     List<Toolbar> before = shownBars();
     this.context = next;
+    this.profile = profile;
     if (!before.equals(shownBars())) {
       rebuild();
     }
   }
 
-  /** The toolbars in the row: enabled by the user and relevant for the current context. */
+  /**
+   * The toolbars in the row: enabled by the user, relevant for the current context and listed by
+   * the active profile, in the profile's order when it lists them.
+   */
   public List<Toolbar> shownBars() {
     List<Toolbar> shown = new ArrayList<>();
     for (Toolbar bar : bars) {
@@ -82,30 +101,44 @@ public class ToolBarContainer extends JPanel {
         shown.add(bar);
       }
     }
+    if (profile != null && profile.toolbars() != null) {
+      shown.sort(Comparator.comparingInt(bar -> profile.rankOf(bar.getToolbarId())));
+    }
     return shown;
   }
 
   private boolean isShown(Toolbar bar) {
-    return bar.isComponentEnabled() && Relevance.isRelevant(bar, context);
+    return bar.isComponentEnabled()
+        && Relevance.isRelevant(bar, context)
+        && (profile == null || profile.showsToolbar(bar.getToolbarId()));
   }
 
   private void rebuild() {
     removeAll();
-    for (Toolbar bar : bars) {
-      if (isShown(bar)) {
-        add(bar.getComponent());
-      }
+    for (Toolbar bar : shownBars()) {
+      add(bar.getComponent());
     }
     revalidate();
     repaint();
   }
 
-  /** The user's choice: the toolbar is enabled or disabled, then the row is rebuilt. */
+  /**
+   * The user's choice: with a profile that lists the toolbars, the list of its user layer changes
+   * (a toolbar shown again is also enabled); otherwise the toolbar is enabled or disabled. The row
+   * is rebuilt.
+   */
   public void displayToolbar(WtoolBar barComponent, boolean show) {
-    if (show == barComponent.isComponentEnabled()) {
+    boolean taken = UiProfiles.userToggledToolbar(barComponent.getToolbarId(), show);
+    if (taken) {
+      profile = UiProfiles.active().orElse(null);
+      if (show && !barComponent.isComponentEnabled()) {
+        barComponent.setComponentEnabled(true);
+      }
+    } else if (show != barComponent.isComponentEnabled()) {
+      barComponent.setComponentEnabled(show);
+    } else {
       return;
     }
-    barComponent.setComponentEnabled(show);
     rebuild();
   }
 
@@ -144,7 +177,7 @@ public class ToolBarContainer extends JPanel {
     public PopUpToolbars() {
       for (final Toolbar bar : bars) {
         if (!Insertable.Type.EMPTY.equals(bar.getPanelType())) {
-          var item = new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
+          var item = new JCheckBoxMenuItem(bar.getComponentName(), isShown(bar));
           if (!Relevance.isRelevant(bar, context)) {
             item.setEnabled(false);
             item.setToolTipText(Messages.getString("ToolBarContainer.irrelevant"));

@@ -53,6 +53,7 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.UiProfiles;
 import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.launcher.Launcher;
@@ -750,6 +751,17 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   /**
+   * Whether a context-menu entry is shown: its site switch ({@code weasis.contextmenu.*}, true by
+   * default) and the active UI profile both allow it.
+   *
+   * @param prop the switch key, null for an entry that is always shown
+   */
+  public static boolean isMenuEnabled(String prop) {
+    return GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)
+        && UiProfiles.showsMenu(prop);
+  }
+
+  /**
    * Builds a "Viewport Layout" submenu that lets the user switch the selected {@link ViewportPane}
    * between STACK mode and various TILED presets.
    *
@@ -763,7 +775,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     if (container == null
         || !container.supportsViewportPanes()
         || pane == null
-        || !GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+        || !isMenuEnabled(prop)) {
       return null;
     }
 

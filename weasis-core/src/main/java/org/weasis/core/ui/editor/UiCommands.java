@@ -1,0 +1,220 @@
+/*
+ * Copyright (c) 2026 Weasis Team and other contributors.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
+package org.weasis.core.ui.editor;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import java.io.IOException;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
+import org.pf4j.Extension;
+import org.weasis.core.api.command.AbstractVerb;
+import org.weasis.core.api.command.CommandExtension;
+import org.weasis.core.api.command.CommandFailure;
+import org.weasis.core.api.command.Since;
+import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.util.LayeredDocument;
+import org.weasis.core.api.util.LayeredDocument.Entry;
+import org.weasis.core.ui.docking.Shell;
+import org.weasis.core.ui.docking.ShellState;
+import org.weasis.core.ui.util.ToolBarContainer;
+import org.weasis.core.ui.util.Toolbar;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.ParentCommand;
+
+/** The {@code ui:} namespace: the UI profiles laid over the workspace. */
+@Extension
+@Command(
+    name = "ui",
+    description =
+        "The workspace around the viewers: the UI profiles (shell slots, toolbars, menus, mouse "
+            + "bindings, measurement profile) that a hanging protocol or a reading step lays over "
+            + "it. Profile ids come from 'ui:profiles'.",
+    subcommands = {UiCommands.Profiles.class, UiCommands.Profile.class})
+@Since("5.0")
+public class UiCommands implements CommandExtension {
+
+  private Supplier<Optional<? extends SeriesViewer<?>>> selectedViewer =
+      () -> GuiUtils.getUICore().getSelectedPlugin();
+  private Supplier<Shell> shell = Shell::current;
+  private Supplier<ToolBarContainer> toolbars = () -> GuiUtils.getUICore().getToolbarContainer();
+
+  @Override
+  public String getNamespace() {
+    return "ui"; // NON-NLS
+  }
+
+  @Override
+  public Object getCommandModel() {
+    return this;
+  }
+
+  UiCommands withSelectedViewer(Supplier<Optional<? extends SeriesViewer<?>>> supplier) {
+    this.selectedViewer = Objects.requireNonNull(supplier);
+    return this;
+  }
+
+  UiCommands withShell(Supplier<Shell> supplier) {
+    this.shell = Objects.requireNonNull(supplier);
+    return this;
+  }
+
+  UiCommands withToolbars(Supplier<ToolBarContainer> supplier) {
+    this.toolbars = Objects.requireNonNull(supplier);
+    return this;
+  }
+
+  /** The active profile and what the shell shows now. */
+  JsonObject state() {
+    JsonObjectBuilder json = Json.createObjectBuilder();
+    String active = UiProfiles.activeId();
+    if (active != null) {
+      json.add("active", active); // NON-NLS
+    }
+    Shell current = shell.get();
+    if (current != null) {
+      json.add(ShellState.SHELL, ShellState.capture(current).toJson());
+    }
+    ToolBarContainer container = toolbars.get();
+    if (container != null) {
+      JsonArrayBuilder row = Json.createArrayBuilder();
+      container.shownBars().stream().map(Toolbar::getToolbarId).forEach(row::add);
+      json.add(UiProfile.TOOLBARS, row);
+    }
+    return json.build();
+  }
+
+  static JsonObject describe(Entry entry, UiProfile profile) {
+    JsonObjectBuilder json =
+        Json.createObjectBuilder()
+            .add("id", entry.id()) // NON-NLS
+            .add("origin", entry.origin().name().toLowerCase(Locale.ROOT)) // NON-NLS
+            .add("locked", entry.locked()) // NON-NLS
+            .add("active", entry.id().equals(UiProfiles.activeId())); // NON-NLS
+    if (profile.name() != null) {
+      json.add(UiProfile.NAME, profile.name());
+    }
+    return json.build();
+  }
+
+  abstract static class Verb extends AbstractVerb {
+    @ParentCommand UiCommands parent;
+  }
+
+  @Command(
+      name = "profiles",
+      description =
+          "The UI profiles of every layer (built-in, site, user) with the one in force, and the "
+              + "shell and toolbar row as they are now.")
+  @Since("5.0")
+  static class Profiles extends Verb {
+    @Override
+    protected void run() {
+      JsonArrayBuilder list = Json.createArrayBuilder();
+      LayeredDocument document = UiProfiles.document();
+      for (Entry entry : document.entries()) {
+        UiProfiles.find(entry.id()).ifPresent(p -> list.add(describe(entry, p)));
+      }
+      JsonObject state = GuiExecutor.invokeAndRethrow(parent::state);
+      JsonObject body =
+          Json.createObjectBuilder(state).add(UiProfiles.ENTRIES, list).build(); // NON-NLS
+      if (isJson()) {
+        print(body.toString());
+        return;
+      }
+      StringBuilder out = new StringBuilder();
+      for (JsonObject p : body.getJsonArray(UiProfiles.ENTRIES).getValuesAs(JsonObject.class)) {
+        out.append(p.getBoolean("active") ? "* " : "  ") // NON-NLS
+            .append(p.getString("id")) // NON-NLS
+            .append(" (") // NON-NLS
+            .append(p.getString("origin")) // NON-NLS
+            .append(p.getBoolean("locked") ? ", locked)" : ")") // NON-NLS
+            .append(p.containsKey(UiProfile.NAME) ? " " + p.getString(UiProfile.NAME) : "")
+            .append('\n');
+      }
+      print(out.toString().stripTrailing());
+    }
+  }
+
+  @Command(
+      name = "profile",
+      description =
+          "One UI profile as its JSON entry; --apply lays it over the workspace of the selected "
+              + "viewer until the next selection asks for another, --clear puts the user's own "
+              + "settings back, --delete removes the entry of the user layer. After a change the "
+              + "active profile, the shell and the toolbar row are returned.")
+  @Since("5.0")
+  static class Profile extends Verb {
+    @Option(
+        names = "--id",
+        paramLabel = "<ui-profile-id>",
+        description = "Profile id from 'profiles'.")
+    String id;
+
+    @Option(names = "--apply", description = "Lays --id over the workspace now.")
+    boolean apply;
+
+    @Option(names = "--clear", description = "Releases the active profile.")
+    boolean clear;
+
+    @Option(names = "--delete", description = "Removes --id from the user layer.")
+    boolean delete;
+
+    @Override
+    protected void run() throws IOException {
+      int actions = (apply ? 1 : 0) + (clear ? 1 : 0) + (delete ? 1 : 0);
+      if (actions > 1) {
+        throw invalid("--apply, --clear and --delete are exclusive");
+      }
+      if (id == null && !clear) {
+        throw invalid("--id is required, except with --clear");
+      }
+      if (clear) {
+        GuiExecutor.invokeAndRethrow(UiProfiles::release);
+        print(parent.state().toString());
+        return;
+      }
+      Entry entry =
+          UiProfiles.document()
+              .find(id)
+              .orElseThrow(
+                  () ->
+                      CommandFailure.unknownHandle("Unknown UI profile id: " + id, "ui:profiles"));
+      UiProfile profile =
+          UiProfiles.find(id)
+              .orElseThrow(
+                  () -> new IllegalArgumentException("The UI profile " + id + " is invalid"));
+      if (delete) {
+        if (!UiProfiles.document().remove(id)) {
+          throw new IllegalArgumentException("The UI profile " + id + " is not in the user layer");
+        }
+        print(parent.state().toString());
+        return;
+      }
+      if (apply) {
+        GuiExecutor.invokeAndRethrow(
+            () -> UiProfiles.activate(profile, parent.selectedViewer.get().orElse(null)));
+        print(parent.state().toString());
+        return;
+      }
+      JsonObject json =
+          Json.createObjectBuilder(describe(entry, profile))
+              .add("profile", profile.toJson()) // NON-NLS
+              .build();
+      print(json.toString());
+    }
+  }
+}

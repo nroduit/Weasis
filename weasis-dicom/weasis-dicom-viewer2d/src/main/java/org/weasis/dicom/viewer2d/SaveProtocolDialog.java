@@ -46,6 +46,7 @@ import org.weasis.dicom.codec.hp.StudySeries;
 import org.weasis.dicom.codec.hp.ValidationReport;
 import org.weasis.dicom.codec.hp.WeasisExtensions;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.hp.ActiveHanging;
 import org.weasis.dicom.explorer.hp.HpStudies;
 
 /**
@@ -154,7 +155,9 @@ public class SaveProtocolDialog extends JDialog {
 
   /** The protocol as the check boxes shape it: dropped selectors widen the rule of their cell. */
   private Derivation current(String id, String protocolName) {
-    Derivation base = ProtocolDeriver.derive(id, protocolName, "SINGLE_USER", layout, study);
+    Derivation base =
+        ActiveHanging.withUiProfile(
+            ProtocolDeriver.derive(id, protocolName, "SINGLE_USER", layout, study));
     java.util.Map<Integer, WeasisExtensions.ImageSet> sets =
         new java.util.LinkedHashMap<>(base.document().weasis().imageSets());
     for (int i = 0; i < base.rules().size() && i < selectorBoxes.size(); i++) {

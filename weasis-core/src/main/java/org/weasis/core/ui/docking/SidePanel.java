@@ -27,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -123,6 +124,7 @@ public class SidePanel extends JPanel {
   private final Map<String, ToolView> views = new LinkedHashMap<>();
 
   private Supplier<WorkspaceManager> workspace = () -> GuiUtils.getUICore().getWorkspaceManager();
+  private Consumer<SidePanel> userChange = side -> {};
 
   private JSplitPane split;
   private boolean leftChild;
@@ -511,7 +513,17 @@ public class SidePanel extends JPanel {
     return Optional.ofNullable(tool.getPreferredSlot()).orElse(Slot.TOP);
   }
 
+  /** Told after the user shaped the slots from the stripe (click or Shift-click). */
+  public void onUserChange(Consumer<SidePanel> listener) {
+    this.userChange = Objects.requireNonNull(listener);
+  }
+
   private void toggle(String toolId, boolean otherSlot) {
+    toggleSlot(toolId, otherSlot);
+    userChange.accept(this);
+  }
+
+  private void toggleSlot(String toolId, boolean otherSlot) {
     DockableTool tool = find(toolId).orElse(null);
     if (tool == null) {
       return;

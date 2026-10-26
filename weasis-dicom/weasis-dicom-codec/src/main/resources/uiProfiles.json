@@ -1,0 +1,67 @@
+{
+  "kind": "weasis.document",
+  "id": "uiProfiles",
+  "schema": 1,
+  "profiles": [
+    {
+      "id": "weasis.ct",
+      "name": "CT reading",
+      "shell": { "tools": { "slots": ["image", "hp-why"] } },
+      "toolbars": ["viewer", "measure", "zoom", "lut", "basic-3d", "key-object", "hanging-protocol", "dcm-header", "launcher"],
+      "mouse": { "left": "window-level", "middle": "pan", "right": "context-menu", "wheel": "sequence" },
+      "measurementProfile": "cross-sectional"
+    },
+    {
+      "id": "weasis.mr",
+      "name": "MR reading",
+      "shell": { "tools": { "slots": ["image", "hp-why"] } },
+      "toolbars": ["viewer", "measure", "zoom", "lut", "basic-3d", "key-object", "hanging-protocol", "dcm-header", "launcher"],
+      "mouse": { "left": "window-level", "middle": "pan", "right": "context-menu", "wheel": "sequence" },
+      "measurementProfile": "cross-sectional"
+    },
+    {
+      "id": "weasis.xr",
+      "name": "Radiography reading",
+      "shell": { "tools": { "slots": ["measure", "hp-why"] } },
+      "toolbars": ["viewer", "measure", "zoom", "rotation", "lut", "key-object", "hanging-protocol", "dcm-header", "launcher"],
+      "mouse": { "left": "window-level", "middle": "pan", "right": "context-menu", "wheel": "sequence" },
+      "measurementProfile": "radiography"
+    },
+    {
+      "id": "weasis.mg",
+      "name": "Mammography reading",
+      "shell": { "tools": { "slots": ["display", "hp-why"] } },
+      "toolbars": ["viewer", "zoom", "rotation", "lut", "measure", "key-object", "hanging-protocol", "dcm-header", "launcher"],
+      "mouse": { "left": "zoom", "middle": "pan", "right": "context-menu", "wheel": "sequence" }
+    },
+    {
+      "id": "weasis.us",
+      "name": "Ultrasound reading",
+      "shell": { "tools": { "slots": ["measure", "hp-why"] } },
+      "toolbars": ["viewer", "measure", "zoom", "cine", "key-object", "hanging-protocol", "dcm-header", "launcher"],
+      "mouse": { "left": "measure", "middle": "pan", "right": "context-menu", "wheel": "sequence" },
+      "measurementProfile": "ultrasound"
+    },
+    {
+      "id": "weasis.xa",
+      "name": "Angiography reading",
+      "shell": { "tools": { "slots": ["image", "hp-why"] } },
+      "toolbars": ["viewer", "measure", "zoom", "lut", "cine", "key-object", "hanging-protocol", "dcm-header", "launcher"],
+      "mouse": { "left": "window-level", "middle": "pan", "right": "context-menu", "wheel": "sequence" },
+      "measurementProfile": "radiography"
+    },
+    {
+      "id": "weasis.pt",
+      "name": "PET reading",
+      "shell": { "tools": { "slots": ["image", "hp-why"] } },
+      "toolbars": ["viewer", "measure", "zoom", "lut", "basic-3d", "key-object", "hanging-protocol", "dcm-header", "launcher"],
+      "mouse": { "left": "window-level", "middle": "pan", "right": "context-menu", "wheel": "sequence" },
+      "measurementProfile": "cross-sectional"
+    },
+    {
+      "id": "weasis.default",
+      "name": "Default reading",
+      "shell": { "tools": { "slots": ["display", "hp-why"] } }
+    }
+  ]
+}

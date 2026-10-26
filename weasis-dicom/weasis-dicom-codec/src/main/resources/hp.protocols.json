@@ -166,6 +166,7 @@
         ]
       },
       "weasis": {
+        "uiProfile": "weasis.ct",
         "imageSets": {
           "1": {
             "label": "Axial soft tissue",
@@ -590,6 +591,7 @@
         ]
       },
       "weasis": {
+        "uiProfile": "weasis.mr",
         "imageSets": {
           "1": {
             "label": "T1",
@@ -975,6 +977,7 @@
         "PartialDataDisplayHandling": "ADAPT_LAYOUT"
       },
       "weasis": {
+        "uiProfile": "weasis.xr",
         "imageSets": {
           "1": {
             "label": "Frontal view",
@@ -1648,6 +1651,7 @@
         "NumberOfPriorsReferenced": 1
       },
       "weasis": {
+        "uiProfile": "weasis.mg",
         "imageSets": {
           "1": {
             "label": "R CC",
@@ -2290,6 +2294,7 @@
         "PartialDataDisplayHandling": "ADAPT_LAYOUT"
       },
       "weasis": {
+        "uiProfile": "weasis.us",
         "imageSets": {
           "1": {
             "label": "Clips",
@@ -2388,6 +2393,7 @@
         "PartialDataDisplayHandling": "ADAPT_LAYOUT"
       },
       "weasis": {
+        "uiProfile": "weasis.xa",
         "imageSets": {
           "1": {
             "label": "Runs",
@@ -2545,6 +2551,7 @@
         ]
       },
       "weasis": {
+        "uiProfile": "weasis.pt",
         "imageSets": {
           "1": {
             "label": "CT",
@@ -2682,6 +2689,7 @@
         "PartialDataDisplayHandling": "ADAPT_LAYOUT"
       },
       "weasis": {
+        "uiProfile": "weasis.default",
         "imageSets": {
           "1": {
             "label": "Image series",
