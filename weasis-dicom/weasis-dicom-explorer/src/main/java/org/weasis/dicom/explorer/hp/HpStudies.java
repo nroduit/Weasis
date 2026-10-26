@@ -9,12 +9,23 @@
  */
 package org.weasis.dicom.explorer.hp;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.editor.image.HangingLayout;
+import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.hp.DerivationTables;
+import org.weasis.dicom.codec.hp.SeriesFeatureExtractor;
+import org.weasis.dicom.codec.hp.SeriesFeatures;
 import org.weasis.dicom.codec.hp.StudySeries;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.items.Interest;
+import org.weasis.dicom.explorer.items.InterestSource;
 
 /** The study lookups the hanging protocol UI of other plugins needs from the explorer. */
 public final class HpStudies {
@@ -29,6 +40,34 @@ public final class HpStudies {
   /** The image series of a study with their features. */
   public static List<StudySeries> studySeries(DicomModel model, MediaSeriesGroup study) {
     return HpCommands.studySeries(model, study);
+  }
+
+  /**
+   * The feature extractor that knows the images of interest: the explorer counts the images a key
+   * object, a presentation state with annotations or a segment references and the ones drawn on in
+   * Weasis ({@link Interest}), which the {@code interest} selectors of a protocol test.
+   */
+  public static SeriesFeatureExtractor extractor() {
+    return new SeriesFeatureExtractor(DerivationTables.getInstance(), HpStudies::interestOf);
+  }
+
+  /** The images of interest of a series as the features carry them. */
+  static SeriesFeatures.Interest interestOf(MediaSeries<DicomImageElement> series) {
+    return series instanceof DicomSeries dicom
+        ? toFeature(Interest.of(dicom))
+        : SeriesFeatures.Interest.NONE;
+  }
+
+  /** The explorer's interest as a feature: the count and the source ids, upper case. */
+  static SeriesFeatures.Interest toFeature(Interest interest) {
+    if (interest == null || interest.isEmpty()) {
+      return SeriesFeatures.Interest.NONE;
+    }
+    Set<String> sources = new LinkedHashSet<>();
+    for (InterestSource source : interest.sources()) {
+      sources.add(source.getId().toUpperCase(Locale.ROOT));
+    }
+    return new SeriesFeatures.Interest(interest.count(), sources);
   }
 
   /** The study of the first series a layout shows, empty when it shows none that is loaded. */

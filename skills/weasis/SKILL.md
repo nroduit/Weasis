@@ -24,7 +24,7 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.13 and protocol
+This instance runs Weasis development with command API 2.14 and protocol
 1, and answers these namespaces: color, config, dicom, explorer, hp, image, redact, script, state, view2d, view3d, weasis, workspace.
 
 Check the connection first:
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.13 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.14 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -185,6 +185,9 @@ line naming the current spelling. Use the current one everywhere.
    and the plan of the best one: per reading step the layout to hang and, per cell, the series
    chosen, how it matched (exact, preferred, fallback, shared, empty), the reasons and the
    alternatives; `--protocol <id>` plans another one, `--protocols <file>` tries a draft file.
+   `hp:open [--study <uid>] [--protocol <id>] [--prior <uid>]...` is the reading workflow in one
+   call (match on the study with its loaded priors, hang the first step) and `hp:compare
+   --current <uid> --prior <uid>... [--protocol <id>]` hangs a study against the priors you name;
    `hp:apply [--study <uid>] [--protocol <id>] [--step <n>] [--new-tab]` hangs one reading step
    of that plan: the 2D cells in one viewer (re-hung when a viewer of the patient is open) and
    each MPR or 3D cell in its own, and returns the cells with the view ids they went to, so the

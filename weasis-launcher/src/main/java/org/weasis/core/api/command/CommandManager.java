@@ -66,7 +66,7 @@ public class CommandManager {
    * additive changes (a verb, an option, a JSON key), the major with breaking ones. A verb or an
    * option is never removed within a major; a renamed one keeps its old name as a deprecated alias.
    */
-  public static final String API_VERSION = "2.13"; // NON-NLS
+  public static final String API_VERSION = "2.14"; // NON-NLS
 
   private static volatile Supplier<String> viewerType = () -> null;
 

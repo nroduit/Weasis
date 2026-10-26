@@ -22,12 +22,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import org.dcm4che3.data.Tag;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
@@ -89,6 +92,8 @@ import picocli.CommandLine.ParentCommand;
       HpCommands.ListProtocols.class,
       HpCommands.Match.class,
       HpCommands.Apply.class,
+      HpCommands.Open.class,
+      HpCommands.Compare.class,
       HpCommands.Sets.class,
       HpCommands.Group.class,
       HpCommands.Explain.class,
@@ -429,7 +434,7 @@ public class HpCommands implements CommandExtension {
         series.add((MediaSeries<DicomImageElement>) s);
       }
     }
-    return StudySeries.of(series, new SeriesFeatureExtractor());
+    return StudySeries.of(series, HpStudies.extractor());
   }
 
   /**
@@ -543,32 +548,7 @@ public class HpCommands implements CommandExtension {
         throw new IllegalArgumentException("--step counts from 1");
       }
       HangingPlanApplier.Applied applied =
-          GuiExecutor.invokeAndRethrow(
-              () ->
-                  IdentityMask.callForCommand(
-                      () -> {
-                        DicomModel model = parent.model();
-                        MediaSeriesGroup study = parent.resolveStudy(model, studyUid);
-                        List<StudySeries> series = studySeries(model, study);
-                        List<PriorStudy> priors = priorsOf(model, study, series);
-                        List<ProtocolScore> scores =
-                            HangingEngine.select(candidates, series, priors);
-                        HangingPlan plan =
-                            planOf(candidates, scores, series, priors, protocolId)
-                                .orElseThrow(
-                                    () ->
-                                        new IllegalArgumentException(
-                                            "No protocol applies to this study; give --protocol"));
-                        if (plan.steps().isEmpty()) {
-                          throw new IllegalArgumentException(
-                              "The protocol " + plan.protocolId() + " has no display set");
-                        }
-                        MediaSeriesGroup patient = model.getParent(study, DicomModel.patient);
-                        HangingPlanApplier.Context context =
-                            new HangingPlanApplier.Context(
-                                model, patient, study, candidates, scores);
-                        return parent.applier.get().apply(plan, index, context, placement(), null);
-                      }));
+          hang(parent, candidates, studyUid, null, protocolId, index, placement());
       print(isJson() ? applied.toJson().toString() : applied.text());
     }
 
@@ -577,6 +557,158 @@ public class HpCommands implements CommandExtension {
         return ViewerPlacement.external(ExternalDisplay.onRole(screen));
       }
       return newTab ? ViewerPlacement.newTab() : ViewerPlacement.reuseViewer();
+    }
+  }
+
+  /**
+   * Plans and hangs a loaded study on the event thread: the priors are the older loaded studies of
+   * the patient, or only those of {@code priorUids} when given.
+   */
+  static HangingPlanApplier.Applied hang(
+      HpCommands parent,
+      List<Candidate> candidates,
+      StudyUid studyUid,
+      Set<String> priorUids,
+      String protocolId,
+      int index,
+      ViewerPlacement placement) {
+    return GuiExecutor.invokeAndRethrow(
+        () ->
+            IdentityMask.callForCommand(
+                () -> {
+                  DicomModel model = parent.model();
+                  MediaSeriesGroup study = parent.resolveStudy(model, studyUid);
+                  List<StudySeries> series = studySeries(model, study);
+                  List<PriorStudy> priors = priorsOf(model, study, series);
+                  if (priorUids != null) {
+                    List<PriorStudy> kept =
+                        priors.stream().filter(p -> priorUids.contains(p.uid())).toList();
+                    if (kept.size() != priorUids.size()) {
+                      Set<String> missing = new LinkedHashSet<>(priorUids);
+                      kept.forEach(p -> missing.remove(p.uid()));
+                      throw CommandFailure.unknownHandle(
+                          "Not a loaded prior study of this patient: " + missing,
+                          "dicom:list"); // NON-NLS
+                    }
+                    priors = kept;
+                  }
+                  List<ProtocolScore> scores = HangingEngine.select(candidates, series, priors);
+                  HangingPlan plan =
+                      planOf(candidates, scores, series, priors, protocolId)
+                          .orElseThrow(
+                              () ->
+                                  new IllegalArgumentException(
+                                      "No protocol applies to this study; give --protocol"));
+                  if (plan.steps().isEmpty()) {
+                    throw new IllegalArgumentException(
+                        "The protocol " + plan.protocolId() + " has no display set");
+                  }
+                  MediaSeriesGroup patient = model.getParent(study, DicomModel.patient);
+                  HangingPlanApplier.Context context =
+                      new HangingPlanApplier.Context(model, patient, study, candidates, scores);
+                  return parent.applier.get().apply(plan, index, context, placement, null);
+                }));
+  }
+
+  @Command(
+      name = "open",
+      description =
+          "Opens a study hung by a protocol, the reading workflow in one call: the best protocol "
+              + "(or --protocol) is matched on the study with its priors, the older loaded studies "
+              + "of the patient, or only the ones --prior names, and its first step is hung. The "
+              + "study and its priors must be loaded ('dicom:get' first); the selective download "
+              + "of the hung series is not there yet.")
+  @Since("5.0")
+  static class Open extends Verb {
+    @Option(
+        names = "--study",
+        paramLabel = "<study-uid>",
+        description = "Study Instance UID from 'dicom:list'.")
+    StudyUid studyUid;
+
+    @Option(
+        names = "--protocol",
+        paramLabel = "<protocol-id>",
+        description = "Hangs this protocol from 'list' even when another one scores better.")
+    String protocolId;
+
+    @Option(
+        names = "--prior",
+        paramLabel = "<study-uid>",
+        description = "A prior study to compare with; repeatable. Default: every loaded prior.")
+    List<StudyUid> priors;
+
+    @Option(
+        names = "--new-tab",
+        description = "Opens new viewers instead of re-hanging the one of the same patient.")
+    boolean newTab;
+
+    @Override
+    protected void run() {
+      Set<String> priorUids =
+          priors == null
+              ? null
+              : priors.stream()
+                  .map(StudyUid::value)
+                  .collect(Collectors.toCollection(LinkedHashSet::new));
+      HangingPlanApplier.Applied applied =
+          hang(
+              parent,
+              parent.candidateSupplier.get(),
+              studyUid,
+              priorUids,
+              protocolId,
+              0,
+              newTab ? ViewerPlacement.newTab() : ViewerPlacement.reuseViewer());
+      print(isJson() ? applied.toJson().toString() : applied.text());
+    }
+  }
+
+  @Command(
+      name = "compare",
+      description =
+          "Hangs a study against the priors you name: the protocol (the best comparison one, or "
+              + "--protocol) is matched on --current with --prior as its only priors, and its first "
+              + "step is hung. Every study must be loaded.")
+  @Since("5.0")
+  static class Compare extends Verb {
+    @Option(
+        names = "--current",
+        required = true,
+        paramLabel = "<study-uid>",
+        description = "The current study, from 'dicom:list'.")
+    StudyUid current;
+
+    @Option(
+        names = "--prior",
+        required = true,
+        paramLabel = "<study-uid>",
+        description = "A prior study of the same patient; repeatable.")
+    List<StudyUid> priors;
+
+    @Option(
+        names = "--protocol",
+        paramLabel = "<protocol-id>",
+        description = "Hangs this protocol from 'list' even when another one scores better.")
+    String protocolId;
+
+    @Override
+    protected void run() {
+      Set<String> priorUids =
+          priors.stream().map(StudyUid::value).collect(Collectors.toCollection(LinkedHashSet::new));
+      if (priorUids.contains(current.value())) {
+        throw invalid("--prior must differ from --current");
+      }
+      HangingPlanApplier.Applied applied =
+          hang(
+              parent,
+              parent.candidateSupplier.get(),
+              current,
+              priorUids,
+              protocolId,
+              0,
+              ViewerPlacement.reuseViewer());
+      print(isJson() ? applied.toJson().toString() : applied.text());
     }
   }
 
@@ -1238,7 +1370,7 @@ public class HpCommands implements CommandExtension {
       } catch (IOException e) {
         throw new IllegalArgumentException("Cannot read " + root + ": " + e.getMessage());
       }
-      SeriesFeatureExtractor extractor = new SeriesFeatureExtractor();
+      SeriesFeatureExtractor extractor = HpStudies.extractor();
       JsonArrayBuilder array = Json.createArrayBuilder();
       try {
         for (CorpusStudies.Study study : studies) {
@@ -1399,7 +1531,7 @@ public class HpCommands implements CommandExtension {
       } catch (IOException e) {
         throw new IllegalArgumentException("Cannot read " + root + ": " + e.getMessage());
       }
-      SeriesFeatureExtractor extractor = new SeriesFeatureExtractor();
+      SeriesFeatureExtractor extractor = HpStudies.extractor();
       List<ValidationReport.Input> inputs = new ArrayList<>();
       try {
         for (CorpusStudies.Study study : studies) {

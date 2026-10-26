@@ -46,7 +46,7 @@ import org.weasis.dicom.explorer.DicomModel;
 @Extension
 public class ContentContextContributor implements ViewContextContributor {
 
-  private static final SeriesFeatureExtractor EXTRACTOR = new SeriesFeatureExtractor();
+  private static final SeriesFeatureExtractor EXTRACTOR = HpStudies.extractor();
   private static final Set<String> FUNCTIONAL = Set.of("PT", "NM"); // NON-NLS
   private static final Set<String> ANATOMICAL = Set.of("CT", "MR"); // NON-NLS
 
