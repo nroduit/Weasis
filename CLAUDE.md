@@ -123,6 +123,7 @@ Existing docs:
 | `weasis-core/docs/Preferences-Migration.md` | plugin-scoped preferences on `java.util.prefs`, file/remote sync, preference pages |
 | `weasis-core/docs/Shortcut-Management.md` | shortcut registry and contexts, `KeyBinding`, dispatch tables, menu accelerators, mouse button matching |
 | `weasis-core/docs/Workspace-Docking.md` | workspace docking engine: manager, views, drag, snapshots, `workspace:` commands |
+| `weasis-dicom/weasis-dicom-codec/docs/Hanging-Protocols.md` | hanging protocols: protocol model and layers, series features and selectors, engine and plan, applier, sessions, DICOM exchange |
 | `weasis-dicom/weasis-dicom-codec/docs/Segmentation.md` | DICOM SEG model, display paths (2D, MPR, 3D), visibility policy |
 | `weasis-dicom/weasis-dicom-codec/docs/Window-Presets.md` | configured window/level presets: order, model, layers, anatomy matching |
 | `weasis-dicom/weasis-dicom-explorer/docs/Retrieve-Paths.md` | DICOM download transports and shared download layer |
