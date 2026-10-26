@@ -24,7 +24,7 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.7 and protocol
+This instance runs Weasis development with command API 2.8 and protocol
 1, and answers these namespaces: color, config, dicom, explorer, hp, image, redact, script, state, view2d, view3d, weasis, workspace.
 
 Check the connection first:
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.7 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.8 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -212,6 +212,12 @@ line naming the current spelling. Use the current one everywhere.
    profile asked for under `ui.profile`. What the view's context or the profile hides stays
    reachable: the state these verbs return lists it under `hidden.toolbars` / `hidden.tools`,
    and `ui:reveal --toolbar <id>` or `--tool <id>` shows it again for the selected view only.
+   `ui:context` is the one call that tells you where you are: the facts of the selected view,
+   the profile in force, the shell and toolbar row, what is hidden, and the actions the view
+   shows (menu entries, toolbar buttons, tool panels) with their ids; `ui:actions [--filter
+   <text>] [--relevant]` lists the whole catalog and `ui:action --id <action-id>` runs one as a
+   click would. `help --context` lists only the namespaces that serve the selected viewer type
+   (`view3d` for a 3D view, `view2d` and `redact` otherwise), a smaller surface to pick from.
 10. **Reading states**: `state:keep [--label <text>] [--pin]` keeps the whole display as a
    session of the user (windows, viewers, every pane's series and presentation, the shell, the
    protocol and step that hung it) and returns its id; `state:list` lists the sessions, most

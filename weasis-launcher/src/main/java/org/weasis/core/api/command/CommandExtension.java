@@ -45,6 +45,15 @@ public interface CommandExtension extends ExtensionPoint {
   }
 
   /**
+   * Whether the namespace serves the viewer type selected now ({@code 2d}, {@code mpr}, {@code 3d},
+   * ...; null when no viewer is selected); {@code help --context} lists only the namespaces that
+   * do. True by default: a namespace that does not depend on the viewer.
+   */
+  default boolean isRelevantFor(String viewerTypeId) {
+    return true;
+  }
+
+  /**
    * Executes a hand-parsed verb; only called when there is no command model.
    *
    * @param commandName the verb without namespace

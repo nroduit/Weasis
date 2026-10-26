@@ -154,6 +154,23 @@ finished line). The contexts published in a burst, a keyboard walk across the ce
 applied once, debounced on the event thread (`Relevance.follow`); the stripe is diffed by tool
 id, so a switch changes the tools without resizing the viewers.
 
+### Command palette and action catalog
+
+`ActionCatalog` (`org.weasis.core.ui.editor`) lists every action of the workspace as
+`ActionEntry` values under a stable id: the leaves of the menu bar of the main window (a dynamic
+menu built first), the buttons of the registered toolbars whether the row shows them or not, and
+the tool panels of the selected viewer. Each entry carries its group, its shortcut and its action
+command when it has them, and whether the selected view shows it; a hidden one still runs. The
+sources register themselves (`addSource`) and are read again at every lookup, so the catalog
+follows the selected viewer. `CommandPalette` (`org.weasis.core.ui.util`) is the searchable list
+over it, opened from the View menu (Ctrl/Cmd+Shift+P): typing filters by word, Enter runs the
+selected entry. The View menu also holds *Show all tools*, the toggle of `weasis.ui.contextual`.
+`ui:actions [--filter] [--relevant]` and `ui:action --id` are the same catalog for an agent;
+`ui:context` returns the context of the selected view, the profile in force with its entry, the
+shell, the toolbar row, what the view hides and the actions it shows, and `help --context` lists
+only the command namespaces relevant for the selected viewer type
+(`CommandExtension.isRelevantFor`).
+
 ### A tool as a view
 
 A shell tool can leave its slot for the central area: `SidePanel.openAsView(toolId)` wraps it
@@ -249,7 +266,7 @@ the display verbs echo). A window reports the view it has maximized; the listing
 application's selection under `selected`. View ids are durable handles; the window and group
 numbers are positions in that listing and change with the layout.
 
-`UiCommands` exposes the UI profiles and the overflow under the `ui:` namespace (profiles, profile, reveal).
+`UiCommands` exposes the UI profiles, the overflow and the action catalog under the `ui:` namespace (profiles, profile, reveal, actions, action, context).
 
 `detach` floats a view in a viewer window near the main window, on the usable area of the
 screen of a role (`--screen diagnostic-1`) or at explicit bounds (`--bounds`); `screens` lists

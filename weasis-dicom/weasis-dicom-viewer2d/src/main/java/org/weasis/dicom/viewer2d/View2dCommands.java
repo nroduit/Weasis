@@ -175,6 +175,11 @@ public class View2dCommands implements CommandExtension {
   }
 
   @Override
+  public boolean isRelevantFor(String viewerTypeId) {
+    return viewerTypeId != null && !"3d".equals(viewerTypeId); // NON-NLS
+  }
+
+  @Override
   public Object getCommandModel() {
     return this;
   }

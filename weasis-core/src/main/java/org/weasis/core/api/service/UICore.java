@@ -45,6 +45,7 @@ import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.command.CommandManager;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -73,10 +74,12 @@ import org.weasis.core.ui.docking.Shell;
 import org.weasis.core.ui.docking.SidePanel;
 import org.weasis.core.ui.docking.ws.Workspace;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
+import org.weasis.core.ui.editor.ActionCatalog;
 import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.UiProfiles;
+import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.launcher.Launcher;
@@ -182,6 +185,8 @@ public final class UICore {
     startRemoteSettings(prefDir);
     HangingProtocolDocuments.configure();
     UiProfiles.configure();
+    ActionCatalog.configure();
+    CommandManager.setViewerTypeSupplier(() -> ViewContexts.current().viewerTypeId());
     this.propsFile =
         new File(systemPreferences.getProperty("weasis.pref.dir"), "weasis.properties");
     if (!propsFile.canRead()) {

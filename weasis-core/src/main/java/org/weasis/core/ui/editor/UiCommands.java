@@ -14,6 +14,7 @@ import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -43,14 +44,23 @@ import picocli.CommandLine.ParentCommand;
     description =
         "The workspace around the viewers: the UI profiles (shell slots, toolbars, menus, mouse "
             + "bindings, measurement profile) that a hanging protocol or a reading step lays over "
-            + "it, and the overflow of what the selected view hides. Profile ids come from "
-            + "'ui:profiles'.",
-    subcommands = {UiCommands.Profiles.class, UiCommands.Profile.class, UiCommands.Reveal.class})
+            + "it, the overflow of what the selected view hides, and the catalog of every action "
+            + "of the workspace (menu entries, toolbar buttons, tool panels). Profile ids come "
+            + "from 'ui:profiles', action ids from 'ui:actions'.",
+    subcommands = {
+      UiCommands.Profiles.class,
+      UiCommands.Profile.class,
+      UiCommands.Reveal.class,
+      UiCommands.Actions.class,
+      UiCommands.Action.class,
+      UiCommands.Context.class
+    })
 @Since("5.0")
 public class UiCommands implements CommandExtension {
 
   static final String HIDDEN = "hidden"; // NON-NLS
   static final String TOOLS = "tools"; // NON-NLS
+  static final String ACTIONS = "actions"; // NON-NLS
 
   private Supplier<Optional<? extends SeriesViewer<?>>> selectedViewer =
       () -> GuiUtils.getUICore().getSelectedPlugin();
@@ -278,6 +288,126 @@ public class UiCommands implements CommandExtension {
             }
           });
       print(parent.state().toString());
+    }
+  }
+
+  static JsonArrayBuilder actionsJson(List<ActionEntry> entries) {
+    JsonArrayBuilder list = Json.createArrayBuilder();
+    entries.forEach(entry -> list.add(entry.toJson()));
+    return list;
+  }
+
+  static String actionsText(List<ActionEntry> entries) {
+    StringBuilder out = new StringBuilder();
+    for (ActionEntry entry : entries) {
+      out.append(entry.relevant() ? "  " : "- ") // NON-NLS
+          .append(entry.id())
+          .append("  ")
+          .append(entry.label())
+          .append(" (")
+          .append(entry.group())
+          .append(entry.shortcut().isEmpty() ? ")" : ", " + entry.shortcut() + ")")
+          .append('\n');
+    }
+    return out.toString().stripTrailing();
+  }
+
+  @Command(
+      name = "actions",
+      description =
+          "The actions of the workspace as the command palette lists them: the menu entries, the "
+              + "toolbar buttons and the tool panels of the selected viewer, with a stable id, the "
+              + "group, the shortcut and whether the selected view shows them ('relevant'; a "
+              + "hidden one still runs). In text a hidden action is marked with '-'.")
+  @Since("5.0")
+  static class Actions extends Verb {
+    @Option(
+        names = "--filter",
+        paramLabel = "<text>",
+        description = "Keeps the actions whose label, group or id contain every word, best first.")
+    String filter;
+
+    @Option(names = "--relevant", description = "Keeps the actions the selected view shows.")
+    boolean relevant;
+
+    @Override
+    protected void run() {
+      List<ActionEntry> entries =
+          GuiExecutor.invokeAndRethrow(
+              () -> filter == null ? ActionCatalog.entries() : ActionCatalog.search(filter));
+      if (relevant) {
+        entries = entries.stream().filter(ActionEntry::relevant).toList();
+      }
+      if (isJson()) {
+        print(Json.createObjectBuilder().add(ACTIONS, actionsJson(entries)).build().toString());
+      } else {
+        print(actionsText(entries));
+      }
+    }
+  }
+
+  @Command(
+      name = "action",
+      description =
+          "Runs one action of 'ui:actions' by id, as its menu entry, button or stripe click would, "
+              + "and returns the active profile, the shell and the toolbar row after it.")
+  @Since("5.0")
+  static class Action extends Verb {
+    @Option(
+        names = "--id",
+        required = true,
+        paramLabel = "<action-id>",
+        description = "From 'actions'.")
+    String id;
+
+    @Override
+    protected void run() {
+      GuiExecutor.invokeAndRethrow(
+          () ->
+              ActionCatalog.find(id)
+                  .orElseThrow(
+                      () -> CommandFailure.unknownHandle("Unknown action id: " + id, "ui:actions"))
+                  .run()
+                  .run());
+      print(parent.state().toString());
+    }
+  }
+
+  @Command(
+      name = "context",
+      description =
+          "The context of the selected view (its facts), the UI profile in force with its entry, "
+              + "the shell and the toolbar row, what the view hides, and the actions the view "
+              + "shows with their action command when they have one; what an agent needs to pick "
+              + "the next verb.")
+  @Since("5.0")
+  static class Context extends Verb {
+    @Override
+    protected void run() {
+      JsonObject body =
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                JsonObjectBuilder json = Json.createObjectBuilder();
+                json.add("context", ViewContexts.current().toJson()); // NON-NLS
+                UiProfiles.active()
+                    .ifPresent(
+                        profile ->
+                            UiProfiles.document()
+                                .find(profile.id())
+                                .ifPresent(
+                                    entry ->
+                                        json.add(
+                                            "profile", // NON-NLS
+                                            Json.createObjectBuilder(describe(entry, profile))
+                                                .add("profile", profile.toJson()) // NON-NLS
+                                                .build())));
+                parent.state().forEach(json::add);
+                List<ActionEntry> relevant =
+                    ActionCatalog.entries().stream().filter(ActionEntry::relevant).toList();
+                json.add(ACTIONS, actionsJson(relevant));
+                return json.build();
+              });
+      print(body.toString());
     }
   }
 }

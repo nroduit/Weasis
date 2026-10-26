@@ -39,6 +39,11 @@ public class Viewer3dCommands implements CommandExtension {
   }
 
   @Override
+  public boolean isRelevantFor(String viewerTypeId) {
+    return "3d".equals(viewerTypeId); // NON-NLS
+  }
+
+  @Override
   public Object getCommandModel() {
     return this;
   }

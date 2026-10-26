@@ -112,6 +112,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.DynamicMenu;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.KeyBinding;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.ShortcutTable;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -147,12 +148,13 @@ import org.weasis.core.ui.docking.ws.Workspace;
 import org.weasis.core.ui.docking.ws.WorkspaceListener;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
+import org.weasis.core.ui.editor.ActionCatalog;
 import org.weasis.core.ui.editor.MediaFactory;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
+import org.weasis.core.ui.editor.Relevance;
 import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
-import org.weasis.core.ui.editor.Relevance;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.TabFocusPolicy;
 import org.weasis.core.ui.editor.ViewContext;
@@ -169,6 +171,7 @@ import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.CaptureButton;
 import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.CommandPalette;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.MaskingIndicator;
 import org.weasis.core.ui.util.MaskingProfileSelector;
@@ -895,6 +898,7 @@ public class WeasisWin {
 
   private JMenuBar createMenuBar() {
     JMenuBar menuBar = new JMenuBar();
+    ActionCatalog.addSource(() -> ActionCatalog.ofMenuBar(menuBar));
     buildMenuFile();
     menuBar.add(menuFile);
     buildMenuView();
@@ -1303,6 +1307,23 @@ public class WeasisWin {
         };
     explorerMenu.addPopupMenuListener();
     menuView.add(explorerMenu);
+
+    menuView.addSeparator();
+    JCheckBoxMenuItem showAll =
+        new JCheckBoxMenuItem(
+            Messages.getString("WeasisWin.show_all_tools"), !Relevance.contextual());
+    showAll.setToolTipText(Messages.getString("WeasisWin.show_all_tools.tip"));
+    showAll.addActionListener(e -> Settings.set(Relevance.CONTEXTUAL, !showAll.isSelected()));
+    Settings.addListener(
+        Relevance.CONTEXTUAL, value -> GuiExecutor.execute(() -> showAll.setSelected(!value)));
+    menuView.add(showAll);
+
+    JMenuItem palette = new JMenuItem(Messages.getString("WeasisWin.palette"));
+    palette.setAccelerator(
+        KeyStroke.getKeyStroke(
+            KeyEvent.VK_P, KeyBinding.MENU_SHORTCUT_MASK | InputEvent.SHIFT_DOWN_MASK));
+    palette.addActionListener(e -> CommandPalette.show(activeWindow()));
+    menuView.add(palette);
   }
 
   /** The window of the selected viewer, else the main window. */

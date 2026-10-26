@@ -297,7 +297,10 @@ summary, `help <namespace>` the verbs of a namespace, and `help <namespace>:<ver
 `help <namespace> <verb>`) one verb in detail, its synopsis naming it `namespace:verb`. The
 first two levels also come as `--names` (bare names) and `--index` (a title line, then one
 `name`, tab, `summary` line per entry, rendered by `CommandHelp`); `--markdown` and `--json`
-give the whole reference. On the client side, `weasis-cli help` at any level opens an
+give the whole reference. `--context` keeps only the namespaces relevant for the viewer type
+selected now (`CommandExtension.isRelevantFor`, the viewer type supplied by the UI core), the
+smaller surface an agent asks for after `ui:context`; a namespace named explicitly always
+answers. On the client side, `weasis-cli help` at any level opens an
 interactive browser (`HelpBrowser`) when a terminal is attached: entries are chosen by number,
 name or unique prefix, Enter goes back and `q` quits. Without a terminal, as in a pipe or from an
 agent, the client prints the level and the `weasis-cli help ...` commands that lead down and

@@ -158,4 +158,61 @@ class UiCommandsTest {
         () -> assertTrue(after.getJsonObject("hidden").getJsonArray("toolbars").isEmpty()),
         () -> assertTrue(after.getJsonObject("hidden").getJsonArray("tools").isEmpty()));
   }
+
+  @Test
+  void actionsListsTheCatalogActionRunsOneAndContextReportsTheView() {
+    List<String> ran = new java.util.ArrayList<>();
+    java.util.function.Supplier<List<ActionEntry>> source =
+        () ->
+            List.of(
+                new ActionEntry(
+                    "t/zoom", "Zoom in", "Viewer", "Ctrl+I", "zoomIn", true, () -> ran.add("zoom")),
+                new ActionEntry("t/mpr", "MPR", "3D", "", "", false, () -> ran.add("mpr")));
+    ActionCatalog.addSource(source);
+    try {
+      JsonObject all = json(run("actions", "--json").body());
+      List<JsonObject> list = all.getJsonArray("actions").getValuesAs(JsonObject.class);
+      JsonObject relevant = json(run("actions", "--json", "--relevant").body());
+      JsonObject filtered = json(run("actions", "--json", "--filter", "mpr").body());
+      String text = run("actions").body();
+      assertAll(
+          () -> assertTrue(list.stream().anyMatch(a -> a.getString("id").equals("t/zoom"))),
+          () -> assertTrue(list.stream().anyMatch(a -> a.getString("id").equals("t/mpr"))),
+          () ->
+              assertTrue(
+                  relevant.getJsonArray("actions").getValuesAs(JsonObject.class).stream()
+                      .noneMatch(a -> a.getString("id").equals("t/mpr"))),
+          () ->
+              assertEquals(
+                  "t/mpr", filtered.getJsonArray("actions").getJsonObject(0).getString("id")),
+          () -> assertTrue(text.contains("- t/mpr  MPR (3D)"), text),
+          () -> assertTrue(text.contains("  t/zoom  Zoom in (Viewer, Ctrl+I)"), text));
+
+      CommandResult result = run("action", "--id", "t/mpr");
+      assertAll(
+          () -> assertEquals(CommandResult.OK, result.status(), result.error()),
+          () -> assertEquals(List.of("mpr"), ran),
+          () -> assertTrue(json(result.body()).containsKey("hidden")));
+      assertNotEquals(CommandResult.OK, run("action", "--id", "t/none").status());
+      assertNotEquals(CommandResult.OK, run("action").status(), "--id is required");
+
+      run("profile", "--id", "cmd.ct", "--apply");
+      JsonObject context = json(run("context").body());
+      assertAll(
+          () -> assertTrue(context.containsKey("context")),
+          () -> assertEquals("cmd.ct", context.getJsonObject("profile").getString("id")),
+          () -> assertEquals("CT", context.getJsonObject("profile").getString("name")),
+          () -> assertEquals("cmd.ct", context.getString("active")),
+          () -> assertTrue(context.containsKey("hidden")),
+          () ->
+              assertEquals(
+                  List.of("t/zoom"),
+                  context.getJsonArray("actions").getValuesAs(JsonObject.class).stream()
+                      .map(a -> a.getString("id"))
+                      .toList(),
+                  "only the relevant actions"));
+    } finally {
+      ActionCatalog.removeSource(source);
+    }
+  }
 }

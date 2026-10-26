@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.pf4j.PluginManager;
 import org.slf4j.Logger;
@@ -55,11 +56,19 @@ public class CommandManager {
   public static final String INDEX_OPTION = "--index"; // NON-NLS
 
   /**
+   * Help option keeping only the namespaces relevant for the viewer type selected now ({@link
+   * CommandExtension#isRelevantFor}), a smaller surface for an agent.
+   */
+  public static final String CONTEXT_OPTION = "--context"; // NON-NLS
+
+  /**
    * Version of the command surface, independent of the application version: the minor grows with
    * additive changes (a verb, an option, a JSON key), the major with breaking ones. A verb or an
    * option is never removed within a major; a renamed one keeps its old name as a deprecated alias.
    */
-  public static final String API_VERSION = "2.7"; // NON-NLS
+  public static final String API_VERSION = "2.8"; // NON-NLS
+
+  private static volatile Supplier<String> viewerType = () -> null;
 
   private final PluginManager pluginManager;
   private final ConcurrentMap<String, CommandExtension> commands;
@@ -304,6 +313,8 @@ public class CommandManager {
   private CommandResult help(Target target) {
     List<String> args = Arrays.asList(target.args());
     HelpFormat format = HelpFormat.of(args);
+    Map<String, CommandExtension> scope =
+        args.contains(CONTEXT_OPTION) ? relevantCommands() : commands;
     String namespace = target.verb();
     String verb = "";
     int colon = namespace.indexOf(':');
@@ -314,7 +325,7 @@ public class CommandManager {
       verb = args.stream().filter(a -> !a.startsWith("-")).findFirst().orElse("");
     }
     if (namespace.isEmpty()) {
-      return rootHelp(format);
+      return rootHelp(format, scope);
     }
     String resolved = resolve(namespace);
     CommandExtension extension = commands.get(resolved);
@@ -328,15 +339,37 @@ public class CommandManager {
         : verbHelp(namespace, extension, verb, format);
   }
 
-  private CommandResult rootHelp(HelpFormat format) {
+  private CommandResult rootHelp(HelpFormat format, Map<String, CommandExtension> scope) {
     return switch (format) {
-      case AGENT -> CommandResult.ok(AgentSkill.render(commands.keySet()));
-      case NAMES -> CommandResult.ok(namespaceNames());
-      case JSON -> CommandResult.ok(getJsonHelp());
-      case MARKDOWN -> CommandResult.ok(getMarkdownHelp());
-      case INDEX -> CommandResult.ok(CommandHelp.index(rootTitle(), namespaceEntries()));
-      case TEXT -> CommandResult.ok(CommandHelp.table(rootTitle(), namespaceEntries(), false));
+      case AGENT -> CommandResult.ok(AgentSkill.render(scope.keySet()));
+      case NAMES -> CommandResult.ok(namespaceNames(scope));
+      case JSON -> CommandResult.ok(jsonHelp(scope));
+      case MARKDOWN -> CommandResult.ok(markdownHelp(scope));
+      case INDEX -> CommandResult.ok(CommandHelp.index(rootTitle(), namespaceEntries(scope)));
+      case TEXT -> CommandResult.ok(CommandHelp.table(rootTitle(), namespaceEntries(scope), false));
     };
+  }
+
+  /** Names the viewer type selected now, for {@code help --context}; set by the UI core. */
+  public static void setViewerTypeSupplier(Supplier<String> supplier) {
+    viewerType = supplier == null ? () -> null : supplier;
+  }
+
+  /** The namespaces relevant for the viewer type selected now. */
+  private Map<String, CommandExtension> relevantCommands() {
+    String type;
+    try {
+      type = viewerType.get();
+    } catch (RuntimeException e) {
+      type = null;
+    }
+    Map<String, CommandExtension> relevant = new TreeMap<>();
+    for (Map.Entry<String, CommandExtension> entry : commands.entrySet()) {
+      if (entry.getValue().isRelevantFor(type)) {
+        relevant.put(entry.getKey(), entry.getValue());
+      }
+    }
+    return relevant;
   }
 
   private CommandResult namespaceHelp(
@@ -407,12 +440,16 @@ public class CommandManager {
   }
 
   private String namespaceNames() {
-    return String.join(", ", new TreeMap<>(commands).keySet());
+    return namespaceNames(commands);
+  }
+
+  private static String namespaceNames(Map<String, CommandExtension> scope) {
+    return String.join(", ", new TreeMap<>(scope).keySet());
   }
 
   /** Every namespace with the first sentence of its description. */
-  private List<CommandHelp.Entry> namespaceEntries() {
-    return new TreeMap<>(commands)
+  private static List<CommandHelp.Entry> namespaceEntries(Map<String, CommandExtension> scope) {
+    return new TreeMap<>(scope)
         .entrySet().stream()
             .map(e -> new CommandHelp.Entry(e.getKey(), summary(e.getValue())))
             .toList();
@@ -550,6 +587,10 @@ public class CommandManager {
 
   /** Markdown reference of every namespace, meant for the agent skill. */
   public String getMarkdownHelp() {
+    return markdownHelp(commands);
+  }
+
+  private static String markdownHelp(Map<String, CommandExtension> scope) {
     StringBuilder sb =
         new StringBuilder("# Weasis commands\n\nCommand API ")
             .append(API_VERSION)
@@ -558,7 +599,7 @@ public class CommandManager {
             .append(", application ")
             .append(applicationVersion())
             .append(".\n\n");
-    for (Map.Entry<String, CommandExtension> entry : new TreeMap<>(commands).entrySet()) {
+    for (Map.Entry<String, CommandExtension> entry : new TreeMap<>(scope).entrySet()) {
       sb.append(markdown(entry.getKey(), entry.getValue())).append('\n');
     }
     return sb.toString();
@@ -566,6 +607,10 @@ public class CommandManager {
 
   /** JSON descriptor of every namespace: the machine-readable form of the reference. */
   public String getJsonHelp() {
+    return jsonHelp(commands);
+  }
+
+  private static String jsonHelp(Map<String, CommandExtension> scope) {
     JsonWriter out = new JsonWriter();
     out.beginObject()
         .name("apiVersion") // NON-NLS
@@ -584,7 +629,7 @@ public class CommandManager {
     out.name("6").value("not permitted remotely"); // NON-NLS
     out.endObject();
     out.name("namespaces").beginArray(); // NON-NLS
-    for (Map.Entry<String, CommandExtension> entry : new TreeMap<>(commands).entrySet()) {
+    for (Map.Entry<String, CommandExtension> entry : new TreeMap<>(scope).entrySet()) {
       json(out, entry.getKey(), entry.getValue());
     }
     out.endArray().endObject();

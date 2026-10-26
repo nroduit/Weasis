@@ -348,6 +348,59 @@ class CommandManagerTest {
     return text.replaceAll("[ \t]+", " ");
   }
 
+  /** A namespace that serves one viewer type only. */
+  static final class ThreeDExtension implements CommandExtension {
+    @Override
+    public String getNamespace() {
+      return "cube";
+    }
+
+    @Override
+    public boolean isRelevantFor(String viewerTypeId) {
+      return "3d".equals(viewerTypeId);
+    }
+
+    @Override
+    public void execute(String commandName, String[] args) {}
+
+    @Override
+    public String getHelp() {
+      return "cube commands:\n  cube:spin";
+    }
+  }
+
+  @Test
+  void helpContextKeepsTheNamespacesOfTheSelectedViewerType() {
+    CommandManager manager = manager(new MathExtension(), new ThreeDExtension());
+    try {
+      CommandManager.setViewerTypeSupplier(() -> "2d");
+      CommandResult flat = manager.run(List.of("help", "--names"), CommandOrigin.REMOTE);
+      CommandResult twoD =
+          manager.run(List.of("help", "--names", "--context"), CommandOrigin.REMOTE);
+      CommandResult json =
+          manager.run(List.of("help", "--json", "--context"), CommandOrigin.REMOTE);
+      CommandManager.setViewerTypeSupplier(() -> "3d");
+      CommandResult threeD =
+          manager.run(List.of("help", "--names", "--context"), CommandOrigin.REMOTE);
+      CommandManager.setViewerTypeSupplier(
+          () -> {
+            throw new IllegalStateException("no ui");
+          });
+      CommandResult failing =
+          manager.run(List.of("help", "--names", "--context"), CommandOrigin.REMOTE);
+      CommandResult cube = manager.run(List.of("help", "cube", "--context"), CommandOrigin.REMOTE);
+      assertAll(
+          () -> assertEquals("cube, math, script", flat.body()),
+          () -> assertEquals("math, script", twoD.body()),
+          () -> assertFalse(json.body().contains("\"cube\""), json.body()),
+          () -> assertEquals("cube, math, script", threeD.body()),
+          () -> assertEquals("math, script", failing.body(), "no viewer: the general namespaces"),
+          () -> assertTrue(cube.body().contains("cube:spin"), "a named namespace always answers"));
+    } finally {
+      CommandManager.setViewerTypeSupplier(null);
+    }
+  }
+
   @Test
   void helpIsNavigableByNamespaceAndVerb() {
     CommandManager manager = manager(new MathExtension(), new EchoExtension());
