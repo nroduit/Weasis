@@ -16,8 +16,11 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.editor.Relevance;
+import org.weasis.core.ui.editor.ViewContext;
 import org.weasis.core.ui.util.WtoolBar;
 
+/** Cine of the selected series; relevant for a dynamic acquisition or a multi-frame series. */
 public class CineToolBar extends WtoolBar {
 
   public CineToolBar(int index) {
@@ -91,5 +94,10 @@ public class CineToolBar extends WtoolBar {
         sequence.registerActionState(fwdButton);
       }
     }
+  }
+
+  @Override
+  public boolean isRelevant(ViewContext context) {
+    return Relevance.TEMPORAL.test(context);
   }
 }

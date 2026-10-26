@@ -12,11 +12,11 @@ package org.weasis.dicom.explorer.hp;
 import java.util.Map;
 import org.pf4j.Extension;
 import org.weasis.core.api.media.data.MediaSeries;
+
+import org.weasis.core.ui.editor.ContextFacts;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.ViewContextContributor;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.hp.SeriesFeatureExtractor;
 import org.weasis.dicom.codec.hp.SeriesFeatures;
 
 /**
@@ -28,15 +28,13 @@ import org.weasis.dicom.codec.hp.SeriesFeatures;
 @Extension
 public class HangingContextContributor implements ViewContextContributor {
 
-  public static final String PROTOCOL = "hp.protocol"; // NON-NLS
+  public static final String PROTOCOL = ContextFacts.HANGING_PROTOCOL;
   public static final String PROTOCOL_NAME = "hp.protocolName"; // NON-NLS
   public static final String STEP = "hp.step"; // NON-NLS
   public static final String STEPS = "hp.steps"; // NON-NLS
   public static final String FEATURES = "hp.features"; // NON-NLS
   public static final String MODALITY = "hp.modality"; // NON-NLS
   public static final String ANATOMY = "hp.anatomy"; // NON-NLS
-
-  private final SeriesFeatureExtractor extractor = new SeriesFeatureExtractor();
 
   @Override
   public void contribute(SeriesViewer<?> viewer, MediaSeries<?> series, Map<String, Object> facts) {
@@ -50,7 +48,7 @@ public class HangingContextContributor implements ViewContextContributor {
                 facts.put(STEPS, applied.plan().steps().size());
               });
     }
-    SeriesFeatures features = featuresOf(series);
+    SeriesFeatures features = ContentContextContributor.featuresOf(series);
     if (features != null) {
       facts.put(FEATURES, features);
       if (features.modality() != null) {
@@ -60,25 +58,5 @@ public class HangingContextContributor implements ViewContextContributor {
         facts.put(ANATOMY, features.anatomy().notation());
       }
     }
-  }
-
-  @SuppressWarnings("unchecked")
-  private SeriesFeatures featuresOf(MediaSeries<?> series) {
-    if (series == null) {
-      return null;
-    }
-    Object cached = series.getTagValue(SeriesFeatureExtractor.FEATURES);
-    if (cached instanceof SeriesFeatures features) {
-      return features;
-    }
-    Object first = series.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null);
-    if (first instanceof DicomImageElement) {
-      try {
-        return extractor.of((MediaSeries<DicomImageElement>) series);
-      } catch (RuntimeException e) {
-        return null;
-      }
-    }
-    return null;
   }
 }

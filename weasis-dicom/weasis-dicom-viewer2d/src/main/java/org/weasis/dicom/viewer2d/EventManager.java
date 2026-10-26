@@ -79,6 +79,7 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.editor.Relevance;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -252,6 +253,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     }
 
     initializeParameters();
+    declareRelevance();
+  }
+
+  /** The content capabilities the core actions need, for the contextual workspace. */
+  private static void declareRelevance() {
+    Relevance.registerAction(ActionW.VOLUME.cmd(), Relevance.VOLUME);
+    Relevance.registerAction(ActionW.CINESTART.cmd(), Relevance.TEMPORAL);
+    Relevance.registerAction(ActionW.CINESTOP.cmd(), Relevance.TEMPORAL);
+    Relevance.registerAction(ActionW.KO_FILTER.cmd(), Relevance.objects("KO")); // NON-NLS
+    Relevance.registerAction(ActionW.KO_SELECTION.cmd(), Relevance.objects("KO")); // NON-NLS
   }
 
   private void initializeParameters() {

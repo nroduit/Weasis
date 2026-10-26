@@ -73,9 +73,11 @@ public class SeriesViewerUI {
         }
       }
       if (tool != null) {
+        // visible by the user's setting and relevant for what the viewer shows
+        ViewContext context = ViewContexts.of(plugin);
         for (DockableTool p : tool) {
           ToolVisibility.watch(p.getToolId());
-          if (ToolVisibility.isVisible(p)) {
+          if (ToolVisibility.isVisible(p) && Relevance.isRelevant(p, context)) {
             p.showDockable();
           }
         }

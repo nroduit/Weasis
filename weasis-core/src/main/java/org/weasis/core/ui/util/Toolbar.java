@@ -10,8 +10,13 @@
 package org.weasis.core.ui.util;
 
 import org.weasis.core.api.gui.Insertable;
+import org.weasis.core.ui.editor.Relevant;
 
-public interface Toolbar extends Insertable {
+/**
+ * A toolbar of a viewer; {@link Relevant#isRelevant} decides whether it is shown for the selected
+ * view (always, unless the toolbar overrides it).
+ */
+public interface Toolbar extends Insertable, Relevant {
 
   @Override
   Type getPanelType();

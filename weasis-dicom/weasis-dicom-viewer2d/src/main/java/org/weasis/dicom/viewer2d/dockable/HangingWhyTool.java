@@ -31,9 +31,11 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.editor.Relevance;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.ViewContext;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -219,5 +221,11 @@ public class HangingWhyTool extends PluginTool implements SeriesViewerListener {
   /** Whether the tool is of use: a 2D viewer hung by a protocol is selected. */
   public static boolean isRelevant() {
     return GuiUtils.getUICore().getSelectedPlugin().flatMap(ActiveHanging::of).isPresent();
+  }
+
+  /** The panel explains a hanging: relevant once a protocol hung the viewer. */
+  @Override
+  public boolean isRelevant(ViewContext context) {
+    return Relevance.PROTOCOL.test(context);
   }
 }

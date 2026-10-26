@@ -24,7 +24,9 @@ import org.weasis.core.api.setting.SettingType;
 import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.setting.Settings.Origin;
 import org.weasis.core.api.setting.Settings.Resolution;
+import org.weasis.core.ui.editor.Relevance;
 import org.weasis.core.ui.editor.SeriesViewer;
+import org.weasis.core.ui.editor.ViewContexts;
 
 /**
  * Whether a tool is shown, as a typed setting of the catalog: {@code weasis.tool.<id>.visible}, one
@@ -125,7 +127,7 @@ public final class ToolVisibility {
             viewer -> {
               for (DockableTool tool : viewer.getSeriesViewerUI().tools) {
                 if (toolId.equals(tool.getToolId())) {
-                  if (isVisible(tool)) {
+                  if (isVisible(tool) && Relevance.isRelevant(tool, ViewContexts.current())) {
                     tool.showDockable();
                   } else {
                     tool.closeDockable();

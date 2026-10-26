@@ -11,13 +11,16 @@ package org.weasis.core.ui.docking;
 
 import java.awt.Component;
 import org.weasis.core.api.gui.Insertable;
+import org.weasis.core.ui.editor.Relevant;
 
 /**
  * A panel hosted by a shell side around the workspace. Its {@link #getToolId() id} is stable across
  * viewer types, so the display tool of a 2D viewer and the display tool of a 3D viewer are the same
- * tool for the shell: swapped in place, named by a UI profile, remembered by a session.
+ * tool for the shell: swapped in place, named by a UI profile, remembered by a session. {@link
+ * Relevant#isRelevant} decides whether it is offered for the selected view (always, unless the tool
+ * overrides it); the user's choice to hide it is a setting on top of that.
  */
-public interface DockableTool extends Insertable {
+public interface DockableTool extends Insertable, Relevant {
 
   /** A plain lowercase token, never a localized name: {@code display}, {@code measure}, ... */
   String getToolId();

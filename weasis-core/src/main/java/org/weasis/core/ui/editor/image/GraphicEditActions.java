@@ -26,6 +26,8 @@ import javax.swing.event.PopupMenuListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
+import org.weasis.core.ui.editor.Relevance;
+import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.core.ui.dialog.MeasureDialog;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
@@ -387,7 +389,10 @@ public final class GraphicEditActions {
     }
     addSeparator(popupMenu, count);
 
-    if (graphic instanceof LineGraphic lineGraphic && CalibrationView.accepts(lineGraphic)) {
+    // calibration is for images without a reliable pixel spacing
+    if (graphic instanceof LineGraphic lineGraphic
+        && CalibrationView.accepts(lineGraphic)
+        && Relevance.applies(Relevance.CALIBRATION, ViewContexts.current())) {
       JMenuItem calibrate = new JMenuItem(Messages.getString("GraphicEditActions.calibrate"));
       calibrate.addActionListener(_ -> CalibrationView.showDialog(lineGraphic, view));
       popupMenu.add(calibrate);

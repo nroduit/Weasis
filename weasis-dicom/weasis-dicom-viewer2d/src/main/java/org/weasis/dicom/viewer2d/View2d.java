@@ -71,6 +71,8 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.ui.editor.Relevance;
+import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.core.ui.editor.image.CaptureAction;
 import org.weasis.core.ui.editor.image.ContextMenuHandler;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -1361,7 +1363,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       GuiUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
       GuiUtils.addItemToMenu(
           popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
-      GuiUtils.addItemToMenu(popupMenu, manager.getCineMenu("weasis.contextmenu.cine"));
+      if (Relevance.applies(
+          Relevance.TEMPORAL, ViewContexts.of(manager.getSelectedView2dContainer(), getSeries()))) {
+        GuiUtils.addItemToMenu(popupMenu, manager.getCineMenu("weasis.contextmenu.cine"));
+      }
       GuiUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
       count = addSeparatorToPopupMenu(popupMenu, count);
 

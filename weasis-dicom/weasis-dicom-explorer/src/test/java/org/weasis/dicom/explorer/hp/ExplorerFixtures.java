@@ -36,31 +36,69 @@ final class ExplorerFixtures {
     Tag.ImagePositionPatient,
     Tag.SliceThickness,
     Tag.ConvolutionKernel,
-    Tag.PixelSpacing
+    Tag.PixelSpacing,
+    Tag.ImagerPixelSpacing,
+    Tag.FrameOfReferenceUID
   };
 
   private static final int[] SERIES_TAGS = {
-    Tag.SeriesInstanceUID, Tag.Modality, Tag.SOPClassUID, Tag.SeriesDescription, Tag.Manufacturer
+    Tag.SeriesInstanceUID,
+    Tag.Modality,
+    Tag.SOPClassUID,
+    Tag.SeriesDescription,
+    Tag.Manufacturer,
+    Tag.FrameOfReferenceUID
   };
 
   private ExplorerFixtures() {}
 
   /** An axial CT series of one image with the given kernel. */
   static DicomSeries ctSeries(String uid, String kernel) {
+    return ctSeries(uid, kernel, 1, "CT"); // NON-NLS
+  }
+
+  /** An axial series of {@code images} slices 1.25 mm apart, with the given kernel and modality. */
+  static DicomSeries ctSeries(String uid, String kernel, int images, String modality) {
+    DicomSeries series = new DicomSeries(uid);
+    for (int i = 0; i < images; i++) {
+      Attributes a = new Attributes();
+      a.setString(Tag.SOPClassUID, VR.UI, "1.2.840.10008.5.1.4.1.1.2"); // NON-NLS
+      a.setString(Tag.SOPInstanceUID, VR.UI, uid + "." + (i + 1)); // NON-NLS
+      a.setString(Tag.SeriesInstanceUID, VR.UI, uid);
+      a.setString(Tag.FrameOfReferenceUID, VR.UI, uid + ".frame"); // NON-NLS
+      a.setString(Tag.Modality, VR.CS, modality);
+      a.setString(Tag.Manufacturer, VR.LO, "SIEMENS"); // NON-NLS
+      a.setString(Tag.ImageType, VR.CS, "ORIGINAL", "PRIMARY", "AXIAL"); // NON-NLS
+      a.setInt(Tag.InstanceNumber, VR.IS, i + 1);
+      a.setDouble(Tag.ImageOrientationPatient, VR.DS, 1, 0, 0, 0, 1, 0);
+      a.setDouble(Tag.ImagePositionPatient, VR.DS, -100, -100, i * 1.25);
+      a.setDouble(Tag.SliceThickness, VR.DS, 1.25);
+      a.setDouble(Tag.PixelSpacing, VR.DS, 0.7, 0.7);
+      a.setString(Tag.ConvolutionKernel, VR.SH, kernel);
+      a.setString(Tag.SeriesDescription, VR.LO, kernel);
+      if (i == 0) {
+        for (int tag : SERIES_TAGS) {
+          TagW key = TagD.get(tag);
+          Object value = key.getValue(a);
+          if (value != null) {
+            series.setTag(key, value);
+          }
+        }
+      }
+      series.addMedia(element(a));
+    }
+    return series;
+  }
+
+  /** A one-image radiograph whose spacing is an estimate at the detector (no Pixel Spacing). */
+  static DicomSeries crSeries(String uid) {
     Attributes a = new Attributes();
-    a.setString(Tag.SOPClassUID, VR.UI, "1.2.840.10008.5.1.4.1.1.2"); // NON-NLS
+    a.setString(Tag.SOPClassUID, VR.UI, "1.2.840.10008.5.1.4.1.1.1"); // NON-NLS
     a.setString(Tag.SOPInstanceUID, VR.UI, uid + ".1"); // NON-NLS
     a.setString(Tag.SeriesInstanceUID, VR.UI, uid);
-    a.setString(Tag.Modality, VR.CS, "CT"); // NON-NLS
-    a.setString(Tag.Manufacturer, VR.LO, "SIEMENS"); // NON-NLS
-    a.setString(Tag.ImageType, VR.CS, "ORIGINAL", "PRIMARY", "AXIAL"); // NON-NLS
+    a.setString(Tag.Modality, VR.CS, "CR"); // NON-NLS
     a.setInt(Tag.InstanceNumber, VR.IS, 1);
-    a.setDouble(Tag.ImageOrientationPatient, VR.DS, 1, 0, 0, 0, 1, 0);
-    a.setDouble(Tag.ImagePositionPatient, VR.DS, -100, -100, 0);
-    a.setDouble(Tag.SliceThickness, VR.DS, 1.25);
-    a.setDouble(Tag.PixelSpacing, VR.DS, 0.7, 0.7);
-    a.setString(Tag.ConvolutionKernel, VR.SH, kernel);
-    a.setString(Tag.SeriesDescription, VR.LO, kernel);
+    a.setDouble(Tag.ImagerPixelSpacing, VR.DS, 0.15, 0.15);
     DicomSeries series = new DicomSeries(uid);
     for (int tag : SERIES_TAGS) {
       TagW key = TagD.get(tag);

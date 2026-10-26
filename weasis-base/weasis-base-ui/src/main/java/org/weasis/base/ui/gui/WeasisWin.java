@@ -152,6 +152,7 @@ import org.weasis.core.ui.editor.MimeSystemAppViewer;
 import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.Relevance;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.TabFocusPolicy;
 import org.weasis.core.ui.editor.ViewContext;
@@ -280,6 +281,7 @@ public class WeasisWin {
               }
             });
     ToolContributions.follow();
+    Relevance.follow();
     KeyEventDispatcher dockingShortcutDispatcher = this::dispatchDockingShortcut;
     KeyboardFocusManager.getCurrentKeyboardFocusManager()
         .addKeyEventDispatcher(dockingShortcutDispatcher);

@@ -23,67 +23,90 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import org.weasis.core.api.gui.Insertable;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.ui.editor.Relevance;
+import org.weasis.core.ui.editor.ViewContext;
 import org.weasis.core.api.util.ResourceUtil;
 
 public class ToolBarContainer extends JPanel {
   public static final Toolbar EMPTY = buildEmptyToolBar("empty");
   private final List<Toolbar> bars = new ArrayList<>();
+  private ViewContext context = ViewContext.empty();
 
   public ToolBarContainer() {
     setLayout(new FlowLayout(FlowLayout.LEADING, 0, 0));
     addMouseListener(new PopClickListener());
   }
 
-  /** Registers a new ToolBar. */
+  /**
+   * Registers the toolbars of the selected viewer: shown in their order when the user keeps them
+   * enabled and the current {@link ViewContext} makes them relevant.
+   */
   public void registerToolBar(List<Toolbar> toolBars) {
     unregisterAll();
 
     if (toolBars == null || toolBars.isEmpty()) {
-      add(EMPTY.getComponent());
       bars.add(EMPTY);
     } else {
       List<Toolbar> sortedBars = new ArrayList<>(toolBars);
       InsertableUtil.sortInsertable(sortedBars);
-
       for (var toolbar : sortedBars) {
-        WtoolBar component = toolbar.getComponent();
-        if (component instanceof DynamicToolbar dyn) {
+        if (toolbar.getComponent() instanceof DynamicToolbar dyn) {
           dyn.updateToolbar();
-        }
-        if (toolbar.isComponentEnabled()) {
-          add(component);
         }
         bars.add(toolbar);
       }
     }
+    rebuild();
+  }
 
+  /**
+   * The context of the selected view changed: the toolbars it makes relevant are shown, the others
+   * leave the row; the user's enabled flag of each toolbar is untouched.
+   */
+  public void applyContext(ViewContext context) {
+    ViewContext next = context == null ? ViewContext.empty() : context;
+    List<Toolbar> before = shownBars();
+    this.context = next;
+    if (!before.equals(shownBars())) {
+      rebuild();
+    }
+  }
+
+  /** The toolbars in the row: enabled by the user and relevant for the current context. */
+  public List<Toolbar> shownBars() {
+    List<Toolbar> shown = new ArrayList<>();
+    for (Toolbar bar : bars) {
+      if (isShown(bar)) {
+        shown.add(bar);
+      }
+    }
+    return shown;
+  }
+
+  private boolean isShown(Toolbar bar) {
+    return bar.isComponentEnabled() && Relevance.isRelevant(bar, context);
+  }
+
+  private void rebuild() {
+    removeAll();
+    for (Toolbar bar : bars) {
+      if (isShown(bar)) {
+        add(bar.getComponent());
+      }
+    }
     revalidate();
     repaint();
   }
 
+  /** The user's choice: the toolbar is enabled or disabled, then the row is rebuilt. */
   public void displayToolbar(WtoolBar barComponent, boolean show) {
     if (show == barComponent.isComponentEnabled()) {
       return;
     }
-
-    if (show) {
-      // Calculate insertion index based on currently enabled bars preceding this one
-      int index =
-          (int)
-              bars.stream()
-                  .takeWhile(b -> b.getComponent() != barComponent)
-                  .filter(Toolbar::isComponentEnabled)
-                  .count();
-
-      add(barComponent, index);
-    } else {
-      remove(barComponent);
-    }
-
     barComponent.setComponentEnabled(show);
-    revalidate();
-    repaint();
+    rebuild();
   }
 
   private void unregisterAll() {
@@ -122,6 +145,10 @@ public class ToolBarContainer extends JPanel {
       for (final Toolbar bar : bars) {
         if (!Insertable.Type.EMPTY.equals(bar.getPanelType())) {
           var item = new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
+          if (!Relevance.isRelevant(bar, context)) {
+            item.setEnabled(false);
+            item.setToolTipText(Messages.getString("ToolBarContainer.irrelevant"));
+          }
           item.addActionListener(
               e -> {
                 if (e.getSource() instanceof JCheckBoxMenuItem menuItem) {

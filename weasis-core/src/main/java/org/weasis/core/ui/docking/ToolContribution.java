@@ -10,6 +10,7 @@
 package org.weasis.core.ui.docking;
 
 import org.pf4j.ExtensionPoint;
+import org.weasis.core.ui.editor.Relevant;
 import org.weasis.core.ui.editor.ViewContext;
 
 /**
@@ -20,7 +21,7 @@ import org.weasis.core.ui.editor.ViewContext;
  * stable {@link DockableTool#getToolId() id}, so a UI profile can name it and a session remember
  * it. A contribution with no predicate of its own is always relevant on the viewers it names.
  */
-public interface ToolContribution extends ExtensionPoint {
+public interface ToolContribution extends ExtensionPoint, Relevant {
 
   /** The stable id of the tool, the one its {@link DockableTool#getToolId()} returns. */
   String toolId();
@@ -34,6 +35,7 @@ public interface ToolContribution extends ExtensionPoint {
   }
 
   /** Whether the tool is relevant for what the viewer shows; called only when it applies. */
+  @Override
   default boolean isRelevant(ViewContext context) {
     return true;
   }

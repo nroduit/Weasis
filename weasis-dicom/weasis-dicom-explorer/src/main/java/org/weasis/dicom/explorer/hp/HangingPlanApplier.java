@@ -28,11 +28,13 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.image.HangingLayout;
@@ -317,6 +319,21 @@ public final class HangingPlanApplier {
     this.show = Objects.requireNonNull(show);
   }
 
+  /**
+   * The selected viewer was hung: its view context changes (protocol, step), so the tools and
+   * toolbars that depend on it follow at once instead of at the next selection.
+   */
+  private static void publishContext(Applied applied) {
+    try {
+      SeriesViewer<?> selected = GuiUtils.getUICore().getSelectedPlugin().orElse(null);
+      if (selected != null && applied.viewers().contains(selected)) {
+        GuiExecutor.execute(() -> ViewContexts.publish(selected));
+      }
+    } catch (RuntimeException e) {
+      LOGGER.debug("No context published for the hanging", e);
+    }
+  }
+
   /** The hanging a viewer is part of, when a plan produced it. */
   public static Optional<Applied> activeOn(ViewerPlugin<?> viewer) {
     return Optional.ofNullable(ACTIVE.get(viewer));
@@ -325,6 +342,7 @@ public final class HangingPlanApplier {
   /** Attaches a hanging to its viewers in place of the one they had, and tells the listeners. */
   public static void replace(Applied applied) {
     applied.viewers().forEach(v -> ACTIVE.put(v, applied));
+    publishContext(applied);
     for (Consumer<Applied> listener : LISTENERS) {
       try {
         listener.accept(applied);
@@ -416,6 +434,7 @@ public final class HangingPlanApplier {
 
     Applied applied = new Applied(plan, step, used, placed, warnings, context);
     used.forEach(v -> ACTIVE.put(v, applied));
+    publishContext(applied);
     for (Consumer<Applied> listener : LISTENERS) {
       try {
         listener.accept(applied);
