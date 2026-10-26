@@ -30,7 +30,9 @@ class StateCommandsTest {
           "state:list",
           "state:restore --session 2026-10-17T10:00:00Z",
           "state:restore --study 1.2.3",
-          "state:delete --session 2026-10-17T10:00:00Z");
+          "state:delete --session 2026-10-17T10:00:00Z",
+          "state:export --session 2026-10-17T10:00:00Z --out /tmp/session",
+          "state:export --study 1.2.3 --out /tmp/session --dicom --json");
 
   @Test
   void documentedCommandLinesParse() {

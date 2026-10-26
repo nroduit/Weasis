@@ -24,7 +24,7 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.9 and protocol
+This instance runs Weasis development with command API 2.10 and protocol
 1, and answers these namespaces: color, config, dicom, explorer, hp, image, redact, script, state, view2d, view3d, weasis, workspace.
 
 Check the connection first:
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.9 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.10 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -230,7 +230,11 @@ line naming the current spelling. Use the current one everywhere.
    when its studies are loaded (a study not loaded is reported: load it first); `state:delete
    --session <id>` removes one. Sessions hold study and series identifiers, never credentials,
    and are purged by the retention settings `weasis.hp.sessions.max` and
-   `weasis.hp.sessions.max.days`.
+   `weasis.hp.sessions.max.days`. `state:export --session <id> | --study <uid> --out <dir>
+   [--dicom]` writes a session to a directory, as its JSON or, with `--dicom`, as a Basic
+   Structured Display object with one Grayscale Softcopy Presentation State per pane (window,
+   rotation, flip, inversion, magnification, graphics) for a PACS or another viewer; the studies
+   must be loaded and what the object cannot carry comes back under `warnings`.
    `hp:validate --corpus <dir> [--protocols <file>] [--expected <file>]` runs the matching over
    a folder of studies without any viewer and reports the counts per protocol, the protocol and
    first-step cells of each study and, with an expectations file, which studies hang as expected.

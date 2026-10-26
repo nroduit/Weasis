@@ -16,6 +16,8 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonString;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -31,6 +33,7 @@ import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
+import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -75,7 +78,8 @@ import picocli.CommandLine.ParentCommand;
       StateCommands.Keep.class,
       StateCommands.ListSessions.class,
       StateCommands.Restore.class,
-      StateCommands.Delete.class
+      StateCommands.Delete.class,
+      StateCommands.Export.class
     })
 @Since("5.0")
 public class StateCommands implements CommandExtension {
@@ -413,6 +417,70 @@ public class StateCommands implements CommandExtension {
   }
 
   // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "export",
+      description =
+          "Writes a session to a directory: its JSON (the sidecar as 'state:keep' stores it), or "
+              + "with --dicom a Basic Structured Display object laying out the panes of the 2D "
+              + "viewers of the main window as image boxes, each with a Grayscale Softcopy "
+              + "Presentation State carrying the pane's window, rotation, flip, inversion, "
+              + "magnification and graphics; the studies of the session must be loaded. What the "
+              + "object cannot carry (MPR and 3D views, other windows, hidden tabs, blends) is "
+              + "listed under 'warnings'.")
+  @Since("5.0")
+  static class Export extends Verb {
+    @Option(
+        names = "--session",
+        paramLabel = "<session-id>",
+        description = "Session id from 'list'.")
+    String sessionId;
+
+    @Option(
+        names = "--study",
+        paramLabel = "<study-uid>",
+        description = "The most recent session showing this study instead of an id.")
+    StudyUid studyUid;
+
+    @Option(
+        names = "--out",
+        required = true,
+        paramLabel = "<output-path>",
+        description = "Target directory, created when missing.")
+    OutputPath out;
+
+    @Option(names = "--dicom", description = "Writes DICOM objects instead of the JSON.")
+    boolean dicom;
+
+    @Override
+    protected void run() throws IOException {
+      if ((sessionId == null) == (studyUid == null)) {
+        throw invalid("Give --session <session-id> or --study <study-uid>");
+      }
+      SessionStore store = parent.storeSupplier.get();
+      Session session =
+          (sessionId != null ? store.find(sessionId) : store.latestOf(studyUid.value()))
+              .orElseThrow(
+                  () ->
+                      CommandFailure.unknownHandle(
+                          sessionId != null
+                              ? "Unknown session: " + sessionId
+                              : "No session shows the study " + studyUid,
+                          "state:list")); // NON-NLS
+      Path dir = out.value();
+      JsonObjectBuilder json = Json.createObjectBuilder().add("session", session.id()); // NON-NLS
+      if (dicom) {
+        SessionDicomExport.Report report = SessionDicomExport.write(session, parent.model(), dir);
+        report.toJson().forEach(json::add);
+      } else {
+        Files.createDirectories(dir);
+        Path file = dir.resolve("session-" + session.id().replaceAll("[^\\w.-]", "_") + ".json");
+        Files.writeString(file, session.toJson().toString());
+        json.add("files", Json.createArrayBuilder().add(file.toString())); // NON-NLS
+      }
+      print(json.build().toString());
+    }
+  }
 
   @Command(name = "delete", description = "Deletes a session of the user.")
   @Since("5.0")
