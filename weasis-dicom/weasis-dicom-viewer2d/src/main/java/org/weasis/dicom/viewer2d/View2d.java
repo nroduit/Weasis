@@ -71,6 +71,8 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.Relevance;
 import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.core.ui.editor.image.CaptureAction;
@@ -135,6 +137,7 @@ import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
 import org.weasis.dicom.viewer2d.fusion.FusionScaleDragHandler;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
+import org.weasis.dicom.viewer2d.mpr.ReformatMenu;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.WlPresentation;
@@ -163,6 +166,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   protected Vector3d lastCrosshairPosition;
 
   protected final KOViewButton koStarButton;
+  private final ViewButton planeButton;
 
   public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
@@ -193,6 +197,31 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     this.koStarButton = KOComponentFactory.buildKoStarButton(this);
     koStarButton.setPosition(GridBagConstraints.NORTHEAST);
     getViewButtons().add(koStarButton);
+    this.planeButton = buildPlaneButton();
+    getViewButtons().add(planeButton);
+  }
+
+  /** The plane of the pane: a popup with the acquired plane and the two reformats. */
+  private ViewButton buildPlaneButton() {
+    ViewButton button =
+        new ViewButton(
+            (invoker, x, y) ->
+                ReformatMenu.popup(eventManager.getSelectedView2dContainer(), this)
+                    .show(invoker, x, y),
+            ResourceUtil.getIcon(OtherIcon.VIEW_3D, 24, 24),
+            Messages.getString("ReformatMenu.title"));
+    button.setVisible(false);
+    button.setPosition(GridBagConstraints.NORTHEAST);
+    return button;
+  }
+
+  /** Shows the plane button on the series that can be resliced, and on their reformats. */
+  private void updatePlaneButton() {
+    boolean visible = ReformatMenu.applies(this);
+    if (planeButton.isVisible() != visible) {
+      planeButton.setVisible(visible);
+      repaint();
+    }
   }
 
   @Override
@@ -777,6 +806,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     updateKOButtonVisibleState();
+    updatePlaneButton();
   }
 
   /**
@@ -1371,6 +1401,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       GuiUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
       GuiUtils.addItemToMenu(
           popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
+      if (ReformatMenu.applies(this)) {
+        GuiUtils.addItemToMenu(
+            popupMenu, ReformatMenu.menu(manager.getSelectedView2dContainer(), this));
+      }
       if (Relevance.applies(
           Relevance.TEMPORAL, ViewContexts.of(manager.getSelectedView2dContainer(), getSeries()))) {
         GuiUtils.addItemToMenu(popupMenu, manager.getCineMenu("weasis.contextmenu.cine"));

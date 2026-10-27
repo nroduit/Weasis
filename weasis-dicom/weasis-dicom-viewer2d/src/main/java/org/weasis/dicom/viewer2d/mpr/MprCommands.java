@@ -24,7 +24,9 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.ui.editor.SeriesResolver;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewDisplayState;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.SeriesUid;
@@ -98,15 +100,71 @@ public class MprCommands implements CommandExtension {
           series == null
               ? GuiExecutor.invokeAndRethrow(Reformat::selectedSeriesUid)
               : series.value();
-      Derived derived = ReformatService.create(uid, target);
+      // The plane of the acquired series behind a reformat is the series itself, shown again
+      MediaSeries<DicomImageElement> source =
+          GuiExecutor.invokeAndRethrow(() -> ReformatService.sourceOf(resolve(uid)));
+      if (ReformatService.planeOf(source) == target) {
+        JsonObject pane = GuiExecutor.invokeAndRethrow(() -> showInSelectedPane(source, target));
+        JsonObjectBuilder body =
+            Json.createObjectBuilder()
+                .add(
+                    "series",
+                    String.valueOf(
+                        TagD.getTagValue(source, Tag.SeriesInstanceUID, String.class))) // NON-NLS
+                .add("plane", target.name()) // NON-NLS
+                .add("acquired", true); // NON-NLS
+        if (pane != null) {
+          body.add("target", pane); // NON-NLS
+        }
+        print(body.build().toString());
+        return;
+      }
+      Derived derived =
+          ReformatService.create(
+              TagD.getTagValue(source, Tag.SeriesInstanceUID, String.class), target);
       JsonObjectBuilder body = ReformatService.describe(derived);
       if (!noOpen) {
-        JsonObject pane = GuiExecutor.invokeAndRethrow(() -> ReformatService.open(derived));
+        JsonObject pane =
+            GuiExecutor.invokeAndRethrow(() -> showInSelectedPane(derived.series(), target));
+        if (pane == null) {
+          pane = GuiExecutor.invokeAndRethrow(() -> ReformatService.open(derived));
+        }
         if (pane != null) {
           body.add("target", pane); // NON-NLS
         }
       }
       print(body.build().toString());
+    }
+
+    /**
+     * Switches the selected pane to that plane when it shows the series or another plane of it, on
+     * the slice through the centre of the one shown, and returns its state; null otherwise.
+     */
+    private static JsonObject showInSelectedPane(
+        MediaSeries<DicomImageElement> series, MprView.Plane plane) {
+      ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+      ImageViewerPlugin<DicomImageElement> container =
+          EventManager.getInstance().getSelectedView2dContainer();
+      if (view == null
+          || view.getSeries() == null
+          || container == null
+          || ReformatService.sourceOf(view.getSeries()) != ReformatService.sourceOf(series)) {
+        return null;
+      }
+      ReformatService.switchPlane(container, view, plane);
+      return ViewDisplayState.target(container, view).build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static MediaSeries<DicomImageElement> resolve(String uid) {
+      MediaSeries<? extends MediaElement> resolved =
+          SeriesResolver.ofApplication()
+              .resolve(uid)
+              .orElseThrow(
+                  () ->
+                      CommandFailure.unknownHandle(
+                          "Unknown series: " + uid, "dicom:list")); // NON-NLS
+      return (MediaSeries<DicomImageElement>) resolved;
     }
 
     static String selectedSeriesUid() {

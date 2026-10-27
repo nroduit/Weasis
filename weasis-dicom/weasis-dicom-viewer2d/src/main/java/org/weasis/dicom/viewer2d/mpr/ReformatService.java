@@ -18,28 +18,37 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.swing.JOptionPane;
 import org.dcm4che3.data.Tag;
+import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewDisplayState;
+import org.weasis.core.ui.editor.image.ViewportPane;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
@@ -206,6 +215,139 @@ public final class ReformatService {
         .add("plane", derived.plane().name()) // NON-NLS
         .add("slices", derived.slices()) // NON-NLS
         .add("spacing", derived.spacing()); // NON-NLS
+  }
+
+  /** Whether the series can be resliced: enough slices with a geometry. */
+  public static boolean canReformat(MediaSeries<DicomImageElement> series) {
+    if (series == null || series.size(null) < DefaultView2d.MINIMAL_IMAGES_FOR_3D) {
+      return false;
+    }
+    DicomImageElement middle = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
+    return middle != null && middle.getSliceGeometry() != null;
+  }
+
+  /** The acquired series behind a reformat, else the series itself. */
+  public static MediaSeries<DicomImageElement> sourceOf(MediaSeries<DicomImageElement> series) {
+    return find(TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class))
+        .map(Derived::source)
+        .orElse(series);
+  }
+
+  /** The plane a series lies in: the one of a reformat, else the acquisition plane. */
+  public static Plane planeOf(MediaSeries<DicomImageElement> series) {
+    Optional<Derived> derived = find(TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class));
+    if (derived.isPresent()) {
+      return derived.get().plane();
+    }
+    DicomImageElement middle = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
+    return middle == null ? Plane.AXIAL : Plane.getAcquisitionPlane(middle);
+  }
+
+  /**
+   * Shows the pane's series in another plane, on the slice through the point at the centre of the
+   * slice shown: the acquired series when the plane is its own, else its reformat, built in the
+   * background when the service has none yet. EDT only.
+   */
+  public static void switchPlane(
+      ImageViewerPlugin<DicomImageElement> container,
+      ViewCanvas<DicomImageElement> view,
+      Plane plane) {
+    MediaSeries<DicomImageElement> shown = view == null ? null : view.getSeries();
+    if (shown == null || plane == null || plane == planeOf(shown)) {
+      return;
+    }
+    MediaSeries<DicomImageElement> source = sourceOf(shown);
+    Vector3d point = centerOf(view.getImage());
+    if (plane == planeOf(source)) {
+      show(container, view, source, point);
+      return;
+    }
+    String sourceUid = TagD.getTagValue(source, Tag.SeriesInstanceUID, String.class);
+    DataExplorerModel model = modelOf(source);
+    ExplorerTask<Derived, Void> task =
+        new ExplorerTask<>(Messages.getString("ReformatMenu.build"), false) {
+          @Override
+          protected Derived doInBackground() throws Exception {
+            fire(ObservableEvent.BasicAction.LOADING_START);
+            return create(sourceUid, plane);
+          }
+
+          @Override
+          protected void done() {
+            fire(ObservableEvent.BasicAction.LOADING_STOP);
+            try {
+              if (view.getSeries() == shown) {
+                show(container, view, get().series(), point);
+              }
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+            } catch (Exception e) {
+              Throwable cause = e.getCause() == null ? e : e.getCause();
+              LOGGER.error("Reformat failed", cause);
+              JOptionPane.showMessageDialog(
+                  GuiUtils.getUICore().getApplicationWindow(),
+                  Messages.getString("ReformatMenu.failed") + "\n" + cause.getMessage(),
+                  Messages.getString("ReformatMenu.title"),
+                  JOptionPane.ERROR_MESSAGE);
+            }
+          }
+
+          private void fire(ObservableEvent.BasicAction action) {
+            if (model != null) {
+              GuiExecutor.execute(
+                  () -> model.firePropertyChange(new ObservableEvent(action, model, null, this)));
+            }
+          }
+        };
+    task.execute();
+  }
+
+  private static void show(
+      ImageViewerPlugin<DicomImageElement> container,
+      ViewCanvas<DicomImageElement> view,
+      MediaSeries<DicomImageElement> series,
+      Vector3d point) {
+    ViewportPane<DicomImageElement> pane = container.getOwningPane(view);
+    if (pane != null && pane.isTiled()) {
+      pane.setSeries(series);
+    } else {
+      view.setSeries(series, point == null ? null : sliceThrough(series, point));
+    }
+    series.setOpen(true);
+  }
+
+  /** The patient-space point at the centre of an image, null without geometry. */
+  public static Vector3d centerOf(DicomImageElement image) {
+    GeometryOfSlice geometry = image == null ? null : image.getSliceGeometry();
+    if (geometry == null) {
+      return null;
+    }
+    Vector3d size = geometry.getDimensions();
+    Vector3d spacing = geometry.getVoxelSpacing();
+    Vector3d center = new Vector3d(geometry.getTLHC());
+    center.fma(size.x / 2 * spacing.x, geometry.getRow());
+    center.fma(size.y / 2 * spacing.y, geometry.getColumn());
+    return center;
+  }
+
+  /** The slice of the series whose plane passes nearest to the point, null without geometry. */
+  public static DicomImageElement sliceThrough(
+      MediaSeries<DicomImageElement> series, Vector3d point) {
+    DicomImageElement nearest = null;
+    double best = Double.MAX_VALUE;
+    for (DicomImageElement image : series.copyOfMedias(null, null)) {
+      GeometryOfSlice geometry = image.getSliceGeometry();
+      if (geometry == null) {
+        continue;
+      }
+      Vector3d offset = new Vector3d(point).sub(geometry.getTLHC());
+      double distance = Math.abs(geometry.getNormal().dot(offset));
+      if (distance < best) {
+        best = distance;
+        nearest = image;
+      }
+    }
+    return nearest;
   }
 
   @SuppressWarnings("unchecked")

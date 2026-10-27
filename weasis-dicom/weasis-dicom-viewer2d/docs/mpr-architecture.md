@@ -146,7 +146,11 @@ isotropic spacing, Image Type `DERIVED\SECONDARY\MPR`, derivation code). The res
 the study like any other, badged `MPR`, so it hangs in a 2D cell, scrolls, measures and is sent.
 `ReformatService` keeps the reformats of the session (same source and plane, same identifiers),
 `MprDerivations` builds one for a hanging protocol cell or a session restore, and the `mpr:`
-namespace (`reformat`, `list`, `delete`) drives it.
+namespace (`reformat`, `list`, `delete`) drives it. A 2D pane switches plane from its view button
+and the *Reformat* submenu of its context menu (`ReformatMenu`): the acquired plane shows the
+source series, the two others its reformats, each opened on the slice through the centre of the
+slice shown (`ReformatService.switchPlane`); the explorer's series menu builds a reformat as a
+series of the study (`ReformatSeriesMenu`).
 
 ## 5. Volume Center vs. Canvas Projection
 

@@ -27,7 +27,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 
 /** Series without pixels, enough for the geometry checks of the compatibility. */
-final class SyntheticSeries {
+public final class SyntheticSeries {
 
   static final String STUDY = "1.2.3"; // NON-NLS
   static final String FRAME = "1.2.3.4.5"; // NON-NLS
@@ -61,11 +61,11 @@ final class SyntheticSeries {
   private SyntheticSeries() {}
 
   /** An MR series of {@code count} axial slices spaced 2 mm apart, the first one at {@code z0}. */
-  static DicomSeries mr(String seriesUid, int count, double z0) {
+  public static DicomSeries mr(String seriesUid, int count, double z0) {
     return mr(seriesUid, count, z0, 1.0, 256, FRAME);
   }
 
-  static DicomSeries mr(
+  public static DicomSeries mr(
       String seriesUid, int count, double z0, double spacing, int matrix, String frame) {
     Attributes[] slices = new Attributes[count];
     for (int i = 0; i < count; i++) {
@@ -74,7 +74,7 @@ final class SyntheticSeries {
     return series(slices);
   }
 
-  static Attributes slice(
+  public static Attributes slice(
       String seriesUid,
       String modality,
       int instance,
@@ -102,7 +102,7 @@ final class SyntheticSeries {
     return a;
   }
 
-  static DicomImageElement element(Attributes a) {
+  public static DicomImageElement element(Attributes a) {
     Map<TagW, Object> tags = new HashMap<>();
     for (int tag : IMAGE_TAGS) {
       TagW key = TagD.get(tag);
@@ -119,7 +119,7 @@ final class SyntheticSeries {
   }
 
   /** A series tagged from its first image, holding one element per dataset. */
-  static DicomSeries series(Attributes... images) {
+  public static DicomSeries series(Attributes... images) {
     DicomSeries series = new DicomSeries(images[0].getString(Tag.SeriesInstanceUID));
     for (int tag : SERIES_TAGS) {
       TagW key = TagD.get(tag);
