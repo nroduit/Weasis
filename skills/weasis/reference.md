@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.19, protocol 1, application development.
+Command API 2.20, protocol 1, application development.
 
 ## color
 
@@ -940,7 +940,7 @@ Derived series subtracting one series of a study from another (post-contrast min
 
 Builds the series minus the mask as a new series of the study, pixel by pixel on the same grid (A - factor*B + offset, real values), and opens it in the selected pane. The same operands and options always give the same series.
 
-Usage: `subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--motion-correction] [--no-open] [--signed] [--factor=<number>] [--mask=<series-uid>] [--mask-frames=<frames>] [--mask-phase=<phase-index>] [--offset=<number>] [--phase=<phase-index>] [--series=<series-uid>] [--shift=<rows,columns>] [--tid-offset=<count>]`
+Usage: `subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--motion-correction] [--no-open] [--signed] [--normalize[=<region>]] [--factor=<number>] [--mask=<series-uid>] [--mask-frames=<frames>] [--mask-phase=<phase-index>] [--offset=<number>] [--phase=<phase-index>] [--series=<series-uid>] [--shift=<rows,columns>] [--tid-offset=<count>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
@@ -959,6 +959,7 @@ Usage: `subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--
 | --tid-offset | integer |  | DSA: time-interval mask, each frame minus the frame that many before it. |
 | --shift | string |  | DSA: sub-pixel shift of the mask in pixels, down and right when positive. |
 | --motion-correction | boolean |  | Move the mask of each slice onto it by the translation phase correlation measures (default: what the pane previews, else off). |
+| --normalize | string |  | Weight the mask so that its mean equals the one of the series, over the whole slices or over a pixel rectangle 'x,y,width,height' of every slice: the dual-tracer normalization of nuclear medicine; overrides --factor. |
 | --no-open | boolean |  | Build the series without opening it. |
 
 ### subtraction:delete (since 5.0)

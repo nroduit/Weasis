@@ -105,7 +105,14 @@ public final class SubtractionCompatibility {
     }
     String study = text(images.getFirst(), Tag.StudyInstanceUID);
     if (study == null || !study.equals(text(masks.getFirst(), Tag.StudyInstanceUID))) {
-      return new Refusal("The operands belong to different studies");
+      // A dual-tracer pair of nuclear medicine is often two studies of the patient (sestamibi
+      // and pertechnetate): the same patient is enough there, elsewhere the study rule holds
+      String patient = text(images.getFirst(), Tag.PatientID);
+      if (!isNuclear(modality)
+          || patient == null
+          || !patient.equals(text(masks.getFirst(), Tag.PatientID))) {
+        return new Refusal("The operands belong to different studies");
+      }
     }
     String frame = frameOfReference(series, images.getFirst());
     String maskFrame = frameOfReference(mask, masks.getFirst());
@@ -325,6 +332,11 @@ public final class SubtractionCompatibility {
       MediaSeries<DicomImageElement> series, DicomImageElement first) {
     String frame = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
     return frame != null ? frame : text(first, Tag.FrameOfReferenceUID);
+  }
+
+  /** Nuclear medicine, whose pairs may span two studies of the patient. */
+  public static boolean isNuclear(String modality) {
+    return "NM".equals(modality) || "PT".equals(modality); // NON-NLS
   }
 
   private static String modality(MediaSeries<DicomImageElement> series, DicomImageElement first) {

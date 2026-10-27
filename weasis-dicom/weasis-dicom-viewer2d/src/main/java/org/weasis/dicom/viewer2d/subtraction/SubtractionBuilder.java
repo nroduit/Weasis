@@ -25,6 +25,7 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -97,6 +98,65 @@ public final class SubtractionBuilder {
     public String path() {
       return resampled ? "resampled" : "direct"; // NON-NLS
     }
+  }
+
+  /**
+   * The mask weight that equalizes the mask to the series over a region: the ratio of their mean
+   * values over every pair.
+   */
+  public record Normalization(double factor, double meanSeries, double meanMask, Rect region) {}
+
+  /**
+   * Measures the means of the series and of the mask over the region of every pair (the whole slice
+   * when null) and returns the weight that equalizes them; one when the mask is empty.
+   */
+  public static Normalization normalize(
+      SubtractionSpec spec, MediaSeries<DicomImageElement> mask, Pairing pairing, Rect region) {
+    MaskVolume volume = pairing.resampled() ? MaskVolume.of(mask) : null;
+    if (pairing.resampled() && volume == null) {
+      throw new IllegalStateException("The volume of the mask cannot be built to resample it");
+    }
+    MaskSource source = volume != null ? volume : pair -> maskOf(spec, pair);
+    double sumSeries = 0;
+    double sumMask = 0;
+    long pixels = 0;
+    try {
+      for (SlicePair pair : pairing.slices()) {
+        PlanarImage image = pair.image().getUncachedModalityLutImage(null);
+        if (image == null) {
+          throw new IllegalStateException("A slice of an operand cannot be read");
+        }
+        Mat a = new Mat();
+        Mat b = source.maskOf(pair);
+        try {
+          image.toMat().convertTo(a, CvType.CV_32F);
+          Rect window = region == null ? new Rect(0, 0, a.cols(), a.rows()) : clip(region, a);
+          sumSeries += Core.sumElems(a.submat(window)).val[0];
+          sumMask += Core.sumElems(b.submat(window)).val[0];
+          pixels += window.area();
+        } finally {
+          a.release();
+          b.release();
+          image.release();
+        }
+      }
+    } finally {
+      if (volume != null) {
+        volume.close();
+      }
+    }
+    double meanSeries = pixels == 0 ? 0 : sumSeries / pixels;
+    double meanMask = pixels == 0 ? 0 : sumMask / pixels;
+    double factor = meanMask == 0 ? 1.0 : meanSeries / meanMask;
+    return new Normalization(factor, meanSeries, meanMask, region);
+  }
+
+  private static Rect clip(Rect region, Mat image) {
+    int x = Math.clamp(region.x, 0, image.cols() - 1);
+    int y = Math.clamp(region.y, 0, image.rows() - 1);
+    int width = Math.clamp(region.width, 1, image.cols() - x);
+    int height = Math.clamp(region.height, 1, image.rows() - y);
+    return new Rect(x, y, width, height);
   }
 
   /** The translation the motion correction applied to a mask slice, in pixels. */

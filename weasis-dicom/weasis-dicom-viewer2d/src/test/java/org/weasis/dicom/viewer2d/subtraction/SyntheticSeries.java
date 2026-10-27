@@ -33,6 +33,7 @@ final class SyntheticSeries {
   static final String FRAME = "1.2.3.4.5"; // NON-NLS
 
   private static final int[] IMAGE_TAGS = {
+    Tag.PatientID,
     Tag.SOPInstanceUID,
     Tag.SOPClassUID,
     Tag.InstanceNumber,
@@ -85,6 +86,7 @@ final class SyntheticSeries {
     a.setString(Tag.SOPClassUID, VR.UI, UID.MRImageStorage);
     a.setString(Tag.SOPInstanceUID, VR.UI, UIDUtils.createUID());
     a.setString(Tag.Modality, VR.CS, modality);
+    a.setString(Tag.PatientID, VR.LO, "P1"); // NON-NLS
     a.setString(Tag.StudyInstanceUID, VR.UI, STUDY);
     a.setString(Tag.SeriesInstanceUID, VR.UI, seriesUid);
     a.setInt(Tag.InstanceNumber, VR.IS, instance);

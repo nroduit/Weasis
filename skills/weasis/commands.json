@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.19",
+  "apiVersion": "2.20",
   "protocolVersion": 1,
   "applicationVersion": "development",
   "exitCodes": {
@@ -3462,7 +3462,7 @@
           "name": "create",
           "description": "Builds the series minus the mask as a new series of the study, pixel by pixel on the same grid (A - factor*B + offset, real values), and opens it in the selected pane. The same operands and options always give the same series.",
           "since": "5.0",
-          "usage": "subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--motion-correction] [--no-open] [--signed] [--factor=<number>] [--mask=<series-uid>] [--mask-frames=<frames>] [--mask-phase=<phase-index>] [--offset=<number>] [--phase=<phase-index>] [--series=<series-uid>] [--shift=<rows,columns>] [--tid-offset=<count>]",
+          "usage": "subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--motion-correction] [--no-open] [--signed] [--normalize[=<region>]] [--factor=<number>] [--mask=<series-uid>] [--mask-frames=<frames>] [--mask-phase=<phase-index>] [--offset=<number>] [--phase=<phase-index>] [--series=<series-uid>] [--shift=<rows,columns>] [--tid-offset=<count>]",
           "parameters": [],
           "options": [
             {
@@ -3614,6 +3614,16 @@
               "arity": "0",
               "required": false,
               "description": "Move the mask of each slice onto it by the translation phase correlation measures (default: what the pane previews, else off)."
+            },
+            {
+              "names": [
+                "--normalize"
+              ],
+              "label": "<region>",
+              "type": "string",
+              "arity": "0..1",
+              "required": false,
+              "description": "Weight the mask so that its mean equals the one of the series, over the whole slices or over a pixel rectangle 'x,y,width,height' of every slice: the dual-tracer normalization of nuclear medicine; overrides --factor."
             },
             {
               "names": [

@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.dcm4che3.data.Tag;
+import org.opencv.core.Rect;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.CommandExtension;
@@ -495,6 +496,17 @@ public class SubtractionCommands implements CommandExtension {
                 + " (default: what the pane previews, else off).")
     boolean motionCorrection;
 
+    @Option(
+        names = "--normalize",
+        arity = "0..1",
+        fallbackValue = "all",
+        paramLabel = "<region>",
+        description =
+            "Weight the mask so that its mean equals the one of the series, over the whole slices"
+                + " or over a pixel rectangle 'x,y,width,height' of every slice: the dual-tracer"
+                + " normalization of nuclear medicine; overrides --factor.")
+    String normalize;
+
     @Option(names = "--no-open", description = "Build the series without opening it.")
     boolean noOpen;
 
@@ -511,6 +523,11 @@ public class SubtractionCommands implements CommandExtension {
       if (motionCorrection) {
         spec = spec.withMotionCorrection(true);
       }
+      SubtractionBuilder.Normalization normalization = null;
+      if (normalize != null) {
+        normalization = SubtractionService.normalize(spec, region(normalize));
+        spec = spec.withFactor(normalization.factor());
+      }
       JsonObjectBuilder body;
       Derived shown;
       if (allPhases) {
@@ -526,6 +543,24 @@ public class SubtractionCommands implements CommandExtension {
       } else {
         shown = SubtractionService.create(spec);
         body = describe(shown);
+      }
+      if (normalization != null) {
+        JsonObjectBuilder measured =
+            Json.createObjectBuilder()
+                .add("factor", normalization.factor()) // NON-NLS
+                .add("meanSeries", normalization.meanSeries()) // NON-NLS
+                .add("meanMask", normalization.meanMask()); // NON-NLS
+        if (normalization.region() != null) {
+          Rect r = normalization.region();
+          measured.add(
+              "region", // NON-NLS
+              Json.createObjectBuilder()
+                  .add("x", r.x)
+                  .add("y", r.y)
+                  .add("width", r.width) // NON-NLS
+                  .add("height", r.height)); // NON-NLS
+        }
+        body.add("normalization", measured); // NON-NLS
       }
       if (!noOpen) {
         Derived opened = shown;
@@ -622,6 +657,29 @@ public class SubtractionCommands implements CommandExtension {
             motion);
       } catch (IllegalArgumentException e) {
         throw invalid(e.getMessage());
+      }
+    }
+
+    /** The region of {@code --normalize}: null for the whole slices, else a pixel rectangle. */
+    private Rect region(String text) {
+      if ("all".equalsIgnoreCase(text)) { // NON-NLS
+        return null;
+      }
+      String[] parts = text.split(",");
+      if (parts.length != 4) {
+        throw invalid("--normalize takes 'x,y,width,height' in pixels, or nothing: " + text);
+      }
+      try {
+        int[] v = new int[4];
+        for (int i = 0; i < 4; i++) {
+          v[i] = Integer.parseInt(parts[i].trim());
+        }
+        if (v[0] < 0 || v[1] < 0 || v[2] < 1 || v[3] < 1) {
+          throw new NumberFormatException();
+        }
+        return new Rect(v[0], v[1], v[2], v[3]);
+      } catch (NumberFormatException e) {
+        throw invalid("--normalize takes 'x,y,width,height' in pixels, or nothing: " + text);
       }
     }
 

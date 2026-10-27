@@ -250,6 +250,20 @@ public record SubtractionSpec(
         motionCorrection);
   }
 
+  public SubtractionSpec withFactor(double factor) {
+    return new SubtractionSpec(
+        seriesUid,
+        maskUid,
+        phase,
+        maskPhase,
+        factor,
+        offset,
+        absolute,
+        signed,
+        dsa,
+        motionCorrection);
+  }
+
   public SubtractionSpec withMotionCorrection(boolean on) {
     return new SubtractionSpec(
         seriesUid, maskUid, phase, maskPhase, factor, offset, absolute, signed, dsa, on);

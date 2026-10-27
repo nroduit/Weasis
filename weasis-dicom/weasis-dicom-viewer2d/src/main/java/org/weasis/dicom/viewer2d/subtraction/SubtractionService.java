@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import org.dcm4che3.data.Tag;
+import org.opencv.core.Rect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -113,16 +114,47 @@ public final class SubtractionService {
     if (study == null) {
       return masks;
     }
-    for (MediaSeriesGroup group : model.getChildren(study)) {
-      if (group instanceof MediaSeries<?> candidate
-          && candidate != parent
-          && candidate.getTagValue(TagW.Derivation) == null
-          && SubtractionCompatibility.isCompatible(
-              series, (MediaSeries<DicomImageElement>) candidate)) {
-        masks.add((MediaSeries<DicomImageElement>) candidate);
+    // The series of the study; for nuclear medicine, of every study of the patient
+    List<MediaSeriesGroup> studies = new ArrayList<>(List.of(study));
+    MediaSeriesGroup patient = model.getParent(study, DicomModel.patient);
+    String modality = TagD.getTagValue(parent, Tag.Modality, String.class);
+    if (patient != null && SubtractionCompatibility.isNuclear(modality)) {
+      model.getChildren(patient).stream().filter(s -> s != study).forEach(studies::add);
+    }
+    for (MediaSeriesGroup node : studies) {
+      for (MediaSeriesGroup group : model.getChildren(node)) {
+        if (group instanceof MediaSeries<?> candidate
+            && candidate != parent
+            && candidate.getTagValue(TagW.Derivation) == null
+            && SubtractionCompatibility.isCompatible(
+                series, (MediaSeries<DicomImageElement>) candidate)) {
+          masks.add((MediaSeries<DicomImageElement>) candidate);
+        }
       }
     }
     return masks;
+  }
+
+  /**
+   * The mask weight that normalizes the mask to the series over a region of every slice (the whole
+   * slice when null): the ratio of the two mean values, as a dual-tracer pair needs before the
+   * subtraction.
+   */
+  public static SubtractionBuilder.Normalization normalize(SubtractionSpec spec, Rect region)
+      throws IOException {
+    MediaSeries<DicomImageElement> series = resolve(spec.seriesUid());
+    MediaSeries<DicomImageElement> mask = resolve(spec.maskUid());
+    MediaSeries<DicomImageElement> operand = PhaseGrouper.operand(series, spec.phase());
+    MediaSeries<DicomImageElement> maskOperand = PhaseGrouper.operand(mask, spec.maskPhase());
+    Result result =
+        spec.dsa() == null
+            ? SubtractionCompatibility.pair(operand, maskOperand)
+            : SubtractionCompatibility.pairFrames(operand, spec.dsa());
+    if (result instanceof Refusal refusal) {
+      throw new IllegalStateException(
+          "The mask cannot be subtracted from the series: " + refusal.reason());
+    }
+    return SubtractionBuilder.normalize(spec, maskOperand, (Pairing) result, region);
   }
 
   /** The masks the mask combo offers: the frames of a run first, then the series of the study. */

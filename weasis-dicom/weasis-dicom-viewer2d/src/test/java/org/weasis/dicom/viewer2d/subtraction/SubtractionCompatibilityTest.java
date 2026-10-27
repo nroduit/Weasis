@@ -236,6 +236,42 @@ class SubtractionCompatibilityTest {
   }
 
   @Test
+  void a_nuclear_medicine_pair_may_span_two_studies_of_the_patient() {
+    Attributes[] mibi = new Attributes[3];
+    Attributes[] tc = new Attributes[3];
+    Attributes[] mr = new Attributes[3];
+    for (int i = 0; i < 3; i++) {
+      mibi[i] = SyntheticSeries.slice(POST, "NM", i + 1, 2.0 * i, 1.0, 128, null); // NON-NLS
+      tc[i] = SyntheticSeries.slice(PRE, "NM", i + 1, 2.0 * i, 1.0, 128, null); // NON-NLS
+      tc[i].setString(Tag.StudyInstanceUID, VR.UI, "1.2.9"); // NON-NLS
+      mr[i] = SyntheticSeries.slice("1.2.3.33", "MR", i + 1, 2.0 * i, 1.0, 128, null); // NON-NLS
+      mr[i].setString(Tag.StudyInstanceUID, VR.UI, "1.2.9"); // NON-NLS
+    }
+    Attributes[] other = new Attributes[3];
+    for (int i = 0; i < 3; i++) {
+      other[i] = SyntheticSeries.slice(PRE, "NM", i + 1, 2.0 * i, 1.0, 128, null); // NON-NLS
+      other[i].setString(Tag.StudyInstanceUID, VR.UI, "1.2.9"); // NON-NLS
+      other[i].setString(Tag.PatientID, VR.LO, "P2"); // NON-NLS
+    }
+    assertAll(
+        () ->
+            assertInstanceOf(
+                Pairing.class,
+                SubtractionCompatibility.pair(
+                    SyntheticSeries.series(mibi), SyntheticSeries.series(tc))),
+        () ->
+            assertInstanceOf(
+                Refusal.class,
+                SubtractionCompatibility.pair(
+                    SyntheticSeries.series(mibi), SyntheticSeries.series(other))),
+        () ->
+            assertInstanceOf(
+                Refusal.class,
+                SubtractionCompatibility.pair(
+                    SyntheticSeries.mr(POST, 3, 0, 1.0, 128, null), SyntheticSeries.series(mr))));
+  }
+
+  @Test
   void planar_images_without_geometry_pair_by_order_when_the_counts_match() {
     Attributes[] a = new Attributes[2];
     Attributes[] b = new Attributes[2];

@@ -41,6 +41,8 @@ class SubtractionCommandsTest {
           "subtraction:preview --motion-correction",
           "subtraction:preview --motion-correction=false --json",
           "subtraction:create --motion-correction --no-open",
+          "subtraction:create --normalize --no-open",
+          "subtraction:create --normalize=10,10,64,64 --series 1.2.3 --mask 1.2.4",
           "subtraction:mask --frames 3",
           "subtraction:mask --view view_1 --pane 2 --frames 1,3,5",
           "subtraction:mask --tid-offset -1 --json",

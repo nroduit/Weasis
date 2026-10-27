@@ -84,6 +84,17 @@ largest shift, which the command reports under `motionCorrection`, and the Deriv
 says the mask was moved. It is a rigid, per-slice, in-plane correction: the elastic registration
 of a breast workstation is out of scope.
 
+## Dual-tracer pairs
+
+A nuclear medicine pair (sestamibi minus pertechnetate for the parathyroid, ictal minus interictal
+SPECT) needs the mask weighted before the subtraction, the two tracers not sharing a scale.
+`SubtractionService.normalize` measures the mean of the series and of the mask over every pair, on
+the whole slices or on a pixel rectangle of each one, and gives the weight that equalizes them;
+`subtraction:create --normalize[=x,y,width,height]` builds with it and reports the means. The
+weight is an ordinary factor of the spec, so the derived series restores like any other. For NM
+and PT the two operands may belong to two studies of the same patient, the usual way such pairs
+are acquired; every other modality keeps the same-study rule.
+
 ## Classes
 
 | Class | Role |
@@ -91,7 +102,7 @@ of a breast workstation is out of scope.
 | `SubtractionSpec` | What is computed: the two series (or phases, or a run and the frames of its mask), the mask weight `k`, an offset, the absolute-value and signed-window flags. The same spec always names the same derived Series and SOP Instance UIDs, so a subtraction created twice is one object |
 | `SubtractionCompatibility` | Whether and how a mask can be subtracted: the *direct path* (same modality, same study, one matrix, one pixel spacing and orientation, and a mask slice within half a slice spacing of every slice of the series), the *resampled path* when the grids differ in one frame of reference, and the frame pairing of a run. Anything else is a `Refusal` with its reason |
 | `SubtractionBuilder` | Computes each pair on modality-LUT values in 32-bit floats, the mask read from its slices or resliced from its volume, moved by the motion correction when asked, stores the difference as signed 16-bit with the rescale slope of the series (a difference of two stored values is then exact), counts the clipped pixels, writes the DICOM attributes of the derived instances and measures the default window on the middle slice |
-| `SubtractionService` | Headless entry point: the compatible masks of a series and the one a reader would pick, `create`, `list`, `find`, `delete`, and `open` in the selected pane. Keeps the derived series of the session with their spec |
+| `SubtractionService` | Headless entry point: the compatible masks of a series and the one a reader would pick, `normalize`, `create`, `list`, `find`, `delete`, and `open` in the selected pane. Keeps the derived series of the session with their spec |
 | `PhaseGrouper` | The phases of a dynamic series stored as one series, each as a transient series that remembers its parent and index |
 | `DsaMask`, `FrameMask` | What the DICOM of an X-ray run says about subtracting it (mask sequence, recommended viewing mode, frame order), and the entries of the mask combo for the frames of a run |
 | `SubtractionView` | The live preview of a pane: a `View2d` scrolling the source series and showing the difference of each slice, with its own cache directory |

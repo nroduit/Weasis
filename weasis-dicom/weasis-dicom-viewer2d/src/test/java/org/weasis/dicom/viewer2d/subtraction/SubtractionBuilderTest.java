@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -46,6 +47,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer2d.mpr.DerivedStack;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionBuilder.MaskVolume;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionBuilder.Normalization;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionBuilder.Result;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Pairing;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionSpec.Dsa;
@@ -352,6 +354,27 @@ class SubtractionBuilderTest {
             assertTrue(
                 TagD.getTagValue(result.series(), Tag.SeriesDescription, String.class)
                     .endsWith("(resampled)")));
+  }
+
+  @Test
+  void the_normalization_weights_the_mask_to_the_mean_of_the_series(@TempDir Path dir)
+      throws IOException {
+    // The series is twice the mask everywhere, four times in the top-left quarter
+    DicomSeries mibi = series(dir, POST, "MIBI", 5, 2, (z, i) -> i < 32 ? 2000 : 1000, 1.0);
+    DicomSeries tc = series(dir, PRE, "TC", 6, 2, (z, i) -> i < 32 ? 500 : 500, 1.0);
+    Pairing pairing = assertInstanceOf(Pairing.class, SubtractionCompatibility.pair(mibi, tc));
+    SubtractionSpec spec = SubtractionSpec.of(POST, PRE);
+    Normalization whole = SubtractionBuilder.normalize(spec, tc, pairing, null);
+    Normalization corner =
+        SubtractionBuilder.normalize(spec, tc, pairing, new Rect(0, 0, SIZE, SIZE / 2));
+    Result result = build(spec.withFactor(corner.factor()), mibi, tc);
+    assertAll(
+        () -> assertEquals(3.0, whole.factor(), 1e-9, "(2000*32 + 1000*32) / (500*64)"),
+        () -> assertEquals(1500, whole.meanSeries(), 1e-9),
+        () -> assertEquals(500, whole.meanMask(), 1e-9),
+        () -> assertEquals(4.0, corner.factor(), 1e-9),
+        () -> assertEquals(0, values(first(result))[0], 1e-6, "normalized on the corner: zero"),
+        () -> assertEquals(-1000, values(first(result))[40], 1e-6, "outside it: 1000 - 4*500"));
   }
 
   private static boolean inSquare(int row, int column, int top, int left) {
