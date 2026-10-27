@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.5, protocol 1, application development.
+Command API 2.16, protocol 1, application development.
 
 ## color
 
@@ -389,6 +389,19 @@ Needs: file read
 | --new-tab | boolean |  | Opens new viewers instead of re-hanging the one of the same patient. |
 | --screen | screen-role |  | Opens the viewers of the step in a viewer window on the screen of this role (control, diagnostic-1, diagnostic-2, color, portrait, see 'workspace:screens'). |
 
+### hp:compare (since 5.0)
+
+Hangs a study against the priors you name: the protocol (the best comparison one, or --protocol) is matched on --current with --prior as its only priors, and its first step is hung. Every study must be loaded.
+
+Usage: `hp:compare [-h] [--json] --current=<study-uid> [--protocol=<protocol-id>] --prior=<study-uid> [--prior=<study-uid>]...`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --current | study-uid |  | The current study, from 'dicom:list'. |
+| --prior | study-uid |  | A prior study of the same patient; repeatable. |
+| --protocol | string |  | Hangs this protocol from 'list' even when another one scores better. |
+
 ### hp:correct (since 5.0)
 
 Puts another series of the study in a cell of the active hanging: the cell is re-hung with it, the correction is recorded with the rule that would have produced the choice, and --apply writes that rule into the protocol when it is a user one.
@@ -405,14 +418,15 @@ Usage: `hp:correct [-h] [--apply] [--json] --cell=<cell> --series=<series-uid> [
 
 ### hp:corrections (since 5.0)
 
-The correction log: what users put in the cells instead of what the protocols chose, with the rule each correction proposes; which rules fail most.
+The correction log: what users put in the cells instead of what the protocols chose, with the rule each correction proposes; --stats gives the anonymous counts per protocol, cell, display set and proposed rule (no study or series), the figures an administrator or the Viewer Hub collects to see which rules fail most.
 
-Usage: `hp:corrections [-h] [--json] [--protocol=<protocol-id>]`
+Usage: `hp:corrections [-h] [--json] [--stats] [--protocol=<protocol-id>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --protocol | string |  | Only the corrections of this protocol. |
+| --stats | boolean |  | The anonymous statistics instead of the log. |
 
 ### hp:delete (since 5.0)
 
@@ -436,6 +450,22 @@ Usage: `hp:explain [-h] [--json] [--cell=<cell>] [--view=<view-id>]`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --cell | integer |  | Only this cell, from 1. |
+
+### hp:export (since 5.0)
+
+Writes a protocol of any layer to a file: its JSON entry, or with --dicom a DICOM Hanging Protocol Storage object (also when the file ends with .dcm). The Weasis extensions (feature selectors, viewer types, display by reference, UI profile) travel in a private block of the object, or are dropped with --plain for a reader that must not see them.
+
+Usage: `hp:export [-h] [--dicom] [--json] [--plain] --id=<protocol-id> --out=<output-path>`
+
+Needs: file write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --id | string |  | Protocol id from 'list'. |
+| --out | output-path |  | Target file. |
+| --dicom | boolean |  | Writes a DICOM object instead of JSON. |
+| --plain | boolean |  | Leaves the Weasis extensions out. |
 
 ### hp:features (since 5.0)
 
@@ -466,6 +496,20 @@ Usage: `hp:group [-h] [--json] [--next] [--previous] [--index=<step>] [--protoco
 | --index | integer |  | The step to show, from 1. |
 | --protocol | string |  | Hangs this candidate of the study instead, from its first step. |
 
+### hp:import (since 5.0)
+
+Reads a protocol file, a DICOM Hanging Protocol Storage object or a JSON entry (one, an array, or an object with 'protocols'), and stores the protocols in the user layer with their level; a protocol of the same id in the built-in or site layer is overridden by it. An object without the Weasis private block imports with its DICOM selectors alone, with a warning.
+
+Usage: `hp:import [-h] [--json] --file=<input-path> [--id=<protocol-id>]`
+
+Needs: file read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --file | input-path |  | Source file. |
+| --id | string |  | The id to store a single imported protocol under. |
+
 ### hp:list (since 5.0)
 
 The protocols of every layer (built-in, site, user) with their level, whether they are enabled, and the number of image sets and display sets they declare.
@@ -490,6 +534,20 @@ Needs: file read
 | --study | study-uid |  | Study Instance UID from 'dicom:list'. |
 | --protocol | string |  | Plans this protocol from 'list' even when another one scores better. |
 | --protocols | input-path |  | A JSON file of protocol entries matched instead of the layers, to try a draft. |
+
+### hp:open (since 5.0)
+
+Opens a study hung by a protocol, the reading workflow in one call: the best protocol (or --protocol) is matched on the study with its priors, the older loaded studies of the patient, or only the ones --prior names, and its first step is hung. The study and its priors must be loaded ('dicom:get' first); the selective download of the hung series is not there yet.
+
+Usage: `hp:open [-h] [--json] [--new-tab] [--protocol=<protocol-id>] [--study=<study-uid>] [--prior=<study-uid>]...`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --study | study-uid |  | Study Instance UID from 'dicom:list'. |
+| --protocol | string |  | Hangs this protocol from 'list' even when another one scores better. |
+| --prior | study-uid |  | A prior study to compare with; repeatable. Default: every loaded prior. |
+| --new-tab | boolean |  | Opens new viewers instead of re-hanging the one of the same patient. |
 
 ### hp:save (since 5.0)
 
@@ -823,6 +881,22 @@ Usage: `state:delete [-h] [--json] --session=<session-id>`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --session | string |  | Session id from 'list'. |
 
+### state:export (since 5.0)
+
+Writes a session to a directory: its JSON (the sidecar as 'state:keep' stores it), or with --dicom a Basic Structured Display object laying out the panes of the 2D viewers of the main window as image boxes, each with a Grayscale Softcopy Presentation State carrying the pane's window, rotation, flip, inversion, magnification and graphics; the studies of the session must be loaded. What the object cannot carry (MPR and 3D views, other windows, hidden tabs, blends) is listed under 'warnings'.
+
+Usage: `state:export [-h] [--dicom] [--json] --out=<output-path> [--session=<session-id>] [--study=<study-uid>]`
+
+Needs: file write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --session | string |  | Session id from 'list'. |
+| --study | study-uid |  | The most recent session showing this study instead of an id. |
+| --out | output-path |  | Target directory, created when missing. |
+| --dicom | boolean |  | Writes DICOM objects instead of the JSON. |
+
 ### state:keep (since 5.0)
 
 Keep this display: saves the workspace as a session of the user (windows, viewers, the series and presentation of every pane, the shell, the protocol and step that hung it) and returns its id. The session holds study and series identifiers, never credentials.
@@ -856,6 +930,150 @@ Usage: `state:restore [-h] [--json] [--session=<session-id>] [--study=<study-uid
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --session | string |  | Session id from 'list'. |
 | --study | study-uid |  | The most recent session showing this study instead of an id. |
+
+
+## subtraction
+
+Derived series subtracting one series of a study from another (post-contrast minus pre-contrast), scrolled, windowed, measured and sent like any series.
+
+### subtraction:create (since 5.0)
+
+Builds the series minus the mask as a new series of the study, pixel by pixel on the same grid (A - factor*B + offset, real values), and opens it in the selected pane. The same operands and options always give the same series.
+
+Usage: `subtraction:create [-h] [--absolute] [--json] [--no-open] [--signed] [--factor=<number>] [--mask=<series-uid>] [--offset=<number>] [--series=<series-uid>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | series-uid |  | The series subtracted from, from 'dicom:list' (default: the series of the selected pane). |
+| --mask | series-uid |  | The series subtracted, from 'dicom:list' (default: the series of the study without contrast agent, else the earliest compatible one). |
+| --factor | number |  | Weight of the mask: 1 subtracts it fully, below 1 keeps part of the anatomy (default: 1). |
+| --offset | number |  | Value added to every difference (default: 0). |
+| --absolute | boolean |  | Store the absolute difference. |
+| --signed | boolean |  | Open with the signed window, negative differences visible, instead of black below zero. |
+| --no-open | boolean |  | Build the series without opening it. |
+
+### subtraction:delete (since 5.0)
+
+Removes a subtraction series from the explorer and its slices from the cache.
+
+Usage: `subtraction:delete [-h] [--json] --series=<series-uid>`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | series-uid |  | A subtraction series, from 'subtraction:list'. |
+
+### subtraction:info (since 5.0)
+
+What a subtraction series was computed from and how.
+
+Usage: `subtraction:info [-h] [--json] --series=<series-uid>`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | series-uid |  | A subtraction series, from 'subtraction:list'. |
+
+### subtraction:list (since 5.0)
+
+The subtraction series built in this session.
+
+Usage: `subtraction:list [-h] [--json] [--study=<study-uid>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --study | study-uid |  | Keep the series of one study, from 'dicom:list'. |
+
+### subtraction:preview (since 5.0)
+
+Shows the series of a pane minus a mask live, slice by slice, before any series is built: a call starts the preview (with the proposed mask unless --mask), --mask and --factor change it, --off puts the plain series back. The state of the pane comes back with the preview under 'subtraction'.
+
+Usage: `subtraction:preview [-h] [--json] [--off] [--factor=<number>] [--mask=<series-uid>] [--pane=<pane-index>] [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --mask | series-uid |  | The series subtracted, from 'dicom:list' (default: the series of the study without contrast agent, else the earliest compatible one). |
+| --factor | number |  | Weight of the mask, 1 subtracts it fully (default: 1). |
+| --off | boolean |  | Leaves the preview, the plain series stays shown. |
+
+
+## ui
+
+The workspace around the viewers: the UI profiles (shell slots, toolbars, menus, mouse bindings, measurement profile) that a hanging protocol or a reading step lays over it, the overflow of what the selected view hides, and the catalog of every action of the workspace (menu entries, toolbar buttons, tool panels). Profile ids come from 'ui:profiles', action ids from 'ui:actions'.
+
+### ui:action (since 5.0)
+
+Runs one action of 'ui:actions' by id, as its menu entry, button or stripe click would, and returns the active profile, the shell and the toolbar row after it.
+
+Usage: `ui:action [-h] [--json] --id=<action-id>`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --id | string |  | From 'actions'. |
+
+### ui:actions (since 5.0)
+
+The actions of the workspace as the command palette lists them: the menu entries, the toolbar buttons and the tool panels of the selected viewer, with a stable id, the group, the shortcut and whether the selected view shows them ('relevant'; a hidden one still runs). In text a hidden action is marked with '-'.
+
+Usage: `ui:actions [-h] [--json] [--relevant] [--filter=<text>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --filter | string |  | Keeps the actions whose label, group or id contain every word, best first. |
+| --relevant | boolean |  | Keeps the actions the selected view shows. |
+
+### ui:context (since 5.0)
+
+The context of the selected view (its facts), the UI profile in force with its entry, the shell and the toolbar row, what the view hides, and the actions the view shows with their action command when they have one; what an agent needs to pick the next verb.
+
+Usage: `ui:context [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+### ui:profile (since 5.0)
+
+One UI profile as its JSON entry; --apply lays it over the workspace of the selected viewer until the next selection asks for another, --clear puts the user's own settings back, --delete removes the entry of the user layer. After a change the active profile, the shell and the toolbar row are returned.
+
+Usage: `ui:profile [-h] [--apply] [--clear] [--delete] [--json] [--id=<ui-profile-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --id | string |  | Profile id from 'profiles'. |
+| --apply | boolean |  | Lays --id over the workspace now. |
+| --clear | boolean |  | Releases the active profile. |
+| --delete | boolean |  | Removes --id from the user layer. |
+
+### ui:profiles (since 5.0)
+
+The UI profiles of every layer (built-in, site, user) with the one in force, and the shell and toolbar row as they are now.
+
+Usage: `ui:profiles [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+### ui:reveal (since 5.0)
+
+Shows again, for the selected view only, a toolbar or a tool panel that the view's context or the UI profile hides (the overflow 'More tools...' of the toolbar row); the next view hides it again. The hidden ids are under 'hidden' in the state the verbs of this namespace return.
+
+Usage: `ui:reveal [-h] [--json] [--tool=<tool-id>] [--toolbar=<toolbar-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --toolbar | string |  | Toolbar id from 'hidden.toolbars'. |
+| --tool | string |  | Tool id from 'hidden.tools'. |
 
 
 ## view2d
@@ -926,6 +1144,22 @@ Usage: `view2d:flip [-h] [--json] [--axis=<flip-axis>] [--pane=<pane-index>] [--
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --axis | enum | horizontal | horizontal or vertical (default: horizontal). (since 5.0) |
+
+### view2d:fusion (since 5.0)
+
+Blends another series of the study over the one a pane shows (PET over CT, SPECT over MR...): --series starts or replaces the overlay, --color-map and --opacity change the blend, --off removes it; the display state returns the blend under 'blend'. With no argument the state is returned unchanged.
+
+Usage: `view2d:fusion [-h] [--json] [--off] [--color-map=<color-map-id>] [--opacity=<0-1>] [--pane=<pane-index>] [--series=<series-uid>] [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --series | series-uid |  | The overlay series, from 'dicom:list'; it must share the frame of reference. |
+| --color-map | string |  | Color map of the overlay, from 'color:maps'. |
+| --opacity | number |  | Opacity of the overlay, 0 transparent to 1 opaque. |
+| --off | boolean |  | Removes the overlay. |
 
 ### view2d:graphics (since 5.0)
 
@@ -1072,6 +1306,20 @@ Usage: `view2d:scroll [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--
 | --by | integer |  | Moves by this many images, negative towards the first one. |
 | --image | image-index |  | Image to show, from 1. |
 
+### view2d:sort (since 5.0)
+
+Orders the images of the stack a pane shows, by a sort key and a direction, and returns the display state ('sort', 'inverseStack'); with no argument the state is returned unchanged. 'slice-position' orders along the positive patient axis whatever the acquisition direction (feet to head for an axial stack, right to left, front to back), so --inverse true reads head to feet.
+
+Usage: `view2d:sort [-h] [--json] [--inverse=<true|false>] [--key=<sort-key>] [--pane=<pane-index>] [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --key | string |  | instance, slice-position, slice-location, content-time, acquisition-time, b-value. |
+| --inverse | boolean |  | Reads the stack backwards. |
+
 ### view2d:stats (since 5.0)
 
 Pixel statistics of a region (min, max, mean, median, standard deviation, ...) in the image value unit, e.g. HU, plus the region geometry in the spatial unit.
@@ -1135,16 +1383,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
+| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 
 
 ## view3d

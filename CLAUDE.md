@@ -133,6 +133,7 @@ Existing docs:
 | `weasis-dicom/weasis-dicom-viewer2d/docs/mpr-transformations.md` | MPR transforms and rotations |
 | `weasis-dicom/weasis-dicom-viewer2d/docs/mpr-curved.md` | curved MPR (panoramic, cross-sections) |
 | `weasis-dicom/weasis-dicom-viewer2d/docs/fusion-architecture.md` | PET/CT fusion pipeline |
+| `weasis-dicom/weasis-dicom-viewer2d/docs/subtraction.md` | subtraction as a derived series: compatibility and slice pairing, value conventions, DICOM encoding, `subtraction:` commands |
 | `weasis-dicom/weasis-dicom-viewer2d/docs/synch-architecture.md` | view synchronization |
 | `weasis-distributions/docs/Native-Build-Overview.md` | installer build jobs and binary compatibility |
 | `weasis-launcher/docs/Launcher-Overview.md` | launcher startup sequence, launch pipeline and AOT cache, class loaders, base directories |

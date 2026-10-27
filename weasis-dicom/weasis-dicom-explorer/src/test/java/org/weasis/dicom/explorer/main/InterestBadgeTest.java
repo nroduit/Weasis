@@ -12,6 +12,7 @@ package org.weasis.dicom.explorer.main;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 import java.util.Set;
@@ -42,17 +43,28 @@ class InterestBadgeTest {
             Map.of(
                 InterestSource.KEY_OBJECT, Set.of("1.1", "1.2", "1.3"),
                 InterestSource.GRAPHICS, Set.of("1.2", "1.9")));
-    Badge badge = InterestBadge.of(interest);
+    Badge badge = InterestBadge.of(interest, null);
+    Badge derived = InterestBadge.of(interest, "SUB");
     assertAll(
         () -> assertEquals("★4", badge.text()),
-        () -> assertEquals("4 images of interest (KO 3, Drawn graphics 2)", badge.tooltip()));
+        () -> assertEquals("4 images of interest (KO 3, Drawn graphics 2)", badge.tooltip()),
+        () -> assertEquals("SUB ★4", derived.text()),
+        () -> assertTrue(derived.tooltip().startsWith("Series derived by Weasis (SUB)")));
+  }
+
+  @Test
+  void a_derived_series_shows_its_label_without_interest() {
+    Badge badge = InterestBadge.of(Interest.NONE, "MIP");
+    assertAll(
+        () -> assertEquals("MIP", badge.text()),
+        () -> assertEquals("Series derived by Weasis (MIP)", badge.tooltip()));
   }
 
   @Test
   void no_badge_without_interest() {
     assertAll(
-        () -> assertNull(InterestBadge.of(Interest.NONE)),
-        () -> assertNull(InterestBadge.of(null)));
+        () -> assertNull(InterestBadge.of(Interest.NONE, null)),
+        () -> assertNull(InterestBadge.of(null, "")));
   }
 
   @Test

@@ -120,6 +120,10 @@ import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.dicom.viewer2d.mpr.Volume;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionAction;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionController;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionService;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionView;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.ColorLut;
@@ -204,6 +208,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newFusionEnableAction());
     setAction(newFusionSeriesAction());
     setAction(newFusionLutAction());
+    setAction(newSubtractionPreviewAction());
+    setAction(newSubtractionMaskAction());
+    setAction(newSubtractionFactorAction());
     fusionBaseOpacity =
         new FusionOpacityListener(
             FusionAction.BASE_OPACITY,
@@ -898,6 +905,74 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   // ---  End of Fusion actions ------------------------------------------------------------------
 
+  // ---  Subtraction actions: the preview toggle turns the selected pane into a live preview of
+  // its series minus the mask; the mask and the weight drive that preview, and the next build.
+
+  private ToggleButtonListener newSubtractionPreviewAction() {
+    return new ToggleButtonListener(SubtractionAction.PREVIEW, false) {
+      @Override
+      public void actionPerformed(boolean selected) {
+        SubtractionController.setPreview(selected);
+      }
+    };
+  }
+
+  private ComboItemListener<Object> newSubtractionMaskAction() {
+    return new ComboItemListener<>(SubtractionAction.MASK, null) {
+      @Override
+      public void itemStateChanged(Object object) {
+        SubtractionController.updatePreview();
+      }
+    };
+  }
+
+  private SliderChangeListener newSubtractionFactorAction() {
+    return new SliderChangeListener(SubtractionAction.FACTOR, 0, 100, 100, false) {
+      @Override
+      public void stateChanged(BoundedRangeModel model) {
+        SubtractionController.updatePreview();
+      }
+    };
+  }
+
+  /**
+   * Lists the masks the selected series can take and proposes the pre-contrast one; a preview view
+   * shows its own mask and weight.
+   */
+  private void updateSubtractionComponentsListener(ViewCanvas<DicomImageElement> view2d) {
+    List<MediaSeries<DicomImageElement>> masks = SubtractionController.compatibleMasks(view2d);
+    boolean available = !masks.isEmpty();
+    SubtractionView preview = view2d instanceof SubtractionView v ? v : null;
+    getAction(SubtractionAction.MASK)
+        .ifPresent(
+            a -> {
+              a.setDataListWithoutTriggerAction(masks.toArray());
+              if (preview != null && masks.contains(preview.getMask())) {
+                a.setSelectedItemWithoutTriggerAction(preview.getMask());
+              } else if (available) {
+                SubtractionService.proposeMask(view2d.getSeries(), masks)
+                    .ifPresent(a::setSelectedItemWithoutTriggerAction);
+              }
+              a.enableAction(available);
+            });
+    getAction(SubtractionAction.FACTOR)
+        .ifPresent(
+            a -> {
+              if (preview != null) {
+                a.setSliderValue((int) Math.round(preview.getFactor() * 100), false);
+              }
+              a.enableAction(available);
+            });
+    getAction(SubtractionAction.PREVIEW)
+        .ifPresent(
+            a -> {
+              a.setSelectedWithoutTriggerAction(preview != null);
+              a.enableAction(available);
+            });
+  }
+
+  // ---  End of Subtraction actions ----------------------------------------------------------
+
   private ToggleButtonListener newKOToggleAction() {
     return new ToggleButtonListener(ActionW.KO_TOGGLE_STATE, false) {
       @Override
@@ -1493,6 +1568,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     getAction(ActionW.CROSSHAIR).ifPresent(a -> a.enableAction(!isMprOrOblique));
     updateKeyObjectComponentsListener(view2d);
     updateFusionComponentsListener(view2d);
+    updateSubtractionComponentsListener(view2d);
 
     // register all actions for the selected view and for the other views register according to
     // synchview.

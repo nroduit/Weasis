@@ -40,6 +40,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.ExternalDisplay;
+import org.weasis.core.ui.editor.SeriesMenuContributor;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerOpenOptions;
@@ -153,6 +154,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
     addViewerMenuItems(popupMenu, seriesList);
     addProtocolMenuItems(popupMenu);
     addInterestMenuItem(popupMenu);
+    addContributedMenuItems(popupMenu);
     addSelectionMenuItems(popupMenu, selList);
     addLoadSeriesMenuItems(popupMenu, selList);
     addMergeMenuItem(popupMenu, selList, seriesList);
@@ -161,6 +163,14 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
     addThumbnailMenuItems(popupMenu, selList);
 
     popupMenu.show(e.getComponent(), e.getX() - 5, e.getY() - 5);
+  }
+
+  /** What the plugins can do with this series, each one adding its own items. */
+  private void addContributedMenuItems(JPopupMenu popupMenu) {
+    for (SeriesMenuContributor contributor :
+        GuiUtils.getUICore().getPluginManager().getExtensions(SeriesMenuContributor.class)) {
+      contributor.contribute(series, popupMenu);
+    }
   }
 
   /** Hangs the study with one of the protocols that apply to it, or restores its kept session. */

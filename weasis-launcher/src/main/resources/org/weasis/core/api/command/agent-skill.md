@@ -123,8 +123,20 @@ line naming the current spelling. Use the current one everywhere.
    `workspace:stack`, `workspace:maximize`, `workspace:save --out layout.json` and
    `workspace:load --file layout.json`. `workspace:list` shows, for each view, its grid, its
    synchronization and what every pane holds.
+<!--if:subtraction-->
+8. **Subtract** a pre-contrast series from its post-contrast acquisition. `subtraction:preview`
+   on the pane of the post-contrast series shows the difference live, slice by slice, without
+   building anything (`--mask <uid>` chooses the mask, else the series without contrast agent is
+   proposed; `--factor 0.8` keeps part of the anatomy; `--off` puts the plain series back).
+   `subtraction:create` builds what the pane previews, or `--series <uid> --mask <uid>` given
+   explicitly, as a new series of the study (same grid only, real values, black where nothing
+   enhances) and opens it in the pane; `--signed` opens with negative differences visible,
+   `--no-open` only builds. `subtraction:list` and `subtraction:info --series <uid>` describe
+   what was built, `subtraction:delete` removes it. The result is a series: scroll, window,
+   measure and capture it like any other.
+<!--endif-->
 <!--if:view3d-->
-8. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
+9. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
    and still have no usable 3D.
 <!--endif-->

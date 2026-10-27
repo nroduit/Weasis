@@ -343,6 +343,7 @@ public class MipView extends View2d {
     DicomSeries s = new DicomSeries(TagD.getTagValue(first, Tag.SeriesInstanceUID, String.class));
     s.addAll(dicomImages);
     first.getMediaReader().writeMetaData(s);
+    s.setTag(TagW.Derivation, "MIP"); // NON-NLS
 
     DataExplorerModel model = (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
     if (model instanceof DicomModel dicomModel) {

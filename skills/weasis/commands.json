@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.5",
+  "apiVersion": "2.16",
   "protocolVersion": 1,
   "applicationVersion": "development",
   "exitCodes": {
@@ -1473,6 +1473,55 @@
           ]
         },
         {
+          "name": "compare",
+          "description": "Hangs a study against the priors you name: the protocol (the best comparison one, or --protocol) is matched on --current with --prior as its only priors, and its first step is hung. Every study must be loaded.",
+          "since": "5.0",
+          "usage": "hp:compare [-h] [--json] --current=<study-uid> [--protocol=<protocol-id>] --prior=<study-uid> [--prior=<study-uid>]...",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--current"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": true,
+              "description": "The current study, from 'dicom:list'."
+            },
+            {
+              "names": [
+                "--prior"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": true,
+              "description": "A prior study of the same patient; repeatable."
+            },
+            {
+              "names": [
+                "--protocol"
+              ],
+              "label": "<protocol-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Hangs this protocol from 'list' even when another one scores better."
+            }
+          ]
+        },
+        {
           "name": "correct",
           "description": "Puts another series of the study in a cell of the active hanging: the cell is re-hung with it, the correction is recorded with the rule that would have produced the choice, and --apply writes that rule into the protocol when it is a user one.",
           "since": "5.0",
@@ -1533,9 +1582,9 @@
         },
         {
           "name": "corrections",
-          "description": "The correction log: what users put in the cells instead of what the protocols chose, with the rule each correction proposes; which rules fail most.",
+          "description": "The correction log: what users put in the cells instead of what the protocols chose, with the rule each correction proposes; --stats gives the anonymous counts per protocol, cell, display set and proposed rule (no study or series), the figures an administrator or the Viewer Hub collects to see which rules fail most.",
           "since": "5.0",
-          "usage": "hp:corrections [-h] [--json] [--protocol=<protocol-id>]",
+          "usage": "hp:corrections [-h] [--json] [--stats] [--protocol=<protocol-id>]",
           "parameters": [],
           "options": [
             {
@@ -1557,6 +1606,16 @@
               "arity": "1",
               "required": false,
               "description": "Only the corrections of this protocol."
+            },
+            {
+              "names": [
+                "--stats"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "The anonymous statistics instead of the log."
             }
           ]
         },
@@ -1625,6 +1684,71 @@
               "arity": "1",
               "required": false,
               "description": "Only this cell, from 1."
+            }
+          ]
+        },
+        {
+          "name": "export",
+          "description": "Writes a protocol of any layer to a file: its JSON entry, or with --dicom a DICOM Hanging Protocol Storage object (also when the file ends with .dcm). The Weasis extensions (feature selectors, viewer types, display by reference, UI profile) travel in a private block of the object, or are dropped with --plain for a reader that must not see them.",
+          "since": "5.0",
+          "usage": "hp:export [-h] [--dicom] [--json] [--plain] --id=<protocol-id> --out=<output-path>",
+          "needs": [
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--id"
+              ],
+              "label": "<protocol-id>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Protocol id from 'list'."
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": true,
+              "description": "Target file.",
+              "needs": [
+                "file-write"
+              ]
+            },
+            {
+              "names": [
+                "--dicom"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Writes a DICOM object instead of JSON."
+            },
+            {
+              "names": [
+                "--plain"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Leaves the Weasis extensions out."
             }
           ]
         },
@@ -1743,6 +1867,51 @@
           ]
         },
         {
+          "name": "import",
+          "description": "Reads a protocol file, a DICOM Hanging Protocol Storage object or a JSON entry (one, an array, or an object with 'protocols'), and stores the protocols in the user layer with their level; a protocol of the same id in the built-in or site layer is overridden by it. An object without the Weasis private block imports with its DICOM selectors alone, with a warning.",
+          "since": "5.0",
+          "usage": "hp:import [-h] [--json] --file=<input-path> [--id=<protocol-id>]",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--file"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": true,
+              "description": "Source file.",
+              "needs": [
+                "file-read"
+              ]
+            },
+            {
+              "names": [
+                "--id"
+              ],
+              "label": "<protocol-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "The id to store a single imported protocol under."
+            }
+          ]
+        },
+        {
           "name": "list",
           "description": "The protocols of every layer (built-in, site, user) with their level, whether they are enabled, and the number of image sets and display sets they declare.",
           "since": "5.0",
@@ -1813,6 +1982,65 @@
               "needs": [
                 "file-read"
               ]
+            }
+          ]
+        },
+        {
+          "name": "open",
+          "description": "Opens a study hung by a protocol, the reading workflow in one call: the best protocol (or --protocol) is matched on the study with its priors, the older loaded studies of the patient, or only the ones --prior names, and its first step is hung. The study and its priors must be loaded ('dicom:get' first); the selective download of the hung series is not there yet.",
+          "since": "5.0",
+          "usage": "hp:open [-h] [--json] [--new-tab] [--protocol=<protocol-id>] [--study=<study-uid>] [--prior=<study-uid>]...",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": false,
+              "description": "Study Instance UID from 'dicom:list'."
+            },
+            {
+              "names": [
+                "--protocol"
+              ],
+              "label": "<protocol-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Hangs this protocol from 'list' even when another one scores better."
+            },
+            {
+              "names": [
+                "--prior"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": false,
+              "description": "A prior study to compare with; repeatable. Default: every loaded prior."
+            },
+            {
+              "names": [
+                "--new-tab"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Opens new viewers instead of re-hanging the one of the same patient."
             }
           ]
         },
@@ -3063,6 +3291,71 @@
           ]
         },
         {
+          "name": "export",
+          "description": "Writes a session to a directory: its JSON (the sidecar as 'state:keep' stores it), or with --dicom a Basic Structured Display object laying out the panes of the 2D viewers of the main window as image boxes, each with a Grayscale Softcopy Presentation State carrying the pane's window, rotation, flip, inversion, magnification and graphics; the studies of the session must be loaded. What the object cannot carry (MPR and 3D views, other windows, hidden tabs, blends) is listed under 'warnings'.",
+          "since": "5.0",
+          "usage": "state:export [-h] [--dicom] [--json] --out=<output-path> [--session=<session-id>] [--study=<study-uid>]",
+          "needs": [
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--session"
+              ],
+              "label": "<session-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Session id from 'list'."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": false,
+              "description": "The most recent session showing this study instead of an id."
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": true,
+              "description": "Target directory, created when missing.",
+              "needs": [
+                "file-write"
+              ]
+            },
+            {
+              "names": [
+                "--dicom"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Writes DICOM objects instead of the JSON."
+            }
+          ]
+        },
+        {
           "name": "keep",
           "description": "Keep this display: saves the workspace as a session of the user (windows, viewers, the series and presentation of every pane, the shell, the protocol and step that hung it) and returns its id. The session holds study and series identifiers, never credentials.",
           "since": "5.0",
@@ -3156,6 +3449,468 @@
               "arity": "1",
               "required": false,
               "description": "The most recent session showing this study instead of an id."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "subtraction",
+      "description": "Derived series subtracting one series of a study from another (post-contrast minus pre-contrast), scrolled, windowed, measured and sent like any series.",
+      "verbs": [
+        {
+          "name": "create",
+          "description": "Builds the series minus the mask as a new series of the study, pixel by pixel on the same grid (A - factor*B + offset, real values), and opens it in the selected pane. The same operands and options always give the same series.",
+          "since": "5.0",
+          "usage": "subtraction:create [-h] [--absolute] [--json] [--no-open] [--signed] [--factor=<number>] [--mask=<series-uid>] [--offset=<number>] [--series=<series-uid>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": false,
+              "description": "The series subtracted from, from 'dicom:list' (default: the series of the selected pane)."
+            },
+            {
+              "names": [
+                "--mask"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": false,
+              "description": "The series subtracted, from 'dicom:list' (default: the series of the study without contrast agent, else the earliest compatible one)."
+            },
+            {
+              "names": [
+                "--factor"
+              ],
+              "label": "<number>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "description": "Weight of the mask: 1 subtracts it fully, below 1 keeps part of the anatomy (default: 1)."
+            },
+            {
+              "names": [
+                "--offset"
+              ],
+              "label": "<number>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "description": "Value added to every difference (default: 0)."
+            },
+            {
+              "names": [
+                "--absolute"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Store the absolute difference."
+            },
+            {
+              "names": [
+                "--signed"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Open with the signed window, negative differences visible, instead of black below zero."
+            },
+            {
+              "names": [
+                "--no-open"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Build the series without opening it."
+            }
+          ]
+        },
+        {
+          "name": "delete",
+          "description": "Removes a subtraction series from the explorer and its slices from the cache.",
+          "since": "5.0",
+          "usage": "subtraction:delete [-h] [--json] --series=<series-uid>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": true,
+              "description": "A subtraction series, from 'subtraction:list'."
+            }
+          ]
+        },
+        {
+          "name": "info",
+          "description": "What a subtraction series was computed from and how.",
+          "since": "5.0",
+          "usage": "subtraction:info [-h] [--json] --series=<series-uid>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": true,
+              "description": "A subtraction series, from 'subtraction:list'."
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "description": "The subtraction series built in this session.",
+          "since": "5.0",
+          "usage": "subtraction:list [-h] [--json] [--study=<study-uid>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": false,
+              "description": "Keep the series of one study, from 'dicom:list'."
+            }
+          ]
+        },
+        {
+          "name": "preview",
+          "description": "Shows the series of a pane minus a mask live, slice by slice, before any series is built: a call starts the preview (with the proposed mask unless --mask), --mask and --factor change it, --off puts the plain series back. The state of the pane comes back with the preview under 'subtraction'.",
+          "since": "5.0",
+          "usage": "subtraction:preview [-h] [--json] [--off] [--factor=<number>] [--mask=<series-uid>] [--pane=<pane-index>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--mask"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": false,
+              "description": "The series subtracted, from 'dicom:list' (default: the series of the study without contrast agent, else the earliest compatible one)."
+            },
+            {
+              "names": [
+                "--factor"
+              ],
+              "label": "<number>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "description": "Weight of the mask, 1 subtracts it fully (default: 1)."
+            },
+            {
+              "names": [
+                "--off"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Leaves the preview, the plain series stays shown."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ui",
+      "description": "The workspace around the viewers: the UI profiles (shell slots, toolbars, menus, mouse bindings, measurement profile) that a hanging protocol or a reading step lays over it, the overflow of what the selected view hides, and the catalog of every action of the workspace (menu entries, toolbar buttons, tool panels). Profile ids come from 'ui:profiles', action ids from 'ui:actions'.",
+      "since": "5.0",
+      "verbs": [
+        {
+          "name": "action",
+          "description": "Runs one action of 'ui:actions' by id, as its menu entry, button or stripe click would, and returns the active profile, the shell and the toolbar row after it.",
+          "since": "5.0",
+          "usage": "ui:action [-h] [--json] --id=<action-id>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--id"
+              ],
+              "label": "<action-id>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "From 'actions'."
+            }
+          ]
+        },
+        {
+          "name": "actions",
+          "description": "The actions of the workspace as the command palette lists them: the menu entries, the toolbar buttons and the tool panels of the selected viewer, with a stable id, the group, the shortcut and whether the selected view shows them ('relevant'; a hidden one still runs). In text a hidden action is marked with '-'.",
+          "since": "5.0",
+          "usage": "ui:actions [-h] [--json] [--relevant] [--filter=<text>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--filter"
+              ],
+              "label": "<text>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Keeps the actions whose label, group or id contain every word, best first."
+            },
+            {
+              "names": [
+                "--relevant"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Keeps the actions the selected view shows."
+            }
+          ]
+        },
+        {
+          "name": "context",
+          "description": "The context of the selected view (its facts), the UI profile in force with its entry, the shell and the toolbar row, what the view hides, and the actions the view shows with their action command when they have one; what an agent needs to pick the next verb.",
+          "since": "5.0",
+          "usage": "ui:context [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "profile",
+          "description": "One UI profile as its JSON entry; --apply lays it over the workspace of the selected viewer until the next selection asks for another, --clear puts the user's own settings back, --delete removes the entry of the user layer. After a change the active profile, the shell and the toolbar row are returned.",
+          "since": "5.0",
+          "usage": "ui:profile [-h] [--apply] [--clear] [--delete] [--json] [--id=<ui-profile-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--id"
+              ],
+              "label": "<ui-profile-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Profile id from 'profiles'."
+            },
+            {
+              "names": [
+                "--apply"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Lays --id over the workspace now."
+            },
+            {
+              "names": [
+                "--clear"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Releases the active profile."
+            },
+            {
+              "names": [
+                "--delete"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Removes --id from the user layer."
+            }
+          ]
+        },
+        {
+          "name": "profiles",
+          "description": "The UI profiles of every layer (built-in, site, user) with the one in force, and the shell and toolbar row as they are now.",
+          "since": "5.0",
+          "usage": "ui:profiles [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "reveal",
+          "description": "Shows again, for the selected view only, a toolbar or a tool panel that the view's context or the UI profile hides (the overflow 'More tools...' of the toolbar row); the next view hides it again. The hidden ids are under 'hidden' in the state the verbs of this namespace return.",
+          "since": "5.0",
+          "usage": "ui:reveal [-h] [--json] [--tool=<tool-id>] [--toolbar=<toolbar-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--toolbar"
+              ],
+              "label": "<toolbar-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Toolbar id from 'hidden.toolbars'."
+            },
+            {
+              "names": [
+                "--tool"
+              ],
+              "label": "<tool-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Tool id from 'hidden.tools'."
             }
           ]
         }
@@ -3464,6 +4219,85 @@
               "default": "horizontal",
               "description": "horizontal or vertical (default: horizontal).",
               "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "fusion",
+          "description": "Blends another series of the study over the one a pane shows (PET over CT, SPECT over MR...): --series starts or replaces the overlay, --color-map and --opacity change the blend, --off removes it; the display state returns the blend under 'blend'. With no argument the state is returned unchanged.",
+          "since": "5.0",
+          "usage": "view2d:fusion [-h] [--json] [--off] [--color-map=<color-map-id>] [--opacity=<0-1>] [--pane=<pane-index>] [--series=<series-uid>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": false,
+              "description": "The overlay series, from 'dicom:list'; it must share the frame of reference."
+            },
+            {
+              "names": [
+                "--color-map"
+              ],
+              "label": "<color-map-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Color map of the overlay, from 'color:maps'."
+            },
+            {
+              "names": [
+                "--opacity"
+              ],
+              "label": "<0-1>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "description": "Opacity of the overlay, 0 transparent to 1 opaque."
+            },
+            {
+              "names": [
+                "--off"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Removes the overlay."
             }
           ]
         },
@@ -4159,6 +4993,65 @@
           ]
         },
         {
+          "name": "sort",
+          "description": "Orders the images of the stack a pane shows, by a sort key and a direction, and returns the display state ('sort', 'inverseStack'); with no argument the state is returned unchanged. 'slice-position' orders along the positive patient axis whatever the acquisition direction (feet to head for an axial stack, right to left, front to back), so --inverse true reads head to feet.",
+          "since": "5.0",
+          "usage": "view2d:sort [-h] [--json] [--inverse=<true|false>] [--key=<sort-key>] [--pane=<pane-index>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--key"
+              ],
+              "label": "<sort-key>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "instance, slice-position, slice-location, content-time, acquisition-time, b-value."
+            },
+            {
+              "names": [
+                "--inverse"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "1",
+              "required": false,
+              "description": "Reads the stack backwards."
+            }
+          ]
+        },
+        {
           "name": "stats",
           "description": "Pixel statistics of a region (min, max, mean, median, standard deviation, ...) in the image value unit, e.g. HU, plus the region geometry in the spatial unit.",
           "since": "5.0",
@@ -4469,7 +5362,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]",
           "parameters": [],
           "options": [
             {
@@ -4504,20 +5397,6 @@
             },
             {
               "names": [
-                "--set"
-              ],
-              "label": "<magnification>",
-              "type": "magnification",
-              "arity": "1",
-              "required": true,
-              "description": "Magnification, 1 being one image pixel per canvas pixel.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
                 "--fit"
               ],
               "label": "<zoom-fit>",
@@ -4544,6 +5423,20 @@
               "arity": "1",
               "required": true,
               "description": "Moves the zoom slider by this many steps, negative to zoom out.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--set"
+              ],
+              "label": "<magnification>",
+              "type": "magnification",
+              "arity": "1",
+              "required": true,
+              "description": "Magnification, 1 being one image pixel per canvas pixel.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"

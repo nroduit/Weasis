@@ -13,8 +13,11 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.SeriesThumbnail.Badge;
+import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.items.Interest;
@@ -22,7 +25,8 @@ import org.weasis.dicom.explorer.items.InterestSource;
 
 /**
  * The badge of a thumbnail for the images of interest of its series: the count after a star, and a
- * tooltip line naming the sources. The interest is derived again at most every half second, since a
+ * tooltip line naming the sources. A series Weasis derived in this session (subtraction, MIP) shows
+ * its derivation label first. The interest is derived again at most every half second, since a
  * thumbnail paints far more often than key objects or graphics change.
  */
 public final class InterestBadge implements Supplier<Badge> {
@@ -46,16 +50,21 @@ public final class InterestBadge implements Supplier<Badge> {
   public Badge get() {
     long now = System.currentTimeMillis();
     if (now - computedAt > REFRESH_MS) {
-      badge = of(Interest.of(series));
+      badge = of(Interest.of(series), (String) series.getTagValue(TagW.Derivation));
       computedAt = now;
     }
     return badge;
   }
 
-  /** The badge for an interest, null when there is none. */
-  static Badge of(Interest interest) {
+  /** The badge for an interest and a derivation label, null when there is neither. */
+  static Badge of(Interest interest, String derivation) {
+    boolean derived = StringUtil.hasText(derivation);
     if (interest == null || interest.isEmpty()) {
-      return null;
+      return derived
+          ? new Badge(
+              derivation,
+              MessageFormat.format(Messages.getString("DicomExplorer.derived_tip"), derivation))
+          : null;
     }
     List<String> parts = new ArrayList<>();
     for (InterestSource source : interest.sources()) {
@@ -66,6 +75,13 @@ public final class InterestBadge implements Supplier<Badge> {
             + " ("
             + String.join(", ", parts)
             + ")";
+    if (derived) {
+      return new Badge(
+          derivation + " ★" + interest.count(),
+          MessageFormat.format(Messages.getString("DicomExplorer.derived_tip"), derivation)
+              + GuiUtils.HTML_BR
+              + tooltip);
+    }
     return new Badge("★" + interest.count(), tooltip);
   }
 }

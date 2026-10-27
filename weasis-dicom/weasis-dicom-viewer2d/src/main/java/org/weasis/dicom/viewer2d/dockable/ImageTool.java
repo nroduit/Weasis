@@ -10,7 +10,9 @@
 package org.weasis.dicom.viewer2d.dockable;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.text.DecimalFormat;
 import java.util.Optional;
 import javax.swing.BorderFactory;
@@ -24,11 +26,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.border.Border;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.text.NumberFormatter;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.CollapsiblePanel;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -46,6 +51,8 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.WindowPresetActions;
 import org.weasis.dicom.viewer2d.fusion.FusionAction;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionAction;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionController;
 
 public class ImageTool extends PluginTool {
 
@@ -77,6 +84,7 @@ public class ImageTool extends PluginTool {
     addSection(Messages.getString("cine"), getSlicePanel(spaceY), true, "slice"); // NON-NLS
     // Advanced image operations are collapsed by default to keep the tool compact.
     addSection(Messages.getString("FusionTool.title"), getFusionPanel(spaceY), false, "fusion");
+    addSubtractionSection();
     addSection(ActionW.RESET.getTitle(), getResetPanel(spaceY), true, "reset"); // NON-NLS
     add(GuiUtils.boxYLastElement(3));
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
@@ -87,10 +95,59 @@ public class ImageTool extends PluginTool {
    * (the collapsible header carries the title) and its expanded state is persisted under {@code
    * name}.
    */
-  private void addSection(
+  private CollapsiblePanel addSection(
       String title, JComponent content, boolean expandedByDefault, String name) {
     content.setBorder(SECTION_CONTENT_BORDER);
-    add(new CollapsiblePanel(title, content, expandedByDefault, PREF_SECTION + name));
+    CollapsiblePanel section =
+        new CollapsiblePanel(title, content, expandedByDefault, PREF_SECTION + name);
+    add(section);
+    return section;
+  }
+
+  /**
+   * The subtraction section is contextual: it shows only while the selected series has a series of
+   * its study it can subtract, which the mask combo lists.
+   */
+  private void addSubtractionSection() {
+    EventManager manager = EventManager.getInstance();
+    Optional<ComboItemListener<Object>> mask = manager.getAction(SubtractionAction.MASK);
+    if (mask.isEmpty()) {
+      return;
+    }
+    JComboBox<?> maskCombo = mask.get().createCombo(160);
+    CollapsiblePanel section =
+        addSection(
+            Messages.getString("SubtractionTool.title"),
+            getSubtractionPanel(manager, maskCombo, spaceY),
+            false,
+            "subtraction"); // NON-NLS
+    ListDataListener contextual =
+        new ListDataListener() {
+          @Override
+          public void intervalAdded(ListDataEvent e) {
+            update();
+          }
+
+          @Override
+          public void intervalRemoved(ListDataEvent e) {
+            update();
+          }
+
+          @Override
+          public void contentsChanged(ListDataEvent e) {
+            update();
+          }
+
+          private void update() {
+            boolean visible = maskCombo.getModel().getSize() > 0;
+            if (section.isVisible() != visible) {
+              section.setVisible(visible);
+              revalidate();
+            }
+          }
+        };
+    maskCombo.getModel().addListDataListener(contextual);
+    section.setVisible(maskCombo.getModel().getSize() > 0);
   }
 
   @Override
@@ -340,6 +397,50 @@ public class ImageTool extends PluginTool {
               transform.add(pane);
             });
     return transform;
+  }
+
+  /**
+   * Mask series and weight of the mask, then a bottom row with the preview toggle on the left and
+   * the button that builds the series on the right.
+   */
+  public static JPanel getSubtractionPanel(
+      EventManager manager, JComboBox<?> maskCombo, Border hspace) {
+    int gabY = 7;
+    JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
+    panel.setBorder(
+        BorderFactory.createCompoundBorder(
+            hspace, GuiUtils.getTitledBorder(Messages.getString("SubtractionTool.title"))));
+
+    JLabel label = new JLabel(Messages.getString("SubtractionTool.mask") + StringUtil.COLON);
+    panel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, maskCombo));
+    panel.add(GuiUtils.boxVerticalStrut(gabY));
+
+    manager
+        .getAction(SubtractionAction.FACTOR)
+        .ifPresent(
+            a -> {
+              JSliderW slider = a.createSlider(0, true);
+              GuiUtils.setPreferredWidth(slider, 100);
+              panel.add(slider);
+              panel.add(GuiUtils.boxVerticalStrut(gabY));
+            });
+
+    JPanel bottom = new JPanel(new BorderLayout());
+    bottom.setAlignmentX(Component.LEFT_ALIGNMENT);
+    manager
+        .getAction(SubtractionAction.PREVIEW)
+        .ifPresent(
+            a ->
+                bottom.add(
+                    a.createCheckBox(SubtractionAction.PREVIEW.getTitle()), BorderLayout.WEST));
+    JButton build = new JButton(Messages.getString("SubtractionTool.subtract"));
+    build.setToolTipText(Messages.getString("SubtractionTool.subtract.tip"));
+    build.addActionListener(e -> SubtractionController.subtractSelected());
+    manager.getAction(SubtractionAction.MASK).ifPresent(a -> a.registerActionState(build));
+    bottom.add(build, BorderLayout.EAST);
+    bottom.setMaximumSize(new Dimension(Integer.MAX_VALUE, bottom.getPreferredSize().height));
+    panel.add(bottom);
+    return panel;
   }
 
   public static JPanel getFusionPanel(Border hspace) {

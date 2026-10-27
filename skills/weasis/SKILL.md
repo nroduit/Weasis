@@ -24,8 +24,8 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.14 and protocol
-1, and answers these namespaces: color, config, dicom, explorer, hp, image, redact, script, state, view2d, view3d, weasis, workspace.
+This instance runs Weasis development with command API 2.16 and protocol
+1, and answers these namespaces: color, config, dicom, explorer, hp, image, redact, script, state, subtraction, view2d, view3d, weasis, workspace.
 
 Check the connection first:
 
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.14 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.16 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -249,7 +249,17 @@ line naming the current spelling. Use the current one everywhere.
    `hp:features [--study <uid> | --corpus <dir>]` lists the series features the selectors test
    (role, orientation, anatomy, view, laterality, MR weighting, CT kernel family, thickness,
    temporal...), the way to see why a series matched or not.
-11. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
+11. **Subtract** a pre-contrast series from its post-contrast acquisition. `subtraction:preview`
+   on the pane of the post-contrast series shows the difference live, slice by slice, without
+   building anything (`--mask <uid>` chooses the mask, else the series without contrast agent is
+   proposed; `--factor 0.8` keeps part of the anatomy; `--off` puts the plain series back).
+   `subtraction:create` builds what the pane previews, or `--series <uid> --mask <uid>` given
+   explicitly, as a new series of the study (same grid only, real values, black where nothing
+   enhances) and opens it in the pane; `--signed` opens with negative differences visible,
+   `--no-open` only builds. `subtraction:list` and `subtraction:info --series <uid>` describe
+   what was built, `subtraction:delete` removes it. The result is a series: scroll, window,
+   measure and capture it like any other.
+12. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
    and still have no usable 3D.
 

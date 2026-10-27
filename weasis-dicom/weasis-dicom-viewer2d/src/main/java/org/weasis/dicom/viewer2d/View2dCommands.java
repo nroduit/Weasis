@@ -225,7 +225,7 @@ public class View2dCommands implements CommandExtension {
   }
 
   /** A resolved pane: the viewer that owns it and the canvas itself. */
-  record Target(
+  public record Target(
       ImageViewerPlugin<DicomImageElement> container, DefaultView2d<DicomImageElement> view) {}
 
   /**
@@ -233,7 +233,7 @@ public class View2dCommands implements CommandExtension {
    * window/level range then apply to it, exactly as after a click. Verbs that only read the state
    * leave the selection alone.
    */
-  static void focus(Target target) {
+  public static void focus(Target target) {
     focus(target.container());
     if (target.container().getSelectedViewCanvas() != target.view()) {
       target.container().setSelectedImagePane(target.view());
@@ -249,7 +249,7 @@ public class View2dCommands implements CommandExtension {
   }
 
   /** Selects the target viewer: an id from 'workspace:list', else the selected viewer. */
-  static class ViewerOptions {
+  public static class ViewerOptions {
     @Option(
         names = "--view",
         paramLabel = "<view-id>",
@@ -262,7 +262,7 @@ public class View2dCommands implements CommandExtension {
   }
 
   /** Selects the target 2D pane: a viewer from 'workspace:list' and a pane of its layout. */
-  static class ViewOptions {
+  public static class ViewOptions {
     @Mixin ViewerOptions viewer;
 
     @Option(
@@ -271,7 +271,7 @@ public class View2dCommands implements CommandExtension {
         description = "Pane index in the viewer layout, from 1 (default: the selected pane).")
     PaneIndex pane;
 
-    Target resolve() {
+    public Target resolve() {
       ImageViewerPlugin<DicomImageElement> container = viewer.resolve();
       ViewCanvas<DicomImageElement> canvas;
       if (pane == null) {
@@ -293,7 +293,7 @@ public class View2dCommands implements CommandExtension {
     /**
      * The pane and the image it shows; an empty pane is an error for the verbs that read pixels.
      */
-    Target withImage() {
+    public Target withImage() {
       Target target = resolve();
       if (target.view().getImage() == null) {
         throw new IllegalStateException("No image displayed in the pane");
@@ -301,7 +301,7 @@ public class View2dCommands implements CommandExtension {
       return target;
     }
 
-    DefaultView2d<DicomImageElement> view() {
+    public DefaultView2d<DicomImageElement> view() {
       return withImage().view();
     }
   }

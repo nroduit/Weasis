@@ -165,6 +165,10 @@ public class TagW {
   public static final TagW DicomSpecialElementList =
       new TagW("DicomSpecialElementList", TagType.LIST);
   public static final TagW SlicePosition = new TagW("SlicePosition", TagType.DOUBLE);
+
+  /** Short label of a series Weasis derived in this session ({@code SUB}, {@code MIP}). */
+  public static final TagW Derivation = new TagW("Derivation", TagType.STRING);
+
   public static final TagW SuvFactor = new TagW("SUVFactor", TagType.DOUBLE);
 
   /**
@@ -224,6 +228,7 @@ public class TagW {
     addTag(SeriesOpen);
     addTag(SeriesSelected);
     addTag(SlicePosition);
+    addTag(Derivation);
     addTag(SuvFactor);
     addTag(PercentReference);
     addTag(DirectDownloadFile);
