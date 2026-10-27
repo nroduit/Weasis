@@ -447,6 +447,9 @@ public final class HangingPlanApplier {
         if (derivation.factor() != null) {
           params.add("factor", derivation.factor()); // NON-NLS
         }
+        if (derivation.plane() != null) {
+          params.add("plane", derivation.plane()); // NON-NLS
+        }
         MediaSeries<? extends MediaElement> derived =
             provider.derive(derivation.source(), derivation.mask(), params.build());
         String uid = String.valueOf(derived.getTagValue(derived.getTagID()));

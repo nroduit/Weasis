@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.weasis.core.api.command.CommandVocabulary;
+import org.weasis.dicom.viewer2d.mpr.MprCommands;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCommands;
 
 /** Every value of the namespace is labelled and carries the same type everywhere. */
@@ -24,5 +25,6 @@ class VocabularyTest {
     assertEquals(List.of(), CommandVocabulary.violations("view2d", new View2dCommands()));
     assertEquals(List.of(), CommandVocabulary.violations("redact", new RedactionCommands()));
     assertEquals(List.of(), CommandVocabulary.violations("subtraction", new SubtractionCommands()));
+    assertEquals(List.of(), CommandVocabulary.violations("mpr", new MprCommands()));
   }
 }

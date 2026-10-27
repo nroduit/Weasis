@@ -428,12 +428,52 @@ class HangingPlanApplierTest {
             return derived;
           }
         };
+    List<String> planes = new ArrayList<>();
+    DerivedSeriesProvider reformats =
+        new DerivedSeriesProvider() {
+          @Override
+          public String kind() {
+            return "mpr"; // NON-NLS
+          }
+
+          @Override
+          public Optional<JsonObject> describe(MediaSeries<? extends MediaElement> series) {
+            return Optional.empty();
+          }
+
+          @Override
+          public void rebuild(JsonObject spec) {}
+
+          @Override
+          public MediaSeries<? extends MediaElement> derive(
+              String series, String mask, JsonObject params) {
+            planes.add(series + "-" + mask + "-" + params.getString("plane")); // NON-NLS
+            return derived;
+          }
+        };
+    CellPlan reformatting =
+        cell(0, SOFT, ViewerType.VIEWER_2D, Match.FALLBACK)
+            .withDerivation(
+                new HangingPlan.Derivation("mpr", SOFT, 0, null, null, "SAGITTAL"), // NON-NLS
+                List.of("fallback")); // NON-NLS
+    HangingPlan reformatPlan =
+        new HangingPlan(
+            "p",
+            "p",
+            "SITE",
+            1,
+            List.of(), // NON-NLS
+            List.of(new Step(1, "s", layout, List.of(reformatting))), // NON-NLS
+            List.of());
+    HangingPlan reformatted = HangingPlanApplier.prepare(reformatPlan, 0, List.of(reformats));
 
     HangingPlan prepared = HangingPlanApplier.prepare(plan, 0, List.of(provider));
     HangingPlan unprepared = HangingPlanApplier.prepare(plan, 0, List.of());
     Step step = prepared.steps().getFirst();
     assertAll(
         () -> assertEquals(List.of(SOFT + "-" + LUNG + "-0.5"), asked),
+        () -> assertEquals(List.of(SOFT + "-null-SAGITTAL"), planes),
+        () -> assertEquals("2.25.9", reformatted.steps().getFirst().cells().getFirst().series()),
         () -> assertEquals("2.25.9", step.cells().getFirst().series()),
         () -> assertEquals(Optional.of("2.25.9"), step.layout().cells().getFirst().seriesId()),
         () -> assertEquals(LUNG, step.cells().get(1).series()),

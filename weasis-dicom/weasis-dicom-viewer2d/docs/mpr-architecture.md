@@ -121,6 +121,19 @@ The rotation of a view has three layers, all held by `AxesControl`:
 
 ---
 
+## 4b. Reformat as a series
+
+The MPR views reslice the volume live. `ReformatBuilder` produces the other form: a **static
+series** in one of the standard planes, each slice resliced from the rectified volume of the
+source (`OwnedVolume`, the same volume a viewer may already hold, released only when built for the
+occasion) on the isotropic grid `ReformatGrid` lays over the volume's box, written as a raw image
+with the DICOM attributes of a derived instance (orientation of the plane, position of each slice,
+isotropic spacing, Image Type `DERIVED\SECONDARY\MPR`, derivation code). The result is a series of
+the study like any other, badged `MPR`, so it hangs in a 2D cell, scrolls, measures and is sent.
+`ReformatService` keeps the reformats of the session (same source and plane, same identifiers),
+`MprDerivations` builds one for a hanging protocol cell or a session restore, and the `mpr:`
+namespace (`reformat`, `list`, `delete`) drives it.
+
 ## 5. Volume Center vs. Canvas Projection
 
 There are two ways to read the crosshair position, and code must use the right one:

@@ -225,14 +225,20 @@ public record HangingPlan(
    * What a cell derives before it is hung: its series minus the series of the mask image set, done
    * by the plugin of that kind once the plan is prepared.
    *
-   * @param kind the derivation ({@code subtraction})
+   * @param kind the derivation ({@code subtraction}, {@code mpr})
    * @param source the Series Instance UID of the series derived from
-   * @param maskImageSet the Image Set Number of the mask
-   * @param mask the Series Instance UID of the mask
+   * @param maskImageSet the Image Set Number of the mask, 0 without a mask
+   * @param mask the Series Instance UID of the mask, null without one
    * @param factor the weight of the mask, null for 1
+   * @param plane the plane of a reformat, null for the other kinds
    */
   public record Derivation(
-      String kind, String source, int maskImageSet, String mask, Double factor) {}
+      String kind, String source, int maskImageSet, String mask, Double factor, String plane) {
+
+    public Derivation(String kind, String source, int maskImageSet, String mask, Double factor) {
+      this(kind, source, maskImageSet, mask, factor, null);
+    }
+  }
 
   /**
    * An image set without a series.

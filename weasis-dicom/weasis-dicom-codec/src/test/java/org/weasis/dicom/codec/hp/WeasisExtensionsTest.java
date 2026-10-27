@@ -11,7 +11,9 @@ package org.weasis.dicom.codec.hp;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
@@ -73,6 +75,39 @@ class WeasisExtensionsTest {
                     .getJsonObject("derive")
                     .getInt("maskImageSet")),
         () -> assertEquals(extensions, WeasisExtensions.fromJson(back)));
+  }
+
+  @Test
+  void aDisplaySetFallsBackToAReformatOfAnotherImageSet() {
+    JsonObject json =
+        Json.createObjectBuilder()
+            .add(
+                "displaySets",
+                Json.createObjectBuilder()
+                    .add(
+                        "3",
+                        Json.createObjectBuilder()
+                            .add(
+                                "derive",
+                                Json.createObjectBuilder()
+                                    .add("kind", "mpr")
+                                    .add("imageSet", 1)
+                                    .add("plane", "CORONAL")
+                                    .add("fallback", true))))
+            .build();
+    WeasisExtensions extensions = WeasisExtensions.fromJson(json);
+    WeasisExtensions.Derive derive = extensions.displaySets().get(3).derive();
+    JsonObject back = extensions.toJson().getJsonObject("displaySets").getJsonObject("3");
+    assertAll(
+        () -> assertEquals("mpr", derive.kind()),
+        () -> assertEquals(1, derive.imageSet()),
+        () -> assertNull(derive.maskImageSet()),
+        () -> assertEquals("CORONAL", derive.plane()),
+        () -> assertTrue(derive.fallback()),
+        () -> assertEquals("CORONAL", back.getJsonObject("derive").getString("plane")),
+        () -> assertFalse(back.getJsonObject("derive").containsKey("maskImageSet")),
+        () -> assertEquals(extensions, WeasisExtensions.fromJson(extensions.toJson())),
+        () -> assertNull(new WeasisExtensions.Derive("subtraction", 1, null).plane()));
   }
 
   @Test

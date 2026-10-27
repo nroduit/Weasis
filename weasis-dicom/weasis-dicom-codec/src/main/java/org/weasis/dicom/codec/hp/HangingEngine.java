@@ -709,6 +709,26 @@ public final class HangingEngine {
 
       if (resolution == null || !resolution.isResolved()) {
         String expected = resolution == null ? "no image set" : resolution.unresolved(); // NON-NLS
+        CellPlan fallback =
+            fallback(
+                cells.size(),
+                displaySetNumber,
+                label,
+                imageSetNumber,
+                viewer,
+                expected,
+                extension,
+                resolutions);
+        if (fallback != null) {
+          addCell(
+              cells,
+              layout,
+              displaySet,
+              extension,
+              fallback,
+              resolutions.get(extension.derive().imageSet()).candidates().getFirst().series());
+          continue;
+        }
         if (adapt) {
           continue; // ADAPT_LAYOUT removes the cell and the grid re-flows
         }
@@ -734,9 +754,9 @@ public final class HangingEngine {
         continue;
       }
 
-      if (extension != null && extension.derive() != null) {
+      if (extension != null && extension.derive() != null && !extension.derive().fallback()) {
         // A deriving cell works on the best series of its image set, shown or not by another cell
-        Scored best = resolution.candidates().getFirst();
+        Scored best = sourceOf(extension.derive(), resolution, resolutions);
         addCell(
             cells,
             layout,
@@ -835,14 +855,88 @@ public final class HangingEngine {
 
   /** Appends the plan of a cell and the matching layout cell with its presentation. */
   /**
+   * The series a derivation starts from: the best of the image set it names, else the best of the
+   * display set's own.
+   */
+  private static Scored sourceOf(
+      Derive derive, Resolution own, Map<Integer, Resolution> resolutions) {
+    if (derive.imageSet() != null) {
+      Resolution source = resolutions.get(derive.imageSet());
+      if (source != null && source.isResolved()) {
+        return source.candidates().getFirst();
+      }
+    }
+    return own.candidates().getFirst();
+  }
+
+  /**
+   * The cell a display set gets when its image set resolves nothing and its derivation is a
+   * fallback: the series of the source image set, derived; null when nothing can be derived.
+   */
+  private static CellPlan fallback(
+      int cell,
+      int displaySetNumber,
+      String label,
+      int imageSetNumber,
+      ViewerType viewer,
+      String expected,
+      DisplaySet extension,
+      Map<Integer, Resolution> resolutions) {
+    Derive derive = extension == null ? null : extension.derive();
+    if (derive == null || !derive.fallback() || derive.imageSet() == null) {
+      return null;
+    }
+    Resolution source = resolutions.get(derive.imageSet());
+    if (source == null || !source.isResolved()) {
+      return null;
+    }
+    Scored best = source.candidates().getFirst();
+    List<String> reasons = new ArrayList<>();
+    reasons.add("expected: " + expected); // NON-NLS
+    reasons.add(
+        "fallback: " // NON-NLS
+            + derive.kind()
+            + (derive.plane() == null ? "" : " " + derive.plane())
+            + " from the series of image set "
+            + derive.imageSet()); // NON-NLS
+    return derived(
+        new CellPlan(
+            cell,
+            displaySetNumber,
+            label,
+            imageSetNumber,
+            best.series().uid(),
+            Match.FALLBACK,
+            best.score(),
+            viewer,
+            reasons,
+            alternatives(source, best),
+            studyOf(best.series(), source),
+            rankOf(source)),
+        extension,
+        resolutions);
+  }
+
+  /**
    * The cell with the derivation its display set asks for: the best series of the mask image set is
-   * the mask; without one the acquired series is shown and the reason says why.
+   * the mask; without one the acquired series is shown and the reason says why. A kind without a
+   * mask (a reformat) derives from the cell's series alone.
    */
   private static CellPlan derived(
       CellPlan cell, DisplaySet extension, Map<Integer, Resolution> resolutions) {
     Derive derive = extension == null ? null : extension.derive();
-    if (derive == null) {
+    if (derive == null || (derive.fallback() && cell.match() != Match.FALLBACK)) {
+      // A fallback derivation is planned by fallback() alone: an acquired series wins
       return cell;
+    }
+    if (derive.maskImageSet() == null) {
+      return cell.withDerivation(
+          new Derivation(derive.kind(), cell.series(), 0, null, derive.factor(), derive.plane()),
+          List.of(
+              "derived: " // NON-NLS
+                  + derive.kind()
+                  + (derive.plane() == null ? "" : " " + derive.plane())
+                  + " of the series")); // NON-NLS
     }
     Resolution mask = resolutions.get(derive.maskImageSet());
     if (mask == null || !mask.isResolved()) {

@@ -163,16 +163,34 @@ public record WeasisExtensions(
   }
 
   /**
-   * A series the cell derives from two image sets, so a protocol shows what no acquired series
-   * gives: a subtraction of the display set's series minus the series of the mask image set.
+   * A series the cell derives from the series of image sets, so a protocol shows what no acquired
+   * series gives: a subtraction of a series minus the series of a mask image set, or a multiplanar
+   * reformat of a series in another plane.
    *
-   * @param kind the derivation, the kind of the plugin that does it ({@code subtraction})
-   * @param maskImageSet the Image Set Number of the series subtracted
+   * @param kind the derivation, the kind of the plugin that does it ({@code subtraction}, {@code
+   *     mpr})
+   * @param imageSet the Image Set Number of the series derived from, null for the display set's own
+   * @param maskImageSet the Image Set Number of the series subtracted, null when the kind takes
+   *     none
    * @param factor the weight of the mask, null for 1
+   * @param plane the plane of a reformat ({@code AXIAL}, {@code CORONAL}, {@code SAGITTAL})
+   * @param fallback whether the derivation happens only when the display set's own image set
+   *     resolves no series, an acquired series being preferred to a computed one
    */
-  public record Derive(String kind, int maskImageSet, Double factor) {
+  public record Derive(
+      String kind,
+      Integer imageSet,
+      Integer maskImageSet,
+      Double factor,
+      String plane,
+      boolean fallback) {
     public Derive {
       Objects.requireNonNull(kind, "kind");
+    }
+
+    /** A subtraction of the display set's series minus the series of the mask image set. */
+    public Derive(String kind, int maskImageSet, Double factor) {
+      this(kind, null, maskImageSet, factor, null, false);
     }
   }
 
@@ -427,12 +445,20 @@ public record WeasisExtensions(
       json.add("screen", ds.screen()); // NON-NLS
     }
     if (ds.derive() != null) {
-      JsonObjectBuilder derive =
-          Json.createObjectBuilder()
-              .add("kind", ds.derive().kind()) // NON-NLS
-              .add("maskImageSet", ds.derive().maskImageSet()); // NON-NLS
-      if (ds.derive().factor() != null) {
-        derive.add("factor", ds.derive().factor()); // NON-NLS
+      Derive d = ds.derive();
+      JsonObjectBuilder derive = Json.createObjectBuilder().add("kind", d.kind()); // NON-NLS
+      if (d.imageSet() != null) {
+        derive.add("imageSet", d.imageSet()); // NON-NLS
+      }
+      if (d.maskImageSet() != null) {
+        derive.add("maskImageSet", d.maskImageSet()); // NON-NLS
+      }
+      if (d.factor() != null) {
+        derive.add("factor", d.factor()); // NON-NLS
+      }
+      JsonUtil.addIfPresent(derive, "plane", d.plane()); // NON-NLS
+      if (d.fallback()) {
+        derive.add("fallback", true); // NON-NLS
       }
       json.add("derive", derive); // NON-NLS
     }
@@ -462,8 +488,11 @@ public record WeasisExtensions(
     JsonNumber factor = json.getJsonNumber("factor"); // NON-NLS
     return new Derive(
         json.getString("kind"), // NON-NLS
-        json.getInt("maskImageSet"), // NON-NLS
-        factor == null ? null : factor.doubleValue());
+        integer(json, "imageSet"), // NON-NLS
+        integer(json, "maskImageSet"), // NON-NLS
+        factor == null ? null : factor.doubleValue(),
+        json.getString("plane", null), // NON-NLS
+        json.getBoolean("fallback", false)); // NON-NLS
   }
 
   private static JsonObjectBuilder display(Display d) {

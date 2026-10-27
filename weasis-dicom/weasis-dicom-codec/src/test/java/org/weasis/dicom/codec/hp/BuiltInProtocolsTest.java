@@ -11,6 +11,7 @@ package org.weasis.dicom.codec.hp;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.json.JsonObject;
@@ -106,8 +107,12 @@ class BuiltInProtocolsTest {
         () -> assertEquals("C", first.cells().get(1).series(), "lung kernel"), // NON-NLS
         () -> assertEquals(Match.PREFERRED, first.cells().get(1).match(), "no lung in the name"),
         () -> assertEquals("stack", first.layout().synch()), // NON-NLS
-        () -> assertEquals(1, second.cells().size(), "the sagittal cell is dropped"),
-        () -> assertEquals("E", second.cells().get(0).series())); // NON-NLS
+        () -> assertEquals(2, second.cells().size(), "the sagittal cell falls back to a reformat"),
+        () -> assertEquals("E", second.cells().get(0).series()), // NON-NLS
+        () -> assertNull(second.cells().get(0).derivation(), "the acquired coronal"),
+        () -> assertEquals(Match.FALLBACK, second.cells().get(1).match()),
+        () -> assertEquals("B", second.cells().get(1).series(), "reformatted from the thin soft"),
+        () -> assertEquals("SAGITTAL", second.cells().get(1).derivation().plane())); // NON-NLS
   }
 
   @Test

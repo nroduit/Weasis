@@ -568,6 +568,70 @@ class HangingEngineTest {
   }
 
   @Test
+  void anEmptyImageSetFallsBackToAReformatOfAnotherOneWhenItsDisplaySetAsksForIt() {
+    HangingPlan alone = HangingEngine.plan(reformatProtocol(), List.of(mr("1.2.3.6", "axial")));
+    HangingPlan both =
+        HangingEngine.plan(
+            reformatProtocol(), List.of(mr("1.2.3.6", "axial"), mr("1.2.3.7", "coronal")));
+    CellPlan fallback = alone.steps().getFirst().cells().get(1);
+    CellPlan acquired = both.steps().getFirst().cells().get(1);
+    assertAll(
+        () -> assertEquals(2, alone.steps().getFirst().cells().size()),
+        () -> assertEquals(Match.FALLBACK, fallback.match()),
+        () -> assertEquals("1.2.3.6", fallback.series()),
+        () -> assertEquals("mpr", fallback.derivation().kind()),
+        () -> assertEquals("CORONAL", fallback.derivation().plane()),
+        () -> assertNull(fallback.derivation().mask()),
+        () -> assertTrue(fallback.reasons().stream().anyMatch(r -> r.startsWith("fallback"))),
+        () -> assertEquals("1.2.3.7", acquired.series()),
+        () -> assertNull(acquired.derivation()));
+  }
+
+  private static Document reformatProtocol() {
+    HangingProtocol hp = new HangingProtocol();
+    hp.setHangingProtocolName("CT reformat"); // NON-NLS
+    hp.setHangingProtocolLevel("SITE"); // NON-NLS
+    HPDefinition def = new HPDefinition();
+    def.setModality("MR"); // NON-NLS
+    hp.addHangingProtocolDefinition(def);
+    HPImageSet axial = hp.addNewImageSet(null);
+    axial.addImageSetSelector(
+        HPSelectorFactory.createAttributeValueSelector(
+            "MATCH", null, Tag.SeriesDescription, 1, VR.LO, new String[] {"axial"})); // NON-NLS
+    HPImageSet coronal = hp.addNewImageSet(null);
+    coronal.addImageSetSelector(
+        HPSelectorFactory.createAttributeValueSelector(
+            "MATCH", null, Tag.SeriesDescription, 1, VR.LO, new String[] {"coronal"})); // NON-NLS
+    for (HPImageSet set : List.of(axial, coronal)) {
+      HPTimeBasedImageSet now = new HPTimeBasedImageSet();
+      now.setRelativeTime(new RelativeTime(0, 0, RelativeTimeUnits.DAYS));
+      set.addTimeBasedImageSet(now);
+    }
+    hp.addDisplaySet(displaySet(1, "axial", axial, 1)); // NON-NLS
+    hp.addDisplaySet(displaySet(2, "coronal", coronal, 1)); // NON-NLS
+    WeasisExtensions weasis =
+        new WeasisExtensions(
+            Map.of(),
+            Map.of(
+                2,
+                new DisplaySet(
+                    null,
+                    null,
+                    List.of(),
+                    null,
+                    null,
+                    null,
+                    new Derive("mpr", 1, null, null, "CORONAL", true))), // NON-NLS
+            Map.of(),
+            null,
+            null,
+            null,
+            null,
+            null);
+    return new Document("ct-reformat", hp, weasis); // NON-NLS
+  }
+
+  @Test
   void withoutAMaskTheCellShowsTheAcquiredSeriesAndSaysWhy() {
     HangingPlan plan =
         HangingEngine.plan(subtractionProtocol(), List.of(mr("1.2.3.5", "post"))); // NON-NLS

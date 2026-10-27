@@ -37,10 +37,10 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
-import org.weasis.dicom.viewer2d.fusion.FusionVolumeBuilder;
 import org.weasis.dicom.viewer2d.fusion.FusionVolumeResampler;
 import org.weasis.dicom.viewer2d.mip.SeriesBuilder;
 import org.weasis.dicom.viewer2d.mpr.DerivedStack;
+import org.weasis.dicom.viewer2d.mpr.OwnedVolume;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
 import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Pairing;
@@ -176,16 +176,18 @@ public final class SubtractionBuilder {
 
   /** The reslicing of a mask volume onto the grid of each slice, built once per mask series. */
   public static final class MaskVolume implements MaskSource, AutoCloseable {
+    private final OwnedVolume owned;
     private final Volume<?, ?> volume;
 
-    private MaskVolume(Volume<?, ?> volume) {
-      this.volume = volume;
+    private MaskVolume(OwnedVolume owned) {
+      this.owned = owned;
+      this.volume = owned.volume();
     }
 
     /** The volume of the mask series, or null when it cannot be built. */
     public static MaskVolume of(MediaSeries<DicomImageElement> mask) {
-      Volume<?, ?> volume = FusionVolumeBuilder.build(mask);
-      return volume == null || volume.isBasic() ? null : new MaskVolume(volume);
+      OwnedVolume owned = OwnedVolume.of(mask);
+      return owned == null ? null : new MaskVolume(owned);
     }
 
     @Override
@@ -209,7 +211,7 @@ public final class SubtractionBuilder {
 
     @Override
     public void close() {
-      volume.removeData();
+      owned.close();
     }
   }
 

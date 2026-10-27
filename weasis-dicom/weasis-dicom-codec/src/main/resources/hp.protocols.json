@@ -321,6 +321,24 @@
               }
             ]
           }
+        },
+        "displaySets": {
+          "3": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "CORONAL",
+              "fallback": true
+            }
+          },
+          "4": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "SAGITTAL",
+              "fallback": true
+            }
+          }
         }
       }
     },

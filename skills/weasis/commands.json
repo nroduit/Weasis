@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.20",
+  "apiVersion": "2.21",
   "protocolVersion": 1,
   "applicationVersion": "development",
   "exitCodes": {
@@ -2429,6 +2429,109 @@
               "required": false,
               "default": "[]",
               "description": "Series or image to close, as 'image:load' returns it."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "mpr",
+      "description": "Multiplanar reformats of a series built as series of the study (a coronal or sagittal stack from an axial one), scrolled, windowed, measured and sent like any series.",
+      "verbs": [
+        {
+          "name": "delete",
+          "description": "Removes a reformat from the explorer and its slices from the cache.",
+          "since": "5.0",
+          "usage": "mpr:delete [-h] [--json] --series=<series-uid>",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": true,
+              "description": "A reformat series, from 'mpr:list'."
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "description": "The reformats built in this session.",
+          "since": "5.0",
+          "usage": "mpr:list [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "reformat",
+          "description": "Builds the reformat of a series in a standard plane as a new series of the study, on an isotropic grid at the finest spacing of the source, and opens it in the selected pane. The same series and plane always give the same result.",
+          "since": "5.0",
+          "usage": "mpr:reformat [-h] [--json] [--no-open] --plane=<plane> [--series=<series-uid>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": false,
+              "description": "The series reformatted, from 'dicom:list' (default: the selected pane's)."
+            },
+            {
+              "names": [
+                "--plane"
+              ],
+              "label": "<plane>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "AXIAL, CORONAL or SAGITTAL; not the plane the series already lies in."
+            },
+            {
+              "names": [
+                "--no-open"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Build the series without opening it."
             }
           ]
         }
@@ -5609,7 +5712,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]",
           "parameters": [],
           "options": [
             {
@@ -5644,20 +5747,6 @@
             },
             {
               "names": [
-                "--set"
-              ],
-              "label": "<magnification>",
-              "type": "magnification",
-              "arity": "1",
-              "required": true,
-              "description": "Magnification, 1 being one image pixel per canvas pixel.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
                 "--fit"
               ],
               "label": "<zoom-fit>",
@@ -5684,6 +5773,20 @@
               "arity": "1",
               "required": true,
               "description": "Moves the zoom slider by this many steps, negative to zoom out.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--set"
+              ],
+              "label": "<magnification>",
+              "type": "magnification",
+              "arity": "1",
+              "required": true,
+              "description": "Magnification, 1 being one image pixel per canvas pixel.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"

@@ -25,7 +25,7 @@ answers that the command is unknown, try the path of the platform:
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
 This instance runs Weasis development with command API 2.17 and protocol
-1, and answers these namespaces: color, config, dicom, explorer, hp, image, redact, script, state, subtraction, view2d, view3d, weasis, workspace.
+1, and answers these namespaces: color, config, dicom, explorer, hp, image, mpr, redact, script, state, subtraction, view2d, view3d, weasis, workspace.
 
 Check the connection first:
 
@@ -276,6 +276,11 @@ line naming the current spelling. Use the current one everywhere.
    `--normalize=x,y,width,height`: the mask is weighted so that its mean equals the one of the
    series over the slices or over that rectangle, and the result reports the weight and the means.
    The result is a series: scroll, window, measure and capture it like any other.
+   Likewise `mpr:reformat --plane CORONAL` (or SAGITTAL, AXIAL) builds the reformat of the
+   selected pane's series (or `--series <uid>`) as a new series of the study on an isotropic grid
+   and opens it; `mpr:list` and `mpr:delete --series <uid>` manage them. The built-in CT protocol
+   fills an empty coronal or sagittal cell with such a reformat of the axial series (cell indicator
+   *fallback*).
 12. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
    and still have no usable 3D.

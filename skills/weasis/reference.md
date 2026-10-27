@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.20, protocol 1, application development.
+Command API 2.21, protocol 1, application development.
 
 ## color
 
@@ -658,6 +658,45 @@ Usage: `image:unload [-h] [--all] [--json] [--group=<group>]... [--series=<serie
 | --all | boolean |  | Close every group. |
 | --group | string | [] | Group to close, as 'image:load' returns it. |
 | --series | string | [] | Series or image to close, as 'image:load' returns it. |
+
+
+## mpr
+
+Multiplanar reformats of a series built as series of the study (a coronal or sagittal stack from an axial one), scrolled, windowed, measured and sent like any series.
+
+### mpr:delete (since 5.0)
+
+Removes a reformat from the explorer and its slices from the cache.
+
+Usage: `mpr:delete [-h] [--json] --series=<series-uid>`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | series-uid |  | A reformat series, from 'mpr:list'. |
+
+### mpr:list (since 5.0)
+
+The reformats built in this session.
+
+Usage: `mpr:list [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+### mpr:reformat (since 5.0)
+
+Builds the reformat of a series in a standard plane as a new series of the study, on an isotropic grid at the finest spacing of the source, and opens it in the selected pane. The same series and plane always give the same result.
+
+Usage: `mpr:reformat [-h] [--json] [--no-open] --plane=<plane> [--series=<series-uid>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | series-uid |  | The series reformatted, from 'dicom:list' (default: the selected pane's). |
+| --plane | string |  | AXIAL, CORONAL or SAGITTAL; not the plane the series already lies in. |
+| --no-open | boolean |  | Build the series without opening it. |
 
 
 ## redact
@@ -1432,16 +1471,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
+| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 
 
 ## view3d

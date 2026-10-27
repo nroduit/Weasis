@@ -29,11 +29,15 @@ UI profile of the protocol or of each step. Members a version does not know are 
 back unchanged.
 
 A display set may derive its series instead of showing an acquired one: the Weasis extension
-`derive` names a kind (`subtraction`) and the image set of the mask, the engine plans the cell with
-the series of its image set and a `Derivation` naming the mask series, and `HangingPlanApplier`
-prepares the step off the event thread by asking the `DerivedSeriesProvider` of that kind to
-build the series before it is hung. A mask that does not resolve leaves the acquired series in the
-cell, with the reason. A display set may also project its series through a slab instead of
+`derive` names a kind (`subtraction`, `mpr`), the image set the derivation starts from (its own by
+default), the image set of a mask and the plane of a reformat; the engine plans the cell with the
+source series and a `Derivation`, and `HangingPlanApplier` prepares the step off the event thread
+by asking the `DerivedSeriesProvider` of that kind to build the series before it is hung. A mask
+that does not resolve leaves the acquired series in the cell, with the reason. With `fallback` the
+derivation happens only when the display set's own image set resolves nothing, an acquired series
+being preferred to a computed one: the built-in *CT* protocol fills its coronal and sagittal
+cells with reformats of the axial soft-tissue series when the study has none (the cell indicator
+shows *fallback*). A display set may also project its series through a slab instead of
 showing its images: a `SLAB` Reformatting Operation Type with its Reformatting Thickness, or the
 Weasis extension `projection` (mode `MIP`, `MINIP` or `MEAN`), gives the cell a
 `ViewState.Projection` the 2D viewer realizes as a MIP pane. The built-in *MR breast* protocol
