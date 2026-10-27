@@ -62,6 +62,7 @@ public class SubtractionView extends View2d {
   private MediaSeries<DicomImageElement> mask;
   private double factor = 1.0;
   private Map<DicomImageElement, DicomImageElement> maskOf = Map.of();
+  private List<SlicePair> pairList = List.of();
   private MediaSeries<DicomImageElement> pairedSeries;
   private Percentiles window;
 
@@ -199,7 +200,10 @@ public class SubtractionView extends View2d {
     stopCurrentProcess();
     SubtractionSpec spec = spec();
     SlicePair pair = new SlicePair(source, maskSlice);
-    Percentiles shared = window;
+    Percentiles known = window;
+    // The window of a parameter set is the one of the middle slice, as the built series has it,
+    // whatever slice is shown first and however fast the reader scrolls meanwhile
+    SlicePair reference = pairList.get(pairList.size() / 2);
     process =
         Thread.ofVirtual()
             .name(Messages.getString("SubtractionTool.build"))
@@ -207,10 +211,12 @@ public class SubtractionView extends View2d {
                 () -> {
                   Thread me = Thread.currentThread();
                   try {
+                    Percentiles shared =
+                        known != null ? known : SubtractionBuilder.percentiles(spec, reference);
                     DicomImageElement preview =
                         SubtractionBuilder.preview(
                             spec, series, mask, pair, viewCacheDir, shared, currentIndex + 1);
-                    GuiExecutor.execute(() -> accept(source, spec, preview));
+                    GuiExecutor.execute(() -> accept(source, spec, preview, shared));
                   } catch (IOException | RuntimeException e) {
                     // A computation stopped by a newer one says nothing; a failed one shows the
                     // source slice as it is
@@ -228,14 +234,18 @@ public class SubtractionView extends View2d {
   }
 
   /** Keeps a computed preview when the view still shows that slice with the same parameters. */
-  private void accept(DicomImageElement source, SubtractionSpec spec, DicomImageElement preview) {
+  private void accept(
+      DicomImageElement source,
+      SubtractionSpec spec,
+      DicomImageElement preview,
+      Percentiles shared) {
     if (source != sourceImage || !spec.equals(spec())) {
       preview.dispose();
       return;
     }
     boolean first = window == null;
     if (first) {
-      window = firstWindow(preview);
+      window = shared;
     }
     previews.put(source, preview);
     show(preview);
@@ -244,16 +254,6 @@ public class SubtractionView extends View2d {
     } else {
       showingDifference = true;
     }
-  }
-
-  /** The window of the first preview of a parameter set, shared by the next slices. */
-  private static Percentiles firstWindow(DicomImageElement preview) {
-    PresetWindowLevel preset = preview.getDefaultPreset(new DefaultWlPresentation(null, true));
-    if (preset == null) {
-      return null;
-    }
-    double half = preset.getWindow() / 2;
-    return new Percentiles(preset.getLevel() - half, preset.getLevel() + half);
   }
 
   /**
@@ -319,10 +319,12 @@ public class SubtractionView extends View2d {
       pairedSeries = series;
       maskOf = new HashMap<>();
       if (SubtractionCompatibility.pair(series, mask) instanceof Pairing pairing) {
+        pairList = pairing.slices();
         for (SlicePair pair : pairing.slices()) {
           maskOf.put(pair.image(), pair.mask());
         }
       } else {
+        pairList = List.of();
         LOGGER.warn("The mask cannot be subtracted from the series shown");
       }
     }
@@ -334,6 +336,7 @@ public class SubtractionView extends View2d {
     List<DicomImageElement> old = new ArrayList<>(previews.values());
     previews.clear();
     maskOf = Map.of();
+    pairList = List.of();
     window = null;
     Thread.ofVirtual()
         .name("subtraction-cleanup")
@@ -351,6 +354,12 @@ public class SubtractionView extends View2d {
   @Override
   public int getFrameIndex() {
     return currentIndex;
+  }
+
+  /** The differences of one parameter set share their presets: scrolling keeps the window. */
+  @Override
+  public DicomImageElement windowedImage(DicomImageElement slice) {
+    return null;
   }
 
   /** Builds the series the view previews and shows it in this pane. */

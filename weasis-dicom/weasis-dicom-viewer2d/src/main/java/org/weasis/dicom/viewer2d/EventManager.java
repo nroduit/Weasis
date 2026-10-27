@@ -388,11 +388,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           }
         }
 
+        // A view showing a derived image of the slice (a subtraction preview) keeps its window
+        DicomImageElement windowed = view2d instanceof View2d v ? v.windowedImage(image) : image;
         Optional<SliderChangeListener> windowAction = getAction(ActionW.WINDOW);
         Optional<SliderChangeListener> levelAction = getAction(ActionW.LEVEL);
         if (view2d != null
-            && image != view2d.getImage()
-            && image != null
+            && windowed != view2d.getImage()
+            && windowed != null
             && windowAction.isPresent()
             && levelAction.isPresent()) {
           Optional<? extends ComboItemListener<?>> presetAction = getAction(ActionW.PRESET);
@@ -411,7 +413,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                   .filter(PRSpecialElement.class::isInstance)
                   .map(PRSpecialElement.class::cast)
                   .orElse(null);
-          if (pr != null && !PresentationStateReader.isImageApplicable(pr, image)) {
+          if (pr != null && !PresentationStateReader.isImageApplicable(pr, windowed)) {
             // Remove the calibration included in the PR
             view2d.getImage().initPixelConfiguration();
             pr = null;
@@ -419,14 +421,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           DefaultWlPresentation wlp =
               new DefaultWlPresentation(pr == null ? null : pr.getPrDicomObject(), pixelPadding);
 
-          List<PresetWindowLevel> newPresetList = image.getPresetList(wlp);
+          List<PresetWindowLevel> newPresetList = windowed.getPresetList(wlp);
 
-          // Assume the image cannot display when win =1 and level = 0
+          // Assume the windowed cannot display when win =1 and level = 0
           if (oldPreset != null
               || (windowAction.get().getSliderValue() <= 1
                   && levelAction.get().getSliderValue() == 0)) {
             if (isDefaultPresetSelected) {
-              newPreset = image.getDefaultPreset(wlp);
+              newPreset = windowed.getDefaultPreset(wlp);
             } else {
               if (oldPreset != null) {
                 for (PresetWindowLevel preset : newPresetList) {
@@ -438,7 +440,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
               }
               // set default preset when the old preset is not available anymore
               if (newPreset == null) {
-                newPreset = image.getDefaultPreset(wlp);
+                newPreset = windowed.getDefaultPreset(wlp);
                 isDefaultPresetSelected = true;
               }
             }
@@ -466,11 +468,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                   .orElse(null);
 
           if (levelMin == null || levelMax == null) {
-            levelMin = Math.min(levelValue - windowValue / 2.0, image.getMinValue(wlp));
-            levelMax = Math.max(levelValue + windowValue / 2.0, image.getMaxValue(wlp));
+            levelMin = Math.min(levelValue - windowValue / 2.0, windowed.getMinValue(wlp));
+            levelMax = Math.max(levelValue + windowValue / 2.0, windowed.getMaxValue(wlp));
           } else {
-            levelMin = Math.min(levelMin, image.getMinValue(wlp));
-            levelMax = Math.max(levelMax, image.getMaxValue(wlp));
+            levelMin = Math.min(levelMin, windowed.getMinValue(wlp));
+            levelMax = Math.max(levelMax, windowed.getMaxValue(wlp));
           }
 
           // FIX : setting actionInView here without firing a propertyChange avoid another call to
@@ -488,7 +490,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             n.setParam(ActionW.LEVEL_MAX.cmd(), levelMax);
             n.setParam(ActionW.LUT_SHAPE.cmd(), lutShapeItem);
           }
-          updateWindowLevelComponentsListener(image, view2d);
+          updateWindowLevelComponentsListener(windowed, view2d);
         }
 
         // SynchData synchData = (SynchData)

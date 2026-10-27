@@ -779,6 +779,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     updateKOButtonVisibleState();
   }
 
+  /**
+   * The image whose window the shared controls follow when the stack lands on {@code slice}: the
+   * slice itself, or null for a view that shows a derived image of it and keeps its window.
+   */
+  public DicomImageElement windowedImage(DicomImageElement slice) {
+    return slice;
+  }
+
   @Override
   public void setImage(DicomImageElement img) {
     boolean newImg = img != null && !img.equals(imageLayer.getSourceImage());

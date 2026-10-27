@@ -152,6 +152,14 @@ public final class SubtractionBuilder {
     return element(spec, pair, raw, base, slope, spec.derivedSeriesUid(), instanceNumber - 1);
   }
 
+  /** The window percentiles of one pair, the slice computed and dropped: what a preview shares. */
+  public static Percentiles percentiles(SubtractionSpec spec, SlicePair pair) {
+    Attributes source = pair.image().getMediaReader().getDicomObject();
+    Slice slice = subtract(spec, pair, rescaleSlope(source));
+    slice.stored().release();
+    return slice.percentiles();
+  }
+
   private record Slice(ImageCV stored, long clipped, Percentiles percentiles) {}
 
   /** The stored difference of one pair; the percentiles are measured on the real values. */
