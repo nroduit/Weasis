@@ -305,6 +305,7 @@ public class StateCommands implements CommandExtension {
                               : "No session shows the study " + studyUid,
                           "state:list")); // NON-NLS
       DicomModel model = parent.model();
+      SessionActions.rebuildDerived(session);
       List<String> views =
           GuiExecutor.invokeAndRethrow(() -> SessionActions.restore(session, model, manager()));
       try {

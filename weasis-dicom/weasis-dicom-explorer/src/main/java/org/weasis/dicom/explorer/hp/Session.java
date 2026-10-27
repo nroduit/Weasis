@@ -57,7 +57,8 @@ public record Session(
     String protocol,
     int step,
     Map<Integer, String> bindings,
-    WorkspaceSnapshot workspace) {
+    WorkspaceSnapshot workspace,
+    List<Derived> derived) {
 
   /** The archive id a source is loaded from when none is known: files on this machine. */
   public static final String LOCAL = "local"; // NON-NLS
@@ -76,7 +77,31 @@ public record Session(
   public Session {
     sources = sources == null ? List.of() : List.copyOf(sources);
     bindings = bindings == null ? Map.of() : Map.copyOf(bindings);
+    derived = derived == null ? List.of() : List.copyOf(derived);
   }
+
+  /** A session showing acquired series only. */
+  public Session(
+      String id,
+      String label,
+      boolean pinned,
+      Instant created,
+      Instant updated,
+      List<Source> sources,
+      String protocol,
+      int step,
+      Map<Integer, String> bindings,
+      WorkspaceSnapshot workspace) {
+    this(id, label, pinned, created, updated, sources, protocol, step, bindings, workspace, null);
+  }
+
+  /**
+   * A series Weasis derived from loaded ones, kept as the spec its provider builds it from again.
+   *
+   * @param kind the derivation, the provider's kind
+   * @param spec what the provider needs to build the series again
+   */
+  public record Derived(String kind, JsonObject spec) {}
 
   /** The studies of one archive. */
   public record Source(String archive, List<String> studies) {
@@ -95,7 +120,7 @@ public record Session(
 
   public Session withUpdated(Instant at) {
     return new Session(
-        id, label, pinned, created, at, sources, protocol, step, bindings, workspace);
+        id, label, pinned, created, at, sources, protocol, step, bindings, workspace, derived);
   }
 
   public JsonObject toJson() {
@@ -124,6 +149,14 @@ public record Session(
       bindings.forEach((k, v) -> b.add(String.valueOf(k), v));
       json.add("bindings", b); // NON-NLS
     }
+    if (!derived.isEmpty()) {
+      JsonArrayBuilder derivedJson = Json.createArrayBuilder();
+      for (Derived d : derived) {
+        derivedJson.add(
+            Json.createObjectBuilder().add("kind", d.kind()).add("spec", d.spec())); // NON-NLS
+      }
+      json.add("derived", derivedJson); // NON-NLS
+    }
     return json.add("workspace", WorkspaceSnapshotIO.toJson(workspace)).build(); // NON-NLS
   }
 
@@ -145,6 +178,13 @@ public record Session(
     if (b != null) {
       b.forEach((k, v) -> bindings.put(Integer.parseInt(k), ((JsonString) v).getString()));
     }
+    List<Derived> derived = new ArrayList<>();
+    JsonArray derivedJson = json.getJsonArray("derived"); // NON-NLS
+    if (derivedJson != null) {
+      for (JsonObject d : derivedJson.getValuesAs(JsonObject.class)) {
+        derived.add(new Derived(d.getString("kind"), d.getJsonObject("spec"))); // NON-NLS
+      }
+    }
     return new Session(
         json.getString(ListDocument.ID),
         json.getString("label", null), // NON-NLS
@@ -155,7 +195,8 @@ public record Session(
         json.getString("protocol", null), // NON-NLS
         json.getInt("step", 0), // NON-NLS
         bindings,
-        WorkspaceSnapshotIO.fromJson(json.getJsonObject("workspace"))); // NON-NLS
+        WorkspaceSnapshotIO.fromJson(json.getJsonObject("workspace")), // NON-NLS
+        derived);
   }
 
   /** The keys of a JSON tree that a session must not hold, empty when it is clean. */

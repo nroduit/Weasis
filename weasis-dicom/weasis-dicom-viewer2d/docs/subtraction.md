@@ -85,6 +85,13 @@ geometry of `A` (frame of reference, position, orientation, spacing, thickness),
 Interpretation `MONOCHROME2`, Pixel Representation 1, and the window presets above. Export and
 DICOM send treat the series as any other.
 
+## Lifecycle
+
+A derived series belongs to the study of its source in the explorer, removable with
+`subtraction:delete`, and the session of a display that shows it keeps its spec: on restore
+`SubtractionDerivations`, the `DerivedSeriesProvider` of the plugin, builds it again under the same
+identifiers before the panes are rebuilt.
+
 ## Invariants
 
 - A subtraction never changes its operands; the derived series is a new object of the study.

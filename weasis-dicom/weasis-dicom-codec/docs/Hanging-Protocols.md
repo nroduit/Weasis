@@ -102,7 +102,9 @@ the protocol that hung it with the bindings of its cells, a label and a pinned f
 study and series identifiers, never a name, a token or a URL with credentials, and lives in the
 private user document `hp.sessions.json` (`SessionStore`), with a retention by number and by age.
 Restoring loads nothing by itself: the studies must be loaded, then the workspace is rebuilt from
-the snapshot. `SessionDicomExport` writes a session for a PACS or another viewer as a Basic
+the snapshot. A series a plugin derived from loaded ones (a subtraction) is kept as its spec under
+`derived`, and the plugin, a `DerivedSeriesProvider` extension, builds it again under the same
+identifiers before the workspace is rebuilt. `SessionDicomExport` writes a session for a PACS or another viewer as a Basic
 Structured Display object whose image boxes are the panes of the main window, each with a
 Grayscale Softcopy Presentation State carrying the pane's window, rotation, flip, inversion,
 magnification and graphics; what the IOD cannot carry is reported.

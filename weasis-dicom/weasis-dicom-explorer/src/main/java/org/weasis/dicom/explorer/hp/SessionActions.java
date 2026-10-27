@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.setting.Settings;
 import org.weasis.core.ui.docking.Shell;
@@ -32,6 +35,7 @@ import org.weasis.core.ui.docking.ShellState;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
+import org.weasis.core.ui.editor.DerivedSeriesProvider;
 import org.weasis.core.ui.editor.ViewerRestorer;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.TagD;
@@ -96,7 +100,64 @@ public final class SessionActions {
     }
     Instant now = Instant.now();
     return new Session(
-        now.toString(), label, pin, now, now, sources, protocol, step, bindings, snapshot);
+        now.toString(),
+        label,
+        pin,
+        now,
+        now,
+        sources,
+        protocol,
+        step,
+        bindings,
+        snapshot,
+        derivedOf(model, snapshot));
+  }
+
+  /** The specs of the series of the snapshot that a plugin derived, so they can be built again. */
+  static List<Session.Derived> derivedOf(DicomModel model, WorkspaceSnapshot snapshot) {
+    List<Session.Derived> derived = new ArrayList<>();
+    List<DerivedSeriesProvider> providers = providers();
+    for (String id : StateCommands.seriesOf(snapshot)) {
+      MediaSeries<? extends MediaElement> series = model.findSeries(id).orElse(null);
+      if (series == null) {
+        continue;
+      }
+      for (DerivedSeriesProvider provider : providers) {
+        provider
+            .describe(series)
+            .ifPresent(spec -> derived.add(new Session.Derived(provider.kind(), spec)));
+      }
+    }
+    return derived;
+  }
+
+  /**
+   * Builds the derived series of a session again, from their specs, so the restore finds them; one
+   * that cannot be built is logged and skipped. Off the event dispatch thread.
+   */
+  public static void rebuildDerived(Session session) {
+    if (session.derived().isEmpty()) {
+      return;
+    }
+    List<DerivedSeriesProvider> providers = providers();
+    for (Session.Derived derived : session.derived()) {
+      providers.stream()
+          .filter(p -> p.kind().equals(derived.kind()))
+          .findFirst()
+          .ifPresentOrElse(
+              provider -> {
+                try {
+                  provider.rebuild(derived.spec());
+                } catch (IOException | RuntimeException e) {
+                  LOGGER.warn("Cannot derive a {} series of the session", derived.kind(), e);
+                }
+              },
+              () -> LOGGER.warn("No provider derives {} series", derived.kind()));
+    }
+  }
+
+  private static List<DerivedSeriesProvider> providers() {
+    return GuiUtils.getUICore().getPluginManager().getExtensions(DerivedSeriesProvider.class);
   }
 
   /**
@@ -138,6 +199,7 @@ public final class SessionActions {
       return false;
     }
     try {
+      rebuildDerived(session.get());
       GuiExecutor.invokeAndRethrow(() -> restore(session.get(), model, manager));
       store().touch(session.get());
       return true;

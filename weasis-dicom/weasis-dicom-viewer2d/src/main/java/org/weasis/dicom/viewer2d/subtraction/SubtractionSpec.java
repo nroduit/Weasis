@@ -10,6 +10,7 @@
 package org.weasis.dicom.viewer2d.subtraction;
 
 import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -118,6 +119,21 @@ public record SubtractionSpec(
         .add("offset", offset) // NON-NLS
         .add("absolute", absolute) // NON-NLS
         .add("signed", signed); // NON-NLS
+  }
+
+  /** The spec written by {@link #toJson()}. */
+  public static SubtractionSpec fromJson(JsonObject json) {
+    int phase = json.getInt("phase", 0); // NON-NLS
+    int maskPhase = json.getInt("maskPhase", 0); // NON-NLS
+    return new SubtractionSpec(
+        json.getString("series"), // NON-NLS
+        json.getString("mask"), // NON-NLS
+        phase == 0 ? null : phase,
+        maskPhase == 0 ? null : maskPhase,
+        json.getJsonNumber("factor").doubleValue(), // NON-NLS
+        json.getJsonNumber("offset").doubleValue(), // NON-NLS
+        json.getBoolean("absolute", false), // NON-NLS
+        json.getBoolean("signed", false)); // NON-NLS
   }
 
   private String key() {
