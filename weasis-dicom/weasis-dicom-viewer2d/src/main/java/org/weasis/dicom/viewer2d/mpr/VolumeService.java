@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
@@ -106,7 +107,16 @@ public final class VolumeService implements PropertyChangeListener {
   public Lease acquire(MediaSeries<DicomImageElement> series, boolean rectified, JProgressBar bar) {
     MediaSeries<DicomImageElement> source = volumeSeriesOf(series);
     observe(source);
-    return new Lease(cache.acquire(new Key(source, rectified), bar));
+    VolumeCache<Volume<?, ?>>.Lease lease = cache.acquire(new Key(source, rectified), bar);
+    if (bar != null) {
+      // A volume the service already holds, or builds for another requester, never moves this
+      // bar: fill it when the volume is there, which is what hides it
+      lease
+          .future()
+          .whenComplete(
+              (volume, failure) -> GuiExecutor.execute(() -> bar.setValue(bar.getMaximum())));
+    }
+    return new Lease(lease);
   }
 
   /**
