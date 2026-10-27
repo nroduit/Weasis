@@ -100,11 +100,29 @@ public final class VolumeService implements PropertyChangeListener {
 
   /**
    * A lease on the volume of the series, built in the background when the service has none; the
-   * progress bar, when given, follows the build this call starts.
+   * progress bar, when given, follows the build this call starts. A reformat has no volume of its
+   * own: the lease is on the volume of the acquired series it was resliced from.
    */
   public Lease acquire(MediaSeries<DicomImageElement> series, boolean rectified, JProgressBar bar) {
-    observe(series);
-    return new Lease(cache.acquire(new Key(series, rectified), bar));
+    MediaSeries<DicomImageElement> source = volumeSeriesOf(series);
+    observe(source);
+    return new Lease(cache.acquire(new Key(source, rectified), bar));
+  }
+
+  /**
+   * The series whose voxels make the volume of a series: the acquired series behind a reformat,
+   * which only reslices them; any other series itself.
+   */
+  public static MediaSeries<DicomImageElement> volumeSeriesOf(
+      MediaSeries<DicomImageElement> series) {
+    if (series == null) {
+      return null;
+    }
+    MediaSeries<DicomImageElement> source = ReformatService.sourceOf(series);
+    if (source != series) {
+      LOGGER.debug("The volume of a reformat is the one of its acquired series");
+    }
+    return source;
   }
 
   /**
@@ -112,6 +130,7 @@ public final class VolumeService implements PropertyChangeListener {
    * slices rectify without a question; nothing when the series has one already.
    */
   public void prefetch(MediaSeries<DicomImageElement> series) {
+    series = volumeSeriesOf(series);
     if (series == null || series.size(null) < 2) {
       return;
     }
@@ -148,14 +167,19 @@ public final class VolumeService implements PropertyChangeListener {
     return Optional.of(new Lease(cache.acquire(key, null)));
   }
 
-  /** The built volume of a stack, when the service holds one. */
+  /**
+   * The built volume of a stack, when the service holds one: the stack's own, or the one of the
+   * acquired series when the stack is a reformat's.
+   */
   public Optional<Volume<?, ?>> peek(OriginalStack stack) {
     if (stack == null) {
       return Optional.empty();
     }
+    MediaSeries<DicomImageElement> source = volumeSeriesOf(stack.getSeries());
+    boolean reformat = source != stack.getSeries();
     for (boolean rectified : new boolean[] {true, false}) {
-      Optional<Volume<?, ?>> volume = cache.peek(new Key(stack.getSeries(), rectified));
-      if (volume.isPresent() && stack.equals(volume.get().getStack())) {
+      Optional<Volume<?, ?>> volume = cache.peek(new Key(source, rectified));
+      if (volume.isPresent() && (reformat || stack.equals(volume.get().getStack()))) {
         return volume;
       }
     }
