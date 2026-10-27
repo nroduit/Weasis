@@ -133,6 +133,21 @@ public final class VolumeService implements PropertyChangeListener {
     cache.prefetch(new Key(series, true));
   }
 
+  /**
+   * A lease on a volume the service holds, for a consumer handed the volume itself; empty when the
+   * service does not hold that instance (built outside it), the consumer then owning nothing.
+   */
+  public Optional<Lease> leaseOf(Volume<?, ?> volume) {
+    if (volume == null || volume.getStack() == null) {
+      return Optional.empty();
+    }
+    Key key = new Key(volume.getStack().getSeries(), !volume.isBasic());
+    if (cache.peek(key).filter(held -> held == volume).isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(new Lease(cache.acquire(key, null)));
+  }
+
   /** The built volume of a stack, when the service holds one. */
   public Optional<Volume<?, ?>> peek(OriginalStack stack) {
     if (stack == null) {

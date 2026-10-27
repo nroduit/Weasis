@@ -70,9 +70,9 @@ result again.
 When the grids of the two series differ (matrix, spacing, orientation, or slice positions that
 do not match) but both lie in one frame of reference, the pairing takes the **resampled path**:
 every slice of the series keeps the nearest mask slice as its reference, and the mask values are
-resliced from the volume of the mask series (`FusionVolumeBuilder`, `FusionVolumeResampler`, the
-same reslicing the fusion uses) onto the grid of each slice, built once per mask by
-`SubtractionBuilder.MaskVolume`. Outside the mask volume the difference is zero. The derived
+resliced from the volume of the mask series (`VolumeService`, `FusionVolumeResampler`, the same
+volume and reslicing the fusion uses) onto the grid of each slice, held by
+`SubtractionBuilder.MaskVolume` for the build. Outside the mask volume the difference is zero. The derived
 series is labelled *(resampled)* and the command reports `path: resampled`. Without a frame of
 reference the grids must match, as before.
 

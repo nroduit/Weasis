@@ -36,6 +36,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.viewer2d.mpr.Volume;
+import org.weasis.dicom.viewer2d.mpr.VolumeService;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.ByteLut;
@@ -74,6 +75,44 @@ import org.weasis.opencv.op.lut.colormap.ColorMapCompiler;
  * </ul>
  */
 public class FusionOp extends AbstractOp {
+
+  /** The hold on the volume of the service this op shows, released when the volume changes. */
+  private VolumeService.Lease volumeLease;
+
+  /**
+   * As the base, and for the volume keeps the service's lease on it: the volume stays while this op
+   * shows it and goes back to the service when the op drops it, is switched off or loses its
+   * overlay series.
+   */
+  @Override
+  public void setParam(String key, Object value) {
+    if ((P_FUSION_ENABLED.equals(key) && Boolean.FALSE.equals(value))
+        || (P_FUSION_SERIES.equals(key) && value == null)) {
+      // A fusion switched off or without overlay gives its volume back; switching it on builds
+      // the volume again, which the service has kept
+      super.setParam(key, value);
+      if (getParam(P_FUSION_VOLUME) != null) {
+        setParam(P_FUSION_VOLUME, null);
+      }
+      return;
+    }
+    if (P_FUSION_VOLUME.equals(key)) {
+      Object previous = getParam(P_FUSION_VOLUME);
+      super.setParam(key, value);
+      if (previous != value) {
+        VolumeService.Lease old = volumeLease;
+        volumeLease =
+            value instanceof Volume<?, ?> volume
+                ? VolumeService.getInstance().leaseOf(volume).orElse(null)
+                : null;
+        if (old != null) {
+          old.close();
+        }
+      }
+      return;
+    }
+    super.setParam(key, value);
+  }
 
   public static final String OP_NAME = "fusion.pet.ct";
 

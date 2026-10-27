@@ -125,7 +125,8 @@ The rotation of a view has three layers, all held by `AxesControl`:
 
 Every consumer of a volume takes it from `VolumeService`: the MPR controller (`ObliqueMpr`
 acquires it and the controller releases it when disposed), the 3D texture of the volume
-rendering, the fusion reslicing, the subtraction mask and the reformat (`OwnedVolume`). The
+rendering, the fusion (each `FusionOp` leases the volume it shows, through `leaseOf`), the
+subtraction mask and the reformat (`OwnedVolume`). The
 service builds a volume once per series and rectification mode on a single background worker
 (`VolumeCache`: requests first, prefetches after), keeps it under leases, lets released volumes
 wait for the next consumer up to a budget, and evicts the volumes of a series the explorer

@@ -54,7 +54,7 @@ slice and on every path.
 | `FusionOp` | The op node: orchestrates sampling, windowing, colorization, compositing; owns the overlay caches |
 | `FusionWindow` | Series-wide display window (record): real-value bounds + display factor/unit (SUVbw) |
 | `FusionWindowEstimator` | Robust (percentile) maximum of the volume, excluding physiologic outliers |
-| `FusionVolumeBuilder` | Builds the rectified PET `Volume` off the EDT (reuses the MPR `Volume` machinery) |
+| `VolumeService` (`mpr`) | Builds the rectified PET `Volume` once, in the background, for the fusion, the MPR and the rendering; `FusionOp` holds a lease on it while it shows it |
 | `FusionVolumeResampler` | Reslices the PET volume on an arbitrary display plane |
 | `FusionSliceMatcher` | Finds the nearest native PET slice for a base slice |
 | `FusionRegistration` | 2D-affine aligns a native PET slice onto the base pixel grid |
@@ -92,9 +92,10 @@ slice and on every path.
 
 ## 4. Geometry: two sampling paths
 
-- **Volume reslice (preferred).** `FusionVolumeBuilder` builds a rectified
-  `Volume` from the overlay series on a worker thread (voxels are real
-  values). `FusionVolumeResampler` then samples it on the displayed plane,
+- **Volume reslice (preferred).** `FusionController.buildVolume` takes the
+  rectified `Volume` of the overlay series from the `VolumeService` (voxels
+  are real values), built in the background and shared with the other
+  consumers; each `FusionOp` keeps a lease on it while it shows it. `FusionVolumeResampler` then samples it on the displayed plane,
   which stays correct for MPR coronal, sagittal and oblique reslices.
 - **Single-slice fallback.** While no volume is available,
   `FusionSliceMatcher` picks the nearest native PET slice and
@@ -149,7 +150,7 @@ User selects overlay series (EventManager FusionAction.SERIES)
   ├─ FusionController.applyParam(P_FUSION_SERIES)   ── drops stale volume+window
   ├─ applyDefaultFusionWindow → FusionWindow.fromSlice   (provisional, EDT-safe)
   └─ FusionController.buildVolume (worker thread)
-        ├─ FusionVolumeBuilder.build
+        ├─ VolumeService.acquire (one build per series, shared)
         ├─ FusionWindow.fromVolume (robust max — scans voxels)
         └─ applyVolume: only to panes still showing that series
                         (guards against series switches and out-of-order builds);

@@ -15,6 +15,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.dcm4che3.data.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -30,6 +32,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.dicom.viewer2d.mpr.Volume;
+import org.weasis.dicom.viewer2d.mpr.VolumeService;
 import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
 
@@ -39,6 +42,8 @@ import org.weasis.opencv.op.lut.colormap.ColorMap;
  * EDT, and list the study series compatible with the displayed base series.
  */
 public final class FusionController {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(FusionController.class);
 
   private static final Set<MediaSeries<DicomImageElement>> buildingVolumes =
       ConcurrentHashMap.newKeySet();
@@ -318,14 +323,33 @@ public final class FusionController {
     Thread worker =
         new Thread(
             () -> {
+              VolumeService.Lease lease = null;
               try {
-                Volume<?, ?> volume = FusionVolumeBuilder.build(overlaySeries);
-                if (volume != null) {
-                  // Measured here rather than in applyVolume: it scans the voxels.
-                  FusionWindow window = FusionWindow.fromVolume(overlaySeries, volume, map);
-                  GuiExecutor.execute(() -> applyVolume(overlaySeries, volume, window, shown));
+                // The service builds the volume once for every consumer; the panes take their own
+                // leases as the volume is applied, this one bridges the build and the apply
+                lease = VolumeService.getInstance().acquire(overlaySeries, true, null);
+                Volume<?, ?> volume = lease.volume();
+                if (volume.isBasic()) {
+                  throw new IllegalStateException("The overlay cannot be rectified");
                 }
+                // Measured here rather than in applyVolume: it scans the voxels.
+                FusionWindow window = FusionWindow.fromVolume(overlaySeries, volume, map);
+                VolumeService.Lease bridge = lease;
+                lease = null;
+                GuiExecutor.execute(
+                    () -> {
+                      try {
+                        applyVolume(overlaySeries, volume, window, shown);
+                      } finally {
+                        bridge.close();
+                      }
+                    });
+              } catch (RuntimeException e) {
+                LOGGER.warn("Cannot build the fusion volume of the overlay", e);
               } finally {
+                if (lease != null) {
+                  lease.close();
+                }
                 buildingVolumes.remove(overlaySeries);
                 // The loading message is evaluated at paint time: repaint whatever the outcome so
                 // it also disappears when the volume could not be built.
@@ -335,6 +359,21 @@ public final class FusionController {
             "fusion-volume-builder"); // NON-NLS
     worker.setDaemon(true);
     worker.start();
+  }
+
+  /** Switches the fusion off on the panes whose overlay is that series, gone from the explorer. */
+  public static void dropOverlay(List<ViewCanvas<DicomImageElement>> views, Object series) {
+    for (ViewCanvas<DicomImageElement> view : views) {
+      OpManager disOp = view.getDisplayOpManager();
+      if (disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES).orElse(null) != series) {
+        continue;
+      }
+      disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_ENABLED, Boolean.FALSE);
+      disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES, null);
+      clearCache(disOp);
+      view.getImageLayer().updateDisplayOperations();
+    }
+    EventManager.getInstance().refreshFusionWindowControl();
   }
 
   /** Repaints every pane of the selected container. */

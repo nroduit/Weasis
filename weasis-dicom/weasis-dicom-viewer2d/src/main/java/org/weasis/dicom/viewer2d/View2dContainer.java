@@ -100,6 +100,7 @@ import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.HangingWhyTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
+import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionController;
 
 public class View2dContainer extends DicomViewerPlugin implements PropertyChangeListener {
@@ -593,8 +594,12 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
         if (newVal instanceof MediaSeriesGroup group) {
           removeViews(this, group, event);
-          if (group instanceof Series<?> removedSeries && hasOverlay(removedSeries)) {
-            SwingUtilities.invokeLater(this::refreshOverlays);
+          if (group instanceof Series<?> removedSeries) {
+            // A fusion whose overlay leaves the explorer loses it, and its volume with it
+            FusionController.dropOverlay(getAllCanvasesIncludingPanes(), removedSeries);
+            if (hasOverlay(removedSeries)) {
+              SwingUtilities.invokeLater(this::refreshOverlays);
+            }
           }
         }
       } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
