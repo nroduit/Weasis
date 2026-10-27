@@ -390,6 +390,7 @@ public class View3DContainer extends DicomViewerPlugin
         if (volumeBuilder != null) {
           DicomVolTexture retired = volumeBuilder.getVolTexture();
           GlRuntime.submit(retired::destroy);
+          retired.dispose();
         }
         GuiUtils.getUICore().closeSeries(oldSequence);
         synchronized (volumeBuilderLock) {
@@ -571,6 +572,12 @@ public class View3DContainer extends DicomViewerPlugin
     build.fail(new CancellationException("3D viewer closed"));
     View3DFactory.closeSeriesViewer(this);
     super.close();
+    DicomVolTexture texture = getVolTexture();
+    if (texture != null) {
+      // The texture itself goes on the GL thread with the views; its volume goes back to the
+      // service now
+      texture.dispose();
+    }
 
     GuiExecutor.execute(
         () -> {

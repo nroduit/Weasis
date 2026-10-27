@@ -20,6 +20,10 @@ import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.util.JsonUtil;
+import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
@@ -42,7 +46,9 @@ import picocli.CommandLine.Option;
     subcommands = {
       MprCommands.Reformat.class,
       MprCommands.ListDerived.class,
-      MprCommands.Delete.class
+      MprCommands.Delete.class,
+      MprCommands.Volumes.class,
+      MprCommands.Prefetch.class
     })
 public class MprCommands implements CommandExtension {
 
@@ -103,7 +109,7 @@ public class MprCommands implements CommandExtension {
       print(body.build().toString());
     }
 
-    private static String selectedSeriesUid() {
+    static String selectedSeriesUid() {
       ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
       if (view == null || view.getSeries() == null) {
         throw new IllegalStateException("No series in the selected pane: give --series");
@@ -120,6 +126,80 @@ public class MprCommands implements CommandExtension {
       var series = Json.createArrayBuilder();
       ReformatService.list().forEach(d -> series.add(ReformatService.describe(d)));
       print(Json.createObjectBuilder().add("series", series).build().toString()); // NON-NLS
+    }
+  }
+
+  @Command(
+      name = "volumes",
+      description =
+          "The volumes the service holds for the MPR, the volume rendering and the derived series:"
+              + " built once per series and kept, within a budget, for the next consumer.")
+  @Since("5.0")
+  static class Volumes extends AbstractVerb {
+    @Override
+    protected void run() {
+      var volumes = Json.createArrayBuilder();
+      for (VolumeCache.Info info : VolumeService.getInstance().snapshot()) {
+        if (info.key() instanceof VolumeService.Key key) {
+          JsonObjectBuilder entry =
+              Json.createObjectBuilder()
+                  .add("series", String.valueOf(key.uid())) // NON-NLS
+                  .add("rectified", key.rectified()) // NON-NLS
+                  .add(
+                      "state", // NON-NLS
+                      info.failed() ? "failed" : info.built() ? "ready" : "building") // NON-NLS
+                  .add("leases", info.leases()) // NON-NLS
+                  .add("bytes", info.bytes()); // NON-NLS
+          JsonUtil.addIfPresent(
+              entry,
+              "description", // NON-NLS
+              TagD.getTagValue(key.series(), Tag.SeriesDescription, String.class));
+          volumes.add(entry);
+        }
+      }
+      print(
+          Json.createObjectBuilder()
+              .add("budget", VolumeService.getInstance().budget()) // NON-NLS
+              .add("volumes", volumes) // NON-NLS
+              .build()
+              .toString());
+    }
+  }
+
+  @Command(
+      name = "prefetch",
+      description =
+          "Builds the volume of a series in the background, after the requests under way, so a"
+              + " later MPR, rendering or reformat finds it ready; nothing when the slices need a"
+              + " rectification question.")
+  @Since("5.0")
+  static class Prefetch extends AbstractVerb {
+    @Option(
+        names = "--series",
+        paramLabel = "<series-uid>",
+        description = "The series, from 'dicom:list' (default: the selected pane's).")
+    SeriesUid series;
+
+    @Override
+    protected void run() {
+      String uid =
+          series == null
+              ? GuiExecutor.invokeAndRethrow(Reformat::selectedSeriesUid)
+              : series.value();
+      MediaSeries<? extends MediaElement> resolved =
+          SeriesResolver.ofApplication()
+              .resolve(uid)
+              .orElseThrow(
+                  () ->
+                      CommandFailure.unknownHandle(
+                          "Unknown series: " + uid, "dicom:list")); // NON-NLS
+      new MprVolumePrefetch().prefetch(resolved);
+      print(
+          Json.createObjectBuilder()
+              .add("series", uid) // NON-NLS
+              .add("queued", true) // NON-NLS
+              .build()
+              .toString());
     }
   }
 

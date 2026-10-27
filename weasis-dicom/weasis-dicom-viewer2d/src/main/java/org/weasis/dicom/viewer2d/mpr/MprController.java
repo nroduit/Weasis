@@ -81,6 +81,7 @@ public class MprController
 
   private static final int PIX_TOLERANCE = 7;
   private Volume<?, ?> volume;
+  private VolumeService.Lease volumeLease;
   private final List<SegSpecialElement> segElements = new ArrayList<>();
   private final List<SegmentationVolume> segVolumes = new ArrayList<>();
   // SEGs whose volume build was attempted in the last build (those visible then), succeeded or not.
@@ -194,7 +195,16 @@ public class MprController
   }
 
   public void setVolume(Volume<?, ?> volume) {
+    setVolume(volume, null);
+  }
+
+  /** Takes the volume and the lease that keeps it, released when the controller is disposed. */
+  public void setVolume(Volume<?, ?> volume, VolumeService.Lease lease) {
+    if (volumeLease != null && volumeLease != lease) {
+      volumeLease.close();
+    }
     this.volume = volume;
+    this.volumeLease = lease;
     axesControl.reset();
   }
 
@@ -1053,7 +1063,11 @@ public class MprController
     disposeSegVolumes();
     segElements.clear();
     attemptedSegs.clear();
-    if (volume != null && !volume.isSharedVolume()) {
+    if (volumeLease != null) {
+      // The service keeps the volume for the next consumer, within its budget
+      volumeLease.close();
+      volumeLease = null;
+    } else if (volume != null && !volume.isSharedVolume()) {
       volume.removeData();
     }
   }

@@ -32,6 +32,8 @@ A display set may derive its series instead of showing an acquired one: the Weas
 `derive` names a kind (`subtraction`, `mpr`), the image set the derivation starts from (its own by
 default), the image set of a mask and the plane of a reformat; the engine plans the cell with the
 source series and a `Derivation`, and `HangingPlanApplier` prepares the step off the event thread
+(and asks the `VolumePrefetcher` extensions to build, in the background, the volumes the MPR,
+volume-rendering and reformat cells of the other steps will need)
 by asking the `DerivedSeriesProvider` of that kind to build the series before it is hung. A mask
 that does not resolve leaves the acquired series in the cell, with the reason. With `fallback` the
 derivation happens only when the display set's own image set resolves nothing, an acquired series

@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.21, protocol 1, application development.
+Command API 2.22, protocol 1, application development.
 
 ## color
 
@@ -685,6 +685,17 @@ Usage: `mpr:list [-h] [--json]`
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 
+### mpr:prefetch (since 5.0)
+
+Builds the volume of a series in the background, after the requests under way, so a later MPR, rendering or reformat finds it ready; nothing when the slices need a rectification question.
+
+Usage: `mpr:prefetch [-h] [--json] [--series=<series-uid>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | series-uid |  | The series, from 'dicom:list' (default: the selected pane's). |
+
 ### mpr:reformat (since 5.0)
 
 Builds the reformat of a series in a standard plane as a new series of the study, on an isotropic grid at the finest spacing of the source, and opens it in the selected pane. The same series and plane always give the same result.
@@ -697,6 +708,16 @@ Usage: `mpr:reformat [-h] [--json] [--no-open] --plane=<plane> [--series=<series
 | --series | series-uid |  | The series reformatted, from 'dicom:list' (default: the selected pane's). |
 | --plane | string |  | AXIAL, CORONAL or SAGITTAL; not the plane the series already lies in. |
 | --no-open | boolean |  | Build the series without opening it. |
+
+### mpr:volumes (since 5.0)
+
+The volumes the service holds for the MPR, the volume rendering and the derived series: built once per series and kept, within a budget, for the next consumer.
+
+Usage: `mpr:volumes [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 
 ## redact
@@ -1471,16 +1492,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
-| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 
 
 ## view3d

@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.21",
+  "apiVersion": "2.22",
   "protocolVersion": 1,
   "applicationVersion": "development",
   "exitCodes": {
@@ -2487,6 +2487,35 @@
           ]
         },
         {
+          "name": "prefetch",
+          "description": "Builds the volume of a series in the background, after the requests under way, so a later MPR, rendering or reformat finds it ready; nothing when the slices need a rectification question.",
+          "since": "5.0",
+          "usage": "mpr:prefetch [-h] [--json] [--series=<series-uid>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": false,
+              "description": "The series, from 'dicom:list' (default: the selected pane's)."
+            }
+          ]
+        },
+        {
           "name": "reformat",
           "description": "Builds the reformat of a series in a standard plane as a new series of the study, on an isotropic grid at the finest spacing of the source, and opens it in the selected pane. The same series and plane always give the same result.",
           "since": "5.0",
@@ -2532,6 +2561,25 @@
               "arity": "0",
               "required": false,
               "description": "Build the series without opening it."
+            }
+          ]
+        },
+        {
+          "name": "volumes",
+          "description": "The volumes the service holds for the MPR, the volume rendering and the derived series: built once per series and kept, within a budget, for the next consumer.",
+          "since": "5.0",
+          "usage": "mpr:volumes [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
             }
           ]
         }
@@ -5712,7 +5760,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
           "parameters": [],
           "options": [
             {
@@ -5747,6 +5795,20 @@
             },
             {
               "names": [
+                "--set"
+              ],
+              "label": "<magnification>",
+              "type": "magnification",
+              "arity": "1",
+              "required": true,
+              "description": "Magnification, 1 being one image pixel per canvas pixel.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
                 "--fit"
               ],
               "label": "<zoom-fit>",
@@ -5773,20 +5835,6 @@
               "arity": "1",
               "required": true,
               "description": "Moves the zoom slider by this many steps, negative to zoom out.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
-                "--set"
-              ],
-              "label": "<magnification>",
-              "type": "magnification",
-              "arity": "1",
-              "required": true,
-              "description": "Magnification, 1 being one image pixel per canvas pixel.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"

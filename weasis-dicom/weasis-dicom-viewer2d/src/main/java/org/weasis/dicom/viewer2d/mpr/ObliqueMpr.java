@@ -40,6 +40,7 @@ import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 public class ObliqueMpr extends OriginalStack {
   static final String[] imageTypes = {"DERIVED", "SECONDARY", "MPR"};
   private Volume<?, ?> volume;
+  private VolumeService.Lease lease;
   private final JProgressBar bar;
 
   public ObliqueMpr(
@@ -64,11 +65,25 @@ public class ObliqueMpr extends OriginalStack {
   }
 
   public void createTransformedVolume() {
-    this.volume = Volume.createVolume(this, bar, false);
+    acquire(true);
   }
 
   public void createBasicVolume() {
-    this.volume = Volume.createVolume(this, bar, true);
+    acquire(false);
+  }
+
+  /** Takes the volume from the service, which builds it once for every consumer. */
+  private void acquire(boolean rectified) {
+    if (lease != null) {
+      lease.close();
+    }
+    lease = VolumeService.getInstance().acquire(getSeries(), rectified, bar);
+    this.volume = lease.volume();
+  }
+
+  /** The hold on the volume, for the controller to release with the viewer. */
+  public VolumeService.Lease getLease() {
+    return lease;
   }
 
   public static JProgressBar createProgressBar(ViewProgress progress, int maxSize) {
@@ -108,7 +123,8 @@ public class ObliqueMpr extends OriginalStack {
   public void generate(BuildContext context) {
     MprController controller = context.getMprContainer().getMprController();
     volume.setSkipRectification(context.isSkipRectification());
-    controller.setVolume(volume);
+    controller.setVolume(volume, lease);
+    lease = null;
 
     String[] uidsRef = setUIDsRef();
     context.getMainView().zoom(0.0);

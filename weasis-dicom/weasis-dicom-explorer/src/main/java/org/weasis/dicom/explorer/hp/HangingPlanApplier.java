@@ -49,6 +49,7 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPlacement;
+import org.weasis.core.ui.editor.VolumePrefetcher;
 import org.weasis.core.ui.editor.image.HangingLayout;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -407,10 +408,45 @@ public final class HangingPlanApplier {
    * @return the plan with the derived series in the cells of the step
    */
   public static HangingPlan prepare(HangingPlan plan, int step) {
-    return prepare(
-        plan,
-        step,
-        GuiUtils.getUICore().getPluginManager().getExtensions(DerivedSeriesProvider.class));
+    HangingPlan prepared =
+        prepare(
+            plan,
+            step,
+            GuiUtils.getUICore().getPluginManager().getExtensions(DerivedSeriesProvider.class));
+    prefetchVolumes(
+        plan, step, GuiUtils.getUICore().getPluginManager().getExtensions(VolumePrefetcher.class));
+    return prepared;
+  }
+
+  /**
+   * Starts, in the background, the volumes the other steps of the plan will reslice: the series of
+   * the MPR and volume-rendering cells and of the cells deriving a reformat, so the next step hangs
+   * on a ready volume. The current step builds its own as it is hung.
+   */
+  static void prefetchVolumes(HangingPlan plan, int step, List<VolumePrefetcher> prefetchers) {
+    if (prefetchers.isEmpty()) {
+      return;
+    }
+    SeriesResolver resolver = SeriesResolver.ofApplication();
+    for (int i = 0; i < plan.steps().size(); i++) {
+      if (i == step) {
+        continue;
+      }
+      for (CellPlan cell : plan.steps().get(i).cells()) {
+        if (cell.series() == null || !needsVolume(cell)) {
+          continue;
+        }
+        resolver
+            .resolve(cell.series())
+            .ifPresent(series -> prefetchers.forEach(p -> p.prefetch(series)));
+      }
+    }
+  }
+
+  private static boolean needsVolume(CellPlan cell) {
+    return cell.viewer() == ViewerType.MPR
+        || cell.viewer() == ViewerType.VOLUME_3D
+        || (cell.derivation() != null && "mpr".equals(cell.derivation().kind())); // NON-NLS
   }
 
   static HangingPlan prepare(HangingPlan plan, int step, List<DerivedSeriesProvider> providers) {

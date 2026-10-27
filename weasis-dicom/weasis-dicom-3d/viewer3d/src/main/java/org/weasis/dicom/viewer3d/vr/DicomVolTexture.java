@@ -39,6 +39,7 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.viewer2d.SegComponentFactory;
 import org.weasis.dicom.viewer2d.mpr.Volume;
+import org.weasis.dicom.viewer2d.mpr.VolumeService;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.gl.Gl;
 import org.weasis.opencv.data.PlanarImage;
@@ -53,6 +54,7 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   private final PropertyChangeSupport changeSupport;
   private final Vector3d scale;
   private final Volume<?, ?> volume;
+  private VolumeService.Lease lease;
   private boolean loadFinished;
   private final PropertyChangeListener crossHairRelay;
   private final MajorantGrid majorantGrid;
@@ -161,6 +163,11 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     return volume;
   }
 
+  /** Keeps the lease of the volume service until the texture is disposed. */
+  public void hold(VolumeService.Lease lease) {
+    this.lease = lease;
+  }
+
   /** Block bounds of the voxel values, complete once the upload has ended without error. */
   public MajorantGrid getMajorantGrid() {
     return majorantGrid;
@@ -214,6 +221,10 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   @Override
   public void dispose() {
     unregisterCrossHairRelay();
+    if (lease != null) {
+      lease.close();
+      lease = null;
+    }
   }
 
   @Override

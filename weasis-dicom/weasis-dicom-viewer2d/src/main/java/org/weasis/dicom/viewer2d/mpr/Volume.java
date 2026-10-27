@@ -1494,6 +1494,10 @@ public abstract sealed class Volume<T extends Number, A>
   }
 
   public static Volume<?, ?> getSharedVolume(OriginalStack currentStack) {
+    Optional<Volume<?, ?>> cached = VolumeService.getInstance().peek(currentStack);
+    if (cached.isPresent()) {
+      return cached.get();
+    }
     List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
     synchronized (viewerPlugins) {
       for (int i = viewerPlugins.size() - 1; i >= 0; i--) {

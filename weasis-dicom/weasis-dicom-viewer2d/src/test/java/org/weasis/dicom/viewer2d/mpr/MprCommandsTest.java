@@ -29,10 +29,18 @@ class MprCommandsTest {
           "mpr:reformat --series 1.2.3 --plane sagittal --no-open",
           "mpr:reformat --plane AXIAL --json",
           "mpr:list",
+          "mpr:volumes",
+          "mpr:prefetch",
+          "mpr:prefetch --series 1.2.3 --json",
           "mpr:delete --series 1.2.3.4");
 
   private static final List<String> INVALID =
-      List.of("mpr:reformat", "mpr:reformat --series 1.2.3", "mpr:delete", "mpr:list --series x");
+      List.of(
+          "mpr:reformat",
+          "mpr:reformat --series 1.2.3",
+          "mpr:delete",
+          "mpr:list --series x",
+          "mpr:volumes --series x");
 
   @Test
   void documentedCommandLinesParse() {

@@ -106,8 +106,15 @@ Consumers play one of two roles:
 While a volume loads, aggregate usage rises and the image cache yields room on its next `put`.
 Eviction is `put`-driven, not immediate.
 
-The MPR `Volume` stores its data in a `ChunkedArray` on the JVM heap; it is governed by the GC and
-is deliberately **not** a `MemoryManager` consumer, which would double-count the heap.
+The MPR `Volume` stores its data in a `ChunkedArray` on the JVM heap (in a temporary file when the
+heap cannot hold it); it is governed by the GC and is deliberately **not** a `MemoryManager`
+consumer, which would double-count the heap. Volumes are built and kept by one `VolumeService`
+(`weasis-dicom-viewer2d`, `org.weasis.dicom.viewer2d.mpr`): one volume per series and
+rectification, built once on a background worker and handed out under leases to the MPR, the
+volume rendering, the fusion reslicing, a subtraction mask or a reformat. A volume stays while a
+lease holds it; released, it waits for the next consumer until the unreferenced volumes exceed a
+share of the heap, when the least recently used leave, and it goes with its series. Requests build
+before prefetches, which a hanging protocol asks for the series its next steps reslice.
 
 ## The 3D viewer
 

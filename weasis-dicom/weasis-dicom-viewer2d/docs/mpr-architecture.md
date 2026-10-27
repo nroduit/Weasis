@@ -121,6 +121,19 @@ The rotation of a view has three layers, all held by `AxesControl`:
 
 ---
 
+## 4a. The volume service
+
+Every consumer of a volume takes it from `VolumeService`: the MPR controller (`ObliqueMpr`
+acquires it and the controller releases it when disposed), the 3D texture of the volume
+rendering, the fusion reslicing, the subtraction mask and the reformat (`OwnedVolume`). The
+service builds a volume once per series and rectification mode on a single background worker
+(`VolumeCache`: requests first, prefetches after), keeps it under leases, lets released volumes
+wait for the next consumer up to a budget, and evicts the volumes of a series the explorer
+removes. `Volume.getSharedVolume` consults it first, so a consumer that still builds through
+`Volume.createVolume` reuses what the service holds. `mpr:volumes` lists what it holds and
+`mpr:prefetch` asks for a build ahead of time; a hanging protocol prefetches the series of the
+MPR, rendering and reformat cells of its other steps (`VolumePrefetcher` extension point).
+
 ## 4b. Reformat as a series
 
 The MPR views reslice the volume live. `ReformatBuilder` produces the other form: a **static

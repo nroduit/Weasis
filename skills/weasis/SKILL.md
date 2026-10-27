@@ -278,7 +278,9 @@ line naming the current spelling. Use the current one everywhere.
    The result is a series: scroll, window, measure and capture it like any other.
    Likewise `mpr:reformat --plane CORONAL` (or SAGITTAL, AXIAL) builds the reformat of the
    selected pane's series (or `--series <uid>`) as a new series of the study on an isotropic grid
-   and opens it; `mpr:list` and `mpr:delete --series <uid>` manage them. The built-in CT protocol
+   and opens it; `mpr:list` and `mpr:delete --series <uid>` manage them. The volume of a series is
+   built once for the MPR, the volume rendering and the reformats: `mpr:volumes` says which are
+   ready, `mpr:prefetch --series <uid>` builds one ahead of time. The built-in CT protocol
    fills an empty coronal or sagittal cell with such a reformat of the axial series (cell indicator
    *fallback*).
 12. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at

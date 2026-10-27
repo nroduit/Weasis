@@ -32,6 +32,7 @@ import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.dicom.viewer2d.mpr.ObliqueMpr;
 import org.weasis.dicom.viewer2d.mpr.OriginalStack;
 import org.weasis.dicom.viewer2d.mpr.Volume;
+import org.weasis.dicom.viewer2d.mpr.VolumeService;
 import org.weasis.dicom.viewer3d.View3DFactory;
 import org.weasis.dicom.viewer3d.vr.TextureData.PixelFormat;
 
@@ -85,8 +86,10 @@ public class DicomVolTextureFactory {
           progress.repaint();
         });
 
-    Volume<?, ?> volume = Volume.getSharedVolume(stack);
-    if (volume == null) {
+    // The volume comes from the service, built once for the MPR, the rendering and the derived
+    // series; the question of the rectification is asked here, the service builds what is decided
+    boolean rectified = true;
+    if (Volume.getSharedVolume(stack) == null) {
       try {
         String question = null;
         if (stack.isNonParallelSlices()) {
@@ -100,13 +103,18 @@ public class DicomVolTextureFactory {
           warnings.accept(question);
           MPRGenerator.confirmMessage(bar, policy, question);
         }
-        // If yes is selected or none of the conditions are met, the volume is generated with
-        // geometric rectification
-        volume = Volume.createVolume(stack, bar, false);
       } catch (IllegalStateException e) {
         // If the user selects no then a basic volume with no rectification is generated
-        volume = Volume.createVolume(stack, bar, true);
+        rectified = false;
       }
+    }
+    VolumeService.Lease lease = VolumeService.getInstance().acquire(series, rectified, bar);
+    Volume<?, ?> volume;
+    try {
+      volume = lease.volume();
+    } catch (RuntimeException e) {
+      lease.close();
+      throw e;
     }
 
     WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
@@ -136,11 +144,15 @@ public class DicomVolTextureFactory {
 
     PixelFormat imageDataPixFormat = getImageDataFormat(volume.getCvType());
     if (imageDataPixFormat == null) {
+      lease.close();
       throw new IllegalArgumentException("Pixel format not supported");
     }
 
-    return new DicomVolTexture(
-        new Vector3i(width, height, depth), volume, imageDataPixFormat, changeSupport);
+    DicomVolTexture texture =
+        new DicomVolTexture(
+            new Vector3i(width, height, depth), volume, imageDataPixFormat, changeSupport);
+    texture.hold(lease);
+    return texture;
   }
 
   public void addPropertyChangeListener(PropertyChangeListener listener) {
