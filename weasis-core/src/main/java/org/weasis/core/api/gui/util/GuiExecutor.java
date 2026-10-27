@@ -52,17 +52,24 @@ public class GuiExecutor {
     if (SwingUtilities.isEventDispatchThread()) {
       return task.get();
     }
-    CommandContext context = CommandContext.current();
+    // A caller outside any command carries no context to the EDT: what the task publishes there
+    // is the application's own doing, not a launch argument's.
+    CommandContext context = CommandContext.isBound() ? CommandContext.current() : null;
     AtomicReference<T> result = new AtomicReference<>();
     try {
       SwingUtilities.invokeAndWait(
-          () ->
-              CommandContext.runWith(
-                  context,
-                  () -> {
-                    result.set(task.get());
-                    return null;
-                  }));
+          () -> {
+            if (context == null) {
+              result.set(task.get());
+              return;
+            }
+            CommandContext.runWith(
+                context,
+                () -> {
+                  result.set(task.get());
+                  return null;
+                });
+          });
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IllegalStateException("Interrupted while waiting for the EDT", e);

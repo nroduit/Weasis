@@ -107,6 +107,11 @@ public class WorkspaceCommands implements CommandExtension {
     return this;
   }
 
+  @Override
+  public List<org.weasis.core.api.event.EventType> getEventTypes() {
+    return WorkspaceManager.eventTypes();
+  }
+
   /** Replaces the workspace lookup, for headless tests. */
   WorkspaceCommands withManager(Supplier<WorkspaceManager> supplier) {
     this.managerSupplier = supplier;

@@ -33,7 +33,9 @@ public enum Capability {
    */
   PIXEL_ATTEST,
   /** Stops the application, which ends every other caller's session too. */
-  SHUTDOWN;
+  SHUTDOWN,
+  /** Observes the application through the event stream or the ring buffer of recent events. */
+  EVENTS;
 
   /** The name of the capability in the vocabulary: {@code file-write}. */
   public String key() {

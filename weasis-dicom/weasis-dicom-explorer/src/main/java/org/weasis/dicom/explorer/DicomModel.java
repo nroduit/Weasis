@@ -160,6 +160,7 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
   public DicomModel() {
     model = new Tree<>(MediaSeriesGroupNode.rootNode);
     splittingRules = new SplittingRules();
+    addPropertyChangeListener(new DicomEventBridge(this));
   }
 
   /** The tree the DICOM Explorer displays and the {@code dicom:} commands feed. */
@@ -181,6 +182,11 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
   @Override
   public Object getCommandModel() {
     return new DicomModelCommands(this);
+  }
+
+  @Override
+  public List<org.weasis.core.api.event.EventType> getEventTypes() {
+    return DicomEventBridge.types();
   }
 
   @Override

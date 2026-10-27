@@ -614,6 +614,15 @@ public final class CommandModel {
 
   /** JSON descriptor of a namespace: verbs, options, parameters, versions and deprecations. */
   public static void json(JsonWriter out, String namespace, Object model) {
+    json(out, namespace, model, List.of());
+  }
+
+  /** The descriptor of a namespace with the events it publishes, when it declares some. */
+  public static void json(
+      JsonWriter out,
+      String namespace,
+      Object model,
+      List<org.weasis.core.api.event.EventType> events) {
     CommandLine cl = newCommandLine(model);
     CommandSpec root = cl.getCommandSpec();
     out.beginObject().name("name").value(namespace); // NON-NLS
@@ -630,7 +639,13 @@ public final class CommandModel {
           .sorted((a, b) -> a.name().compareTo(b.name()))
           .forEach(spec -> jsonVerb(out, spec.name(), spec));
     }
-    out.endArray().endObject();
+    out.endArray();
+    if (!events.isEmpty()) {
+      out.name("events").beginArray(); // NON-NLS
+      events.forEach(type -> type.write(out));
+      out.endArray();
+    }
+    out.endObject();
   }
 
   private static void jsonVerb(JsonWriter out, String name, CommandSpec spec) {

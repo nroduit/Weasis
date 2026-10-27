@@ -10,21 +10,26 @@
 package org.weasis.core.api.command;
 
 /**
- * One step of a script: a command to run, whose body may be kept under a variable, or an
- * expectation about what the previous steps returned.
+ * One step of a script: a command to run, whose body may be kept under a variable, an expectation
+ * about what the previous steps returned, or a wait for an event.
  *
  * @param line the line of the file it comes from, so a report points at it
- * @param variable the name a command step keeps its body under, or {@code null}
+ * @param variable the name a command or wait step keeps its body under, or {@code null}
  * @param text the line as written, with its {@code ${…}} references
  */
 public record ScriptStep(int line, Kind kind, String variable, String text) {
 
   public enum Kind {
     COMMAND,
-    EXPECT
+    EXPECT,
+    WAIT
   }
 
   public boolean isExpectation() {
     return kind == Kind.EXPECT;
+  }
+
+  public boolean isWait() {
+    return kind == Kind.WAIT;
   }
 }

@@ -32,8 +32,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.command.CommandError;
+import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.CommandManager;
 import org.weasis.core.api.command.CommandResult;
+import org.weasis.core.api.event.EventFilter;
 import org.weasis.pref.ConfigData;
 
 public class Singleton {
@@ -82,6 +85,17 @@ public class Singleton {
      */
     default CommandResult runCommand(List<String> arguments, boolean assumeYes) {
       return CommandResult.error("Remote commands are not supported by this application");
+    }
+
+    /**
+     * Opens the event stream a remote caller asked for ({@code si.sub}); the grant decides what the
+     * caller sees and is closed when the connection ends.
+     *
+     * @throws CommandFailure when the policy refuses
+     */
+    default CommandManager.EventStreamGrant openEventStream(EventFilter filter) {
+      throw new CommandFailure(
+          CommandError.of(CommandError.FAILED, "Events are not supported by this application"));
     }
   }
 
@@ -370,6 +384,8 @@ public class Singleton {
 
           if (CommandProtocol.RUN.equals(line)) {
             handleRun(in, socket, isr);
+          } else if (CommandProtocol.SUBSCRIBE.equals(line)) {
+            handleSubscribe(in, socket, isr);
           } else if (SI_MAGICWORD.equals(line)) {
             runSerially(() -> handleMagicWord(in, socket, isr));
           } else if (SI_STOP.equals(line)) {
@@ -452,7 +468,7 @@ public class Singleton {
       }
       try (OutputStream os = s.getOutputStream();
           PrintStream ps = new PrintStream(os, true, isr.getEncoding())) {
-        CommandProtocol.writeResponse(ps, result);
+        CommandProtocol.writeResponse(ps, result, request.version());
       }
       if (failure != null) {
         // Logged after the answer: rendering a stack trace can fail for the very same reason.
@@ -462,14 +478,9 @@ public class Singleton {
 
     private CommandResult execute(CommandProtocol.Request request) {
       SingletonApp app = siApp;
-      if (request.version() > CommandProtocol.VERSION) {
-        return CommandResult.of(
-            CommandResult.CONNECTION,
-            "The client speaks protocol version "
-                + request.version()
-                + ", this Weasis supports "
-                + CommandProtocol.VERSION
-                + ": update Weasis");
+      CommandResult refused = refuseNewerClient(request.version());
+      if (refused != null) {
+        return refused;
       }
       if (app == null) {
         return CommandResult.error("Application is shutting down");
@@ -477,6 +488,60 @@ public class Singleton {
       return CommandManager.runWithTimeout(
           () -> app.runCommand(request.argv(), request.assumeYes()),
           timeout(request.timeoutSeconds()));
+    }
+
+    private static CommandResult refuseNewerClient(int version) {
+      if (version <= CommandProtocol.VERSION) {
+        return null;
+      }
+      return CommandResult.of(
+          CommandResult.CONNECTION,
+          "The client speaks protocol version "
+              + version
+              + ", this Weasis supports "
+              + CommandProtocol.VERSION
+              + ": update Weasis");
+    }
+
+    /**
+     * A subscription to the events: the policy decides, then the connection stays open and carries
+     * one JSON line per event until the client closes it.
+     */
+    private void handleSubscribe(BufferedReader in, Socket s, InputStreamReader isr)
+        throws IOException {
+      CommandProtocol.Subscribe request = CommandProtocol.readSubscribe(in);
+      SingletonApp app = siApp;
+      CommandResult refused = refuseNewerClient(request.version());
+      if (refused == null && app == null) {
+        refused = CommandResult.error("Application is shutting down");
+      }
+      CommandManager.EventStreamGrant grant = null;
+      if (refused == null) {
+        try {
+          grant =
+              app.openEventStream(
+                  EventFilter.parse(String.join(",", request.globs()), request.where()));
+        } catch (CommandFailure e) {
+          int status =
+              CommandError.REFUSED_BY_POLICY.equals(e.error().code())
+                  ? CommandResult.FORBIDDEN
+                  : CommandResult.ERROR;
+          refused = CommandResult.of(status, e.error().toJson(CommandManager.EVENTS, List.of()));
+        } catch (IllegalArgumentException e) {
+          refused =
+              CommandResult.usage(
+                  CommandError.of(CommandError.USAGE, e.getMessage())
+                      .toJson(CommandManager.EVENTS, List.of()));
+        }
+      }
+      try (OutputStream os = s.getOutputStream();
+          PrintStream ps = new PrintStream(os, true, isr.getEncoding())) {
+        if (refused != null) {
+          CommandProtocol.writeResponse(ps, refused, request.version());
+          return;
+        }
+        EventStream.serve(s, in, ps, request, grant);
+      }
     }
 
     private static Duration timeout(int requestedSeconds) {

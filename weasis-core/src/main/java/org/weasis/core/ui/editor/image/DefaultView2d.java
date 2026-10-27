@@ -92,6 +92,7 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.event.ViewerEventBridge;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -953,6 +954,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     if (oldSequence == null && newSeries == null) {
       return;
+    }
+    if (oldSequence != newSeries) {
+      ViewerEventBridge.seriesChanged(this, newSeries);
     }
     if (oldSequence != null
         && oldSequence.equals(newSeries)

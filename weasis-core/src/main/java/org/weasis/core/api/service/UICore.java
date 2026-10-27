@@ -48,6 +48,7 @@ import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.CommandManager;
+import org.weasis.core.api.event.EventBus;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -84,6 +85,9 @@ import org.weasis.core.ui.editor.UiProfiles;
 import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.event.GraphicEventBridge;
+import org.weasis.core.ui.event.UiActivityBridge;
+import org.weasis.core.ui.event.ViewerEventBridge;
 import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.model.graphic.GraphicRegistry;
 import org.weasis.core.ui.model.graphic.GraphicToolProvider;
@@ -190,6 +194,10 @@ public final class UICore {
     UiProfiles.configure();
     ActionCatalog.configure();
     CommandManager.setViewerTypeSupplier(() -> ViewContexts.current().viewerTypeId());
+    EventBus.global().catalog().declare(ViewerEventBridge.types());
+    EventBus.global().catalog().declare(GraphicEventBridge.types());
+    UiActivityBridge.install(
+        window -> workspaceManager == null ? 0 : workspaceManager.windowNumber(window));
     this.propsFile =
         new File(systemPreferences.getProperty("weasis.pref.dir"), "weasis.properties");
     if (!propsFile.canRead()) {

@@ -53,6 +53,40 @@ class CommandProtocolTest {
   }
 
   @Test
+  void subscribeRoundTripCarriesFiltersConditionsAndTheSequence() throws IOException {
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    PrintStream out = new PrintStream(bytes, true, StandardCharsets.UTF_8);
+    CommandProtocol.writeSubscribe(
+        out,
+        "s3cret",
+        new CommandProtocol.Subscribe(
+            List.of("dicom:*", "view2d:windowLevel.*"), List.of("view=v1"), 42));
+    BufferedReader in = reader(bytes);
+    assertEquals("s3cret", in.readLine());
+    assertEquals(CommandProtocol.SUBSCRIBE, in.readLine());
+    CommandProtocol.Subscribe request = CommandProtocol.readSubscribe(in);
+    assertAll(
+        () -> assertEquals(List.of("dicom:*", "view2d:windowLevel.*"), request.globs()),
+        () -> assertEquals(List.of("view=v1"), request.where()),
+        () -> assertEquals(42, request.since()),
+        () -> assertEquals(CommandProtocol.VERSION, request.version()));
+  }
+
+  @Test
+  void aVersionOneClientIsAnsweredInItsVersion() throws IOException {
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    PrintStream out = new PrintStream(bytes, true, StandardCharsets.UTF_8);
+    CommandProtocol.writeResponse(out, CommandResult.ok("{}"), 1);
+    BufferedReader in = reader(bytes);
+    assertEquals(CommandProtocol.PROTOCOL + " 1", in.readLine());
+    ByteArrayOutputStream current = new ByteArrayOutputStream();
+    CommandProtocol.writeResponse(
+        new PrintStream(current, true, StandardCharsets.UTF_8), CommandResult.ok("{}"));
+    assertEquals(
+        CommandProtocol.PROTOCOL + " " + CommandProtocol.VERSION, reader(current).readLine());
+  }
+
+  @Test
   void requestCarriesAssumeYes() throws IOException {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(bytes, true, StandardCharsets.UTF_8);

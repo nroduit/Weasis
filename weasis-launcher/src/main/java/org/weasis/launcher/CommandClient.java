@@ -60,6 +60,8 @@ import picocli.CommandLine.Spec;
       "5 connection error, 6 not permitted remotely.",
       "Help: weasis-cli help [<namespace>[:<verb>]] browses the commands (interactive in a terminal);",
       "weasis-cli help --markdown prints the whole reference.",
+      "Events: weasis-cli events [--filter <glob>] [--since <seq>] [--count <n>] [--timeout <s>]",
+      "streams what changes in the instance as JSON Lines; weasis-cli events --help for the options.",
       "Examples: weasis-cli workspace:list, weasis-cli view2d:window-level --window 400 --level 40"
     })
 public final class CommandClient implements Callable<Integer> {
@@ -73,6 +75,9 @@ public final class CommandClient implements Callable<Integer> {
   private static final int HELP_TIMEOUT = 3;
   private static final String SECTION_NAMESPACES = "instanceCommands"; // NON-NLS
   private static final String CLIENT = "weasis-cli"; // NON-NLS
+
+  /** The client-side word that tails the events instead of running a verb. */
+  static final String EVENTS = "events"; // NON-NLS
 
   @Option(
       names = "--instance",
@@ -249,6 +254,9 @@ public final class CommandClient implements Callable<Integer> {
       return CommandResult.CONNECTION;
     }
     try {
+      if (EVENTS.equals(command.getFirst())) {
+        return EventStreamClient.run(command.subList(1, command.size()), target.get(), out, err);
+      }
       return CommandManager.HELP.equals(command.getFirst())
           ? help(target.get())
           : execute(target.get());

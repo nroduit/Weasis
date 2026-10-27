@@ -257,7 +257,7 @@ class CommandManagerTest {
     assertAll(
         () -> assertTrue(result.isOk()),
         // script: is registered by the manager itself, so every instance has it
-        () -> assertEquals("echo, math, script", result.body()));
+        () -> assertEquals("echo, events, math, script", result.body()));
   }
 
   @Test
@@ -390,11 +390,13 @@ class CommandManagerTest {
           manager.run(List.of("help", "--names", "--context"), CommandOrigin.REMOTE);
       CommandResult cube = manager.run(List.of("help", "cube", "--context"), CommandOrigin.REMOTE);
       assertAll(
-          () -> assertEquals("cube, math, script", flat.body()),
-          () -> assertEquals("math, script", twoD.body()),
+          () -> assertEquals("cube, events, math, script", flat.body()),
+          () -> assertEquals("events, math, script", twoD.body()),
           () -> assertFalse(json.body().contains("\"cube\""), json.body()),
-          () -> assertEquals("cube, math, script", threeD.body()),
-          () -> assertEquals("math, script", failing.body(), "no viewer: the general namespaces"),
+          () -> assertEquals("cube, events, math, script", threeD.body()),
+          () ->
+              assertEquals(
+                  "events, math, script", failing.body(), "no viewer: the general namespaces"),
           () -> assertTrue(cube.body().contains("cube:spin"), "a named namespace always answers"));
     } finally {
       CommandManager.setViewerTypeSupplier(null);
@@ -447,9 +449,9 @@ class CommandManagerTest {
         () -> assertTrue(rootIndex.title().startsWith("Weasis commands"), root.body()),
         () ->
             assertEquals(
-                List.of("echo", "math", "script"),
+                List.of("echo", "events", "math", "script"),
                 rootIndex.entries().stream().map(CommandHelp.Entry::name).toList()),
-        () -> assertEquals("Arithmetic verbs.", rootIndex.entries().get(1).summary()),
+        () -> assertEquals("Arithmetic verbs.", rootIndex.entries().get(2).summary()),
         () -> assertEquals("math: Arithmetic verbs.", verbIndex.title()),
         () ->
             assertEquals(
@@ -488,7 +490,7 @@ class CommandManagerTest {
         () ->
             assertTrue(
                 body.startsWith("{\n  \"apiVersion\": \"" + CommandManager.API_VERSION), body),
-        () -> assertTrue(compact.contains("\"protocolVersion\":1"), compact),
+        () -> assertTrue(compact.contains("\"protocolVersion\":2"), compact),
         () -> assertTrue(compact.contains("\"name\":\"add\""), compact),
         () -> assertTrue(compact.contains("\"since\":\"5.0\""), compact),
         () -> assertTrue(compact.contains("\"deprecated\":true"), compact),

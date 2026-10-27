@@ -74,6 +74,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.CommandManager;
 import org.weasis.core.api.command.CommandOrigin;
+import org.weasis.core.api.event.Event;
+import org.weasis.core.api.event.EventBus;
+import org.weasis.core.api.event.WeasisEvents;
 import org.weasis.launcher.LookAndFeels.ReadableLookAndFeelInfo;
 import org.weasis.plugin.WeasisPluginManager;
 import org.weasis.pref.ConfigData;
@@ -220,6 +223,13 @@ public class WeasisLauncher {
       if (!deferred.isEmpty()) {
         executeCommands(commandManager, deferred, CommandOrigin.URI);
       }
+      commandManager
+          .eventBus()
+          .publish(
+              Event.of(WeasisEvents.READY)
+                  .put("version", CommandManager.applicationVersion()) // NON-NLS
+                  .put("apiVersion", CommandManager.API_VERSION) // NON-NLS
+                  .put("profile", System.getProperty("weasis.profile"))); // NON-NLS
 
       showMessage(mainFrame, serverProp);
 
@@ -1056,6 +1066,7 @@ Starting PF4J Plugins...
   protected void shutdownHook() {
     closing = true;
     LOGGER.info("Stop the plugin framework and clean files before closing");
+    EventBus.global().publish(Event.of(WeasisEvents.SHUTDOWN));
     try {
       PluginManager pluginManager = configData.getPluginManager();
       pluginManager.stopPlugins();

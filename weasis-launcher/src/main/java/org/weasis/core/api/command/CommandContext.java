@@ -54,6 +54,11 @@ public final class CommandContext {
     this.policy = Objects.requireNonNull(policy);
   }
 
+  /** Whether a command is running on this thread. */
+  public static boolean isBound() {
+    return CURRENT.isBound();
+  }
+
   /** The context of the running command, or a throwaway local one when none is bound. */
   public static CommandContext current() {
     return CURRENT.isBound() ? CURRENT.get() : new CommandContext(CommandOrigin.LAUNCH_ARGS);

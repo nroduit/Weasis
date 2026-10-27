@@ -292,6 +292,14 @@ reads inside it, and `@expect` compares a value, which is what turns a script in
 answer is one JSON object per step and a summary, and the status is that of the first failing step.
 A script never runs a script. The client sugar is `weasis-cli --script <file>`.
 
+The same socket carries the **event stream**: a second request, `si.sub` (protocol version 2),
+holds the connection open and writes one JSON object per line for every change of state the
+instance publishes on its event bus (`org.weasis.core.api.event`, next to the command model);
+`weasis-cli events` is the client, `events:recent` the poll, and the `events:` namespace is
+registered by the `CommandManager` like `script:`. The policy decides whether a remote caller may
+observe, which namespaces and how many at once, identity fields are masked like command results,
+and each subscription is an audit line. See [Event-Model.md](Event-Model.md).
+
 The built-in `help` is navigable in three levels: `help` lists the namespaces with a one-line
 summary, `help <namespace>` the verbs of a namespace, and `help <namespace>:<verb>` (or
 `help <namespace> <verb>`) one verb in detail, its synopsis naming it `namespace:verb`. The

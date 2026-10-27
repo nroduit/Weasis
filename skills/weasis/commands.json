@@ -1,6 +1,6 @@
 {
-  "apiVersion": "2.22",
-  "protocolVersion": 1,
+  "apiVersion": "2.23",
+  "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
     "0": "ok",
@@ -1146,6 +1146,399 @@
               "required": false,
               "default": "[]",
               "description": "Series Instance UID, or series id, to unload."
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "name": "dicom:loading.progress",
+          "since": "5.0",
+          "description": "Images arrived in a series; one event per series per tick.",
+          "coalesced": true,
+          "fields": [
+            {
+              "name": "series",
+              "type": "series-uid",
+              "description": "series id"
+            },
+            {
+              "name": "images",
+              "type": "integer",
+              "description": "images present"
+            }
+          ]
+        },
+        {
+          "name": "dicom:loading.started",
+          "since": "5.0",
+          "description": "A load, download or export task started.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "source",
+              "type": "string",
+              "description": "download, local, export or task"
+            },
+            {
+              "name": "series",
+              "type": "series-uid",
+              "description": "the series a download fills, when it is one"
+            }
+          ]
+        },
+        {
+          "name": "dicom:loading.stopped",
+          "since": "5.0",
+          "description": "A load, download or export task ended.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "source",
+              "type": "string",
+              "description": "download, local, export or task"
+            },
+            {
+              "name": "series",
+              "type": "series-uid",
+              "description": "the series a download filled, when it is one"
+            },
+            {
+              "name": "canceled",
+              "type": "boolean",
+              "description": "whether it was canceled"
+            }
+          ]
+        },
+        {
+          "name": "dicom:object.added",
+          "since": "5.0",
+          "description": "A non-image object (KO, PR, SR, SEG, RT) is available.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "type",
+              "type": "string",
+              "description": "modality of the object"
+            },
+            {
+              "name": "sopInstanceUID",
+              "type": "string",
+              "description": "SOP instance UID"
+            },
+            {
+              "name": "seriesInstanceUID",
+              "type": "series-uid",
+              "description": "series instance UID of the object"
+            }
+          ]
+        },
+        {
+          "name": "dicom:patient.added",
+          "since": "5.0",
+          "description": "A patient entered the explorer.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "patientID",
+              "type": "patient-handle",
+              "description": "patient identifier, the handle of dicom:list"
+            },
+            {
+              "name": "patientName",
+              "type": "string",
+              "description": "patient name"
+            },
+            {
+              "name": "patientBirthDate",
+              "type": "string",
+              "description": "birth date"
+            }
+          ]
+        },
+        {
+          "name": "dicom:patient.removed",
+          "since": "5.0",
+          "description": "A patient and everything under it left the explorer.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "patientID",
+              "type": "patient-handle",
+              "description": "patient identifier"
+            }
+          ]
+        },
+        {
+          "name": "dicom:series.added",
+          "since": "5.0",
+          "description": "A series entered the explorer; its images may still be loading.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "id",
+              "type": "series-uid",
+              "description": "series id, the handle of the other verbs"
+            },
+            {
+              "name": "seriesInstanceUID",
+              "type": "series-uid",
+              "description": "series instance UID"
+            },
+            {
+              "name": "studyInstanceUID",
+              "type": "study-uid",
+              "description": "study instance UID"
+            },
+            {
+              "name": "modality",
+              "type": "string",
+              "description": "modality"
+            },
+            {
+              "name": "seriesDescription",
+              "type": "string",
+              "description": "series description"
+            },
+            {
+              "name": "imageCount",
+              "type": "integer",
+              "description": "images present when the event was published"
+            }
+          ]
+        },
+        {
+          "name": "dicom:series.removed",
+          "since": "5.0",
+          "description": "A series left the explorer.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "id",
+              "type": "series-uid",
+              "description": "series id"
+            },
+            {
+              "name": "studyInstanceUID",
+              "type": "study-uid",
+              "description": "study instance UID"
+            }
+          ]
+        },
+        {
+          "name": "dicom:study.added",
+          "since": "5.0",
+          "description": "A study entered the explorer.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "studyInstanceUID",
+              "type": "study-uid",
+              "description": "study instance UID"
+            },
+            {
+              "name": "patientID",
+              "type": "patient-handle",
+              "description": "patient identifier"
+            },
+            {
+              "name": "studyDate",
+              "type": "string",
+              "description": "study date"
+            },
+            {
+              "name": "studyDescription",
+              "type": "string",
+              "description": "study description"
+            },
+            {
+              "name": "accessionNumber",
+              "type": "string",
+              "description": "accession number"
+            }
+          ]
+        },
+        {
+          "name": "dicom:study.closed",
+          "since": "5.0",
+          "description": "No pane of any viewer shows this study anymore.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "studyInstanceUID",
+              "type": "study-uid",
+              "description": "study instance UID"
+            }
+          ]
+        },
+        {
+          "name": "dicom:study.opened",
+          "since": "5.0",
+          "description": "A first pane shows a series of this study.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "studyInstanceUID",
+              "type": "study-uid",
+              "description": "study instance UID"
+            },
+            {
+              "name": "view",
+              "type": "string",
+              "description": "the viewer that opened it"
+            },
+            {
+              "name": "series",
+              "type": "series-uid",
+              "description": "the series id shown"
+            }
+          ]
+        },
+        {
+          "name": "dicom:study.removed",
+          "since": "5.0",
+          "description": "A study and its series left the explorer.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "studyInstanceUID",
+              "type": "study-uid",
+              "description": "study instance UID"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "events",
+      "description": "The events this instance publishes: the catalog, the recent ones, and the subscribers. 'weasis-cli events' streams them live.",
+      "verbs": [
+        {
+          "name": "list",
+          "description": "The events this instance may publish, by namespace, with the fields of their payload.",
+          "since": "5.0",
+          "usage": "events:list [-h] [--json] [--markdown] [--namespace=<namespace>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--namespace"
+              ],
+              "label": "<namespace>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Only the events of this namespace.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--markdown"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "A Markdown table, for a reference page.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "recent",
+          "description": "The last events the bus kept, oldest first: a poll for a caller that cannot hold a stream. Pass the 'lastSeq' of the previous answer as --since to read only what is new.",
+          "since": "5.0",
+          "usage": "events:recent [-h] [--json] [--filter=<event-glob>] [--last=<n>] [--since=<seq>] [--where=<key=value>]...",
+          "needs": [
+            "events"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--since"
+              ],
+              "label": "<seq>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "0",
+              "description": "Only the events after this sequence number.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--last"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "50",
+              "description": "At most this many events, the newest ones (default: 50).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--filter"
+              ],
+              "label": "<event-glob>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Event names to keep, with '*' as a wildcard: 'dicom:*,workspace:view.*'.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--where"
+              ],
+              "label": "<key=value>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "A payload value an event must carry; repeatable.",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "subscribers",
+          "description": "The active subscriptions: id, owner, filter, delivery, dropped events, and whether the owner component is gone (dangling).",
+          "since": "5.0",
+          "usage": "events:subscribers [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
             }
           ]
         }
@@ -5760,7 +6153,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --set=<magnification> | --fit=<zoom-fit>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
           "parameters": [],
           "options": [
             {
@@ -5795,20 +6188,6 @@
             },
             {
               "names": [
-                "--by"
-              ],
-              "label": "<steps>",
-              "type": "integer",
-              "arity": "1",
-              "required": true,
-              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
                 "--set"
               ],
               "label": "<magnification>",
@@ -5839,6 +6218,114 @@
                 "exclusive": true,
                 "multiplicity": "0..1"
               }
+            },
+            {
+              "names": [
+                "--by"
+              ],
+              "label": "<steps>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "name": "view2d:image.changed",
+          "since": "5.0",
+          "description": "The selected pane of a viewer shows another image.",
+          "coalesced": true,
+          "fields": [
+            {
+              "name": "view",
+              "type": "view-id",
+              "description": "the viewer"
+            },
+            {
+              "name": "series",
+              "type": "string",
+              "description": "series id, as dicom:list names it"
+            },
+            {
+              "name": "imageIndex",
+              "type": "integer",
+              "description": "position of the image in the series, from 1"
+            }
+          ]
+        },
+        {
+          "name": "view2d:series.changed",
+          "since": "5.0",
+          "description": "A pane of a viewer shows another series, or none; whatever opened it.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "view",
+              "type": "view-id",
+              "description": "the viewer"
+            },
+            {
+              "name": "pane",
+              "type": "integer",
+              "description": "pane index in the layout, from 1"
+            },
+            {
+              "name": "series",
+              "type": "string",
+              "description": "series id, as dicom:list names it; absent for an empty pane"
+            }
+          ]
+        },
+        {
+          "name": "view2d:windowLevel.changed",
+          "since": "5.0",
+          "description": "Window or level of the selected pane was set.",
+          "coalesced": true,
+          "fields": [
+            {
+              "name": "view",
+              "type": "view-id",
+              "description": "the viewer"
+            },
+            {
+              "name": "window",
+              "type": "number",
+              "description": "window width"
+            },
+            {
+              "name": "level",
+              "type": "number",
+              "description": "window center"
+            }
+          ]
+        },
+        {
+          "name": "view2d:windowLevel.changing",
+          "since": "5.0",
+          "description": "Window or level of the selected pane moves under a drag; local subscribers only.",
+          "coalesced": true,
+          "fields": [
+            {
+              "name": "view",
+              "type": "view-id",
+              "description": "the viewer"
+            },
+            {
+              "name": "window",
+              "type": "number",
+              "description": "window width"
+            },
+            {
+              "name": "level",
+              "type": "number",
+              "description": "window center"
             }
           ]
         }
@@ -5949,6 +6436,99 @@
               "arity": "0",
               "required": false,
               "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "name": "weasis:heartbeat",
+          "since": "5.0",
+          "description": "Sent on an idle stream; seq is the last sequence number.",
+          "coalesced": false,
+          "fields": []
+        },
+        {
+          "name": "weasis:ready",
+          "since": "5.0",
+          "description": "The plugins are started and the commands answer.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "version",
+              "type": "string",
+              "description": "application version"
+            },
+            {
+              "name": "apiVersion",
+              "type": "string",
+              "description": "command API version"
+            },
+            {
+              "name": "profile",
+              "type": "string",
+              "description": "configuration profile"
+            }
+          ]
+        },
+        {
+          "name": "weasis:shutdown",
+          "since": "5.0",
+          "description": "The application is stopping.",
+          "coalesced": false,
+          "fields": []
+        },
+        {
+          "name": "weasis:subscriber.dropped",
+          "since": "5.0",
+          "description": "This subscriber fell behind: the oldest pending events were dropped; one that loses 6144 events without catching up is detached.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "subscriber",
+              "type": "string",
+              "description": "subscription id"
+            },
+            {
+              "name": "dropped",
+              "type": "integer",
+              "description": "events dropped since the subscription started"
+            },
+            {
+              "name": "detached",
+              "type": "boolean",
+              "description": "whether the subscription was closed"
+            }
+          ]
+        },
+        {
+          "name": "weasis:ui.modal",
+          "since": "5.0",
+          "description": "A modal dialog opened or closed.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "state",
+              "type": "string",
+              "description": "opened or closed"
+            },
+            {
+              "name": "title",
+              "type": "string",
+              "description": "dialog title"
+            }
+          ]
+        },
+        {
+          "name": "weasis:user.active",
+          "since": "5.0",
+          "description": "The user moved the mouse or typed.",
+          "coalesced": true,
+          "fields": [
+            {
+              "name": "window",
+              "type": "integer",
+              "description": "window number, as workspace:list numbers them"
             }
           ]
         }
@@ -6675,7 +7255,855 @@
             }
           ]
         }
+      ],
+      "events": [
+        {
+          "name": "workspace:layout.changed",
+          "since": "5.0",
+          "description": "A viewer changed its pane layout.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "view",
+              "type": "view-id",
+              "description": "the viewer"
+            },
+            {
+              "name": "layout",
+              "type": "string",
+              "description": "layout id"
+            }
+          ]
+        },
+        {
+          "name": "workspace:panel.changed",
+          "since": "5.0",
+          "description": "The toolbars or the tool panels were rebuilt for the selected viewer.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "panel",
+              "type": "string",
+              "description": "toolbars or tools"
+            }
+          ]
+        },
+        {
+          "name": "workspace:view.closed",
+          "since": "5.0",
+          "description": "A view left the workspace.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "view",
+              "type": "view-id",
+              "description": "the view"
+            },
+            {
+              "name": "window",
+              "type": "integer",
+              "description": "window number"
+            }
+          ]
+        },
+        {
+          "name": "workspace:view.opened",
+          "since": "5.0",
+          "description": "A view was docked into a window.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "view",
+              "type": "view-id",
+              "description": "the view"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "description": "viewer type id"
+            },
+            {
+              "name": "window",
+              "type": "integer",
+              "description": "window number, as workspace:list numbers them"
+            }
+          ]
+        },
+        {
+          "name": "workspace:view.selected",
+          "since": "5.0",
+          "description": "A view became the application's selection.",
+          "coalesced": true,
+          "fields": [
+            {
+              "name": "view",
+              "type": "view-id",
+              "description": "the view"
+            },
+            {
+              "name": "type",
+              "type": "string",
+              "description": "viewer type id"
+            },
+            {
+              "name": "window",
+              "type": "integer",
+              "description": "window number"
+            }
+          ]
+        },
+        {
+          "name": "workspace:window.activated",
+          "since": "5.0",
+          "description": "The active window changed, once it stayed so for 100 ms; from the engine, not AWT.",
+          "coalesced": true,
+          "fields": [
+            {
+              "name": "window",
+              "type": "integer",
+              "description": "window number"
+            }
+          ]
+        },
+        {
+          "name": "workspace:window.closed",
+          "since": "5.0",
+          "description": "A floating viewer window closed.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "window",
+              "type": "integer",
+              "description": "window number it had"
+            },
+            {
+              "name": "detached",
+              "type": "boolean",
+              "description": "always true"
+            }
+          ]
+        },
+        {
+          "name": "workspace:window.opened",
+          "since": "5.0",
+          "description": "A window hosting a workspace appeared.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "window",
+              "type": "integer",
+              "description": "window number"
+            },
+            {
+              "name": "detached",
+              "type": "boolean",
+              "description": "whether it is a floating viewer window"
+            }
+          ]
+        }
       ]
     }
-  ]
+  ],
+  "events": {
+    "command": [
+      {
+        "name": "command:finished",
+        "since": "5.0",
+        "description": "A command of a remote caller finished.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "command",
+            "type": "string",
+            "description": "namespace:verb"
+          },
+          {
+            "name": "status",
+            "type": "integer",
+            "description": "exit status"
+          },
+          {
+            "name": "durationMs",
+            "type": "integer",
+            "description": "how long it ran"
+          }
+        ]
+      }
+    ],
+    "dicom": [
+      {
+        "name": "dicom:loading.progress",
+        "since": "5.0",
+        "description": "Images arrived in a series; one event per series per tick.",
+        "coalesced": true,
+        "fields": [
+          {
+            "name": "series",
+            "type": "series-uid",
+            "description": "series id"
+          },
+          {
+            "name": "images",
+            "type": "integer",
+            "description": "images present"
+          }
+        ]
+      },
+      {
+        "name": "dicom:loading.started",
+        "since": "5.0",
+        "description": "A load, download or export task started.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "source",
+            "type": "string",
+            "description": "download, local, export or task"
+          },
+          {
+            "name": "series",
+            "type": "series-uid",
+            "description": "the series a download fills, when it is one"
+          }
+        ]
+      },
+      {
+        "name": "dicom:loading.stopped",
+        "since": "5.0",
+        "description": "A load, download or export task ended.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "source",
+            "type": "string",
+            "description": "download, local, export or task"
+          },
+          {
+            "name": "series",
+            "type": "series-uid",
+            "description": "the series a download filled, when it is one"
+          },
+          {
+            "name": "canceled",
+            "type": "boolean",
+            "description": "whether it was canceled"
+          }
+        ]
+      },
+      {
+        "name": "dicom:object.added",
+        "since": "5.0",
+        "description": "A non-image object (KO, PR, SR, SEG, RT) is available.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "description": "modality of the object"
+          },
+          {
+            "name": "sopInstanceUID",
+            "type": "string",
+            "description": "SOP instance UID"
+          },
+          {
+            "name": "seriesInstanceUID",
+            "type": "series-uid",
+            "description": "series instance UID of the object"
+          }
+        ]
+      },
+      {
+        "name": "dicom:patient.added",
+        "since": "5.0",
+        "description": "A patient entered the explorer.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "patientID",
+            "type": "patient-handle",
+            "description": "patient identifier, the handle of dicom:list"
+          },
+          {
+            "name": "patientName",
+            "type": "string",
+            "description": "patient name"
+          },
+          {
+            "name": "patientBirthDate",
+            "type": "string",
+            "description": "birth date"
+          }
+        ]
+      },
+      {
+        "name": "dicom:patient.removed",
+        "since": "5.0",
+        "description": "A patient and everything under it left the explorer.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "patientID",
+            "type": "patient-handle",
+            "description": "patient identifier"
+          }
+        ]
+      },
+      {
+        "name": "dicom:series.added",
+        "since": "5.0",
+        "description": "A series entered the explorer; its images may still be loading.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "id",
+            "type": "series-uid",
+            "description": "series id, the handle of the other verbs"
+          },
+          {
+            "name": "seriesInstanceUID",
+            "type": "series-uid",
+            "description": "series instance UID"
+          },
+          {
+            "name": "studyInstanceUID",
+            "type": "study-uid",
+            "description": "study instance UID"
+          },
+          {
+            "name": "modality",
+            "type": "string",
+            "description": "modality"
+          },
+          {
+            "name": "seriesDescription",
+            "type": "string",
+            "description": "series description"
+          },
+          {
+            "name": "imageCount",
+            "type": "integer",
+            "description": "images present when the event was published"
+          }
+        ]
+      },
+      {
+        "name": "dicom:series.removed",
+        "since": "5.0",
+        "description": "A series left the explorer.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "id",
+            "type": "series-uid",
+            "description": "series id"
+          },
+          {
+            "name": "studyInstanceUID",
+            "type": "study-uid",
+            "description": "study instance UID"
+          }
+        ]
+      },
+      {
+        "name": "dicom:study.added",
+        "since": "5.0",
+        "description": "A study entered the explorer.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "studyInstanceUID",
+            "type": "study-uid",
+            "description": "study instance UID"
+          },
+          {
+            "name": "patientID",
+            "type": "patient-handle",
+            "description": "patient identifier"
+          },
+          {
+            "name": "studyDate",
+            "type": "string",
+            "description": "study date"
+          },
+          {
+            "name": "studyDescription",
+            "type": "string",
+            "description": "study description"
+          },
+          {
+            "name": "accessionNumber",
+            "type": "string",
+            "description": "accession number"
+          }
+        ]
+      },
+      {
+        "name": "dicom:study.closed",
+        "since": "5.0",
+        "description": "No pane of any viewer shows this study anymore.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "studyInstanceUID",
+            "type": "study-uid",
+            "description": "study instance UID"
+          }
+        ]
+      },
+      {
+        "name": "dicom:study.opened",
+        "since": "5.0",
+        "description": "A first pane shows a series of this study.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "studyInstanceUID",
+            "type": "study-uid",
+            "description": "study instance UID"
+          },
+          {
+            "name": "view",
+            "type": "string",
+            "description": "the viewer that opened it"
+          },
+          {
+            "name": "series",
+            "type": "series-uid",
+            "description": "the series id shown"
+          }
+        ]
+      },
+      {
+        "name": "dicom:study.removed",
+        "since": "5.0",
+        "description": "A study and its series left the explorer.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "studyInstanceUID",
+            "type": "study-uid",
+            "description": "study instance UID"
+          }
+        ]
+      }
+    ],
+    "graphic": [
+      {
+        "name": "graphic:added",
+        "since": "5.0",
+        "description": "A graphic was drawn or loaded.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "graphic",
+            "type": "graphic-id",
+            "description": "graphic id"
+          },
+          {
+            "name": "tool",
+            "type": "string",
+            "description": "the kind of graphic, as its tool names it"
+          },
+          {
+            "name": "layer",
+            "type": "string",
+            "description": "layer type"
+          },
+          {
+            "name": "model",
+            "type": "string",
+            "description": "id of the graphic model"
+          }
+        ]
+      },
+      {
+        "name": "graphic:changed",
+        "since": "5.0",
+        "description": "A graphic moved, was resized or relabelled.",
+        "coalesced": true,
+        "fields": [
+          {
+            "name": "graphic",
+            "type": "graphic-id",
+            "description": "graphic id"
+          },
+          {
+            "name": "view",
+            "type": "string",
+            "description": "the viewer, when the model is shown"
+          }
+        ]
+      },
+      {
+        "name": "graphic:removed",
+        "since": "5.0",
+        "description": "A graphic was deleted.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "graphic",
+            "type": "graphic-id",
+            "description": "graphic id"
+          },
+          {
+            "name": "model",
+            "type": "string",
+            "description": "id of the graphic model"
+          }
+        ]
+      },
+      {
+        "name": "graphic:selection.changed",
+        "since": "5.0",
+        "description": "The selected graphics of a view changed.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "graphics",
+            "type": "array",
+            "description": "the selected graphic ids"
+          },
+          {
+            "name": "view",
+            "type": "string",
+            "description": "the viewer, when the model is shown"
+          }
+        ]
+      }
+    ],
+    "view2d": [
+      {
+        "name": "view2d:image.changed",
+        "since": "5.0",
+        "description": "The selected pane of a viewer shows another image.",
+        "coalesced": true,
+        "fields": [
+          {
+            "name": "view",
+            "type": "view-id",
+            "description": "the viewer"
+          },
+          {
+            "name": "series",
+            "type": "string",
+            "description": "series id, as dicom:list names it"
+          },
+          {
+            "name": "imageIndex",
+            "type": "integer",
+            "description": "position of the image in the series, from 1"
+          }
+        ]
+      },
+      {
+        "name": "view2d:series.changed",
+        "since": "5.0",
+        "description": "A pane of a viewer shows another series, or none; whatever opened it.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "view",
+            "type": "view-id",
+            "description": "the viewer"
+          },
+          {
+            "name": "pane",
+            "type": "integer",
+            "description": "pane index in the layout, from 1"
+          },
+          {
+            "name": "series",
+            "type": "string",
+            "description": "series id, as dicom:list names it; absent for an empty pane"
+          }
+        ]
+      },
+      {
+        "name": "view2d:windowLevel.changed",
+        "since": "5.0",
+        "description": "Window or level of the selected pane was set.",
+        "coalesced": true,
+        "fields": [
+          {
+            "name": "view",
+            "type": "view-id",
+            "description": "the viewer"
+          },
+          {
+            "name": "window",
+            "type": "number",
+            "description": "window width"
+          },
+          {
+            "name": "level",
+            "type": "number",
+            "description": "window center"
+          }
+        ]
+      },
+      {
+        "name": "view2d:windowLevel.changing",
+        "since": "5.0",
+        "description": "Window or level of the selected pane moves under a drag; local subscribers only.",
+        "coalesced": true,
+        "fields": [
+          {
+            "name": "view",
+            "type": "view-id",
+            "description": "the viewer"
+          },
+          {
+            "name": "window",
+            "type": "number",
+            "description": "window width"
+          },
+          {
+            "name": "level",
+            "type": "number",
+            "description": "window center"
+          }
+        ]
+      }
+    ],
+    "weasis": [
+      {
+        "name": "weasis:heartbeat",
+        "since": "5.0",
+        "description": "Sent on an idle stream; seq is the last sequence number.",
+        "coalesced": false,
+        "fields": []
+      },
+      {
+        "name": "weasis:ready",
+        "since": "5.0",
+        "description": "The plugins are started and the commands answer.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "version",
+            "type": "string",
+            "description": "application version"
+          },
+          {
+            "name": "apiVersion",
+            "type": "string",
+            "description": "command API version"
+          },
+          {
+            "name": "profile",
+            "type": "string",
+            "description": "configuration profile"
+          }
+        ]
+      },
+      {
+        "name": "weasis:shutdown",
+        "since": "5.0",
+        "description": "The application is stopping.",
+        "coalesced": false,
+        "fields": []
+      },
+      {
+        "name": "weasis:subscriber.dropped",
+        "since": "5.0",
+        "description": "This subscriber fell behind: the oldest pending events were dropped; one that loses 6144 events without catching up is detached.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "subscriber",
+            "type": "string",
+            "description": "subscription id"
+          },
+          {
+            "name": "dropped",
+            "type": "integer",
+            "description": "events dropped since the subscription started"
+          },
+          {
+            "name": "detached",
+            "type": "boolean",
+            "description": "whether the subscription was closed"
+          }
+        ]
+      },
+      {
+        "name": "weasis:ui.modal",
+        "since": "5.0",
+        "description": "A modal dialog opened or closed.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "state",
+            "type": "string",
+            "description": "opened or closed"
+          },
+          {
+            "name": "title",
+            "type": "string",
+            "description": "dialog title"
+          }
+        ]
+      },
+      {
+        "name": "weasis:user.active",
+        "since": "5.0",
+        "description": "The user moved the mouse or typed.",
+        "coalesced": true,
+        "fields": [
+          {
+            "name": "window",
+            "type": "integer",
+            "description": "window number, as workspace:list numbers them"
+          }
+        ]
+      }
+    ],
+    "workspace": [
+      {
+        "name": "workspace:layout.changed",
+        "since": "5.0",
+        "description": "A viewer changed its pane layout.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "view",
+            "type": "view-id",
+            "description": "the viewer"
+          },
+          {
+            "name": "layout",
+            "type": "string",
+            "description": "layout id"
+          }
+        ]
+      },
+      {
+        "name": "workspace:panel.changed",
+        "since": "5.0",
+        "description": "The toolbars or the tool panels were rebuilt for the selected viewer.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "panel",
+            "type": "string",
+            "description": "toolbars or tools"
+          }
+        ]
+      },
+      {
+        "name": "workspace:view.closed",
+        "since": "5.0",
+        "description": "A view left the workspace.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "view",
+            "type": "view-id",
+            "description": "the view"
+          },
+          {
+            "name": "window",
+            "type": "integer",
+            "description": "window number"
+          }
+        ]
+      },
+      {
+        "name": "workspace:view.opened",
+        "since": "5.0",
+        "description": "A view was docked into a window.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "view",
+            "type": "view-id",
+            "description": "the view"
+          },
+          {
+            "name": "type",
+            "type": "string",
+            "description": "viewer type id"
+          },
+          {
+            "name": "window",
+            "type": "integer",
+            "description": "window number, as workspace:list numbers them"
+          }
+        ]
+      },
+      {
+        "name": "workspace:view.selected",
+        "since": "5.0",
+        "description": "A view became the application's selection.",
+        "coalesced": true,
+        "fields": [
+          {
+            "name": "view",
+            "type": "view-id",
+            "description": "the view"
+          },
+          {
+            "name": "type",
+            "type": "string",
+            "description": "viewer type id"
+          },
+          {
+            "name": "window",
+            "type": "integer",
+            "description": "window number"
+          }
+        ]
+      },
+      {
+        "name": "workspace:window.activated",
+        "since": "5.0",
+        "description": "The active window changed, once it stayed so for 100 ms; from the engine, not AWT.",
+        "coalesced": true,
+        "fields": [
+          {
+            "name": "window",
+            "type": "integer",
+            "description": "window number"
+          }
+        ]
+      },
+      {
+        "name": "workspace:window.closed",
+        "since": "5.0",
+        "description": "A floating viewer window closed.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "window",
+            "type": "integer",
+            "description": "window number it had"
+          },
+          {
+            "name": "detached",
+            "type": "boolean",
+            "description": "always true"
+          }
+        ]
+      },
+      {
+        "name": "workspace:window.opened",
+        "since": "5.0",
+        "description": "A window hosting a workspace appeared.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "window",
+            "type": "integer",
+            "description": "window number"
+          },
+          {
+            "name": "detached",
+            "type": "boolean",
+            "description": "whether it is a floating viewer window"
+          }
+        ]
+      }
+    ]
+  }
 }

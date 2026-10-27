@@ -24,8 +24,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.command.CommandError;
+import org.weasis.core.api.command.CommandFailure;
+import org.weasis.core.api.command.CommandManager;
 import org.weasis.core.api.command.CommandOrigin;
 import org.weasis.core.api.command.CommandResult;
+import org.weasis.core.api.event.EventFilter;
 import org.weasis.pref.ConfigData;
 import org.weasis.pref.PlatformDirectories;
 
@@ -130,6 +134,16 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
       return CommandResult.error("Weasis is still starting, retry in a moment");
     }
     return commandManager().run(arguments, CommandOrigin.REMOTE, assumeYes);
+  }
+
+  @Override
+  public CommandManager.EventStreamGrant openEventStream(EventFilter filter) {
+    waitWhenStarted();
+    if (!frameworkLoaded) {
+      throw new CommandFailure(
+          CommandError.of(CommandError.FAILED, "Weasis is still starting, retry in a moment"));
+    }
+    return commandManager().openEventStream(filter, CommandOrigin.REMOTE);
   }
 
   private void waitWhenStarted() {

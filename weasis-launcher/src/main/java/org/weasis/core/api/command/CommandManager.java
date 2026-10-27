@@ -28,6 +28,13 @@ import java.util.stream.Collectors;
 import org.pf4j.PluginManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.event.Event;
+import org.weasis.core.api.event.EventBus;
+import org.weasis.core.api.event.EventCatalog;
+import org.weasis.core.api.event.EventCommands;
+import org.weasis.core.api.event.EventFilter;
+import org.weasis.core.api.event.EventType;
+import org.weasis.core.api.event.WeasisEvents;
 import org.weasis.launcher.CommandProtocol;
 import org.weasis.pref.PlatformDirectories;
 
@@ -66,7 +73,10 @@ public class CommandManager {
    * additive changes (a verb, an option, a JSON key), the major with breaking ones. A verb or an
    * option is never removed within a major; a renamed one keeps its old name as a deprecated alias.
    */
-  public static final String API_VERSION = "2.22"; // NON-NLS
+  public static final String API_VERSION = "2.23"; // NON-NLS
+
+  /** Namespace of the event verbs and of the audit lines of the event stream. */
+  public static final String EVENTS = "events"; // NON-NLS
 
   private static volatile Supplier<String> viewerType = () -> null;
 
@@ -78,6 +88,9 @@ public class CommandManager {
 
   private final CommandAudit audit;
   private final CommandPolicy policy;
+  private final EventBus bus;
+  private final java.util.concurrent.atomic.AtomicInteger remoteStreams =
+      new java.util.concurrent.atomic.AtomicInteger();
 
   public CommandManager(PluginManager pluginManager) {
     this(
@@ -92,12 +105,23 @@ public class CommandManager {
   }
 
   public CommandManager(PluginManager pluginManager, CommandAudit audit, CommandPolicy policy) {
+    this(pluginManager, audit, policy, EventBus.global());
+  }
+
+  public CommandManager(
+      PluginManager pluginManager, CommandAudit audit, CommandPolicy policy, EventBus bus) {
     this.pluginManager = pluginManager;
     this.commands = new ConcurrentHashMap<>();
     this.namespaceAliases = new ConcurrentHashMap<>();
     this.audit = audit;
     this.policy = policy;
+    this.bus = bus;
     loadCommands();
+  }
+
+  /** The bus the events of this instance go through. */
+  public EventBus eventBus() {
+    return bus;
   }
 
   private static CommandPolicy withRemote(RemotePolicy remote) {
@@ -118,7 +142,8 @@ public class CommandManager {
   }
 
   private void loadCommands() {
-    List<CommandExtension> extensions = new ArrayList<>(List.of(new ScriptCommands(this)));
+    List<CommandExtension> extensions =
+        new ArrayList<>(List.of(new ScriptCommands(this), new EventCommands(bus)));
     extensions.addAll(pluginManager.getExtensions(CommandExtension.class));
     LOGGER.info("Loading {} command extensions", extensions.size());
 
@@ -127,6 +152,7 @@ public class CommandManager {
       if (commands.putIfAbsent(namespace, extension) == null) {
         LOGGER.info("Registered command namespace: {}", namespace);
         extension.getNamespaceAliases().forEach(alias -> namespaceAliases.put(alias, namespace));
+        bus.catalog().declare(extension.getEventTypes());
       } else {
         LOGGER.warn("Command namespace already registered: {}", namespace);
       }
@@ -251,15 +277,96 @@ public class CommandManager {
         result = result.withNotice(notice);
       }
       result = asErrorBody(result, context, namespace + ":" + target.verb());
-      audit.record(
-          origin,
-          namespace,
-          target.verb(),
-          target.args(),
-          result,
-          TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
+      long millis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+      audit.record(origin, namespace, target.verb(), target.args(), result, millis);
+      bus.publish(
+          Event.of(WeasisEvents.COMMAND_FINISHED)
+              .origin(origin)
+              .put("command", namespace + ":" + target.verb()) // NON-NLS
+              .put("status", result.status()) // NON-NLS
+              .put("durationMs", millis)); // NON-NLS
     }
     return result;
+  }
+
+  /**
+   * Opens the event stream of a remote caller: the policy decides whether the events are open, how
+   * many may listen at once and which namespaces they see, and the audit gets one line for the
+   * subscription and one when it ends.
+   *
+   * @throws CommandFailure with the single refusal shape when the policy refuses
+   */
+  public EventStreamGrant openEventStream(EventFilter filter, CommandOrigin origin) {
+    Optional<CommandPolicy.Refusal> refusal = policy.checkEvents(origin, remoteStreams.get());
+    if (refusal.isEmpty() && origin == CommandOrigin.REMOTE && !policy.remote().enabled()) {
+      refusal =
+          Optional.of(
+              new CommandPolicy.Refusal(
+                  "remote.enabled", "remote callers are refused on this instance")); // NON-NLS
+    }
+    String[] args = {"--filter=" + filter.describe()}; // NON-NLS
+    if (refusal.isPresent()) {
+      audit.record(
+          origin,
+          EVENTS,
+          "subscribe", // NON-NLS
+          args,
+          CommandResult.of(CommandResult.FORBIDDEN, refusal.get().message()),
+          0);
+      throw new CommandFailure(CommandError.refused(refusal.get()));
+    }
+    remoteStreams.incrementAndGet();
+    audit.record(origin, EVENTS, "subscribe", args, CommandResult.ok(), 0); // NON-NLS
+    return new EventStreamGrant(filter, origin, args);
+  }
+
+  /** A subscription the policy allowed; closing it writes the audit line of its end. */
+  public final class EventStreamGrant implements AutoCloseable {
+    private final EventFilter filter;
+    private final CommandOrigin origin;
+    private final String[] args;
+    private final long start = System.nanoTime();
+    private volatile boolean closed;
+
+    private EventStreamGrant(EventFilter filter, CommandOrigin origin, String[] args) {
+      this.filter = filter;
+      this.origin = origin;
+      this.args = args;
+    }
+
+    public EventFilter filter() {
+      return filter;
+    }
+
+    public EventBus bus() {
+      return bus;
+    }
+
+    /** Whether the policy lets this subscriber see an event of that namespace. */
+    public boolean allows(Event event) {
+      return origin != CommandOrigin.REMOTE || policy.events().allows(event.namespace());
+    }
+
+    /** The event as this subscriber may see it. */
+    public Event mask(Event event) {
+      return origin == CommandOrigin.REMOTE ? bus.maskForRemote(event) : event;
+    }
+
+    @Override
+    public void close() {
+      if (closed) {
+        return;
+      }
+      closed = true;
+      remoteStreams.decrementAndGet();
+      audit.record(
+          origin,
+          EVENTS,
+          "unsubscribe", // NON-NLS
+          args,
+          CommandResult.ok(),
+          TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
+    }
   }
 
   /** An error the manager itself produces, rendered the way the origin reads errors. */
@@ -387,11 +494,11 @@ public class CommandManager {
     }
     Object model = extension.getCommandModel();
     if (model == null) {
-      return CommandResult.ok(extension.getHelp());
+      return CommandResult.ok(extension.getHelp() + eventsText(namespace));
     }
     List<CommandHelp.Entry> verbs = CommandModel.verbs(model);
     if (verbs.isEmpty()) { // the namespace is a single verb
-      return CommandResult.ok(CommandModel.usage(model));
+      return CommandResult.ok(CommandModel.usage(model) + eventsText(namespace));
     }
     String description = CommandModel.rootDescription(model);
     String title = description.isEmpty() ? namespace : namespace + ": " + description;
@@ -400,8 +507,22 @@ public class CommandManager {
           CommandResult.ok(
               verbs.stream().map(CommandHelp.Entry::name).collect(Collectors.joining(", ")));
       case INDEX -> CommandResult.ok(CommandHelp.index(title, verbs));
-      default -> CommandResult.ok(CommandHelp.table(title, verbs, false));
+      default -> CommandResult.ok(CommandHelp.table(title, verbs, false) + eventsText(namespace));
     };
+  }
+
+  /** The events of a namespace, appended to its text help; empty when it declares none. */
+  private String eventsText(String namespace) {
+    List<EventType> events = bus.catalog().types(namespace);
+    if (events.isEmpty()) {
+      return "";
+    }
+    return System.lineSeparator()
+        + "Events ('weasis-cli events --filter "
+        + namespace
+        + ":*' streams them):"
+        + System.lineSeparator()
+        + EventCatalog.text(events);
   }
 
   private static CommandResult verbHelp(
@@ -590,7 +711,7 @@ public class CommandManager {
     return markdownHelp(commands);
   }
 
-  private static String markdownHelp(Map<String, CommandExtension> scope) {
+  private String markdownHelp(Map<String, CommandExtension> scope) {
     StringBuilder sb =
         new StringBuilder("# Weasis commands\n\nCommand API ")
             .append(API_VERSION)
@@ -602,6 +723,20 @@ public class CommandManager {
     for (Map.Entry<String, CommandExtension> entry : new TreeMap<>(scope).entrySet()) {
       sb.append(markdown(entry.getKey(), entry.getValue())).append('\n');
     }
+    List<EventType> events = bus.catalog().types();
+    if (!events.isEmpty()) {
+      sb.append("## Events\n\n")
+          .append(
+              "What the instance publishes on its event bus; `weasis-cli events` streams them, "
+                  + "`events:recent` polls them.\n\n");
+      for (String namespace : bus.catalog().namespaces()) {
+        sb.append("### ")
+            .append(namespace)
+            .append(":\n\n")
+            .append(EventCatalog.markdownTable(bus.catalog().types(namespace)))
+            .append('\n');
+      }
+    }
     return sb.toString();
   }
 
@@ -610,7 +745,7 @@ public class CommandManager {
     return jsonHelp(commands);
   }
 
-  private static String jsonHelp(Map<String, CommandExtension> scope) {
+  private String jsonHelp(Map<String, CommandExtension> scope) {
     JsonWriter out = new JsonWriter();
     out.beginObject()
         .name("apiVersion") // NON-NLS
@@ -632,21 +767,32 @@ public class CommandManager {
     for (Map.Entry<String, CommandExtension> entry : new TreeMap<>(scope).entrySet()) {
       json(out, entry.getKey(), entry.getValue());
     }
-    out.endArray().endObject();
+    out.endArray();
+    out.name("events").beginObject(); // NON-NLS
+    for (String namespace : bus.catalog().namespaces()) {
+      out.name(namespace);
+      bus.catalog().write(out, bus.catalog().types(namespace));
+    }
+    out.endObject().endObject();
     return out.toString();
   }
 
-  private static void json(JsonWriter out, String namespace, CommandExtension extension) {
+  private void json(JsonWriter out, String namespace, CommandExtension extension) {
     Object model = extension.getCommandModel();
+    List<EventType> events = bus.catalog().types(namespace);
     if (model != null) {
-      CommandModel.json(out, namespace, model);
+      CommandModel.json(out, namespace, model, events);
     } else {
       out.beginObject()
           .name("name") // NON-NLS
           .value(namespace)
           .name("help") // NON-NLS
-          .value(extension.getHelp().strip())
-          .endObject();
+          .value(extension.getHelp().strip());
+      if (!events.isEmpty()) {
+        out.name("events"); // NON-NLS
+        bus.catalog().write(out, events);
+      }
+      out.endObject();
     }
   }
 
@@ -655,12 +801,22 @@ public class CommandManager {
     return System.getProperty("jpackage.app-version", "development"); // NON-NLS
   }
 
-  private static String markdown(String namespace, CommandExtension extension) {
+  private String markdown(String namespace, CommandExtension extension) {
     Object model = extension.getCommandModel();
-    if (model != null) {
-      return CommandModel.markdown(namespace, model);
+    String text =
+        model != null
+            ? CommandModel.markdown(namespace, model)
+            : "## " + namespace + "\n\n```\n" + extension.getHelp().strip() + "\n```\n";
+    List<EventType> events = bus.catalog().types(namespace);
+    if (events.isEmpty()) {
+      return text;
     }
-    return "## " + namespace + "\n\n```\n" + extension.getHelp().strip() + "\n```\n";
+    return text
+        + "### Events of "
+        + namespace
+        + ":\n\n"
+        + EventCatalog.markdownTable(events)
+        + '\n';
   }
 
   /** A parsed command target: namespace, verb (may be empty) and the remaining arguments. */

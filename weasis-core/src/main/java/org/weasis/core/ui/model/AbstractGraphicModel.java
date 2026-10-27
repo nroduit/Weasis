@@ -58,6 +58,7 @@ import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.editor.image.Canvas;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.event.GraphicEventBridge;
 import org.weasis.core.ui.model.graphic.AbstractGraphic;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -282,6 +283,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         fireLayerAdded(layer);
       }
       models.add(graphic);
+      GraphicEventBridge.added(this, graphic);
     }
   }
 
@@ -300,7 +302,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   @Override
   public void removeGraphic(Graphic graphic) {
     if (graphic != null) {
-      models.remove(graphic);
+      if (models.remove(graphic)) {
+        GraphicEventBridge.removed(this, graphic);
+      }
       graphic.removeAllPropertyChangeListener();
 
       GraphicLayer layer = graphic.getLayer();
@@ -784,7 +788,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
   @Override
   public void fireGraphicsSelectionChanged(MeasurableLayer layer) {
-    selectedGraphicsListeners.forEach(gl -> gl.handle(getSelectedGraphics(), layer));
+    List<Graphic> selected = getSelectedGraphics();
+    selectedGraphicsListeners.forEach(gl -> gl.handle(selected, layer));
+    GraphicEventBridge.selectionChanged(null, selected);
   }
 
   @Override

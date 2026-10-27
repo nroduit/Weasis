@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.22, protocol 1, application development.
+Command API 2.23, protocol 2, application development.
 
 ## color
 
@@ -287,6 +287,66 @@ Usage: `dicom:unload [-h] [--all] [--json] [--patient=<patient-handle>]... [--se
 | --patient | patient-handle | [] | Patient identifier to unload, as 'dicom:list' returns it. |
 | --study | study-uid | [] | Study Instance UID to unload. |
 | --series | series-uid | [] | Series Instance UID, or series id, to unload. |
+
+### Events of dicom:
+
+| Event | Since | Payload | Description |
+|---|---|---|---|
+| `dicom:loading.progress` (coalesced) | 5.0 | series: series-uid, images: integer | Images arrived in a series; one event per series per tick. |
+| `dicom:loading.started` | 5.0 | source: string, series: series-uid | A load, download or export task started. |
+| `dicom:loading.stopped` | 5.0 | source: string, series: series-uid, canceled: boolean | A load, download or export task ended. |
+| `dicom:object.added` | 5.0 | type: string, sopInstanceUID: string, seriesInstanceUID: series-uid | A non-image object (KO, PR, SR, SEG, RT) is available. |
+| `dicom:patient.added` | 5.0 | patientID: patient-handle, patientName: string, patientBirthDate: string | A patient entered the explorer. |
+| `dicom:patient.removed` | 5.0 | patientID: patient-handle | A patient and everything under it left the explorer. |
+| `dicom:series.added` | 5.0 | id: series-uid, seriesInstanceUID: series-uid, studyInstanceUID: study-uid, modality: string, seriesDescription: string, imageCount: integer | A series entered the explorer; its images may still be loading. |
+| `dicom:series.removed` | 5.0 | id: series-uid, studyInstanceUID: study-uid | A series left the explorer. |
+| `dicom:study.added` | 5.0 | studyInstanceUID: study-uid, patientID: patient-handle, studyDate: string, studyDescription: string, accessionNumber: string | A study entered the explorer. |
+| `dicom:study.closed` | 5.0 | studyInstanceUID: study-uid | No pane of any viewer shows this study anymore. |
+| `dicom:study.opened` | 5.0 | studyInstanceUID: study-uid, view: string, series: series-uid | A first pane shows a series of this study. |
+| `dicom:study.removed` | 5.0 | studyInstanceUID: study-uid | A study and its series left the explorer. |
+
+
+## events
+
+The events this instance publishes: the catalog, the recent ones, and the subscribers. 'weasis-cli events' streams them live.
+
+### events:list (since 5.0)
+
+The events this instance may publish, by namespace, with the fields of their payload.
+
+Usage: `events:list [-h] [--json] [--markdown] [--namespace=<namespace>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --namespace | string |  | Only the events of this namespace. (since 5.0) |
+| --markdown | boolean |  | A Markdown table, for a reference page. (since 5.0) |
+
+### events:recent (since 5.0)
+
+The last events the bus kept, oldest first: a poll for a caller that cannot hold a stream. Pass the 'lastSeq' of the previous answer as --since to read only what is new.
+
+Usage: `events:recent [-h] [--json] [--filter=<event-glob>] [--last=<n>] [--since=<seq>] [--where=<key=value>]...`
+
+Needs: events
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --since | integer | 0 | Only the events after this sequence number. (since 5.0) |
+| --last | integer | 50 | At most this many events, the newest ones (default: 50). (since 5.0) |
+| --filter | string |  | Event names to keep, with '*' as a wildcard: 'dicom:*,workspace:view.*'. (since 5.0) |
+| --where | string | [] | A payload value an event must carry; repeatable. (since 5.0) |
+
+### events:subscribers (since 5.0)
+
+The active subscriptions: id, owner, filter, delivery, dropped events, and whether the owner component is gone (dangling).
+
+Usage: `events:subscribers [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 
 ## explorer
@@ -1492,16 +1552,25 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --set=<magnification> | --fit=<zoom-fit>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
 | --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
+| --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
+
+### Events of view2d:
+
+| Event | Since | Payload | Description |
+|---|---|---|---|
+| `view2d:image.changed` (coalesced) | 5.0 | view: view-id, series: string, imageIndex: integer | The selected pane of a viewer shows another image. |
+| `view2d:series.changed` | 5.0 | view: view-id, pane: integer, series: string | A pane of a viewer shows another series, or none; whatever opened it. |
+| `view2d:windowLevel.changed` (coalesced) | 5.0 | view: view-id, window: number, level: number | Window or level of the selected pane was set. |
+| `view2d:windowLevel.changing` (coalesced) | 5.0 | view: view-id, window: number, level: number | Window or level of the selected pane moves under a drag; local subscribers only. |
 
 
 ## view3d
@@ -1564,6 +1633,17 @@ Usage: `weasis:show [-h] [--json]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
+
+### Events of weasis:
+
+| Event | Since | Payload | Description |
+|---|---|---|---|
+| `weasis:heartbeat` | 5.0 |  | Sent on an idle stream; seq is the last sequence number. |
+| `weasis:ready` | 5.0 | version: string, apiVersion: string, profile: string | The plugins are started and the commands answer. |
+| `weasis:shutdown` | 5.0 |  | The application is stopping. |
+| `weasis:subscriber.dropped` | 5.0 | subscriber: string, dropped: integer, detached: boolean | This subscriber fell behind: the oldest pending events were dropped; one that loses 6144 events without catching up is detached. |
+| `weasis:ui.modal` | 5.0 | state: string, title: string | A modal dialog opened or closed. |
+| `weasis:user.active` (coalesced) | 5.0 | window: integer | The user moved the mouse or typed. |
 
 
 ## workspace
@@ -1763,4 +1843,86 @@ Usage: `workspace:unmaximize [-h] [--json] --view=<view-id>`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | View id from 'workspace:list'. |
 
+### Events of workspace:
+
+| Event | Since | Payload | Description |
+|---|---|---|---|
+| `workspace:layout.changed` | 5.0 | view: view-id, layout: string | A viewer changed its pane layout. |
+| `workspace:panel.changed` | 5.0 | panel: string | The toolbars or the tool panels were rebuilt for the selected viewer. |
+| `workspace:view.closed` | 5.0 | view: view-id, window: integer | A view left the workspace. |
+| `workspace:view.opened` | 5.0 | view: view-id, type: string, window: integer | A view was docked into a window. |
+| `workspace:view.selected` (coalesced) | 5.0 | view: view-id, type: string, window: integer | A view became the application's selection. |
+| `workspace:window.activated` (coalesced) | 5.0 | window: integer | The active window changed, once it stayed so for 100 ms; from the engine, not AWT. |
+| `workspace:window.closed` | 5.0 | window: integer, detached: boolean | A floating viewer window closed. |
+| `workspace:window.opened` | 5.0 | window: integer, detached: boolean | A window hosting a workspace appeared. |
+
+
+## Events
+
+What the instance publishes on its event bus; `weasis-cli events` streams them, `events:recent` polls them.
+
+### command:
+
+| Event | Since | Payload | Description |
+|---|---|---|---|
+| `command:finished` | 5.0 | command: string, status: integer, durationMs: integer | A command of a remote caller finished. |
+
+### dicom:
+
+| Event | Since | Payload | Description |
+|---|---|---|---|
+| `dicom:loading.progress` (coalesced) | 5.0 | series: series-uid, images: integer | Images arrived in a series; one event per series per tick. |
+| `dicom:loading.started` | 5.0 | source: string, series: series-uid | A load, download or export task started. |
+| `dicom:loading.stopped` | 5.0 | source: string, series: series-uid, canceled: boolean | A load, download or export task ended. |
+| `dicom:object.added` | 5.0 | type: string, sopInstanceUID: string, seriesInstanceUID: series-uid | A non-image object (KO, PR, SR, SEG, RT) is available. |
+| `dicom:patient.added` | 5.0 | patientID: patient-handle, patientName: string, patientBirthDate: string | A patient entered the explorer. |
+| `dicom:patient.removed` | 5.0 | patientID: patient-handle | A patient and everything under it left the explorer. |
+| `dicom:series.added` | 5.0 | id: series-uid, seriesInstanceUID: series-uid, studyInstanceUID: study-uid, modality: string, seriesDescription: string, imageCount: integer | A series entered the explorer; its images may still be loading. |
+| `dicom:series.removed` | 5.0 | id: series-uid, studyInstanceUID: study-uid | A series left the explorer. |
+| `dicom:study.added` | 5.0 | studyInstanceUID: study-uid, patientID: patient-handle, studyDate: string, studyDescription: string, accessionNumber: string | A study entered the explorer. |
+| `dicom:study.closed` | 5.0 | studyInstanceUID: study-uid | No pane of any viewer shows this study anymore. |
+| `dicom:study.opened` | 5.0 | studyInstanceUID: study-uid, view: string, series: series-uid | A first pane shows a series of this study. |
+| `dicom:study.removed` | 5.0 | studyInstanceUID: study-uid | A study and its series left the explorer. |
+
+### graphic:
+
+| Event | Since | Payload | Description |
+|---|---|---|---|
+| `graphic:added` | 5.0 | graphic: graphic-id, tool: string, layer: string, model: string | A graphic was drawn or loaded. |
+| `graphic:changed` (coalesced) | 5.0 | graphic: graphic-id, view: string | A graphic moved, was resized or relabelled. |
+| `graphic:removed` | 5.0 | graphic: graphic-id, model: string | A graphic was deleted. |
+| `graphic:selection.changed` | 5.0 | graphics: array, view: string | The selected graphics of a view changed. |
+
+### view2d:
+
+| Event | Since | Payload | Description |
+|---|---|---|---|
+| `view2d:image.changed` (coalesced) | 5.0 | view: view-id, series: string, imageIndex: integer | The selected pane of a viewer shows another image. |
+| `view2d:series.changed` | 5.0 | view: view-id, pane: integer, series: string | A pane of a viewer shows another series, or none; whatever opened it. |
+| `view2d:windowLevel.changed` (coalesced) | 5.0 | view: view-id, window: number, level: number | Window or level of the selected pane was set. |
+| `view2d:windowLevel.changing` (coalesced) | 5.0 | view: view-id, window: number, level: number | Window or level of the selected pane moves under a drag; local subscribers only. |
+
+### weasis:
+
+| Event | Since | Payload | Description |
+|---|---|---|---|
+| `weasis:heartbeat` | 5.0 |  | Sent on an idle stream; seq is the last sequence number. |
+| `weasis:ready` | 5.0 | version: string, apiVersion: string, profile: string | The plugins are started and the commands answer. |
+| `weasis:shutdown` | 5.0 |  | The application is stopping. |
+| `weasis:subscriber.dropped` | 5.0 | subscriber: string, dropped: integer, detached: boolean | This subscriber fell behind: the oldest pending events were dropped; one that loses 6144 events without catching up is detached. |
+| `weasis:ui.modal` | 5.0 | state: string, title: string | A modal dialog opened or closed. |
+| `weasis:user.active` (coalesced) | 5.0 | window: integer | The user moved the mouse or typed. |
+
+### workspace:
+
+| Event | Since | Payload | Description |
+|---|---|---|---|
+| `workspace:layout.changed` | 5.0 | view: view-id, layout: string | A viewer changed its pane layout. |
+| `workspace:panel.changed` | 5.0 | panel: string | The toolbars or the tool panels were rebuilt for the selected viewer. |
+| `workspace:view.closed` | 5.0 | view: view-id, window: integer | A view left the workspace. |
+| `workspace:view.opened` | 5.0 | view: view-id, type: string, window: integer | A view was docked into a window. |
+| `workspace:view.selected` (coalesced) | 5.0 | view: view-id, type: string, window: integer | A view became the application's selection. |
+| `workspace:window.activated` (coalesced) | 5.0 | window: integer | The active window changed, once it stayed so for 100 ms; from the engine, not AWT. |
+| `workspace:window.closed` | 5.0 | window: integer, detached: boolean | A floating viewer window closed. |
+| `workspace:window.opened` | 5.0 | window: integer, detached: boolean | A window hosting a workspace appeared. |
 

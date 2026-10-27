@@ -39,6 +39,14 @@ public interface CommandExtension extends ExtensionPoint {
     return null;
   }
 
+  /**
+   * The events this namespace publishes on the {@link org.weasis.core.api.event.EventBus}, declared
+   * where the verbs are so the catalog, {@code help <namespace>} and the descriptor list them.
+   */
+  default List<org.weasis.core.api.event.EventType> getEventTypes() {
+    return List.of();
+  }
+
   /** False for namespaces that must not be reachable from the singleton socket. */
   default boolean isRemotable() {
     return true;

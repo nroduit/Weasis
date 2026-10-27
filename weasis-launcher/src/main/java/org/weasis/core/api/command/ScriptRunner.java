@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -48,12 +49,21 @@ public final class ScriptRunner {
     }
   }
 
+  /** The name a wait step binds the event it received to: {@code ${event.seq}}. */
+  public static final String EVENT_VARIABLE = "event"; // NON-NLS
+
+  private static final Duration DEFAULT_WAIT = Duration.ofSeconds(30);
+
   private final CommandManager manager;
   private final CommandOrigin origin;
+
+  /** The sequence number before the last command step ran: what a wait considers "after". */
+  private long watermark;
 
   public ScriptRunner(CommandManager manager, CommandOrigin origin) {
     this.manager = manager;
     this.origin = origin;
+    this.watermark = manager.eventBus().lastSequence();
   }
 
   /** Parses every step against the models without resolving or running anything. */
@@ -64,6 +74,14 @@ public final class ScriptRunner {
       if (step.isExpectation()) {
         try {
           ScriptExpectation.parse(withoutReferences(text));
+        } catch (IllegalArgumentException e) {
+          problems.add("line " + step.line() + ": " + e.getMessage());
+        }
+        continue;
+      }
+      if (step.isWait()) {
+        try {
+          Wait.parse(withoutReferences(text));
         } catch (IllegalArgumentException e) {
           problems.add("line " + step.line() + ": " + e.getMessage());
         }
@@ -143,6 +161,9 @@ public final class ScriptRunner {
     if (step.isExpectation()) {
       return expectation(step, number, text, start);
     }
+    if (step.isWait()) {
+      return waitFor(step, number, text, values, start);
+    }
     List<String> argv = tokens(text);
     if (argv.isEmpty()) {
       return new StepResult(
@@ -158,6 +179,7 @@ public final class ScriptRunner {
           "",
           "A script does not run a script");
     }
+    watermark = manager.eventBus().lastSequence();
     CommandResult result = manager.run(argv, origin, options.assumeYes());
     if (step.variable() != null) {
       values.setBody(step.variable(), result.body());
@@ -170,6 +192,110 @@ public final class ScriptRunner {
         elapsed(start),
         options.brief() ? "" : result.body().strip(),
         result.error().strip());
+  }
+
+  /**
+   * Blocks until an event matching the step is published, counting from before the previous command
+   * ran so an event that command caused is not missed; the event is bound to {@code ${event…}} and
+   * to the step's variable.
+   */
+  private StepResult waitFor(
+      ScriptStep step, int number, String text, ScriptValues values, long start) {
+    Wait wait;
+    try {
+      wait = Wait.parse(text);
+    } catch (IllegalArgumentException e) {
+      return new StepResult(
+          number,
+          step.line(),
+          ScriptParser.WAIT,
+          CommandResult.USAGE,
+          elapsed(start),
+          text,
+          e.getMessage());
+    }
+    Optional<org.weasis.core.api.event.Event> event;
+    try {
+      event = manager.eventBus().await(wait.filter(), watermark, wait.timeout());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return new StepResult(
+          number,
+          step.line(),
+          ScriptParser.WAIT,
+          CommandResult.ERROR,
+          elapsed(start),
+          text,
+          "Interrupted");
+    }
+    if (event.isEmpty()) {
+      return new StepResult(
+          number,
+          step.line(),
+          ScriptParser.WAIT,
+          CommandResult.TIMEOUT,
+          elapsed(start),
+          text,
+          "No event matching '"
+              + wait.filter().describe()
+              + "' within "
+              + wait.timeout().toSeconds()
+              + " s");
+    }
+    org.weasis.core.api.event.Event received = event.get();
+    watermark = received.seq();
+    String body =
+        (origin == CommandOrigin.REMOTE ? manager.eventBus().maskForRemote(received) : received)
+            .toJson();
+    values.setBody(EVENT_VARIABLE, body);
+    if (step.variable() != null) {
+      values.setBody(step.variable(), body);
+    }
+    return new StepResult(
+        number, step.line(), ScriptParser.WAIT, CommandResult.OK, elapsed(start), body, "");
+  }
+
+  /** What a wait step asks for: {@code <event-glob> [--timeout s] [--where key=value]...}. */
+  record Wait(org.weasis.core.api.event.EventFilter filter, Duration timeout) {
+
+    static Wait parse(String text) {
+      List<String> tokens = tokens(text);
+      if (tokens.isEmpty() || tokens.getFirst().startsWith("-")) {
+        throw new IllegalArgumentException(
+            "A wait names the event first: @wait <event-glob> [--timeout s] [--where key=value]");
+      }
+      String glob = tokens.getFirst();
+      if (glob.indexOf(':') <= 0) {
+        throw new IllegalArgumentException("An event is named namespace:subject.change: " + glob);
+      }
+      Duration timeout = DEFAULT_WAIT;
+      List<String> where = new ArrayList<>();
+      for (int i = 1; i < tokens.size(); i++) {
+        String option = tokens.get(i);
+        String value = i + 1 < tokens.size() ? tokens.get(++i) : null;
+        if (value == null) {
+          throw new IllegalArgumentException(option + " takes a value");
+        }
+        switch (option) {
+          case "--timeout" -> timeout = seconds(value); // NON-NLS
+          case "--where" -> where.add(value); // NON-NLS
+          default -> throw new IllegalArgumentException("Unknown option of @wait: " + option);
+        }
+      }
+      return new Wait(org.weasis.core.api.event.EventFilter.parse(glob, where), timeout);
+    }
+
+    private static Duration seconds(String value) {
+      try {
+        double seconds = Double.parseDouble(value);
+        if (seconds <= 0 || seconds > 3600) {
+          throw new IllegalArgumentException("--timeout is between 0 and 3600 seconds");
+        }
+        return Duration.ofMillis(Math.round(seconds * 1000));
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException("--timeout takes a number of seconds: " + value);
+      }
+    }
   }
 
   private static StepResult expectation(ScriptStep step, int number, String text, long start) {

@@ -17,13 +17,19 @@ import java.util.regex.Pattern;
 /**
  * Reads a script: one command per line, {@code #} comments, blank lines ignored, a trailing
  * backslash continuing a line, {@code $name = <command>} keeping the body of a step under a name,
- * and {@code @expect} lines. No loop, no condition: a script is a list of commands and of the
- * values they are expected to return.
+ * {@code @expect} lines and {@code @wait} lines. No loop, no condition: a script is a list of
+ * commands, of the values they are expected to return and of the events it waits for.
  */
 public final class ScriptParser {
 
   /** Prefix of an expectation line. */
   public static final String EXPECT = "@expect"; // NON-NLS
+
+  /**
+   * Prefix of a line that waits for an event: {@code @wait <event-glob> [--timeout s] [--where
+   * k=v]}.
+   */
+  public static final String WAIT = "@wait"; // NON-NLS
 
   private static final Pattern ASSIGNMENT =
       Pattern.compile("^\\$([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*(.+)$");
@@ -63,11 +69,16 @@ public final class ScriptParser {
       return new ScriptStep(
           line, ScriptStep.Kind.EXPECT, null, text.substring(EXPECT.length()).strip());
     }
+    String variable = null;
     Matcher assignment = ASSIGNMENT.matcher(text);
     if (assignment.matches()) {
-      return new ScriptStep(
-          line, ScriptStep.Kind.COMMAND, assignment.group(1), assignment.group(2).strip());
+      variable = assignment.group(1);
+      text = assignment.group(2).strip();
     }
-    return new ScriptStep(line, ScriptStep.Kind.COMMAND, null, text);
+    if (text.startsWith(WAIT)) {
+      return new ScriptStep(
+          line, ScriptStep.Kind.WAIT, variable, text.substring(WAIT.length()).strip());
+    }
+    return new ScriptStep(line, ScriptStep.Kind.COMMAND, variable, text);
   }
 }

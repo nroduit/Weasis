@@ -306,6 +306,25 @@ JSON object per step, then a summary; a failing step stops the run unless `--kee
 `script:check --file <file>` parses a plan without running it, which is the cheapest way to
 validate one before proposing it.
 
+## Watching for changes
+
+Do not poll `workspace:list` or `dicom:list` to find out what the user changed. The instance
+publishes every change of state as an event, named like the commands (`dicom:study.opened`,
+`workspace:view.selected`, `view2d:windowLevel.changed`, `graphic:added`), and three ways read them:
+
+```
+weasis-cli events --filter 'dicom:*,workspace:view.selected' --count 1 --timeout 60   # wait for the next one
+weasis-cli events --since 1200 --filter 'view2d:*'          # replay what happened after seq 1200, then follow
+weasis-cli events:recent --last 20                          # poll, when you cannot hold a stream
+weasis-cli events:list                                      # the catalog: names, payload fields, since
+```
+
+The stream is one JSON object per line: `seq`, `name`, `time`, `origin` (`app`, or `remote` when a
+command caused it) and the payload with the same keys and handles as the command results. Keep the
+last `seq` you saw and pass it as `--since` to miss nothing. In a script, `@wait <event-glob>
+[--timeout s] [--where key=value]` blocks a step until the event, and `${event.<key>}` reads its
+payload in the next steps. Patient fields in the events are masked exactly as in the results.
+
 ## Coordinates
 
 - Image coordinates are pixels of the DICOM image: origin at the top-left pixel, x to the right, y

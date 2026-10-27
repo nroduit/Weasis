@@ -32,8 +32,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.TransferHandler;
 import org.weasis.core.api.command.ScreenRole;
+import org.weasis.core.api.command.ViewId;
+import org.weasis.core.api.event.Event;
+import org.weasis.core.api.event.EventBus;
+import org.weasis.core.api.event.EventType;
 import org.weasis.core.ui.docking.ws.snapshot.ViewRestorer;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
 import org.weasis.core.ui.editor.ExternalDisplay;
@@ -54,6 +59,21 @@ public final class WorkspaceManager {
   private final Map<Window, Workspace> workspaces = new LinkedHashMap<>();
   private final Map<WorkspaceView, TabGroup> viewGroups = new IdentityHashMap<>();
   private final List<WorkspaceListener> listeners = new CopyOnWriteArrayList<>();
+
+  /** Events of the engine, in the {@code workspace} namespace. */
+  public static final String VIEW_OPENED = "workspace:view.opened"; // NON-NLS
+
+  public static final String VIEW_SELECTED = "workspace:view.selected"; // NON-NLS
+  public static final String WINDOW_OPENED = "workspace:window.opened"; // NON-NLS
+  public static final String WINDOW_CLOSED = "workspace:window.closed"; // NON-NLS
+  public static final String WINDOW_ACTIVATED = "workspace:window.activated"; // NON-NLS
+  public static final String PANEL_CHANGED = "workspace:panel.changed"; // NON-NLS
+  private static final String WINDOW = "window"; // NON-NLS
+  private static final String SINCE = "5.0"; // NON-NLS
+  private static final int ACTIVATION_SETTLE_MS = 100;
+
+  private Timer activationTimer;
+  private Window pendingActivation;
   private boolean mutating;
   private boolean dragEnabled = true;
   private WorkspaceView selectedView;
@@ -473,7 +493,7 @@ public final class WorkspaceManager {
   public void disposeAll() {
     for (Window window : List.copyOf(workspaces.keySet())) {
       if (window instanceof DetachedFrame frame) {
-        workspaces.remove(frame);
+        forgetWindow(frame);
         frame.dispose();
       }
     }
@@ -607,7 +627,7 @@ public final class WorkspaceManager {
             addWorkspace(frame, target);
             Component root = restoreNode(win.root(), target, restorer);
             if (root == null) {
-              workspaces.remove(frame);
+              forgetWindow(frame);
               frame.dispose();
               continue;
             }
@@ -822,7 +842,13 @@ public final class WorkspaceManager {
 
   private void dockInto(WorkspaceView view, TabGroup group, int index) {
     group.addView(view, index);
-    viewGroups.put(view, group);
+    boolean opened = viewGroups.put(view, group) == null;
+    if (opened) {
+      EventBus.global()
+          .publish(
+              viewEvent(VIEW_OPENED, view, group.getWorkspace().getWindow())
+                  .put("type", view.typeId())); // NON-NLS
+    }
   }
 
   private void undockInternal(WorkspaceView view) {
@@ -830,6 +856,8 @@ public final class WorkspaceManager {
     if (group == null) {
       return;
     }
+    EventBus.global()
+        .publish(viewEvent(EventBus.VIEW_CLOSED, view, group.getWorkspace().getWindow()));
     Workspace workspace = group.getWorkspace();
     if (workspace.getMaximizedView() == view) {
       workspace.restoreMaximized();
@@ -855,7 +883,7 @@ public final class WorkspaceManager {
     if (workspace.isEmpty()) {
       fireWorkspaceEmptied(workspace.getWindow());
       if (workspace.getWindow() instanceof DetachedFrame frame) {
-        workspaces.remove(frame);
+        forgetWindow(frame);
         frame.dispose();
       }
     }
@@ -912,9 +940,33 @@ public final class WorkspaceManager {
             @Override
             public void windowGainedFocus(WindowEvent e) {
               activateWindow(workspace);
+              activationSettled(window);
             }
           });
+      publishWindow(WINDOW_OPENED, window);
     }
+  }
+
+  /**
+   * Publishes the active window once it stayed so for 100 ms: AWT activation ping-pongs between
+   * windows, menus and tooltips, differently per platform, so the state is read from the engine
+   * after it settles, never from the raw events.
+   */
+  private void activationSettled(Window window) {
+    pendingActivation = window;
+    if (activationTimer == null) {
+      activationTimer =
+          new Timer(
+              ACTIVATION_SETTLE_MS,
+              e -> {
+                Window active = pendingActivation;
+                if (active != null && active.isFocused()) {
+                  publishWindow(WINDOW_ACTIVATED, active);
+                }
+              });
+      activationTimer.setRepeats(false);
+    }
+    activationTimer.restart();
   }
 
   /**
@@ -966,6 +1018,89 @@ public final class WorkspaceManager {
     for (WorkspaceListener listener : listeners) {
       listener.viewSelected(view, window);
     }
+    EventBus.global()
+        .publish(
+            viewEvent(VIEW_SELECTED, view, window)
+                .coalesce(VIEW_SELECTED)
+                .put("type", view.typeId())); // NON-NLS
+  }
+
+  /** The number {@code workspace:list} gives a window: the main window is 1; 0 for a stranger. */
+  public int windowNumber(Window window) {
+    int index = 0;
+    for (Window known : workspaces.keySet()) {
+      index++;
+      if (known == window) {
+        return index;
+      }
+    }
+    return 0;
+  }
+
+  private Event.Builder viewEvent(String name, WorkspaceView view, Window window) {
+    Event.Builder event = Event.of(name).put(EventBus.VIEW_KEY, view.viewId());
+    int number = windowNumber(window);
+    if (number > 0) {
+      event.put(WINDOW, number);
+    }
+    return event;
+  }
+
+  private void publishWindow(String name, Window window) {
+    int number = windowNumber(window);
+    Event.Builder event =
+        Event.of(name).put("detached", window instanceof DetachedFrame); // NON-NLS
+    if (number > 0) {
+      event.put(WINDOW, number);
+    }
+    EventBus.global().publish(event);
+  }
+
+  /** Forgets a detached window and says so; its number is read before it is gone. */
+  private void forgetWindow(DetachedFrame frame) {
+    publishWindow(WINDOW_CLOSED, frame);
+    workspaces.remove(frame);
+  }
+
+  /** The events of the engine, declared by the {@code workspace} namespace. */
+  public static List<EventType> eventTypes() {
+    return List.of(
+        EventType.of(VIEW_OPENED, SINCE, "A view was docked into a window.")
+            .field(EventBus.VIEW_KEY, ViewId.class, "the view")
+            .field("type", String.class, "viewer type id")
+            .field(WINDOW, int.class, "window number, as workspace:list numbers them")
+            .build(),
+        EventType.of(EventBus.VIEW_CLOSED, SINCE, "A view left the workspace.")
+            .field(EventBus.VIEW_KEY, ViewId.class, "the view")
+            .field(WINDOW, int.class, "window number")
+            .build(),
+        EventType.of(VIEW_SELECTED, SINCE, "A view became the application's selection.")
+            .coalesced()
+            .field(EventBus.VIEW_KEY, ViewId.class, "the view")
+            .field("type", String.class, "viewer type id")
+            .field(WINDOW, int.class, "window number")
+            .build(),
+        EventType.of(WINDOW_OPENED, SINCE, "A window hosting a workspace appeared.")
+            .field(WINDOW, int.class, "window number")
+            .field("detached", boolean.class, "whether it is a floating viewer window")
+            .build(),
+        EventType.of(WINDOW_CLOSED, SINCE, "A floating viewer window closed.")
+            .field(WINDOW, int.class, "window number it had")
+            .field("detached", boolean.class, "always true")
+            .build(),
+        EventType.of(
+                WINDOW_ACTIVATED,
+                SINCE,
+                "The active window changed, once it stayed so for 100 ms; from the engine, not AWT.")
+            .coalesced()
+            .field(WINDOW, int.class, "window number")
+            .build(),
+        EventType.of(
+                PANEL_CHANGED,
+                SINCE,
+                "The toolbars or the tool panels were rebuilt for the selected viewer.")
+            .field("panel", String.class, "toolbars or tools")
+            .build());
   }
 
   private void fireWorkspaceEmptied(Window window) {

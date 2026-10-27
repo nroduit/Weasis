@@ -19,6 +19,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.ui.docking.ws.WorkspaceView;
+import org.weasis.core.ui.event.GraphicEventBridge;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
@@ -42,12 +44,14 @@ public class PropertyChangeHandler implements PropertyChangeListener {
             (Shape) propertychangeevent.getOldValue(),
             (Shape) propertychangeevent.getNewValue(),
             canvas.getAffineTransform());
+        GraphicEventBridge.changed(viewId(), graph);
       } else if ("graphicLabel".equals(s)) {
         labelBoundsChanged(
             graph,
             (DefaultGraphicLabel) propertychangeevent.getOldValue(),
             (DefaultGraphicLabel) propertychangeevent.getNewValue(),
             canvas.getAffineTransform());
+        GraphicEventBridge.changed(viewId(), graph);
       } else if ("remove".equals(s)) {
         removeGraphic(graph);
       } else if ("remove.repaint".equals(s)) {
@@ -58,6 +62,18 @@ public class PropertyChangeHandler implements PropertyChangeListener {
         toBack(graph);
       }
     }
+  }
+
+  /** The workspace view showing this canvas, or {@code null} when it is not docked. */
+  private String viewId() {
+    if (canvas instanceof java.awt.Component component) {
+      java.awt.Container view =
+          javax.swing.SwingUtilities.getAncestorOfClass(WorkspaceView.class, component);
+      if (view instanceof WorkspaceView workspaceView) {
+        return workspaceView.viewId();
+      }
+    }
+    return null;
   }
 
   public void toFront(Graphic graphic) {

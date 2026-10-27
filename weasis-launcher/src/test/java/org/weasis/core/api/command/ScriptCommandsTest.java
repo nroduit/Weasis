@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.pf4j.PluginManager;
 import org.weasis.core.api.command.CommandManagerTest.MathExtension;
+import org.weasis.core.api.event.Event;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
@@ -186,5 +187,60 @@ class ScriptCommandsTest {
         () -> assertTrue(xml.contains("<testsuite name=\"report.weasis\""), xml),
         () -> assertTrue(xml.contains("failures=\"1\""), xml),
         () -> assertTrue(xml.contains("<failure message="), xml));
+  }
+
+  @Test
+  void aWaitStepBlocksUntilTheEventAndBindsIt(@TempDir Path dir) throws Exception {
+    CommandManager manager = manager();
+    Path script = dir.resolve("wait.weasis");
+    Files.writeString(
+        script,
+        """
+        math:add --a 1 --b 2
+        $e = @wait test:done --timeout 5 --where step=two
+        @expect ${event.step} == two
+        @expect ${e.count} == 3
+        """);
+    Thread.ofVirtual()
+        .start(
+            () -> {
+              try {
+                Thread.sleep(200);
+              } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+              }
+              manager.eventBus().publish(Event.of("test:done").put("step", "one").put("count", 1));
+              manager.eventBus().publish(Event.of("test:done").put("step", "two").put("count", 3));
+            });
+    CommandResult result =
+        manager.run(List.of("script:run", "--file", script.toString()), CommandOrigin.LAUNCH_ARGS);
+    assertAll(
+        () -> assertTrue(result.isOk(), result.error()),
+        () -> assertTrue(result.body().contains("\"command\":\"@wait\""), result.body()),
+        () -> assertTrue(result.body().contains("\"failed\":0"), result.body()));
+  }
+
+  @Test
+  void aWaitThatTimesOutFailsItsStepAndCheckSeesABadWait(@TempDir Path dir) throws Exception {
+    CommandManager manager = manager();
+    Path script = dir.resolve("wait.weasis");
+    Files.writeString(script, "@wait test:never --timeout 0.2\n");
+    CommandResult result =
+        manager.run(List.of("script:run", "--file", script.toString()), CommandOrigin.LAUNCH_ARGS);
+    Path bad = dir.resolve("bad.weasis");
+    Files.writeString(bad, "@wait --timeout 3\n@wait nonamespace\n@wait a:b --later 2\n");
+    CommandResult check =
+        manager.run(List.of("script:check", "--file", bad.toString()), CommandOrigin.LAUNCH_ARGS);
+    assertAll(
+        () -> assertEquals(CommandResult.ERROR, result.status()),
+        () -> assertTrue(result.body().contains("\"status\":4"), result.body()),
+        () -> assertTrue(result.error().contains("No event matching 'test:never'"), result.error()),
+        () -> assertEquals(CommandResult.ERROR, check.status()),
+        () ->
+            assertTrue(check.body().contains("line 1: A wait names the event first"), check.body()),
+        () -> assertTrue(check.body().contains("line 2: An event is named"), check.body()),
+        () ->
+            assertTrue(
+                check.body().contains("line 3: Unknown option of @wait: --later"), check.body()));
   }
 }

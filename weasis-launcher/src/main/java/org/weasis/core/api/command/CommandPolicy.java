@@ -36,7 +36,32 @@ public record CommandPolicy(
     boolean assumeYesAllowed,
     boolean shutdownAllowed,
     boolean pixelAttestAllowed,
-    boolean locked) {
+    boolean locked,
+    EventRules events) {
+
+  /** The seven-part policy with the default event rules, for the callers that predate them. */
+  public CommandPolicy(
+      RemotePolicy remote,
+      FileRules files,
+      NetworkRules network,
+      boolean assumeYesAllowed,
+      boolean shutdownAllowed,
+      boolean pixelAttestAllowed,
+      boolean locked) {
+    this(
+        remote,
+        files,
+        network,
+        assumeYesAllowed,
+        shutdownAllowed,
+        pixelAttestAllowed,
+        locked,
+        EventRules.defaults());
+  }
+
+  public CommandPolicy {
+    events = events == null ? EventRules.defaults() : events;
+  }
 
   /** Prefix of the system properties that override one key each. */
   public static final String PROPERTY_PREFIX = "weasis.commands.policy."; // NON-NLS
@@ -76,6 +101,27 @@ public record CommandPolicy(
 
     public static NetworkRules closed() {
       return new NetworkRules(false, Set.of(), false, Set.of());
+    }
+  }
+
+  /**
+   * Whether a remote caller may observe the application through the events, which namespaces it may
+   * observe, and how many may do so at once.
+   *
+   * @param namespaces the only namespaces whose events are streamed; empty for all
+   */
+  public record EventRules(boolean enabled, Set<String> namespaces, int maxSubscribers) {
+
+    public EventRules {
+      namespaces = Set.copyOf(namespaces);
+    }
+
+    public static EventRules defaults() {
+      return new EventRules(true, Set.of(), 4);
+    }
+
+    public boolean allows(String namespace) {
+      return enabled && (namespaces.isEmpty() || namespaces.contains(namespace));
     }
   }
 
@@ -166,6 +212,11 @@ public record CommandPolicy(
             hosts(lookup.apply("network.readHosts")), // NON-NLS
             flag(lookup, "network.write", false), // NON-NLS
             hosts(lookup.apply("network.writeHosts"))); // NON-NLS
+    EventRules events =
+        new EventRules(
+            flag(lookup, "events", true), // NON-NLS
+            hosts(lookup.apply("events.namespaces")), // NON-NLS
+            integer(lookup.apply("events.maxSubscribers"), 4)); // NON-NLS
     return new CommandPolicy(
         remote,
         files,
@@ -173,31 +224,80 @@ public record CommandPolicy(
         flag(lookup, "confirmations.assumeYes", true), // NON-NLS
         flag(lookup, "shutdown", true), // NON-NLS
         flag(lookup, "pixels.attest", false), // NON-NLS
-        flag(lookup, "locked", false)); // NON-NLS
+        flag(lookup, "locked", false), // NON-NLS
+        events);
+  }
+
+  /** The same policy with other event rules. */
+  public CommandPolicy withEvents(EventRules rules) {
+    return new CommandPolicy(
+        remote,
+        files,
+        network,
+        assumeYesAllowed,
+        shutdownAllowed,
+        pixelAttestAllowed,
+        locked,
+        rules);
+  }
+
+  /**
+   * What refuses a subscription to the events, or empty when it may be opened. Only a remote
+   * subscriber is policed; {@code active} is how many remote subscribers are already connected.
+   */
+  public Optional<Refusal> checkEvents(CommandOrigin origin, int active) {
+    if (origin != CommandOrigin.REMOTE) {
+      return Optional.empty();
+    }
+    if (!events.enabled()) {
+      return refuse("events", "the events are closed to remote callers on this instance");
+    }
+    if (active >= events.maxSubscribers()) {
+      return refuse(
+          "events.maxSubscribers", // NON-NLS
+          "this instance serves at most "
+              + events.maxSubscribers()
+              + " event subscriber(s) at once; close one or ask the instance for more");
+    }
+    return Optional.empty();
   }
 
   /** The same policy with other file rules, for a configuration step or a test. */
   public CommandPolicy withFiles(FileRules rules) {
     return new CommandPolicy(
-        remote, rules, network, assumeYesAllowed, shutdownAllowed, pixelAttestAllowed, locked);
+        remote,
+        rules,
+        network,
+        assumeYesAllowed,
+        shutdownAllowed,
+        pixelAttestAllowed,
+        locked,
+        events);
   }
 
   /** The same policy with other network rules. */
   public CommandPolicy withNetwork(NetworkRules rules) {
     return new CommandPolicy(
-        remote, files, rules, assumeYesAllowed, shutdownAllowed, pixelAttestAllowed, locked);
+        remote,
+        files,
+        rules,
+        assumeYesAllowed,
+        shutdownAllowed,
+        pixelAttestAllowed,
+        locked,
+        events);
   }
 
   /** The same policy with stopping the application allowed or refused. */
   public CommandPolicy withShutdown(boolean allowed) {
     return new CommandPolicy(
-        remote, files, network, assumeYesAllowed, allowed, pixelAttestAllowed, locked);
+        remote, files, network, assumeYesAllowed, allowed, pixelAttestAllowed, locked, events);
   }
 
   /** The same policy with pixel attestation by a remote caller allowed or refused. */
   public CommandPolicy withPixelAttest(boolean allowed) {
     return new CommandPolicy(
-        remote, files, network, assumeYesAllowed, shutdownAllowed, allowed, locked);
+        remote, files, network, assumeYesAllowed, shutdownAllowed, allowed, locked, events);
   }
 
   /**
@@ -207,6 +307,9 @@ public record CommandPolicy(
   public Optional<Refusal> check(CommandOrigin origin, Request request) {
     if (origin != CommandOrigin.REMOTE) {
       return Optional.empty();
+    }
+    if (request.needs(Capability.EVENTS) && !events.enabled()) {
+      return refuse("events", "the events are closed to remote callers on this instance");
     }
     if (request.needs(Capability.UI_QUERY)) {
       return refuse(
@@ -425,6 +528,17 @@ public record CommandPolicy(
     }
     return new LinkedHashSet<>(
         Arrays.stream(value.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
+  }
+
+  private static int integer(String value, int fallback) {
+    if (value == null || value.isBlank()) {
+      return fallback;
+    }
+    try {
+      return Math.max(0, Integer.parseInt(value.trim()));
+    } catch (NumberFormatException e) {
+      return fallback;
+    }
   }
 
   private static boolean flag(UnaryOperator<String> lookup, String key, boolean fallback) {

@@ -137,3 +137,4 @@ Existing docs:
 | `weasis-dicom/weasis-dicom-viewer2d/docs/synch-architecture.md` | view synchronization |
 | `weasis-distributions/docs/Native-Build-Overview.md` | installer build jobs and binary compatibility |
 | `weasis-launcher/docs/Launcher-Overview.md` | launcher startup sequence, launch pipeline and AOT cache, class loaders, base directories |
+| `weasis-launcher/docs/Event-Model.md` | event model: typed events on one bus, catalog, bridges from the listener families, stream on the singleton socket, policy and masking, `@wait` in scripts |

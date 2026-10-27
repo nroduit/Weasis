@@ -56,6 +56,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.UiProfiles;
 import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.event.ViewerEventBridge;
 import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicRegistry;
@@ -600,6 +601,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
       for (SeriesViewerListener listener : seriesViewerListeners) {
         listener.changingViewContentEvent(event);
       }
+      ViewerEventBridge.publish(this, event);
     }
   }
 
