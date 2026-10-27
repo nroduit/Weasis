@@ -12,6 +12,7 @@ package org.weasis.dicom.codec.hp;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonNumber;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonString;
@@ -19,6 +20,7 @@ import jakarta.json.JsonValue;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.weasis.core.api.util.JsonUtil;
@@ -127,21 +129,50 @@ public record WeasisExtensions(
    *     color}...), null for the screen of the step; a role no monitor fills folds the display set
    *     into the main window
    */
+  /**
+   * @param derive when set, the cell shows a series derived from the one its image set gives and
+   *     the series of another image set, instead of the acquired one
+   */
   public record DisplaySet(
       ViewerType viewerType,
       Display display,
       List<Cell> cells,
       Loading loading,
       Integer repeat,
-      String screen) {
+      String screen,
+      Derive derive) {
+
+    public DisplaySet(
+        ViewerType viewerType,
+        Display display,
+        List<Cell> cells,
+        Loading loading,
+        Integer repeat,
+        String screen) {
+      this(viewerType, display, cells, loading, repeat, screen, null);
+    }
 
     public DisplaySet(
         ViewerType viewerType, Display display, List<Cell> cells, Loading loading, Integer repeat) {
-      this(viewerType, display, cells, loading, repeat, null);
+      this(viewerType, display, cells, loading, repeat, null, null);
     }
 
     public DisplaySet(ViewerType viewerType, Display display, List<Cell> cells, Loading loading) {
       this(viewerType, display, cells, loading, null, null);
+    }
+  }
+
+  /**
+   * A series the cell derives from two image sets, so a protocol shows what no acquired series
+   * gives: a subtraction of the display set's series minus the series of the mask image set.
+   *
+   * @param kind the derivation, the kind of the plugin that does it ({@code subtraction})
+   * @param maskImageSet the Image Set Number of the series subtracted
+   * @param factor the weight of the mask, null for 1
+   */
+  public record Derive(String kind, int maskImageSet, Double factor) {
+    public Derive {
+      Objects.requireNonNull(kind, "kind");
     }
   }
 
@@ -359,6 +390,16 @@ public record WeasisExtensions(
     if (ds.screen() != null) {
       json.add("screen", ds.screen()); // NON-NLS
     }
+    if (ds.derive() != null) {
+      JsonObjectBuilder derive =
+          Json.createObjectBuilder()
+              .add("kind", ds.derive().kind()) // NON-NLS
+              .add("maskImageSet", ds.derive().maskImageSet()); // NON-NLS
+      if (ds.derive().factor() != null) {
+        derive.add("factor", ds.derive().factor()); // NON-NLS
+      }
+      json.add("derive", derive); // NON-NLS
+    }
     return json;
   }
 
@@ -377,7 +418,16 @@ public record WeasisExtensions(
         cells,
         json.get("loading") instanceof JsonObject l ? loading(l) : null, // NON-NLS
         integer(json, "repeat"), // NON-NLS
-        json.getString("screen", null)); // NON-NLS
+        json.getString("screen", null), // NON-NLS
+        json.get("derive") instanceof JsonObject d ? derive(d) : null); // NON-NLS
+  }
+
+  private static Derive derive(JsonObject json) {
+    JsonNumber factor = json.getJsonNumber("factor"); // NON-NLS
+    return new Derive(
+        json.getString("kind"), // NON-NLS
+        json.getInt("maskImageSet"), // NON-NLS
+        factor == null ? null : factor.doubleValue());
   }
 
   private static JsonObjectBuilder display(Display d) {

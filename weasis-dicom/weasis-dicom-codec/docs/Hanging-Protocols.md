@@ -28,6 +28,14 @@ its non-image cells, the placement of the viewers in the workspace, the loading 
 UI profile of the protocol or of each step. Members a version does not know are kept and written
 back unchanged.
 
+A display set may derive its series instead of showing an acquired one: the Weasis extension
+`derive` names a kind (`subtraction`) and the image set of the mask, the engine plans the cell with
+the series of its image set and a `Derivation` naming the mask series, and `HangingPlanApplier`
+prepares the step off the event thread by asking the `DerivedSeriesProvider` of that kind to
+build the series before it is hung. A mask that does not resolve leaves the acquired series in the
+cell, with the reason. The built-in *MR breast* protocol hangs the pre-contrast and post-contrast
+T1 and their subtraction this way.
+
 `ProtocolJson` is the working form: one entry `{id, schema, dicom, weasis}` where `dicom` is the
 dataset by keyword (`DicomJson`). The entries are a layered document, `hp.protocols.json`
 (`HangingProtocolDocuments`): the built-in library shipped by the codec (`BuiltInProtocols`, one

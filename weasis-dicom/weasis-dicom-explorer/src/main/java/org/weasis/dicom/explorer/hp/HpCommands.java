@@ -572,6 +572,25 @@ public class HpCommands implements CommandExtension {
       String protocolId,
       int index,
       ViewerPlacement placement) {
+    Planned planned = plan(parent, candidates, studyUid, priorUids, protocolId);
+    // The derivations compute pixels: done here, off the event thread, before the hanging
+    HangingPlan prepared = HangingPlanApplier.prepare(planned.plan(), index);
+    return GuiExecutor.invokeAndRethrow(
+        () ->
+            IdentityMask.callForCommand(
+                () ->
+                    parent
+                        .applier
+                        .get()
+                        .apply(prepared, index, planned.context(), placement, null)));
+  }
+
+  private static Planned plan(
+      HpCommands parent,
+      List<Candidate> candidates,
+      StudyUid studyUid,
+      Set<String> priorUids,
+      String protocolId) {
     return GuiExecutor.invokeAndRethrow(
         () ->
             IdentityMask.callForCommand(
@@ -606,9 +625,12 @@ public class HpCommands implements CommandExtension {
                   MediaSeriesGroup patient = model.getParent(study, DicomModel.patient);
                   HangingPlanApplier.Context context =
                       new HangingPlanApplier.Context(model, patient, study, candidates, scores);
-                  return parent.applier.get().apply(plan, index, context, placement, null);
+                  return new Planned(plan, context);
                 }));
   }
+
+  /** A plan and its context, between the planning on the event thread and the hanging. */
+  private record Planned(HangingPlan plan, HangingPlanApplier.Context context) {}
 
   @Command(
       name = "open",

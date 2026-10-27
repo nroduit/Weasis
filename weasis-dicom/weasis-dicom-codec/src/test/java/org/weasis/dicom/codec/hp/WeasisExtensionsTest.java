@@ -40,4 +40,38 @@ class WeasisExtensionsTest {
                 back.getJsonObject("displaySets").getJsonObject("2").getString("screen")),
         () -> assertEquals(extensions, WeasisExtensions.fromJson(back)));
   }
+
+  @Test
+  void aDisplaySetDerivesItsSeriesFromAnotherImageSet() {
+    JsonObject json =
+        Json.createObjectBuilder()
+            .add(
+                "displaySets",
+                Json.createObjectBuilder()
+                    .add(
+                        "3",
+                        Json.createObjectBuilder()
+                            .add(
+                                "derive",
+                                Json.createObjectBuilder()
+                                    .add("kind", "subtraction")
+                                    .add("maskImageSet", 1)
+                                    .add("factor", 0.8))))
+            .build();
+    WeasisExtensions extensions = WeasisExtensions.fromJson(json);
+    WeasisExtensions.Derive derive = extensions.displaySets().get(3).derive();
+    JsonObject back = extensions.toJson();
+    assertAll(
+        () -> assertEquals("subtraction", derive.kind()),
+        () -> assertEquals(1, derive.maskImageSet()),
+        () -> assertEquals(0.8, derive.factor()),
+        () ->
+            assertEquals(
+                1,
+                back.getJsonObject("displaySets")
+                    .getJsonObject("3")
+                    .getJsonObject("derive")
+                    .getInt("maskImageSet")),
+        () -> assertEquals(extensions, WeasisExtensions.fromJson(back)));
+  }
 }

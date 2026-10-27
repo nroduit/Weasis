@@ -368,9 +368,10 @@ public final class HangingOpener {
 
   private static Set<String> hangInApplication(
       HangingPlan plan, Context context, ViewerPlacement placement) {
+    HangingPlan prepared = HangingPlanApplier.prepare(plan, 0);
     HangingPlanApplier.Applied applied =
         GuiExecutor.invokeAndRethrow(
-            () -> new HangingPlanApplier().apply(plan, 0, context, placement, null));
+            () -> new HangingPlanApplier().apply(prepared, 0, context, placement, null));
     if (applied.viewers().isEmpty()) {
       return Set.of();
     }

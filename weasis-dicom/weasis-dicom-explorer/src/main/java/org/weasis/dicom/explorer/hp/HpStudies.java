@@ -89,7 +89,9 @@ public final class HpStudies {
     HangingPlanApplier.Context context =
         new HangingPlanApplier.Context(
             model, model.getParent(study, DicomModel.patient), study, candidates, scores);
-    return new HangingPlanApplier().apply(plan, 0, context, ViewerPlacement.reuseViewer(), null);
+    HangingPlan prepared = HangingPlanApplier.prepare(plan, 0);
+    return new HangingPlanApplier()
+        .apply(prepared, 0, context, ViewerPlacement.reuseViewer(), null);
   }
 
   /** The explorer's interest as a feature: the count and the source ids, upper case. */

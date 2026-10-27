@@ -40,10 +40,12 @@ import org.weasis.core.ui.editor.image.ViewState.ViewData;
 import org.weasis.core.ui.editor.image.ViewState.ViewPresentation;
 import org.weasis.dicom.codec.hp.HangingPlan.Alternative;
 import org.weasis.dicom.codec.hp.HangingPlan.CellPlan;
+import org.weasis.dicom.codec.hp.HangingPlan.Derivation;
 import org.weasis.dicom.codec.hp.HangingPlan.Match;
 import org.weasis.dicom.codec.hp.HangingPlan.Step;
 import org.weasis.dicom.codec.hp.HangingPlan.Unresolved;
 import org.weasis.dicom.codec.hp.ProtocolJson.Document;
+import org.weasis.dicom.codec.hp.WeasisExtensions.Derive;
 import org.weasis.dicom.codec.hp.WeasisExtensions.Display;
 import org.weasis.dicom.codec.hp.WeasisExtensions.DisplaySet;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ImageSet;
@@ -732,6 +734,33 @@ public final class HangingEngine {
         continue;
       }
 
+      if (extension != null && extension.derive() != null) {
+        // A deriving cell works on the best series of its image set, shown or not by another cell
+        Scored best = resolution.candidates().getFirst();
+        addCell(
+            cells,
+            layout,
+            displaySet,
+            extension,
+            derived(
+                new CellPlan(
+                    cells.size(),
+                    displaySetNumber,
+                    label,
+                    imageSetNumber,
+                    best.series().uid(),
+                    best.match(),
+                    best.score(),
+                    viewer,
+                    best.reasons(),
+                    alternatives(resolution, best),
+                    studyOf(best.series(), resolution),
+                    rankOf(resolution)),
+                extension,
+                resolutions),
+            best.series());
+        continue;
+      }
       List<Scored> fresh =
           resolution.candidates().stream().filter(c -> !used.contains(c.series())).toList();
       Integer repeat = extension == null ? null : extension.repeat();
@@ -750,19 +779,22 @@ public final class HangingEngine {
             layout,
             displaySet,
             extension,
-            new CellPlan(
-                cells.size(),
-                displaySetNumber,
-                label,
-                imageSetNumber,
-                shared.series().uid(),
-                Match.SHARED,
-                shared.score(),
-                viewer,
-                reasons,
-                alternatives(resolution, shared),
-                studyOf(shared.series(), resolution),
-                rankOf(resolution)),
+            derived(
+                new CellPlan(
+                    cells.size(),
+                    displaySetNumber,
+                    label,
+                    imageSetNumber,
+                    shared.series().uid(),
+                    Match.SHARED,
+                    shared.score(),
+                    viewer,
+                    reasons,
+                    alternatives(resolution, shared),
+                    studyOf(shared.series(), resolution),
+                    rankOf(resolution)),
+                extension,
+                resolutions),
             shared.series());
         continue;
       }
@@ -777,19 +809,22 @@ public final class HangingEngine {
             layout,
             displaySet,
             extension,
-            new CellPlan(
-                cells.size(),
-                displaySetNumber,
-                label,
-                imageSetNumber,
-                chosen.series().uid(),
-                chosen.match(),
-                chosen.score(),
-                viewer,
-                chosen.reasons(),
-                alternatives(resolution, chosen),
-                studyOf(chosen.series(), resolution),
-                rankOf(resolution)),
+            derived(
+                new CellPlan(
+                    cells.size(),
+                    displaySetNumber,
+                    label,
+                    imageSetNumber,
+                    chosen.series().uid(),
+                    chosen.match(),
+                    chosen.score(),
+                    viewer,
+                    chosen.reasons(),
+                    alternatives(resolution, chosen),
+                    studyOf(chosen.series(), resolution),
+                    rankOf(resolution)),
+                extension,
+                resolutions),
             chosen.series());
       }
     }
@@ -799,6 +834,46 @@ public final class HangingEngine {
   }
 
   /** Appends the plan of a cell and the matching layout cell with its presentation. */
+  /**
+   * The cell with the derivation its display set asks for: the best series of the mask image set is
+   * the mask; without one the acquired series is shown and the reason says why.
+   */
+  private static CellPlan derived(
+      CellPlan cell, DisplaySet extension, Map<Integer, Resolution> resolutions) {
+    Derive derive = extension == null ? null : extension.derive();
+    if (derive == null) {
+      return cell;
+    }
+    Resolution mask = resolutions.get(derive.maskImageSet());
+    if (mask == null || !mask.isResolved()) {
+      return cell.withDerivation(
+          null,
+          List.of(
+              "derivation " // NON-NLS
+                  + derive.kind()
+                  + " skipped: image set "
+                  + derive.maskImageSet()
+                  + " gives no mask, the acquired series is shown")); // NON-NLS
+    }
+    String maskUid = mask.candidates().getFirst().series().uid();
+    if (maskUid.equals(cell.series())) {
+      return cell.withDerivation(
+          null,
+          List.of(
+              "derivation " // NON-NLS
+                  + derive.kind()
+                  + " skipped: the mask image set gives the same series")); // NON-NLS
+    }
+    return cell.withDerivation(
+        new Derivation(
+            derive.kind(), cell.series(), derive.maskImageSet(), maskUid, derive.factor()),
+        List.of(
+            "derived: " // NON-NLS
+                + derive.kind()
+                + " minus the series of image set "
+                + derive.maskImageSet()));
+  }
+
   private static void addCell(
       List<CellPlan> cells,
       HangingLayout.Builder layout,

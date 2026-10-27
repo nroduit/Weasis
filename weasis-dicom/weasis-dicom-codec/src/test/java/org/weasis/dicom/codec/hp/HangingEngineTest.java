@@ -32,6 +32,8 @@ import org.weasis.dicom.codec.hp.HangingPlan.CellPlan;
 import org.weasis.dicom.codec.hp.HangingPlan.Match;
 import org.weasis.dicom.codec.hp.HangingPlan.Step;
 import org.weasis.dicom.codec.hp.ProtocolJson.Document;
+import org.weasis.dicom.codec.hp.WeasisExtensions.Derive;
+import org.weasis.dicom.codec.hp.WeasisExtensions.DisplaySet;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ImageSet;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ViewerType;
 import org.weasis.dicom.hp.HPComparatorFactory;
@@ -460,5 +462,84 @@ class HangingEngineTest {
         () ->
             assertEquals(
                 3, json.getJsonArray("unresolved").getJsonObject(0).getInt("imageSet"))); // NON-NLS
+  }
+
+  /** Pre and post contrast T1, and a third cell deriving their subtraction. */
+  private static Document subtractionProtocol() {
+    HangingProtocol hp = new HangingProtocol();
+    hp.setHangingProtocolName("MR subtraction"); // NON-NLS
+    hp.setHangingProtocolLevel("SITE"); // NON-NLS
+    HPDefinition def = new HPDefinition();
+    def.setModality("MR"); // NON-NLS
+    hp.addHangingProtocolDefinition(def);
+    HPImageSet pre = hp.addNewImageSet(null);
+    pre.addImageSetSelector(
+        HPSelectorFactory.createAttributeValueSelector(
+            "MATCH", null, Tag.SeriesDescription, 1, VR.LO, new String[] {"pre"})); // NON-NLS
+    HPImageSet post = hp.addNewImageSet(null);
+    post.addImageSetSelector(
+        HPSelectorFactory.createAttributeValueSelector(
+            "MATCH", null, Tag.SeriesDescription, 1, VR.LO, new String[] {"post"})); // NON-NLS
+    for (HPImageSet set : List.of(pre, post)) {
+      HPTimeBasedImageSet now = new HPTimeBasedImageSet();
+      now.setRelativeTime(new RelativeTime(0, 0, RelativeTimeUnits.DAYS));
+      set.addTimeBasedImageSet(now);
+    }
+    hp.addDisplaySet(displaySet(1, "pre", pre, 1)); // NON-NLS
+    hp.addDisplaySet(displaySet(2, "post", post, 1)); // NON-NLS
+    hp.addDisplaySet(displaySet(3, "subtraction", post, 1)); // NON-NLS
+    WeasisExtensions weasis =
+        new WeasisExtensions(
+            Map.of(),
+            Map.of(
+                3,
+                new DisplaySet(
+                    null, null, List.of(), null, null, null, new Derive("subtraction", 1, null))),
+            Map.of(),
+            null,
+            null,
+            null,
+            null,
+            null);
+    return new Document("mr-sub", hp, weasis); // NON-NLS
+  }
+
+  private static StudySeries mr(String seriesUid, String description) {
+    Attributes a = TestSeries.image("MR", "1.2.840.10008.5.1.4.1.1.4", 1); // NON-NLS
+    a.setString(Tag.SeriesInstanceUID, VR.UI, seriesUid);
+    a.setString(Tag.SeriesDescription, VR.LO, description);
+    return StudySeries.of(List.of(TestSeries.series(a)), EXTRACTOR).getFirst();
+  }
+
+  @Test
+  void aDisplaySetDerivingItsSeriesPlansTheSubtractionOfTheTwoMatchedSeries() {
+    HangingPlan plan =
+        HangingEngine.plan(
+            subtractionProtocol(), List.of(mr("1.2.3.4", "pre"), mr("1.2.3.5", "post"))); // NON-NLS
+    CellPlan cell = plan.steps().getFirst().cells().get(2);
+    HangingPlan.Derivation derivation = cell.derivation();
+    assertAll(
+        () -> assertEquals("1.2.3.5", cell.series()),
+        () -> assertEquals("subtraction", derivation.kind()),
+        () -> assertEquals("1.2.3.5", derivation.source()),
+        () -> assertEquals("1.2.3.4", derivation.mask()),
+        () -> assertEquals(1, derivation.maskImageSet()),
+        () -> assertTrue(cell.reasons().stream().anyMatch(r -> r.startsWith("derived"))),
+        () -> assertNull(plan.steps().getFirst().cells().get(1).derivation()));
+  }
+
+  @Test
+  void withoutAMaskTheCellShowsTheAcquiredSeriesAndSaysWhy() {
+    HangingPlan plan =
+        HangingEngine.plan(subtractionProtocol(), List.of(mr("1.2.3.5", "post"))); // NON-NLS
+    CellPlan cell =
+        plan.steps().getFirst().cells().stream()
+            .filter(c -> c.displaySet() == 3)
+            .findFirst()
+            .orElseThrow();
+    assertAll(
+        () -> assertEquals("1.2.3.5", cell.series()),
+        () -> assertNull(cell.derivation()),
+        () -> assertTrue(cell.reasons().stream().anyMatch(r -> r.contains("skipped"))));
   }
 }

@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer2d.subtraction;
 
+import jakarta.json.JsonNumber;
 import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.util.Optional;
@@ -37,5 +38,15 @@ public class SubtractionDerivations implements DerivedSeriesProvider {
   @Override
   public void rebuild(JsonObject spec) throws IOException {
     SubtractionService.create(SubtractionSpec.fromJson(spec));
+  }
+
+  @Override
+  public MediaSeries<? extends MediaElement> derive(String series, String mask, JsonObject params)
+      throws IOException {
+    JsonNumber factor = params == null ? null : params.getJsonNumber("factor"); // NON-NLS
+    SubtractionSpec spec =
+        new SubtractionSpec(
+            series, mask, factor == null ? 1.0 : factor.doubleValue(), 0.0, false, false);
+    return SubtractionService.create(spec).series();
   }
 }

@@ -92,6 +92,13 @@ A derived series belongs to the study of its source in the explorer, removable w
 `SubtractionDerivations`, the `DerivedSeriesProvider` of the plugin, builds it again under the same
 identifiers before the panes are rebuilt.
 
+## Hanging protocols
+
+A display set whose Weasis extension says `derive: subtraction` with a mask image set hangs the
+subtraction of the two matched series: the hanging-protocol applier asks `SubtractionDerivations`
+to build it from the two Series Instance UIDs before the step is hung. The built-in *MR breast*
+protocol shows the pre-contrast T1, the post-contrast T1 and their subtraction.
+
 ## Invariants
 
 - A subtraction never changes its operands; the derived series is a new object of the study.

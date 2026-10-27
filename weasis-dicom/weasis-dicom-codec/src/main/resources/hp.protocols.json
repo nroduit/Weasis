@@ -881,6 +881,230 @@
       }
     },
     {
+      "id": "weasis.mr.breast",
+      "schema": 1,
+      "dicom": {
+        "HangingProtocolName": "MR breast",
+        "HangingProtocolLevel": "MANUFACTURER",
+        "HangingProtocolCreator": "Weasis",
+        "HangingProtocolDefinitionSequence": [
+          {
+            "Modality": "MR",
+            "AnatomicRegionSequence": [
+              {
+                "CodeValue": "76752008",
+                "CodingSchemeDesignator": "SCT",
+                "CodeMeaning": "Breast"
+              }
+            ]
+          }
+        ],
+        "ImageSetsSequence": [
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MR"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 1,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "MR"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 2,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          }
+        ],
+        "DisplaySetsSequence": [
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 1,
+            "DisplaySetLabel": "T1 before contrast",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 2,
+            "DisplaySetLabel": "T1 after contrast",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 3,
+            "DisplaySetLabel": "Subtraction",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          }
+        ],
+        "PartialDataDisplayHandling": "ADAPT_LAYOUT",
+        "SynchronizedScrollingSequence": [
+          {
+            "DisplaySetScrollingGroup": [
+              1,
+              2,
+              3
+            ]
+          }
+        ]
+      },
+      "weasis": {
+        "uiProfile": "weasis.mr",
+        "imageSets": {
+          "1": {
+            "label": "T1 before contrast",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "SCREENSHOT",
+                  "MIP",
+                  "DOCUMENT",
+                  "DOSE_REPORT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "NO_MATCH",
+                "values": [
+                  "MIXED"
+                ]
+              },
+              {
+                "feature": "mrWeighting",
+                "usage": "MATCH",
+                "values": [
+                  "T1"
+                ]
+              },
+              {
+                "feature": "contrast",
+                "usage": "MATCH",
+                "values": [
+                  "NONE",
+                  "UNKNOWN"
+                ]
+              },
+              {
+                "feature": "role",
+                "usage": "PREFER",
+                "values": [
+                  "ORIGINAL"
+                ],
+                "weight": 0.5
+              },
+              {
+                "feature": "orientation",
+                "usage": "PREFER",
+                "values": [
+                  "AXIAL"
+                ],
+                "weight": 0.5
+              }
+            ]
+          },
+          "2": {
+            "label": "T1 after contrast",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "SCREENSHOT",
+                  "MIP",
+                  "DOCUMENT",
+                  "DOSE_REPORT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "NO_MATCH",
+                "values": [
+                  "MIXED"
+                ]
+              },
+              {
+                "feature": "mrWeighting",
+                "usage": "MATCH",
+                "values": [
+                  "T1"
+                ]
+              },
+              {
+                "feature": "contrast",
+                "usage": "MATCH",
+                "values": [
+                  "WITH"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "PREFER",
+                "values": [
+                  "AXIAL"
+                ],
+                "weight": 0.5
+              }
+            ]
+          }
+        },
+        "displaySets": {
+          "3": {
+            "derive": {
+              "kind": "subtraction",
+              "maskImageSet": 1
+            }
+          }
+        }
+      }
+    },
+    {
       "id": "weasis.xr",
       "schema": 1,
       "dicom": {

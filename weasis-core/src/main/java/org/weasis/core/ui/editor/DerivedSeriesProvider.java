@@ -37,4 +37,18 @@ public interface DerivedSeriesProvider extends ExtensionPoint {
    * @throws IllegalStateException when its sources are not loaded or no longer qualify
    */
   void rebuild(JsonObject spec) throws IOException;
+
+  /**
+   * Derives a series from two loaded ones, as a hanging protocol asks (the display set's series
+   * minus the mask), registers it in its explorer and returns it; nothing is built again when it is
+   * already there. Off the event dispatch thread.
+   *
+   * @param series the Series Instance UID of the series derived from
+   * @param mask the Series Instance UID of the mask series
+   * @param params the parameters of the derivation, {@code factor} for a subtraction
+   * @throws IOException when the series cannot be written
+   * @throws IllegalStateException when the operands do not qualify
+   */
+  MediaSeries<? extends MediaElement> derive(String series, String mask, JsonObject params)
+      throws IOException;
 }

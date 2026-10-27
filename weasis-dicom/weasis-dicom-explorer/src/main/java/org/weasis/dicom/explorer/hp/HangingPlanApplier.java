@@ -13,6 +13,7 @@ import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -34,10 +35,12 @@ import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
+import org.weasis.core.ui.editor.DerivedSeriesProvider;
 import org.weasis.core.ui.editor.ExternalDisplay;
 import org.weasis.core.ui.editor.ScreenRoles;
 import org.weasis.core.ui.editor.SeriesResolver;
@@ -57,6 +60,7 @@ import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
 import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
 import org.weasis.dicom.codec.hp.HangingPlan;
 import org.weasis.dicom.codec.hp.HangingPlan.CellPlan;
+import org.weasis.dicom.codec.hp.HangingPlan.Derivation;
 import org.weasis.dicom.codec.hp.HangingPlan.Step;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ViewerType;
 import org.weasis.dicom.explorer.DicomModel;
@@ -394,6 +398,84 @@ public final class HangingPlanApplier {
    * @param preferred the 2D container to re-hang when the placement reuses a viewer, else the
    *     latest one of the patient; may be null
    */
+  /**
+   * Does the derivations of a step before it is hung: every cell that derives its series gets the
+   * series its plugin builds from the two the plan matched; a derivation that fails leaves the
+   * acquired series in the cell with the reason. Off the event dispatch thread, since a derivation
+   * computes pixels.
+   *
+   * @return the plan with the derived series in the cells of the step
+   */
+  public static HangingPlan prepare(HangingPlan plan, int step) {
+    return prepare(
+        plan,
+        step,
+        GuiUtils.getUICore().getPluginManager().getExtensions(DerivedSeriesProvider.class));
+  }
+
+  static HangingPlan prepare(HangingPlan plan, int step, List<DerivedSeriesProvider> providers) {
+    if (step < 0 || step >= plan.steps().size()) {
+      return plan;
+    }
+    Step stepPlan = plan.steps().get(step);
+    if (stepPlan.cells().stream().noneMatch(c -> c.derivation() != null)) {
+      return plan;
+    }
+    List<CellPlan> cells = new ArrayList<>();
+    HangingLayout layout = stepPlan.layout();
+    for (CellPlan cell : stepPlan.cells()) {
+      Derivation derivation = cell.derivation();
+      if (derivation == null) {
+        cells.add(cell);
+        continue;
+      }
+      DerivedSeriesProvider provider =
+          providers.stream()
+              .filter(p -> p.kind().equals(derivation.kind()))
+              .findFirst()
+              .orElse(null);
+      if (provider == null) {
+        cells.add(
+            cell.withDerivation(
+                null,
+                List.of(
+                    "derivation " + derivation.kind() + " skipped: no plugin does it"))); // NON-NLS
+        continue;
+      }
+      try {
+        JsonObjectBuilder params = Json.createObjectBuilder();
+        if (derivation.factor() != null) {
+          params.add("factor", derivation.factor()); // NON-NLS
+        }
+        MediaSeries<? extends MediaElement> derived =
+            provider.derive(derivation.source(), derivation.mask(), params.build());
+        String uid = String.valueOf(derived.getTagValue(derived.getTagID()));
+        cells.add(cell.withSeries(uid));
+        layout = layout.withCellSeries(cell.cell(), uid);
+      } catch (IOException | RuntimeException e) {
+        LOGGER.warn("Cannot derive the series of cell {}", cell.cell() + 1, e);
+        cells.add(
+            cell.withDerivation(
+                null,
+                List.of(
+                    "derivation " // NON-NLS
+                        + derivation.kind()
+                        + " failed, the acquired series is shown: "
+                        + e.getMessage()))); // NON-NLS
+      }
+    }
+    List<Step> steps = new ArrayList<>(plan.steps());
+    steps.set(step, new Step(stepPlan.group(), stepPlan.label(), layout, cells));
+    return new HangingPlan(
+        plan.protocolId(),
+        plan.name(),
+        plan.level(),
+        plan.score(),
+        plan.reasons(),
+        steps,
+        plan.unresolved());
+  }
+
   public Applied apply(
       HangingPlan plan,
       int step,

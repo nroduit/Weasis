@@ -373,7 +373,9 @@ public final class ActiveHanging {
     }
     Context next =
         new Context(model, context.patient(), context.study(), context.candidates(), ranking);
+    // On the event thread: a derivation already built by the opener comes back at once
+    HangingPlan prepared = HangingPlanApplier.prepare(plan, 0);
     return new HangingPlanApplier()
-        .apply(plan, 0, next, ViewerPlacement.reuseViewer(), current.container().orElse(null));
+        .apply(prepared, 0, next, ViewerPlacement.reuseViewer(), current.container().orElse(null));
   }
 }

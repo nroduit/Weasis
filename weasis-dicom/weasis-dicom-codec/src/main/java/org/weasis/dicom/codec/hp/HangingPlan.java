@@ -13,6 +13,7 @@ import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.weasis.core.ui.editor.image.HangingLayout;
@@ -105,10 +106,79 @@ public record HangingPlan(
       List<String> reasons,
       List<Alternative> alternatives,
       String study,
-      int prior) {
+      int prior,
+      Derivation derivation) {
     public CellPlan {
       reasons = reasons == null ? List.of() : List.copyOf(reasons);
       alternatives = alternatives == null ? List.of() : List.copyOf(alternatives);
+    }
+
+    /** A cell without a derivation. */
+    public CellPlan(
+        int cell,
+        int displaySet,
+        String label,
+        int imageSet,
+        String series,
+        Match match,
+        double score,
+        ViewerType viewer,
+        List<String> reasons,
+        List<Alternative> alternatives,
+        String study,
+        int prior) {
+      this(
+          cell,
+          displaySet,
+          label,
+          imageSet,
+          series,
+          match,
+          score,
+          viewer,
+          reasons,
+          alternatives,
+          study,
+          prior,
+          null);
+    }
+
+    /** The same cell showing another series, the one a derivation produced. */
+    public CellPlan withSeries(String seriesUid) {
+      return new CellPlan(
+          cell,
+          displaySet,
+          label,
+          imageSet,
+          seriesUid,
+          match,
+          score,
+          viewer,
+          reasons,
+          alternatives,
+          study,
+          prior,
+          derivation);
+    }
+
+    /** The same cell with a derivation to do, and the reasons that explain it. */
+    public CellPlan withDerivation(Derivation derivation, List<String> moreReasons) {
+      List<String> all = new ArrayList<>(reasons);
+      all.addAll(moreReasons);
+      return new CellPlan(
+          cell,
+          displaySet,
+          label,
+          imageSet,
+          series,
+          match,
+          score,
+          viewer,
+          all,
+          alternatives,
+          study,
+          prior,
+          derivation);
     }
 
     /** A cell of the current study, or whose study is not known. */
@@ -150,6 +220,19 @@ public record HangingPlan(
 
   /** Another candidate of an image set, with its score and a short description. */
   public record Alternative(String series, double score, String description) {}
+
+  /**
+   * What a cell derives before it is hung: its series minus the series of the mask image set, done
+   * by the plugin of that kind once the plan is prepared.
+   *
+   * @param kind the derivation ({@code subtraction})
+   * @param source the Series Instance UID of the series derived from
+   * @param maskImageSet the Image Set Number of the mask
+   * @param mask the Series Instance UID of the mask
+   * @param factor the weight of the mask, null for 1
+   */
+  public record Derivation(
+      String kind, String source, int maskImageSet, String mask, Double factor) {}
 
   /**
    * An image set without a series.

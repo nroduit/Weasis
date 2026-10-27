@@ -85,6 +85,20 @@ public record HangingLayout(String grid, String synch, int selected, List<Cell> 
                   ViewState.ViewPresentation.DEFAULT)));
     }
 
+    /** The same cell showing another series in its panes, from their first image. */
+    public Cell withSeries(String seriesId) {
+      List<ViewState> replaced =
+          panes.stream()
+              .map(
+                  pane ->
+                      new ViewState(
+                          new ViewState.ViewData(seriesId, 0, null, null),
+                          pane.view(),
+                          pane.blend()))
+              .toList();
+      return new Cell(position, tiling, replaced.isEmpty() ? List.of() : replaced);
+    }
+
     /** The series id of the cell: the one of its first pane, empty for an empty cell. */
     public Optional<String> seriesId() {
       return panes.isEmpty()
@@ -153,6 +167,15 @@ public record HangingLayout(String grid, String synch, int selected, List<Cell> 
         json.getString("synch", null), // NON-NLS
         json.getInt("selected", 0), // NON-NLS
         cells);
+  }
+
+  /** The same layout with the cell at {@code position} showing another series. */
+  public HangingLayout withCellSeries(int position, String seriesId) {
+    List<Cell> replaced =
+        cells.stream()
+            .map(cell -> cell.position() == position ? cell.withSeries(seriesId) : cell)
+            .toList();
+    return new HangingLayout(grid, synch, selected, replaced);
   }
 
   public static Builder builder() {

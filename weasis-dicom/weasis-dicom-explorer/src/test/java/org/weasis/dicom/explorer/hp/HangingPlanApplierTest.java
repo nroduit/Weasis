@@ -21,6 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.json.JsonObject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,8 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.DerivedSeriesProvider;
 import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPlacement;
@@ -372,5 +375,72 @@ class HangingPlanApplierTest {
                         "cur") // NON-NLS
                     .size(),
                 "a current pane without a frame synchronizes every prior"));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void prepareGivesADerivingCellTheSeriesItsPluginBuilds() throws IOException {
+    CellPlan deriving =
+        cell(0, SOFT, ViewerType.VIEWER_2D, Match.EXACT)
+            .withDerivation(
+                new HangingPlan.Derivation("subtraction", SOFT, 2, LUNG, 0.5), // NON-NLS
+                List.of("derived")); // NON-NLS
+    HangingLayout layout =
+        HangingLayout.builder().grid("1x2").series(0, SOFT).series(1, LUNG).build(); // NON-NLS
+    HangingPlan plan =
+        new HangingPlan(
+            "p",
+            "p",
+            "SITE",
+            1,
+            List.of(), // NON-NLS
+            List.of(
+                new Step(
+                    1,
+                    "s", // NON-NLS
+                    layout,
+                    List.of(deriving, cell(1, LUNG, ViewerType.VIEWER_2D, Match.EXACT)))),
+            List.of());
+    MediaSeries<MediaElement> derived = mock(MediaSeries.class);
+    TagW id = TagW.get("SeriesInstanceUID"); // NON-NLS
+    when(derived.getTagID()).thenReturn(id);
+    when(derived.getTagValue(id)).thenReturn("2.25.9"); // NON-NLS
+    List<String> asked = new ArrayList<>();
+    DerivedSeriesProvider provider =
+        new DerivedSeriesProvider() {
+          @Override
+          public String kind() {
+            return "subtraction"; // NON-NLS
+          }
+
+          @Override
+          public Optional<JsonObject> describe(MediaSeries<? extends MediaElement> series) {
+            return Optional.empty();
+          }
+
+          @Override
+          public void rebuild(JsonObject spec) {}
+
+          @Override
+          public MediaSeries<? extends MediaElement> derive(
+              String series, String mask, JsonObject params) {
+            asked.add(series + "-" + mask + "-" + params.getJsonNumber("factor")); // NON-NLS
+            return derived;
+          }
+        };
+
+    HangingPlan prepared = HangingPlanApplier.prepare(plan, 0, List.of(provider));
+    HangingPlan unprepared = HangingPlanApplier.prepare(plan, 0, List.of());
+    Step step = prepared.steps().getFirst();
+    assertAll(
+        () -> assertEquals(List.of(SOFT + "-" + LUNG + "-0.5"), asked),
+        () -> assertEquals("2.25.9", step.cells().getFirst().series()),
+        () -> assertEquals(Optional.of("2.25.9"), step.layout().cells().getFirst().seriesId()),
+        () -> assertEquals(LUNG, step.cells().get(1).series()),
+        () -> assertEquals(SOFT, unprepared.steps().getFirst().cells().getFirst().series()),
+        () ->
+            assertTrue(
+                unprepared.steps().getFirst().cells().getFirst().reasons().stream()
+                    .anyMatch(r -> r.contains("no plugin"))));
   }
 }
