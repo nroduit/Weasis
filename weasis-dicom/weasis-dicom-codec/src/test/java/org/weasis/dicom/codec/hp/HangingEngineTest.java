@@ -24,6 +24,7 @@ import org.dcm4che3.data.VR;
 import org.junit.jupiter.api.Test;
 import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.editor.image.HangingLayout;
+import org.weasis.core.ui.editor.image.ViewState;
 import org.weasis.dicom.codec.hp.FeatureSelector.Extreme;
 import org.weasis.dicom.codec.hp.FeatureSelector.Key;
 import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
@@ -33,6 +34,7 @@ import org.weasis.dicom.codec.hp.HangingPlan.Match;
 import org.weasis.dicom.codec.hp.HangingPlan.Step;
 import org.weasis.dicom.codec.hp.ProtocolJson.Document;
 import org.weasis.dicom.codec.hp.WeasisExtensions.Derive;
+import org.weasis.dicom.codec.hp.WeasisExtensions.Display;
 import org.weasis.dicom.codec.hp.WeasisExtensions.DisplaySet;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ImageSet;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ViewerType;
@@ -488,13 +490,32 @@ class HangingEngineTest {
     hp.addDisplaySet(displaySet(1, "pre", pre, 1)); // NON-NLS
     hp.addDisplaySet(displaySet(2, "post", post, 1)); // NON-NLS
     hp.addDisplaySet(displaySet(3, "subtraction", post, 1)); // NON-NLS
+    HPDisplaySet mip = displaySet(4, "subtraction MIP", post, 1); // NON-NLS
+    mip.setReformattingOperationType("SLAB"); // NON-NLS
+    mip.setReformattingThickness(30);
+    hp.addDisplaySet(mip);
+    Derive derive = new Derive("subtraction", 1, null); // NON-NLS
+    Display projected =
+        new Display(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            new WeasisExtensions.Projection("MIP", null)); // NON-NLS
     WeasisExtensions weasis =
         new WeasisExtensions(
             Map.of(),
             Map.of(
                 3,
-                new DisplaySet(
-                    null, null, List.of(), null, null, null, new Derive("subtraction", 1, null))),
+                new DisplaySet(null, null, List.of(), null, null, null, derive),
+                4,
+                new DisplaySet(null, projected, List.of(), null, null, null, derive)),
             Map.of(),
             null,
             null,
@@ -526,6 +547,24 @@ class HangingEngineTest {
         () -> assertEquals(1, derivation.maskImageSet()),
         () -> assertTrue(cell.reasons().stream().anyMatch(r -> r.startsWith("derived"))),
         () -> assertNull(plan.steps().getFirst().cells().get(1).derivation()));
+  }
+
+  @Test
+  void aSlabDisplaySetIsA2dCellProjectingItsSeriesWithTheThicknessOfTheIod() {
+    HangingPlan plan =
+        HangingEngine.plan(
+            subtractionProtocol(), List.of(mr("1.2.3.4", "pre"), mr("1.2.3.5", "post"))); // NON-NLS
+    Step step = plan.steps().getFirst();
+    CellPlan cell = step.cells().get(3);
+    ViewState.Projection projection =
+        step.layout().cells().get(3).panes().getFirst().view().projection();
+    assertAll(
+        () -> assertEquals(ViewerType.VIEWER_2D, cell.viewer()),
+        () -> assertEquals("subtraction", cell.derivation().kind()),
+        () -> assertEquals("MAX", projection.type()),
+        () -> assertEquals(30.0, projection.thickness()),
+        () -> assertNull(projection.extent()),
+        () -> assertNull(step.layout().cells().get(2).panes().getFirst().view().projection()));
   }
 
   @Test

@@ -1018,7 +1018,8 @@ public final class HangingEngine {
             Justification.of(
                 displaySet.getAttributes().getString(Tag.DisplaySetHorizontalJustification),
                 displaySet.getAttributes().getString(Tag.DisplaySetVerticalJustification)),
-            display == null ? null : display.scaleGroup());
+            display == null ? null : display.scaleGroup(),
+            projectionOf(displaySet, display));
     ViewData data =
         seriesUid == null
             ? ViewData.NONE
@@ -1026,6 +1027,42 @@ public final class HangingEngine {
                 ? new ViewData(seriesUid, series.image(), series.instance(), null)
                 : new ViewData(seriesUid, 0, null, null);
     return new ViewState(data, view);
+  }
+
+  /**
+   * The slab projection of a 2D cell: a {@code SLAB} Reformatting Operation Type, or the Weasis
+   * {@code projection} extension; the thickness is the Reformatting Thickness unless the extension
+   * gives one, the rendering is the extension's mode, a plain slab being a mean.
+   */
+  private static ViewState.Projection projectionOf(HPDisplaySet displaySet, Display display) {
+    WeasisExtensions.Projection extension = display == null ? null : display.projection();
+    boolean slab = "SLAB".equalsIgnoreCase(displaySet.getReformattingOperationType()); // NON-NLS
+    if (extension == null && !slab) {
+      return null;
+    }
+    Double thickness =
+        extension != null && extension.thickness() != null
+            ? extension.thickness()
+            : displaySet.getReformattingThickness();
+    String mode = extension == null ? null : extension.mode();
+    if (mode == null) {
+      // Departs from PS3.3 C.23.4: Three-D Rendering Type belongs to 3D_RENDERING only, but a
+      // SLAB that carries one is read as the rendering of the slab rather than ignored
+      String[] rendering = displaySet.get3DRenderingType();
+      mode = rendering == null || rendering.length == 0 ? null : rendering[0];
+    }
+    return new ViewState.Projection(projectionType(mode), null, thickness);
+  }
+
+  private static String projectionType(String mode) {
+    if (mode == null) {
+      return "MEAN"; // NON-NLS
+    }
+    return switch (mode.toUpperCase(Locale.ROOT)) {
+      case "MIP", "MAX", "MAXIMUM" -> "MAX"; // NON-NLS
+      case "MINIP", "MIN", "MINIMUM" -> "MIN"; // NON-NLS
+      default -> "MEAN"; // NON-NLS
+    };
   }
 
   private static String synchOf(

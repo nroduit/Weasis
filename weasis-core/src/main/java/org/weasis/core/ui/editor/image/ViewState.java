@@ -102,15 +102,20 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
    */
   @SuppressWarnings("unchecked")
   public <E extends ImageElement> void apply(ViewCanvas<E> canvas, SeriesResolver resolver) {
-    view.applyTo(canvas, data);
-    if (blend != null && blend.overlay() != null && canvas.getSeries() != null) {
+    // a projection may turn the pane into another canvas: the rest of the state goes to that one
+    ViewCanvas<E> target =
+        view.projection() == null
+            ? canvas
+            : canvas.getViewStateAdapter().project(canvas, view.projection());
+    view.applyTo(target, data);
+    if (blend != null && blend.overlay() != null && target.getSeries() != null) {
       resolver
           .resolve(blend.overlay())
           .ifPresent(
               overlay ->
-                  canvas
+                  target
                       .getViewStateAdapter()
-                      .blend(canvas, (MediaSeries<E>) overlay, blend.params()));
+                      .blend(target, (MediaSeries<E>) overlay, blend.params()));
     }
   }
 
@@ -269,6 +274,38 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
   }
 
   /**
+   * A projection through a slab of the stack shown instead of the single image: the type of the
+   * projection ({@code MAX}, {@code MEAN}, {@code MIN}), the slab as a number of images on each
+   * side of the shown one (what the pane computes) and as a thickness in mm (what a protocol asks);
+   * either may be null, the adapter takes the one it has.
+   */
+  public record Projection(String type, Integer extent, Double thickness) {
+
+    public Projection {
+      type = type == null ? "MAX" : type.toUpperCase(Locale.ROOT); // NON-NLS
+    }
+
+    public JsonObject toJson() {
+      JsonObjectBuilder json =
+          Json.createObjectBuilder().add("type", type.toLowerCase(Locale.ROOT)); // NON-NLS
+      if (extent != null) {
+        json.add("extent", extent); // NON-NLS
+      }
+      if (thickness != null) {
+        json.add("thickness", thickness); // NON-NLS
+      }
+      return json.build();
+    }
+
+    public static Projection fromJson(JsonObject json) {
+      return new Projection(
+          json.getString("type", null), // NON-NLS
+          json.containsKey("extent") ? json.getInt("extent") : null, // NON-NLS
+          optionalNumber(json, "thickness")); // NON-NLS
+    }
+  }
+
+  /**
    * How a pane presents, without any identifier of the data.
    *
    * @param position where the image sits in the stack, used when no exact image is given
@@ -290,6 +327,7 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
    * @param justify where the image sits when it does not fill the view, null to center it
    * @param scaleGroup the scale group of the pane (see {@link ViewCanvas#SCALE_GROUP_CMD}), null
    *     for none
+   * @param projection the slab projection the pane shows instead of the image, null for none
    */
   public record ViewPresentation(
       Position position,
@@ -309,7 +347,8 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
       String sort,
       boolean inverseStack,
       Justification justify,
-      String scaleGroup) {
+      String scaleGroup,
+      Projection projection) {
 
     public static final ViewPresentation DEFAULT =
         new ViewPresentation(
@@ -387,6 +426,48 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
           null);
     }
 
+    /** A presentation showing the image itself, without a slab projection. */
+    public ViewPresentation(
+        Position position,
+        Context context,
+        ZoomType zoomType,
+        double zoom,
+        double panX,
+        double panY,
+        int rotation,
+        boolean flip,
+        Double window,
+        Double level,
+        String preset,
+        String lutShape,
+        String colorMap,
+        boolean invert,
+        String sort,
+        boolean inverseStack,
+        Justification justify,
+        String scaleGroup) {
+      this(
+          position,
+          context,
+          zoomType,
+          zoom,
+          panX,
+          panY,
+          rotation,
+          flip,
+          window,
+          level,
+          preset,
+          lutShape,
+          colorMap,
+          invert,
+          sort,
+          inverseStack,
+          justify,
+          scaleGroup,
+          null);
+    }
+
     @SuppressWarnings("unchecked")
     static <E extends ImageElement> ViewPresentation capture(ViewCanvas<E> canvas) {
       MediaSeries<E> series = canvas.getSeries();
@@ -447,7 +528,8 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
               : null,
           Boolean.TRUE.equals(canvas.getActionValue(ActionW.INVERSE_STACK.cmd())),
           canvas.getActionValue(ViewCanvas.JUSTIFY_CMD) instanceof Justification j ? j : null,
-          canvas.getActionValue(ViewCanvas.SCALE_GROUP_CMD) instanceof String g ? g : null);
+          canvas.getActionValue(ViewCanvas.SCALE_GROUP_CMD) instanceof String g ? g : null,
+          adapter.projection(canvas).orElse(null));
     }
 
     @SuppressWarnings("unchecked")
@@ -699,6 +781,9 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
       if (scaleGroup != null) {
         json.add("scaleGroup", scaleGroup); // NON-NLS
       }
+      if (projection != null) {
+        json.add("projection", projection.toJson()); // NON-NLS
+      }
       return json.build();
     }
 
@@ -733,7 +818,10 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
           json.get("justify") instanceof JsonObject j // NON-NLS
               ? Justification.fromJson(j)
               : null,
-          json.getString("scaleGroup", null)); // NON-NLS
+          json.getString("scaleGroup", null), // NON-NLS
+          json.get("projection") instanceof JsonObject p // NON-NLS
+              ? Projection.fromJson(p)
+              : null);
     }
 
     private static ZoomType zoomType(String name) {

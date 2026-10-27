@@ -124,7 +124,7 @@ public final class SubtractionCompatibility {
     for (int i = 0; i < images.size(); i++) {
       pairs.add(new SlicePair(images.get(i), masks.get(i)));
     }
-    return new Pairing(pairs, sameFrame);
+    return new Pairing(acquisitionOrder(pairs), sameFrame);
   }
 
   /** Every slice of the series takes the mask slice within half a slice spacing of it. */
@@ -147,7 +147,23 @@ public final class SubtractionCompatibility {
       }
       pairs.add(new SlicePair(image, masks.get(index)));
     }
-    return new Pairing(pairs, sameFrame);
+    return new Pairing(acquisitionOrder(pairs), sameFrame);
+  }
+
+  /**
+   * The pairs in the order the series was acquired (its instance numbers), so the derived series
+   * stacks and scrolls like its source; the position order stays when a number is missing.
+   */
+  private static List<SlicePair> acquisitionOrder(List<SlicePair> pairs) {
+    if (pairs.stream()
+        .anyMatch(p -> TagD.getTagValue(p.image(), Tag.InstanceNumber, Integer.class) == null)) {
+      return pairs;
+    }
+    List<SlicePair> ordered = new ArrayList<>(pairs);
+    ordered.sort(
+        Comparator.comparingInt(
+            p -> TagD.getTagValue(p.image(), Tag.InstanceNumber, Integer.class)));
+    return ordered;
   }
 
   /** Half the smallest distance between two slices, or half the thickness of a single slice. */

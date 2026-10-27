@@ -978,6 +978,19 @@
                 "ImageBoxNumber": 1
               }
             ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 4,
+            "DisplaySetLabel": "Subtraction MIP",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ],
+            "ReformattingOperationType": "SLAB",
+            "ReformattingThickness": 30.0
           }
         ],
         "PartialDataDisplayHandling": "ADAPT_LAYOUT",
@@ -986,7 +999,8 @@
             "DisplaySetScrollingGroup": [
               1,
               2,
-              3
+              3,
+              4
             ]
           }
         ]
@@ -1099,6 +1113,17 @@
             "derive": {
               "kind": "subtraction",
               "maskImageSet": 1
+            }
+          },
+          "4": {
+            "derive": {
+              "kind": "subtraction",
+              "maskImageSet": 1
+            },
+            "display": {
+              "projection": {
+                "mode": "MIP"
+              }
             }
           }
         }

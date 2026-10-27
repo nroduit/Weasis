@@ -16,12 +16,16 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import javax.swing.SwingUtilities;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewState;
+import org.weasis.core.ui.editor.image.ViewState.Projection;
 import org.weasis.core.ui.editor.image.ViewStateAdapter;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -31,6 +35,7 @@ import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
 import org.weasis.dicom.viewer2d.fusion.FusionState;
 import org.weasis.dicom.viewer2d.fusion.FusionWindow;
+import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.WlPresentation;
 
@@ -146,6 +151,65 @@ final class DicomViewStateAdapter implements ViewStateAdapter<DicomImageElement>
             : FusionOp.DEFAULT_OVERLAY_OPACITY;
     FusionController.applyState(
         List.of(view), new FusionState(overlay, lut, window, base, over, null));
+  }
+
+  /** A MIP view projects: its type and the slab, in images and in mm when the spacing is known. */
+  @Override
+  public Optional<Projection> projection(ViewCanvas<DicomImageElement> view) {
+    if (!(view instanceof MipView mip)
+        || !(mip.getActionValue(MipView.MIP.cmd()) instanceof MipView.Type type)
+        || type == MipView.Type.NONE
+        || !(mip.getActionValue(MipView.MIP_THICKNESS.cmd()) instanceof Integer extent)) {
+      return Optional.empty();
+    }
+    double mm = MipView.slabThickness(mip.getSeries(), extent);
+    return Optional.of(new Projection(type.name(), extent, mm > 0 ? mm : null));
+  }
+
+  /**
+   * Puts a MIP view in the pane when the view is not one yet and builds the slab; a series too
+   * short to project, or a pane outside a viewer, keeps the view as it is.
+   */
+  @Override
+  public ViewCanvas<DicomImageElement> project(
+      ViewCanvas<DicomImageElement> view, Projection projection) {
+    MediaSeries<DicomImageElement> series = view.getSeries();
+    MipView.Type type = projectionType(projection.type());
+    if (series == null
+        || type == MipView.Type.NONE
+        || series.size(null) < DefaultView2d.MINIMAL_IMAGES_FOR_3D) {
+      return view;
+    }
+    MipView mip;
+    if (view instanceof MipView m) {
+      mip = m;
+    } else {
+      @SuppressWarnings("unchecked")
+      ImageViewerPlugin<DicomImageElement> container =
+          (ImageViewerPlugin<DicomImageElement>)
+              SwingUtilities.getAncestorOfClass(ImageViewerPlugin.class, view.getJComponent());
+      if (container == null) {
+        return view;
+      }
+      mip = MipView.swapIn(EventManager.getInstance(), container, view);
+    }
+    int extent =
+        projection.extent() != null
+            ? Math.max(1, projection.extent())
+            : MipView.slabExtent(
+                series, projection.thickness() == null ? 0 : projection.thickness());
+    mip.setActionsInView(MipView.MIP.cmd(), type);
+    mip.setActionsInView(MipView.MIP_THICKNESS.cmd(), extent);
+    MipView.buildMip(mip);
+    return mip;
+  }
+
+  private static MipView.Type projectionType(String type) {
+    try {
+      return MipView.Type.valueOf(type.toUpperCase(Locale.ROOT));
+    } catch (IllegalArgumentException e) {
+      return MipView.Type.MAX;
+    }
   }
 
   /** The configured id, or one derived from the name for a preset the image itself carries. */

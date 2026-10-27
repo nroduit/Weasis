@@ -33,8 +33,12 @@ A display set may derive its series instead of showing an acquired one: the Weas
 the series of its image set and a `Derivation` naming the mask series, and `HangingPlanApplier`
 prepares the step off the event thread by asking the `DerivedSeriesProvider` of that kind to
 build the series before it is hung. A mask that does not resolve leaves the acquired series in the
-cell, with the reason. The built-in *MR breast* protocol hangs the pre-contrast and post-contrast
-T1 and their subtraction this way.
+cell, with the reason. A display set may also project its series through a slab instead of
+showing its images: a `SLAB` Reformatting Operation Type with its Reformatting Thickness, or the
+Weasis extension `projection` (mode `MIP`, `MINIP` or `MEAN`), gives the cell a
+`ViewState.Projection` the 2D viewer realizes as a MIP pane. The built-in *MR breast* protocol
+hangs the pre-contrast and post-contrast T1, their subtraction and a MIP of the subtraction this
+way.
 
 `ProtocolJson` is the working form: one entry `{id, schema, dicom, weasis}` where `dicom` is the
 dataset by keyword (`DicomJson`). The entries are a layered document, `hp.protocols.json`

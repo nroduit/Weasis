@@ -74,4 +74,40 @@ class WeasisExtensionsTest {
                     .getInt("maskImageSet")),
         () -> assertEquals(extensions, WeasisExtensions.fromJson(back)));
   }
+
+  @Test
+  void aDisplaySetProjectsItsImagesThroughASlab() {
+    JsonObject json =
+        Json.createObjectBuilder()
+            .add(
+                "displaySets",
+                Json.createObjectBuilder()
+                    .add(
+                        "4",
+                        Json.createObjectBuilder()
+                            .add(
+                                "display",
+                                Json.createObjectBuilder()
+                                    .add(
+                                        "projection",
+                                        Json.createObjectBuilder()
+                                            .add("mode", "MIP")
+                                            .add("thickness", 30)))))
+            .build();
+    WeasisExtensions extensions = WeasisExtensions.fromJson(json);
+    WeasisExtensions.Projection projection = extensions.displaySets().get(4).display().projection();
+    JsonObject back = extensions.toJson();
+    assertAll(
+        () -> assertEquals("MIP", projection.mode()),
+        () -> assertEquals(30.0, projection.thickness()),
+        () ->
+            assertEquals(
+                "MIP",
+                back.getJsonObject("displaySets")
+                    .getJsonObject("4")
+                    .getJsonObject("display")
+                    .getJsonObject("projection")
+                    .getString("mode")),
+        () -> assertEquals(extensions, WeasisExtensions.fromJson(back)));
+  }
 }

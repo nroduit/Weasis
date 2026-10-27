@@ -43,7 +43,6 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.explorer.main.DicomExplorer;
@@ -230,18 +229,9 @@ public final class MipMenu {
   private static String buildSizeLabel(
       int size, MediaSeries<DicomImageElement> series, String unit) {
     if (series == null || unit.isEmpty()) return String.valueOf(size);
-    try {
-      var first = series.getMedia(0, null, null);
-      var second = series.size(null) > 1 ? series.getMedia(1, null, null) : null;
-      if (first != null && second != null) {
-        double sliceThickness = Math.abs(DicomMediaUtils.getThickness(first, second));
-        if (sliceThickness > 0) {
-          double mm = (size * 2 + 1) * sliceThickness;
-          return size + " (" + DecFormatter.allNumber(mm) + " " + unit + ")";
-        }
-      }
-    } catch (Exception ignored) {
-      // fall through to plain label
+    double mm = MipView.slabThickness(series, size);
+    if (mm > 0) {
+      return size + " (" + DecFormatter.allNumber(mm) + " " + unit + ")";
     }
     return String.valueOf(size);
   }
@@ -257,20 +247,13 @@ public final class MipMenu {
     var convLabel = new JLabel();
 
     // Live mm conversion
-    if (v != null && !unit.isEmpty() && series != null) {
-      var first = series.getMedia(0, null, null);
-      var second = series.getMedia(1, null, null);
-      if (first != null && second != null) {
-        double sliceThickness = Math.abs(DicomMediaUtils.getThickness(first, second));
-        if (sliceThickness > 0) {
-          spinner.addChangeListener(
-              _ -> {
-                int val = (Integer) spinner.getValue();
-                convLabel.setText(
-                    " = " + DecFormatter.allNumber((val * 2 + 1) * sliceThickness) + " " + unit);
-              });
-        }
-      }
+    if (v != null && !unit.isEmpty() && MipView.slabThickness(series, 1) > 0) {
+      spinner.addChangeListener(
+          _ -> {
+            int val = (Integer) spinner.getValue();
+            double mm = MipView.slabThickness(series, val);
+            convLabel.setText(" = " + DecFormatter.allNumber(mm) + " " + unit);
+          });
     }
     spinner.setValue(Math.min(currentThickness, maxVal));
 
@@ -366,10 +349,7 @@ public final class MipMenu {
     List<ViewCanvas<DicomImageElement>> manualSyncTargets = collectManualSyncTargets(selView);
 
     container.setSelectedAndGetFocus();
-    MipView newView = new MipView(em);
-    newView.registerDefaultListeners();
-    newView.initMIPSeries(selView);
-    container.replaceView(selView, newView);
+    MipView newView = MipView.swapIn(em, container, selView);
 
     // Re-establish manual sync between the new MIP view and the previously linked views.
     // At this point MipView.getImage() still holds the original series image (the async MIP

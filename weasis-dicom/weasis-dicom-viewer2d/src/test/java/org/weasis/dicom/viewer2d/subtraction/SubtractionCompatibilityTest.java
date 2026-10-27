@@ -21,7 +21,9 @@ import org.dcm4che3.data.VR;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
+import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Pairing;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Refusal;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Result;
@@ -48,6 +50,31 @@ class SubtractionCompatibilityTest {
           SubtractionCompatibility.position(pair.mask()),
           1e-9);
     }
+  }
+
+  @Test
+  void the_pairs_follow_the_acquisition_order_of_the_series_not_the_positions() {
+    Attributes[] images = new Attributes[3];
+    for (int i = 0; i < 3; i++) {
+      // instance 1 is the highest slice: the series was acquired top-down
+      images[i] =
+          SyntheticSeries.slice(POST, "MR", i + 1, 2.0 * (2 - i), 1.0, 256, null); // NON-NLS
+    }
+    DicomSeries post = SyntheticSeries.series(images);
+    DicomSeries pre = SyntheticSeries.mr(PRE, 3, 0, 1.0, 256, null);
+    Pairing pairing = assertInstanceOf(Pairing.class, SubtractionCompatibility.pair(post, pre));
+    assertAll(
+        () -> assertEquals(1, instance(pairing.slices().getFirst().image())),
+        () -> assertEquals(3, instance(pairing.slices().getLast().image())),
+        () ->
+            assertEquals(
+                SubtractionCompatibility.position(pairing.slices().getFirst().image()),
+                SubtractionCompatibility.position(pairing.slices().getFirst().mask()),
+                1e-9));
+  }
+
+  private static int instance(DicomImageElement image) {
+    return TagD.getTagValue(image, Tag.InstanceNumber, Integer.class);
   }
 
   @Test

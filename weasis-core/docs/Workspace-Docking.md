@@ -223,13 +223,14 @@ its name and series ids and reports the id of its factory as the view type; an
 tiling of the viewport and a `ViewState` per pane. A `ViewState` has two parts: the data
 (`ViewData`: series, image, instance, frame), which is what a session binds, and the
 presentation (`ViewPresentation`: zoom, pan, rotation, flip, window/level or preset id, LUT
-shape, color map id, inversion, stack order, a position in the stack and the modality and pixel
-size it was captured on), which holds no identifier. The combination restores a pane exactly;
+shape, color map id, inversion, stack order, a slab projection, a position in the stack and the
+modality and pixel size it was captured on), which holds no identifier. The combination restores a pane exactly;
 the presentation alone is a display template whose adapter rules keep, on other data, only what
 transfers (the image by slice location or relative position, the explicit scale for the same
 pixel size, the window values for the same modality, presets, color maps and stack orders by
 id). Both apply themselves through the events the synchronization uses; a viewer type whose
-presets and sort orders have ids supplies a `ViewStateAdapter`.
+presets and sort orders have ids supplies a `ViewStateAdapter`, which also captures and realizes
+the projection, replacing the pane by one that projects (a MIP view) when needed.
 A third part, the blend (`ViewState.Blend`), carries the id of a series blended over the shown
 one (fusion) and the parameters of the blend, which the adapter owns: the series id is data, the
 parameters are presentation.

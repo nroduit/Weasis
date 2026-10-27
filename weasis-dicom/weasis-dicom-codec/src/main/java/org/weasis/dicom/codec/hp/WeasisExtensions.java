@@ -190,6 +190,7 @@ public record WeasisExtensions(
    * @param synch synchronization rule, as a {@code SynchView} command
    * @param scaleGroup the cells of a step sharing it show their images at the same physical scale
    *     (e.g. current and prior mammograms), the largest that fits all of them
+   * @param projection the slab projection a 2D cell shows instead of its images
    */
   public record Display(
       String preset,
@@ -201,7 +202,33 @@ public record WeasisExtensions(
       String measurementProfile,
       String zoomMode,
       String synch,
-      String scaleGroup) {
+      String scaleGroup,
+      Projection projection) {
+
+    public Display(
+        String preset,
+        String colorMap,
+        String lutShape,
+        String preset3d,
+        Fusion fusion,
+        Mpr mpr,
+        String measurementProfile,
+        String zoomMode,
+        String synch,
+        String scaleGroup) {
+      this(
+          preset,
+          colorMap,
+          lutShape,
+          preset3d,
+          fusion,
+          mpr,
+          measurementProfile,
+          zoomMode,
+          synch,
+          scaleGroup,
+          null);
+    }
 
     public Display(
         String preset,
@@ -241,6 +268,15 @@ public record WeasisExtensions(
    * @param mode {@code MEAN}, {@code MIP} or {@code MINIP}
    */
   public record Mpr(List<String> planes, Double thickness, String mode) {}
+
+  /**
+   * A thick-slab projection shown by a 2D cell, the Weasis form of a {@code SLAB} Reformatting
+   * Operation Type whose rendering the IOD cannot name.
+   *
+   * @param mode {@code MIP}, {@code MINIP} or {@code MEAN}
+   * @param thickness slab thickness in mm, null to take the Reformatting Thickness
+   */
+  public record Projection(String mode, Double thickness) {}
 
   /**
    * A non-image cell of a layout.
@@ -467,6 +503,14 @@ public record WeasisExtensions(
     JsonUtil.addIfPresent(json, "zoomMode", d.zoomMode()); // NON-NLS
     JsonUtil.addIfPresent(json, "synch", d.synch()); // NON-NLS
     JsonUtil.addIfPresent(json, "scaleGroup", d.scaleGroup()); // NON-NLS
+    if (d.projection() != null) {
+      JsonObjectBuilder p = Json.createObjectBuilder();
+      JsonUtil.addIfPresent(p, "mode", d.projection().mode()); // NON-NLS
+      if (d.projection().thickness() != null) {
+        p.add("thickness", d.projection().thickness()); // NON-NLS
+      }
+      json.add("projection", p); // NON-NLS
+    }
     return json;
   }
 
@@ -502,7 +546,14 @@ public record WeasisExtensions(
         json.getString("measurementProfile", null), // NON-NLS
         json.getString("zoomMode", null), // NON-NLS
         json.getString("synch", null), // NON-NLS
-        json.getString("scaleGroup", null)); // NON-NLS
+        json.getString("scaleGroup", null), // NON-NLS
+        json.get("projection") instanceof JsonObject p // NON-NLS
+            ? new Projection(
+                p.getString("mode", null), // NON-NLS
+                p.containsKey("thickness")
+                    ? p.getJsonNumber("thickness").doubleValue()
+                    : null) // NON-NLS
+            : null);
   }
 
   private static JsonObjectBuilder loading(Loading l) {

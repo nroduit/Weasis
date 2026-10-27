@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -155,6 +156,57 @@ class ViewStateTest {
                         null)
                     .justify(),
                 "a centered justification is no justification"));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void aProjectionTravelsInTheJsonAndIsAppliedThroughTheAdapter() {
+    ViewPresentation projected =
+        new ViewPresentation(
+            Position.START,
+            Context.UNKNOWN,
+            ZoomType.BEST_FIT,
+            0,
+            0,
+            0,
+            0,
+            false,
+            null,
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            false,
+            null,
+            null,
+            new ViewState.Projection("max", 3, 7.0)); // NON-NLS
+    JsonObject json = projected.toJson();
+    ViewPresentation read = ViewPresentation.fromJson(json);
+
+    ViewCanvas<ImageElement> pane = mock(ViewCanvas.class);
+    ViewCanvas<ImageElement> mip = mock(ViewCanvas.class);
+    ViewStateAdapter<ImageElement> adapter = mock(ViewStateAdapter.class);
+    MediaSeries<ImageElement> series = mock(MediaSeries.class);
+    when(pane.getViewStateAdapter()).thenReturn(adapter);
+    when(adapter.project(pane, projected.projection())).thenReturn(mip);
+    when(mip.getSeries()).thenReturn(series);
+    when(mip.getViewStateAdapter()).thenReturn(adapter);
+    when(mip.getViewModel()).thenReturn(mock(ViewModel.class));
+    when(mip.getDisplayOpManager()).thenReturn(mock(OpManager.class));
+    new ViewState(ViewData.NONE, projected).apply(pane);
+
+    assertAll(
+        () -> assertEquals(projected, read),
+        () -> assertEquals("MAX", read.projection().type(), "the type is an upper-case name"),
+        () -> assertEquals("max", json.getJsonObject("projection").getString("type")),
+        () -> assertEquals(3, read.projection().extent()),
+        () -> assertEquals(7.0, read.projection().thickness()),
+        () ->
+            assertFalse(VIEW.toJson().containsKey("projection"), "no projection: nothing written"),
+        () -> verify(mip, atLeastOnce()).setActionsInView(eq(ViewCanvas.ZOOM_TYPE_CMD), any()),
+        () -> verify(pane, never()).setActionsInView(eq(ViewCanvas.ZOOM_TYPE_CMD), any()));
   }
 
   @Test

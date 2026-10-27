@@ -62,6 +62,19 @@ public interface ViewStateAdapter<E extends ImageElement> {
     // viewer types without a blend ignore it
   }
 
+  /** The slab projection the view shows instead of its image, when it projects. */
+  default Optional<ViewState.Projection> projection(ViewCanvas<E> view) {
+    return Optional.empty();
+  }
+
+  /**
+   * Makes the view show that projection of its series and returns the canvas that shows it, which
+   * may replace the view in its pane; a viewer type without projections returns the view as it is.
+   */
+  default ViewCanvas<E> project(ViewCanvas<E> view, ViewState.Projection projection) {
+    return view;
+  }
+
   @SuppressWarnings("unchecked")
   static <E extends ImageElement> ViewStateAdapter<E> none() {
     return (ViewStateAdapter<E>) None.INSTANCE;

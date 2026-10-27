@@ -56,6 +56,7 @@ import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
@@ -291,6 +292,61 @@ public class MipView extends View2d {
       targets.add((ViewCanvas<DicomImageElement>) msd.getTargetPane());
     }
     return targets;
+  }
+
+  /**
+   * Puts a MIP view in the place of that view in its container, on the same series, image and stack
+   * order; the projection parameters are the caller's to set before building.
+   */
+  public static MipView swapIn(
+      ImageViewerEventManager<DicomImageElement> eventManager,
+      ImageViewerPlugin<DicomImageElement> container,
+      ViewCanvas<DicomImageElement> view) {
+    MipView mip = new MipView(eventManager);
+    mip.registerDefaultListeners();
+    mip.initMIPSeries(view);
+    container.replaceView(view, mip);
+    return mip;
+  }
+
+  /** The distance between the positions of two consecutive images in mm, 0 when unknown. */
+  private static double sliceSpacing(MediaSeries<DicomImageElement> series) {
+    if (series == null || series.size(null) < 2) {
+      return 0;
+    }
+    DicomImageElement first = series.getMedia(0, null, null);
+    DicomImageElement second = series.getMedia(1, null, null);
+    if (first == null || second == null) {
+      return 0;
+    }
+    return Math.abs(
+        DicomMediaUtils.getSlicePositionValue(second)
+            - DicomMediaUtils.getSlicePositionValue(first));
+  }
+
+  private static double sliceThickness(MediaSeries<DicomImageElement> series) {
+    DicomImageElement first = series == null ? null : series.getMedia(0, null, null);
+    Double thickness =
+        first == null ? null : TagD.getTagValue(first, Tag.SliceThickness, Double.class);
+    return thickness == null ? 0 : thickness;
+  }
+
+  /**
+   * The thickness in mm of a slab of that many images on each side of the center, the distance
+   * between its outer images plus one slice; 0 when the positions are unknown.
+   */
+  public static double slabThickness(MediaSeries<DicomImageElement> series, int extent) {
+    double spacing = sliceSpacing(series);
+    return spacing > 0 ? 2 * extent * spacing + sliceThickness(series) : 0;
+  }
+
+  /** The number of images on each side of the center for a slab of that thickness in mm. */
+  public static int slabExtent(MediaSeries<DicomImageElement> series, double thickness) {
+    double spacing = sliceSpacing(series);
+    if (spacing <= 0 || thickness <= 0) {
+      return 2;
+    }
+    return Math.max(1, (int) Math.round((thickness - sliceThickness(series)) / (2 * spacing)));
   }
 
   public static void buildMip(final MipView view) {
