@@ -348,7 +348,8 @@ public final class MipMenu {
    * Creates a fresh {@link MipView}, replaces {@code selView} in the container, and immediately
    * triggers the initial build.
    */
-  static MipView createMipView(
+  /** Replaces the selected pane by a MIP view of its series, keeping its slice and its links. */
+  public static MipView createMipView(
       EventManager em,
       ImageViewerPlugin<DicomImageElement> container,
       ViewCanvas<DicomImageElement> selView) {

@@ -114,7 +114,8 @@ public final class SubtractionBuilder {
       throw e;
     }
 
-    Attributes base = baseAttributes(spec, source, mask, pairs.get(middle).mask(), percentiles[0]);
+    Attributes base =
+        baseAttributes(spec, source, series, mask, pairs.get(middle).mask(), percentiles[0]);
     List<DicomImageElement> images =
         IntStream.range(0, pairs.size())
             .mapToObj(i -> element(spec, pairs.get(i), files[i], base, slope, seriesUid, i))
@@ -133,6 +134,7 @@ public final class SubtractionBuilder {
    */
   public static DicomImageElement preview(
       SubtractionSpec spec,
+      MediaSeries<DicomImageElement> series,
       MediaSeries<DicomImageElement> mask,
       SlicePair pair,
       Path dir,
@@ -146,7 +148,7 @@ public final class SubtractionBuilder {
         write(
             slice.stored(), new FileRawImage(Files.createTempFile(dir, "sub_", ".wcv"))); // NON-NLS
     Percentiles percentiles = window == null ? slice.percentiles() : window;
-    Attributes base = baseAttributes(spec, source, mask, pair.mask(), percentiles);
+    Attributes base = baseAttributes(spec, source, series, mask, pair.mask(), percentiles);
     return element(spec, pair, raw, base, slope, spec.derivedSeriesUid(), instanceNumber - 1);
   }
 
@@ -225,12 +227,13 @@ public final class SubtractionBuilder {
   private static Attributes baseAttributes(
       SubtractionSpec spec,
       Attributes source,
+      MediaSeries<DicomImageElement> series,
       MediaSeries<DicomImageElement> mask,
       DicomImageElement maskReference,
       Percentiles percentiles) {
     Attributes base = SeriesBuilder.getBaseAttributes(source);
     base.remove(Tag.VOILUTSequence);
-    base.setString(Tag.SeriesDescription, VR.LO, description(source, mask, maskReference));
+    base.setString(Tag.SeriesDescription, VR.LO, description(series, source, mask, maskReference));
     base.setString(Tag.ImageType, VR.CS, imageType(source));
     base.setInt(Tag.SeriesNumber, VR.IS, source.getInt(Tag.SeriesNumber, 0) + 1000);
     base.setString(Tag.DerivationDescription, VR.ST, spec.derivationDescription());
@@ -248,8 +251,14 @@ public final class SubtractionBuilder {
 
   /** {@code SUB <series> - <mask>}, cut to the 64 characters of a LO value. */
   static String description(
-      Attributes source, MediaSeries<DicomImageElement> mask, DicomImageElement maskReference) {
-    String series = source.getString(Tag.SeriesDescription, "");
+      MediaSeries<DicomImageElement> operand,
+      Attributes source,
+      MediaSeries<DicomImageElement> mask,
+      DicomImageElement maskReference) {
+    String series = TagD.getTagValue(operand, Tag.SeriesDescription, String.class);
+    if (series == null) {
+      series = source.getString(Tag.SeriesDescription, "");
+    }
     String maskDescription = TagD.getTagValue(mask, Tag.SeriesDescription, String.class);
     if (maskDescription == null) {
       maskDescription =

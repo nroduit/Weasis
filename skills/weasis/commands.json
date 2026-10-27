@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.16",
+  "apiVersion": "2.17",
   "protocolVersion": 1,
   "applicationVersion": "development",
   "exitCodes": {
@@ -3462,7 +3462,7 @@
           "name": "create",
           "description": "Builds the series minus the mask as a new series of the study, pixel by pixel on the same grid (A - factor*B + offset, real values), and opens it in the selected pane. The same operands and options always give the same series.",
           "since": "5.0",
-          "usage": "subtraction:create [-h] [--absolute] [--json] [--no-open] [--signed] [--factor=<number>] [--mask=<series-uid>] [--offset=<number>] [--series=<series-uid>]",
+          "usage": "subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--no-open] [--signed] [--factor=<number>] [--mask=<series-uid>] [--mask-phase=<phase-index>] [--offset=<number>] [--phase=<phase-index>] [--series=<series-uid>]",
           "parameters": [],
           "options": [
             {
@@ -3494,6 +3494,46 @@
               "arity": "1",
               "required": false,
               "description": "The series subtracted, from 'dicom:list' (default: the series of the study without contrast agent, else the earliest compatible one)."
+            },
+            {
+              "names": [
+                "--phase"
+              ],
+              "label": "<phase-index>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Phase of a dynamic series to subtract from, from 'subtraction:phases' (default: every slice of the series)."
+            },
+            {
+              "names": [
+                "--mask-phase"
+              ],
+              "label": "<phase-index>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Phase of the mask series to subtract (default: the first phase when the mask is the series itself)."
+            },
+            {
+              "names": [
+                "--all-phases"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Build one series per phase of the series minus the mask phase; the first one opens."
+            },
+            {
+              "names": [
+                "--mip"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Open the result as a maximum intensity projection through all its slices."
             },
             {
               "names": [
@@ -3631,6 +3671,35 @@
               "arity": "1",
               "required": false,
               "description": "Keep the series of one study, from 'dicom:list'."
+            }
+          ]
+        },
+        {
+          "name": "phases",
+          "description": "The phases of a dynamic series stored as one series (temporal position, trigger time, or repeated slice positions): what --phase and --mask-phase count.",
+          "since": "5.0",
+          "usage": "subtraction:phases [-h] [--json] [--series=<series-uid>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": false,
+              "description": "A series from 'dicom:list' (default: the series of the selected pane)."
             }
           ]
         },
@@ -5362,7 +5431,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --fit=<zoom-fit> | --set=<magnification>]",
           "parameters": [],
           "options": [
             {
@@ -5397,6 +5466,20 @@
             },
             {
               "names": [
+                "--by"
+              ],
+              "label": "<steps>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
                 "--fit"
               ],
               "label": "<zoom-fit>",
@@ -5409,20 +5492,6 @@
               "arity": "1",
               "required": true,
               "description": "default, real-size or best-fit.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
-                "--by"
-              ],
-              "label": "<steps>",
-              "type": "integer",
-              "arity": "1",
-              "required": true,
-              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"

@@ -129,6 +129,8 @@ public class SubtractionView extends View2d {
     return new SubtractionSpec(
         SubtractionCommands.uidOf(series),
         SubtractionCommands.uidOf(mask),
+        PhaseGrouper.phaseOf(series).map(PhaseGrouper.Phase::index).orElse(null),
+        PhaseGrouper.phaseOf(mask).map(PhaseGrouper.Phase::index).orElse(null),
         factor,
         0,
         false,
@@ -207,7 +209,7 @@ public class SubtractionView extends View2d {
                   try {
                     DicomImageElement preview =
                         SubtractionBuilder.preview(
-                            spec, mask, pair, viewCacheDir, shared, currentIndex + 1);
+                            spec, series, mask, pair, viewCacheDir, shared, currentIndex + 1);
                     GuiExecutor.execute(() -> accept(source, spec, preview));
                   } catch (IOException | RuntimeException e) {
                     // A computation stopped by a newer one says nothing; a failed one shows the

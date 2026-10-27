@@ -55,6 +55,7 @@ import picocli.CommandLine.Option;
             + " pre-contrast), scrolled, windowed, measured and sent like any series.",
     subcommands = {
       SubtractionCommands.Preview.class,
+      SubtractionCommands.Phases.class,
       SubtractionCommands.Create.class,
       SubtractionCommands.ListDerived.class,
       SubtractionCommands.Info.class,
@@ -181,6 +182,47 @@ public class SubtractionCommands implements CommandExtension {
   }
 
   @Command(
+      name = "phases",
+      description =
+          "The phases of a dynamic series stored as one series (temporal position, trigger time,"
+              + " or repeated slice positions): what --phase and --mask-phase count.")
+  @Since("5.0")
+  static class Phases extends AbstractVerb {
+    @Option(
+        names = "--series",
+        paramLabel = "<series-uid>",
+        description = "A series from 'dicom:list' (default: the series of the selected pane).")
+    SeriesUid series;
+
+    @Override
+    protected void run() {
+      print(
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                String uid = series == null ? selectedSeriesUid() : series.value();
+                JsonArrayBuilder phases = Json.createArrayBuilder();
+                List<PhaseGrouper.Phase> found = SubtractionService.phases(uid);
+                for (PhaseGrouper.Phase phase : found) {
+                  JsonObjectBuilder json =
+                      Json.createObjectBuilder()
+                          .add("index", phase.index()) // NON-NLS
+                          .add("count", phase.count()); // NON-NLS
+                  if (phase.time() != null) {
+                    json.add("time", phase.time().toString()); // NON-NLS
+                  }
+                  phases.add(json);
+                }
+                return Json.createObjectBuilder()
+                    .add("series", uid) // NON-NLS
+                    .add("dynamic", found.size() > 1) // NON-NLS
+                    .add("phases", phases) // NON-NLS
+                    .build()
+                    .toString();
+              }));
+    }
+  }
+
+  @Command(
       name = "create",
       description =
           "Builds the series minus the mask as a new series of the study, pixel by pixel on the"
@@ -203,6 +245,33 @@ public class SubtractionCommands implements CommandExtension {
             "The series subtracted, from 'dicom:list' (default: the series of the study without"
                 + " contrast agent, else the earliest compatible one).")
     SeriesUid mask;
+
+    @Option(
+        names = "--phase",
+        paramLabel = "<phase-index>",
+        description =
+            "Phase of a dynamic series to subtract from, from 'subtraction:phases' (default: every"
+                + " slice of the series).")
+    Integer phase;
+
+    @Option(
+        names = "--mask-phase",
+        paramLabel = "<phase-index>",
+        description =
+            "Phase of the mask series to subtract (default: the first phase when the mask is the"
+                + " series itself).")
+    Integer maskPhase;
+
+    @Option(
+        names = "--all-phases",
+        description =
+            "Build one series per phase of the series minus the mask phase; the first one opens.")
+    boolean allPhases;
+
+    @Option(
+        names = "--mip",
+        description = "Open the result as a maximum intensity projection through all its slices.")
+    boolean mip;
 
     @Option(
         names = "--factor",
@@ -233,21 +302,47 @@ public class SubtractionCommands implements CommandExtension {
 
     @Override
     protected void run() throws IOException {
+      if (allPhases && phase != null) {
+        throw invalid("--all-phases cannot be combined with --phase");
+      }
       SubtractionSpec spec = GuiExecutor.invokeAndRethrow(this::spec);
-      Derived derived = SubtractionService.create(spec);
-      JsonObjectBuilder body = describe(derived);
+      JsonObjectBuilder body;
+      Derived shown;
+      if (allPhases) {
+        List<Derived> all = SubtractionService.createAll(spec);
+        JsonArrayBuilder derived = Json.createArrayBuilder();
+        all.forEach(d -> derived.add(describe(d)));
+        body =
+            Json.createObjectBuilder()
+                .add("mask", spec.maskUid()) // NON-NLS
+                .add("maskPhase", spec.maskPhase() == null ? 0 : spec.maskPhase()) // NON-NLS
+                .add("derived", derived); // NON-NLS
+        shown = all.getFirst();
+      } else {
+        shown = SubtractionService.create(spec);
+        body = describe(shown);
+      }
       if (!noOpen) {
+        Derived opened = shown;
         JsonObject target =
             GuiExecutor.invokeAndRethrow(
                 () -> {
                   // The preview of what was built gives its pane to the series
                   SubtractionController.selectedPreview()
-                      .filter(p -> p.spec().derivedSeriesUid().equals(derived.seriesUid()))
+                      .filter(p -> p.spec().derivedSeriesUid().equals(opened.seriesUid()))
                       .ifPresent(SubtractionView::exitPreview);
-                  return SubtractionService.open(derived);
+                  JsonObject pane = SubtractionService.open(opened);
+                  return mip ? SubtractionService.projectSelectedPane(opened) : pane;
                 });
         if (target != null) {
           body.add("target", target); // NON-NLS
+        }
+        if (mip) {
+          body.add(
+              "mip", // NON-NLS
+              Json.createObjectBuilder()
+                  .add("type", "max") // NON-NLS
+                  .add("thickness", opened.slices())); // NON-NLS
         }
       }
       print(body.build().toString());
@@ -257,31 +352,43 @@ public class SubtractionCommands implements CommandExtension {
     private SubtractionSpec spec() {
       String seriesUid = series == null ? selectedSeriesUid() : series.value();
       String maskUid;
+      Integer maskPhaseIndex = maskPhase;
       SubtractionView preview = SubtractionController.selectedPreview().orElse(null);
       if (mask == null && preview != null && seriesUid.equals(uidOf(preview.getSeries()))) {
         // What the pane previews is what is built
-        maskUid = uidOf(preview.getMask());
+        SubtractionSpec previewed = preview.spec();
+        maskUid = previewed.maskUid();
+        if (maskPhaseIndex == null) {
+          maskPhaseIndex = previewed.maskPhase();
+        }
         if (factor == null) {
           factor = preview.getFactor();
         }
       } else if (mask == null) {
         MediaSeries<DicomImageElement> source = selectedOrResolved(seriesUid);
-        List<MediaSeries<DicomImageElement>> candidates =
-            SubtractionService.compatibleMasks(source);
-        maskUid =
-            SubtractionService.proposeMask(source, candidates)
-                .map(SubtractionCommands::uidOf)
+        MediaSeries<DicomImageElement> proposed =
+            SubtractionService.proposeMask(source, SubtractionService.compatibleMasks(source))
                 .orElseThrow(
                     () ->
                         new IllegalStateException(
                             "No series of the study is on the grid of the series: give --mask"));
+        maskUid = uidOf(proposed);
+        if (maskPhaseIndex == null) {
+          maskPhaseIndex =
+              PhaseGrouper.phaseOf(proposed).map(PhaseGrouper.Phase::index).orElse(null);
+        }
       } else {
         maskUid = mask.value();
+      }
+      if (maskPhaseIndex == null && seriesUid.equals(maskUid)) {
+        maskPhaseIndex = 1;
       }
       try {
         return new SubtractionSpec(
             seriesUid,
             maskUid,
+            phase,
+            maskPhaseIndex,
             factor == null ? 1.0 : factor,
             offset == null ? 0.0 : offset,
             absolute,
@@ -289,14 +396,6 @@ public class SubtractionCommands implements CommandExtension {
       } catch (IllegalArgumentException e) {
         throw invalid(e.getMessage());
       }
-    }
-
-    private String selectedSeriesUid() {
-      ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
-      if (view == null || view.getSeries() == null) {
-        throw new IllegalStateException("No series in the selected pane: give --series");
-      }
-      return uidOf(view.getSeries());
     }
 
     @SuppressWarnings("unchecked")
@@ -375,6 +474,14 @@ public class SubtractionCommands implements CommandExtension {
     }
   }
 
+  static String selectedSeriesUid() {
+    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+    if (view == null || view.getSeries() == null) {
+      throw new IllegalStateException("No series in the selected pane: give --series");
+    }
+    return uidOf(view.getSeries());
+  }
+
   private static Derived derived(SeriesUid uid) {
     return SubtractionService.find(uid.value())
         .orElseThrow(
@@ -400,8 +507,8 @@ public class SubtractionCommands implements CommandExtension {
     body.add(
         "sources", // NON-NLS
         Json.createArrayBuilder()
-            .add(source(derived.source(), "series")) // NON-NLS
-            .add(source(derived.mask(), "mask"))); // NON-NLS
+            .add(source(derived.source(), derived.spec().phase(), "series")) // NON-NLS
+            .add(source(derived.mask(), derived.spec().maskPhase(), "mask"))); // NON-NLS
     body.add("factor", derived.spec().factor()) // NON-NLS
         .add("offset", derived.spec().offset()) // NON-NLS
         .add("absolute", derived.spec().absolute()) // NON-NLS
@@ -413,12 +520,16 @@ public class SubtractionCommands implements CommandExtension {
     return body;
   }
 
-  private static JsonObjectBuilder source(MediaSeries<DicomImageElement> series, String role) {
+  private static JsonObjectBuilder source(
+      MediaSeries<DicomImageElement> series, Integer phase, String role) {
     JsonObjectBuilder json = Json.createObjectBuilder().add("series", uidOf(series)); // NON-NLS
     JsonUtil.addIfPresent(
         json,
         "description",
         TagD.getTagValue(series, Tag.SeriesDescription, String.class)); // NON-NLS
+    if (phase != null) {
+      json.add("phase", phase); // NON-NLS
+    }
     return json.add("role", role); // NON-NLS
   }
 

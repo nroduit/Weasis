@@ -45,6 +45,8 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2dContainer;
+import org.weasis.dicom.viewer2d.mip.MipMenu;
+import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Pairing;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Refusal;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Result;
@@ -64,6 +66,8 @@ public final class SubtractionService {
       DicomSeries series,
       MediaSeries<DicomImageElement> source,
       MediaSeries<DicomImageElement> mask,
+      MediaSeries<DicomImageElement> operand,
+      MediaSeries<DicomImageElement> maskOperand,
       Path cacheDir,
       int slices,
       long clipped,
@@ -89,15 +93,26 @@ public final class SubtractionService {
   public static List<MediaSeries<DicomImageElement>> compatibleMasks(
       MediaSeries<DicomImageElement> series) {
     List<MediaSeries<DicomImageElement>> masks = new ArrayList<>();
-    if (series == null || isDerived(series) || !(modelOf(series) instanceof DicomModel model)) {
+    if (series == null || isDerived(series)) {
       return masks;
     }
-    MediaSeriesGroup study = model.getParent(series, DicomModel.study);
+    MediaSeries<DicomImageElement> parent = parentOf(series);
+    if (!(modelOf(parent) instanceof DicomModel model)) {
+      return masks;
+    }
+    // The phases of a dynamic series come first: each one is a mask of the others
+    for (PhaseGrouper.Phase phase : PhaseGrouper.phases(parent)) {
+      if (phase.series() != series && phase.series() != parent) {
+        masks.add(phase.series());
+      }
+    }
+    MediaSeriesGroup study = model.getParent(parent, DicomModel.study);
     if (study == null) {
       return masks;
     }
     for (MediaSeriesGroup group : model.getChildren(study)) {
       if (group instanceof MediaSeries<?> candidate
+          && candidate != parent
           && candidate.getTagValue(TagW.Derivation) == null
           && SubtractionCompatibility.isCompatible(
               series, (MediaSeries<DicomImageElement>) candidate)) {
@@ -105,6 +120,11 @@ public final class SubtractionService {
       }
     }
     return masks;
+  }
+
+  /** The real series behind an operand: the parent of a phase, else the series itself. */
+  public static MediaSeries<DicomImageElement> parentOf(MediaSeries<DicomImageElement> series) {
+    return PhaseGrouper.phaseOf(series).map(PhaseGrouper.Phase::parent).orElse(series);
   }
 
   /**
@@ -117,6 +137,14 @@ public final class SubtractionService {
       MediaSeries<DicomImageElement> series, List<MediaSeries<DicomImageElement>> candidates) {
     if (candidates.isEmpty()) {
       return Optional.empty();
+    }
+    // The first phase of the series itself, when it is dynamic
+    Optional<MediaSeries<DicomImageElement>> firstPhase =
+        candidates.stream()
+            .filter(c -> PhaseGrouper.phaseOf(c).filter(p -> p.index() == 1).isPresent())
+            .findFirst();
+    if (firstPhase.isPresent()) {
+      return firstPhase;
     }
     String stem = stem(series);
     boolean withAgent = StringUtil.hasText(contrastAgent(series));
@@ -155,6 +183,33 @@ public final class SubtractionService {
     return create(spec, series, mask);
   }
 
+  /**
+   * Builds one derived series per phase of the series other than the mask phase, the phases taken
+   * from the spec's series; a series of one phase gives one derived series.
+   */
+  public static List<Derived> createAll(SubtractionSpec spec) throws IOException {
+    MediaSeries<DicomImageElement> series = resolve(spec.seriesUid());
+    MediaSeries<DicomImageElement> mask = resolve(spec.maskUid());
+    List<Derived> result = new ArrayList<>();
+    List<PhaseGrouper.Phase> phases = PhaseGrouper.phases(series);
+    if (phases.size() < 2) {
+      result.add(create(spec.withPhase(null), series, mask));
+      return result;
+    }
+    boolean sameSeries = spec.seriesUid().equals(spec.maskUid());
+    for (PhaseGrouper.Phase phase : phases) {
+      if (sameSeries && spec.maskPhase() != null && spec.maskPhase() == phase.index()) {
+        continue;
+      }
+      result.add(create(spec.withPhase(phase.index()), series, mask));
+    }
+    return result;
+  }
+
+  /**
+   * Builds the derived series of the spec from its two series, the phases named by the spec taken
+   * from them.
+   */
   public static Derived create(
       SubtractionSpec spec,
       MediaSeries<DicomImageElement> series,
@@ -167,7 +222,9 @@ public final class SubtractionService {
     if (isDerived(series) || isDerived(mask)) {
       throw new IllegalStateException("A series Weasis derived cannot be an operand");
     }
-    Result result = SubtractionCompatibility.pair(series, mask);
+    MediaSeries<DicomImageElement> operand = PhaseGrouper.operand(series, spec.phase());
+    MediaSeries<DicomImageElement> maskOperand = PhaseGrouper.operand(mask, spec.maskPhase());
+    Result result = SubtractionCompatibility.pair(operand, maskOperand);
     if (result instanceof Refusal refusal) {
       throw new IllegalStateException(
           "The mask cannot be subtracted from the series: " + refusal.reason());
@@ -179,13 +236,15 @@ public final class SubtractionService {
           spec.maskUid(),
           spec.seriesUid());
     }
-    SubtractionBuilder.Result built = SubtractionBuilder.build(spec, series, mask, pairing);
+    SubtractionBuilder.Result built = SubtractionBuilder.build(spec, operand, maskOperand, pairing);
     Derived derived =
         new Derived(
             spec,
             built.series(),
             series,
             mask,
+            operand,
+            maskOperand,
             built.cacheDir(),
             built.slices(),
             built.clipped(),
@@ -283,6 +342,33 @@ public final class SubtractionService {
     }
     ViewerPluginBuilder.openInDefaultViewer(series, model, ViewerOpenOptions.defaults());
     return null;
+  }
+
+  /** The phases of a series the service can subtract, from its handle. */
+  public static List<PhaseGrouper.Phase> phases(String seriesUid) {
+    return PhaseGrouper.phases(resolve(seriesUid));
+  }
+
+  /**
+   * Turns the selected pane, which shows the derived series, into a maximum intensity projection
+   * through all its slices: the breast overview. EDT only.
+   */
+  public static JsonObject projectSelectedPane(Derived derived) {
+    ImageViewerPlugin<DicomImageElement> container =
+        EventManager.getInstance().getSelectedView2dContainer();
+    ViewCanvas<DicomImageElement> view =
+        container == null ? null : container.getSelectedViewCanvas();
+    if (view == null || view.getSeries() != derived.series()) {
+      throw new IllegalStateException("The derived series is not in the selected pane");
+    }
+    MipView projection = MipMenu.createMipView(EventManager.getInstance(), container, view);
+    if (projection == null) {
+      throw new IllegalStateException("The series is too small for a projection");
+    }
+    projection.setActionsInView(MipView.MIP.cmd(), MipView.Type.MAX);
+    projection.setActionsInView(MipView.MIP_THICKNESS.cmd(), derived.slices());
+    MipView.buildMip(projection);
+    return ViewDisplayState.target(container, projection).build();
   }
 
   public static String studyUid(MediaSeries<DicomImageElement> series) {

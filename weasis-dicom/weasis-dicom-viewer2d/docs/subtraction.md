@@ -35,6 +35,17 @@ view back. The preview is reached from the image tool section, the view button o
 `subtraction:preview`; a `subtraction:create` without arguments builds what the selected pane
 previews.
 
+## Phases of a dynamic series
+
+An operand is a phase, not only a series. `PhaseGrouper` finds the phases of a series stored as
+one series: the images sharing one Temporal Position Identifier, else one Trigger Time, else the
+k-th acquisition at every slice position when every position was acquired the same number of
+times. Each phase is handed out as a transient series of the parent's images, so it pairs,
+previews and builds like a series of its own, and the service lists the phases of a dynamic series
+first among the masks of that series. The spec names the phases (`phase`, `maskPhase`), a build of
+every phase minus the mask phase gives one derived series per phase, and the result can open as a
+maximum intensity projection through all its slices.
+
 ## Classes
 
 | Class | Role |
@@ -43,8 +54,9 @@ previews.
 | `SubtractionCompatibility` | Whether a mask can be subtracted without resampling (the *direct path*) and the pairing of the slices: same modality, same study, one frame of reference, one matrix, one pixel spacing and orientation, and a mask slice within half a slice spacing of every slice of the series. Anything else is a `Refusal` with its reason |
 | `SubtractionBuilder` | Computes each pair on modality-LUT values in 32-bit floats, stores the difference as signed 16-bit with the rescale slope of the series (a difference of two stored values is then exact), counts the clipped pixels, writes the DICOM attributes of the derived instances and measures the default window on the middle slice |
 | `SubtractionService` | Headless entry point: the compatible masks of a series and the one a reader would pick, `create`, `list`, `find`, `delete`, and `open` in the selected pane. Keeps the derived series of the session with their spec |
+| `PhaseGrouper` | The phases of a dynamic series stored as one series, each as a transient series that remembers its parent and index |
 | `SubtractionView` | The live preview of a pane: a `View2d` scrolling the source series and showing the difference of each slice, with its own cache directory |
-| `SubtractionCommands` | The `subtraction:` namespace (`preview`, `create`, `list`, `info`, `delete`) over the view and the service |
+| `SubtractionCommands` | The `subtraction:` namespace (`preview`, `phases`, `create`, `list`, `info`, `delete`) over the view and the service |
 | `SubtractionAction`, `SubtractionController` | The preview toggle, mask combo and weight slider of the *Subtraction* section of the image tool, and the glue that enters or updates the preview and runs the service off the EDT with the explorer's loading indicator |
 | `SubtractionMenu` | The *Subtract…* entry of the series context menu of the explorer, a `SeriesMenuContributor` extension |
 

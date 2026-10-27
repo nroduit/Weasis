@@ -134,18 +134,22 @@ public final class SubtractionController {
         new SubtractionSpec(
             SubtractionCommands.uidOf(series),
             SubtractionCommands.uidOf(mask),
+            PhaseGrouper.phaseOf(series).map(PhaseGrouper.Phase::index).orElse(null),
+            PhaseGrouper.phaseOf(mask).map(PhaseGrouper.Phase::index).orElse(null),
             factor,
             0.0,
             false,
             false);
+    MediaSeries<DicomImageElement> parent = SubtractionService.parentOf(series);
+    MediaSeries<DicomImageElement> maskParent = SubtractionService.parentOf(mask);
     DataExplorerModel model =
-        series.getTagValue(TagW.ExplorerModel) instanceof DataExplorerModel m ? m : null;
+        parent.getTagValue(TagW.ExplorerModel) instanceof DataExplorerModel m ? m : null;
     ExplorerTask<Derived, Void> task =
         new ExplorerTask<>(Messages.getString("SubtractionTool.build"), false) {
           @Override
           protected Derived doInBackground() throws Exception {
             fire(ObservableEvent.BasicAction.LOADING_START);
-            return SubtractionService.create(spec, series, mask);
+            return SubtractionService.create(spec, parent, maskParent);
           }
 
           @Override

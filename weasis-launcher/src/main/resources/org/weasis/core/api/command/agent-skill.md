@@ -131,9 +131,12 @@ line naming the current spelling. Use the current one everywhere.
    `subtraction:create` builds what the pane previews, or `--series <uid> --mask <uid>` given
    explicitly, as a new series of the study (same grid only, real values, black where nothing
    enhances) and opens it in the pane; `--signed` opens with negative differences visible,
-   `--no-open` only builds. `subtraction:list` and `subtraction:info --series <uid>` describe
-   what was built, `subtraction:delete` removes it. The result is a series: scroll, window,
-   measure and capture it like any other.
+   `--no-open` only builds. A dynamic series stored as one series has phases:
+   `subtraction:phases --series <uid>` lists them, `--phase 2 --mask-phase 1` subtracts one from
+   another, `--all-phases` builds every phase minus the mask phase, and `--mip` opens the result
+   as a maximum intensity projection, the breast overview. `subtraction:list` and
+   `subtraction:info --series <uid>` describe what was built, `subtraction:delete` removes it.
+   The result is a series: scroll, window, measure and capture it like any other.
 <!--endif-->
 <!--if:view3d-->
 9. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at

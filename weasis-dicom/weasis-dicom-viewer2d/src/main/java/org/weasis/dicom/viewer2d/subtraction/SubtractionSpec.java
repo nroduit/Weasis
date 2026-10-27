@@ -18,11 +18,15 @@ import org.weasis.core.util.StringUtil;
 
 /**
  * What a subtraction computes: the series minus {@code factor} times the mask, plus an offset, on
- * the grid of the series. The same spec always names the same derived series and instances, so a
- * subtraction created twice is one object.
+ * the grid of the series. An operand is a series, or one phase of a dynamic series when the series
+ * holds several. The same spec always names the same derived series and instances, so a subtraction
+ * created twice is one object.
  *
  * @param seriesUid the series subtracted from (post-contrast)
  * @param maskUid the series subtracted (pre-contrast, mask)
+ * @param phase the phase of the series that is subtracted from, 1-based, null for the whole series
+ * @param maskPhase the phase of the mask series that is subtracted, 1-based, null for the whole
+ *     series
  * @param factor weight of the mask, 1 subtracts it fully
  * @param offset value added to every difference
  * @param absolute whether the absolute difference is stored
@@ -31,6 +35,8 @@ import org.weasis.core.util.StringUtil;
 public record SubtractionSpec(
     String seriesUid,
     String maskUid,
+    Integer phase,
+    Integer maskPhase,
     double factor,
     double offset,
     boolean absolute,
@@ -40,17 +46,37 @@ public record SubtractionSpec(
     if (!StringUtil.hasText(seriesUid) || !StringUtil.hasText(maskUid)) {
       throw new IllegalArgumentException("A subtraction needs a series and a mask");
     }
-    if (seriesUid.equals(maskUid)) {
+    if (seriesUid.equals(maskUid) && (maskPhase == null || maskPhase.equals(phase))) {
       throw new IllegalArgumentException("A series cannot be subtracted from itself");
+    }
+    if ((phase != null && phase < 1) || (maskPhase != null && maskPhase < 1)) {
+      throw new IllegalArgumentException("A phase counts from 1");
     }
     if (!Double.isFinite(factor) || !Double.isFinite(offset)) {
       throw new IllegalArgumentException("The factor and the offset are finite numbers");
     }
   }
 
+  /** A subtraction of whole series. */
+  public SubtractionSpec(
+      String seriesUid,
+      String maskUid,
+      double factor,
+      double offset,
+      boolean absolute,
+      boolean signed) {
+    this(seriesUid, maskUid, null, null, factor, offset, absolute, signed);
+  }
+
   /** The plain difference: the series minus the mask. */
   public static SubtractionSpec of(String seriesUid, String maskUid) {
     return new SubtractionSpec(seriesUid, maskUid, 1.0, 0.0, false, false);
+  }
+
+  /** The same subtraction for another phase of the series. */
+  public SubtractionSpec withPhase(Integer phase) {
+    return new SubtractionSpec(
+        seriesUid, maskUid, phase, maskPhase, factor, offset, absolute, signed);
   }
 
   /** Series Instance UID of the derived series. */
@@ -72,6 +98,13 @@ public record SubtractionSpec(
             "Pixel by pixel subtraction, A - k*B + offset, k=%.2f, offset=%s, direct grid",
             factor,
             number(offset));
+    if (phase != null || maskPhase != null) {
+      text +=
+          ", phase "
+              + (phase == null ? "all" : phase)
+              + " - phase "
+              + (maskPhase == null ? "all" : maskPhase); // NON-NLS
+    }
     return absolute ? text + ", absolute value" : text;
   }
 
@@ -79,6 +112,8 @@ public record SubtractionSpec(
     return Json.createObjectBuilder()
         .add("series", seriesUid) // NON-NLS
         .add("mask", maskUid) // NON-NLS
+        .add("phase", phase == null ? 0 : phase) // NON-NLS
+        .add("maskPhase", maskPhase == null ? 0 : maskPhase) // NON-NLS
         .add("factor", factor) // NON-NLS
         .add("offset", offset) // NON-NLS
         .add("absolute", absolute) // NON-NLS
@@ -91,6 +126,8 @@ public record SubtractionSpec(
         "weasis.subtraction", // NON-NLS
         seriesUid,
         maskUid,
+        phase == null ? "" : phase.toString(),
+        maskPhase == null ? "" : maskPhase.toString(),
         number(factor),
         number(offset),
         Boolean.toString(absolute),

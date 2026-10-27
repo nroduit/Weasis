@@ -46,7 +46,10 @@ final class SyntheticSeries {
     Tag.PixelSpacing,
     Tag.Rows,
     Tag.Columns,
-    Tag.ContrastBolusAgent
+    Tag.ContrastBolusAgent,
+    Tag.TemporalPositionIdentifier,
+    Tag.TriggerTime,
+    Tag.AcquisitionTime
   };
 
   private static final int[] SERIES_TAGS = {

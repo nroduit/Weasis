@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.16, protocol 1, application development.
+Command API 2.17, protocol 1, application development.
 
 ## color
 
@@ -940,13 +940,17 @@ Derived series subtracting one series of a study from another (post-contrast min
 
 Builds the series minus the mask as a new series of the study, pixel by pixel on the same grid (A - factor*B + offset, real values), and opens it in the selected pane. The same operands and options always give the same series.
 
-Usage: `subtraction:create [-h] [--absolute] [--json] [--no-open] [--signed] [--factor=<number>] [--mask=<series-uid>] [--offset=<number>] [--series=<series-uid>]`
+Usage: `subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--no-open] [--signed] [--factor=<number>] [--mask=<series-uid>] [--mask-phase=<phase-index>] [--offset=<number>] [--phase=<phase-index>] [--series=<series-uid>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --series | series-uid |  | The series subtracted from, from 'dicom:list' (default: the series of the selected pane). |
 | --mask | series-uid |  | The series subtracted, from 'dicom:list' (default: the series of the study without contrast agent, else the earliest compatible one). |
+| --phase | integer |  | Phase of a dynamic series to subtract from, from 'subtraction:phases' (default: every slice of the series). |
+| --mask-phase | integer |  | Phase of the mask series to subtract (default: the first phase when the mask is the series itself). |
+| --all-phases | boolean |  | Build one series per phase of the series minus the mask phase; the first one opens. |
+| --mip | boolean |  | Open the result as a maximum intensity projection through all its slices. |
 | --factor | number |  | Weight of the mask: 1 subtracts it fully, below 1 keeps part of the anatomy (default: 1). |
 | --offset | number |  | Value added to every difference (default: 0). |
 | --absolute | boolean |  | Store the absolute difference. |
@@ -985,6 +989,17 @@ Usage: `subtraction:list [-h] [--json] [--study=<study-uid>]`
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --study | study-uid |  | Keep the series of one study, from 'dicom:list'. |
+
+### subtraction:phases (since 5.0)
+
+The phases of a dynamic series stored as one series (temporal position, trigger time, or repeated slice positions): what --phase and --mask-phase count.
+
+Usage: `subtraction:phases [-h] [--json] [--series=<series-uid>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | series-uid |  | A series from 'dicom:list' (default: the series of the selected pane). |
 
 ### subtraction:preview (since 5.0)
 
@@ -1383,15 +1398,15 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --fit=<zoom-fit> | --set=<magnification>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
+| --fit | enum |  | default, real-size or best-fit. |
 | --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 
 

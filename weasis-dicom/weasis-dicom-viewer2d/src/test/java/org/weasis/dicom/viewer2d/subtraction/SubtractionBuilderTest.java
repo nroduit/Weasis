@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -223,6 +224,40 @@ class SubtractionBuilderTest {
                     .getTagValue(TagD.get(Tag.SeriesInstanceUID))));
   }
 
+  @Test
+  void a_phase_of_a_dynamic_series_is_subtracted_from_another(@TempDir Path dir)
+      throws IOException {
+    // One series holding two acquisitions of the same slices, five minutes apart
+    DicomSeries dynamic = new DicomSeries("1.2.3.30"); // NON-NLS
+    dynamic.setTag(TagD.get(Tag.Modality), "MR"); // NON-NLS
+    dynamic.setTag(TagD.get(Tag.SeriesDescription), "DCE"); // NON-NLS
+    DicomSeries pre = series(dir, "1.2.3.30", "DCE", 7, 3, (z, i) -> 400, 1.0, LocalTime.of(10, 0));
+    DicomSeries post =
+        series(dir, "1.2.3.30", "DCE", 7, 3, (z, i) -> 1000 + i, 1.0, LocalTime.of(10, 5));
+    pre.copyOfMedias(null, null).forEach(dynamic::addMedia);
+    post.copyOfMedias(null, null).forEach(dynamic::addMedia);
+
+    List<PhaseGrouper.Phase> phases = PhaseGrouper.phases(dynamic);
+    assertEquals(2, phases.size());
+    SubtractionSpec spec =
+        new SubtractionSpec("1.2.3.30", "1.2.3.30", 2, 1, 1.0, 0.0, false, false); // NON-NLS
+    DicomSeries second = (DicomSeries) PhaseGrouper.operand(dynamic, 2);
+    DicomSeries first = (DicomSeries) PhaseGrouper.operand(dynamic, 1);
+    Result result = build(spec, second, first);
+    Attributes attributes = first(result).getMediaReader().getDicomObject();
+    assertAll(
+        () -> assertEquals(3, result.slices()),
+        () -> assertEquals("SUB DCE p2 - DCE p1", attributes.getString(Tag.SeriesDescription)),
+        () ->
+            assertTrue(
+                attributes.getString(Tag.DerivationDescription).contains("phase 2 - phase 1")),
+        () -> assertNotEquals(spec.derivedSeriesUid(), spec.withPhase(null).derivedSeriesUid()));
+    double[] values = values(first(result));
+    for (int i = 0; i < values.length; i++) {
+      assertEquals(600 + i, values[i], 1e-6, "pixel " + i);
+    }
+  }
+
   private Result build(SubtractionSpec spec, DicomSeries series, DicomSeries mask)
       throws IOException {
     Pairing pairing = (Pairing) SubtractionCompatibility.pair(series, mask);
@@ -264,7 +299,22 @@ class SubtractionBuilderTest {
       Pixel pixel,
       double slope)
       throws IOException {
-    Path seriesDir = Files.createDirectories(dir.resolve(seriesUid));
+    return series(dir, seriesUid, description, seriesNumber, count, pixel, slope, null);
+  }
+
+  private static DicomSeries series(
+      Path dir,
+      String seriesUid,
+      String description,
+      int seriesNumber,
+      int count,
+      Pixel pixel,
+      double slope,
+      LocalTime acquisitionTime)
+      throws IOException {
+    Path seriesDir =
+        Files.createDirectories(
+            dir.resolve(seriesUid + (acquisitionTime == null ? "" : acquisitionTime.toString())));
     Attributes base = new Attributes();
     base.setString(Tag.SeriesDescription, VR.LO, description);
     base.setInt(Tag.SeriesNumber, VR.IS, seriesNumber);
@@ -282,7 +332,11 @@ class SubtractionBuilderTest {
       for (int i = 0; i < pixels.length; i++) {
         pixels[i] = (short) pixel.value(z, i);
       }
-      series.addMedia(slice(seriesDir, seriesUid, z, pixels, base, slope));
+      DicomImageElement slice = slice(seriesDir, seriesUid, z, pixels, base, slope);
+      if (acquisitionTime != null) {
+        slice.setTag(TagD.get(Tag.AcquisitionTime), acquisitionTime);
+      }
+      series.addMedia(slice);
     }
     return series;
   }

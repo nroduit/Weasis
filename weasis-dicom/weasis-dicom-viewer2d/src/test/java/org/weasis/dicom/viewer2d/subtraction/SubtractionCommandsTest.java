@@ -34,6 +34,10 @@ class SubtractionCommandsTest {
           "subtraction:create --series 1.2.3 --mask 1.2.4",
           "subtraction:create --mask 1.2.4 --factor 0.8 --offset 100 --absolute --signed --no-open",
           "subtraction:create --series series_2 --json",
+          "subtraction:create --phase 2 --mask-phase 1",
+          "subtraction:create --series 1.2.3 --all-phases --mip --no-open",
+          "subtraction:phases",
+          "subtraction:phases --series 1.2.3",
           "subtraction:list",
           "subtraction:list --study 1.2",
           "subtraction:info --series 1.2.3.4",
@@ -45,6 +49,7 @@ class SubtractionCommandsTest {
           "subtraction:delete", // a series is required
           "subtraction:create --factor abc",
           "subtraction:preview --mask",
+          "subtraction:create --phase x",
           "subtraction:preview --pane x",
           "subtraction:create --offset",
           "subtraction:list --study");

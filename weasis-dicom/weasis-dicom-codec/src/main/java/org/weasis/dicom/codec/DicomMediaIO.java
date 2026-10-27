@@ -182,6 +182,8 @@ public class DicomMediaIO implements DcmMediaReader {
     tagManager.addTag(Tag.AcquisitionTime, Level.INSTANCE);
     tagManager.addTag(Tag.ContentDate, Level.INSTANCE);
     tagManager.addTag(Tag.ContentTime, Level.INSTANCE);
+    tagManager.addTag(Tag.TemporalPositionIdentifier, Level.INSTANCE);
+    tagManager.addTag(Tag.TriggerTime, Level.INSTANCE);
     tagManager.addTag(Tag.DiffusionBValue, Level.INSTANCE);
     tagManager.addTag(Tag.MIMETypeOfEncapsulatedDocument, Level.INSTANCE);
     tagManager.addTag(Tag.PixelDataProviderURL, Level.INSTANCE);
