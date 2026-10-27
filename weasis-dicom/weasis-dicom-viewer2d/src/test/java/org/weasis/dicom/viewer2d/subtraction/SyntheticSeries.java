@@ -48,6 +48,7 @@ final class SyntheticSeries {
     Tag.Columns,
     Tag.ContrastBolusAgent,
     Tag.TemporalPositionIdentifier,
+    Tag.TemporalPositionIndex,
     Tag.TriggerTime,
     Tag.AcquisitionTime
   };

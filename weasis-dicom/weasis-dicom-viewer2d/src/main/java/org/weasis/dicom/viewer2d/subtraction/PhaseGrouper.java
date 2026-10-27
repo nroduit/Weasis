@@ -28,11 +28,12 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 /**
- * Finds the phases of a dynamic series stored as one series: the images sharing one Temporal
- * Position Identifier, else one Trigger Time, else the k-th acquisition at every slice position
- * when every position was acquired the same number of times. A phase is handed out as a transient
- * series of the parent's images, so it pairs, previews and builds like a series of its own; the
- * same phase object comes back for the same series until its images change.
+ * Finds the phases of a dynamic series stored as one series: the frames sharing one Temporal
+ * Position Index, else the images sharing one Temporal Position Identifier, else one Trigger Time,
+ * else the k-th acquisition at every slice position when every position was acquired the same
+ * number of times. A phase is handed out as a transient series of the parent's images, so it pairs,
+ * previews and builds like a series of its own; the same phase object comes back for the same
+ * series until its images change.
  */
 public final class PhaseGrouper {
 
@@ -108,8 +109,15 @@ public final class PhaseGrouper {
   private static List<Phase> group(MediaSeries<DicomImageElement> series) {
     // Positions computed and ordered along the normal, as the pairing of the slices needs them
     List<DicomImageElement> images = SubtractionCompatibility.sortedSlices(series);
+    // The frames of an enhanced multi-frame image carry the Temporal Position Index of their
+    // Frame Content macro; single-frame images the Temporal Position Identifier
     List<List<DicomImageElement>> groups =
-        byTag(images, img -> TagD.getTagValue(img, Tag.TemporalPositionIdentifier, Integer.class));
+        byTag(images, img -> TagD.getTagValue(img, Tag.TemporalPositionIndex, Integer.class));
+    if (groups == null) {
+      groups =
+          byTag(
+              images, img -> TagD.getTagValue(img, Tag.TemporalPositionIdentifier, Integer.class));
+    }
     if (groups == null) {
       groups = byTag(images, img -> TagD.getTagValue(img, Tag.TriggerTime, Double.class));
     }

@@ -64,6 +64,22 @@ class PhaseGrouperTest {
   }
 
   @Test
+  void the_temporal_position_index_of_enhanced_frames_comes_first() {
+    Attributes[] images = new Attributes[4];
+    for (int i = 0; i < 4; i++) {
+      images[i] = SyntheticSeries.slice(UID, "MR", i + 1, 2.0 * (i % 2), 1.0, 256, null); // NON-NLS
+      images[i].setInt(Tag.TemporalPositionIndex, VR.UL, i < 2 ? 1 : 2);
+      // A stale identifier that would group every frame together is not what counts
+      images[i].setInt(Tag.TemporalPositionIdentifier, VR.IS, 1);
+    }
+    List<Phase> phases = PhaseGrouper.phases(SyntheticSeries.series(images));
+    assertAll(
+        () -> assertEquals(2, phases.size()),
+        () -> assertEquals(1, instance(phases.get(0), 0)),
+        () -> assertEquals(3, instance(phases.get(1), 0)));
+  }
+
+  @Test
   void repeated_positions_give_one_phase_per_acquisition_ordered_by_time() {
     Attributes[] images = new Attributes[6];
     for (int i = 0; i < 6; i++) {

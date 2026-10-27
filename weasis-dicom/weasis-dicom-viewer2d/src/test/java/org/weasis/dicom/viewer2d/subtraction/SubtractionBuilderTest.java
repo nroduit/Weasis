@@ -285,12 +285,12 @@ class SubtractionBuilderTest {
   }
 
   @FunctionalInterface
-  private interface Pixel {
+  interface Pixel {
     int value(int slice, int index);
   }
 
   /** An MR series of 16-bit unsigned slices 2 mm apart, written as raw images. */
-  private static DicomSeries series(
+  static DicomSeries series(
       Path dir,
       String seriesUid,
       String description,
