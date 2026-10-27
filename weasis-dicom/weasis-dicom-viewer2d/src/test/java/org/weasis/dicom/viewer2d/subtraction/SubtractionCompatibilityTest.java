@@ -81,13 +81,20 @@ class SubtractionCompatibilityTest {
   }
 
   @Test
-  void a_mask_shifted_by_less_than_half_a_slice_still_pairs_a_larger_shift_does_not() {
+  void a_mask_shifted_by_less_than_half_a_slice_pairs_directly_a_larger_shift_resamples() {
     DicomSeries post = SyntheticSeries.mr(POST, 3, 0);
     Result near = SubtractionCompatibility.pair(post, SyntheticSeries.mr(PRE, 3, 0.4));
     Result far = SubtractionCompatibility.pair(post, SyntheticSeries.mr(PRE, 3, 1.5));
+    Result farElsewhere =
+        SubtractionCompatibility.pair(
+            SyntheticSeries.mr(POST, 3, 0, 1.0, 256, null),
+            SyntheticSeries.mr(PRE, 3, 1.5, 1.0, 256, null));
     assertAll(
-        () -> assertInstanceOf(Pairing.class, near),
-        () -> assertTrue(assertInstanceOf(Refusal.class, far).reason().contains("No mask slice")));
+        () -> assertFalse(assertInstanceOf(Pairing.class, near).resampled()),
+        () -> assertTrue(assertInstanceOf(Pairing.class, far).resampled()),
+        () ->
+            assertTrue(
+                assertInstanceOf(Refusal.class, farElsewhere).reason().contains("No mask slice")));
   }
 
   @Test
@@ -105,23 +112,27 @@ class SubtractionCompatibilityTest {
   }
 
   @Test
-  void a_slice_without_counterpart_refuses_the_direct_path() {
+  void a_slice_without_counterpart_leaves_the_direct_path_for_the_resampled_one() {
     DicomSeries post = SyntheticSeries.mr(POST, 4, 0);
     DicomSeries pre = SyntheticSeries.mr(PRE, 3, 0);
-    assertInstanceOf(Refusal.class, SubtractionCompatibility.pair(post, pre));
+    Pairing pairing = assertInstanceOf(Pairing.class, SubtractionCompatibility.pair(post, pre));
+    assertAll(
+        () -> assertTrue(pairing.resampled()),
+        () -> assertEquals(4, pairing.slices().size()),
+        () -> assertSame(pre.getMedia(2, null, null), pairing.slices().getLast().mask()));
   }
 
   @Test
-  void a_different_grid_is_refused_with_its_reason() {
+  void a_different_grid_in_the_same_frame_is_resampled_elsewhere_refused() {
     DicomSeries post = SyntheticSeries.mr(POST, 3, 0);
-    Refusal spacing =
+    Pairing spacing =
         assertInstanceOf(
-            Refusal.class,
+            Pairing.class,
             SubtractionCompatibility.pair(
                 post, SyntheticSeries.mr(PRE, 3, 0, 0.8, 256, SyntheticSeries.FRAME)));
-    Refusal matrix =
+    Pairing matrix =
         assertInstanceOf(
-            Refusal.class,
+            Pairing.class,
             SubtractionCompatibility.pair(
                 post, SyntheticSeries.mr(PRE, 3, 0, 1.0, 512, SyntheticSeries.FRAME)));
     Refusal frame =
@@ -129,10 +140,24 @@ class SubtractionCompatibilityTest {
             Refusal.class,
             SubtractionCompatibility.pair(
                 post, SyntheticSeries.mr(PRE, 3, 0, 1.0, 256, "9.9.9"))); // NON-NLS
+    Refusal noFrame =
+        assertInstanceOf(
+            Refusal.class,
+            SubtractionCompatibility.pair(
+                SyntheticSeries.mr(POST, 3, 0, 1.0, 256, null),
+                SyntheticSeries.mr(PRE, 3, 0, 1.0, 512, null)));
     assertAll(
-        () -> assertTrue(spacing.reason().contains("pixel spacing")),
-        () -> assertTrue(matrix.reason().contains("matrices")),
-        () -> assertTrue(frame.reason().contains("frames of reference")));
+        () -> assertTrue(spacing.resampled()),
+        () -> assertTrue(matrix.resampled()),
+        () -> assertEquals(3, matrix.slices().size(), "every slice, with the nearest mask slice"),
+        () ->
+            assertFalse(
+                assertInstanceOf(
+                        Pairing.class,
+                        SubtractionCompatibility.pair(post, SyntheticSeries.mr(PRE, 3, 0)))
+                    .resampled()),
+        () -> assertTrue(frame.reason().contains("frames of reference")),
+        () -> assertTrue(noFrame.reason().contains("matrices")));
   }
 
   @Test

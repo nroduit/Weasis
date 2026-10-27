@@ -102,12 +102,22 @@ public class SubtractionCommands implements CommandExtension {
         description = "Weight of the mask, 1 subtracts it fully (default: 1).")
     Double factor;
 
+    @Option(
+        names = "--motion-correction",
+        arity = "0..1",
+        fallbackValue = "true",
+        paramLabel = "<on>",
+        description =
+            "Moves the mask of each slice onto it by the translation phase correlation measures"
+                + " (true when given without a value; false switches it off).")
+    Boolean motionCorrection;
+
     @Option(names = "--off", description = "Leaves the preview, the plain series stays shown.")
     boolean off;
 
     @Override
     protected void run() {
-      if (off && (mask != null || factor != null)) {
+      if (off && (mask != null || factor != null || motionCorrection != null)) {
         throw invalid("--off cannot be combined with the other options");
       }
       Target shown = GuiExecutor.invokeAndRethrow(this::apply);
@@ -127,10 +137,17 @@ public class SubtractionCommands implements CommandExtension {
           View2dCommands.focus(resolved);
           view = preview.exitPreview();
         }
-      } else if (mask != null || factor != null || !(view instanceof SubtractionView)) {
+      } else if (mask != null
+          || factor != null
+          || motionCorrection != null
+          || !(view instanceof SubtractionView)) {
         // A bare call on a plain pane starts the preview with the proposed mask
         View2dCommands.focus(resolved);
         view = start(resolved, view);
+        if (motionCorrection != null && view instanceof SubtractionView preview) {
+          preview.setParameters(
+              preview.getMask(), preview.getFactor(), preview.getDsa(), motionCorrection);
+        }
       }
       return new Target(resolved.container(), view);
     }
@@ -190,7 +207,9 @@ public class SubtractionCommands implements CommandExtension {
       JsonObjectBuilder subtraction =
           Json.createObjectBuilder()
               .add("mask", uidOf(preview.getMask())) // NON-NLS
-              .add("factor", preview.getFactor()); // NON-NLS
+              .add("factor", preview.getFactor()) // NON-NLS
+              .add("path", preview.isResampled() ? "resampled" : "direct") // NON-NLS
+              .add("motionCorrection", preview.isMotionCorrection()); // NON-NLS
       if (preview.getDsa() != null) {
         subtraction.add("dsa", preview.getDsa().toJson()); // NON-NLS
       }
@@ -469,6 +488,13 @@ public class SubtractionCommands implements CommandExtension {
         description = "DSA: sub-pixel shift of the mask in pixels, down and right when positive.")
     String shift;
 
+    @Option(
+        names = "--motion-correction",
+        description =
+            "Move the mask of each slice onto it by the translation phase correlation measures"
+                + " (default: what the pane previews, else off).")
+    boolean motionCorrection;
+
     @Option(names = "--no-open", description = "Build the series without opening it.")
     boolean noOpen;
 
@@ -482,6 +508,9 @@ public class SubtractionCommands implements CommandExtension {
         throw invalid("The DSA options go with the run alone, not with --mask or phases");
       }
       SubtractionSpec spec = GuiExecutor.invokeAndRethrow(this::spec);
+      if (motionCorrection) {
+        spec = spec.withMotionCorrection(true);
+      }
       JsonObjectBuilder body;
       Derived shown;
       if (allPhases) {
@@ -532,6 +561,7 @@ public class SubtractionCommands implements CommandExtension {
       SubtractionView preview = SubtractionController.selectedPreview().orElse(null);
       boolean previewed = preview != null && seriesUid.equals(uidOf(preview.getSeries()));
       Dsa dsa = runMask(seriesUid, previewed ? preview : null);
+      boolean motion = previewed && preview.isMotionCorrection();
       if (dsa != null) {
         try {
           return new SubtractionSpec(
@@ -543,7 +573,8 @@ public class SubtractionCommands implements CommandExtension {
               offset == null ? 0.0 : offset,
               absolute,
               signed,
-              dsa);
+              dsa,
+              motion);
         } catch (IllegalArgumentException e) {
           throw invalid(e.getMessage());
         }
@@ -586,7 +617,9 @@ public class SubtractionCommands implements CommandExtension {
             factor == null ? 1.0 : factor,
             offset == null ? 0.0 : offset,
             absolute,
-            signed);
+            signed,
+            null,
+            motion);
       } catch (IllegalArgumentException e) {
         throw invalid(e.getMessage());
       }
@@ -750,12 +783,19 @@ public class SubtractionCommands implements CommandExtension {
         .add("offset", derived.spec().offset()) // NON-NLS
         .add("absolute", derived.spec().absolute()) // NON-NLS
         .add("signed", derived.spec().signed()) // NON-NLS
-        .add("path", "direct") // NON-NLS
+        .add("path", derived.path()) // NON-NLS
         .add("slices", derived.slices()) // NON-NLS
         .add("clipped", derived.clipped()) // NON-NLS
         .add("sameFrameOfReference", derived.sameFrameOfReference()); // NON-NLS
     if (derived.spec().dsa() != null) {
       body.add("dsa", derived.spec().dsa().toJson()); // NON-NLS
+    }
+    if (derived.spec().motionCorrection()) {
+      body.add(
+          "motionCorrection", // NON-NLS
+          Json.createObjectBuilder()
+              .add("slices", derived.corrected()) // NON-NLS
+              .add("maxShift", derived.maxShift())); // NON-NLS
     }
     return body;
   }

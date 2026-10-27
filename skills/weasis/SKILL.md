@@ -268,6 +268,10 @@ line naming the current spelling. Use the current one everywhere.
    against patient motion, and `subtraction:create` builds the subtracted run (`--mask-frames`,
    `--tid-offset`, `--shift rows,columns` without a preview). The run opens on the signed window:
    iodine dark on a mid-gray background, as the console shows it.
+   A mask on another grid of the same frame of reference is resliced onto the series
+   (`path: resampled` in the result); `--motion-correction` moves the mask of every slice onto
+   it by phase correlation, for a patient who moved between the acquisitions (the result says how
+   many slices moved and by how much).
    The result is a series: scroll, window, measure and capture it like any other.
 12. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well

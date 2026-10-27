@@ -18,6 +18,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -69,16 +70,22 @@ public final class SubtractionController {
         return;
       }
       Object choice = selectedMask().orElse(null);
+      SubtractionView preview = null;
       if (choice instanceof FrameMask frames) {
-        enterPreview(
-            manager.getSelectedView2dContainer(),
-            view,
-            view.getSeries(),
-            selectedFactor(),
-            selectedDsa(frames));
+        preview =
+            enterPreview(
+                manager.getSelectedView2dContainer(),
+                view,
+                view.getSeries(),
+                selectedFactor(),
+                selectedDsa(frames));
       } else if (choice instanceof MediaSeries<?> mask) {
-        enterPreview(
-            manager.getSelectedView2dContainer(), view, cast(mask), selectedFactor(), null);
+        preview =
+            enterPreview(
+                manager.getSelectedView2dContainer(), view, cast(mask), selectedFactor(), null);
+      }
+      if (preview != null && selectedMotionCorrection()) {
+        preview.setParameters(preview.getMask(), preview.getFactor(), preview.getDsa(), true);
       }
     } else if (view instanceof SubtractionView preview) {
       preview.exitPreview();
@@ -130,11 +137,19 @@ public final class SubtractionController {
     if (preview == null || choice == null) {
       return;
     }
+    boolean motion = selectedMotionCorrection();
     if (choice instanceof FrameMask frames) {
-      preview.setParameters(preview.getSeries(), selectedFactor(), selectedDsa(frames));
+      preview.setParameters(preview.getSeries(), selectedFactor(), selectedDsa(frames), motion);
     } else if (choice instanceof MediaSeries<?> mask) {
-      preview.setParameters(cast(mask), selectedFactor(), null);
+      preview.setParameters(cast(mask), selectedFactor(), null, motion);
     }
+  }
+
+  private static boolean selectedMotionCorrection() {
+    return EventManager.getInstance()
+        .getAction(SubtractionAction.MOTION)
+        .map(ToggleButtonListener::isSelected)
+        .orElse(false);
   }
 
   /** Selects the frame the selected pane shows as the mask of its run. */
@@ -181,10 +196,11 @@ public final class SubtractionController {
       return;
     }
     Object choice = selectedMask().orElse(null);
+    boolean motion = selectedMotionCorrection();
     if (choice instanceof FrameMask frames) {
-      subtract(view.getSeries(), view.getSeries(), selectedFactor(), selectedDsa(frames));
+      subtract(view.getSeries(), view.getSeries(), selectedFactor(), selectedDsa(frames), motion);
     } else if (choice instanceof MediaSeries<?> mask) {
-      subtract(view.getSeries(), cast(mask), selectedFactor(), null);
+      subtract(view.getSeries(), cast(mask), selectedFactor(), null, motion);
     }
   }
 
@@ -204,16 +220,20 @@ public final class SubtractionController {
   /** Builds the series minus the mask in the background and opens it when done. */
   public static void subtract(
       MediaSeries<DicomImageElement> series, MediaSeries<DicomImageElement> mask, double factor) {
-    subtract(series, mask, factor, null);
+    subtract(series, mask, factor, null, false);
   }
 
-  /** As {@link #subtract(MediaSeries, MediaSeries, double)}, the mask of a run from its frames. */
+  /**
+   * As {@link #subtract(MediaSeries, MediaSeries, double)}, the mask of a run from its frames and
+   * the motion correction on or off.
+   */
   public static void subtract(
       MediaSeries<DicomImageElement> series,
       MediaSeries<DicomImageElement> mask,
       double factor,
-      Dsa dsa) {
-    SubtractionSpec spec =
+      Dsa dsa,
+      boolean motionCorrection) {
+    SubtractionSpec plain =
         dsa != null
             ? SubtractionSpec.ofRun(SubtractionCommands.uidOf(series), dsa, factor)
             : new SubtractionSpec(
@@ -225,6 +245,7 @@ public final class SubtractionController {
                 0.0,
                 false,
                 false);
+    SubtractionSpec spec = plain.withMotionCorrection(motionCorrection);
     MediaSeries<DicomImageElement> parent = SubtractionService.parentOf(series);
     MediaSeries<DicomImageElement> maskParent = SubtractionService.parentOf(mask);
     DataExplorerModel model =

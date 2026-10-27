@@ -12,6 +12,7 @@ package org.weasis.dicom.viewer2d.subtraction;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import org.dcm4che3.data.Attributes;
@@ -43,6 +45,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer2d.mpr.DerivedStack;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionBuilder.MaskVolume;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionBuilder.Result;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Pairing;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionSpec.Dsa;
@@ -290,6 +293,71 @@ class SubtractionBuilderTest {
         () -> assertEquals(210, third[SIZE - 1], 1e-6));
   }
 
+  @Test
+  void the_motion_correction_moves_the_mask_onto_each_slice(@TempDir Path dir) throws IOException {
+    // A bright square; the mask holds it three rows lower and two columns to the right
+    int size = 64;
+    Pixel square = (z, i) -> inSquare(i / size, i % size, 20, 24) ? 2000 : 100;
+    Pixel moved = (z, i) -> inSquare(i / size, i % size, 23, 26) ? 2000 : 100;
+    DicomSeries post =
+        series(dir, "1.2.3.50", "post", 5, 1, square, 1.0, null, "MR", size, 1.0); // NON-NLS
+    DicomSeries pre =
+        series(dir, "1.2.3.51", "pre", 6, 1, moved, 1.0, null, "MR", size, 1.0); // NON-NLS
+    Result plain = build(SubtractionSpec.of("1.2.3.50", "1.2.3.51"), post, pre); // NON-NLS
+    Result corrected =
+        build(SubtractionSpec.of("1.2.3.50", "1.2.3.51").withMotionCorrection(true), post, pre);
+    double[] plainValues = values(first(plain));
+    double[] correctedValues = values(first(corrected));
+    double plainMax = Arrays.stream(plainValues).map(Math::abs).max().orElse(0);
+    double correctedMax = Arrays.stream(correctedValues).map(Math::abs).max().orElse(0);
+    assertAll(
+        () -> assertEquals(1900, plainMax, 1e-6, "uncorrected: the square shows twice"),
+        () -> assertEquals(1, corrected.corrected()),
+        () -> assertEquals(Math.hypot(3, 2), corrected.maxShift(), 0.3),
+        () -> assertTrue(correctedMax < 400, "corrected: the squares cancel, max " + correctedMax),
+        () -> assertEquals(0, plain.corrected()),
+        () ->
+            assertTrue(
+                corrected
+                    .series()
+                    .copyOfMedias(null, null)
+                    .getFirst()
+                    .getMediaReader()
+                    .getDicomObject()
+                    .getString(Tag.DerivationDescription)
+                    .contains("phase correlation")));
+  }
+
+  @Test
+  void a_mask_on_another_grid_of_the_same_frame_is_resampled(@TempDir Path dir) throws IOException {
+    DicomSeries post = series(dir, POST, "post", 5, 5, (z, i) -> 1000 + 10 * z, 1.0);
+    DicomSeries pre =
+        series(dir, PRE, "pre", 6, 5, (z, i) -> 400, 1.0, null, "MR", 2 * SIZE, 0.5); // NON-NLS
+    Pairing pairing = assertInstanceOf(Pairing.class, SubtractionCompatibility.pair(post, pre));
+    assertTrue(pairing.resampled());
+    // The volume of the mask needs the application context: without it the path is only classified
+    MaskVolume volume = MaskVolume.of(pre);
+    assumeTrue(volume != null, "no application context to build the mask volume");
+    volume.close();
+    Result result = SubtractionBuilder.build(SubtractionSpec.of(POST, PRE), post, pre, pairing);
+    results.add(result);
+    List<DicomImageElement> slices = result.series().copyOfMedias(null, null);
+    double[] middle = values(slices.get(2));
+    assertAll(
+        () -> assertTrue(pairing.resampled()),
+        () -> assertEquals("resampled", result.path()),
+        () -> assertEquals(5, result.slices()),
+        () -> assertEquals(620, middle[SIZE * (SIZE / 2) + SIZE / 2], 1e-6, "1020 - 400 inside"),
+        () ->
+            assertTrue(
+                TagD.getTagValue(result.series(), Tag.SeriesDescription, String.class)
+                    .endsWith("(resampled)")));
+  }
+
+  private static boolean inSquare(int row, int column, int top, int left) {
+    return row >= top && row < top + 8 && column >= left && column < left + 8;
+  }
+
   private Result build(SubtractionSpec spec, DicomSeries run) throws IOException {
     Pairing pairing = (Pairing) SubtractionCompatibility.pairFrames(run, spec.dsa());
     assertNotNull(pairing, "the frames of the run pair with the mask");
@@ -347,7 +415,8 @@ class SubtractionBuilderTest {
       Pixel pixel,
       double slope)
       throws IOException {
-    return series(dir, seriesUid, description, seriesNumber, count, pixel, slope, null, "MR");
+    return series(
+        dir, seriesUid, description, seriesNumber, count, pixel, slope, null, "MR", SIZE, 1.0);
   }
 
   private static DicomSeries series(
@@ -360,6 +429,34 @@ class SubtractionBuilderTest {
       double slope,
       LocalTime acquisitionTime,
       String modality)
+      throws IOException {
+    return series(
+        dir,
+        seriesUid,
+        description,
+        seriesNumber,
+        count,
+        pixel,
+        slope,
+        acquisitionTime,
+        modality,
+        SIZE,
+        1.0);
+  }
+
+  /** A series of square slices of that size and pixel spacing, 2 mm apart. */
+  private static DicomSeries series(
+      Path dir,
+      String seriesUid,
+      String description,
+      int seriesNumber,
+      int count,
+      Pixel pixel,
+      double slope,
+      LocalTime acquisitionTime,
+      String modality,
+      int size,
+      double spacing)
       throws IOException {
     Path seriesDir =
         Files.createDirectories(
@@ -377,11 +474,12 @@ class SubtractionBuilderTest {
     series.setTag(TagD.get(Tag.SeriesDescription), description);
     series.setTag(TagD.get(Tag.SeriesNumber), seriesNumber);
     for (int z = 0; z < count; z++) {
-      short[] pixels = new short[SIZE * SIZE];
+      short[] pixels = new short[size * size];
       for (int i = 0; i < pixels.length; i++) {
         pixels[i] = (short) pixel.value(z, i);
       }
-      DicomImageElement slice = slice(seriesDir, seriesUid, z, pixels, base, slope, modality);
+      DicomImageElement slice =
+          slice(seriesDir, seriesUid, z, pixels, base, slope, modality, size, spacing);
       if (acquisitionTime != null) {
         slice.setTag(TagD.get(Tag.AcquisitionTime), acquisitionTime);
       }
@@ -397,8 +495,10 @@ class SubtractionBuilderTest {
       short[] pixels,
       Attributes base,
       double slope,
-      String modality) {
-    ImageCV image = new ImageCV(SIZE, SIZE, CvType.CV_16UC1);
+      String modality,
+      int size,
+      double spacing) {
+    ImageCV image = new ImageCV(size, size, CvType.CV_16UC1);
     image.put(0, 0, pixels);
     FileRawImage raw = new FileRawImage(dir.resolve("slice_" + z + ".wcv")); // NON-NLS
     assertTrue(raw.write(image));
@@ -409,7 +509,7 @@ class SubtractionBuilderTest {
     io.setBaseAttributes(base);
     Attributes a =
         SyntheticSeries.slice(
-            seriesUid, modality, z + 1, 2.0 * z, 1.0, SIZE, SyntheticSeries.FRAME);
+            seriesUid, modality, z + 1, 2.0 * z, spacing, size, SyntheticSeries.FRAME);
     Stream.of(
             Tag.SOPClassUID,
             Tag.SOPInstanceUID,

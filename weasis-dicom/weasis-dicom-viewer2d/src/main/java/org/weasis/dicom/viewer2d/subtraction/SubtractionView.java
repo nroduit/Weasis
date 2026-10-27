@@ -39,6 +39,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionBuilder.MaskVolume;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionBuilder.Percentiles;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Pairing;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.SlicePair;
@@ -63,7 +64,10 @@ public class SubtractionView extends View2d {
 
   private MediaSeries<DicomImageElement> mask;
   private Dsa dsa;
+  private boolean motionCorrection;
   private double factor = 1.0;
+  private MaskVolume maskVolume;
+  private boolean resampled;
   private Map<DicomImageElement, SlicePair> maskOf = Map.of();
   private List<SlicePair> pairList = List.of();
   private MediaSeries<DicomImageElement> pairedSeries;
@@ -132,6 +136,16 @@ public class SubtractionView extends View2d {
     return dsa;
   }
 
+  public boolean isMotionCorrection() {
+    return motionCorrection;
+  }
+
+  /** Whether the mask is resliced onto the grid of the series, the grids differing. */
+  public boolean isResampled() {
+    pairs();
+    return resampled;
+  }
+
   /** The slice of the source series the view shows the difference of. */
   public DicomImageElement getSourceSlice() {
     return sourceImage;
@@ -140,7 +154,8 @@ public class SubtractionView extends View2d {
   /** The spec a build of what the view shows would use. */
   public SubtractionSpec spec() {
     if (dsa != null) {
-      return SubtractionSpec.ofRun(SubtractionCommands.uidOf(series), dsa, factor);
+      return SubtractionSpec.ofRun(SubtractionCommands.uidOf(series), dsa, factor)
+          .withMotionCorrection(motionCorrection);
     }
     return new SubtractionSpec(
         SubtractionCommands.uidOf(series),
@@ -150,7 +165,9 @@ public class SubtractionView extends View2d {
         factor,
         0,
         false,
-        false);
+        false,
+        null,
+        motionCorrection);
   }
 
   /** Changes the mask or its weight and recomputes the shown slice. EDT only. */
@@ -163,12 +180,22 @@ public class SubtractionView extends View2d {
    * slice. EDT only.
    */
   public void setParameters(MediaSeries<DicomImageElement> mask, double factor, Dsa dsa) {
-    if (mask == this.mask && factor == this.factor && Objects.equals(dsa, this.dsa)) {
+    setParameters(mask, factor, dsa, motionCorrection);
+  }
+
+  /** As {@link #setParameters(MediaSeries, double, Dsa)}, with the motion correction. */
+  public void setParameters(
+      MediaSeries<DicomImageElement> mask, double factor, Dsa dsa, boolean motionCorrection) {
+    if (mask == this.mask
+        && factor == this.factor
+        && Objects.equals(dsa, this.dsa)
+        && motionCorrection == this.motionCorrection) {
       return;
     }
     this.mask = mask;
     this.factor = factor;
     this.dsa = dsa;
+    this.motionCorrection = motionCorrection;
     showingDifference = false;
     discardPreviews();
     DicomImageElement source = sourceImage;
@@ -234,11 +261,21 @@ public class SubtractionView extends View2d {
                 () -> {
                   Thread me = Thread.currentThread();
                   try {
+                    MaskVolume volume = maskVolume();
                     Percentiles shared =
-                        known != null ? known : SubtractionBuilder.percentiles(spec, reference);
+                        known != null
+                            ? known
+                            : SubtractionBuilder.percentiles(spec, reference, volume);
                     DicomImageElement preview =
                         SubtractionBuilder.preview(
-                            spec, series, mask, pair, viewCacheDir, shared, currentIndex + 1);
+                            spec,
+                            series,
+                            mask,
+                            pair,
+                            viewCacheDir,
+                            shared,
+                            currentIndex + 1,
+                            volume);
                     GuiExecutor.execute(() -> accept(source, spec, preview, shared));
                   } catch (IOException | RuntimeException e) {
                     // A computation stopped by a newer one says nothing; a failed one shows the
@@ -336,17 +373,43 @@ public class SubtractionView extends View2d {
     }
   }
 
+  /**
+   * The volume of the mask when the grids differ, built once per mask off the EDT by the
+   * computation that needs it first; null on the direct path or when it cannot be built.
+   */
+  private synchronized MaskVolume maskVolume() {
+    if (!isResampled()) {
+      return null;
+    }
+    if (maskVolume == null) {
+      maskVolume = MaskVolume.of(mask);
+      if (maskVolume == null) {
+        throw new IllegalStateException("The volume of the mask cannot be built to resample it");
+      }
+    }
+    return maskVolume;
+  }
+
+  private synchronized void releaseMaskVolume() {
+    if (maskVolume != null) {
+      maskVolume.close();
+      maskVolume = null;
+    }
+  }
+
   /** The pair of every slice of the series, paired once per series and mask. */
   private Map<DicomImageElement, SlicePair> pairs() {
     if (pairedSeries != series || maskOf.isEmpty()) {
       pairedSeries = series;
       maskOf = new HashMap<>();
+      resampled = false;
       SubtractionCompatibility.Result result =
           dsa == null
               ? SubtractionCompatibility.pair(series, mask)
               : SubtractionCompatibility.pairFrames(series, dsa);
       if (result instanceof Pairing pairing) {
         pairList = pairing.slices();
+        resampled = pairing.resampled();
         for (SlicePair pair : pairing.slices()) {
           maskOf.put(pair.image(), pair);
         }
@@ -365,6 +428,7 @@ public class SubtractionView extends View2d {
     maskOf = Map.of();
     pairList = List.of();
     window = null;
+    releaseMaskVolume();
     Thread.ofVirtual()
         .name("subtraction-cleanup")
         .start(() -> old.forEach(DicomImageElement::dispose)); // NON-NLS
@@ -395,9 +459,10 @@ public class SubtractionView extends View2d {
     MediaSeries<DicomImageElement> maskSeries = mask;
     double weight = factor;
     Dsa frames = dsa;
+    boolean motion = motionCorrection;
     exitPreview();
     if (source != null && maskSeries != null) {
-      SubtractionController.subtract(source, maskSeries, weight, frames);
+      SubtractionController.subtract(source, maskSeries, weight, frames, motion);
     }
   }
 
@@ -420,6 +485,7 @@ public class SubtractionView extends View2d {
     }
     container.setSelectedImagePane(newView2d);
     previews.clear();
+    releaseMaskVolume();
     FileUtil.delete(viewCacheDir);
     return newView2d;
   }

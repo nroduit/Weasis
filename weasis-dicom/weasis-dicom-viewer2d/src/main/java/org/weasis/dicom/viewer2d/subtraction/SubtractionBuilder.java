@@ -24,6 +24,7 @@ import org.dcm4che3.data.VR;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -34,9 +35,13 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.dicom.viewer2d.fusion.FusionVolumeBuilder;
+import org.weasis.dicom.viewer2d.fusion.FusionVolumeResampler;
 import org.weasis.dicom.viewer2d.mip.SeriesBuilder;
 import org.weasis.dicom.viewer2d.mpr.DerivedStack;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
+import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Pairing;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.SlicePair;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionSpec.Dsa;
@@ -71,8 +76,82 @@ public final class SubtractionBuilder {
    *
    * @param clipped the pixels whose stored value fell outside the signed 16-bit range
    */
+  /**
+   * The derived series and what its computation reports.
+   *
+   * @param clipped the pixels whose stored value fell outside the signed 16-bit range
+   * @param resampled whether the mask was resliced onto the grid of the series
+   * @param corrected the slices whose mask was moved by the motion correction
+   * @param maxShift the largest motion correction in pixels
+   */
   public record Result(
-      DicomSeries series, Path cacheDir, int slices, long clipped, Percentiles percentiles) {}
+      DicomSeries series,
+      Path cacheDir,
+      int slices,
+      long clipped,
+      Percentiles percentiles,
+      boolean resampled,
+      int corrected,
+      double maxShift) {
+
+    public String path() {
+      return resampled ? "resampled" : "direct"; // NON-NLS
+    }
+  }
+
+  /** The translation the motion correction applied to a mask slice, in pixels. */
+  private record Motion(double rows, double columns) {
+    static final Motion NONE = new Motion(0, 0);
+
+    double length() {
+      return Math.hypot(rows, columns);
+    }
+  }
+
+  /** The mask values of a pair come from its mask slices, or from this volume once resampled. */
+  @FunctionalInterface
+  interface MaskSource {
+    Mat maskOf(SlicePair pair);
+  }
+
+  /** The reslicing of a mask volume onto the grid of each slice, built once per mask series. */
+  public static final class MaskVolume implements MaskSource, AutoCloseable {
+    private final Volume<?, ?> volume;
+
+    private MaskVolume(Volume<?, ?> volume) {
+      this.volume = volume;
+    }
+
+    /** The volume of the mask series, or null when it cannot be built. */
+    public static MaskVolume of(MediaSeries<DicomImageElement> mask) {
+      Volume<?, ?> volume = FusionVolumeBuilder.build(mask);
+      return volume == null || volume.isBasic() ? null : new MaskVolume(volume);
+    }
+
+    @Override
+    public Mat maskOf(SlicePair pair) {
+      DicomImageElement image = pair.image();
+      GeometryOfSlice plane = image.getSliceGeometry();
+      Integer columns = TagD.getTagValue(image, Tag.Columns, Integer.class);
+      Integer rows = TagD.getTagValue(image, Tag.Rows, Integer.class);
+      if (plane == null || columns == null || rows == null) {
+        throw new IllegalStateException("A slice has no geometry to reslice the mask onto");
+      }
+      PlanarImage values = FusionVolumeResampler.resampleToValue(volume, plane, columns, rows);
+      if (values == null) {
+        throw new IllegalStateException("The mask volume cannot be resliced on the series");
+      }
+      Mat mask = values.toMat();
+      // Outside the mask volume nothing is known: the difference there is zero
+      Core.patchNaNs(mask, 0);
+      return mask;
+    }
+
+    @Override
+    public void close() {
+      volume.removeData();
+    }
+  }
 
   private SubtractionBuilder() {}
 
@@ -96,18 +175,29 @@ public final class SubtractionBuilder {
     AtomicLong clipped = new AtomicLong();
     Percentiles[] percentiles = new Percentiles[1];
     FileRawImage[] files = new FileRawImage[pairs.size()];
-    // One mask for every frame of a run: computed once, read by every slice
+    MaskVolume volume = pairing.resampled() ? MaskVolume.of(mask) : null;
+    if (pairing.resampled() && volume == null) {
+      FileUtil.delete(dir);
+      throw new IllegalStateException("The volume of the mask cannot be built to resample it");
+    }
+    MaskSource masks = volume != null ? volume : pair -> maskOf(spec, pair);
+    // One mask for every frame of a run: computed once, read by every slice, unless each slice
+    // moves its own
     Mat shared =
-        pairs.stream().allMatch(p -> p.masks().equals(pairs.getFirst().masks()))
+        volume == null
+                && !spec.motionCorrection()
+                && pairs.stream().allMatch(p -> p.masks().equals(pairs.getFirst().masks()))
             ? maskOf(spec, pairs.getFirst())
             : null;
+    Motion[] motions = new Motion[pairs.size()];
     try {
       IntStream.range(0, pairs.size())
           .parallel()
           .forEach(
               i -> {
-                Slice slice = subtract(spec, pairs.get(i), slope, shared);
+                Slice slice = subtract(spec, pairs.get(i), slope, shared, masks);
                 clipped.addAndGet(slice.clipped());
+                motions[i] = slice.motion();
                 if (i == middle) {
                   percentiles[0] = slice.percentiles();
                 }
@@ -123,10 +213,22 @@ public final class SubtractionBuilder {
       if (shared != null) {
         shared.release();
       }
+      if (volume != null) {
+        volume.close();
+      }
     }
+    int corrected = (int) Arrays.stream(motions).filter(m -> m != Motion.NONE).count();
+    double maxShift = Arrays.stream(motions).mapToDouble(Motion::length).max().orElse(0);
 
     Attributes base =
-        baseAttributes(spec, source, series, mask, pairs.get(middle).mask(), percentiles[0]);
+        baseAttributes(
+            spec,
+            source,
+            series,
+            mask,
+            pairs.get(middle).mask(),
+            percentiles[0],
+            pairing.resampled());
     List<DicomImageElement> images =
         IntStream.range(0, pairs.size())
             .mapToObj(i -> element(spec, pairs.get(i), files[i], base, slope, seriesUid, i))
@@ -135,7 +237,15 @@ public final class SubtractionBuilder {
     derived.addAll(images);
     images.getFirst().getMediaReader().writeMetaData(derived);
     derived.setTag(TagW.Derivation, DERIVATION);
-    return new Result(derived, dir, pairs.size(), clipped.get(), percentiles[0]);
+    return new Result(
+        derived,
+        dir,
+        pairs.size(),
+        clipped.get(),
+        percentiles[0],
+        pairing.resampled(),
+        corrected,
+        maxShift);
   }
 
   /**
@@ -150,44 +260,50 @@ public final class SubtractionBuilder {
       SlicePair pair,
       Path dir,
       Percentiles window,
-      int instanceNumber)
+      int instanceNumber,
+      MaskVolume volume)
       throws IOException {
     Attributes source = pair.image().getMediaReader().getDicomObject();
     double slope = rescaleSlope(source);
-    Slice slice = subtract(spec, pair, slope);
+    Slice slice = subtract(spec, pair, slope, null, maskSource(spec, volume));
     FileRawImage raw =
         write(
             slice.stored(), new FileRawImage(Files.createTempFile(dir, "sub_", ".wcv"))); // NON-NLS
     Percentiles percentiles = window == null ? slice.percentiles() : window;
-    Attributes base = baseAttributes(spec, source, series, mask, pair.mask(), percentiles);
+    Attributes base =
+        baseAttributes(spec, source, series, mask, pair.mask(), percentiles, volume != null);
     return element(spec, pair, raw, base, slope, spec.derivedSeriesUid(), instanceNumber - 1);
   }
 
   /** The window percentiles of one pair, the slice computed and dropped: what a preview shares. */
-  public static Percentiles percentiles(SubtractionSpec spec, SlicePair pair) {
+  public static Percentiles percentiles(SubtractionSpec spec, SlicePair pair, MaskVolume volume) {
     Attributes source = pair.image().getMediaReader().getDicomObject();
-    Slice slice = subtract(spec, pair, rescaleSlope(source));
+    Slice slice = subtract(spec, pair, rescaleSlope(source), null, maskSource(spec, volume));
     slice.stored().release();
     return slice.percentiles();
   }
 
-  private record Slice(ImageCV stored, long clipped, Percentiles percentiles) {}
-
-  /** The stored difference of one pair; the percentiles are measured on the real values. */
-  private static Slice subtract(SubtractionSpec spec, SlicePair pair, double slope) {
-    return subtract(spec, pair, slope, null);
+  private static MaskSource maskSource(SubtractionSpec spec, MaskVolume volume) {
+    return volume != null ? volume : pair -> maskOf(spec, pair);
   }
 
-  /** The difference of one pair; {@code shared} is the mask already computed for it, if any. */
-  private static Slice subtract(SubtractionSpec spec, SlicePair pair, double slope, Mat shared) {
+  private record Slice(ImageCV stored, long clipped, Percentiles percentiles, Motion motion) {}
+
+  /**
+   * The difference of one pair; {@code shared} is the mask already computed for it, if any, else
+   * the source gives it.
+   */
+  private static Slice subtract(
+      SubtractionSpec spec, SlicePair pair, double slope, Mat shared, MaskSource source) {
     PlanarImage image = pair.image().getUncachedModalityLutImage(null);
     Mat b = shared;
+    Motion motion = Motion.NONE;
     try {
       if (image == null) {
         throw new IllegalStateException("A slice of an operand cannot be read");
       }
       if (b == null) {
-        b = maskOf(spec, pair);
+        b = source.maskOf(pair);
       }
       if (image.width() != b.cols() || image.height() != b.rows()) {
         throw new IllegalStateException("A mask slice has not the size of its slice");
@@ -195,6 +311,16 @@ public final class SubtractionBuilder {
       // Both operands as 32-bit floats: the sources may differ in depth and sign
       Mat a = new Mat();
       image.toMat().convertTo(a, CvType.CV_32F);
+      if (spec.motionCorrection()) {
+        motion = motionOf(a, b);
+        if (motion != Motion.NONE) {
+          Mat moved = translate(b, motion.rows(), motion.columns());
+          if (b != shared) {
+            b.release();
+          }
+          b = moved;
+        }
+      }
       Mat difference = new Mat();
       Core.addWeighted(a, 1.0, b, -spec.factor(), spec.offset(), difference);
       a.release();
@@ -212,7 +338,7 @@ public final class SubtractionBuilder {
       ImageCV stored = new ImageCV();
       difference.convertTo(stored, CvType.CV_16S);
       difference.release();
-      return new Slice(stored, clipped, percentiles);
+      return new Slice(stored, clipped, percentiles, motion);
     } finally {
       release(image);
       if (b != null && b != shared) {
@@ -256,16 +382,52 @@ public final class SubtractionBuilder {
     }
     Dsa dsa = spec.dsa();
     if (dsa != null && dsa.isShifted()) {
-      Mat translation = new Mat(2, 3, CvType.CV_64F);
-      translation.put(0, 0, 1, 0, dsa.shiftColumns(), 0, 1, dsa.shiftRows());
-      Mat shifted = new Mat();
-      Imgproc.warpAffine(
-          sum, shifted, translation, sum.size(), Imgproc.INTER_LINEAR, Core.BORDER_REPLICATE);
-      translation.release();
+      Mat shifted = translate(sum, dsa.shiftRows(), dsa.shiftColumns());
       sum.release();
       sum = shifted;
     }
     return sum;
+  }
+
+  /** The image moved by that many rows and columns, bilinear, edge pixels repeated. */
+  private static Mat translate(Mat image, double rows, double columns) {
+    Mat translation = new Mat(2, 3, CvType.CV_64F);
+    translation.put(0, 0, 1, 0, columns, 0, 1, rows);
+    Mat moved = new Mat();
+    Imgproc.warpAffine(
+        image, moved, translation, image.size(), Imgproc.INTER_LINEAR, Core.BORDER_REPLICATE);
+    translation.release();
+    return moved;
+  }
+
+  /** A correction is ignored when the correlation is weak or the shift implausibly large. */
+  private static final double MIN_CORRELATION = 0.05;
+
+  private static final double MAX_SHIFT_FRACTION = 0.1;
+
+  /**
+   * The translation that brings the mask onto the slice, measured by phase correlation under a Hann
+   * window; none when the two do not correlate or the measured shift is beyond a tenth of the
+   * image.
+   */
+  private static Motion motionOf(Mat slice, Mat mask) {
+    Mat window = new Mat();
+    Imgproc.createHanningWindow(window, slice.size(), CvType.CV_32F);
+    double[] response = new double[1];
+    Point shift = Imgproc.phaseCorrelate(mask, slice, window, response);
+    window.release();
+    double limit = MAX_SHIFT_FRACTION * Math.min(slice.cols(), slice.rows());
+    if (response[0] < MIN_CORRELATION
+        || !Double.isFinite(shift.x)
+        || !Double.isFinite(shift.y)
+        || Math.abs(shift.x) > limit
+        || Math.abs(shift.y) > limit
+        || (Math.abs(shift.x) < 1e-3 && Math.abs(shift.y) < 1e-3)) {
+      return Motion.NONE;
+    }
+    // phaseCorrelate(mask, slice) is the shift of the slice relative to the mask: moving the mask
+    // by it aligns the two
+    return new Motion(shift.y, shift.x);
   }
 
   private static void release(Mat mat) {
@@ -309,14 +471,20 @@ public final class SubtractionBuilder {
       MediaSeries<DicomImageElement> series,
       MediaSeries<DicomImageElement> mask,
       DicomImageElement maskReference,
-      Percentiles percentiles) {
+      Percentiles percentiles,
+      boolean resampled) {
     Attributes base = SeriesBuilder.getBaseAttributes(source);
     base.remove(Tag.VOILUTSequence);
     base.setString(
         Tag.SeriesDescription,
         VR.LO,
         description(
-            series, source, mask, maskReference, spec.dsa() == null ? "" : spec.dsa().label()));
+            series,
+            source,
+            mask,
+            maskReference,
+            spec.dsa() == null ? "" : spec.dsa().label(),
+            resampled));
     base.setString(Tag.ImageType, VR.CS, imageType(source));
     base.setInt(Tag.SeriesNumber, VR.IS, source.getInt(Tag.SeriesNumber, 0) + 1000);
     base.setString(Tag.DerivationDescription, VR.ST, spec.derivationDescription());
@@ -338,7 +506,8 @@ public final class SubtractionBuilder {
       Attributes source,
       MediaSeries<DicomImageElement> mask,
       DicomImageElement maskReference,
-      String maskLabel) {
+      String maskLabel,
+      boolean resampled) {
     String series = TagD.getTagValue(operand, Tag.SeriesDescription, String.class);
     if (series == null) {
       series = source.getString(Tag.SeriesDescription, "");
@@ -352,6 +521,9 @@ public final class SubtractionBuilder {
     if (operand == mask) {
       // A run minus its own frames: SUB <run> (mask 1)
       text = DERIVATION + " " + series + " (mask " + maskLabel + ")"; // NON-NLS
+    }
+    if (resampled) {
+      text += " (resampled)"; // NON-NLS
     }
     return text.length() <= MAX_DESCRIPTION_LENGTH
         ? text.strip()

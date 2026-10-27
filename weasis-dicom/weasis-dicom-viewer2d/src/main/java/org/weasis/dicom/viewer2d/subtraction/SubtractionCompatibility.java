@@ -45,7 +45,19 @@ public final class SubtractionCompatibility {
    * @param sameFrameOfReference false when both operands lack a Frame of Reference UID, which the
    *     direct path accepts with a warning
    */
-  public record Pairing(List<SlicePair> slices, boolean sameFrameOfReference) implements Result {}
+  /**
+   * The slices of the series with their mask slices. On the direct path the mask slice shares the
+   * grid of its slice; on the resampled path the grids differ in one frame of reference, the mask
+   * slice is the nearest one by position (a reference) and the mask values are resliced from the
+   * volume of the mask series onto every slice.
+   */
+  public record Pairing(List<SlicePair> slices, boolean sameFrameOfReference, boolean resampled)
+      implements Result {
+
+    public Pairing(List<SlicePair> slices, boolean sameFrameOfReference) {
+      this(slices, sameFrameOfReference, false);
+    }
+  }
 
   public record Refusal(String reason) implements Result {}
 
@@ -101,22 +113,43 @@ public final class SubtractionCompatibility {
     if (!sameFrame && frame != null && maskFrame != null) {
       return new Refusal("The operands have different frames of reference");
     }
-    if (!sameMatrix(images.getFirst(), masks.getFirst())) {
-      return new Refusal("The operands have different matrices (rows and columns)");
-    }
     GeometryOfSlice geometry = images.getFirst().getSliceGeometry();
     GeometryOfSlice maskGeometry = masks.getFirst().getSliceGeometry();
     if (geometry == null || maskGeometry == null) {
+      if (!sameMatrix(images.getFirst(), masks.getFirst())) {
+        return new Refusal("The operands have different matrices (rows and columns)");
+      }
       return pairByIndex(images, masks, geometry == null && maskGeometry == null, sameFrame);
     }
-    if (!within(geometry.getVoxelSpacing(), maskGeometry.getVoxelSpacing())) {
-      return new Refusal("The operands have different pixel spacings");
-    }
-    if (!within(geometry.getRow(), maskGeometry.getRow())
+    Refusal grid = null;
+    if (!sameMatrix(images.getFirst(), masks.getFirst())) {
+      grid = new Refusal("The operands have different matrices (rows and columns)");
+    } else if (!within(geometry.getVoxelSpacing(), maskGeometry.getVoxelSpacing())) {
+      grid = new Refusal("The operands have different pixel spacings");
+    } else if (!within(geometry.getRow(), maskGeometry.getRow())
         || !within(geometry.getColumn(), maskGeometry.getColumn())) {
-      return new Refusal("The operands have different orientations");
+      grid = new Refusal("The operands have different orientations");
     }
-    return pairByPosition(images, masks, sameFrame);
+    Result direct = grid == null ? pairByPosition(images, masks, sameFrame) : grid;
+    if (direct instanceof Pairing || !sameFrame) {
+      // Grids that differ pair only through the geometry: one frame of reference is needed
+      return direct;
+    }
+    return resampled(images, masks);
+  }
+
+  /**
+   * The resampled path: every slice of the series takes the nearest mask slice as its reference,
+   * the mask values coming from the volume of the mask series.
+   */
+  private static Result resampled(List<DicomImageElement> images, List<DicomImageElement> masks) {
+    double[] maskPositions =
+        masks.stream().mapToDouble(SubtractionCompatibility::position).toArray();
+    List<SlicePair> pairs = new ArrayList<>(images.size());
+    for (DicomImageElement image : images) {
+      pairs.add(new SlicePair(image, masks.get(nearest(maskPositions, position(image)))));
+    }
+    return new Pairing(acquisitionOrder(pairs), true, true);
   }
 
   /**

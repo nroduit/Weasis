@@ -87,6 +87,19 @@ class SubtractionSpecTest {
   }
 
   @Test
+  void the_motion_correction_is_part_of_the_identity_and_of_the_json() {
+    SubtractionSpec plain = SubtractionSpec.of("1.2.3", "1.2.4");
+    SubtractionSpec corrected = plain.withMotionCorrection(true);
+    assertAll(
+        () -> assertNotEquals(plain.derivedSeriesUid(), corrected.derivedSeriesUid()),
+        () -> assertEquals(corrected, SubtractionSpec.fromJson(corrected.toJson().build())),
+        () -> assertFalse(plain.toJson().build().containsKey("motionCorrection")),
+        () -> assertTrue(corrected.toJson().build().getBoolean("motionCorrection")),
+        () -> assertTrue(corrected.derivationDescription().contains("phase correlation")),
+        () -> assertFalse(corrected.withMotionCorrection(false).motionCorrection()));
+  }
+
+  @Test
   void a_dsa_mask_is_frames_or_an_offset_of_the_run_itself() {
     assertAll(
         () ->

@@ -71,7 +71,10 @@ public final class SubtractionService {
       Path cacheDir,
       int slices,
       long clipped,
-      boolean sameFrameOfReference) {
+      boolean sameFrameOfReference,
+      String path,
+      int corrected,
+      double maxShift) {
 
     public String seriesUid() {
       return spec.derivedSeriesUid();
@@ -261,7 +264,10 @@ public final class SubtractionService {
             built.cacheDir(),
             built.slices(),
             built.clipped(),
-            pairing.sameFrameOfReference());
+            pairing.sameFrameOfReference(),
+            built.path(),
+            built.corrected(),
+            built.maxShift());
     GuiExecutor.invokeAndRethrow(() -> register(derived));
     DERIVED.put(derived.seriesUid(), derived);
     LOGGER.info(

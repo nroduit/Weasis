@@ -213,6 +213,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newSubtractionPreviewAction());
     setAction(newSubtractionMaskAction());
     setAction(newSubtractionFactorAction());
+    setAction(newSubtractionMotionAction());
     setAction(newSubtractionShiftAction(SubtractionAction.SHIFT_ROWS));
     setAction(newSubtractionShiftAction(SubtractionAction.SHIFT_COLUMNS));
     fusionBaseOpacity =
@@ -941,6 +942,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     };
   }
 
+  private ToggleButtonListener newSubtractionMotionAction() {
+    return new ToggleButtonListener(SubtractionAction.MOTION, false) {
+      @Override
+      public void actionPerformed(boolean selected) {
+        SubtractionController.updatePreview();
+      }
+    };
+  }
+
   /** The mask of a run moves by quarter pixels, up to five pixels each way. */
   private SliderChangeListener newSubtractionShiftAction(SliderChangeListenerValue action) {
     return new SliderChangeListener(action, -5.0, 5.0, 0.0, false, 0.1, 40) {
@@ -1013,6 +1023,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         .ifPresent(
             a -> {
               a.setSelectedWithoutTriggerAction(preview != null);
+              a.enableAction(available);
+            });
+    getAction(SubtractionAction.MOTION)
+        .ifPresent(
+            a -> {
+              if (preview != null) {
+                a.setSelectedWithoutTriggerAction(preview.isMotionCorrection());
+              }
               a.enableAction(available);
             });
   }

@@ -61,5 +61,14 @@ public final class SubtractionAction {
           0,
           null); // NON-NLS
 
+  /** Moves each mask slice onto its slice by the translation phase correlation measures. */
+  public static final ToggleButtonListenerValue MOTION =
+      new ToggleButtonListenerValue(
+          Messages.getString("SubtractionTool.motion"),
+          "subtraction.motion",
+          0,
+          0,
+          null); // NON-NLS
+
   private SubtractionAction() {}
 }

@@ -36,6 +36,9 @@ import org.weasis.core.util.StringUtil;
  * @param offset value added to every difference
  * @param absolute whether the absolute difference is stored
  * @param signed whether the signed window is the default one instead of black below zero
+ * @param dsa the mask taken from the frames of a run, null for a mask series
+ * @param motionCorrection whether each mask slice is moved onto its slice by the translation phase
+ *     correlation measures, against the patient's motion between the acquisitions
  */
 public record SubtractionSpec(
     String seriesUid,
@@ -46,7 +49,8 @@ public record SubtractionSpec(
     double offset,
     boolean absolute,
     boolean signed,
-    Dsa dsa) {
+    Dsa dsa,
+    boolean motionCorrection) {
 
   /**
    * The mask of an angiographic run taken from its own frames, as the Mask Subtraction Sequence
@@ -188,6 +192,20 @@ public record SubtractionSpec(
     }
   }
 
+  /** A subtraction without motion correction. */
+  public SubtractionSpec(
+      String seriesUid,
+      String maskUid,
+      Integer phase,
+      Integer maskPhase,
+      double factor,
+      double offset,
+      boolean absolute,
+      boolean signed,
+      Dsa dsa) {
+    this(seriesUid, maskUid, phase, maskPhase, factor, offset, absolute, signed, dsa, false);
+  }
+
   /** A subtraction of two series or of two phases, not of the frames of a run. */
   public SubtractionSpec(
       String seriesUid,
@@ -198,7 +216,7 @@ public record SubtractionSpec(
       double offset,
       boolean absolute,
       boolean signed) {
-    this(seriesUid, maskUid, phase, maskPhase, factor, offset, absolute, signed, null);
+    this(seriesUid, maskUid, phase, maskPhase, factor, offset, absolute, signed, null, false);
   }
 
   /** A subtraction of whole series. */
@@ -220,7 +238,21 @@ public record SubtractionSpec(
   /** The same subtraction for another phase of the series. */
   public SubtractionSpec withPhase(Integer phase) {
     return new SubtractionSpec(
-        seriesUid, maskUid, phase, maskPhase, factor, offset, absolute, signed, dsa);
+        seriesUid,
+        maskUid,
+        phase,
+        maskPhase,
+        factor,
+        offset,
+        absolute,
+        signed,
+        dsa,
+        motionCorrection);
+  }
+
+  public SubtractionSpec withMotionCorrection(boolean on) {
+    return new SubtractionSpec(
+        seriesUid, maskUid, phase, maskPhase, factor, offset, absolute, signed, dsa, on);
   }
 
   /** The run minus a mask taken from its own frames. */
@@ -230,7 +262,16 @@ public record SubtractionSpec(
 
   public SubtractionSpec withDsa(Dsa dsa) {
     return new SubtractionSpec(
-        seriesUid, maskUid, phase, maskPhase, factor, offset, absolute, signed, dsa);
+        seriesUid,
+        maskUid,
+        phase,
+        maskPhase,
+        factor,
+        offset,
+        absolute,
+        signed,
+        dsa,
+        motionCorrection);
   }
 
   /** Series Instance UID of the derived series. */
@@ -270,6 +311,9 @@ public record SubtractionSpec(
                 dsa.shiftColumns()); // NON-NLS
       }
     }
+    if (motionCorrection) {
+      text += ", mask moved onto each slice by phase correlation"; // NON-NLS
+    }
     return absolute ? text + ", absolute value" : text;
   }
 
@@ -287,6 +331,9 @@ public record SubtractionSpec(
     if (dsa != null) {
       json.add("dsa", dsa.toJson()); // NON-NLS
     }
+    if (motionCorrection) {
+      json.add("motionCorrection", true); // NON-NLS
+    }
     return json;
   }
 
@@ -303,7 +350,8 @@ public record SubtractionSpec(
         json.getJsonNumber("offset").doubleValue(), // NON-NLS
         json.getBoolean("absolute", false), // NON-NLS
         json.getBoolean("signed", false), // NON-NLS
-        json.get("dsa") instanceof JsonObject d ? Dsa.fromJson(d) : null); // NON-NLS
+        json.get("dsa") instanceof JsonObject d ? Dsa.fromJson(d) : null, // NON-NLS
+        json.getBoolean("motionCorrection", false)); // NON-NLS
   }
 
   private String key() {
@@ -318,7 +366,8 @@ public record SubtractionSpec(
         number(offset),
         Boolean.toString(absolute),
         Boolean.toString(signed),
-        dsa == null ? "" : dsa.key());
+        dsa == null ? "" : dsa.key(),
+        motionCorrection ? "motion" : ""); // NON-NLS
   }
 
   private static String number(double value) {

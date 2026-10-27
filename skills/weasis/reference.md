@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.18, protocol 1, application development.
+Command API 2.19, protocol 1, application development.
 
 ## color
 
@@ -940,7 +940,7 @@ Derived series subtracting one series of a study from another (post-contrast min
 
 Builds the series minus the mask as a new series of the study, pixel by pixel on the same grid (A - factor*B + offset, real values), and opens it in the selected pane. The same operands and options always give the same series.
 
-Usage: `subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--no-open] [--signed] [--factor=<number>] [--mask=<series-uid>] [--mask-frames=<frames>] [--mask-phase=<phase-index>] [--offset=<number>] [--phase=<phase-index>] [--series=<series-uid>] [--shift=<rows,columns>] [--tid-offset=<count>]`
+Usage: `subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--motion-correction] [--no-open] [--signed] [--factor=<number>] [--mask=<series-uid>] [--mask-frames=<frames>] [--mask-phase=<phase-index>] [--offset=<number>] [--phase=<phase-index>] [--series=<series-uid>] [--shift=<rows,columns>] [--tid-offset=<count>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
@@ -958,6 +958,7 @@ Usage: `subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--
 | --mask-frames | string |  | DSA: mask frames of the run itself, from 1 ('3', '2-4' averaged, '1,3,5'); the series is an X-ray run (default for a run: the frames its DICOM names, else frame 1). |
 | --tid-offset | integer |  | DSA: time-interval mask, each frame minus the frame that many before it. |
 | --shift | string |  | DSA: sub-pixel shift of the mask in pixels, down and right when positive. |
+| --motion-correction | boolean |  | Move the mask of each slice onto it by the translation phase correlation measures (default: what the pane previews, else off). |
 | --no-open | boolean |  | Build the series without opening it. |
 
 ### subtraction:delete (since 5.0)
@@ -1022,7 +1023,7 @@ Usage: `subtraction:phases [-h] [--json] [--series=<series-uid>]`
 
 Shows the series of a pane minus a mask live, slice by slice, before any series is built: a call starts the preview (with the proposed mask unless --mask), --mask and --factor change it, --off puts the plain series back. The state of the pane comes back with the preview under 'subtraction'.
 
-Usage: `subtraction:preview [-h] [--json] [--off] [--factor=<number>] [--mask=<series-uid>] [--pane=<pane-index>] [--view=<view-id>]`
+Usage: `subtraction:preview [-h] [--json] [--off] [--motion-correction[=<on>]] [--factor=<number>] [--mask=<series-uid>] [--pane=<pane-index>] [--view=<view-id>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
@@ -1031,6 +1032,7 @@ Usage: `subtraction:preview [-h] [--json] [--off] [--factor=<number>] [--mask=<s
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --mask | series-uid |  | The series subtracted, from 'dicom:list' (default: the series of the study without contrast agent, else the earliest compatible one). |
 | --factor | number |  | Weight of the mask, 1 subtracts it fully (default: 1). |
+| --motion-correction | boolean |  | Moves the mask of each slice onto it by the translation phase correlation measures (true when given without a value; false switches it off). |
 | --off | boolean |  | Leaves the preview, the plain series stays shown. |
 
 ### subtraction:shift (since 5.0)
@@ -1429,16 +1431,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --set=<magnification> | --fit=<zoom-fit>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
 | --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
+| --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
 
 
 ## view3d

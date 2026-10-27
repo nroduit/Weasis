@@ -19,6 +19,7 @@ import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -476,6 +477,15 @@ public class ImageTool extends PluginTool {
               GuiUtils.setPreferredWidth(slider, 100);
               panel.add(slider);
               panel.add(GuiUtils.boxVerticalStrut(gabY));
+            });
+
+    manager
+        .getAction(SubtractionAction.MOTION)
+        .ifPresent(
+            a -> {
+              JCheckBox motion = a.createCheckBox(SubtractionAction.MOTION.getTitle());
+              motion.setToolTipText(Messages.getString("SubtractionTool.motion.tip"));
+              panel.add(GuiUtils.getFlowLayoutPanel(motion));
             });
 
     JPanel bottom = new JPanel(new BorderLayout());

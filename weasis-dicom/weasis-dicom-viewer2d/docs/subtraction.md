@@ -65,13 +65,32 @@ drive the preview of a pane, `subtraction:create` takes `--mask-frames`, `--tid-
 no Mask Subtraction Sequence is written on them, since a reader applying it would subtract the
 result again.
 
+## Resampled path and motion correction
+
+When the grids of the two series differ (matrix, spacing, orientation, or slice positions that
+do not match) but both lie in one frame of reference, the pairing takes the **resampled path**:
+every slice of the series keeps the nearest mask slice as its reference, and the mask values are
+resliced from the volume of the mask series (`FusionVolumeBuilder`, `FusionVolumeResampler`, the
+same reslicing the fusion uses) onto the grid of each slice, built once per mask by
+`SubtractionBuilder.MaskVolume`. Outside the mask volume the difference is zero. The derived
+series is labelled *(resampled)* and the command reports `path: resampled`. Without a frame of
+reference the grids must match, as before.
+
+**Motion correction** is an opt-in of the spec (`motionCorrection`): for every pair, phase
+correlation under a Hann window measures the translation between the mask and the slice, and the
+mask is moved by it before the subtraction, bilinear, edge pixels repeated. A weak correlation or
+a shift beyond a tenth of the image is ignored. The result counts the corrected slices and the
+largest shift, which the command reports under `motionCorrection`, and the Derivation Description
+says the mask was moved. It is a rigid, per-slice, in-plane correction: the elastic registration
+of a breast workstation is out of scope.
+
 ## Classes
 
 | Class | Role |
 |---|---|
 | `SubtractionSpec` | What is computed: the two series (or phases, or a run and the frames of its mask), the mask weight `k`, an offset, the absolute-value and signed-window flags. The same spec always names the same derived Series and SOP Instance UIDs, so a subtraction created twice is one object |
-| `SubtractionCompatibility` | Whether a mask can be subtracted without resampling (the *direct path*) and the pairing of the slices: same modality, same study, one frame of reference, one matrix, one pixel spacing and orientation, and a mask slice within half a slice spacing of every slice of the series. Anything else is a `Refusal` with its reason |
-| `SubtractionBuilder` | Computes each pair on modality-LUT values in 32-bit floats, stores the difference as signed 16-bit with the rescale slope of the series (a difference of two stored values is then exact), counts the clipped pixels, writes the DICOM attributes of the derived instances and measures the default window on the middle slice |
+| `SubtractionCompatibility` | Whether and how a mask can be subtracted: the *direct path* (same modality, same study, one matrix, one pixel spacing and orientation, and a mask slice within half a slice spacing of every slice of the series), the *resampled path* when the grids differ in one frame of reference, and the frame pairing of a run. Anything else is a `Refusal` with its reason |
+| `SubtractionBuilder` | Computes each pair on modality-LUT values in 32-bit floats, the mask read from its slices or resliced from its volume, moved by the motion correction when asked, stores the difference as signed 16-bit with the rescale slope of the series (a difference of two stored values is then exact), counts the clipped pixels, writes the DICOM attributes of the derived instances and measures the default window on the middle slice |
 | `SubtractionService` | Headless entry point: the compatible masks of a series and the one a reader would pick, `create`, `list`, `find`, `delete`, and `open` in the selected pane. Keeps the derived series of the session with their spec |
 | `PhaseGrouper` | The phases of a dynamic series stored as one series, each as a transient series that remembers its parent and index |
 | `DsaMask`, `FrameMask` | What the DICOM of an X-ray run says about subtracting it (mask sequence, recommended viewing mode, frame order), and the entries of the mask combo for the frames of a run |
@@ -122,9 +141,10 @@ protocol shows the pre-contrast T1, the post-contrast T1 and their subtraction.
 ## Invariants
 
 - A subtraction never changes its operands; the derived series is a new object of the study.
-- The direct path refuses rather than guesses: a slice without a mask slice at its position, a
-  different grid or a different frame of reference is a refusal with its reason, which the command
-  returns as `not-applicable` and the panel shows.
+- The pairing never guesses an alignment: grids that differ pair only through their geometry, in
+  one frame of reference; a different frame of reference, or no frame of reference with a
+  different grid, is a refusal with its reason, which the command returns as `not-applicable`
+  and the panel shows.
 - A view of a hanging layout lives in a `ViewportPane`; replacing it (preview, MIP) goes through
   `ImageViewerPlugin.replaceView`, which swaps the stack canvas of the pane.
 - The user interface calls the service the commands call, never the reverse.
