@@ -13,8 +13,10 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
@@ -28,6 +30,7 @@ import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Pairing;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Refusal;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Result;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.SlicePair;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionSpec.Dsa;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
 class SubtractionCompatibilityTest {
@@ -161,6 +164,50 @@ class SubtractionCompatibilityTest {
                 Refusal.class,
                 SubtractionCompatibility.pair(post, SyntheticSeries.series(otherStudy))),
         () -> assertInstanceOf(Refusal.class, SubtractionCompatibility.pair(post, null)));
+  }
+
+  @Test
+  void the_frames_of_a_run_pair_with_the_averaged_mask_frames_within_the_range() {
+    DicomSeries run = DsaMaskTest.run(null, null);
+    Dsa dsa = new Dsa(List.of(1, 2), null, 2, 4, 0, 0);
+    Pairing pairing =
+        assertInstanceOf(Pairing.class, SubtractionCompatibility.pairFrames(run, dsa));
+    List<DicomImageElement> frames = DsaMask.frames(run);
+    assertAll(
+        () -> assertEquals(3, pairing.slices().size(), "frames 2 to 4"),
+        () -> assertSame(frames.get(1), pairing.slices().getFirst().image()),
+        () ->
+            assertEquals(
+                List.of(frames.get(0), frames.get(1)), pairing.slices().getFirst().masks()),
+        () -> assertSame(frames.get(0), pairing.slices().getFirst().mask()),
+        () ->
+            assertInstanceOf(
+                Refusal.class, SubtractionCompatibility.pairFrames(run, Dsa.ofFrame(9))),
+        () ->
+            assertInstanceOf(
+                Refusal.class,
+                SubtractionCompatibility.pairFrames(
+                    SyntheticSeries.mr(PRE, 3, 0), Dsa.ofFrame(1))));
+  }
+
+  @Test
+  void a_time_interval_mask_pairs_each_frame_with_the_one_the_offset_points_to() {
+    DicomSeries run = DsaMaskTest.run(null, null);
+    List<DicomImageElement> frames = DsaMask.frames(run);
+    Pairing forward =
+        assertInstanceOf(
+            Pairing.class,
+            SubtractionCompatibility.pairFrames(run, new Dsa(List.of(), 2, null, null, 0, 0)));
+    Pairing reverse =
+        assertInstanceOf(
+            Pairing.class,
+            SubtractionCompatibility.pairFrames(run, new Dsa(List.of(), -1, null, null, 0, 0)));
+    assertAll(
+        () -> assertEquals(3, forward.slices().size(), "the first two frames have no mask"),
+        () -> assertSame(frames.get(2), forward.slices().getFirst().image()),
+        () -> assertSame(frames.get(0), forward.slices().getFirst().mask()),
+        () -> assertEquals(4, reverse.slices().size(), "the last frame has no mask"),
+        () -> assertSame(frames.get(1), reverse.slices().getFirst().mask()));
   }
 
   @Test

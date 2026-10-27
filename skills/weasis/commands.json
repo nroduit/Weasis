@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.17",
+  "apiVersion": "2.18",
   "protocolVersion": 1,
   "applicationVersion": "development",
   "exitCodes": {
@@ -3462,7 +3462,7 @@
           "name": "create",
           "description": "Builds the series minus the mask as a new series of the study, pixel by pixel on the same grid (A - factor*B + offset, real values), and opens it in the selected pane. The same operands and options always give the same series.",
           "since": "5.0",
-          "usage": "subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--no-open] [--signed] [--factor=<number>] [--mask=<series-uid>] [--mask-phase=<phase-index>] [--offset=<number>] [--phase=<phase-index>] [--series=<series-uid>]",
+          "usage": "subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--no-open] [--signed] [--factor=<number>] [--mask=<series-uid>] [--mask-frames=<frames>] [--mask-phase=<phase-index>] [--offset=<number>] [--phase=<phase-index>] [--series=<series-uid>] [--shift=<rows,columns>] [--tid-offset=<count>]",
           "parameters": [],
           "options": [
             {
@@ -3577,6 +3577,36 @@
             },
             {
               "names": [
+                "--mask-frames"
+              ],
+              "label": "<frames>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "DSA: mask frames of the run itself, from 1 ('3', '2-4' averaged, '1,3,5'); the series is an X-ray run (default for a run: the frames its DICOM names, else frame 1)."
+            },
+            {
+              "names": [
+                "--tid-offset"
+              ],
+              "label": "<count>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "DSA: time-interval mask, each frame minus the frame that many before it."
+            },
+            {
+              "names": [
+                "--shift"
+              ],
+              "label": "<rows,columns>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "DSA: sub-pixel shift of the mask in pixels, down and right when positive."
+            },
+            {
+              "names": [
                 "--no-open"
               ],
               "label": "",
@@ -3675,6 +3705,65 @@
           ]
         },
         {
+          "name": "mask",
+          "description": "Sets the mask of the X-ray run a pane shows, taken from its own frames, and previews the subtraction: one frame, several frames averaged, or a time-interval offset. The state of the pane comes back with the mask under 'subtraction'.",
+          "since": "5.0",
+          "usage": "subtraction:mask [-h] [--json] [--frames=<frames>] [--pane=<pane-index>] [--tid-offset=<count>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--frames"
+              ],
+              "label": "<frames>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Mask frame numbers from 1: one ('3'), a range averaged ('2-4') or a list ('1,3,5')."
+            },
+            {
+              "names": [
+                "--tid-offset"
+              ],
+              "label": "<count>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Time-interval mask: each frame minus the frame that many positions before it; negative for the frame after it."
+            }
+          ]
+        },
+        {
           "name": "phases",
           "description": "The phases of a dynamic series stored as one series (temporal position, trigger time, or repeated slice positions): what --phase and --mask-phase count.",
           "since": "5.0",
@@ -3769,6 +3858,65 @@
               "arity": "0",
               "required": false,
               "description": "Leaves the preview, the plain series stays shown."
+            }
+          ]
+        },
+        {
+          "name": "shift",
+          "description": "Moves the mask of the X-ray run a pane shows by a sub-pixel shift, to correct the patient's motion between the mask and the contrast frames, and previews the subtraction. Positive values move the mask down and to the right.",
+          "since": "5.0",
+          "usage": "subtraction:shift [-h] [--json] [--columns=<pixels>] [--pane=<pane-index>] [--rows=<pixels>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--rows"
+              ],
+              "label": "<pixels>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "description": "Vertical shift of the mask in pixels (default: unchanged)."
+            },
+            {
+              "names": [
+                "--columns"
+              ],
+              "label": "<pixels>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "description": "Horizontal shift of the mask in pixels (default: unchanged)."
             }
           ]
         }
@@ -5431,7 +5579,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --fit=<zoom-fit> | --set=<magnification>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --set=<magnification> | --fit=<zoom-fit>]",
           "parameters": [],
           "options": [
             {
@@ -5480,6 +5628,20 @@
             },
             {
               "names": [
+                "--set"
+              ],
+              "label": "<magnification>",
+              "type": "magnification",
+              "arity": "1",
+              "required": true,
+              "description": "Magnification, 1 being one image pixel per canvas pixel.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
                 "--fit"
               ],
               "label": "<zoom-fit>",
@@ -5492,20 +5654,6 @@
               "arity": "1",
               "required": true,
               "description": "default, real-size or best-fit.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
-                "--set"
-              ],
-              "label": "<magnification>",
-              "type": "magnification",
-              "arity": "1",
-              "required": true,
-              "description": "Magnification, 1 being one image pixel per canvas pixel.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"

@@ -46,18 +46,38 @@ first among the masks of that series. The spec names the phases (`phase`, `maskP
 every phase minus the mask phase gives one derived series per phase, and the result can open as a
 maximum intensity projection through all its slices.
 
+## Digital subtraction angiography
+
+An X-ray run (XA, RF) is subtracted from its own frames: the mask is one frame, the average of
+several, or a time-interval offset (the mask of a frame is the frame some positions before or
+after it), and it may be moved by a sub-pixel shift to follow the patient between the mask and
+the contrast frames. `DsaMask` reads what the run itself says: the Mask Subtraction Sequence
+(`AVG_SUB`, `TID`, `REV_TID`, with its mask frames, applicable frame range and sub-pixel shift)
+gives the mask a reader starts from, else frame 1, and a Recommended Viewing Mode of `SUB` opens
+the run as its subtraction preview. The spec carries this as `SubtractionSpec.Dsa`, the pairing
+takes every frame of the range with its mask frames, the builder averages the mask frames once
+and moves the mask with a bilinear translation (positive values down and right, edge pixels
+repeated), and the derived run opens on the signed window, iodine dark on mid-gray as the
+console shows it. The section of the image tool lists the frames of a run as masks, with a
+*Current frame* button and the two shift sliders; `subtraction:mask` and `subtraction:shift`
+drive the preview of a pane, `subtraction:create` takes `--mask-frames`, `--tid-offset` and
+`--shift`. The derived run is single-frame instances of the run's SOP class with its cine rate;
+no Mask Subtraction Sequence is written on them, since a reader applying it would subtract the
+result again.
+
 ## Classes
 
 | Class | Role |
 |---|---|
-| `SubtractionSpec` | What is computed: the two series, the mask weight `k`, an offset, the absolute-value and signed-window flags. The same spec always names the same derived Series and SOP Instance UIDs, so a subtraction created twice is one object |
+| `SubtractionSpec` | What is computed: the two series (or phases, or a run and the frames of its mask), the mask weight `k`, an offset, the absolute-value and signed-window flags. The same spec always names the same derived Series and SOP Instance UIDs, so a subtraction created twice is one object |
 | `SubtractionCompatibility` | Whether a mask can be subtracted without resampling (the *direct path*) and the pairing of the slices: same modality, same study, one frame of reference, one matrix, one pixel spacing and orientation, and a mask slice within half a slice spacing of every slice of the series. Anything else is a `Refusal` with its reason |
 | `SubtractionBuilder` | Computes each pair on modality-LUT values in 32-bit floats, stores the difference as signed 16-bit with the rescale slope of the series (a difference of two stored values is then exact), counts the clipped pixels, writes the DICOM attributes of the derived instances and measures the default window on the middle slice |
 | `SubtractionService` | Headless entry point: the compatible masks of a series and the one a reader would pick, `create`, `list`, `find`, `delete`, and `open` in the selected pane. Keeps the derived series of the session with their spec |
 | `PhaseGrouper` | The phases of a dynamic series stored as one series, each as a transient series that remembers its parent and index |
+| `DsaMask`, `FrameMask` | What the DICOM of an X-ray run says about subtracting it (mask sequence, recommended viewing mode, frame order), and the entries of the mask combo for the frames of a run |
 | `SubtractionView` | The live preview of a pane: a `View2d` scrolling the source series and showing the difference of each slice, with its own cache directory |
-| `SubtractionCommands` | The `subtraction:` namespace (`preview`, `phases`, `create`, `list`, `info`, `delete`) over the view and the service |
-| `SubtractionAction`, `SubtractionController` | The preview toggle, mask combo and weight slider of the *Subtraction* section of the image tool, and the glue that enters or updates the preview and runs the service off the EDT with the explorer's loading indicator |
+| `SubtractionCommands` | The `subtraction:` namespace (`preview`, `mask`, `shift`, `phases`, `create`, `list`, `info`, `delete`) over the view and the service |
+| `SubtractionAction`, `SubtractionController` | The preview toggle, mask combo, weight and mask-shift sliders of the *Subtraction* section of the image tool, and the glue that enters or updates the preview and runs the service off the EDT with the explorer's loading indicator |
 | `SubtractionMenu` | The *Subtract…* entry of the series context menu of the explorer, a `SeriesMenuContributor` extension |
 
 ## Value conventions

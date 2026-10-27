@@ -11,13 +11,17 @@ package org.weasis.dicom.viewer2d.subtraction;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionSpec.Dsa;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
 class SubtractionSpecTest {
@@ -51,6 +55,67 @@ class SubtractionSpecTest {
         () ->
             assertNotEquals(
                 plain.derivedInstanceUid("1.2.3.1"), plain.derivedInstanceUid("1.2.3.2")));
+  }
+
+  @Test
+  void a_dsa_mask_names_frames_of_the_run_and_travels_in_the_json() {
+    Dsa averaged = new Dsa(List.of(2, 3, 4), null, 2, 40, 0.5, -0.25);
+    SubtractionSpec spec = SubtractionSpec.ofRun("1.2.3", averaged, 0.8);
+    SubtractionSpec back = SubtractionSpec.fromJson(spec.toJson().build());
+    SubtractionSpec tid =
+        SubtractionSpec.ofRun("1.2.3", new Dsa(List.of(), -2, null, null, 0, 0), 1);
+    assertAll(
+        () -> assertEquals(spec, back),
+        () -> assertEquals("1.2.3", back.maskUid()),
+        () -> assertEquals("2-4", back.dsa().label()),
+        () -> assertEquals("1,3", Dsa.ofFrame(1).withFrames(List.of(3, 1)).label()),
+        () -> assertEquals("REV_TID 2", tid.dsa().label()),
+        () -> assertTrue(back.dsa().applies(2) && back.dsa().applies(40)),
+        () -> assertFalse(back.dsa().applies(1) || back.dsa().applies(41)),
+        () -> assertTrue(back.dsa().isShifted()),
+        () ->
+            assertNotEquals(
+                spec.derivedSeriesUid(), spec.withDsa(averaged.withShift(0, 0)).derivedSeriesUid()),
+        () -> assertNotEquals(spec.derivedSeriesUid(), tid.derivedSeriesUid()),
+        () -> assertTrue(spec.derivationDescription().contains("mask frames 2-4")),
+        () -> assertTrue(spec.derivationDescription().contains("shifted")),
+        () ->
+            assertEquals(
+                spec,
+                SubtractionSpec.fromJson(
+                    SubtractionSpec.ofRun("1.2.3", averaged, 0.8).toJson().build())));
+  }
+
+  @Test
+  void a_dsa_mask_is_frames_or_an_offset_of_the_run_itself() {
+    assertAll(
+        () ->
+            assertThrows(
+                IllegalArgumentException.class, () -> new Dsa(List.of(), null, null, null, 0, 0)),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class, () -> new Dsa(List.of(1), 2, null, null, 0, 0)),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class, () -> new Dsa(List.of(), 0, null, null, 0, 0)),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class, () -> new Dsa(List.of(0), null, null, null, 0, 0)),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class, () -> new Dsa(List.of(1), null, 5, 2, 0, 0)),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    new SubtractionSpec(
+                        "1.2.3", "1.2.4", null, null, 1, 0, false, false, Dsa.ofFrame(1))),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    new SubtractionSpec(
+                        "1.2.3", "1.2.3", 2, null, 1, 0, false, false, Dsa.ofFrame(1))));
   }
 
   @Test

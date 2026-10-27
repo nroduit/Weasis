@@ -122,6 +122,16 @@ public final class SubtractionService {
     return masks;
   }
 
+  /** The masks the mask combo offers: the frames of a run first, then the series of the study. */
+  public static List<Object> maskChoices(MediaSeries<DicomImageElement> series) {
+    List<Object> choices = new ArrayList<>();
+    if (series != null && !isDerived(series)) {
+      choices.addAll(FrameMask.of(series));
+    }
+    choices.addAll(compatibleMasks(series));
+    return choices;
+  }
+
   /** The real series behind an operand: the parent of a phase, else the series itself. */
   public static MediaSeries<DicomImageElement> parentOf(MediaSeries<DicomImageElement> series) {
     return PhaseGrouper.phaseOf(series).map(PhaseGrouper.Phase::parent).orElse(series);
@@ -224,7 +234,10 @@ public final class SubtractionService {
     }
     MediaSeries<DicomImageElement> operand = PhaseGrouper.operand(series, spec.phase());
     MediaSeries<DicomImageElement> maskOperand = PhaseGrouper.operand(mask, spec.maskPhase());
-    Result result = SubtractionCompatibility.pair(operand, maskOperand);
+    Result result =
+        spec.dsa() == null
+            ? SubtractionCompatibility.pair(operand, maskOperand)
+            : SubtractionCompatibility.pairFrames(operand, spec.dsa());
     if (result instanceof Refusal refusal) {
       throw new IllegalStateException(
           "The mask cannot be subtracted from the series: " + refusal.reason());

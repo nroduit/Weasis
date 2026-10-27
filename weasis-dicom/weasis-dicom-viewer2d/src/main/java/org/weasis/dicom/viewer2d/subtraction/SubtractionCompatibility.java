@@ -22,6 +22,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionSpec.Dsa;
 
 /**
  * Decides whether a mask series can be subtracted from a series without resampling, and pairs their
@@ -48,7 +49,21 @@ public final class SubtractionCompatibility {
 
   public record Refusal(String reason) implements Result {}
 
-  public record SlicePair(DicomImageElement image, DicomImageElement mask) {}
+  /**
+   * A slice and its mask; the mask of a DSA frame may be several frames averaged, listed in {@code
+   * masks}, with {@code mask} the first of them.
+   */
+  public record SlicePair(
+      DicomImageElement image, DicomImageElement mask, List<DicomImageElement> masks) {
+
+    public SlicePair {
+      masks = masks == null || masks.isEmpty() ? List.of(mask) : List.copyOf(masks);
+    }
+
+    public SlicePair(DicomImageElement image, DicomImageElement mask) {
+      this(image, mask, null);
+    }
+  }
 
   private SubtractionCompatibility() {}
 
@@ -102,6 +117,50 @@ public final class SubtractionCompatibility {
       return new Refusal("The operands have different orientations");
     }
     return pairByPosition(images, masks, sameFrame);
+  }
+
+  /**
+   * Pairs the frames of a run with a mask taken from its own frames: every frame of the applicable
+   * range with the averaged mask frames, or with the frame the TID offset points to; frames without
+   * a mask are left out.
+   */
+  public static Result pairFrames(MediaSeries<DicomImageElement> series, Dsa dsa) {
+    if (series == null || dsa == null) {
+      return new Refusal("A run and its mask are needed");
+    }
+    if (!DsaMask.isRun(series)) {
+      return new Refusal("The series is not an X-ray run of several frames");
+    }
+    List<DicomImageElement> frames = DsaMask.frames(series);
+    List<DicomImageElement> maskFrames = new ArrayList<>();
+    for (int number : dsa.maskFrames()) {
+      if (number > frames.size()) {
+        return new Refusal("The run has no frame " + number);
+      }
+      maskFrames.add(frames.get(number - 1));
+    }
+    List<SlicePair> pairs = new ArrayList<>(frames.size());
+    for (int i = 0; i < frames.size(); i++) {
+      if (!dsa.applies(i + 1)) {
+        continue;
+      }
+      DicomImageElement frame = frames.get(i);
+      if (dsa.tidOffset() == null) {
+        if (!sameMatrix(frame, maskFrames.getFirst())) {
+          return new Refusal("The frames of the run have different matrices");
+        }
+        pairs.add(new SlicePair(frame, maskFrames.getFirst(), maskFrames));
+      } else {
+        int reference = i - dsa.tidOffset();
+        if (reference >= 0 && reference < frames.size()) {
+          pairs.add(new SlicePair(frame, frames.get(reference)));
+        }
+      }
+    }
+    if (pairs.isEmpty()) {
+      return new Refusal("No frame of the run has a mask frame");
+    }
+    return new Pairing(pairs, true);
   }
 
   /** Two-dimensional images without geometry pair by order when the counts match. */

@@ -45,6 +45,7 @@ import org.weasis.dicom.viewer2d.mpr.DerivedStack;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionBuilder.Result;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Pairing;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionSpec.Dsa;
 import org.weasis.opencv.data.FileRawImage;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
@@ -231,9 +232,10 @@ class SubtractionBuilderTest {
     DicomSeries dynamic = new DicomSeries("1.2.3.30"); // NON-NLS
     dynamic.setTag(TagD.get(Tag.Modality), "MR"); // NON-NLS
     dynamic.setTag(TagD.get(Tag.SeriesDescription), "DCE"); // NON-NLS
-    DicomSeries pre = series(dir, "1.2.3.30", "DCE", 7, 3, (z, i) -> 400, 1.0, LocalTime.of(10, 0));
+    DicomSeries pre =
+        series(dir, "1.2.3.30", "DCE", 7, 3, (z, i) -> 400, 1.0, LocalTime.of(10, 0), "MR");
     DicomSeries post =
-        series(dir, "1.2.3.30", "DCE", 7, 3, (z, i) -> 1000 + i, 1.0, LocalTime.of(10, 5));
+        series(dir, "1.2.3.30", "DCE", 7, 3, (z, i) -> 1000 + i, 1.0, LocalTime.of(10, 5), "MR");
     pre.copyOfMedias(null, null).forEach(dynamic::addMedia);
     post.copyOfMedias(null, null).forEach(dynamic::addMedia);
 
@@ -256,6 +258,52 @@ class SubtractionBuilderTest {
     for (int i = 0; i < values.length; i++) {
       assertEquals(600 + i, values[i], 1e-6, "pixel " + i);
     }
+  }
+
+  @Test
+  void a_run_minus_the_average_of_its_mask_frames_moved_by_a_pixel(@TempDir Path dir)
+      throws IOException {
+    // Frame k holds 100k plus ten times the column: the mask moved one column to the right is
+    // ten less everywhere but on the first column, which the border repeats
+    DicomSeries run = run(dir, "1.2.3.40", 4, (frame, i) -> 100 * (frame + 1) + 10 * (i % SIZE));
+    Dsa averaged = new Dsa(List.of(1, 2), null, null, null, 0, 0);
+    Result average = build(SubtractionSpec.ofRun("1.2.3.40", averaged, 1.0), run);
+    Result shifted =
+        build(SubtractionSpec.ofRun("1.2.3.40", Dsa.ofFrame(1).withShift(0, 1), 1.0), run);
+    List<DicomImageElement> frames = shifted.series().copyOfMedias(null, null);
+    double[] third = values(frames.get(2));
+    assertAll(
+        () -> assertEquals(4, average.slices()),
+        () -> assertEquals(150, values(average.series().copyOfMedias(null, null).get(2))[5], 1e-6),
+        () -> assertEquals("XA", TagD.getTagValue(shifted.series(), Tag.Modality, String.class)),
+        () ->
+            assertTrue(
+                TagD.getTagValue(shifted.series(), Tag.SeriesDescription, String.class)
+                    .contains("(mask 1)")),
+        () -> assertEquals(200, third[0], 1e-6, "first column: the border repeats"),
+        () ->
+            assertEquals(
+                210,
+                third[1],
+                1e-6,
+                "second column: 230 - (100 + 10 * 1 + 10)... the mask moved right"),
+        () -> assertEquals(210, third[SIZE - 1], 1e-6));
+  }
+
+  private Result build(SubtractionSpec spec, DicomSeries run) throws IOException {
+    Pairing pairing = (Pairing) SubtractionCompatibility.pairFrames(run, spec.dsa());
+    assertNotNull(pairing, "the frames of the run pair with the mask");
+    Result result = SubtractionBuilder.build(spec, run, run, pairing);
+    results.add(result);
+    return result;
+  }
+
+  /** An X-ray run of single-frame instances, frame k the instance k+1. */
+  private static DicomSeries run(Path dir, String seriesUid, int frames, Pixel pixel)
+      throws IOException {
+    DicomSeries run = series(dir, seriesUid, "Coro", 1, frames, pixel, 1.0, null, "XA"); // NON-NLS
+    run.setTag(TagD.get(Tag.Modality), "XA"); // NON-NLS
+    return run;
   }
 
   private Result build(SubtractionSpec spec, DicomSeries series, DicomSeries mask)
@@ -299,7 +347,7 @@ class SubtractionBuilderTest {
       Pixel pixel,
       double slope)
       throws IOException {
-    return series(dir, seriesUid, description, seriesNumber, count, pixel, slope, null);
+    return series(dir, seriesUid, description, seriesNumber, count, pixel, slope, null, "MR");
   }
 
   private static DicomSeries series(
@@ -310,7 +358,8 @@ class SubtractionBuilderTest {
       int count,
       Pixel pixel,
       double slope,
-      LocalTime acquisitionTime)
+      LocalTime acquisitionTime,
+      String modality)
       throws IOException {
     Path seriesDir =
         Files.createDirectories(
@@ -324,7 +373,7 @@ class SubtractionBuilderTest {
     base.setString(Tag.PatientID, VR.LO, "P1"); // NON-NLS
     base.setString(Tag.PatientName, VR.PN, "Doe^Jane"); // NON-NLS
     DicomSeries series = new DicomSeries(seriesUid);
-    series.setTag(TagD.get(Tag.Modality), "MR"); // NON-NLS
+    series.setTag(TagD.get(Tag.Modality), modality);
     series.setTag(TagD.get(Tag.SeriesDescription), description);
     series.setTag(TagD.get(Tag.SeriesNumber), seriesNumber);
     for (int z = 0; z < count; z++) {
@@ -332,7 +381,7 @@ class SubtractionBuilderTest {
       for (int i = 0; i < pixels.length; i++) {
         pixels[i] = (short) pixel.value(z, i);
       }
-      DicomImageElement slice = slice(seriesDir, seriesUid, z, pixels, base, slope);
+      DicomImageElement slice = slice(seriesDir, seriesUid, z, pixels, base, slope, modality);
       if (acquisitionTime != null) {
         slice.setTag(TagD.get(Tag.AcquisitionTime), acquisitionTime);
       }
@@ -342,7 +391,13 @@ class SubtractionBuilderTest {
   }
 
   private static DicomImageElement slice(
-      Path dir, String seriesUid, int z, short[] pixels, Attributes base, double slope) {
+      Path dir,
+      String seriesUid,
+      int z,
+      short[] pixels,
+      Attributes base,
+      double slope,
+      String modality) {
     ImageCV image = new ImageCV(SIZE, SIZE, CvType.CV_16UC1);
     image.put(0, 0, pixels);
     FileRawImage raw = new FileRawImage(dir.resolve("slice_" + z + ".wcv")); // NON-NLS
@@ -353,7 +408,8 @@ class SubtractionBuilderTest {
     io.getFileCache().setOriginalTempFile(raw.path());
     io.setBaseAttributes(base);
     Attributes a =
-        SyntheticSeries.slice(seriesUid, "MR", z + 1, 2.0 * z, 1.0, SIZE, SyntheticSeries.FRAME);
+        SyntheticSeries.slice(
+            seriesUid, modality, z + 1, 2.0 * z, 1.0, SIZE, SyntheticSeries.FRAME);
     Stream.of(
             Tag.SOPClassUID,
             Tag.SOPInstanceUID,
@@ -369,7 +425,9 @@ class SubtractionBuilderTest {
             Tag.Columns,
             Tag.FrameOfReferenceUID)
         .forEach(tag -> io.setTag(TagD.get(tag), TagD.get(tag).getValue(a)));
-    io.setTag(TagD.get(Tag.SOPClassUID), UID.MRImageStorage);
+    io.setTag(
+        TagD.get(Tag.SOPClassUID),
+        "XA".equals(modality) ? UID.XRayAngiographicImageStorage : UID.MRImageStorage); // NON-NLS
     io.setTag(TagD.get(Tag.SamplesPerPixel), 1);
     io.setTag(TagD.get(Tag.BitsAllocated), 16);
     io.setTag(TagD.get(Tag.BitsStored), 16);

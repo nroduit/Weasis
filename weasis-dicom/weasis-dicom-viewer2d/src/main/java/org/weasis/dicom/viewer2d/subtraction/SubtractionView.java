@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import org.dcm4che3.img.lut.PresetWindowLevel;
@@ -41,6 +42,7 @@ import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionBuilder.Percentiles;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Pairing;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.SlicePair;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionSpec.Dsa;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 
 /**
@@ -60,8 +62,9 @@ public class SubtractionView extends View2d {
   private final Map<DicomImageElement, DicomImageElement> previews = new HashMap<>();
 
   private MediaSeries<DicomImageElement> mask;
+  private Dsa dsa;
   private double factor = 1.0;
-  private Map<DicomImageElement, DicomImageElement> maskOf = Map.of();
+  private Map<DicomImageElement, SlicePair> maskOf = Map.of();
   private List<SlicePair> pairList = List.of();
   private MediaSeries<DicomImageElement> pairedSeries;
   private Percentiles window;
@@ -100,9 +103,13 @@ public class SubtractionView extends View2d {
 
   /** Takes the series and the slice of the view this one replaces, then starts the preview. */
   public void initPreview(
-      ViewCanvas<DicomImageElement> selView, MediaSeries<DicomImageElement> mask, double factor) {
+      ViewCanvas<DicomImageElement> selView,
+      MediaSeries<DicomImageElement> mask,
+      double factor,
+      Dsa dsa) {
     this.mask = mask;
     this.factor = factor;
+    this.dsa = dsa;
     actionsInView.put("no.ko", true); // NON-NLS
     actionsInView.put(ActionW.SORT_STACK.cmd(), selView.getActionValue(ActionW.SORT_STACK.cmd()));
     actionsInView.put(
@@ -120,6 +127,11 @@ public class SubtractionView extends View2d {
     return factor;
   }
 
+  /** The mask taken from the frames of the run, null when the mask is another series. */
+  public Dsa getDsa() {
+    return dsa;
+  }
+
   /** The slice of the source series the view shows the difference of. */
   public DicomImageElement getSourceSlice() {
     return sourceImage;
@@ -127,6 +139,9 @@ public class SubtractionView extends View2d {
 
   /** The spec a build of what the view shows would use. */
   public SubtractionSpec spec() {
+    if (dsa != null) {
+      return SubtractionSpec.ofRun(SubtractionCommands.uidOf(series), dsa, factor);
+    }
     return new SubtractionSpec(
         SubtractionCommands.uidOf(series),
         SubtractionCommands.uidOf(mask),
@@ -140,11 +155,20 @@ public class SubtractionView extends View2d {
 
   /** Changes the mask or its weight and recomputes the shown slice. EDT only. */
   public void setParameters(MediaSeries<DicomImageElement> mask, double factor) {
-    if (mask == this.mask && factor == this.factor) {
+    setParameters(mask, factor, null);
+  }
+
+  /**
+   * Changes the mask, its weight or the frames and shift of a run's mask, and recomputes the shown
+   * slice. EDT only.
+   */
+  public void setParameters(MediaSeries<DicomImageElement> mask, double factor, Dsa dsa) {
+    if (mask == this.mask && factor == this.factor && Objects.equals(dsa, this.dsa)) {
       return;
     }
     this.mask = mask;
     this.factor = factor;
+    this.dsa = dsa;
     showingDifference = false;
     discardPreviews();
     DicomImageElement source = sourceImage;
@@ -192,14 +216,13 @@ public class SubtractionView extends View2d {
       show(cached);
       return;
     }
-    DicomImageElement maskSlice = pairs().get(source);
-    if (maskSlice == null) {
+    SlicePair pair = pairs().get(source);
+    if (pair == null) {
       show(source);
       return;
     }
     stopCurrentProcess();
     SubtractionSpec spec = spec();
-    SlicePair pair = new SlicePair(source, maskSlice);
     Percentiles known = window;
     // The window of a parameter set is the one of the middle slice, as the built series has it,
     // whatever slice is shown first and however fast the reader scrolls meanwhile
@@ -313,15 +336,19 @@ public class SubtractionView extends View2d {
     }
   }
 
-  /** The mask slice of every slice of the series, paired once per series and mask. */
-  private Map<DicomImageElement, DicomImageElement> pairs() {
+  /** The pair of every slice of the series, paired once per series and mask. */
+  private Map<DicomImageElement, SlicePair> pairs() {
     if (pairedSeries != series || maskOf.isEmpty()) {
       pairedSeries = series;
       maskOf = new HashMap<>();
-      if (SubtractionCompatibility.pair(series, mask) instanceof Pairing pairing) {
+      SubtractionCompatibility.Result result =
+          dsa == null
+              ? SubtractionCompatibility.pair(series, mask)
+              : SubtractionCompatibility.pairFrames(series, dsa);
+      if (result instanceof Pairing pairing) {
         pairList = pairing.slices();
         for (SlicePair pair : pairing.slices()) {
-          maskOf.put(pair.image(), pair.mask());
+          maskOf.put(pair.image(), pair);
         }
       } else {
         pairList = List.of();
@@ -367,9 +394,10 @@ public class SubtractionView extends View2d {
     MediaSeries<DicomImageElement> source = series;
     MediaSeries<DicomImageElement> maskSeries = mask;
     double weight = factor;
+    Dsa frames = dsa;
     exitPreview();
     if (source != null && maskSeries != null) {
-      SubtractionController.subtract(source, maskSeries, weight);
+      SubtractionController.subtract(source, maskSeries, weight, frames);
     }
   }
 
@@ -404,12 +432,13 @@ public class SubtractionView extends View2d {
       ImageViewerPlugin<DicomImageElement> container,
       ViewCanvas<DicomImageElement> selView,
       MediaSeries<DicomImageElement> mask,
-      double factor) {
+      double factor,
+      Dsa dsa) {
     List<ViewCanvas<DicomImageElement>> manualSyncTargets = collectManualSyncTargets(selView);
     container.setSelectedAndGetFocus();
     SubtractionView view = new SubtractionView(selView.getEventManager());
     view.registerDefaultListeners();
-    view.initPreview(selView, mask, factor);
+    view.initPreview(selView, mask, factor, dsa);
     container.replaceView(selView, view);
     for (ViewCanvas<DicomImageElement> target : manualSyncTargets) {
       view.syncManuallyWith(target);

@@ -48,6 +48,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
+import org.weasis.core.api.gui.util.Feature.SliderChangeListenerValue;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -120,6 +121,7 @@ import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.dicom.viewer2d.mpr.Volume;
+import org.weasis.dicom.viewer2d.subtraction.FrameMask;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionAction;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionController;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionService;
@@ -211,6 +213,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newSubtractionPreviewAction());
     setAction(newSubtractionMaskAction());
     setAction(newSubtractionFactorAction());
+    setAction(newSubtractionShiftAction(SubtractionAction.SHIFT_ROWS));
+    setAction(newSubtractionShiftAction(SubtractionAction.SHIFT_COLUMNS));
     fusionBaseOpacity =
         new FusionOpacityListener(
             FusionAction.BASE_OPACITY,
@@ -937,25 +941,65 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     };
   }
 
+  /** The mask of a run moves by quarter pixels, up to five pixels each way. */
+  private SliderChangeListener newSubtractionShiftAction(SliderChangeListenerValue action) {
+    return new SliderChangeListener(action, -5.0, 5.0, 0.0, false, 0.1, 40) {
+      @Override
+      public void stateChanged(BoundedRangeModel model) {
+        SubtractionController.updatePreview();
+      }
+    };
+  }
+
   /**
-   * Lists the masks the selected series can take and proposes the pre-contrast one; a preview view
-   * shows its own mask and weight.
+   * Lists the masks the selected series can take (the frames of a run, the series of the study) and
+   * proposes the one a reader starts from; a preview view shows its own mask, weight and shift.
    */
+  @SuppressWarnings("unchecked")
   private void updateSubtractionComponentsListener(ViewCanvas<DicomImageElement> view2d) {
-    List<MediaSeries<DicomImageElement>> masks = SubtractionController.compatibleMasks(view2d);
-    boolean available = !masks.isEmpty();
+    List<Object> choices = SubtractionController.maskChoices(view2d);
+    boolean available = !choices.isEmpty();
     SubtractionView preview = view2d instanceof SubtractionView v ? v : null;
+    boolean run = available && choices.getFirst() instanceof FrameMask;
     getAction(SubtractionAction.MASK)
         .ifPresent(
             a -> {
-              a.setDataListWithoutTriggerAction(masks.toArray());
-              if (preview != null && masks.contains(preview.getMask())) {
-                a.setSelectedItemWithoutTriggerAction(preview.getMask());
+              a.setDataListWithoutTriggerAction(choices.toArray());
+              Object shown =
+                  preview == null
+                      ? null
+                      : preview.getDsa() != null
+                          ? FrameMask.find(choices, preview.getDsa())
+                          : preview.getMask();
+              if (shown != null && choices.contains(shown)) {
+                a.setSelectedItemWithoutTriggerAction(shown);
+              } else if (run) {
+                a.setSelectedItemWithoutTriggerAction(choices.getFirst());
               } else if (available) {
-                SubtractionService.proposeMask(view2d.getSeries(), masks)
+                List<MediaSeries<DicomImageElement>> series =
+                    choices.stream()
+                        .filter(MediaSeries.class::isInstance)
+                        .map(c -> (MediaSeries<DicomImageElement>) c)
+                        .toList();
+                SubtractionService.proposeMask(view2d.getSeries(), series)
                     .ifPresent(a::setSelectedItemWithoutTriggerAction);
               }
               a.enableAction(available);
+            });
+    double rows = preview != null && preview.getDsa() != null ? preview.getDsa().shiftRows() : 0;
+    double columns =
+        preview != null && preview.getDsa() != null ? preview.getDsa().shiftColumns() : 0;
+    getAction(SubtractionAction.SHIFT_ROWS)
+        .ifPresent(
+            a -> {
+              a.setRealValue(rows, false);
+              a.enableAction(run);
+            });
+    getAction(SubtractionAction.SHIFT_COLUMNS)
+        .ifPresent(
+            a -> {
+              a.setRealValue(columns, false);
+              a.enableAction(run);
             });
     getAction(SubtractionAction.FACTOR)
         .ifPresent(

@@ -14,6 +14,7 @@ import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import org.dcm4che3.data.Tag;
 import org.pf4j.Extension;
@@ -39,6 +40,7 @@ import org.weasis.dicom.viewer2d.View2dCommands;
 import org.weasis.dicom.viewer2d.View2dCommands.Target;
 import org.weasis.dicom.viewer2d.View2dCommands.ViewOptions;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionService.Derived;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionSpec.Dsa;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -55,6 +57,8 @@ import picocli.CommandLine.Option;
             + " pre-contrast), scrolled, windowed, measured and sent like any series.",
     subcommands = {
       SubtractionCommands.Preview.class,
+      SubtractionCommands.Mask.class,
+      SubtractionCommands.Shift.class,
       SubtractionCommands.Phases.class,
       SubtractionCommands.Create.class,
       SubtractionCommands.ListDerived.class,
@@ -147,6 +151,14 @@ public class SubtractionCommands implements CommandExtension {
                                 "Unknown series: " + mask, "dicom:list")); // NON-NLS
       } else if (view instanceof SubtractionView preview) {
         maskSeries = preview.getMask();
+      } else if (DsaMask.isRun(view.getSeries())) {
+        // A run is its own mask: the frames its DICOM names, else the first one
+        return SubtractionController.enterPreview(
+            resolved.container(),
+            view,
+            view.getSeries(),
+            factor == null ? 1.0 : factor,
+            DsaMask.proposeMask(view.getSeries()));
       } else {
         maskSeries =
             SubtractionService.proposeMask(
@@ -157,11 +169,14 @@ public class SubtractionCommands implements CommandExtension {
                             "No series of the study is on the grid of the series: give --mask"));
       }
       if (view instanceof SubtractionView preview) {
-        preview.setParameters(maskSeries, factor == null ? preview.getFactor() : factor);
+        preview.setParameters(
+            maskSeries,
+            factor == null ? preview.getFactor() : factor,
+            mask == null ? preview.getDsa() : null);
         return preview;
       }
       return SubtractionController.enterPreview(
-          resolved.container(), view, maskSeries, factor == null ? 1.0 : factor);
+          resolved.container(), view, maskSeries, factor == null ? 1.0 : factor, null);
     }
 
     /** The display state of the pane, plus what it previews. */
@@ -172,12 +187,149 @@ public class SubtractionCommands implements CommandExtension {
         return state;
       }
       JsonObjectBuilder json = Json.createObjectBuilder(state);
-      json.add(
-          "subtraction", // NON-NLS
+      JsonObjectBuilder subtraction =
           Json.createObjectBuilder()
               .add("mask", uidOf(preview.getMask())) // NON-NLS
-              .add("factor", preview.getFactor())); // NON-NLS
+              .add("factor", preview.getFactor()); // NON-NLS
+      if (preview.getDsa() != null) {
+        subtraction.add("dsa", preview.getDsa().toJson()); // NON-NLS
+      }
+      json.add("subtraction", subtraction); // NON-NLS
       return json.build();
+    }
+  }
+
+  /** A verb changing the DSA mask of the run a pane shows, entering its preview when needed. */
+  abstract static class RunVerb extends AbstractVerb {
+    @Mixin ViewOptions target;
+
+    /** The mask after the change, from the one the preview shows (unshifted first frame). */
+    abstract Dsa change(Dsa current);
+
+    @Override
+    protected void run() {
+      Target shown = GuiExecutor.invokeAndRethrow(this::apply);
+      if (shown.view() instanceof SubtractionView preview) {
+        preview.awaitDifference(5000);
+      }
+      print(
+          GuiExecutor.invokeAndRethrow(() -> Preview.state(shown.container(), shown.view()))
+              .toString());
+    }
+
+    private Target apply() {
+      Target resolved = target.withImage();
+      DefaultView2d<DicomImageElement> view = resolved.view();
+      MediaSeries<DicomImageElement> series = view.getSeries();
+      if (!DsaMask.isRun(series)) {
+        throw new IllegalStateException("The pane does not show an X-ray run of several frames");
+      }
+      View2dCommands.focus(resolved);
+      if (view instanceof SubtractionView preview && preview.getDsa() != null) {
+        preview.setParameters(series, preview.getFactor(), change(preview.getDsa()));
+        return new Target(resolved.container(), preview);
+      }
+      Dsa dsa = change(DsaMask.proposeMask(series));
+      return new Target(
+          resolved.container(),
+          SubtractionController.enterPreview(resolved.container(), view, series, 1.0, dsa));
+    }
+
+    /** Frame numbers written as {@code 3}, {@code 2-4} or {@code 1,3,5}. */
+    static List<Integer> frames(String text) {
+      List<Integer> frames = new ArrayList<>();
+      for (String part : text.split(",")) {
+        String[] range = part.trim().split("-", 2);
+        try {
+          int first = Integer.parseInt(range[0].trim());
+          int last = range.length > 1 ? Integer.parseInt(range[1].trim()) : first;
+          if (first < 1 || last < first) {
+            throw new NumberFormatException();
+          }
+          for (int frame = first; frame <= last; frame++) {
+            frames.add(frame);
+          }
+        } catch (NumberFormatException e) {
+          throw new IllegalArgumentException(
+              "Frames are numbers from 1, a range 'a-b' or a list 'a,b,c': " + text);
+        }
+      }
+      return frames;
+    }
+  }
+
+  @Command(
+      name = "mask",
+      description =
+          "Sets the mask of the X-ray run a pane shows, taken from its own frames, and previews the"
+              + " subtraction: one frame, several frames averaged, or a time-interval offset. The"
+              + " state of the pane comes back with the mask under 'subtraction'.")
+  @Since("5.0")
+  static class Mask extends RunVerb {
+    @Option(
+        names = "--frames",
+        paramLabel = "<frames>",
+        description =
+            "Mask frame numbers from 1: one ('3'), a range averaged ('2-4') or a list ('1,3,5').")
+    String frames;
+
+    @Option(
+        names = "--tid-offset",
+        paramLabel = "<count>",
+        description =
+            "Time-interval mask: each frame minus the frame that many positions before it; negative"
+                + " for the frame after it.")
+    Integer tidOffset;
+
+    @Override
+    Dsa change(Dsa current) {
+      if ((frames == null) == (tidOffset == null)) {
+        throw invalid("Give --frames or --tid-offset");
+      }
+      try {
+        return frames != null
+            ? current.withFrames(frames(frames))
+            : new Dsa(
+                List.of(),
+                tidOffset,
+                current.firstFrame(),
+                current.lastFrame(),
+                current.shiftRows(),
+                current.shiftColumns());
+      } catch (IllegalArgumentException e) {
+        throw invalid(e.getMessage());
+      }
+    }
+  }
+
+  @Command(
+      name = "shift",
+      description =
+          "Moves the mask of the X-ray run a pane shows by a sub-pixel shift, to correct the"
+              + " patient's motion between the mask and the contrast frames, and previews the"
+              + " subtraction. Positive values move the mask down and to the right.")
+  @Since("5.0")
+  static class Shift extends RunVerb {
+    @Option(
+        names = "--rows",
+        paramLabel = "<pixels>",
+        description = "Vertical shift of the mask in pixels (default: unchanged).")
+    Double rows;
+
+    @Option(
+        names = "--columns",
+        paramLabel = "<pixels>",
+        description = "Horizontal shift of the mask in pixels (default: unchanged).")
+    Double columns;
+
+    @Override
+    Dsa change(Dsa current) {
+      if (rows == null && columns == null) {
+        throw invalid("Give --rows and/or --columns");
+      }
+      return current.withShift(
+          rows == null ? current.shiftRows() : rows,
+          columns == null ? current.shiftColumns() : columns);
     }
   }
 
@@ -297,6 +449,26 @@ public class SubtractionCommands implements CommandExtension {
                 + " zero.")
     boolean signed;
 
+    @Option(
+        names = "--mask-frames",
+        paramLabel = "<frames>",
+        description =
+            "DSA: mask frames of the run itself, from 1 ('3', '2-4' averaged, '1,3,5'); the series"
+                + " is an X-ray run (default for a run: the frames its DICOM names, else frame 1).")
+    String maskFrames;
+
+    @Option(
+        names = "--tid-offset",
+        paramLabel = "<count>",
+        description = "DSA: time-interval mask, each frame minus the frame that many before it.")
+    Integer tidOffset;
+
+    @Option(
+        names = "--shift",
+        paramLabel = "<rows,columns>",
+        description = "DSA: sub-pixel shift of the mask in pixels, down and right when positive.")
+    String shift;
+
     @Option(names = "--no-open", description = "Build the series without opening it.")
     boolean noOpen;
 
@@ -304,6 +476,10 @@ public class SubtractionCommands implements CommandExtension {
     protected void run() throws IOException {
       if (allPhases && phase != null) {
         throw invalid("--all-phases cannot be combined with --phase");
+      }
+      if ((maskFrames != null || tidOffset != null || shift != null)
+          && (mask != null || phase != null || maskPhase != null || allPhases)) {
+        throw invalid("The DSA options go with the run alone, not with --mask or phases");
       }
       SubtractionSpec spec = GuiExecutor.invokeAndRethrow(this::spec);
       JsonObjectBuilder body;
@@ -354,12 +530,30 @@ public class SubtractionCommands implements CommandExtension {
       String maskUid;
       Integer maskPhaseIndex = maskPhase;
       SubtractionView preview = SubtractionController.selectedPreview().orElse(null);
-      if (mask == null && preview != null && seriesUid.equals(uidOf(preview.getSeries()))) {
+      boolean previewed = preview != null && seriesUid.equals(uidOf(preview.getSeries()));
+      Dsa dsa = runMask(seriesUid, previewed ? preview : null);
+      if (dsa != null) {
+        try {
+          return new SubtractionSpec(
+              seriesUid,
+              seriesUid,
+              null,
+              null,
+              factor == null ? (previewed ? preview.getFactor() : 1.0) : factor,
+              offset == null ? 0.0 : offset,
+              absolute,
+              signed,
+              dsa);
+        } catch (IllegalArgumentException e) {
+          throw invalid(e.getMessage());
+        }
+      }
+      if (mask == null && previewed) {
         // What the pane previews is what is built
-        SubtractionSpec previewed = preview.spec();
-        maskUid = previewed.maskUid();
+        SubtractionSpec shown = preview.spec();
+        maskUid = shown.maskUid();
         if (maskPhaseIndex == null) {
-          maskPhaseIndex = previewed.maskPhase();
+          maskPhaseIndex = shown.maskPhase();
         }
         if (factor == null) {
           factor = preview.getFactor();
@@ -396,6 +590,49 @@ public class SubtractionCommands implements CommandExtension {
       } catch (IllegalArgumentException e) {
         throw invalid(e.getMessage());
       }
+    }
+
+    /**
+     * The DSA mask of a run: the options, else what the pane previews, else the frames the DICOM of
+     * the run names when no other mask is asked; null for a series that is not a run.
+     */
+    private Dsa runMask(String seriesUid, SubtractionView preview) {
+      boolean asked = maskFrames != null || tidOffset != null || shift != null;
+      if (!asked && preview != null && preview.getDsa() != null) {
+        return preview.getDsa();
+      }
+      if (!asked && (mask != null || phase != null || maskPhase != null || allPhases)) {
+        return null;
+      }
+      MediaSeries<DicomImageElement> source = selectedOrResolved(seriesUid);
+      if (!DsaMask.isRun(source)) {
+        if (asked) {
+          throw invalid("The DSA options need an X-ray run of several frames");
+        }
+        return null;
+      }
+      Dsa dsa =
+          preview != null && preview.getDsa() != null
+              ? preview.getDsa()
+              : DsaMask.proposeMask(source);
+      try {
+        if (maskFrames != null) {
+          dsa = dsa.withFrames(RunVerb.frames(maskFrames));
+        } else if (tidOffset != null) {
+          dsa = new Dsa(List.of(), tidOffset, dsa.firstFrame(), dsa.lastFrame(), 0, 0);
+        }
+        if (shift != null) {
+          String[] parts = shift.split(",", 2);
+          dsa =
+              dsa.withShift(
+                  Double.parseDouble(parts[0].trim()),
+                  parts.length > 1 ? Double.parseDouble(parts[1].trim()) : 0);
+        }
+      } catch (IllegalArgumentException e) {
+        throw invalid(
+            "--shift is 'rows,columns' in pixels and frames count from 1: " + e.getMessage());
+      }
+      return dsa;
     }
 
     @SuppressWarnings("unchecked")
@@ -517,6 +754,9 @@ public class SubtractionCommands implements CommandExtension {
         .add("slices", derived.slices()) // NON-NLS
         .add("clipped", derived.clipped()) // NON-NLS
         .add("sameFrameOfReference", derived.sameFrameOfReference()); // NON-NLS
+    if (derived.spec().dsa() != null) {
+      body.add("dsa", derived.spec().dsa().toJson()); // NON-NLS
+    }
     return body;
   }
 

@@ -28,6 +28,7 @@ import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionService.Derived;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionSpec.Dsa;
 
 /**
  * Glue between the Swing surfaces (image tool section, explorer menu, view button) and the
@@ -41,13 +42,15 @@ public final class SubtractionController {
 
   private SubtractionController() {}
 
-  /** The masks the selected view's series can take, none for an empty or derived view. */
-  public static List<MediaSeries<DicomImageElement>> compatibleMasks(
-      ViewCanvas<DicomImageElement> view) {
+  /**
+   * The masks the selected view's series can take, none for an empty or derived view: the frames of
+   * a run, then the series of the study.
+   */
+  public static List<Object> maskChoices(ViewCanvas<DicomImageElement> view) {
     if (view == null || view.getSeries() == null) {
       return List.of();
     }
-    return SubtractionService.compatibleMasks(view.getSeries());
+    return SubtractionService.maskChoices(view.getSeries());
   }
 
   /** The preview the selected pane shows, when it shows one. */
@@ -65,36 +68,105 @@ public final class SubtractionController {
       if (view instanceof SubtractionView || view == null || view.getSeries() == null) {
         return;
       }
-      selectedMask()
-          .ifPresent(
-              mask ->
-                  enterPreview(manager.getSelectedView2dContainer(), view, mask, selectedFactor()));
+      Object choice = selectedMask().orElse(null);
+      if (choice instanceof FrameMask frames) {
+        enterPreview(
+            manager.getSelectedView2dContainer(),
+            view,
+            view.getSeries(),
+            selectedFactor(),
+            selectedDsa(frames));
+      } else if (choice instanceof MediaSeries<?> mask) {
+        enterPreview(
+            manager.getSelectedView2dContainer(), view, cast(mask), selectedFactor(), null);
+      }
     } else if (view instanceof SubtractionView preview) {
       preview.exitPreview();
     }
   }
 
-  /** Replaces a plain pane by the preview of its series minus the mask. */
+  /**
+   * Replaces a plain pane by the preview of its series minus the mask: another series, or with
+   * {@code dsa} the frames of the run itself.
+   */
   public static SubtractionView enterPreview(
       ImageViewerPlugin<DicomImageElement> container,
       ViewCanvas<DicomImageElement> view,
       MediaSeries<DicomImageElement> mask,
-      double factor) {
+      double factor,
+      Dsa dsa) {
     if (!(container instanceof View2dContainer)) {
       throw new IllegalStateException("The preview needs a 2D viewer");
     }
-    if (!SubtractionCompatibility.isCompatible(view.getSeries(), mask)) {
-      throw new IllegalStateException("The mask cannot be subtracted from the series shown");
+    SubtractionCompatibility.Result result =
+        dsa == null
+            ? SubtractionCompatibility.pair(view.getSeries(), mask)
+            : SubtractionCompatibility.pairFrames(view.getSeries(), dsa);
+    if (result instanceof SubtractionCompatibility.Refusal refusal) {
+      throw new IllegalStateException(
+          "The mask cannot be subtracted from the series shown: " + refusal.reason());
     }
-    return SubtractionView.enter(container, view, mask, factor);
+    return SubtractionView.enter(container, view, mask, factor, dsa);
   }
 
-  /** Pushes the mask and weight of the section to the preview of the selected pane, if any. */
+  /** Opens the subtracted display a run asks for (Recommended Viewing Mode SUB), if it does. */
+  public static void previewIfRecommended(
+      ImageViewerPlugin<DicomImageElement> container, ViewCanvas<DicomImageElement> view) {
+    MediaSeries<DicomImageElement> series = view == null ? null : view.getSeries();
+    if (view instanceof SubtractionView || !DsaMask.recommendsSubtraction(series)) {
+      return;
+    }
+    try {
+      enterPreview(container, view, series, 1.0, DsaMask.proposeMask(series));
+    } catch (IllegalStateException e) {
+      LOGGER.warn("The run cannot be shown subtracted as its DICOM asks", e);
+    }
+  }
+
+  /** Pushes the mask, weight and shift of the section to the preview of the selected pane. */
   public static void updatePreview() {
-    selectedPreview()
-        .ifPresent(
-            preview ->
-                selectedMask().ifPresent(mask -> preview.setParameters(mask, selectedFactor())));
+    SubtractionView preview = selectedPreview().orElse(null);
+    Object choice = selectedMask().orElse(null);
+    if (preview == null || choice == null) {
+      return;
+    }
+    if (choice instanceof FrameMask frames) {
+      preview.setParameters(preview.getSeries(), selectedFactor(), selectedDsa(frames));
+    } else if (choice instanceof MediaSeries<?> mask) {
+      preview.setParameters(cast(mask), selectedFactor(), null);
+    }
+  }
+
+  /** Selects the frame the selected pane shows as the mask of its run. */
+  public static void useCurrentFrameAsMask() {
+    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+    if (view == null || view.getSeries() == null) {
+      return;
+    }
+    DicomImageElement shown =
+        view instanceof SubtractionView preview ? preview.getSourceSlice() : view.getImage();
+    int frame = DsaMask.frameOf(view.getSeries(), shown);
+    if (frame < 1) {
+      return;
+    }
+    EventManager.getInstance()
+        .getAction(SubtractionAction.MASK)
+        .ifPresent(a -> a.setSelectedItem(FrameMask.ofFrame(frame)));
+  }
+
+  /** The chosen frames with the shift of the sliders. */
+  private static Dsa selectedDsa(FrameMask frames) {
+    EventManager manager = EventManager.getInstance();
+    double rows =
+        manager.getAction(SubtractionAction.SHIFT_ROWS).map(a -> a.getRealValue()).orElse(0.0);
+    double columns =
+        manager.getAction(SubtractionAction.SHIFT_COLUMNS).map(a -> a.getRealValue()).orElse(0.0);
+    return frames.base().withShift(rows, columns);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static MediaSeries<DicomImageElement> cast(MediaSeries<?> series) {
+    return (MediaSeries<DicomImageElement>) series;
   }
 
   /** Builds what the selected pane previews, else the series of the pane minus the chosen mask. */
@@ -108,16 +180,18 @@ public final class SubtractionController {
     if (view == null || view.getSeries() == null) {
       return;
     }
-    selectedMask().ifPresent(mask -> subtract(view.getSeries(), mask, selectedFactor()));
+    Object choice = selectedMask().orElse(null);
+    if (choice instanceof FrameMask frames) {
+      subtract(view.getSeries(), view.getSeries(), selectedFactor(), selectedDsa(frames));
+    } else if (choice instanceof MediaSeries<?> mask) {
+      subtract(view.getSeries(), cast(mask), selectedFactor(), null);
+    }
   }
 
-  @SuppressWarnings("unchecked")
-  private static Optional<MediaSeries<DicomImageElement>> selectedMask() {
+  private static Optional<Object> selectedMask() {
     return EventManager.getInstance()
         .getAction(SubtractionAction.MASK)
-        .map(a -> a.getSelectedItem())
-        .filter(MediaSeries.class::isInstance)
-        .map(m -> (MediaSeries<DicomImageElement>) m);
+        .map(a -> a.getSelectedItem());
   }
 
   private static double selectedFactor() {
@@ -130,16 +204,27 @@ public final class SubtractionController {
   /** Builds the series minus the mask in the background and opens it when done. */
   public static void subtract(
       MediaSeries<DicomImageElement> series, MediaSeries<DicomImageElement> mask, double factor) {
+    subtract(series, mask, factor, null);
+  }
+
+  /** As {@link #subtract(MediaSeries, MediaSeries, double)}, the mask of a run from its frames. */
+  public static void subtract(
+      MediaSeries<DicomImageElement> series,
+      MediaSeries<DicomImageElement> mask,
+      double factor,
+      Dsa dsa) {
     SubtractionSpec spec =
-        new SubtractionSpec(
-            SubtractionCommands.uidOf(series),
-            SubtractionCommands.uidOf(mask),
-            PhaseGrouper.phaseOf(series).map(PhaseGrouper.Phase::index).orElse(null),
-            PhaseGrouper.phaseOf(mask).map(PhaseGrouper.Phase::index).orElse(null),
-            factor,
-            0.0,
-            false,
-            false);
+        dsa != null
+            ? SubtractionSpec.ofRun(SubtractionCommands.uidOf(series), dsa, factor)
+            : new SubtractionSpec(
+                SubtractionCommands.uidOf(series),
+                SubtractionCommands.uidOf(mask),
+                PhaseGrouper.phaseOf(series).map(PhaseGrouper.Phase::index).orElse(null),
+                PhaseGrouper.phaseOf(mask).map(PhaseGrouper.Phase::index).orElse(null),
+                factor,
+                0.0,
+                false,
+                false);
     MediaSeries<DicomImageElement> parent = SubtractionService.parentOf(series);
     MediaSeries<DicomImageElement> maskParent = SubtractionService.parentOf(mask);
     DataExplorerModel model =

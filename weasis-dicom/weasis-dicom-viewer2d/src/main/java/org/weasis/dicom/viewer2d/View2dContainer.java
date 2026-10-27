@@ -100,6 +100,7 @@ import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.HangingWhyTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionController;
 
 public class View2dContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
@@ -481,7 +482,12 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
     if (DicomModel.isHiddenModality(sequence)) {
       return;
     }
+    ViewCanvas<DicomImageElement> pane = getSelectedViewCanvas();
     super.addSeries(sequence);
+    if (pane != null && pane.getSeries() == sequence) {
+      // A run whose DICOM asks for the subtracted display opens as its subtraction preview
+      SubtractionController.previewIfRecommended(this, pane);
+    }
   }
 
   @Override

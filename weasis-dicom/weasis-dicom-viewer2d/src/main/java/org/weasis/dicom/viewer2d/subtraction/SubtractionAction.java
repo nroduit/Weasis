@@ -43,5 +43,23 @@ public final class SubtractionAction {
           0,
           null); // NON-NLS
 
+  /** Sub-pixel shift of the mask of a run, in rows (pixels), positive downwards. */
+  public static final SliderChangeListenerValue SHIFT_ROWS =
+      new SliderChangeListenerValue(
+          Messages.getString("SubtractionTool.shift_rows"),
+          "subtraction.shift.rows",
+          0,
+          0,
+          null); // NON-NLS
+
+  /** Sub-pixel shift of the mask of a run, in columns (pixels), positive to the right. */
+  public static final SliderChangeListenerValue SHIFT_COLUMNS =
+      new SliderChangeListenerValue(
+          Messages.getString("SubtractionTool.shift_columns"),
+          "subtraction.shift.columns",
+          0,
+          0,
+          null); // NON-NLS
+
   private SubtractionAction() {}
 }

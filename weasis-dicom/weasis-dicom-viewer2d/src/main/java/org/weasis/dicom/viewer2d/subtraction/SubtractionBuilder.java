@@ -25,6 +25,7 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
@@ -38,6 +39,7 @@ import org.weasis.dicom.viewer2d.mpr.DerivedStack;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.Pairing;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionCompatibility.SlicePair;
+import org.weasis.dicom.viewer2d.subtraction.SubtractionSpec.Dsa;
 import org.weasis.opencv.data.FileRawImage;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
@@ -94,12 +96,17 @@ public final class SubtractionBuilder {
     AtomicLong clipped = new AtomicLong();
     Percentiles[] percentiles = new Percentiles[1];
     FileRawImage[] files = new FileRawImage[pairs.size()];
+    // One mask for every frame of a run: computed once, read by every slice
+    Mat shared =
+        pairs.stream().allMatch(p -> p.masks().equals(pairs.getFirst().masks()))
+            ? maskOf(spec, pairs.getFirst())
+            : null;
     try {
       IntStream.range(0, pairs.size())
           .parallel()
           .forEach(
               i -> {
-                Slice slice = subtract(spec, pairs.get(i), slope);
+                Slice slice = subtract(spec, pairs.get(i), slope, shared);
                 clipped.addAndGet(slice.clipped());
                 if (i == middle) {
                   percentiles[0] = slice.percentiles();
@@ -112,6 +119,10 @@ public final class SubtractionBuilder {
     } catch (RuntimeException e) {
       FileUtil.delete(dir);
       throw e;
+    } finally {
+      if (shared != null) {
+        shared.release();
+      }
     }
 
     Attributes base =
@@ -164,24 +175,29 @@ public final class SubtractionBuilder {
 
   /** The stored difference of one pair; the percentiles are measured on the real values. */
   private static Slice subtract(SubtractionSpec spec, SlicePair pair, double slope) {
+    return subtract(spec, pair, slope, null);
+  }
+
+  /** The difference of one pair; {@code shared} is the mask already computed for it, if any. */
+  private static Slice subtract(SubtractionSpec spec, SlicePair pair, double slope, Mat shared) {
     PlanarImage image = pair.image().getUncachedModalityLutImage(null);
-    PlanarImage mask = pair.mask().getUncachedModalityLutImage(null);
+    Mat b = shared;
     try {
-      if (image == null || mask == null) {
+      if (image == null) {
         throw new IllegalStateException("A slice of an operand cannot be read");
       }
-      if (image.width() != mask.width() || image.height() != mask.height()) {
+      if (b == null) {
+        b = maskOf(spec, pair);
+      }
+      if (image.width() != b.cols() || image.height() != b.rows()) {
         throw new IllegalStateException("A mask slice has not the size of its slice");
       }
       // Both operands as 32-bit floats: the sources may differ in depth and sign
       Mat a = new Mat();
-      Mat b = new Mat();
       image.toMat().convertTo(a, CvType.CV_32F);
-      mask.toMat().convertTo(b, CvType.CV_32F);
       Mat difference = new Mat();
       Core.addWeighted(a, 1.0, b, -spec.factor(), spec.offset(), difference);
       a.release();
-      b.release();
       if (spec.absolute()) {
         Core.absdiff(difference, Scalar.all(0), difference);
       }
@@ -199,7 +215,62 @@ public final class SubtractionBuilder {
       return new Slice(stored, clipped, percentiles);
     } finally {
       release(image);
-      release(mask);
+      if (b != null && b != shared) {
+        b.release();
+      }
+    }
+  }
+
+  /**
+   * The mask of a pair as 32-bit floats: its mask slices averaged, then, for a DSA mask, moved by
+   * the sub-pixel shift (bilinear, edge pixels repeated), positive values moving the mask down and
+   * right.
+   */
+  private static Mat maskOf(SubtractionSpec spec, SlicePair pair) {
+    Mat sum = null;
+    for (DicomImageElement element : pair.masks()) {
+      PlanarImage mask = element.getUncachedModalityLutImage(null);
+      if (mask == null) {
+        release(sum);
+        throw new IllegalStateException("A mask slice cannot be read");
+      }
+      try {
+        if (sum == null) {
+          sum = new Mat();
+          mask.toMat().convertTo(sum, CvType.CV_32F);
+        } else {
+          if (mask.width() != sum.cols() || mask.height() != sum.rows()) {
+            throw new IllegalStateException("The mask frames have different sizes");
+          }
+          Mat next = new Mat();
+          mask.toMat().convertTo(next, CvType.CV_32F);
+          Core.add(sum, next, sum);
+          next.release();
+        }
+      } finally {
+        mask.release();
+      }
+    }
+    if (pair.masks().size() > 1) {
+      Core.multiply(sum, Scalar.all(1.0 / pair.masks().size()), sum);
+    }
+    Dsa dsa = spec.dsa();
+    if (dsa != null && dsa.isShifted()) {
+      Mat translation = new Mat(2, 3, CvType.CV_64F);
+      translation.put(0, 0, 1, 0, dsa.shiftColumns(), 0, 1, dsa.shiftRows());
+      Mat shifted = new Mat();
+      Imgproc.warpAffine(
+          sum, shifted, translation, sum.size(), Imgproc.INTER_LINEAR, Core.BORDER_REPLICATE);
+      translation.release();
+      sum.release();
+      sum = shifted;
+    }
+    return sum;
+  }
+
+  private static void release(Mat mat) {
+    if (mat != null) {
+      mat.release();
     }
   }
 
@@ -241,7 +312,11 @@ public final class SubtractionBuilder {
       Percentiles percentiles) {
     Attributes base = SeriesBuilder.getBaseAttributes(source);
     base.remove(Tag.VOILUTSequence);
-    base.setString(Tag.SeriesDescription, VR.LO, description(series, source, mask, maskReference));
+    base.setString(
+        Tag.SeriesDescription,
+        VR.LO,
+        description(
+            series, source, mask, maskReference, spec.dsa() == null ? "" : spec.dsa().label()));
     base.setString(Tag.ImageType, VR.CS, imageType(source));
     base.setInt(Tag.SeriesNumber, VR.IS, source.getInt(Tag.SeriesNumber, 0) + 1000);
     base.setString(Tag.DerivationDescription, VR.ST, spec.derivationDescription());
@@ -262,7 +337,8 @@ public final class SubtractionBuilder {
       MediaSeries<DicomImageElement> operand,
       Attributes source,
       MediaSeries<DicomImageElement> mask,
-      DicomImageElement maskReference) {
+      DicomImageElement maskReference,
+      String maskLabel) {
     String series = TagD.getTagValue(operand, Tag.SeriesDescription, String.class);
     if (series == null) {
       series = source.getString(Tag.SeriesDescription, "");
@@ -273,6 +349,10 @@ public final class SubtractionBuilder {
           maskReference.getMediaReader().getDicomObject().getString(Tag.SeriesDescription, "");
     }
     String text = DERIVATION + " " + series + " - " + maskDescription;
+    if (operand == mask) {
+      // A run minus its own frames: SUB <run> (mask 1)
+      text = DERIVATION + " " + series + " (mask " + maskLabel + ")"; // NON-NLS
+    }
     return text.length() <= MAX_DESCRIPTION_LENGTH
         ? text.strip()
         : text.substring(0, MAX_DESCRIPTION_LENGTH).strip();
@@ -287,7 +367,9 @@ public final class SubtractionBuilder {
 
   /**
    * Two presets of real values: the enhancement window from black up to the 99th percentile, and
-   * the signed window from the 1st to the 99th percentile; the spec says which comes first.
+   * the signed window from the 1st to the 99th percentile; the spec says which comes first. A DSA
+   * run opens on the signed window, as the angiography consoles show it: the iodine lowers the
+   * values of an X-ray image, so the vessels are dark on a mid-gray background.
    */
   private static void window(Attributes base, SubtractionSpec spec, Percentiles percentiles) {
     double high = percentiles.high();
@@ -295,16 +377,17 @@ public final class SubtractionBuilder {
     double black = high > 0 ? 0 : low;
     double[] enhancement = {(black + high) / 2, Math.max(high - black, 1)};
     double[] signedWindow = {(low + high) / 2, Math.max(high - low, 1)};
-    double[] first = spec.signed() ? signedWindow : enhancement;
-    double[] second = spec.signed() ? enhancement : signedWindow;
+    boolean signedFirst = spec.signed() || spec.dsa() != null;
+    double[] first = signedFirst ? signedWindow : enhancement;
+    double[] second = signedFirst ? enhancement : signedWindow;
     String[] names = {"Subtraction", "Signed"}; // NON-NLS
     base.setDouble(Tag.WindowCenter, VR.DS, first[0], second[0]);
     base.setDouble(Tag.WindowWidth, VR.DS, first[1], second[1]);
     base.setString(
         Tag.WindowCenterWidthExplanation,
         VR.LO,
-        spec.signed() ? names[1] : names[0],
-        spec.signed() ? names[0] : names[1]);
+        signedFirst ? names[1] : names[0],
+        signedFirst ? names[0] : names[1]);
     base.setString(Tag.VOILUTFunction, VR.CS, "LINEAR_EXACT"); // NON-NLS
   }
 
@@ -339,7 +422,9 @@ public final class SubtractionBuilder {
             Tag.SpacingBetweenSlices,
             Tag.SliceLocation,
             Tag.Columns,
-            Tag.Rows),
+            Tag.Rows,
+            Tag.CineRate,
+            Tag.FrameTime),
         image,
         false);
     rawIO.setTagNoNull(TagW.SlicePosition, image.getTagValue(TagW.SlicePosition));

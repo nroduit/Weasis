@@ -261,6 +261,13 @@ line naming the current spelling. Use the current one everywhere.
    another, `--all-phases` builds every phase minus the mask phase, and `--mip` opens the result
    as a maximum intensity projection, the breast overview. `subtraction:list` and
    `subtraction:info --series <uid>` describe what was built, `subtraction:delete` removes it.
+   An X-ray run (XA, RF) is its own mask, the digital subtraction angiography: `subtraction:preview`
+   on the pane of the run subtracts the frames its DICOM names, else frame 1;
+   `subtraction:mask --frames 2-4` averages other frames into the mask (`--tid-offset 2` for a
+   moving mask), `subtraction:shift --rows 0.5 --columns -0.25` moves the mask by sub-pixel steps
+   against patient motion, and `subtraction:create` builds the subtracted run (`--mask-frames`,
+   `--tid-offset`, `--shift rows,columns` without a preview). The run opens on the signed window:
+   iodine dark on a mid-gray background, as the console shows it.
    The result is a series: scroll, window, measure and capture it like any other.
 12. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well

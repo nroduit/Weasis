@@ -36,6 +36,13 @@ class SubtractionCommandsTest {
           "subtraction:create --series series_2 --json",
           "subtraction:create --phase 2 --mask-phase 1",
           "subtraction:create --series 1.2.3 --all-phases --mip --no-open",
+          "subtraction:create --mask-frames 2-4 --shift 0.5,-0.25 --no-open",
+          "subtraction:create --series 1.2.3 --tid-offset 2",
+          "subtraction:mask --frames 3",
+          "subtraction:mask --view view_1 --pane 2 --frames 1,3,5",
+          "subtraction:mask --tid-offset -1 --json",
+          "subtraction:shift --rows 0.5",
+          "subtraction:shift --rows -1 --columns 0.25 --json",
           "subtraction:phases",
           "subtraction:phases --series 1.2.3",
           "subtraction:list",
@@ -52,6 +59,9 @@ class SubtractionCommandsTest {
           "subtraction:create --phase x",
           "subtraction:preview --pane x",
           "subtraction:create --offset",
+          "subtraction:mask --frames",
+          "subtraction:mask --tid-offset x",
+          "subtraction:shift --rows abc",
           "subtraction:list --study");
 
   @Test

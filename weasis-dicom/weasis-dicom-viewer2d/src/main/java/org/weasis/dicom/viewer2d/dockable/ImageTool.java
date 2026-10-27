@@ -14,6 +14,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -34,6 +35,7 @@ import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.CollapsiblePanel;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.Feature.SliderChangeListenerValue;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -51,6 +53,7 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.WindowPresetActions;
 import org.weasis.dicom.viewer2d.fusion.FusionAction;
+import org.weasis.dicom.viewer2d.subtraction.FrameMask;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionAction;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionController;
 
@@ -414,6 +417,56 @@ public class ImageTool extends PluginTool {
     JLabel label = new JLabel(Messages.getString("SubtractionTool.mask") + StringUtil.COLON);
     panel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, maskCombo));
     panel.add(GuiUtils.boxVerticalStrut(gabY));
+
+    // The mask of an X-ray run: the frame shown as mask, and the sub-pixel shift of the mask
+    JPanel run = GuiUtils.getVerticalBoxLayoutPanel();
+    JButton current = new JButton(Messages.getString("SubtractionTool.current_frame"));
+    current.setToolTipText(Messages.getString("SubtractionTool.current_frame.tip"));
+    current.addActionListener(e -> SubtractionController.useCurrentFrameAsMask());
+    run.add(GuiUtils.getFlowLayoutPanel(current));
+    for (SliderChangeListenerValue shift :
+        List.of(SubtractionAction.SHIFT_ROWS, SubtractionAction.SHIFT_COLUMNS)) {
+      manager
+          .getAction(shift)
+          .ifPresent(
+              a -> {
+                JSliderW slider = a.createSlider(0, true);
+                GuiUtils.setPreferredWidth(slider, 100);
+                run.add(slider);
+                run.add(GuiUtils.boxVerticalStrut(gabY));
+              });
+    }
+    run.setVisible(false);
+    maskCombo
+        .getModel()
+        .addListDataListener(
+            new ListDataListener() {
+              @Override
+              public void intervalAdded(ListDataEvent e) {
+                update();
+              }
+
+              @Override
+              public void intervalRemoved(ListDataEvent e) {
+                update();
+              }
+
+              @Override
+              public void contentsChanged(ListDataEvent e) {
+                update();
+              }
+
+              private void update() {
+                boolean shown =
+                    maskCombo.getModel().getSize() > 0
+                        && maskCombo.getModel().getElementAt(0) instanceof FrameMask;
+                if (run.isVisible() != shown) {
+                  run.setVisible(shown);
+                  panel.revalidate();
+                }
+              }
+            });
+    panel.add(run);
 
     manager
         .getAction(SubtractionAction.FACTOR)
