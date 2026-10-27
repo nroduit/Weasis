@@ -93,11 +93,16 @@ class WeasisPluginManagerTest {
             "/opt/weasis/app/common-lib/weasis-core-5.0.0.jar",
             "/opt/weasis/app/common-lib/joml-1.10.9.jar",
             "/opt/weasis/app/classes",
+            "/opt/weasis/app/launcher/miglayout-core-11.jar.embedded",
             "relative/zip4j-2.11.5.jar");
     Set<String> names = WeasisPluginManager.classpathJarNames(cp);
     assertEquals(
         Set.of(
-            "weasis-launcher.jar", "weasis-core-5.0.0.jar", "joml-1.10.9.jar", "zip4j-2.11.5.jar"),
+            "weasis-launcher.jar",
+            "weasis-core-5.0.0.jar",
+            "joml-1.10.9.jar",
+            "miglayout-core-11.jar",
+            "zip4j-2.11.5.jar"),
         names);
   }
 

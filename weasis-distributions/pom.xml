@@ -20,6 +20,7 @@
     <dollar>$</dollar>
     <tmp.dir>${project.build.directory}/tmp</tmp.dir>
     <tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
+    <tmp.launcher.dir>${project.build.directory}/tmp/launcher</tmp.launcher.dir>
 
     <xz.ext/>
     <windowsName>weasis-native</windowsName>
@@ -148,12 +149,80 @@
                 <!-- ===================================== -->
                 <!-- Launcher -->
                 <!-- ===================================== -->
+                <!-- Stage 1: the only jar jpackage puts on the class path of the native launchers -->
+                <artifactItem>
+                  <groupId>org.weasis.launcher</groupId>
+                  <artifactId>weasis-bootstrap</artifactId>
+                  <version>${app.version}</version>
+                  <outputDirectory>${tmp.dir}</outputDirectory>
+                  <destFileName>weasis-bootstrap.jar</destFileName>
+                </artifactItem>
+
+                <!-- ===================================== -->
+                <!-- Launcher set (stage 2 class path): launcher/ in the package, plain jars, with -->
+                <!-- the sha256sum manifest written at prepare-package. The same libraries are also -->
+                <!-- served as bundle/*.jar.xz for the development launch and remote codebases. -->
+                <!-- ===================================== -->
                 <artifactItem>
                   <groupId>org.weasis.launcher</groupId>
                   <artifactId>weasis-launcher</artifactId>
                   <version>${app.version}</version>
-                  <outputDirectory>${tmp.dir}</outputDirectory>
+                  <outputDirectory>${tmp.launcher.dir}</outputDirectory>
                   <destFileName>weasis-launcher.jar</destFileName>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.core</groupId>
+                  <artifactId>weasis-core</artifactId>
+                  <version>${app.version}</version>
+                  <outputDirectory>${tmp.launcher.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.core</groupId>
+                  <artifactId>weasis-core-img</artifactId>
+                  <version>${weasis.core.img.version}</version>
+                  <outputDirectory>${tmp.launcher.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.thirdparty</groupId>
+                  <artifactId>jaxb-osgi</artifactId>
+                  <version>${jaxb.osgi.version}</version>
+                  <outputDirectory>${tmp.launcher.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.miglayout</groupId>
+                  <artifactId>miglayout-swing</artifactId>
+                  <version>${miglayout.version}</version>
+                  <outputDirectory>${tmp.launcher.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.miglayout</groupId>
+                  <artifactId>miglayout-core</artifactId>
+                  <version>${miglayout.version}</version>
+                  <outputDirectory>${tmp.launcher.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.joml</groupId>
+                  <artifactId>joml</artifactId>
+                  <version>${joml.version}</version>
+                  <outputDirectory>${tmp.launcher.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>net.lingala.zip4j</groupId>
+                  <artifactId>zip4j</artifactId>
+                  <version>${zip4j.version}</version>
+                  <outputDirectory>${tmp.launcher.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.github.oshi</groupId>
+                  <artifactId>oshi-core-ffm</artifactId>
+                  <version>${oshi.version}</version>
+                  <outputDirectory>${tmp.launcher.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.github.oshi</groupId>
+                  <artifactId>oshi-common</artifactId>
+                  <version>${oshi.version}</version>
+                  <outputDirectory>${tmp.launcher.dir}</outputDirectory>
                 </artifactItem>
 
                 <!-- ===================================== -->
@@ -380,6 +449,39 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <!-- The sha256sum manifest of the launcher set, read by the bootstrap (weasis.launcher.sha256).
+             Written after the jars are signed (process-resources) so the digests are those served. -->
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>launcher-manifest</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>java</goal>
+            </goals>
+            <configuration>
+              <mainClass>org.weasis.bootstrap.tool.Sha256Sum</mainClass>
+              <includePluginDependencies>true</includePluginDependencies>
+              <includeProjectDependencies>false</includeProjectDependencies>
+              <arguments>
+                <argument>${tmp.launcher.dir}/launcher.sha256</argument>
+                <argument>${tmp.launcher.dir}</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.weasis.launcher</groupId>
+            <artifactId>weasis-bootstrap</artifactId>
+            <version>${app.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
 
       <plugin>

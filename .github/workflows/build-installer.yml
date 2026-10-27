@@ -203,35 +203,24 @@ jobs:
           find ${{ env.WEASIS_INPUT_BIN }}/bundle/weasis-opencv-core-* -type f ! -name "*-${{ matrix.wsystem }}-${{ matrix.warc }}-*" -exec rm -f {} \;
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
 
-      - name: Split common libraries out of bundle/ onto the application classpath
+      - name: Keep the embedded launcher set off the jpackage class path
         shell: bash
         run: |
-          # jpackage adds every plain jar found under --input to the application classpath, so
-          # the common libraries become part of the system classloader (required for the AOT
-          # cache) while pf4j plugins must remain .jar.xz in bundle/ to stay OFF the classpath.
-          # Same classification rule as AutoProcessor.isValidPF4JPlugin.
-          COMMON_LIB_DIR="${{ env.WEASIS_INPUT_BIN }}/common-lib"
-          mkdir -p "$COMMON_LIB_DIR"
-          TMP_CHECK=$(mktemp -d)
-          for f in ${{ env.WEASIS_INPUT_BIN }}/bundle/*.jar.xz; do
+          # jpackage adds every plain *.jar found under --input to the class path of the native
+          # launchers, which must carry weasis-bootstrap.jar only: the bootstrap (stage 1) builds the
+          # class path of stage 2 itself from launcher/, so the set is renamed *.jar.embedded.
+          # Same step as package-weasis.sh.
+          for f in ${{ env.WEASIS_INPUT_BIN }}/launcher/*.jar; do
             [ -f "$f" ] || continue
-            jarname=$(basename "$f" .xz)
-            xz -dc "$f" > "$TMP_CHECK/$jarname"
-            ( cd "$TMP_CHECK" && jar -xf "$jarname" META-INF/MANIFEST.MF META-INF/plugin.properties 2>/dev/null )
-            if grep -qiE '^Plugin-Id: *[^ ]' "$TMP_CHECK/META-INF/MANIFEST.MF" 2>/dev/null \
-               || grep -qE '^plugin\.id=.+' "$TMP_CHECK/META-INF/plugin.properties" 2>/dev/null ; then
-              rm -f "$TMP_CHECK/$jarname"
-            else
-              echo "common-lib: $jarname"
-              mv "$TMP_CHECK/$jarname" "$COMMON_LIB_DIR/"
-              rm -f "$f"
-            fi
-            rm -rf "$TMP_CHECK/META-INF"
+            echo "embedded set: $(basename "$f")"
+            mv "$f" "$f.embedded"
           done
-          rm -rf "$TMP_CHECK"
-          # Safety: any plain jar left in bundle/ would be added to the app classpath by jpackage
-          if compgen -G "${{ env.WEASIS_INPUT_BIN }}/bundle/*.jar" > /dev/null; then
-            echo "ERROR: bundle/ contains uncompressed jars; build weasis-distributions with -P compressXZ"
+          [ -f "${{ env.WEASIS_INPUT_BIN }}/weasis-bootstrap.jar" ] || { echo "ERROR: weasis-bootstrap.jar is missing"; exit 1; }
+          rm -f "${{ env.WEASIS_INPUT_BIN }}"/weasis-launcher.jar
+          OTHER_JARS=$(find "${{ env.WEASIS_INPUT_BIN }}" -name '*.jar' ! -path "${{ env.WEASIS_INPUT_BIN }}/weasis-bootstrap.jar")
+          if [ -n "$OTHER_JARS" ]; then
+            echo "ERROR: plain jars besides weasis-bootstrap.jar under --input (build weasis-distributions with -P compressXZ):"
+            echo "$OTHER_JARS"
             exit 1
           fi
 
@@ -310,7 +299,7 @@ jobs:
             # Pre-sign ALL native libraries embedded in JARs.
             # jpackage --mac-sign will sign the extracted content of the app image,
             # but dylibs INSIDE jars must be signed before jpackage repackages them.
-            for jar_file in "${{ env.WEASIS_INPUT_BIN }}"/*.jar "${{ env.WEASIS_INPUT_BIN }}"/common-lib/*.jar "${{ env.WEASIS_INPUT_BIN }}"/bundle/*.jar; do
+            for jar_file in "${{ env.WEASIS_INPUT_BIN }}"/*.jar "${{ env.WEASIS_INPUT_BIN }}"/launcher/*.jar.embedded "${{ env.WEASIS_INPUT_BIN }}"/bundle/*.jar; do
               [ -f "$jar_file" ] || continue
               if unzip -l "$jar_file" 2>/dev/null | grep -qE '\.(dylib|jnilib)$'; then
                 echo "--- Signing native libs in: $jar_file"
@@ -340,7 +329,7 @@ jobs:
           # archive for the first launch and the AOT stage-1 relauncher.
           jpackage --type app-image --input "${{ env.WEASIS_INPUT_BIN }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" \
           --jlink-options "--strip-debug --no-man-pages --no-header-files --generate-cds-archive" \
-          --main-jar weasis-launcher.jar --main-class org.weasis.launcher.Bootstrap --add-modules "${{ env.JDK_MODULES }}" \
+          --main-jar weasis-bootstrap.jar --main-class org.weasis.bootstrap.Bootstrap --add-modules "${{ env.JDK_MODULES }}" \
           --resource-dir "${{ env.RES }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --add-launcher "Dicomizer=${{ env.RES }}/dicomizer-launcher.properties" \
           --add-launcher "weasis-cli=${{ env.RES }}/weasis-cli-launcher.properties" \
           "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"

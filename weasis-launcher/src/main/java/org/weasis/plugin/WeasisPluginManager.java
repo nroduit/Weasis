@@ -12,6 +12,8 @@ package org.weasis.plugin;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -30,6 +32,7 @@ import org.pf4j.PluginWrapper;
 import org.pf4j.VersionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.launcher.BootstrapContract;
 import org.weasis.pref.ConfigData;
 
 public class WeasisPluginManager extends DefaultPluginManager {
@@ -149,16 +152,31 @@ public class WeasisPluginManager extends DefaultPluginManager {
     return commonLibClassLoader;
   }
 
-  /** Returns the file names of the jars on the application classpath. */
+  /**
+   * The file names of the jars the launcher runs from: the application class path, plus the jars of
+   * the launcher's own class loader when the bootstrap loaded the set in-process (macOS). The
+   * embedded suffix of the installer is removed, so a library of the set is recognised by its name.
+   */
   public static Set<String> classpathJarNames() {
-    return classpathJarNames(System.getProperty("java.class.path", ""));
+    Set<String> names = classpathJarNames(System.getProperty("java.class.path", ""));
+    if (WeasisPluginManager.class.getClassLoader() instanceof URLClassLoader loader) {
+      for (URL url : loader.getURLs()) {
+        String name = url.getPath();
+        name = name.substring(name.lastIndexOf('/') + 1);
+        if (!name.isEmpty()) {
+          names.add(BootstrapContract.jarName(name));
+        }
+      }
+    }
+    return names;
   }
 
   static Set<String> classpathJarNames(String classpath) {
     Set<String> names = new HashSet<>();
     for (String entry : classpath.split(File.pathSeparator)) {
-      if (entry.endsWith(".jar")) {
-        names.add(Path.of(entry).getFileName().toString());
+      String name = BootstrapContract.jarName(entry);
+      if (name.endsWith(".jar")) {
+        names.add(Path.of(name).getFileName().toString());
       }
     }
     return names;

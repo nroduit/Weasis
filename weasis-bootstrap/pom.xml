@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>weasis-parent</artifactId>
+    <groupId>org.weasis</groupId>
+    <!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
+    <relativePath>../weasis-parent/pom.xml</relativePath>
+  </parent>
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.weasis.launcher</groupId>
+  <artifactId>weasis-bootstrap</artifactId>
+  <name>Weasis Bootstrap [${project.artifactId}]</name>
+  <description>Stage 1 of the packaged application: single instance, launcher set resolution and verification, stage-2 JVM</description>
+
+  <build>
+    <plugins>
+      <plugin>
+        <!-- A plain jar with a main class: no pf4j header, no dependency beyond the JDK -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration combine.self="override">
+          <archive>
+            <manifestEntries>
+              <Main-Class>org.weasis.bootstrap.Bootstrap</Main-Class>
+              <Bootstrap-Protocol>${bootstrap.protocol}</Bootstrap-Protocol>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

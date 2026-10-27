@@ -63,6 +63,7 @@
 
   <modules>
     <module>weasis-parent</module>
+    <module>weasis-bootstrap</module>
     <module>weasis-launcher</module>
     <module>weasis-opencv</module>
     <module>weasis-core</module>

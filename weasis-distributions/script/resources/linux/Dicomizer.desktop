@@ -3,6 +3,7 @@ Version=1.0
 Name=APPLICATION_NAME
 Comment=Build DICOM files from images
 Exec=APPLICATION_LAUNCHER
+StartupWMClass=org-weasis-launcher-Dicomizer
 Icon=APPLICATION_ICON
 Terminal=false
 Type=Application

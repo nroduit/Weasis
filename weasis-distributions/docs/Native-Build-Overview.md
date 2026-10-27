@@ -75,22 +75,37 @@ their supported OS versions follow those binaries, not the runner image.
 | **macOS** | Native libraries inside JARs are signed (`--options runtime --timestamp`) before jpackage repacks them; `--mac-sign` is used at the app-image stage only, **never** at the `pkg` stage, which would break notarization |
 | **Windows** | WiX 4+ is required by jpackage on JDK 26+; per-architecture `--win-upgrade-uuid`; the MSI is built from the app-image |
 
-`script/launch-options.sh` is the single source of truth for `JDK_MODULES`, `customOptions` (per-OS,
-e.g. the splash screen and Linux-only `-Dsun.awt.disablegrab=true`) and `commonOptions` (identical
-everywhere): `--enable-native-access=ALL-UNNAMED`, `-XX:MaxRAMPercentage=25`,
-`-XX:+UseStringDeduplication`, `-Dweasis.launch.type=NATIVE`,
-`-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider`,
-`-Djavax.accessibility.screen_magnifier_present=false`.
+`weasis-distributions/script/launch-options.sh` is the single source of truth for the JDK modules
+and the `--java-options` of the native launchers. The workflow (macOS, Windows) and
+`package-weasis.sh` (Linux) both source it with the platform as argument, so the launchers cannot
+drift apart. The module list is read from `build.properties` (`jdk.modules`, filtered from the
+pom), the same value the package declares in `weasis.requires.modules`.
 
-`weasis-distributions/script/launch-options.sh` is the single source of truth for the JDK modules and
-the launcher `--java-options` (per-OS options and options common to all platforms). The workflow
-(macOS, Windows) and `package-weasis.sh` (Linux) both source it with the platform as argument, so the
-launchers cannot drift apart.
+The native launchers start the **bootstrap** (`weasis-bootstrap.jar`, stage 1), so their options
+are those of a small, short-lived JVM; the options of the application (stage 2) are served by the
+package (`weasis.launcher.jvm-options` in `base.json`, also from the pom) and applied by the
+bootstrap. macOS is the exception: the bootstrap runs the launcher set in its own process there,
+so its `.cfg` carries the application options. The **Dicomizer** and **weasis-cli** launchers do
+not inherit the command-line options: jpackage discards them for a launcher whose properties file
+sets `java-options`, so `resources/<platform>/*-launcher.properties` repeat the stage-1 set and
+name the entry class (`weasis.bootstrap.entry`). See `weasis-launcher/docs/Launcher-Overview.md`
+(“Bootstrap and Launcher Set”) for the runtime side.
 
-The **Dicomizer** launcher does not inherit these options: jpackage discards the command-line
-`--java-options` for a launcher whose properties file sets `java-options`. Any option it needs must be
-repeated in `resources/<platform>/dicomizer-launcher.properties`; the Dicomizer reads its configuration
-from `conf/dicomizer.json`.
+## 4. The launcher set in the package and in the image
+
+The distribution build copies the launcher jar and the common libraries, plain, into
+`bin-dist/weasis/launcher/` next to their `launcher.sha256` manifest (written by
+`org.weasis.bootstrap.tool.Sha256Sum`), and declares them in `base.json`
+(`weasis.launcher.url`, `.libs`, `.sha256`). The same libraries stay in `bundle/` as `.jar.xz`
+for the development launch and remote codebases. A hub serves `launcher/` like the bundles.
+
+Before jpackage runs, the packaging step renames `launcher/*.jar` to `*.jar.embedded`: jpackage
+adds every plain `*.jar` found under `--input` to the class path of the native launchers, which
+must carry `weasis-bootstrap.jar` only. The bootstrap builds the class path of stage 2 itself, from
+the embedded set or from a set downloaded into the per-user cache. Any other plain jar under
+`--input` fails the build, so **`-P compressXZ` is required** when building `weasis-distributions`
+for native packaging (CI always uses it). A site that signs its own launcher sets drops the
+certificates in `launcher/truststore/` through `prepare-input-site.sh`.
 
 ## 5. Deployment-specific customisation
 
@@ -105,27 +120,15 @@ public distribution; when absent, the stock installers are built.
 `weasis-native.zip` is uploaded by the `build` job before any packaging, so `prepare-input-site.sh`
 never modifies the published server payload.
 
-## 6. Common-library split and the AOT cache
-
-Before jpackage runs, every `bundle/*.jar.xz` is inspected: jars **without** a `Plugin-Id`
-manifest header (or `plugin.properties` `plugin.id`) are common libraries — they are
-decompressed into `common-lib/` inside the `--input` tree and jpackage automatically adds
-them to the application classpath in the generated `.cfg`. pf4j plugins must remain
-`.jar.xz` in `bundle/` to stay **off** the classpath — the split step fails hard if a plain
-jar remains there, so **`-P compressXZ` is required** when building `weasis-distributions`
-for native packaging (CI always uses it).
-
-The classpath placement is what makes the common libraries reliably eligible for the JDK AOT
-cache. Two related constraints on the jpackage runtime:
+## 6. The jpackage runtime and the AOT cache
 
 - `--jlink-options "--strip-debug --no-man-pages --no-header-files --generate-cds-archive"`
   replaces jpackage's defaults **on purpose**: the default set includes
-  `--strip-native-commands`, but `bin/java` must remain because the AOT assembly phase
-  (`-XX:AOTCacheOutput`) spawns `<java.home>/bin/java` at JVM exit.
+  `--strip-native-commands`, but `bin/java` must remain because the bootstrap spawns
+  `<runtime>/bin/java` for stage 2 and the AOT assembly phase (`-XX:AOTCacheOutput`) spawns it
+  at JVM exit.
 - `--generate-cds-archive` ships a base CDS archive (`lib/server/classes.jsa`) that speeds up
-  the first (untrained) launch and the AOT stage-1 relauncher.
-
-See `weasis-launcher/docs/Launcher-Overview.md` (“Launch Pipeline”) for the runtime side.
+  the stage-1 bootstrap JVM and the first (untrained) launch of stage 2.
 
 ## 7. Files
 
@@ -133,28 +136,7 @@ See `weasis-launcher/docs/Launcher-Overview.md` (“Launch Pipeline”) for the 
 |------|------|
 | `.github/workflows/build-installer.yml` | CI pipeline |
 | `weasis-distributions/script/package-weasis.sh` | jpackage build for one platform (Linux in CI, any platform locally) |
-| `weasis-distributions/script/launch-options.sh` | JDK modules and launcher options |
+| `weasis-distributions/script/launch-options.sh` | JDK modules and the options of the stage-1 launchers |
+| `weasis-distributions/script/build.properties` | versions, `jdk.modules` and `bootstrap.protocol`, filtered from the pom |
 | `weasis-distributions/docker/Dockerfile` | `weasis/builder` image for the Linux packages |
-| `weasis-distributions/script/resources/<platform>/` | icons, installer resources, Dicomizer launcher properties |
-
-## 7. Common-library split and the AOT cache
-
-Before jpackage runs, every `bundle/*.jar.xz` is inspected: jars **without** a `Plugin-Id`
-manifest header (or `plugin.properties` `plugin.id`) are common libraries — they are
-decompressed into `common-lib/` inside the `--input` tree and jpackage automatically adds
-them to the application classpath in the generated `.cfg`. pf4j plugins must remain
-`.jar.xz` in `bundle/` to stay **off** the classpath — the split step fails hard if a plain
-jar remains there, so **`-P compressXZ` is required** when building `weasis-distributions`
-for native packaging (CI always uses it).
-
-The classpath placement is what makes the common libraries reliably eligible for the JDK AOT
-cache. Two related constraints on the jpackage runtime:
-
-- `--jlink-options "--strip-debug --no-man-pages --no-header-files --generate-cds-archive"`
-  replaces jpackage's defaults **on purpose**: the default set includes
-  `--strip-native-commands`, but `bin/java` must remain because the AOT assembly phase
-  (`-XX:AOTCacheOutput`) spawns `<java.home>/bin/java` at JVM exit.
-- `--generate-cds-archive` ships a base CDS archive (`lib/server/classes.jsa`) that speeds up
-  the first (untrained) launch and the AOT stage-1 relauncher.
-
-See `weasis-launcher/docs/Launcher-Overview.md` (“Launch Pipeline”) for the runtime side.
+| `weasis-distributions/script/resources/<platform>/` | icons, installer resources, Dicomizer and weasis-cli launcher properties |

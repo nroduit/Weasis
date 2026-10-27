@@ -124,30 +124,17 @@ public class WeasisLauncher {
     WeasisMainFrame mainFrame = loader.getMainFrame();
 
     String minVersion = System.getProperty(ConfigData.P_WEASIS_MIN_NATIVE_VERSION);
+    String fallback = System.getProperty(BootstrapContract.P_FALLBACK);
+    String appName = System.getProperty(ConfigData.P_WEASIS_NAME);
     if (Utils.hasText(minVersion)) {
-      EventQueue.invokeAndWait(
-          () -> {
-            String appName = System.getProperty(ConfigData.P_WEASIS_NAME);
-            int response =
-                JOptionPane.showOptionDialog(
-                    mainFrame.getWindow(),
-                    String.format(
-                        "%s\n\n%s", // NON-NLS
-                        String.format(
-                            Messages.getString("WeasisLauncher.update_min"), appName, minVersion),
-                        Messages.getString("WeasisLauncher.continue_local")),
-                    null,
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.ERROR_MESSAGE,
-                    null,
-                    null,
-                    null);
-
-            if (response != 0) {
-              LOGGER.error("Do not continue the launch with the local version");
-              System.exit(-1);
-            }
-          });
+      askToContinueLocal(
+          mainFrame,
+          String.format(Messages.getString("WeasisLauncher.update_min"), appName, minVersion));
+    } else if (Utils.hasText(fallback)) {
+      askToContinueLocal(
+          mainFrame,
+          String.format(
+              Messages.getString("WeasisLauncher.bootstrap_fallback"), appName, fallback));
     }
 
     Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
@@ -223,6 +210,7 @@ public class WeasisLauncher {
       if (!deferred.isEmpty()) {
         executeCommands(commandManager, deferred, CommandOrigin.URI);
       }
+      BootstrapContract.signalReady();
       commandManager
           .eventBus()
           .publish(
@@ -266,6 +254,31 @@ public class WeasisLauncher {
     } finally {
       Runtime.getRuntime().halt(exitStatus);
     }
+  }
+
+  /** The remote package cannot run on this installation: continue with the local one, or quit. */
+  private static void askToContinueLocal(WeasisMainFrame mainFrame, String message)
+      throws Exception {
+    EventQueue.invokeAndWait(
+        () -> {
+          int response =
+              JOptionPane.showOptionDialog(
+                  mainFrame.getWindow(),
+                  String.format(
+                      "%s\n\n%s", // NON-NLS
+                      message, Messages.getString("WeasisLauncher.continue_local")),
+                  null,
+                  JOptionPane.YES_NO_OPTION,
+                  JOptionPane.ERROR_MESSAGE,
+                  null,
+                  null,
+                  null);
+
+          if (response != 0) {
+            LOGGER.error("Do not continue the launch with the local version");
+            System.exit(-1);
+          }
+        });
   }
 
   private void checkPluginUI(Map<String, String> serverProp) {
@@ -1039,7 +1052,7 @@ Starting PF4J Plugins...
       String[] args, boolean sameInstance, boolean noArgs, WeasisLauncher instance) {
     try {
       ProcessBuilder pb = new ProcessBuilder(args);
-      // Do not leak the AOT stage-2 flags into a URI-triggered secondary instance
+      // Do not leak JVM options of this process into a URI-triggered secondary instance
       pb.environment().remove("JAVA_TOOL_OPTIONS");
       pb.start().waitFor(15, TimeUnit.SECONDS);
       if (sameInstance && noArgs) {

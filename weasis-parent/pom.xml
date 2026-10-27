@@ -26,6 +26,25 @@
 
     <app.version>${revision}${changelist}</app.version>
     <base.minimal.version>5.0.0</base.minimal.version>
+    <!--
+      Facts of the native image, declared by the package (base.json weasis.requires.*) and reported by
+      the installed bootstrap at launch. The JDK modules are the curated list of the installers
+      (jdeps misses reflective uses such as jdk.crypto.mscapi); launch-options.sh reads it from
+      build.properties. The bootstrap protocol is the stage 1 <-> stage 2 contract, see
+      weasis-launcher/docs/Launcher-Overview.md.
+    -->
+    <bootstrap.protocol>1</bootstrap.protocol>
+    <jdk.modules>java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql</jdk.modules>
+    <!--
+      JVM options of the application process (stage 2), served by the package and applied by the
+      bootstrap as plain arguments; $APPDIR is substituted at launch. One common set, one per OS,
+      and the set of the command-line client.
+    -->
+    <launcher.jvm.options>--enable-native-access=ALL-UNNAMED -XX:MaxRAMPercentage=25 -XX:+UseStringDeduplication -Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider -Djavax.accessibility.screen_magnifier_present=false -splash:$APPDIR/resources/images/about-round.png</launcher.jvm.options>
+    <launcher.jvm.options.linux>-Dsun.awt.disablegrab=true</launcher.jvm.options.linux>
+    <launcher.jvm.options.windows></launcher.jvm.options.windows>
+    <launcher.jvm.options.macosx>-Dapple.laf.useScreenMenuBar=true -Dapple.awt.application.appearance=NSAppearanceNameDarkAqua</launcher.jvm.options.macosx>
+    <launcher.jvm.options.cli>-XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Xshare:auto -Dlogback.statusListenerClass=ch.qos.logback.core.status.NopStatusListener</launcher.jvm.options.cli>
     <i18n.version>4.0.0-SNAPSHOT</i18n.version>
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v473-2026-08-25</weasis.releasenotes>
 

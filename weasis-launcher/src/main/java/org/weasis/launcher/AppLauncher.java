@@ -21,6 +21,8 @@ import ch.qos.logback.core.util.FileSize;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
@@ -94,13 +96,19 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
     super(configData);
   }
 
+  /**
+   * The application process: stage 2 of a packaged launch (started by the bootstrap of the native
+   * image, see {@link BootstrapContract}), or the whole process in a development launch.
+   */
   static void main(String[] argv) throws Exception {
-    // The AOT relaunch check runs in Bootstrap, before this class is loaded. Reaching here means
-    // this is the real application process (the stage-2 child, or a launch with AOT disabled).
     LOGGER.info(
         "*PERF* JVM start, type:INIT time:{}",
         (System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime()));
-    AotCache.logStatus();
+    logLaunchStatus();
+    Optional<String> refusal = BootstrapContract.refuseBootstrap();
+    if (refusal.isPresent()) {
+      refuse(refusal.get());
+    }
 
     // Build the merged system trust store on a background thread
     PlatformCertificateLoader.startAsyncSetup();
@@ -111,11 +119,48 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
     ConfigData configData = new ConfigData(argv);
     LOGGER.info(
         "*PERF* Loading config, type:INIT time:{}", (System.currentTimeMillis() - startTime));
+    if (BootstrapContract.launchedByBootstrap()) {
+      List<String> unsatisfied =
+          BootstrapContract.unsatisfiedRequirements(configData.getPreferences());
+      if (!unsatisfied.isEmpty()) {
+        refuse("this runtime does not satisfy the package: " + String.join("; ", unsatisfied));
+      }
+    }
     if (!Singleton.invoke(configData)) {
       AppLauncher instance = new AppLauncher(configData);
 
       Singleton.start(instance, configData.getSourceID());
       instance.launch(launchType);
+    }
+  }
+
+  /** Stage 2 refuses this environment: one line for stage 1, the reserved exit code. */
+  private static void refuse(String reason) {
+    LOGGER.error("Refusing to start: {}", reason);
+    System.err.println("Refusing to start: " + reason); // NON-NLS
+    System.exit(BootstrapContract.EXIT_REFUSED);
+  }
+
+  /** Logs the AOT mode of this process and, after a bootstrap, the time stage 1 took. */
+  private static void logLaunchStatus() {
+    String mode = "off"; // NON-NLS
+    for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+      if (arg.startsWith("-XX:AOTCacheOutput=")) { // NON-NLS
+        mode = "train"; // NON-NLS
+        break;
+      } else if (arg.startsWith("-XX:AOTCache=")) { // NON-NLS
+        mode = "use"; // NON-NLS
+        break;
+      }
+    }
+    LOGGER.info("*PERF* AOT cache, type:INIT mode:{}", mode);
+    Long bootstrapStart = Long.getLong(BootstrapContract.P_T0);
+    if (bootstrapStart != null) {
+      long overhead = ManagementFactory.getRuntimeMXBean().getStartTime() - bootstrapStart;
+      LOGGER.info(
+          "*PERF* Bootstrap overhead, type:INIT time:{} set:{}",
+          overhead,
+          System.getProperty(BootstrapContract.P_SET));
     }
   }
 
@@ -174,6 +219,48 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
         configData.isPropertyValueSimilar(
             ConfigData.P_WEASIS_CONFIG_HASH, prop.getProperty(ConfigData.P_WEASIS_CONFIG_HASH));
     return sameUser && sameConfig;
+  }
+
+  /**
+   * An activation offered by the bootstrap names the instance by what its command line says: user,
+   * codebase or configuration service URL, extended configuration file, and the profile when given.
+   * The profile and the codebase of the running instance may come from its configuration, so a
+   * value the bootstrap left empty is compared with what the launch resolved locally.
+   */
+  @Override
+  public boolean isSameInstance(Properties prop) {
+    if (!configData.isPropertyValueSimilar(
+        ConfigData.P_WEASIS_USER, prop.getProperty(ConfigData.P_WEASIS_USER))) {
+      return false;
+    }
+    if (!sameOrEmpty(prop, ConfigData.P_WEASIS_CONFIG_URL)
+        || !sameOrEmpty(prop, ConfigData.EXTENDED_PROPERTIES_PROP)) {
+      return false;
+    }
+    String profile = prop.getProperty(ConfigData.P_WEASIS_PROFILE, "");
+    if (Utils.hasText(profile)
+        && !Objects.equals(profile, configData.getProperty(ConfigData.P_WEASIS_PROFILE))) {
+      return false;
+    }
+    if (Utils.hasText(prop.getProperty(ConfigData.P_WEASIS_CONFIG_URL))) {
+      return true; // the service decides the codebase on both sides
+    }
+    String codebase = prop.getProperty(ConfigData.P_WEASIS_CODEBASE_URL, "");
+    if (Utils.hasText(codebase)) {
+      return Objects.equals(codebase, configData.getProperty(ConfigData.P_WEASIS_CODEBASE_URL));
+    }
+    return configData.getProperty(ConfigData.P_WEASIS_CODEBASE_LOCAL) != null;
+  }
+
+  private boolean sameOrEmpty(Properties prop, String key) {
+    String offered = prop.getProperty(key, "");
+    String mine = configData.getProperty(key, "");
+    return Objects.equals(offered, mine);
+  }
+
+  @Override
+  public boolean configurationChanged() {
+    return configData.hasConfigurationChanged();
   }
 
   @Override

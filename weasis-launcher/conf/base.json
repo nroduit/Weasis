@@ -188,6 +188,90 @@
       "category": "LOCK"
     },
     {
+      "code": "weasis.requires.jdk",
+      "value": "${java-version}",
+      "description": "JDK major this package was compiled for; the installed runtime must be at least this (checked by the hub and the bootstrap)",
+      "type": "A",
+      "category": "LOCK"
+    },
+    {
+      "code": "weasis.requires.modules",
+      "value": "${jdk.modules}",
+      "description": "JDK modules the package needs in the runtime image",
+      "type": "A",
+      "category": "LOCK"
+    },
+    {
+      "code": "weasis.requires.bootstrap",
+      "value": "${bootstrap.protocol}",
+      "description": "Bootstrap protocol(s) the launcher set speaks (a number, a range 1-2 or a list)",
+      "type": "A",
+      "category": "LOCK"
+    },
+    {
+      "code": "weasis.launcher.url",
+      "value": "${weasis.codebase.url}/launcher/weasis-launcher.jar",
+      "description": "Launcher jar of the launcher set the bootstrap runs stage 2 with",
+      "type": "A",
+      "category": "PLUGIN_INSTALL"
+    },
+    {
+      "code": "weasis.launcher.libs",
+      "value": "${weasis.codebase.url}/launcher/weasis-core-${app.version}.jar ${weasis.codebase.url}/launcher/weasis-core-img-${weasis.core.img.version}.jar ${weasis.codebase.url}/launcher/miglayout-core-${miglayout.version}.jar ${weasis.codebase.url}/launcher/miglayout-swing-${miglayout.version}.jar ${weasis.codebase.url}/launcher/jaxb-osgi-${jaxb.osgi.version}.jar ${weasis.codebase.url}/launcher/joml-${joml.version}.jar ${weasis.codebase.url}/launcher/zip4j-${zip4j.version}.jar ${weasis.codebase.url}/launcher/oshi-core-ffm-${oshi.version}.jar ${weasis.codebase.url}/launcher/oshi-common-${oshi.version}.jar",
+      "description": "Libraries of the launcher set, on the class path of stage 2 before any plugin",
+      "type": "A",
+      "category": "PLUGIN_INSTALL"
+    },
+    {
+      "code": "weasis.launcher.sha256",
+      "value": "${weasis.codebase.url}/launcher/launcher.sha256",
+      "description": "sha256sum manifest of the launcher set; its digest identifies the set in the bootstrap cache",
+      "type": "A",
+      "category": "PLUGIN_INSTALL"
+    },
+    {
+      "code": "weasis.launcher.main",
+      "value": "org.weasis.launcher.Weasis",
+      "description": "Entry class of stage 2 for the main launcher",
+      "type": "A",
+      "category": "PLUGIN_INSTALL"
+    },
+    {
+      "code": "weasis.launcher.jvm-options",
+      "value": "${launcher.jvm.options}",
+      "description": "JVM options of stage 2 on every platform, applied by the bootstrap ($APPDIR substituted, allow-listed when served)",
+      "type": "A",
+      "category": "PLUGIN_CONFIG"
+    },
+    {
+      "code": "weasis.launcher.jvm-options.linux",
+      "value": "${launcher.jvm.options.linux}",
+      "description": "JVM options of stage 2 on Linux",
+      "type": "A",
+      "category": "PLUGIN_CONFIG"
+    },
+    {
+      "code": "weasis.launcher.jvm-options.windows",
+      "value": "${launcher.jvm.options.windows}",
+      "description": "JVM options of stage 2 on Windows",
+      "type": "A",
+      "category": "PLUGIN_CONFIG"
+    },
+    {
+      "code": "weasis.launcher.jvm-options.macosx",
+      "value": "${launcher.jvm.options.macosx}",
+      "description": "JVM options of stage 2 on macOS (applied by the installer: the single process cannot change them at launch)",
+      "type": "A",
+      "category": "PLUGIN_CONFIG"
+    },
+    {
+      "code": "weasis.launcher.jvm-options.cli",
+      "value": "${launcher.jvm.options.cli}",
+      "description": "JVM options of the weasis-cli process",
+      "type": "A",
+      "category": "PLUGIN_CONFIG"
+    },
+    {
       "code": "weasis.min.native.version",
       "value": "${base.minimal.version}",
       "description": "Minimal required version of the native installer",

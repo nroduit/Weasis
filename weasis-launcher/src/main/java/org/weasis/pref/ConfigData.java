@@ -33,6 +33,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import org.semver4j.Semver;
 import org.slf4j.LoggerFactory;
+import org.weasis.launcher.BootstrapContract;
 import org.weasis.launcher.FileUtil;
 import org.weasis.launcher.Utils;
 import org.weasis.launcher.WeasisLauncher.Type;
@@ -129,6 +130,12 @@ public class ConfigData {
   private final AppPreferences preferences = new AppPreferences();
   private final WeasisPluginManager pluginManager = new WeasisPluginManager();
 
+  /** The bootstrap forced the installed package: remote configuration files are not applied. */
+  private boolean localOnly;
+
+  /** The configuration files this instance read, hashed into {@link #P_WEASIS_CONFIG_HASH}. */
+  private final List<URI> loadedConfigFiles = new ArrayList<>();
+
   public ConfigData(String[] args) {
     init(args);
   }
@@ -191,6 +198,10 @@ public class ConfigData {
         + profile
         + "; rv:" // NON-NLS
         + revision
+        + "; jv:" // NON-NLS
+        + Runtime.version().feature()
+        + "; bp:" // NON-NLS
+        + BootstrapContract.bootstrapProtocol().orElse(BootstrapContract.PROTOCOL_MAX)
         + ")"
         + " Java/" // NON-NLS
         + System.getProperty("java.version");
@@ -852,7 +863,19 @@ public class ConfigData {
     if (propURI != null) {
       configOutput.append("\n  Application configuration file = "); // NON-NLS
       configOutput.append(propURI);
-      if (!preferences.readJson(propURI)) {
+      if (bootstrapFallback(propURI)) {
+        // The bootstrap could not run the launcher set of the remote package: the embedded
+        // launcher runs the installed configuration, never the remote plugins.
+        localOnly = true;
+        URI localURI = getLocalPropertiesURI(CONFIG_PROPERTIES_FILE_VALUE);
+        applyLocalCodebase(true);
+        configOutput.append("\n  Fallback to local configuration file = "); // NON-NLS
+        configOutput.append(localURI);
+        preferences.readJson(localURI);
+        loadedConfigFiles.add(localURI);
+      } else if (readConfiguration(propURI)) {
+        loadedConfigFiles.add(propURI);
+      } else {
         // The configuration server is unreachable (or returned an invalid file): fall back to the
         // self-contained local installation so Weasis can still start without the remote server.
         URI localURI = getLocalPropertiesURI(CONFIG_PROPERTIES_FILE_VALUE);
@@ -866,6 +889,7 @@ public class ConfigData {
           configOutput.append("\n  Fallback to local configuration file = "); // NON-NLS
           configOutput.append(localURI);
           preferences.readJson(localURI);
+          loadedConfigFiles.add(localURI);
         }
       }
 
@@ -874,11 +898,16 @@ public class ConfigData {
     }
 
     propURI = getPropertiesURI(EXTENDED_PROPERTIES_PROP, null);
+    if (propURI != null && localOnly && !"file".equalsIgnoreCase(propURI.getScheme())) { // NON-NLS
+      LOGGER.warn("Remote extended configuration {} ignored with the installed package", propURI);
+      propURI = null;
+    }
     if (propURI != null) {
       configOutput.append("\n  Application extension configuration file = "); // NON-NLS
       configOutput.append(propURI);
       // Extended properties, add or override existing properties
       preferences.readJson(propURI);
+      loadedConfigFiles.add(propURI);
     }
     if (Type.NATIVE.name().equals(System.getProperty("weasis.launch.type"))) {
       checkMinimalVersion(preferences);
@@ -891,6 +920,49 @@ public class ConfigData {
     // Build a hash the properties just after reading. It will allow comparing with a new app
     // instance.
     properties.put(P_WEASIS_CONFIG_HASH, String.valueOf(preferences.hashCode()));
+  }
+
+  /** True when the bootstrap forces the installed configuration for a remote launch. */
+  private boolean bootstrapFallback(URI propURI) {
+    return Utils.hasText(System.getProperty(BootstrapContract.P_FALLBACK))
+        && getProperty(P_WEASIS_CODEBASE_LOCAL) == null
+        && !"file".equalsIgnoreCase(propURI.getScheme()); // NON-NLS
+  }
+
+  /**
+   * Reads the configuration: from the file the bootstrap fetched when it is the same URI, so the
+   * document is not fetched twice, else from {@code propURI}.
+   */
+  private boolean readConfiguration(URI propURI) {
+    String cache = System.getProperty(BootstrapContract.P_CONFIG_CACHE);
+    String cacheUri = System.getProperty(BootstrapContract.P_CONFIG_CACHE_URI);
+    if (Utils.hasText(cache) && propURI.toString().equals(cacheUri)) {
+      Path file = Path.of(cache);
+      if (Files.isRegularFile(file) && preferences.readJson(file.toUri())) {
+        configOutput.append("\n  Configuration read from the bootstrap cache = "); // NON-NLS
+        configOutput.append(file);
+        return true;
+      }
+    }
+    return preferences.readJson(propURI);
+  }
+
+  /**
+   * Whether the configuration files changed since this instance read them: the same URIs are read
+   * again and hashed like at start. Unreachable files count as unchanged.
+   */
+  public boolean hasConfigurationChanged() {
+    if (loadedConfigFiles.isEmpty()) {
+      return false;
+    }
+    AppPreferences current = new AppPreferences();
+    for (URI uri : loadedConfigFiles) {
+      if (!current.readJson(uri)) {
+        return false;
+      }
+    }
+    String hash = String.valueOf(current.hashCode());
+    return !hash.equals(properties.getProperty(P_WEASIS_CONFIG_HASH));
   }
 
   private void checkMinimalVersion(AppPreferences preferences) {
@@ -909,6 +981,8 @@ public class ConfigData {
               min);
           preferences.clear();
           preferences.putAll(localPrefs);
+          loadedConfigFiles.clear();
+          loadedConfigFiles.add(propURI);
           System.setProperty(P_WEASIS_MIN_NATIVE_VERSION, val);
         }
       } catch (Exception e) {
@@ -962,6 +1036,11 @@ public class ConfigData {
   }
 
   public static File findLocalCodebase() {
+    // Started by the bootstrap: the launcher jar is in a cached set, the image is where it says.
+    String appDir = System.getProperty(BootstrapContract.P_APPDIR);
+    if (Utils.hasText(appDir)) {
+      return new File(appDir);
+    }
     // Determine where the configuration directory is by figuring
     // out where weasis-launcher.jar is located on the system class path.
     String jarLocation = null;

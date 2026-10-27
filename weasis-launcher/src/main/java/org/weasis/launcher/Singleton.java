@@ -54,6 +54,7 @@ public class Singleton {
   private static final String SI_PROP = "si.prop";
   private static final String SI_ACK = "si.ack";
   private static final String SI_EXIT = "si.exit";
+  private static final String SI_OTHER = "si.other";
   private static final String SI_STOP = "si.stop";
   private static final String SI_EOF = "si.EOF";
   private static final int ENCODING_PLATFORM = 1;
@@ -78,6 +79,23 @@ public class Singleton {
     boolean canStartNewActivation(Properties prop);
 
     void newActivation(List<String> arguments);
+
+    /**
+     * Whether an activation offered by the bootstrap, which knows the command line but not the
+     * configuration, is addressed to this instance (same user, same configuration source). Another
+     * instance is answered {@code si.other} and left alone.
+     */
+    default boolean isSameInstance(Properties prop) {
+      return canStartNewActivation(prop);
+    }
+
+    /**
+     * Whether the configuration of this instance changed since it started, re-read from its source;
+     * an activation then ends this instance so a new one starts with the new configuration.
+     */
+    default boolean configurationChanged() {
+      return false;
+    }
 
     /**
      * Runs a command received on the socket ({@code si.run}); origin is always remote and {@code
@@ -443,6 +461,23 @@ public class Singleton {
         }
       }
 
+      if (props.getProperty(BootstrapContract.P_VERSION) != null) {
+        // The bootstrap offers the raw command line: this instance decides whether it is addressed
+        // and, if so, whether its configuration changed since it started.
+        if (!siApp.isSameInstance(props)) {
+          LOGGER.debug("Sending OTHER: the activation is for another instance");
+          sendResponse(s, isr, SI_OTHER);
+          return;
+        }
+        if (siApp.configurationChanged()) {
+          LOGGER.info("Configuration changed, exiting so that a new instance starts");
+          sendResponse(s, isr, SI_EXIT);
+          System.exit(0);
+        }
+        siApp.newActivation(args);
+        sendResponse(s, isr, SI_ACK);
+        return;
+      }
       if (siApp.canStartNewActivation(props)) {
         siApp.newActivation(args);
         LOGGER.debug("Sending ACK for loading args");

@@ -3,6 +3,7 @@
 ## Table of Contents
 - [Introduction](#introduction)
 - [Startup Sequence](#startup-sequence)
+- [Bootstrap and Launcher Set](#bootstrap-and-launcher-set)
 - [Launch Pipeline](#launch-pipeline)
 - [Class Loaders](#class-loaders)
 - [Configuration Sources and Precedence](#configuration-sources-and-precedence)
@@ -18,16 +19,20 @@
 
 ## Introduction
 
-`weasis-launcher` is a **plain JAR**, not a plugin. It is the entry point that bootstraps
-the application before any plugin is started:
+Two plain JARs, neither a plugin, start the application:
 
-- `org.weasis.launcher.AppLauncher` (extends `WeasisLauncher`) is the `main` class.
-- It starts the **PF4J** plugin manager (`WeasisPluginManager`), which **replaces the former
-  Apache Felix OSGi framework**, then loads and starts the plugins declared in the
-  configuration.
-- Because it runs first and outside the plugin framework, the launcher owns everything that
-  must be decided *before* plugins exist: configuration loading, logging setup,
-  single-instance control, and the resolution of the on-disk directories described below.
+- `weasis-bootstrap` is **stage 1** of a packaged launch: the only jar on the class path of
+  the native launchers (`Weasis`, `Dicomizer`, `weasis-cli`). `org.weasis.bootstrap.Bootstrap`
+  depends on the JDK alone, checks the single instance, resolves and verifies the **launcher
+  set**, then starts stage 2 with that set on its class path. It is what the installer freezes;
+  everything else updates with the package.
+- `weasis-launcher` is **stage 2**, the application: `org.weasis.launcher.AppLauncher`
+  (extends `WeasisLauncher`), reached through a per-application entry class (`Weasis`,
+  `Dicomizer`) or directly from an IDE. It starts the **PF4J** plugin manager
+  (`WeasisPluginManager`), which **replaces the former Apache Felix OSGi framework**, then
+  loads and starts the plugins declared in the configuration. Because it runs before any
+  plugin, it owns configuration loading, logging setup, the single-instance server and the
+  resolution of the on-disk directories described below.
 
 > **Configuration keys.** Since 5.0 the configuration uses `weasis.*` names only — the
 > historical OSGi/Felix names (`felix.auto.start.N`, `felix.config.properties`,
@@ -39,21 +44,86 @@ the application before any plugin is started:
 
 ## Startup Sequence
 
-1. **AOT relaunch check** (packaged app only) — `AotCache.relaunch` re-executes the native
-   launcher with the JDK AOT cache flags (see [Launch Pipeline](#launch-pipeline)); the
-   re-executed child performs all the following steps.
+1. **Stage 1** (packaged app only) — the bootstrap offers the activation to a running
+   instance, resolves the launcher set and the stage-2 JVM options, and spawns stage 2 (see
+   [Bootstrap and Launcher Set](#bootstrap-and-launcher-set)). A development launch starts at
+   step 2.
 2. **Boot logging** — a static initializer in `AppLauncher` configures a temporary Logback
    appender (`boot.log`) so that early failures are captured before the real logging
    configuration is available.
-3. **Configuration loading** — `ConfigData` reads launch arguments, Java system properties,
-   the shipped/remote `base.json`, and any profile-specific JSON, then performs variable
-   substitution.
-4. **Base directory resolution** — the per-OS config/data/cache/state directories are
+3. **Contract check** — `BootstrapContract` refuses a bootstrap outside the protocol range
+   this launcher speaks, with the reserved exit code and a one-line reason.
+4. **Configuration loading** — `ConfigData` reads launch arguments, Java system properties,
+   the shipped/remote `base.json` (from the file stage 1 fetched when it is the same URI), and
+   any profile-specific JSON, then performs variable substitution. Started by the bootstrap,
+   it re-checks the facts the package requires (`weasis.requires.jdk`, `.modules`,
+   `.bootstrap`) against the JVM it runs in.
+5. **Base directory resolution** — the per-OS config/data/cache/state directories are
    resolved and published as system properties (see [Base Directories](#base-directories)).
-5. **Single-instance check** — `Singleton` decides whether to hand the arguments to an
+6. **Single-instance check** — `Singleton` decides whether to hand the arguments to an
    already-running instance or to start a new one.
-6. **Plugin framework start** — the PF4J plugin manager loads and starts the plugins
-   (`loadPlugins()` / `startPlugins()`).
+7. **Plugin framework start** — the PF4J plugin manager loads and starts the plugins
+   (`loadPlugins()` / `startPlugins()`); the launcher then prints `READY` for stage 1.
+
+## Bootstrap and Launcher Set
+
+The native image holds the JDK runtime, `weasis-bootstrap.jar` and an **embedded launcher
+set**: `$APPDIR/launcher/*.jar.embedded` (the launcher jar and the common libraries, renamed so
+that jpackage keeps them off its class path) with its `launcher.sha256` manifest. The package a
+hub serves declares its own set with three keys of `base.json`, `weasis.launcher.url`,
+`weasis.launcher.libs` and `weasis.launcher.sha256`, plus the entry class
+(`weasis.launcher.main`), the JVM options of stage 2 (`weasis.launcher.jvm-options`, one common
+set, one per OS and one for the client) and the facts it requires of the runtime
+(`weasis.requires.jdk`, `.modules`, `.bootstrap`). The bootstrap reads exactly these keys, with
+`${weasis.codebase.url}` as its only variable; everything else is the launcher's business.
+
+```
+jpackage launcher (Weasis, Dicomizer, weasis-cli)
+  └── stage 1: weasis-bootstrap.jar, a tiny JVM
+        1. single instance: the activation is offered to the running instances of the user
+        2. launcher set: <cache>/launcher/<version>-<sha>/ downloaded from the package and verified,
+           or $APPDIR/launcher/ as shipped
+        3. stage 2: <runtime>/bin/java -cp <set> [AOT flags] [served options] <entry class> args
+  └── stage 2: the application, from AppLauncher onwards
+```
+
+A launch ends in one of **two states**: the set named by the hub, complete and verified, with
+the hub's package; or the embedded set with the installed configuration, which is the installer
+exactly as shipped. A set is downloaded into a `.part-<pid>` directory, each jar checked against
+the manifest and, when the image carries a truststore (`$APPDIR/launcher/truststore/`), against
+the jar signatures; one atomic rename makes it visible. Anything else (offline, a server error,
+a digest or signature mismatch, a runtime that lacks a required module, a set that died before
+`READY` last time) takes the embedded path, and `$APPDIR` is never written. When the package
+declared a set that could not be used, stage 2 is told so (`weasis.bootstrap.fallback`) and
+runs the installed configuration rather than combining the embedded launcher with remote
+plugins; the user sees why. A package that declares no set (one built before the split) runs as
+before: the embedded launcher with the remote configuration.
+
+Stage 1 waits for stage 2 and reads its stdout: `READY` means the plugin manager has started.
+An exit before `READY` with a hub set, a served option set or an AOT cache in use is recovered
+once, with the embedded set, the embedded options and no cache; the hub set is marked failed
+until the hub names another, a crashing cache is discarded and disabled for its key. The
+reserved exit code (`BootstrapContract.EXIT_REFUSED`) means stage 2 refused the environment and
+is not retried. Options served by the hub are an allow-list (`JvmOptions`): anything that loads
+code outside the signed set, an agent, a boot class path, a module path, is refused, since
+`base.json` is not signed.
+
+The **single instance** moves to stage 1 for packaged launches: the bootstrap connects to every
+instance of the OS user with the raw arguments and what the command line says about the
+configuration (user, codebase or configuration service URL, extended configuration, profile).
+The application decides: `si.ack` (handled, stage 2 never starts), `si.other` (another
+application or configuration), or `si.exit` when its configuration changed since it started,
+which it re-reads for the purpose. A `FileChannel` lock serialises concurrent starts until
+`READY`. The client launcher (`weasis-cli`) fetches nothing and runs the set the application ran
+last, else the embedded one.
+
+On **macOS** stage 1 loads the set in its own process, in a class loader whose parent is the
+platform loader, and calls the entry class: LaunchServices keeps one process for the open-file
+events. The JVM options of the application are therefore native there, and no AOT cache is
+used. In a development launch nothing of this exists: the IDE starts `AppLauncher` directly.
+
+Every decision is one line in `<state>/log/bootstrap.log` (set, id, digest, reason, JDK,
+options, AOT mode, restart, exit), echoed to stderr with `-Dweasis.bootstrap.trace=true`.
 
 ## Launch Pipeline
 
@@ -63,51 +133,48 @@ How code reaches the JVM differs between development and the packaged applicatio
   Maven repository into the per-user cache; non-plugin jars land in `common-lib/` and
   `WeasisPluginManager.loadCommonLibraries()` publishes them through the common library
   classloader (see below). No AOT cache is used in dev.
-- **Packaged application** — the packaging step splits the bundle jars: jars **without** a
-  `Plugin-Id` manifest header (weasis-core, weasis-core-img, …) ship
-  uncompressed in `$APPDIR/common-lib/` and jpackage puts them on the **application
-  classpath**, so they live in the system classloader from process start; pf4j plugins stay
-  `.jar.xz` in `$APPDIR/bundle/`. Only a **remote codebase** launch (`cdb=` parameter) whose
-  server ships libraries that are not in the app image needs the common library classloader.
-- **AOT cache (JEP 483/514/515)** — on Windows and Linux packaged launches, `Bootstrap.main`
-  (a dependency-free entry point that runs before `AppLauncher` and its static initializers)
-  calls `AotCache.relaunch`. The first launch after an install or update re-executes the native
-  launcher with `-XX:AOTCacheOutput` to train a per-user cache; once a trained cache has been
-  used successfully, the `-XX:AOTCache` option is persisted in the launcher `.cfg` so that later
-  launches start in a single process with the cache active. The cache lives in the per-OS cache
-  directory under `aot/` and is keyed by the application version and the runtime image, so an
-  update trains it again. Classpath jars are what the cache reliably serves; classes from the
-  common library and plugin classloaders are served only while their jar is unchanged since
-  training. Every failure falls back to a normal launch, and a cache that crashes the JVM at
-  startup is discarded and disabled for that build, so a bad cache never blocks the
-  application. Disable with `-Dweasis.aot.cache=false` (the Dicomizer launcher does); macOS is
-  excluded for now.
-- **PERF markers** — `*PERF*` lines in `boot.log` (JVM start, AOT cache mode, relaunch
+- **Packaged application** — the launcher set (the launcher jar and the common libraries:
+  weasis-core, weasis-core-img, …) is the explicit class path stage 1 gives stage 2, so those
+  classes live in the application class loader from process start; pf4j plugins stay `.jar.xz`
+  in `$APPDIR/bundle/` or come from the remote codebase. `AutoProcessor` recognises a library
+  of the set by its file name and does not download it again; only a library the package
+  serves beyond the set goes through the common library classloader.
+- **AOT cache (JEP 483/514/515)** — on Windows and Linux packaged launches the bootstrap passes
+  the cache flags as plain arguments of stage 2: `-XX:AOTCache` when the per-user cache exists,
+  `-XX:AOTCacheOutput` to train it on the first launch with a given launcher set and runtime
+  image (`<cache>/aot/<entry>-<set>-<runtime>.aot`). Nothing is persisted in the launcher
+  `.cfg`. A cache that crashes stage 2 before `READY` is deleted and disabled for its key. The
+  client trains its own cache in a detached process after a call. Disable with
+  `-Dweasis.aot.cache=false` (the Dicomizer launcher does); macOS runs in one process and uses
+  none.
+- **PERF markers** — `*PERF*` lines in `boot.log` (JVM start, AOT cache mode, bootstrap
   overhead, plugin start, global starting) measure the pipeline across cold and warm launches.
 
 ## Class Loaders
 
 ```
-AppClassLoader          weasis-launcher.jar + $APPDIR/common-lib/*.jar (packaged app)
-  └── CommonLibClassLoader    shared libraries downloaded at runtime into <cache>/common-lib/
+AppClassLoader          the launcher set: weasis-launcher.jar + its libraries (explicit -cp from stage 1)
+  └── CommonLibClassLoader    libraries listed in base.json but not in the set, downloaded into <cache>/common-lib/
         └── WeasisPluginClassLoader   one per pf4j plugin (parent-last: plugin → deps → parent)
 ```
 
+On macOS the set is loaded by a `URLClassLoader` of stage 1 whose parent is the platform
+loader, which takes the place of the `AppClassLoader` in this picture; the rest is unchanged.
 `WeasisPluginManager.loadCommonLibraries()` is called once, after `AutoProcessor` has
 downloaded the jars and before `loadPlugins()`. It adds every jar of `<cache>/common-lib/` to
-`CommonLibClassLoader` — skipping the file names already on the application classpath, so a
-library shipped in the app image keeps being loaded by the `AppClassLoader` and stays
-AOT-cacheable — and sets it as the context classloader of the main thread.
+`CommonLibClassLoader` — skipping the file names already on the launcher's class path, so a
+library of the set keeps being loaded by its loader and stays AOT-cacheable — and sets it as
+the context classloader of the main thread.
 Extensions declared by a shared library (the `workspace:` and `image:` command namespaces of
 `weasis-core`, for instance) are discovered through that loader as well: `CommonLibExtensionFinder`
 reads the classpath extension index and loads its classes through `CommonLibClassLoader`, so a
 library downloaded into the cache contributes its extensions exactly like one shipped in the app
 image.
 
-Delegation to the parent is the standard parent-first one, so a classpath jar always wins over
+Delegation to the parent is the standard parent-first one, so a jar of the set always wins over
 a downloaded copy of the same library. Consequently the launcher's own classes never see the
 downloaded libraries: everything the launcher needs before this point (`weasis-core-img`, …)
-must be on the classpath, which the packaging step guarantees.
+must be in the launcher set, which the package declares (`weasis.launcher.libs`).
 
 ## Configuration Sources and Precedence
 
@@ -220,10 +287,13 @@ The XDG/native resolution is **bypassed** in two cases, keeping a single self-co
 
 `Singleton` implements single-instance behavior over a local socket. The port/lock file is
 stored in the **state** directory (`<state>/singleton`). A second launch forwards its
-arguments to the running instance instead of starting a new JVM, provided the user and
-configuration hashes match. The same socket carries the command bridge described below; each
-connection is served on its own virtual thread so a long command never blocks argument
-forwarding.
+arguments to the running instance instead of starting a new JVM: in a packaged launch the
+bootstrap does it before stage 2 exists, and the application compares what the command line
+says about the instance (user, configuration source, profile) and whether its configuration
+changed since it started (`SingletonApp.isSameInstance`, `configurationChanged`); in a
+development launch the new process compares the user and the configuration hash itself. The
+same socket carries the command bridge described below; each connection is served on its own
+virtual thread so a long command never blocks argument forwarding.
 
 ## Commands and the Command Bridge
 
@@ -410,17 +480,17 @@ namespace that owns them pins their syntax.
 ### Reaching the bridge
 
 The client is `org.weasis.launcher.CommandClient` in the launcher jar. The packaged
-`weasis-cli` is an additional jpackage launcher tuned for a short-lived JVM that the installers
-put on the `PATH` the way they register the `weasis://` scheme; a build or an IDE runs the same
-class from the launcher jar, and neither needs the configuration, the plugins or the AOT
-bootstrap. The client can start the sibling `Weasis` launcher when no instance is running, pick
-an instance by id prefix when several run for the same user, and answer yes on the caller's behalf
-to the questions a verb would ask.
+`weasis-cli` is an additional jpackage launcher that the installers put on the `PATH` the way
+they register the `weasis://` scheme; it goes through the bootstrap like the others (kind
+`cli`: no configuration fetch, the launcher set the application ran last, a JVM tuned for a
+short-lived process). A build or an IDE runs the same class from the launcher jar, and neither
+needs the configuration or the plugins. The client can start the sibling `Weasis` launcher
+when no instance is running, pick an instance by id prefix when several run for the same user,
+and answer yes on the caller's behalf to the questions a verb would ask.
 
-`weasis-cli` keeps its own per-user AOT cache (`ClientAotCache`): a call answers first, a
-detached child trains the cache, a later call verifies it and persists `-XX:AOTCache` into the
-launcher `.cfg`, under the same conditions as the application (packaged, writable `.cfg`, not
-macOS, cache path free of characters that break `JAVA_TOOL_OPTIONS`).
+`weasis-cli` has its own per-user AOT cache: a call answers first, then the bootstrap trains
+the cache in a detached child, and the next calls start with it; a cache that crashes the
+client is discarded and disabled for its key.
 
 Whatever the entry point, the singleton file must be private to the user; the client refuses a
 world-readable one. The result body goes to stdout, diagnostics to stderr, and the exit status is
@@ -435,6 +505,8 @@ is shipped with the application next to `weasis-cli`.
 
 Two log destinations are produced under the **state** directory:
 
+- `log/bootstrap.log` — one line per packaged launch, written by stage 1: which launcher set
+  ran and why, the options source, the AOT mode, whether a restart happened and the exit code.
 - `log/boot.log` — written by the `AppLauncher` static initializer before configuration is
   loaded. In portable mode this early file still lands in the resolved state directory
   rather than next to the executable, because the configuration (and thus the portable root)

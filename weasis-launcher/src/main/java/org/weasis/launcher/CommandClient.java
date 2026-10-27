@@ -110,11 +110,11 @@ public final class CommandClient implements Callable<Integer> {
               + "volume with geometric rectification despite few slices) instead of showing them.")
   boolean assumeYes;
 
-  @Option(names = ClientAotCache.TRAIN_OPTION, hidden = true)
-  boolean aotTrain;
+  /** Hidden option of the training run the bootstrap spawns to fill the client's AOT cache. */
+  static final String TRAIN_OPTION = "--aot-train"; // NON-NLS
 
-  @Option(names = ClientAotCache.VERIFY_OPTION, hidden = true)
-  boolean aotVerify;
+  @Option(names = TRAIN_OPTION, hidden = true)
+  boolean aotTrain;
 
   @Parameters(
       paramLabel = "<command>",
@@ -143,9 +143,6 @@ public final class CommandClient implements Callable<Integer> {
   public static void main(String[] args) {
     quietLogging();
     int status = run(args, SingletonFiles::list, System.out, System.err);
-    if (status == CommandResult.OK || status == CommandResult.NO_INSTANCE) {
-      ClientAotCache.afterRun();
-    }
     System.exit(status);
   }
 
@@ -216,11 +213,8 @@ public final class CommandClient implements Callable<Integer> {
 
   @Override
   public Integer call() {
-    if (aotVerify) {
-      return CommandResult.OK;
-    }
     if (aotTrain) {
-      ClientAotCache.trainingWorkload();
+      trainingWorkload();
       return CommandResult.OK;
     }
     if (script != null) {
@@ -474,6 +468,16 @@ public final class CommandClient implements Callable<Integer> {
               new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
       return CommandProtocol.readResponse(in);
     }
+  }
+
+  /** A representative workload for the AOT training run: parsing and help rendering, no server. */
+  static void trainingWorkload() {
+    run(
+        new String[] {"--help"}, // NON-NLS
+        List::of,
+        new PrintStream(OutputStream.nullOutputStream()),
+        new PrintStream(OutputStream.nullOutputStream()));
+    SingletonFiles.list();
   }
 
   private static void quietLogging() {

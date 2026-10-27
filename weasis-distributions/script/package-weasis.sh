@@ -105,15 +105,10 @@ if [ ! -d "${INPUT_PATH}" ] ; then
   die "The input path ${INPUT_PATH} doesn't exist, provide a valid value for --input"
 fi
 
-# weasis-core-img is in bundle/ (fresh input) or already in common-lib/ (re-run after the split)
-if compgen -G "$INPUT_PATH/weasis/bundle/weasis-core-img-*" > /dev/null ; then
-  cp "$INPUT_PATH/weasis/bundle/weasis-core-img-"* weasis-core-img.jar.xz
-  xz --decompress weasis-core-img.jar.xz
-else
-  cp "$INPUT_PATH/weasis/common-lib/weasis-core-img-"*.jar weasis-core-img.jar
-fi
-ARC_OS=$("$JDK_PATH_UNIX/bin/java" -cp "weasis-core-img.jar" org.weasis.opencv.natives.NativeLibrary)
-rm -f weasis-core-img.jar
+# weasis-core-img is a plain jar of the launcher set (launcher/), renamed *.jar.embedded on a re-run
+CORE_IMG=$(ls "$INPUT_PATH"/weasis/launcher/weasis-core-img-*.jar* 2>/dev/null | head -n 1)
+[ -n "$CORE_IMG" ] || die "The launcher set (launcher/weasis-core-img-*.jar) is missing from $INPUT_PATH"
+ARC_OS=$("$JDK_PATH_UNIX/bin/java" -cp "$CORE_IMG" org.weasis.opencv.natives.NativeLibrary)
 if [ -z "$ARC_OS" ] ; then
   die "Cannot get Java system architecture"
 fi
@@ -205,34 +200,21 @@ rm -f "$INPUT_DIR"/*.jar.pack.gz
 # Remove the unrelated native packages
 find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'"${ARC_OS}"'-*'  -exec rm -f {} \;
 
-# Split non-plugin jars out of bundle/ into common-lib/. jpackage adds every plain jar found
-# under --input to the application classpath, so the common libraries become part of the system
-# classloader from process start, and are the jars the AOT cache archives most reliably, while the
-# pf4j plugins must remain .jar.xz in bundle/ to stay OFF the classpath.
-COMMON_LIB_DIR="$INPUT_DIR/common-lib"
-mkdir -p "$COMMON_LIB_DIR"
-TMP_CHECK=$(mktemp -d)
-for f in "$INPUT_DIR"/bundle/*.jar.xz; do
+# Embedded launcher set. jpackage adds every plain *.jar found under --input to the class path of
+# the native launchers, which must carry weasis-bootstrap.jar only: stage 1 (the bootstrap) builds
+# the class path of stage 2 itself from launcher/, so the set is renamed *.jar.embedded to stay
+# off the jpackage class path. The sha256sum manifest keeps its name. pf4j plugins stay .jar.xz.
+for f in "$INPUT_DIR"/launcher/*.jar; do
   [ -f "$f" ] || continue
-  jarname=$(basename "$f" .xz)
-  xz -dc "$f" > "$TMP_CHECK/$jarname"
-  # plugin <=> manifest has a non-empty Plugin-Id (case-insensitive) or
-  # META-INF/plugin.properties defines plugin.id (same rule as AutoProcessor.isValidPF4JPlugin)
-  ( cd "$TMP_CHECK" && "$JDK_PATH_UNIX/bin/jar" -xf "$jarname" META-INF/MANIFEST.MF META-INF/plugin.properties 2>/dev/null )
-  if grep -qiE '^Plugin-Id: *[^ ]' "$TMP_CHECK/META-INF/MANIFEST.MF" 2>/dev/null \
-     || grep -qE '^plugin\.id=.+' "$TMP_CHECK/META-INF/plugin.properties" 2>/dev/null ; then
-    rm -f "$TMP_CHECK/$jarname"                   # plugin: keep the .xz in bundle/
-  else
-    echo "common-lib: $jarname"
-    mv "$TMP_CHECK/$jarname" "$COMMON_LIB_DIR/"   # common lib: plain jar on the classpath
-    rm -f "$f"
-  fi
-  rm -rf "$TMP_CHECK/META-INF"
+  echo "embedded set: $(basename "$f")"
+  mv "$f" "$f.embedded"
 done
-rm -rf "$TMP_CHECK"
-# Safety: any plain jar left in bundle/ would be added to the app classpath by jpackage
-if compgen -G "$INPUT_DIR/bundle/*.jar" > /dev/null; then
-  die "bundle/ contains uncompressed jars; build weasis-distributions with -P compressXZ"
+[ -f "$INPUT_DIR/weasis-bootstrap.jar" ] || die "weasis-bootstrap.jar is missing from $INPUT_DIR"
+rm -f "$INPUT_DIR"/weasis-launcher.jar
+# Safety: any other plain jar under --input would be added to the stage-1 class path by jpackage
+OTHER_JARS=$(find "$INPUT_DIR" -name '*.jar' ! -path "$INPUT_DIR/weasis-bootstrap.jar")
+if [ -n "$OTHER_JARS" ]; then
+  die "Plain jars besides weasis-bootstrap.jar under $INPUT_DIR (build weasis-distributions with -P compressXZ):\n$OTHER_JARS"
 fi
 
 # Optional deployment specific preparation of the input directory, absent from the public distribution
@@ -245,7 +227,7 @@ fi
 # jpackage --mac-sign will sign the extracted content of the app image,
 # but dylibs INSIDE jars must be signed before jpackage repackages them.
 if [ "$machine" = "macosx" ] && [[ -n "$CERTIFICATE" ]] ; then
-    for jar_file in "$INPUT_DIR"/*.jar "$INPUT_DIR"/common-lib/*.jar "$INPUT_DIR"/bundle/*.jar; do
+    for jar_file in "$INPUT_DIR"/*.jar "$INPUT_DIR"/launcher/*.jar.embedded "$INPUT_DIR"/bundle/*.jar; do
       [ -f "$jar_file" ] || continue
       if unzip -l "$jar_file" 2>/dev/null | grep -qE '\.(dylib|jnilib)$'; then
         echo "--- Signing native libs in: $jar_file"
@@ -300,15 +282,15 @@ fi
 # --jlink-options replaces jpackage's defaults on purpose: the default set includes
 # --strip-native-commands, but bin/java must remain in the runtime because the AOT cache
 # assembly phase (-XX:AOTCacheOutput) spawns <java.home>/bin/java at exit.
-# --generate-cds-archive ships a base CDS archive that speeds up the first (untrained)
-# launch and the AOT stage-1 relauncher.
+# --generate-cds-archive ships a base CDS archive that speeds up the stage-1 bootstrap JVM and
+# the first (untrained) launch of stage 2.
 JLINK_OPTIONS="--strip-debug --no-man-pages --no-header-files --generate-cds-archive"
 
 if [ "$machine" != "linux" ] || [ "$PACKAGE" = "NO" ] ; then
   # shellcheck disable=SC2154 # customOptions and commonOptions come from launch-options.sh
   $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
   --jlink-options "$JLINK_OPTIONS" \
-  --main-jar weasis-launcher.jar --main-class org.weasis.launcher.Bootstrap --add-modules "$JDK_MODULES" \
+  --main-jar weasis-bootstrap.jar --main-class org.weasis.bootstrap.Bootstrap --add-modules "$JDK_MODULES" \
   --add-launcher "${DICOMIZER_CONFIG}" --add-launcher "${CLI_CONFIG}" --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
   "${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 fi
@@ -341,7 +323,7 @@ if [ "$PACKAGE" = "YES" ] ; then
       # shellcheck disable=SC2154 # customOptions and commonOptions come from launch-options.sh
       $JPKGCMD --type "$installerType" --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
       --jlink-options "$JLINK_OPTIONS" \
-      --main-jar weasis-launcher.jar --main-class org.weasis.launcher.Bootstrap --add-modules "$JDK_MODULES" \
+      --main-jar weasis-bootstrap.jar --main-class org.weasis.bootstrap.Bootstrap --add-modules "$JDK_MODULES" \
       --add-launcher "${DICOMIZER_CONFIG}" --add-launcher "${CLI_CONFIG}" --resource-dir "$RES" \
       --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \
       --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "${curPath}/file-associations.properties" \
