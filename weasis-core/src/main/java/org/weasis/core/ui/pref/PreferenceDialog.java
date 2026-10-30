@@ -48,7 +48,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
       new JButton(Messages.getString("PreferenceDialog.reload.site"));
   protected final JPanel bottomPrefPanel =
       GuiUtils.getFlowLayoutPanel(
-          FlowLayout.TRAILING, 10, 7, reloadSiteButton, jButtonHelp, restoreButton, applyButton);
+          FlowLayout.TRAILING, 10, 7, jButtonHelp, reloadSiteButton, restoreButton, applyButton);
   protected final JLabel scopeLabel = new JLabel();
   protected final JPanel scopePanel =
       GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 10, 0, scopeLabel);

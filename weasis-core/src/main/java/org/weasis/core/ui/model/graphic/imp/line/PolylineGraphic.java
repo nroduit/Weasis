@@ -295,19 +295,4 @@ public class PolylineGraphic extends AbstractDragGraphic {
     }
     return null;
   }
-
-  @Override
-  @Deprecated(since = "4.8.0", forRemoval = true)
-  public void forceToAddPoints(Integer fromPtIndex) {
-    if (getVariablePointsNumber() && fromPtIndex >= 0 && fromPtIndex < pts.size()) {
-      if (fromPtIndex < pts.size() - 1) {
-        // Add only one point
-        pts.add(fromPtIndex, getHandlePoint(fromPtIndex));
-        pointNumber++;
-      } else {
-        // Continue to draw when it is the last point
-        setPointNumber(UNDEFINED);
-      }
-    }
-  }
 }

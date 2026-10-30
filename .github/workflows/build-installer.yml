@@ -364,8 +364,16 @@ jobs:
         if: matrix.wsystem == 'macosx'
         shell: bash
         run: |
-          xcrun stapler staple \
-            "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
+          # The ticket is fetched from Apple's CloudKit, which can drop the connection or not
+          # serve a fresh ticket yet (error 68): retry with a growing delay.
+          PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
+          for attempt in 1 2 3; do
+            xcrun stapler staple "$PKG" && exit 0
+            echo "Staple attempt $attempt failed; retrying in $((attempt * 30)) s..."
+            sleep $((attempt * 30))
+          done
+          echo "Stapling failed after 3 attempts."
+          exit 1
 
       - name: Add checksum sha256 file
         shell: bash

@@ -13,7 +13,6 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import org.weasis.core.ui.model.utils.Draggable;
@@ -56,26 +55,6 @@ public abstract class AbstractDragGraphic extends AbstractGraphic implements Dra
   @Override
   public Boolean getResizingOrMoving() {
     return Optional.ofNullable(resizingOrMoving).orElse(Boolean.FALSE);
-  }
-
-  /**
-   * @deprecated Rotating the point list to resume a drawing silently reorders the vertices of a
-   *     closed outline. Use {@link #insertHandlePoint(int, Point2D)} to add a vertex and {@link
-   *     #resumeDrawing()} to continue an open path.
-   */
-  @Deprecated(since = "4.8.0", forRemoval = true)
-  @Override
-  public void forceToAddPoints(Integer fromPtIndex) {
-    if (variablePointsNumber && fromPtIndex >= 0 && fromPtIndex < pts.size()) {
-      if (fromPtIndex < pts.size() - 1) {
-        List<Point2D> list = pts.subList(fromPtIndex + 1, pts.size());
-        for (int i = 0; i <= fromPtIndex; i++) {
-          list.add(pts.get(i));
-        }
-        pts = list;
-      }
-      pointNumber = UNDEFINED;
-    }
   }
 
   @Override

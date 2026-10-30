@@ -638,6 +638,14 @@
       "category": "UI"
     },
     {
+      "code": "weasis-dicom-viewer2d.all.redactiontoolbar.visible",
+      "value": "false",
+      "description": "Show the redaction toolbars in DICOM 2D viewer",
+      "type": "A",
+      "javaType": "BOOLEAN",
+      "category": "UI"
+    },
+    {
       "code": "weasis.contextmenu.lutShape",
       "value": "false",
       "description": "Show LUT Shape in the contextual menu",
