@@ -38,7 +38,10 @@ public class Camera {
   public static final String P_DEFAULT_ORIENTATION = "default.vr.orientation";
   public static final double SCALE_MAX = 6.0;
   public static final double SCALE_MIN = 1.0 / SCALE_MAX;
-  static final double INITIAL_FOV = 45;
+  // Perspective
+  static final double FIELD_OF_VIEW = 45;
+  static final double Z_NEAR = 0.1;
+  static final double Z_FAR = 10000;
   static final double DEFAULT_ZOOM = 1;
   static final Vector3dc POSITION_ZERO = new Vector3d();
 
@@ -48,14 +51,10 @@ public class Camera {
   private final Quaterniond rotation = new Quaterniond();
 
   private final Vector3d prevMousePos = new Vector3d();
-  // Perspective
-  private double zNear = 0.1;
-  private double zFar = 10000;
-  private double fov = INITIAL_FOV;
 
   // Zoom
   private double zoomFactor = DEFAULT_ZOOM;
-  private double internalZoomFactor = -fov * zNear / DEFAULT_ZOOM;
+  private double internalZoomFactor = -FIELD_OF_VIEW * Z_NEAR / DEFAULT_ZOOM;
 
   // Matrix
   public static final Matrix4d currentModelMatrix =
@@ -135,7 +134,7 @@ public class Camera {
   }
 
   public double getzNear() {
-    return zNear;
+    return Z_NEAR;
   }
 
   public boolean isOrthographicProjection() {
@@ -185,9 +184,9 @@ public class Camera {
       projectionMatrix = new Matrix4d();
       if (orthographicProjection) {
         double size = renderer.getSurfaceHeight();
-        projectionMatrix.setOrthoSymmetric(renderer.getAspectRatio() * size, size, zFar, 1);
+        projectionMatrix.setOrthoSymmetric(renderer.getAspectRatio() * size, size, Z_FAR, 1);
       } else {
-        projectionMatrix.setPerspective(fov, renderer.getAspectRatio(), zNear, zFar);
+        projectionMatrix.setPerspective(FIELD_OF_VIEW, renderer.getAspectRatio(), Z_NEAR, Z_FAR);
       }
     }
     return new Matrix4d(projectionMatrix);
@@ -221,7 +220,7 @@ public class Camera {
   }
 
   public double getFieldOfView() {
-    return fov;
+    return FIELD_OF_VIEW;
   }
 
   public double getFocalLength() {
@@ -254,7 +253,7 @@ public class Camera {
     if (orthographicProjection) {
       ratio /= 3.5;
     }
-    this.internalZoomFactor = -fov * zNear / ratio;
+    this.internalZoomFactor = -FIELD_OF_VIEW * Z_NEAR / ratio;
 
     if (repaint) {
       updateCameraTransform();

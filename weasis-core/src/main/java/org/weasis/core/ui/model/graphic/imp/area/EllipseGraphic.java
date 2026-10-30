@@ -77,7 +77,7 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
     super();
   }
 
-  public EllipseGraphic(EllipseGraphic graphic) {
+  public EllipseGraphic(EllipseGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

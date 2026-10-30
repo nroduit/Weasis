@@ -49,7 +49,8 @@ public class RsQuery implements Callable<Boolean> {
   protected final List<DicomParam> queries;
   private final AuthMethod authMethod;
   private boolean fuzzyMatching;
-  private volatile List<HttpWarning> warnings = List.of();
+  // Immutable, read on the EDT after the GuiExecutor hand-off that follows call()
+  private List<HttpWarning> warnings = List.of();
 
   public RsQuery(
       DicomModel dicomModel,
@@ -131,7 +132,7 @@ public class RsQuery implements Callable<Boolean> {
       LOGGER.debug(RsQueryResult.QIDO_REQUEST, buf);
       SearchResponse response =
           RsQueryResult.search(buf.toString(), authMethod, new URLParameters(queryHeaders));
-      warnings = HttpWarning.parse(response.warnings());
+      warnings = List.copyOf(HttpWarning.parse(response.warnings()));
       for (Attributes studyDataSet : response.matches()) {
         fillSeries(studyDataSet);
       }

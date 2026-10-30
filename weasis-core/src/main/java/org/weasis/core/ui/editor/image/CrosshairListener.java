@@ -32,7 +32,6 @@ public abstract class CrosshairListener extends MouseActionAdapter
   private MouseActionAdapter win = null;
   private MouseActionAdapter lev = null;
   private final BasicActionState basicState;
-  private boolean triggerAction = true;
   private Point pickPoint;
 
   private PanPoint point;
@@ -76,7 +75,7 @@ public abstract class CrosshairListener extends MouseActionAdapter
   }
 
   public boolean isTriggerAction() {
-    return triggerAction;
+    return true;
   }
 
   @Override

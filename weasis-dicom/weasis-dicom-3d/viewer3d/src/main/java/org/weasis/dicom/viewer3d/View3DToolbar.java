@@ -28,7 +28,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer3d.vr.CrosshairCutMode;
 
 public class View3DToolbar extends WtoolBar {
-  private EventManager eventManager;
+  private final EventManager eventManager;
 
   public View3DToolbar(int position) {
     super(Messages.getString("3d.viewer.bar"), position);

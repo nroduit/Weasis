@@ -147,7 +147,8 @@ public class RtSet {
       return;
     }
     if (structureDvh.getDvhSource().equals(DataSource.PROVIDED)
-        && "CM3".equals(structureDvh.getDvhVolumeUnit())) {
+        && "CM3".equals(structureDvh.getDvhVolumeUnit())
+        && structureDvh.getDvhData().length > 0) {
       // Absolute volume is provided in cm^3 - use it
       region.setVolume(structureDvh.getDvhData()[0]);
     }

@@ -78,6 +78,18 @@ class DvhTest {
   }
 
   @Test
+  void statistics_are_zero_when_the_dvh_has_no_data() {
+    // A cumulative DVH whose DVH Data is missing or malformed
+    Dvh empty = new Dvh();
+    empty.setType("CUMULATIVE");
+    empty.setDvhData(null);
+    assertEquals(0, empty.getDvhData().length);
+    assertEquals(0.0, empty.getDvhMinimumDose());
+    assertEquals(0.0, empty.getDvhMaximumDose());
+    assertEquals(0.0, empty.getDvhMeanDose());
+  }
+
+  @Test
   void other_dvh_data_is_differential_when_type_is_cumulative() {
     double[] expected = {0, 10, 10, 20, 20, 20, 20, 0};
     assertArrayEquals(expected, dvh.getOtherDvhData(), 1e-12);

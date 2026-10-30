@@ -37,7 +37,7 @@ public class DicomNodeDialog extends JDialog {
   private DicomPrintOptionPane printOptionsPane;
   private JTextField descriptionTf;
   private JTextField hostnameTf;
-  private JFormattedTextField portTf;
+  private final JFormattedTextField portTf;
 
   private DefaultDicomNode dicomNode;
   private final JComboBox<DefaultDicomNode> nodesComboBox;

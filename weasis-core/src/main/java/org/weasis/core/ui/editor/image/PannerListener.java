@@ -30,7 +30,6 @@ public abstract class PannerListener extends MouseActionAdapter
 
   private final BasicActionState basicState;
   private final ShortcutActions shortcuts = buildShortcuts();
-  private final boolean triggerAction = true;
   protected Point pickPoint;
 
   private Point2D point;
@@ -73,7 +72,7 @@ public abstract class PannerListener extends MouseActionAdapter
   }
 
   public boolean isTriggerAction() {
-    return triggerAction;
+    return true;
   }
 
   @Override

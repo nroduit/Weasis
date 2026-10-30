@@ -83,7 +83,7 @@ public class VolImageIO implements DcmMediaReader {
   private final MprAxis mprAxis;
   private final Volume<?, ?> volume;
   private Attributes attributes;
-  private Map<GeometryOfSlice, GraphicModel> graphicModelMap;
+  private final Map<GeometryOfSlice, GraphicModel> graphicModelMap;
 
   public VolImageIO(MprAxis mprAxis, Volume<?, ?> volume) {
     this.mprAxis = Objects.requireNonNull(mprAxis);
