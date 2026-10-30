@@ -23,7 +23,6 @@ import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
-import org.dcm4che3.data.Tag;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
@@ -39,7 +38,6 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.service.BundlePreferences;
@@ -62,7 +60,7 @@ import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.viewer2d.LutToolBar;
@@ -389,8 +387,10 @@ public class View3DContainer extends DicomViewerPlugin
       return;
     }
 
-    String patientName = TagD.getTagValue(series, Tag.PatientName, String.class);
-    setPluginName(() -> IdentityMask.maskText(TagD.get(Tag.PatientName), patientName));
+    // Opened with a patient group, the viewer keeps the title derived from it (as the 2D viewer)
+    if (getGroupID() == null) {
+      setPluginName(() -> DicomModel.patient.tagView().getFormattedText(series));
+    }
     setSelected(true);
   }
 
