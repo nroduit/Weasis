@@ -18,7 +18,7 @@ The workflow is triggered manually (`workflow_dispatch`). Its `platforms` input 
 | `setup` | `ubuntu-latest` | the `jpackage` and Linux build matrices, from the `platforms` input |
 | `build` | `ubuntu-latest` | `weasis-native.zip`, the shared payload (Maven build, JDK 27 Temurin) |
 | `jpackage` | macOS and Windows runners | `.pkg` (macOS x86-64 and aarch64), `.msi` (Windows x86-64) |
-| `linux-multiarch` | `ubuntu-latest` + Docker (Buildx, QEMU) | `.deb` and `.rpm` for x86-64 and aarch64 |
+| `linux-multiarch` | `ubuntu-latest` + Docker (Buildx, QEMU) | `.deb` and `.rpm` for x86-64 and aarch64, plus an x86-64 `.AppImage` |
 
 Every installer is published as a workflow artifact with a `.sha256` file.
 
@@ -32,6 +32,11 @@ Linux is built **only** in the Docker job, which runs `weasis-distributions/scri
 inside the `weasis/builder` image (`weasis-distributions/docker/Dockerfile`). Docker provides the
 aarch64 build (through QEMU) and a pinned toolchain (JDK, `rpmbuild`, `fakeroot`); it is **not** used
 to control glibc compatibility.
+
+The x86-64 AppImage is repackaged from the freshly built `.deb` by
+`weasis-distributions/script/package-appimage.sh` (linuxdeploy and its AppImage plugin, pinned by
+version and SHA-256 in the workflow). The jpackage tree, including its bundled JRE, is copied
+unchanged, so the glibc floor is the same as the `.deb`.
 
 ## 2. Binary compatibility
 

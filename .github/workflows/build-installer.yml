@@ -466,13 +466,43 @@ jobs:
             exit 1
           fi
 
+        timeout-minutes: 45
+        continue-on-error: false
+
+      # The AppImage is repackaged from the .deb above; the tools run on the runner, so x86_64 only.
+      - name: Build AppImage
+        if: ${{ matrix.arch == 'linux/amd64' }}
+        shell: bash
+        run: |
+          TOOLS="$RUNNER_TEMP/appimage-tools"
+          mkdir -p "$TOOLS"
+          fetch() {  # <file> <url> <sha256>
+            curl -fsSL -o "$TOOLS/$1" "$2"
+            echo "$3  $TOOLS/$1" | sha256sum -c -
+            chmod +x "$TOOLS/$1"
+          }
+          fetch linuxdeploy-x86_64.AppImage \
+            https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage \
+            c20cd71e3a4e3b80c3483cef793cda3f4e990aca14014d23c544ca3ce1270b4d
+          fetch linuxdeploy-plugin-appimage-x86_64.AppImage \
+            https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/1-alpha-20250213-1/linuxdeploy-plugin-appimage-x86_64.AppImage \
+            992d502a248e14ab185448ddf6f6e7d25558cb84d4623c354c3af350c25fccb3
+          fetch runtime-x86_64 \
+            https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64 \
+            2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d
+
+          DEB=$(find "native-dist/weasis-native/installer/${PKG_ARTIFACT}" -maxdepth 1 -name "*.deb" | head -n 1)
+          bash native-dist/weasis-native/build/script/package-appimage.sh \
+            --deb "$DEB" --arch x86_64 --out final-dist --tools "$TOOLS"
+
+      - name: Add checksum sha256 files
+        shell: bash
+        run: |
           for file in final-dist/*; do
-            if [[ -f "$file" ]]; then
+            if [[ -f "$file" && "$file" != *.sha256 ]]; then
               sha256sum "$file" >> "$file.sha256"
             fi
           done
-        timeout-minutes: 45
-        continue-on-error: false
 
       - name: Upload Linux multi-arch installers
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
