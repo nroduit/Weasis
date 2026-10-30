@@ -383,9 +383,8 @@ public class RtSet {
     dvh.setDvhDoseScaling(1.0);
 
     Mat difHistogram = calculateDifferentialDvh(region, dose);
-    double[] cumHistogram = convertDifferentialToCumulativeDvh(difHistogram);
-    dvh.setDvhData(cumHistogram);
-    dvh.setDvhNumberOfBins(cumHistogram.length);
+    dvh.setDvhData(convertDifferentialToCumulativeDvh(difHistogram));
+    dvh.setDvhNumberOfBins(dvh.getDvhData().length);
     return dvh;
   }
 
