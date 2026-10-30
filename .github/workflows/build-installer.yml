@@ -28,9 +28,9 @@ jobs:
           [ -z "$sel" ] && sel="all"
           jpkg=$(jq -cn --arg sel "$sel" '
             [
-              {key:"macosx-x86-64",  os:"macos-15-intel", platform:"x64",   wsystem:"macosx",  warc:"x86-64"},
-              {key:"macosx-aarch64", os:"macos-latest",   platform:"arm64", wsystem:"macosx",  warc:"aarch64"},
-              {key:"windows-x86-64", os:"windows-latest", platform:"x64",   wsystem:"windows", warc:"x86-64"}
+              {key:"macosx-x86-64",  os:"macos-15-intel", platform:"x64",   wsystem:"macosx",  warc:"x86-64",  jdk:"26"},
+              {key:"macosx-aarch64", os:"macos-latest",   platform:"arm64", wsystem:"macosx",  warc:"aarch64", jdk:"27"},
+              {key:"windows-x86-64", os:"windows-latest", platform:"x64",   wsystem:"windows", warc:"x86-64",  jdk:"27"}
             ]
             | map(select($sel == "all" or (.key as $k | ($sel | split(",")) | index($k) != null)))
             | map(del(.key))')
@@ -64,7 +64,7 @@ jobs:
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6  # v6.0.1
         with:
           distribution: 'temurin'
-          java-version: '26'
+          java-version: '27'
           cache: 'maven'
 
       - name: Build with Maven
@@ -122,7 +122,8 @@ jobs:
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6  # v6.0.1
         with:
           distribution: 'temurin'
-          java-version: '26'
+          # Per platform: Temurin 27 has no macOS x64 build, so that installer stays on JDK 26.
+          java-version: ${{ matrix.jdk }}
 
       - name: Download weasis-native
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1

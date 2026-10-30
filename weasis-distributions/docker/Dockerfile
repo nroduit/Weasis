@@ -1,5 +1,5 @@
-# Based on image: https://github.com/adoptium/containers/blob/main/26/jdk/ubuntu/resolute/Dockerfile
-# Additional packages: https://github.com/adoptium/temurin26-binaries/releases/
+# Based on image: https://github.com/adoptium/containers/blob/main/27/jdk/ubuntu/resolute/Dockerfile
+# Additional packages: https://github.com/adoptium/temurin27-binaries/releases/
 # Add libraries required by weasis build: bzip2 unzip xz-utils fakeroot rpm
 
 FROM ubuntu:26.04
@@ -18,18 +18,18 @@ RUN set -eux; \
     locale-gen en_US.UTF-8; \
     rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_VERSION=jdk-26.0.2+10
+ENV JAVA_VERSION=jdk-27.0.1.0.2+1
 
 RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
     case "${ARCH}" in \
        amd64) \
-         ESUM='56f768372f6ca1e2eb4c5f46b78f627949e8dcfe9c9723926cf45a45faf35802'; \
-         BINARY_URL='https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.2%2B10/OpenJDK26U-jdk_x64_linux_hotspot_26.0.2_10.tar.gz'; \
+         ESUM='30cb129f6cf299c852cec0feca9ea2a596d2ee9f26d8605d3a253951f6c8b20f'; \
+         BINARY_URL='https://github.com/adoptium/temurin27-binaries/releases/download/jdk-27.0.1.0.2%2B1/OpenJDK27U-jdk_x64_linux_hotspot_27.0.1.0.2_1.tar.gz'; \
          ;; \
        arm64) \
-         ESUM='f82aeb1d5b0ddb93d3bd81c20948bc560c0758993157202424c17e805e2effbb'; \
-         BINARY_URL='https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.2%2B10/OpenJDK26U-jdk_aarch64_linux_hotspot_26.0.2_10.tar.gz'; \
+         ESUM='5ddacf925244a00b60cac828b61ff2f67a68cd32b8dfe5cee1405e333b4589e5'; \
+         BINARY_URL='https://github.com/adoptium/temurin27-binaries/releases/download/jdk-27.0.1.0.2%2B1/OpenJDK27U-jdk_aarch64_linux_hotspot_27.0.1.0.2_1.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \
