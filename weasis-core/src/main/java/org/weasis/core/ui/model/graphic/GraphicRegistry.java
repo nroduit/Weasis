@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -65,6 +66,11 @@ public final class GraphicRegistry {
   private GraphicRegistry(Function<String, Boolean> hiddenProperty) {
     this.hiddenProperty = hiddenProperty;
     register(new BuiltinGraphicTools());
+  }
+
+  /** A registry whose hide rule may answer {@code null}: undecided, asked again on the next use. */
+  static GraphicRegistry withUndecidedRule(Function<String, Boolean> hiddenProperty) {
+    return new GraphicRegistry(Objects.requireNonNull(hiddenProperty));
   }
 
   public static GraphicRegistry getInstance() {
@@ -240,23 +246,38 @@ public final class GraphicRegistry {
   }
 
   private static Boolean isHiddenBySystemPreferences(String property) {
+    return isHiddenBy(
+        () -> {
+          UICore core = GuiUtils.getUICore();
+          return core == null ? null : core.getSystemPreferences();
+        },
+        property);
+  }
+
+  /**
+   * Hide rule of a property in the given system preferences: {@code null} when they cannot be read
+   * yet, so the answer is asked again later instead of being cached.
+   */
+  static Boolean isHiddenBy(Supplier<WProperties> systemPreferences, String property) {
+    WProperties p;
     try {
-      UICore core = GuiUtils.getUICore();
-      if (core == null) {
-        // Called while the UI core is being built (its preferences read the tools): decide later
-        return null;
-      }
-      WProperties p = core.getSystemPreferences();
-      String value = p.getProperty(property);
-      String legacy = LEGACY_HIDE_PROPERTIES.get(property);
-      if (value == null && legacy != null) {
-        value = p.getProperty(legacy);
-      }
-      return Boolean.FALSE.toString().equalsIgnoreCase(value);
+      p = systemPreferences.get();
+    } catch (IllegalStateException e) {
+      // The UI core is being built (its preferences read the tools) or not configured yet
+      return null;
     } catch (RuntimeException | LinkageError e) {
       // No UI core (headless tests, library use): nothing can hide a tool
       LOGGER.debug("System preferences unavailable, tool {} kept", property, e);
       return false;
     }
+    if (p == null) {
+      return null;
+    }
+    String value = p.getProperty(property);
+    String legacy = LEGACY_HIDE_PROPERTIES.get(property);
+    if (value == null && legacy != null) {
+      value = p.getProperty(legacy);
+    }
+    return Boolean.FALSE.toString().equalsIgnoreCase(value);
   }
 }

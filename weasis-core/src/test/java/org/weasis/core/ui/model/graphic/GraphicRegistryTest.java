@@ -12,15 +12,18 @@ package org.weasis.core.ui.model.graphic;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.model.graphic.imp.BuiltinGraphicTools;
 import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
@@ -132,5 +135,42 @@ class GraphicRegistryTest {
         () -> assertEquals(LineGraphic.class, d.xmlType()),
         () ->
             assertEquals(LineGraphic.class, GraphicToolDescriptor.xmlTypeOf(new LineGraphic() {})));
+  }
+
+  @Test
+  void undecided_hide_rule_is_not_cached() {
+    AtomicReference<Boolean> rule = new AtomicReference<>();
+    GraphicRegistry registry =
+        GraphicRegistry.withUndecidedRule(
+            property -> "weasis.measure.line".equals(property) ? rule.get() : Boolean.FALSE);
+    // asked while the system preferences are being read: the line stays until it can be decided
+    assertEquals(17, registry.prototypes(ToolCategory.MEASURE).size());
+    rule.set(Boolean.TRUE);
+    assertEquals(16, registry.prototypes(ToolCategory.MEASURE).size());
+  }
+
+  @Test
+  void system_preferences_being_created_leave_the_rule_undecided() {
+    WProperties hide = new WProperties();
+    hide.setProperty("weasis.measure.line", "false"); // NON-NLS
+    assertAll(
+        () ->
+            assertNull(
+                GraphicRegistry.isHiddenBy(
+                    () -> {
+                      throw new IllegalStateException("UICore is being created"); // NON-NLS
+                    },
+                    "weasis.measure.line")),
+        () -> assertNull(GraphicRegistry.isHiddenBy(() -> null, "weasis.measure.line")),
+        () -> assertEquals(true, GraphicRegistry.isHiddenBy(() -> hide, "weasis.measure.line")),
+        () -> assertEquals(false, GraphicRegistry.isHiddenBy(() -> hide, "weasis.measure.angle")),
+        () ->
+            assertEquals(
+                false,
+                GraphicRegistry.isHiddenBy(
+                    () -> {
+                      throw new UnsupportedOperationException();
+                    },
+                    "weasis.measure.line")));
   }
 }
