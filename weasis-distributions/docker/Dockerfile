@@ -1,7 +1,5 @@
-# Based on image: https://github.com/adoptium/containers/blob/main/26/jdk/ubuntu/resolute/Dockerfile
-# JDK 27: the OpenJDK GA build of https://jdk.java.net/27/ (GPL+CPE), verified by its pinned
-# SHA-256, until Temurin 27 is published (then switch BINARY_URL/ESUM back to
-# https://github.com/adoptium/temurin27-binaries/releases/ and restore the GPG check).
+# Based on image: https://github.com/adoptium/containers/blob/main/27/jdk/ubuntu/resolute/Dockerfile
+# Additional packages: https://github.com/adoptium/temurin27-binaries/releases/
 # Add libraries required by weasis build: bzip2 unzip xz-utils fakeroot rpm
 
 FROM ubuntu:26.04
@@ -20,18 +18,18 @@ RUN set -eux; \
     locale-gen en_US.UTF-8; \
     rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_VERSION=jdk-27+35
+ENV JAVA_VERSION=jdk-27.0.1.0.2+1
 
 RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
     case "${ARCH}" in \
        amd64) \
-         ESUM='95fc37eb3a18a27a26d5904c2d89d52bace8dafa9a078ca27f4747fbc4bf070b'; \
-         BINARY_URL='https://download.java.net/java/GA/jdk27/55ce5470a6294008af0057ff4626d0e5/35/GPL/openjdk-27_linux-x64_bin.tar.gz'; \
+         ESUM='30cb129f6cf299c852cec0feca9ea2a596d2ee9f26d8605d3a253951f6c8b20f'; \
+         BINARY_URL='https://github.com/adoptium/temurin27-binaries/releases/download/jdk-27.0.1.0.2%2B1/OpenJDK27U-jdk_x64_linux_hotspot_27.0.1.0.2_1.tar.gz'; \
          ;; \
        arm64) \
-         ESUM='da4e9dde1fff90204739e969187bab4751bd59a2a1c479672e1a1810f7dd23ea'; \
-         BINARY_URL='https://download.java.net/java/GA/jdk27/55ce5470a6294008af0057ff4626d0e5/35/GPL/openjdk-27_linux-aarch64_bin.tar.gz'; \
+         ESUM='5ddacf925244a00b60cac828b61ff2f67a68cd32b8dfe5cee1405e333b4589e5'; \
+         BINARY_URL='https://github.com/adoptium/temurin27-binaries/releases/download/jdk-27.0.1.0.2%2B1/OpenJDK27U-jdk_aarch64_linux_hotspot_27.0.1.0.2_1.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \
@@ -40,11 +38,33 @@ RUN set -eux; \
     esac; \
     savedAptMark="$(apt-mark showmanual)"; \
     apt-get update; \
-    apt-get install -y --no-install-recommends wget; \
+    apt-get install -y --no-install-recommends wget gnupg; \
     wget --progress=dot:giga --tries=3 --timeout=30 -O /tmp/openjdk.tar.gz ${BINARY_URL}; \
-    # jdk.java.net publishes SHA-256 sums only (no detached signature): the pinned sum is the
-    # integrity check.
+    wget --progress=dot:giga --tries=3 --timeout=30 -O /tmp/openjdk.tar.gz.sig ${BINARY_URL}.sig; \
+    # The pinned checksum is the authoritative integrity check; verify it first so
+    # the build never depends on a keyserver being reachable.
     echo "${ESUM} */tmp/openjdk.tar.gz" | sha256sum -c -; \
+    export GNUPGHOME="$(mktemp -d)"; \
+    # gpg: key 843C48A565F8F04B: "Adoptium GPG Key (DEB/RPM Signing Key) <temurin-dev@eclipse.org>" imported.
+    # Keyservers time out intermittently (notably under QEMU emulation), so try
+    # several and treat a total failure as a warning rather than a build error.
+    KEY='3B04D753C9050D9A5D343F39843C48A565F8F04B'; \
+    gpg_ok=0; \
+    for ks in keyserver.ubuntu.com keys.openpgp.org pgp.mit.edu; do \
+      for attempt in 1 2; do \
+        if gpg --batch --keyserver "${ks}" --keyserver-options timeout=20 --recv-keys "${KEY}"; then \
+          gpg_ok=1; break; \
+        fi; \
+        sleep 5; \
+      done; \
+      if [ "${gpg_ok}" = 1 ]; then break; fi; \
+    done; \
+    if [ "${gpg_ok}" = 1 ]; then \
+      gpg --batch --verify /tmp/openjdk.tar.gz.sig /tmp/openjdk.tar.gz; \
+    else \
+      echo "WARNING: could not fetch the Adoptium GPG key from any keyserver; relying on the pinned SHA-256 (already verified)."; \
+    fi; \
+    rm -rf "${GNUPGHOME}" /tmp/openjdk.tar.gz.sig; \
     mkdir -p "$JAVA_HOME"; \
     tar --extract \
         --file /tmp/openjdk.tar.gz \

@@ -22,13 +22,6 @@ public interface DragGraphic extends Graphic {
 
   void buildShape(MouseEventDouble mouseEvent);
 
-  /**
-   * @deprecated ambiguous: it rotates the point list on one tool and duplicates a vertex on
-   *     another. Use {@link #insertHandlePoint(int, Point2D)} or {@link #resumeDrawing()}.
-   */
-  @Deprecated(since = "4.8.0", forRemoval = true)
-  void forceToAddPoints(Integer fromPtIndex);
-
   Point2D removeHandlePoint(Integer index, MouseEventDouble mouseEvent);
 
   /** True when the last vertex is joined back to the first, as on a polygon. */

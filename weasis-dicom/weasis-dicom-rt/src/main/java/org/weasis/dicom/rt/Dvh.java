@@ -35,7 +35,8 @@ public class Dvh {
   private double dvhMinimumDose = UNCOMPUTED;
   private double dvhMaximumDose = UNCOMPUTED;
   private double dvhMeanDose = UNCOMPUTED;
-  private double[] dvhData;
+  // Never null: a DVH without DVH Data has no bins
+  private double[] dvhData = new double[0];
   private double[] dvhBinWidths;
   private double[] binEdges;
   private double[] otherDvhData;
@@ -153,7 +154,7 @@ public class Dvh {
   }
 
   public void setDvhData(double[] dvhData) {
-    this.dvhData = dvhData;
+    this.dvhData = dvhData == null ? new double[0] : dvhData;
     this.binEdges = null;
     this.otherDvhData = null;
   }
@@ -178,7 +179,7 @@ public class Dvh {
    */
   double[] getBinEdges() {
     if (binEdges == null) {
-      int n = dvhData == null ? 0 : dvhData.length;
+      int n = dvhData.length;
       double[] edges = new double[n + 1];
       boolean hasWidths = dvhBinWidths != null && dvhBinWidths.length == n;
       double scaling = dvhDoseScaling > 0.0 ? dvhDoseScaling : 1.0;
@@ -212,7 +213,7 @@ public class Dvh {
    * name is derived from the region label to avoid collisions.
    */
   public XYChart appendChart(StructRegion region, XYChart dvhChart) {
-    if (dvhChart == null || dvhData == null || dvhData.length == 0) {
+    if (dvhChart == null || dvhData.length == 0) {
       return null;
     }
 

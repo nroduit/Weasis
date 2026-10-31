@@ -81,7 +81,7 @@ public class SynchView implements GUIEntry {
   private final String command;
   private final FlatSVGIcon svgIcon;
   private SynchData synchData;
-  private SynchData originalSynchData;
+  private final SynchData originalSynchData;
 
   public SynchView(
       String name,

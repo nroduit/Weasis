@@ -54,10 +54,10 @@ public class PreferenceDialog extends AbstractWizardDialog {
           FlowLayout.TRAILING,
           10,
           7,
+          jButtonHelp,
           exportButton,
           importButton,
           reloadSiteButton,
-          jButtonHelp,
           restoreButton,
           applyButton);
   protected final JLabel scopeLabel = new JLabel();

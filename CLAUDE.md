@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build, test, format
 
-Maven multi-module build. Requires **JDK 25+** (CI runs JDK 26 Temurin) and Maven **3.8.1+** (enforced by `maven-enforcer-plugin`). Version is supplied via CI-friendly properties in `weasis-parent/pom.xml`: `${revision}` (currently `4.8.0`) and `${changelist}` (default `-SNAPSHOT`).
+Maven multi-module build. Requires **JDK 25+** (CI runs JDK 27 Temurin; the macOS x64 installer stays on JDK 26, for which Temurin 27 has no build) and Maven **3.8.1+** (enforced by `maven-enforcer-plugin`). Version is supplied via CI-friendly properties in `weasis-parent/pom.xml`: `${revision}` (currently `4.8.0`) and `${changelist}` (default `-SNAPSHOT`).
 
 ```bash
 # Full build + tests (replicates the CI "Build" job, minus Sonar)

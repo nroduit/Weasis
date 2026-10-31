@@ -27,6 +27,7 @@ import javax.swing.SwingUtilities;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MaskingProfile;
+import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.DisplayProfile;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -61,6 +62,7 @@ public class FrameGrabber {
 
   private Dimension frameSize;
   private boolean previousSessionMasking;
+  private MaskingProfile previousSessionProfile;
   private boolean pointerVisible;
   private boolean imageOnly;
   private boolean followSelection;
@@ -205,19 +207,21 @@ public class FrameGrabber {
   }
 
   /**
-   * Freezes the frame size and, for a full-window capture, masks what only re-renders on demand.
+   * Freezes the frame size and, for a full-window capture, masks what only re-renders on demand
+   * with the capture profile, not the one of the screen, which may keep more.
    */
   public void prepare() {
     frameSize = computeFrameSize();
     if (needsSessionMasking()) {
       previousSessionMasking = IdentityMask.isSessionMasking();
-      IdentityMask.setSessionMasking(true);
+      previousSessionProfile = IdentityMask.sessionProfile();
+      IdentityMask.setSessionMasking(true, profile);
     }
   }
 
   public void release() {
     if (needsSessionMasking()) {
-      IdentityMask.setSessionMasking(previousSessionMasking);
+      IdentityMask.setSessionMasking(previousSessionMasking, previousSessionProfile);
     }
     paintBuffer = null;
     frameBuffer = null;
@@ -225,7 +229,8 @@ public class FrameGrabber {
 
   /**
    * A window capture shows docking tab titles and explorer labels, which are built once and cached
-   * rather than resolved per paint, so a scoped mask would not reach them.
+   * rather than resolved per paint, so a scoped mask would not reach them. Switching it may evict
+   * the explorer thumbnails whose pixels the profile redacts, which {@link #capture} builds again.
    */
   private boolean needsSessionMasking() {
     return profile != null && scope == CaptureScope.APPLICATION_WINDOW;
@@ -246,8 +251,9 @@ public class FrameGrabber {
   public BufferedImage grab(BufferedImage target) {
     BufferedImage frame =
         profile == null
-            ? capture(target)
-            : IdentityMask.forProfile(profile).callMasked(() -> capture(target));
+            ? Thumbnail.callLoadingNow(() -> capture(target))
+            : IdentityMask.forProfile(profile)
+                .callMasked(() -> Thumbnail.callLoadingNow(() -> capture(target)));
     if (frame != null && pointerVisible) {
       drawPointer(frame);
     }

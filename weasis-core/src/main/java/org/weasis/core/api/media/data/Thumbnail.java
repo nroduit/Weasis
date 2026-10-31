@@ -76,6 +76,9 @@ public class Thumbnail extends JLabel implements Thumbnailable {
         }
       };
 
+  /** Bound while a missing thumbnail must be built in the painting thread rather than later. */
+  private static final ScopedValue<Boolean> LOAD_NOW = ScopedValue.newInstance();
+
   protected volatile boolean readable = true;
   protected AtomicBoolean loading = new AtomicBoolean(false);
   protected File thumbnailPath = null;
@@ -242,9 +245,27 @@ public class Thumbnail extends JLabel implements Thumbnailable {
     return thumbnailPath;
   }
 
+  /**
+   * Calls {@code task}, typically a paint into a capture, with the thumbnails it paints built on
+   * the spot when missing: the background build would only show up in a later paint, and a capture
+   * often follows a change that evicted them, such as the mask in force.
+   */
+  public static <T> T callLoadingNow(ScopedValue.CallableOp<T, RuntimeException> task) {
+    return ScopedValue.where(LOAD_NOW, Boolean.TRUE).call(task);
+  }
+
   protected PlanarImage getImage(
       final MediaElement media, final boolean keepMediaCache, final OpManager opManager) {
     PlanarImage cacheImage;
+    if (LOAD_NOW.isBound()) {
+      // A first build may only write the temporary file, the second one reads it back
+      for (int i = 0;
+          i < 2 && mCache.get(this) == null && readable && loading.compareAndSet(false, true);
+          i++) {
+        loadThumbnail(media, keepMediaCache, opManager);
+      }
+      return mCache.get(this);
+    }
     if ((cacheImage = mCache.get(this)) == null && readable && loading.compareAndSet(false, true)) {
       try {
         SwingWorker<Boolean, String> thumbnailReader =

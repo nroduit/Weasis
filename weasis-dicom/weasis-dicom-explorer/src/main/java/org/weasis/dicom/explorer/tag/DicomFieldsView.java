@@ -99,7 +99,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
   private final Runnable maskListener =
       () -> GuiExecutor.execute(() -> changeDicomInfo(currentSeries, currentMedia));
 
-  private JPanel tableContainer;
+  private final JPanel tableContainer;
   private final DefaultTableModel tableModel =
       new DefaultTableModel(columns, 0) {
         @Override

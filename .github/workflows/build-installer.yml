@@ -12,12 +12,10 @@ permissions:
   contents: read
 
 env:
-  # JDK of the installers. 27 brings the fixed AOT class linking (JDK-8373392) that halves the
-  # weasis-cli startup; the application cache uses the same tier from 27.
+  # JDK of the build and installers. 27 brings the fixed AOT class linking (JDK-8373392) that halves
+  # the weasis-cli startup; the application cache uses the same tier from 27. The macOS x86-64
+  # installer stays on 26 (no Temurin 27 build), see the jpackage matrix.
   JDK_VERSION: '27'
-  # OpenJDK GA build of jdk.java.net (GPL+CPE), used while Temurin 27 is not published: same
-  # major, pinned checksums. No macOS x86-64 build exists there, that runner needs Temurin.
-  OPENJDK_GA_BASE: 'https://download.java.net/java/GA/jdk27/55ce5470a6294008af0057ff4626d0e5/35/GPL'
 
 jobs:
   setup:
@@ -36,9 +34,9 @@ jobs:
           [ -z "$sel" ] && sel="all"
           jpkg=$(jq -cn --arg sel "$sel" '
             [
-              {key:"macosx-x86-64",  os:"macos-15-intel", platform:"x64",   wsystem:"macosx",  warc:"x86-64"},
-              {key:"macosx-aarch64", os:"macos-latest",   platform:"arm64", wsystem:"macosx",  warc:"aarch64"},
-              {key:"windows-x86-64", os:"windows-latest", platform:"x64",   wsystem:"windows", warc:"x86-64"}
+              {key:"macosx-x86-64",  os:"macos-15-intel", platform:"x64",   wsystem:"macosx",  warc:"x86-64",  jdk:"26"},
+              {key:"macosx-aarch64", os:"macos-latest",   platform:"arm64", wsystem:"macosx",  warc:"aarch64", jdk:"27"},
+              {key:"windows-x86-64", os:"windows-latest", platform:"x64",   wsystem:"windows", warc:"x86-64",  jdk:"27"}
             ]
             | map(select($sel == "all" or (.key as $k | ($sel | split(",")) | index($k) != null)))
             | map(del(.key))')
@@ -68,36 +66,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up JDK ${{ env.JDK_VERSION }} (Temurin)
-        id: temurin
-        continue-on-error: true
+      - name: Set up JDK
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6  # v6.0.1
         with:
           distribution: 'temurin'
-          java-version: ${{ env.JDK_VERSION }}
-          cache: 'maven'
-
-      - name: Download the OpenJDK ${{ env.JDK_VERSION }} GA build (Temurin not published yet)
-        if: steps.temurin.outcome == 'failure'
-        shell: bash
-        run: |
-          case "${{ runner.os }}-${{ runner.arch }}" in
-            Linux-X64)    FILE="openjdk-${JDK_VERSION}_linux-x64_bin.tar.gz";   SUM="95fc37eb3a18a27a26d5904c2d89d52bace8dafa9a078ca27f4747fbc4bf070b" ;;
-            Linux-ARM64)  FILE="openjdk-${JDK_VERSION}_linux-aarch64_bin.tar.gz"; SUM="da4e9dde1fff90204739e969187bab4751bd59a2a1c479672e1a1810f7dd23ea" ;;
-            macOS-ARM64)  FILE="openjdk-${JDK_VERSION}_macos-aarch64_bin.tar.gz"; SUM="ff42134c1bc5ac81c5a91a95fd4df87479db5d0499ba875d6adb5bda5626c3e8" ;;
-            Windows-X64)  FILE="openjdk-${JDK_VERSION}_windows-x64_bin.zip";     SUM="41172837168dd25a8d9fe5eb253ac1efc568c5f9ff608144bcacadfdf50f876c" ;;
-            *) echo "No OpenJDK GA build for ${{ runner.os }}-${{ runner.arch }}: Temurin ${JDK_VERSION} is required"; exit 1 ;;
-          esac
-          curl -sSfL --retry 3 -o "${RUNNER_TEMP}/${FILE}" "${OPENJDK_GA_BASE}/${FILE}"
-          echo "${SUM}  ${RUNNER_TEMP}/${FILE}" | sha256sum -c -
-          echo "JDK_FILE=${RUNNER_TEMP}/${FILE}" >> "$GITHUB_ENV"
-
-      - name: Set up JDK ${{ env.JDK_VERSION }} (OpenJDK GA build)
-        if: steps.temurin.outcome == 'failure'
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6  # v6.0.1
-        with:
-          distribution: 'jdkfile'
-          jdkFile: ${{ env.JDK_FILE }}
           java-version: ${{ env.JDK_VERSION }}
           cache: 'maven'
 
@@ -152,36 +124,12 @@ jobs:
           echo "WEASIS_VERSION=${{needs.build.outputs.version}}" >> $GITHUB_ENV
           echo "WEASIS_CLEAN_VERSION=${{needs.build.outputs.cleanversion}}" >> $GITHUB_ENV
 
-      - name: Set up JDK ${{ env.JDK_VERSION }} (Temurin)
-        id: temurin
-        continue-on-error: true
+      - name: Set up JDK
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6  # v6.0.1
         with:
           distribution: 'temurin'
-          java-version: ${{ env.JDK_VERSION }}
-
-      - name: Download the OpenJDK ${{ env.JDK_VERSION }} GA build (Temurin not published yet)
-        if: steps.temurin.outcome == 'failure'
-        shell: bash
-        run: |
-          case "${{ runner.os }}-${{ runner.arch }}" in
-            Linux-X64)    FILE="openjdk-${JDK_VERSION}_linux-x64_bin.tar.gz";   SUM="95fc37eb3a18a27a26d5904c2d89d52bace8dafa9a078ca27f4747fbc4bf070b" ;;
-            Linux-ARM64)  FILE="openjdk-${JDK_VERSION}_linux-aarch64_bin.tar.gz"; SUM="da4e9dde1fff90204739e969187bab4751bd59a2a1c479672e1a1810f7dd23ea" ;;
-            macOS-ARM64)  FILE="openjdk-${JDK_VERSION}_macos-aarch64_bin.tar.gz"; SUM="ff42134c1bc5ac81c5a91a95fd4df87479db5d0499ba875d6adb5bda5626c3e8" ;;
-            Windows-X64)  FILE="openjdk-${JDK_VERSION}_windows-x64_bin.zip";     SUM="41172837168dd25a8d9fe5eb253ac1efc568c5f9ff608144bcacadfdf50f876c" ;;
-            *) echo "No OpenJDK GA build for ${{ runner.os }}-${{ runner.arch }}: Temurin ${JDK_VERSION} is required"; exit 1 ;;
-          esac
-          curl -sSfL --retry 3 -o "${RUNNER_TEMP}/${FILE}" "${OPENJDK_GA_BASE}/${FILE}"
-          echo "${SUM}  ${RUNNER_TEMP}/${FILE}" | sha256sum -c -
-          echo "JDK_FILE=${RUNNER_TEMP}/${FILE}" >> "$GITHUB_ENV"
-
-      - name: Set up JDK ${{ env.JDK_VERSION }} (OpenJDK GA build)
-        if: steps.temurin.outcome == 'failure'
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6  # v6.0.1
-        with:
-          distribution: 'jdkfile'
-          jdkFile: ${{ env.JDK_FILE }}
-          java-version: ${{ env.JDK_VERSION }}
+          # Per platform: Temurin 27 has no macOS x64 build, so that installer stays on JDK 26.
+          java-version: ${{ matrix.jdk }}
 
       - name: Download weasis-native
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
@@ -446,8 +394,16 @@ jobs:
         if: matrix.wsystem == 'macosx'
         shell: bash
         run: |
-          xcrun stapler staple \
-            "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
+          # The ticket is fetched from Apple's CloudKit, which can drop the connection or not
+          # serve a fresh ticket yet (error 68): retry with a growing delay.
+          PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
+          for attempt in 1 2 3; do
+            xcrun stapler staple "$PKG" && exit 0
+            echo "Staple attempt $attempt failed; retrying in $((attempt * 30)) s..."
+            sleep $((attempt * 30))
+          done
+          echo "Stapling failed after 3 attempts."
+          exit 1
 
       - name: Add checksum sha256 file
         shell: bash

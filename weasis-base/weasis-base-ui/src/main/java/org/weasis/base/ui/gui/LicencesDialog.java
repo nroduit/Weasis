@@ -39,7 +39,7 @@ public class LicencesDialog extends JDialog {
 
   private final JButton jButtonClose;
   private final JTabbedPane tabbedPane;
-  private List<AbstractTabLicense> tabsList;
+  private final List<AbstractTabLicense> tabsList;
 
   /**
    * Creates a dialog to insert third party licences.

@@ -10,6 +10,7 @@
 package org.weasis.core.ui.editor.image.export;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -26,7 +27,7 @@ public final class CaptureFileName {
 
   /** {@code base} followed by the current date and time, without an extension. */
   public static String of(String base) {
-    return of(base, LocalDateTime.now());
+    return of(base, LocalDateTime.now(ZoneId.systemDefault()));
   }
 
   static String of(String base, LocalDateTime time) {

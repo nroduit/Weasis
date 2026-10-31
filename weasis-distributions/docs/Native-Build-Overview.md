@@ -17,7 +17,7 @@ The workflow is triggered manually (`workflow_dispatch`). Its `platforms` input 
 | Job | Runs on | Produces |
 |-----|---------|----------|
 | `setup` | `ubuntu-latest` | the `jpackage` and Linux build matrices, from the `platforms` input |
-| `build` | `ubuntu-latest` | `weasis-native.zip`, the shared payload (Maven build, JDK 27) |
+| `build` | `ubuntu-latest` | `weasis-native.zip`, the shared payload (Maven build, JDK 27 Temurin) |
 | `jpackage` | macOS and Windows runners | `.pkg` (macOS x86-64 and aarch64), `.msi` (Windows x86-64) |
 | `linux-multiarch` | `ubuntu-latest` + Docker (Buildx, QEMU) | `.deb` and `.rpm` for x86-64 and aarch64 |
 
@@ -69,7 +69,7 @@ their supported OS versions follow those binaries, not the runner image.
 
 | Platform | Constraint |
 |----------|------------|
-| **All** | JDK 27 (`JDK_VERSION` in the workflow): Temurin when published, otherwise the OpenJDK GA build of jdk.java.net with pinned checksums, which has no macOS x86-64 build; the `--add-modules` list is OS-specific (Windows adds `jdk.crypto.mscapi`). JDK 27 is required for the AOT class-linking tier of the application and `weasis-cli` caches (JDK-8373392) |
+| **All** | JDK 27 Temurin (`JDK_VERSION` in the workflow), except the macOS x64 installer on JDK 26 (Temurin 27 has no macOS x64 build, so that platform runs without the AOT class-linking tier); the `--add-modules` list is OS-specific (Windows adds `jdk.crypto.mscapi`). JDK 27 is required for the AOT class-linking tier of the application and `weasis-cli` caches (JDK-8373392) |
 | **Linux** | `.deb`/`.rpm` are built in a **single** jpackage step from `--input`. The two-step path (`--app-image` then `--type deb`) loses the launcher icons on JDK 26+ |
 | **Linux/Docker** | `JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork`: the default process spawn mechanism is unreliable under QEMU |
 | **macOS** | Native libraries inside JARs are signed (`--options runtime --timestamp`) before jpackage repacks them; `--mac-sign` is used at the app-image stage only, **never** at the `pkg` stage, which would break notarization |

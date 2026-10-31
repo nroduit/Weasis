@@ -28,7 +28,6 @@ import javax.swing.JMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
-import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -41,7 +40,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.cv.CvUtil;
-import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -611,9 +609,9 @@ public class MprContainer extends DicomViewerPlugin
     if (view != null) {
       view.setSeries(sequence);
 
-      String title = TagD.getTagValue(sequence, Tag.PatientName, String.class);
-      if (title != null) {
-        this.setPluginName(() -> IdentityMask.maskText(TagD.get(Tag.PatientName), title));
+      // Opened with a patient group, the viewer keeps the title derived from it (as the 2D viewer)
+      if (getGroupID() == null) {
+        setPluginName(() -> DicomModel.patient.tagView().getFormattedText(sequence));
       }
       view.repaint();
       process =
