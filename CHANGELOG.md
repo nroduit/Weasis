@@ -1,5 +1,55 @@
 # Changelog
 
+## [v4.8.0](https://github.com/nroduit/Weasis/tree/v4.8.0) (2026-10-31)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.3...v4.8.0)
+
+**Implemented enhancements:**
+
+- Add a "fuzzy search \(Person Name\)" option to the DICOMweb search [\#948](https://github.com/nroduit/Weasis/issues/948)
+- Fusion: adjust the PET scale maximum independently of the CT window [\#946](https://github.com/nroduit/Weasis/issues/946)
+- Binary DICOM SEG overlay does not align with source-image voxels in 2D [\#938](https://github.com/nroduit/Weasis/issues/938)
+- DICOM SR: render TABLE content items [\#933](https://github.com/nroduit/Weasis/issues/933)
+- SR: draw TCOORD items on the referenced waveforms [\#932](https://github.com/nroduit/Weasis/issues/932)
+- Refactor SR rendering: consolidate SCOORD/SCOORD3D handling, add layer visibility toggling, and enhance overlay management [\#931](https://github.com/nroduit/Weasis/issues/931)
+- Add export functionality for screenshots, animations, and recordings; enhance capture actions and related UI components [\#930](https://github.com/nroduit/Weasis/issues/930)
+- Replace hardcoded presets with structured JSON-based configuration, extend LUT shapes, and improve WL slider interactions [\#929](https://github.com/nroduit/Weasis/issues/929)
+- Implement identity masking features: add IdentityMask class, integrate masking profiles, and enhance redaction capabilities across various components [\#928](https://github.com/nroduit/Weasis/issues/928)
+- Add cinematic rendering features: implement denoise pass, cinematic lighting options, and enhance shader management [\#927](https://github.com/nroduit/Weasis/issues/927)
+- Color maps: JSON model for 2D, fusion and 3D, shared editor, DICOM Color Palette import/export [\#926](https://github.com/nroduit/Weasis/issues/926)
+- Reverse scroll direction in MPR mode axial view [\#921](https://github.com/nroduit/Weasis/issues/921)
+- Modernize the Draw & Measure tools: new tools, tool profiles, plugin registry and clearer display [\#920](https://github.com/nroduit/Weasis/issues/920)
+- Replace the Scribejava OAuth2 service with a custom implementation [\#914](https://github.com/nroduit/Weasis/issues/914)
+- Improve system resources information with OSHI [\#913](https://github.com/nroduit/Weasis/issues/913)
+- Replace usbdrivedetector with OSHI for removable-drive detection [\#912](https://github.com/nroduit/Weasis/issues/912)
+- Secure and robust DICOMDIR file resolution [\#911](https://github.com/nroduit/Weasis/issues/911)
+- Hanging-protocol style viewport layouts \(stack / tiled\) with synchronization across tiled views [\#910](https://github.com/nroduit/Weasis/issues/910)
+- Add support for better caching DICOM files from network shares and optical media [\#909](https://github.com/nroduit/Weasis/issues/909)
+- Add keyboard shortcuts for measurements [\#856](https://github.com/nroduit/Weasis/issues/856)
+- Click-and-drag to draw ellipse \(and rectangle\) to measure [\#782](https://github.com/nroduit/Weasis/issues/782)
+- Bidirectional ruler/measurement tool for oncology response assessments [\#749](https://github.com/nroduit/Weasis/issues/749)
+- The cardiothoracic ratio \(CTR\) Function [\#257](https://github.com/nroduit/Weasis/issues/257)
+
+**Fixed bugs:**
+
+- 4.7.x: all HTTP downloads \(WADO, thumbnails\) silently fail when the OS user name contains non-Latin-1 characters \("invalid header value" from Weasis-User header\) [\#941](https://github.com/nroduit/Weasis/issues/941)
+- 4.7.x on Windows: DICOM Q/R retrieve \(WADO\) fails with "Error on loading the manifest from: file:///C:/..." \(Path.of\("/C:/..."\) throws InvalidPathException\) [\#940](https://github.com/nroduit/Weasis/issues/940)
+- SR SCOORD rows render as dead "content by reference" links [\#923](https://github.com/nroduit/Weasis/issues/923)
+- SR SCOORD reference: a second click with the same point count draws nothing [\#922](https://github.com/nroduit/Weasis/issues/922)
+- GNOME shows a permission dialog when Weasis moves the mouse or brings its window to the front [\#919](https://github.com/nroduit/Weasis/issues/919)
+- 3D viewer crashes on second open \(Mesa/radeonsi\): Preset textures reused across destroyed GLJPanel contexts [\#918](https://github.com/nroduit/Weasis/issues/918)
+- Weasis fails to open DICOMDIR within Zip [\#916](https://github.com/nroduit/Weasis/issues/916)
+- Labels of series not visible in DICOM explorer [\#825](https://github.com/nroduit/Weasis/issues/825)
+- GSPS coordinates off by 1/2 pixel dimension [\#338](https://github.com/nroduit/Weasis/issues/338)
+- fix: import ZIP archives containing a DICOMDIR folder [\#936](https://github.com/nroduit/Weasis/pull/936) ([mvanhorn](https://github.com/mvanhorn))
+
+**Merged pull requests:**
+
+- Fix binary SEG overlays to follow pixel boundaries [\#945](https://github.com/nroduit/Weasis/pull/945) ([tiboloysel](https://github.com/tiboloysel))
+- docs: offer private vulnerability reporting in the issue chooser [\#939](https://github.com/nroduit/Weasis/pull/939) ([MrBeldum](https://github.com/MrBeldum))
+- ci: bump the actions group with 3 updates [\#934](https://github.com/nroduit/Weasis/pull/934) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: bump the actions group with 2 updates [\#908](https://github.com/nroduit/Weasis/pull/908) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v4.7.3](https://github.com/nroduit/Weasis/tree/v4.7.3) (2026-08-25)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.2...v4.7.3)
