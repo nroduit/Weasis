@@ -38,8 +38,8 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.NonEditableGraphic;
 import org.weasis.core.ui.model.graphic.imp.PointGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.ObliqueRectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
-import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.ArrowGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
@@ -679,7 +679,7 @@ public class PrGraphicUtil {
   private static Graphic createRectangleGraphic(BaseGraphicContext context, Rectangle2D rect)
       throws InvalidShapeException {
     if (context instanceof GraphicContext graphicContext && context.canBeEdited()) {
-      RectangleGraphic graphic = new RectangleGraphic();
+      ObliqueRectangleGraphic graphic = new ObliqueRectangleGraphic();
       graphic.buildGraphic(rect);
       graphicContext.applyProperties(graphic, graphicContext.isFilled());
       return graphic;

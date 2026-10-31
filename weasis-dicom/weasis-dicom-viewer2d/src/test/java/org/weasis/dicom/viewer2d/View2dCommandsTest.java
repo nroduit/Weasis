@@ -17,6 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
+import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -251,5 +253,26 @@ class View2dCommandsTest {
         () -> assertFalse(markdown.contains("--roi"), "the 4.x options are gone"),
         () -> assertTrue(run("pan", "--help").body().contains("--pane")),
         () -> assertEquals(CommandResult.OK, run("pan", "--help").status()));
+  }
+
+  /**
+   * Every graphic the agent draws must have an element of the presentation file, or the export
+   * fails and leaves a truncated file.
+   */
+  @Test
+  void everyMeasureTypeHasAnElementOfThePresentationXml() {
+    List<Point2D> pts =
+        List.of(new Point2D.Double(10, 10), new Point2D.Double(60, 20), new Point2D.Double(40, 70));
+    assertAll(
+        Stream.of(View2dCommands.MeasureType.values())
+            .map(
+                type ->
+                    (Executable)
+                        () ->
+                            assertTrue(
+                                type.build(pts.subList(0, type.minPoints))
+                                    .getClass()
+                                    .isAnnotationPresent(XmlRootElement.class),
+                                type.name())));
   }
 }

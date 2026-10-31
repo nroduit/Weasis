@@ -110,8 +110,8 @@ import org.weasis.core.ui.model.graphic.GraphicArea;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
 import org.weasis.core.ui.model.graphic.imp.angle.AngleToolGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.ObliqueRectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
-import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.ThreePointsCircleGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
@@ -1338,7 +1338,7 @@ public class View2dCommands implements CommandExtension {
     GraphicArea toGraphic(DefaultView2d<DicomImageElement> view, boolean canvasCoordinates) {
       try {
         if (rect != null) {
-          return new RectangleGraphic().buildGraphic(toImage(view, rect, canvasCoordinates));
+          return new ObliqueRectangleGraphic().buildGraphic(toImage(view, rect, canvasCoordinates));
         }
         if (ellipse != null) {
           return new EllipseGraphic().buildGraphic(toImage(view, ellipse, canvasCoordinates));
@@ -1438,7 +1438,7 @@ public class View2dCommands implements CommandExtension {
         case LINE -> new LineGraphic().buildGraphic(points);
         case POLYLINE -> new PolylineGraphic().buildGraphic(points);
         case RECTANGLE ->
-            new RectangleGraphic().buildGraphic(corners(points.get(0), points.get(1)));
+            new ObliqueRectangleGraphic().buildGraphic(corners(points.get(0), points.get(1)));
         case ELLIPSE -> new EllipseGraphic().buildGraphic(corners(points.get(0), points.get(1)));
         case CIRCLE -> new ThreePointsCircleGraphic().buildGraphic(points);
         case POLYGON -> new PolygonGraphic().buildGraphic(points);

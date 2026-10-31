@@ -28,6 +28,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -100,6 +101,19 @@ public class AnnotationGraphic extends AbstractDragGraphic {
   @Override
   public AnnotationGraphic copy() {
     return new AnnotationGraphic(this);
+  }
+
+  /**
+   * A caption has no anchor: its points are {@code [null, box]}, and a file keeps the box point
+   * alone, as no element is written for the missing anchor. A single point is read back as that
+   * caption instead of an incomplete graphic.
+   */
+  @Override
+  public Graphic buildGraphic(List<Point2D> pts) throws InvalidShapeException {
+    if (pts != null && pts.size() == 1 && pts.getFirst() != null) {
+      return super.buildGraphic(Arrays.asList(null, pts.getFirst()));
+    }
+    return super.buildGraphic(pts);
   }
 
   @Override

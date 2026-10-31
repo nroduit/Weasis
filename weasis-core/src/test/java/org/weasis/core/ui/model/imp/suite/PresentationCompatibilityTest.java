@@ -15,7 +15,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.geom.Point2D;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
@@ -28,6 +30,7 @@ import org.weasis.core.ui.model.graphic.GraphicToolDescriptor;
 import org.weasis.core.ui.model.graphic.GraphicToolProvider;
 import org.weasis.core.ui.model.graphic.StarGraphic;
 import org.weasis.core.ui.model.graphic.ToolCategory;
+import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.serialize.XmlSerializer;
@@ -136,5 +139,26 @@ class PresentationCompatibilityTest {
     } finally {
       registry.unregister(provider);
     }
+  }
+
+  @Test
+  void caption_without_anchor_round_trips() throws Exception {
+    AnnotationGraphic caption = new AnnotationGraphic();
+    caption.buildGraphic(Arrays.asList(null, new Point2D.Double(120.0, 80.0)));
+    caption.setLabels(new String[] {"Caption"}); // NON-NLS
+    XmlGraphicModel fresh = new XmlGraphicModel();
+    fresh.addGraphic(caption);
+
+    String written = XmlSerializer.toXml(fresh);
+    // the missing anchor writes no element: the file keeps the box point alone
+    assertEquals(1, written.split("<pt ", -1).length - 1);
+
+    GraphicModel model = read(written);
+    assertEquals(1, model.getModels().size());
+    AnnotationGraphic back =
+        assertInstanceOf(AnnotationGraphic.class, model.getModels().getFirst());
+    assertAll(
+        () -> assertEquals(Arrays.asList(null, new Point2D.Double(120.0, 80.0)), back.getPts()),
+        () -> assertEquals(List.of("Caption"), Arrays.asList(back.getLabels()))); // NON-NLS
   }
 }
