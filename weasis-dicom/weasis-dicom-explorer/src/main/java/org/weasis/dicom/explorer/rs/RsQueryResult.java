@@ -47,6 +47,7 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.codec.utils.SeriesInstanceList;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomWebOrigin;
 import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -74,11 +75,17 @@ public class RsQueryResult extends AbstractQueryResult {
   private final WadoParameters wadoParameters;
   private final boolean defaultStartDownloading;
   private final AuthMethod authMethod;
+  private final DicomWebOrigin origin;
 
   public RsQueryResult(RsQueryParams rsQueryParams, AuthMethod authMethod) {
     this.rsQueryParams = rsQueryParams;
     this.authMethod = authMethod;
     this.wadoParameters = new WadoParameters("", true, true);
+    this.origin =
+        new DicomWebOrigin(
+            rsQueryParams.getBaseUrl(),
+            rsQueryParams.getProperties().getProperty(RsQueryParams.P_AUTH_UID),
+            null);
     rsQueryParams.getRetrieveHeaders().forEach(wadoParameters::addHttpTag);
     // Accept only multipart/related and retrieve dicom at the stored syntax
     wadoParameters.addHttpTag(
@@ -436,7 +443,7 @@ public class RsQueryResult extends AbstractQueryResult {
         if (!series.isEmpty()) {
           Attributes dataset = series.getFirst();
           MediaSeriesGroup patient = getPatient(dataset, rsQueryParams.getDicomModel());
-          MediaSeriesGroup study = getStudy(patient, dataset, rsQueryParams.getDicomModel());
+          MediaSeriesGroup study = study(patient, dataset);
           for (Attributes seriesDataset : series) {
             Series<?> dicomSeries = getSeries(study, seriesDataset, defaultStartDownloading);
             fillSeriesContent(dicomSeries);
@@ -475,7 +482,7 @@ public class RsQueryResult extends AbstractQueryResult {
         if (!instances.isEmpty()) {
           Attributes dataset = instances.get(0);
           MediaSeriesGroup patient = getPatient(dataset, rsQueryParams.getDicomModel());
-          MediaSeriesGroup study = getStudy(patient, dataset, rsQueryParams.getDicomModel());
+          MediaSeriesGroup study = study(patient, dataset);
           Series<?> dicomSeries = getSeries(study, dataset, defaultStartDownloading);
           String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
           SeriesInstanceList seriesInstanceList =
@@ -510,7 +517,7 @@ public class RsQueryResult extends AbstractQueryResult {
         if (!series.isEmpty()) {
           // Get patient from each study in case IssuerOfPatientID is different
           MediaSeriesGroup patient = getPatient(studyDataSet, rsQueryParams.getDicomModel());
-          MediaSeriesGroup study = getStudy(patient, studyDataSet, rsQueryParams.getDicomModel());
+          MediaSeriesGroup study = study(patient, studyDataSet);
           for (Attributes seriesDataset : series) {
             Series<?> dicomSeries = getSeries(study, seriesDataset, startDownloading);
             fillSeriesContent(dicomSeries);
@@ -574,6 +581,13 @@ public class RsQueryResult extends AbstractQueryResult {
       LOGGER.info("Adding new patient: {}", patient);
     }
     return patient;
+  }
+
+  /** The study node of the dataset, carrying the origin of this query. */
+  private MediaSeriesGroup study(MediaSeriesGroup patient, Attributes dataset) {
+    MediaSeriesGroup study = getStudy(patient, dataset, rsQueryParams.getDicomModel());
+    DicomWebOrigin.attach(study, origin);
+    return study;
   }
 
   public static MediaSeriesGroup getStudy(

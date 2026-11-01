@@ -40,6 +40,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.SeriesInstanceList;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomWebOrigin;
 import org.weasis.dicom.explorer.PluginOpeningStrategy;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
@@ -484,6 +485,9 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
 
     for (String studyInstanceUID : selection.getStudyUids()) {
       MediaSeriesGroup study = getStudyNode(dicomModel, studyInstanceUID);
+      DicomWebOrigin.attach(
+          study,
+          new DicomWebOrigin(baseUrl, retrieveNode.getAuthMethodUid(), retrieveNode.getId()));
       String url = RsQueryResult.seriesQueryUrl(baseUrl, studyInstanceUID, null);
 
       try {
