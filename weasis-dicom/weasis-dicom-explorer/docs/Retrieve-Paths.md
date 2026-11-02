@@ -1,7 +1,6 @@
 # DICOM Retrieve Paths
 
-A developer guide to the five ways Weasis fills a series and the common download layer they all
-feed.
+A developer guide to the five ways Weasis fills a series and the common download layer they all feed.
 
 ## Table of Contents
 
@@ -12,8 +11,8 @@ feed.
 
 ## The shared substrate
 
-Whatever the protocol, a retrieve produces one task per series and hands it to the same download
-manager. Anything built on top of this inherits stop, resume, priority and progress.
+Whatever the protocol, a retrieve produces one task per series and hands it to the same download manager.
+Anything built on top of this inherits stop, resume, priority and progress.
 
 ```
 entry point ──> transport (C-GET, C-MOVE, WADO-URI, WADO-RS) ──> one LoadSeries task per series
@@ -21,7 +20,7 @@ entry point ──> transport (C-GET, C-MOVE, WADO-URI, WADO-RS) ──> one Loa
                                                                          └─> DicomModel, thumbnails, viewer
 ```
 
-| Behaviour | Where it lives |
+| Behavior | Where it lives |
 | --- | --- |
 | One task per series, queued in a shared priority queue | `LoadSeries`, `DownloadManager` |
 | Stop and resume, continuation built by `createResumeTask()` | `LoadSeries.cancelAndReplace` |
@@ -43,15 +42,10 @@ Nothing downstream of `DownloadManager` knows which protocol produced a task.
 
 Invariants shared by every transport:
 
-- **Resume is list, filter, fetch the remainder.** A resumed series lists its instances,
-  drops the SOP Instance UIDs already held by the model (`LoadSeries.isSOPInstanceUIDExist`,
-  `SeriesInstanceList`), then requests what is left.
-- **Identity tags from the query answer are forced onto received objects**, so every transport
-  produces the same patient / study / series identity in the model.
-- **A QIDO query never inherits a retrieve `Accept` header.** Code that reuses retrieve-scoped
-  headers for a query passes them through `RsQueryResult.jsonQueryParameters` first.
-- **C-MOVE runs on `DownloadManager.UNIQUE_EXECUTOR`** because all objects return to one local
-  listener; the other transports use `DownloadManager.CONCURRENT_EXECUTOR`.
+- **Resume is list, filter, fetch the remainder.** A resumed series lists its instances, drops the SOP Instance UIDs already held by the model (`LoadSeries.isSOPInstanceUIDExist`, `SeriesInstanceList`), then requests what is left.
+- **Identity tags from the query answer are forced onto received objects**, so every transport produces the same patient / study / series identity in the model.
+- **A QIDO query never inherits a retrieve `Accept` header.** Code that reuses retrieve-scoped headers for a query passes them through `RsQueryResult.jsonQueryParameters` first.
+- **C-MOVE runs on `DownloadManager.UNIQUE_EXECUTOR`** because all objects return to one local listener; the other transports use `DownloadManager.CONCURRENT_EXECUTOR`.
 
 ## Entry points
 
@@ -61,8 +55,7 @@ Invariants shared by every transport:
 | `dicom:rs` command (`RsQueryParams`, `RsQueryResult`) | WADO-RS | yes |
 | `dicom:get` command (manifest) | WADO-URI and WADO-RS, via a manifest | yes |
 
-The Query/Retrieve dialog expresses the series to fetch as a `RetrieveSelection`: checked
-studies, each narrowed to chosen series.
+The Query/Retrieve dialog expresses the series to fetch as a `RetrieveSelection`: checked studies, each narrowed to chosen series.
 
 ## Reference: files and symbols
 

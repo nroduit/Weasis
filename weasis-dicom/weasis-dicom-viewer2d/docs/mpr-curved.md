@@ -1,19 +1,16 @@
 # Curved MPR (cMPR)
 
-Curved Multi-Planar Reconstruction reformats a 3D volume along a user-drawn path. From a
-single polyline it produces two derivatives:
+Curved Multi-Planar Reconstruction reformats a 3D volume along a user-drawn path.
+From a single polyline it produces two derivatives:
 
-- a **panoramic view** — the volume "straightened" along the curve and shown as one 2D cell
-  inside the MPR container (the dental panoramic / OPG use case);
-- a **cross-sectional series** — a stack of slabs cut perpendicular to the curve, opened as a
-  real DICOM series in a new viewer tab (the dental cross-cuts use case).
+- a **panoramic view** — the volume "straightened" along the curve and shown as one 2D cell inside the MPR container (the dental panoramic / OPG use case);
+- a **cross-sectional series** — a stack of slabs cut perpendicular to the curve, opened as a real DICOM series in a new viewer tab (the dental cross-cuts use case).
 
-The generator targets a curve drawn on the **axial** plane at a fixed Z level (a dental arch):
-it samples height along the volume's Z axis.
+The generator targets a curve drawn on the **axial** plane at a fixed Z level (a dental arch): it samples height along the volume's Z axis.
 
-All code lives in `org.weasis.dicom.viewer2d.mpr.cmpr`. The only callers are `MprView`
-(context-menu actions) and `MprContainer` (orchestration). For the surrounding MPR design, see
-[mpr-architecture.md](mpr-architecture.md).
+All code lives in `org.weasis.dicom.viewer2d.mpr.cmpr`.
+The only callers are `MprView` (context-menu actions) and `MprContainer` (orchestration).
+For the surrounding MPR design, see [mpr-architecture.md](mpr-architecture.md).
 
 ## Classes
 
@@ -30,8 +27,8 @@ All code lives in `org.weasis.dicom.viewer2d.mpr.cmpr`. The only callers are `Mp
 
 ## Data flow
 
-There is no dedicated drawing tool: the curve is an ordinary `PolylineGraphic` (the standard
-measurement polyline). Its context menu starts either derivative.
+There is no dedicated drawing tool: the curve is an ordinary `PolylineGraphic` (the standard measurement polyline).
+Its context menu starts either derivative.
 
 ```
 PolylineGraphic (on an MPR plane)
@@ -45,27 +42,19 @@ PolylineGraphic (on an MPR plane)
          → one CrossSectionImageIO per curve sample → DicomSeries in a new tab
 ```
 
-- **Panoramic view.** Shown in place inside the existing MPR container (a 2×2 layout with the
-  three planes). X is the arc-length position along the curve, Y runs along the normal of the
-  plane the curve was drawn on, so a curve traced on any plane, oblique included, is reformatted
-  correctly.
-  Each pixel is an interpolated sample of the source volume taken on the curve. Editing the
-  source polyline regenerates the image; removing it unbinds the axis.
-- **Cross-sectional series.** The curve is sampled at the requested spacing (one sample = one
-  cut). Each slab spans the in-plane perpendicular (X) and the drawing plane's normal (Y),
-  centered on its sample. The series is registered under the source study in the `DicomModel`
-  and opened in a new viewer tab.
-- **The curve follows the plane.** The polyline is anchored in patient space, so it survives
-  scrolling and rotation of its view (see the MPR architecture guide, *Graphics across planes*);
-  the live binding recomputes the curve from the polyline whenever it is edited on its plane.
+- **Panoramic view.** Shown in place inside the existing MPR container (a 2×2 layout with the three planes).
+  X is the arc-length position along the curve, Y runs along the normal of the plane the curve was drawn on, so a curve traced on any plane, oblique included, is reformatted correctly.
+  Each pixel is an interpolated sample of the source volume taken on the curve.
+  Editing the source polyline regenerates the image; removing it unbinds the axis.
+- **Cross-sectional series.** The curve is sampled at the requested spacing (one sample = one cut).
+  Each slab spans the in-plane perpendicular (X) and the drawing plane's normal (Y), centered on its sample.
+  The series is registered under the source study in the `DicomModel` and opened in a new viewer tab.
+- **The curve follows the plane.** The polyline is anchored in patient space, so it survives scrolling and rotation of its view (see the MPR architecture guide, *Graphics across planes*); the live binding recomputes the curve from the polyline whenever it is edited on its plane.
 
 ## Conventions
 
-- **Panoramic is uncalibrated.** `CurvedMprImageIO` intentionally does not write
-  `PixelSpacing`: its X axis is arc length, not Euclidean distance, so measurements report in
-  pixels. Cross-sections are spatially calibrated and do write `PixelSpacing`.
-- **DICOM identity.** Every derived reader inherits the source patient, study and display tags
-  through `CurvedMprBuilder`. Cross-sections carry a full source header with fresh SOP/Instance
-  UIDs and a new `SeriesInstanceUID`, so they behave as a genuine series in the explorer.
-- **Debug overlay.** Launch with `-Dweasis.cmpr.debug=true` (`CurvedMprAxis.DEBUG_DRAW`) to draw
-  the handles, smoothed curve and perpendicular extents on the axial source view.
+- **Panoramic is uncalibrated.** `CurvedMprImageIO` intentionally does not write `PixelSpacing`: its X axis is arc length, not Euclidean distance, so measurements report in pixels.
+  Cross-sections are spatially calibrated and do write `PixelSpacing`.
+- **DICOM identity.** Every derived reader inherits the source patient, study and display tags through `CurvedMprBuilder`.
+  Cross-sections carry a full source header with fresh SOP/Instance UIDs and a new `SeriesInstanceUID`, so they behave as a genuine series in the explorer.
+- **Debug overlay.** Launch with `-Dweasis.cmpr.debug=true` (`CurvedMprAxis.DEBUG_DRAW`) to draw the handles, smoothed curve and perpendicular extents on the axial source view.

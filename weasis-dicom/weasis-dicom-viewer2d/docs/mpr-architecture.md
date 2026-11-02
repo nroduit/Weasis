@@ -1,7 +1,6 @@
 # MPR Architecture Guide
 
-This document describes the Multi-Planar Reconstruction (MPR) system in Weasis: its main
-classes, the conventions they share, and how a user interaction becomes a rendered slice.
+This document describes the Multi-Planar Reconstruction (MPR) system in Weasis: its main classes, the conventions they share, and how a user interaction becomes a rendered slice.
 
 Code lives in `org.weasis.dicom.viewer2d.mpr` (module `weasis-dicom-viewer2d`).
 Related documents:
@@ -13,8 +12,7 @@ Related documents:
 
 ## 1. Overview
 
-The MPR system reconstructs three orthogonal slice views (Axial, Coronal, Sagittal)
-from a 3D volume and lets the user:
+The MPR system reconstructs three orthogonal slice views (Axial, Coronal, Sagittal) from a 3D volume and lets the user:
 
 - **Move** the crosshair to navigate through the volume.
 - **Rotate** (tilt) the crosshair to view oblique slices.
@@ -60,8 +58,7 @@ from a 3D volume and lets the user:
 | `SliceCanvas` | Interface for canvases that display slices |
 | `ArcBallController` | Alternative 3D rotation input mode |
 
-`Plane` is an enum in `MprView`: `AXIAL` (normal along Z), `CORONAL` (normal along Y),
-`SAGITTAL` (normal along X).
+`Plane` is an enum in `MprView`: `AXIAL` (normal along Z), `CORONAL` (normal along Y), `SAGITTAL` (normal along X).
 
 ---
 
@@ -69,8 +66,7 @@ from a 3D volume and lets the user:
 
 ### 3.1 Patient coordinate system: DICOM LPS
 
-The 3D volume space is **DICOM LPS**; [JOML](https://github.com/JOML-CI/JOML) is only the
-math library:
+The 3D volume space is **DICOM LPS**; [JOML](https://github.com/JOML-CI/JOML) is only the math library:
 
 | Axis | Anatomical direction | LPS |
 |---|---|---|
@@ -78,21 +74,17 @@ math library:
 | +Y | Patient's Posterior | **P** |
 | +Z | Patient's Superior (head) | **S** |
 
-The `AxisDirection` vectors are **anatomical orientation arrows** for the on-screen overlay;
-they are **not** the volume coordinate axes.
+The `AxisDirection` vectors are **anatomical orientation arrows** for the on-screen overlay; they are **not** the volume coordinate axes.
 
 ### 3.2 Slice index vs. DICOM instance order
 
-`MprAxis.getSliceIndex()` / `setSliceIndex()` translate between the depth of the crosshair
-along the plane normal and the slice index shown to the user. The depth increases toward +Z
-(Superior) for AXIAL, while axial series are conventionally numbered from Superior to
-Inferior, so `AxisDirection.isInvertedDirection()` is `true` for AXIAL only.
+`MprAxis.getSliceIndex()` / `setSliceIndex()` translate between the depth of the crosshair along the plane normal and the slice index shown to the user.
+The depth increases toward +Z (Superior) for AXIAL, while axial series are conventionally numbered from Superior to Inferior, so `AxisDirection.isInvertedDirection()` is `true` for AXIAL only.
 
 ### 3.3 Coordinate spaces
 
-Almost all crosshair logic works in the **isotropic slice space**, a cube of
-`sliceSize × sliceSize × sliceSize` where `sliceSize` is the volume diagonal
-(`Volume.getSliceSize()`). Volume sampling happens in **VR-space**, then in voxel indices.
+Almost all crosshair logic works in the **isotropic slice space**, a cube of `sliceSize × sliceSize × sliceSize` where `sliceSize` is the volume diagonal (`Volume.getSliceSize()`).
+Volume sampling happens in **VR-space**, then in voxel indices.
 See [mpr-coordinate-systems.md](mpr-coordinate-systems.md).
 
 ---
@@ -101,8 +93,7 @@ See [mpr-coordinate-systems.md](mpr-coordinate-systems.md).
 
 The rotation of a view has three layers, all held by `AxesControl`:
 
-1. **Base plane rotation** (`getRotationForSlice()`) — fixed, orients each plane relative
-   to the volume axes:
+1. **Base plane rotation** (`getRotationForSlice()`) — fixed, orients each plane relative to the volume axes:
 
    | Plane | Rotation | Effect |
    |---|---|---|
@@ -111,13 +102,11 @@ The rotation of a view has three layers, all held by `AxesControl`:
    | SAGITTAL | Ry(90°) · Rz(90°) | Canvas XY maps to Volume YZ |
 
    The coronal plane also applies `S(1, -1, 1)` (Y-flip) for correct anatomical orientation.
-2. **Global rotation** — accumulates every tilt of the crosshair (`rotateAroundAxis()`), and
-   affects all views.
-3. **Per-plane rotation offset** — cancels the global rotation for the view where the tilt was
-   made, so that view is unchanged and only the two other views are affected.
+2. **Global rotation** — accumulates every tilt of the crosshair (`rotateAroundAxis()`), and affects all views.
+3. **Per-plane rotation offset** — cancels the global rotation for the view where the tilt was made, so that view is unchanged and only the two other views are affected.
 
-`getViewRotation(plane)` combines layers 2 and 3. See
-[mpr-transformations.md](mpr-transformations.md) for the full forward and inverse chains.
+`getViewRotation(plane)` combines layers 2 and 3.
+See [mpr-transformations.md](mpr-transformations.md) for the full forward and inverse chains.
 
 ---
 
@@ -130,9 +119,8 @@ There are two ways to read the crosshair position, and code must use the right o
 | `MprController.getCrossHairPosition()` | the 3D center from `AxesControl.getCenter()` | rendering and volume operations (`MprAxis`, `VolImageIO`) |
 | `MprController.getCrossHairPosition(MprAxis)` | the center projected onto that view's canvas (`AxesControl.getCenterForCanvas()`) | display, hit-testing, mouse interaction |
 
-The rendering code interprets the position as a 3D volume position, so it must never receive
-a canvas projection. When adding code that needs the crosshair, ask: *"Do I need the 3D
-position or the 2D projection on a specific view?"*
+The rendering code interprets the position as a 3D volume position, so it must never receive a canvas projection.
+When adding code that needs the crosshair, ask: *"Do I need the 3D position or the 2D projection on a specific view?"*
 
 ---
 
@@ -150,8 +138,7 @@ Mouse drag on view V (MprController)
     └─ recenter the other views so the crosshair stays visible
 ```
 
-Scrolling changes the depth of the center along the view normal
-(`AxesControl.setCenterAlongAxis()`), then recenters.
+Scrolling changes the depth of the center along the view normal (`AxesControl.setCenterAlongAxis()`), then recenters.
 
 ### 6.2 Rendering
 
@@ -176,35 +163,23 @@ Each view displays crosshair lines for the other two planes:
 | CORONAL | AXIAL (pair.first) | SAGITTAL (pair.second) |
 | SAGITTAL | AXIAL (pair.first) | CORONAL (pair.second) |
 
-Defined by `MprController.getCrossAxis()`. The `selectedAxis` tracks which cross-plane's
-line the user is interacting with.
+Defined by `MprController.getCrossAxis()`.
+The `selectedAxis` tracks which cross-plane's line the user is interacting with.
 
 ---
 
 ## 8. Graphics across planes
 
-A graphic drawn on an MPR view is anchored in patient space like any graphic drawn on a located
-image (see `weasis-core/docs/Measurement-Tools.md`): the reslice element carries the orientation
-and position of its plane, so the anchor is set when the drawing is released.
+A graphic drawn on an MPR view is anchored in patient space like any graphic drawn on a located image (see `weasis-core/docs/Measurement-Tools.md`): the reslice element carries the orientation and position of its plane, so the anchor is set when the drawing is released.
 
-`MprGraphicStore`, owned by `MprController`, keeps every anchored graphic of the volume. When a
-view changes plane, `MprAxis` rebuilds the view's model from the store: a graphic whose points lie
-in the new plane (within half the slice thickness) is placed back, editable, at the projection of
-its anchor; a graphic that crosses the plane is shown as marks where its segments intersect it,
-on the non-serializable `FOOTPRINT` layer. Editing or removing a graphic in one view updates the
-marks of the other two. A volume without patient geometry (stacked, not rectified) keeps the
-previous behaviour: the model of each exact plane is kept aside and restored when that plane
-comes back.
+`MprGraphicStore`, owned by `MprController`, keeps every anchored graphic of the volume.
+When a view changes plane, `MprAxis` rebuilds the view's model from the store: a graphic whose points lie in the new plane (within half the slice thickness) is placed back, editable, at the projection of its anchor; a graphic that crosses the plane is shown as marks where its segments intersect it, on the non-serializable `FOOTPRINT` layer.
+Editing or removing a graphic in one view updates the marks of the other two.
+A volume without patient geometry (stacked, not rectified) keeps the previous behavior: the model of each exact plane is kept aside and restored when that plane comes back.
 
 ## 9. Rules for Contributors
 
-- **Rotation consistency.** The forward transform (display → texture,
-  `MprView.getDisplayPointToTexturePointMatrix()`) and the inverse (texture → display,
-  `AxesControl.getCenterForCanvas()`) must use matching rotations. If you change one, update
-  the other; otherwise the crosshair drifts on tilted planes.
-- **Adding a rotation mode.** Update `rotateAroundAxis()`, make sure `getViewRotation()`
-  still cancels the rotation for the originating view, check that the inverse projection
-  still inverts the full rotation chain, and test with each of the three planes as the
-  originating view.
-- **The `adjusting` flag.** While `MprController.isAdjusting()` is true (during a drag), MIP
-  slabs are not rendered; the full MIP is rendered when the interaction ends.
+- **Rotation consistency.** The forward transform (display → texture, `MprView.getDisplayPointToTexturePointMatrix()`) and the inverse (texture → display, `AxesControl.getCenterForCanvas()`) must use matching rotations.
+  If you change one, update the other; otherwise the crosshair drifts on tilted planes.
+- **Adding a rotation mode.** Update `rotateAroundAxis()`, make sure `getViewRotation()` still cancels the rotation for the originating view, check that the inverse projection still inverts the full rotation chain, and test with each of the three planes as the originating view.
+- **The `adjusting` flag.** While `MprController.isAdjusting()` is true (during a drag), MIP slabs are not rendered; the full MIP is rendered when the interaction ends.
