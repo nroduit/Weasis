@@ -1,0 +1,12 @@
+# https://github.com/DavidAnson/markdownlint (conventions in AGENTS.md, "Writing conventions")
+default: true
+MD004: { style: dash }            # bullets with "-"
+MD013: false                      # no line length: one sentence per line
+MD024: { siblings_only: true }    # same heading text allowed under different parents
+MD029: { style: one_or_ordered }
+MD033: { allowed_elements: [img] }  # no raw HTML, except the README picture
+MD035: { style: "---" }
+MD046: { style: fenced }
+MD048: { style: backtick }
+MD049: { style: asterisk }        # *emphasis*
+MD050: { style: asterisk }        # **strong**
