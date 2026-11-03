@@ -164,9 +164,10 @@ public class RsQueryResult extends AbstractQueryResult {
     return parameters.toBuilder().headers(jsonHeaders).build();
   }
 
+  /** The matches as a modifiable list, the callers sort and filter it. */
   public static List<Attributes> parseJSON(
       String url, AuthMethod authMethod, URLParameters urlParameters) throws Exception {
-    return search(url, authMethod, urlParameters).matches();
+    return new ArrayList<>(search(url, authMethod, urlParameters).matches());
   }
 
   /**
