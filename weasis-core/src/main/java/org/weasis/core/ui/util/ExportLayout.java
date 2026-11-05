@@ -166,9 +166,10 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
       double height = Math.max(1.0, (cellHeight - (rows - 1) * gap) / rows);
       List<TileBox> boxes = new ArrayList<>(tiles.size());
       for (int i = 0; i < tiles.size(); i++) {
-        double x = (i % cols) * (width + gap);
-        double y = (i / cols) * (height + gap);
-        boxes.add(new TileBox(tiles.get(i), x, y, width, height));
+        int col = i % cols;
+        int row = i / cols;
+        boxes.add(
+            new TileBox(tiles.get(i), col * (width + gap), row * (height + gap), width, height));
       }
       return boxes;
     }
