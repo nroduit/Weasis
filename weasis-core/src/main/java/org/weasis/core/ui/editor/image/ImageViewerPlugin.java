@@ -761,11 +761,26 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     int position = cellManager.findPositionOfViewCanvas(oldView);
     if (position == -1) {
-      return; // Old view not found
+      // A canvas of a viewport layout lives in a pane, not in a cell of its own
+      ViewportPane<E> pane = getOwningPane(oldView);
+      if (pane == null || !pane.replaceStackCanvas(oldView, newView)) {
+        return;
+      }
+      if (selectedCanvas == oldView) {
+        selectedCanvas = newView;
+      }
+      oldView.disposeView();
+      markOpen(newView);
+    } else {
+      performViewReplacement(oldView, newView, position);
     }
-
-    performViewReplacement(oldView, newView, position);
     updateViewsAfterReplacement();
+  }
+
+  private static <E extends ImageElement> void markOpen(ViewCanvas<E> view) {
+    if (view.getSeries() != null) {
+      view.getSeries().setOpen(true);
+    }
   }
 
   /** Performs the actual view replacement operations. */
@@ -783,12 +798,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     oldView.disposeView();
     cellManager.replaceViewCanvas(position, newView);
 
-    // Mark series as open
-    if (newView.getSeries() != null) {
-      newView.getSeries().setOpen(true);
-    }
-
-    // Rebuild grid layout
+    markOpen(newView);
     rebuildGridLayout();
   }
 

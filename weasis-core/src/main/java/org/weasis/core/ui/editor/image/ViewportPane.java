@@ -178,7 +178,7 @@ public class ViewportPane<E extends ImageElement> extends JPanel {
    * The single canvas used in STACK mode. This canvas is <em>never</em> placed inside the tiled
    * grid; it is strictly the STACK-mode canvas.
    */
-  private final ViewCanvas<E> stackCanvas;
+  private ViewCanvas<E> stackCanvas;
 
   /**
    * Tiled-mode state; {@code null} when in STACK mode. Created on demand by {@link
@@ -248,6 +248,26 @@ public class ViewportPane<E extends ImageElement> extends JPanel {
           "Canvas not owned by this ViewportPane in its current mode");
     }
     this.selectedCanvas = canvas;
+  }
+
+  /**
+   * Puts another canvas in place of the stack canvas, the pane staying where it is in the layout:
+   * how a view hands its pane to a view of another class (a projection) and takes it back. Nothing
+   * happens in TILED mode.
+   *
+   * @return whether the canvas was replaced
+   */
+  public boolean replaceStackCanvas(ViewCanvas<E> oldCanvas, ViewCanvas<E> newCanvas) {
+    if (tiledLayout != null || oldCanvas != stackCanvas || newCanvas == null) {
+      return false;
+    }
+    stackCanvas = newCanvas;
+    newCanvas.setActionsInView(OWNER_KEY, this);
+    if (selectedCanvas == oldCanvas) {
+      selectedCanvas = newCanvas;
+    }
+    showStackMode();
+    return true;
   }
 
   /**
