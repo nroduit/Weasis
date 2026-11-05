@@ -754,9 +754,15 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     }
   }
 
-  public void replaceView(ViewCanvas<E> oldView, ViewCanvas<E> newView) {
+  /**
+   * Puts a view in place of another one, in its layout cell or in its viewport pane. A view of a
+   * tiled pane cannot be replaced, nor a view that is not in the layout.
+   *
+   * @return whether the view was replaced
+   */
+  public boolean replaceView(ViewCanvas<E> oldView, ViewCanvas<E> newView) {
     if (oldView == null || newView == null) {
-      return;
+      return false;
     }
 
     int position = cellManager.findPositionOfViewCanvas(oldView);
@@ -764,7 +770,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       // A canvas of a viewport layout lives in a pane, not in a cell of its own
       ViewportPane<E> pane = getOwningPane(oldView);
       if (pane == null || !pane.replaceStackCanvas(oldView, newView)) {
-        return;
+        return false;
       }
       if (selectedCanvas == oldView) {
         selectedCanvas = newView;
@@ -775,6 +781,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       performViewReplacement(oldView, newView, position);
     }
     updateViewsAfterReplacement();
+    return true;
   }
 
   private static <E extends ImageElement> void markOpen(ViewCanvas<E> view) {

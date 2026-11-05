@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
@@ -83,7 +84,7 @@ class ImageViewerPluginReplaceViewTest {
     ViewportPane<ImageElement> pane = plugin.getViewportPanes().getFirst();
     plugin.selectedPane = pane;
 
-    plugin.replaceView(oldView, newView);
+    assertTrue(plugin.replaceView(oldView, newView));
 
     assertAll(
         () -> assertEquals(List.of(pane), plugin.getViewportPanes()),
@@ -106,10 +107,26 @@ class ImageViewerPluginReplaceViewTest {
     ImageViewerPlugin<ImageElement> plugin = plugin(hosted);
     ViewportPane<ImageElement> pane = plugin.getViewportPanes().getFirst();
 
-    plugin.replaceView(unknown, newView);
+    assertFalse(plugin.replaceView(unknown, newView));
 
     assertEquals(List.of(hosted), pane.getAllViewCanvases());
     assertFalse(plugin.getAllCanvasesIncludingPanes().contains(newView));
     verify(unknown, never()).disposeView();
+  }
+
+  @Test
+  @DisplayName("refuses to replace a tile")
+  void refusesTile() {
+    ViewCanvas<ImageElement> stack = canvas();
+    ViewCanvas<ImageElement> newView = canvas();
+    ImageViewerPlugin<ImageElement> plugin = plugin(stack);
+    ViewportPane<ImageElement> pane = plugin.getViewportPanes().getFirst();
+    pane.switchToTiled(2, 1, ImageViewerPluginReplaceViewTest::canvas);
+    List<ViewCanvas<ImageElement>> tiles = List.copyOf(pane.getAllViewCanvases());
+
+    assertFalse(plugin.replaceView(tiles.getFirst(), newView));
+
+    assertEquals(tiles, pane.getAllViewCanvases());
+    verify(tiles.getFirst(), never()).disposeView();
   }
 }

@@ -35,6 +35,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormatter;
+import org.weasis.core.api.gui.util.Feature.BasicActionStateValue;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -60,6 +61,14 @@ import org.weasis.dicom.viewer2d.View2dContainer;
  * to an active projection – letting them also pick a thickness without reopening the menu.
  */
 public final class MipMenu {
+
+  /**
+   * Whether a projection can be built from the selected view. Unlike MPR, it replaces the canvas of
+   * its pane, and a tile cannot be replaced.
+   */
+  public static final BasicActionStateValue AVAILABLE =
+      new BasicActionStateValue(
+          Messages.getString("MipView.mip"), "mip.enable", 0, 0, null); // NON-NLS
 
   private MipMenu() {}
 
@@ -368,7 +377,10 @@ public final class MipMenu {
     MipView newView = new MipView(em);
     newView.registerDefaultListeners();
     newView.initMIPSeries(selView);
-    container.replaceView(selView, newView);
+    if (!container.replaceView(selView, newView)) {
+      newView.disposeView();
+      return null;
+    }
 
     // Re-establish manual sync between the new MIP view and the previously linked views.
     // At this point MipView.getImage() still holds the original series image (the async MIP

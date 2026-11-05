@@ -119,6 +119,7 @@ import org.weasis.dicom.viewer2d.fusion.FusionOp;
 import org.weasis.dicom.viewer2d.fusion.FusionOpacityListener;
 import org.weasis.dicom.viewer2d.fusion.FusionWindow;
 import org.weasis.dicom.viewer2d.fusion.FusionWindowListener;
+import org.weasis.dicom.viewer2d.mip.MipMenu;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprAxis;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
@@ -180,6 +181,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(new BasicActionState(ActionW.DRAW));
     setAction(new BasicActionState(ActionW.MEASURE));
     setAction(new BasicActionState(ActionW.VOLUME));
+    setAction(new BasicActionState(MipMenu.AVAILABLE));
 
     setAction(getMoveTroughSliceAction(20.0, TIME.SECOND, 0.1));
     setAction(newLoopSweepAction());
@@ -1487,8 +1489,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             a ->
                 a.setSelectedWithoutTriggerAction(
                     (Boolean) view2d.getActionValue(ActionW.INVERSE_STACK.cmd())));
-    getAction(ActionW.VOLUME)
-        .ifPresent(a -> a.enableAction(isMprOrOblique || series.isSuitableFor3d()));
+    boolean volume = isMprOrOblique || series.isSuitableFor3d();
+    getAction(ActionW.VOLUME).ifPresent(a -> a.enableAction(volume));
+    var viewport = getSelectedViewPortPane();
+    boolean tiled = viewport != null && viewport.isTiled();
+    getAction(MipMenu.AVAILABLE).ifPresent(a -> a.enableAction(volume && !tiled));
 
     getAction(ActionW.CROSSHAIR).ifPresent(a -> a.enableAction(!isMprOrOblique));
     updateKeyObjectComponentsListener(view2d);

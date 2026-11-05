@@ -40,11 +40,10 @@ public class Basic3DToolBar extends WtoolBar {
     // Attach 3D functions to the Volume actions
     EventManager.getInstance()
         .getAction(ActionW.VOLUME)
-        .ifPresent(
-            s -> {
-              s.registerActionState(mprButton);
-              s.registerActionState(mipButton);
-            });
+        .ifPresent(s -> s.registerActionState(mprButton));
+    EventManager.getInstance()
+        .getAction(MipMenu.AVAILABLE)
+        .ifPresent(s -> s.registerActionState(mipButton));
   }
 
   /**
