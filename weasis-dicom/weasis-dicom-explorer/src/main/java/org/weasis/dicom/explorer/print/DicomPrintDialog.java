@@ -259,6 +259,15 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
 
     ExportLayout<I> layout =
         singleView ? new ExportLayout<>(selectedView) : new ExportLayout<>(container);
+    if (!layout.hasContent()) {
+      layout.dispose();
+      JOptionPane.showMessageDialog(
+          WinUtil.getValidComponent(this),
+          Messages.getString("DicomPrintDialog.no_print"),
+          null,
+          JOptionPane.ERROR_MESSAGE);
+      return;
+    }
 
     try {
       // Only the rendering needs the mask; the film is sent afterwards

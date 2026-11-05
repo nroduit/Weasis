@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.layout.MigCell;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ExportImage;
@@ -177,19 +178,6 @@ public class ImagePrint implements Printable {
 
     final List<MigCell> cells = layout.getLayoutModel().getCells();
     for (MigCell cell : cells) {
-      Component component = layout.findComponentForCell(cell);
-
-      ExportImage<? extends ImageElement> image = null;
-      Point2D.Double pad = new Point2D.Double(0.0, 0.0);
-
-      if (component instanceof ExportImage<? extends ImageElement> exportImage) {
-        image = exportImage;
-        // Calculate effective weights for this cell
-        double weightx = calculateCellWeightX(cell, columnWeights);
-        double weighty = calculateCellWeightY(cell, rowWeights);
-        formatImage(image, placeholder, pad, weightx, weighty);
-      }
-
       if (cell.x() == 0) {
         wx = 0.0;
       } else if (lastx < cell.x()) {
@@ -200,30 +188,63 @@ public class ImagePrint implements Printable {
           printLoc.x
               + f.getImageableX()
               + (placeholder.x * wx)
-              + (MathUtil.isEqualToZero(wx) ? 0 : cell.x() * 5)
-              + pad.x;
+              + (MathUtil.isEqualToZero(wx) ? 0 : cell.x() * 5);
       double y =
           printLoc.y
               + f.getImageableY()
               + (placeholder.y * wy)
-              + (MathUtil.isEqualToZero(wy) ? 0 : cell.y() * 5)
-              + pad.y;
+              + (MathUtil.isEqualToZero(wy) ? 0 : cell.y() * 5);
       lastx = cell.x();
       lastwx = columnWeights[cell.x()];
       for (int i = cell.x(); i < cell.x() + cell.spanX(); i++) {
         lastwy[i] += rowWeights[cell.y()];
       }
 
-      if (image != null) {
-        // Set us to the upper left corner
-        g2d.translate(x, y);
-        boolean wasBuffered = disableDoubleBuffering(image);
-        g2d.setClip(image.getBounds());
-        image.draw(g2d);
-        restoreDoubleBuffering(image, wasBuffered);
-        g2d.translate(-x, -y);
+      // Calculate effective weights for this cell
+      double weightx = calculateCellWeightX(cell, columnWeights);
+      double weighty = calculateCellWeightY(cell, rowWeights);
+      Component component = layout.findComponentForCell(cell);
+      if (component instanceof ExportImage<? extends ImageElement> image) {
+        drawImage(g2d, image, placeholder, x, y, weightx, weighty);
+      } else if (component instanceof ExportLayout.ExportTiles<?> tiles) {
+        for (ExportLayout.TileBox tile :
+            tiles.layoutTiles(
+                placeholder.x * weightx,
+                placeholder.y * weighty,
+                MigLayoutModel.DEFAULT_INTERCELL_GAP)) {
+          drawImage(
+              g2d,
+              tile.image(),
+              placeholder,
+              x + tile.x(),
+              y + tile.y(),
+              tile.width() / placeholder.x,
+              tile.height() / placeholder.y);
+        }
       }
     }
+  }
+
+  private void drawImage(
+      Graphics2D g2d,
+      ExportImage<? extends ImageElement> image,
+      Point2D.Double placeholder,
+      double cellX,
+      double cellY,
+      double weightx,
+      double weighty) {
+    Point2D.Double pad = new Point2D.Double(0.0, 0.0);
+    formatImage(image, placeholder, pad, weightx, weighty);
+    double x = cellX + pad.x;
+    double y = cellY + pad.y;
+
+    // Set us to the upper left corner
+    g2d.translate(x, y);
+    boolean wasBuffered = disableDoubleBuffering(image);
+    g2d.setClip(image.getBounds());
+    image.draw(g2d);
+    restoreDoubleBuffering(image, wasBuffered);
+    g2d.translate(-x, -y);
   }
 
   private double[] calculateColumnWeights(Dimension dimGrid) {

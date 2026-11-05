@@ -46,6 +46,7 @@ import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.layout.MigCell;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
@@ -107,19 +108,6 @@ public class DicomPrint {
 
       final List<MigCell> cells = layout.getLayoutModel().getCells();
       for (MigCell cell : cells) {
-        Component component = layout.findComponentForCell(cell);
-
-        ExportImage<? extends ImageElement> image = null;
-        Point2D.Double pad = new Point2D.Double(0.0, 0.0);
-
-        if (component instanceof ExportImage<?> exportImage) {
-          image = exportImage;
-          // Calculate effective weights for this cell
-          double weightx = calculateCellWeightX(cell, columnWeights);
-          double weighty = calculateCellWeightY(cell, rowWeights);
-          formatImage(image, pad, weightx, weighty);
-        }
-
         if (cell.x() == 0) {
           wx = 0.0;
         } else if (lastx < cell.x()) {
@@ -127,39 +115,72 @@ public class DicomPrint {
         }
         double wy = lastwy[cell.x()];
 
-        double x =
-            5 + (placeholderX * wx) + (MathUtil.isEqualToZero(wx) ? 0 : cell.x() * 5) + pad.x;
-        double y =
-            5 + (placeholderY * wy) + (MathUtil.isEqualToZero(wy) ? 0 : cell.y() * 5) + pad.y;
+        double x = 5 + (placeholderX * wx) + (MathUtil.isEqualToZero(wx) ? 0 : cell.x() * 5);
+        double y = 5 + (placeholderY * wy) + (MathUtil.isEqualToZero(wy) ? 0 : cell.y() * 5);
         lastx = cell.x();
         lastwx = columnWeights[cell.x()];
         for (int i = cell.x(); i < cell.x() + cell.spanX(); i++) {
           lastwy[i] += rowWeights[cell.y()];
         }
 
-        if (image != null) {
-          boolean wasBuffered = ImagePrint.disableDoubleBuffering(image);
-
-          // Set us to the upper left corner
-          g2d.translate(x, y);
-          g2d.setClip(image.getBounds());
-          image.draw(g2d);
-          ImagePrint.restoreDoubleBuffering(image, wasBuffered);
-          g2d.translate(-x, -y);
-
-          if (!borderColor.equals(background)) {
-            // Change background color
-            g2d.setClip(null);
-            g2d.setColor(borderColor);
-            g2d.setStroke(new BasicStroke(2));
-            Dimension viewSize = image.getSize();
-            g2d.drawRect((int) x - 1, (int) y - 1, viewSize.width + 1, viewSize.height + 1);
+        // Calculate effective weights for this cell
+        double weightx = calculateCellWeightX(cell, columnWeights);
+        double weighty = calculateCellWeightY(cell, rowWeights);
+        Color border = borderColor.equals(background) ? null : borderColor;
+        Component component = layout.findComponentForCell(cell);
+        if (component instanceof ExportImage<?> image) {
+          drawImage(g2d, image, x, y, weightx, weighty, border);
+        } else if (component instanceof ExportLayout.ExportTiles<?> tiles) {
+          for (ExportLayout.TileBox tile :
+              tiles.layoutTiles(
+                  placeholderX * weightx,
+                  placeholderY * weighty,
+                  MigLayoutModel.DEFAULT_INTERCELL_GAP)) {
+            drawImage(
+                g2d,
+                tile.image(),
+                x + tile.x(),
+                y + tile.y(),
+                tile.width() / placeholderX,
+                tile.height() / placeholderY,
+                border);
           }
         }
       }
     }
 
     return bufferedImage;
+  }
+
+  /** Draws an image in its cell, with a border unless {@code border} is {@code null}. */
+  private void drawImage(
+      Graphics2D g2d,
+      ExportImage<? extends ImageElement> image,
+      double cellX,
+      double cellY,
+      double weightx,
+      double weighty,
+      Color border) {
+    Point2D.Double pad = new Point2D.Double(0.0, 0.0);
+    formatImage(image, pad, weightx, weighty);
+    double x = cellX + pad.x;
+    double y = cellY + pad.y;
+
+    boolean wasBuffered = ImagePrint.disableDoubleBuffering(image);
+    // Set us to the upper left corner
+    g2d.translate(x, y);
+    g2d.setClip(image.getBounds());
+    image.draw(g2d);
+    ImagePrint.restoreDoubleBuffering(image, wasBuffered);
+    g2d.translate(-x, -y);
+
+    if (border != null) {
+      g2d.setClip(null);
+      g2d.setColor(border);
+      g2d.setStroke(new BasicStroke(2));
+      Dimension viewSize = image.getSize();
+      g2d.drawRect((int) x - 1, (int) y - 1, viewSize.width + 1, viewSize.height + 1);
+    }
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
