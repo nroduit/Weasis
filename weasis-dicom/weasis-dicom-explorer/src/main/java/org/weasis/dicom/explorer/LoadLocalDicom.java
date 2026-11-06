@@ -468,6 +468,10 @@ public class LoadLocalDicom extends LoadDicom {
       if (samplingRate < 2 || (samplingRate > 7 && !force)) {
         return false;
       }
+      LOGGER.debug(
+          "Split series {} into {} phases: several images share the same slice position", // NON-NLS
+          dicomSeries,
+          samplingRate);
       for (int i = 0; i < samplingRate; i++) {
         DicomImageElement image = imageList.get(i);
         if (image.getMediaReader() instanceof DicomMediaIO dicomReader) {

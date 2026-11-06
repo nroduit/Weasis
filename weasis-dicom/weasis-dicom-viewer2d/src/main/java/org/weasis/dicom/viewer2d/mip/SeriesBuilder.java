@@ -94,8 +94,17 @@ public class SeriesBuilder {
     Tag.VOILUTSequence
   };
 
+  private static final int[] VOI_ATTRS = {
+    Tag.WindowCenter,
+    Tag.WindowWidth,
+    Tag.VOILUTFunction,
+    Tag.WindowCenterWidthExplanation,
+    Tag.VOILUTSequence
+  };
+
   static {
     Arrays.sort(COPIED_ATTRS);
+    Arrays.sort(VOI_ATTRS);
   }
 
   private SeriesBuilder() {}
@@ -255,7 +264,35 @@ public class SeriesBuilder {
   }
 
   public static Attributes getBaseAttributes(Attributes attributes) {
-    return new Attributes(attributes, COPIED_ATTRS);
+    Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
+    addFunctionalGroupVoiLut(attributes, cpTags);
+    return cpTags;
+  }
+
+  /**
+   * Copies the window presets of an enhanced multiframe object, which are stored in the Frame VOI
+   * LUT Macro of the Shared Functional Groups (or the first item of the Per-frame Functional Groups)
+   * instead of the root of the dataset.
+   */
+  public static void addFunctionalGroupVoiLut(Attributes src, Attributes cpTags) {
+    if (src == null
+        || cpTags.containsValue(Tag.WindowCenter)
+        || cpTags.containsValue(Tag.VOILUTSequence)) {
+      return;
+    }
+    Attributes voi = getFrameVoiLut(src.getNestedDataset(Tag.SharedFunctionalGroupsSequence));
+    if (voi == null) {
+      voi = getFrameVoiLut(src.getNestedDataset(Tag.PerFrameFunctionalGroupsSequence));
+    }
+    if (voi != null) {
+      cpTags.addSelected(voi, VOI_ATTRS);
+    }
+  }
+
+  private static Attributes getFrameVoiLut(Attributes functionalGroup) {
+    return functionalGroup == null
+        ? null
+        : functionalGroup.getNestedDataset(Tag.FrameVOILUTSequence);
   }
 
   public static Attributes getMipBaseAttributes(Attributes attributes) {
