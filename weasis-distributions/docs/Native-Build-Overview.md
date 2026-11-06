@@ -4,8 +4,7 @@ How the platform installers are produced by `.github/workflows/build-installer.y
 
 > TL;DR — `jpackage` only *assembles and packages* prebuilt binaries (Temurin JDK, OpenCV);
 > it never compiles against the build host's libc. The **glibc floor of the Linux packages is
-> `GLIBC_2.16` on x86-64 and `GLIBC_2.17` on aarch64**, fixed by the bundled natives,
-> **independent of the build OS**.
+> `GLIBC_2.27`** on x86-64 and aarch64, fixed by the bundled natives, **independent of the build OS**.
 
 ## 1. Build jobs
 
@@ -35,11 +34,10 @@ Docker provides the aarch64 build (through QEMU) and a pinned toolchain (JDK, `r
 ### Linux: glibc floor
 
 `jpackage` does not compile or link anything against the host libc: it copies the JDK launcher and runtime and the third-party native libraries, then calls `dpkg-deb` / `rpmbuild`.
-The glibc required at run time is therefore the highest symbol version referenced by those prebuilt binaries: OpenCV (`2.16`), the JDK launcher and runtime (`2.14`–`2.15`).
+The glibc required at run time is therefore the highest symbol version referenced by those prebuilt binaries: OpenCV (`2.27`, with the C++ runtime linked in statically), the JDK launcher and runtime (`2.14`–`2.17`).
 The 3D viewer adds no native library of its own: it calls the system OpenGL, EGL, WGL or CGL libraries through the Foreign Function & Memory API.
 
-`GLIBC_2.16` (June 2012) covers RHEL/CentOS 7, Ubuntu 14.04 and later.
-On aarch64 the floor is `2.17` by construction (glibc gained AArch64 support in 2.17).
+`GLIBC_2.27` (February 2018) covers Ubuntu 18.04, Debian 10, RHEL 8 and later.
 
 Rules:
 
