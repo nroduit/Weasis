@@ -10,6 +10,7 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
@@ -18,32 +19,47 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.ToolTipManager;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontItem;
+import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.imp.XmlGraphicModel;
+import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.model.layer.imp.DefaultLayer;
+import org.weasis.core.ui.print.CellFit;
 import org.weasis.core.util.LangUtil;
+import org.weasis.opencv.data.PlanarImage;
 
 /**
  * A non-interactive view used for printing and exporting images.
  *
- * <p>Captures the full visual state of a source {@link ViewCanvas} (image operations, zoom, center,
- * rotation, annotations) and renders it off-screen for printing or image export.
+ * <p>Captures the visual state of a source {@link ViewCanvas} (image operations, zoom, center,
+ * rotation, annotations) and a copy of its graphics, then renders it off-screen. The source view is
+ * never touched again: its graphic model, its labels and its display chain stay as they are.
  *
- * <p>When rendering to a printer context, the image pipeline automatically uses the printer's
- * native device scale to produce the sharpest possible output.
+ * <p>The view works in logical pixels, as on a 96 dpi screen, and draws through a {@linkplain
+ * #setRenderScale render scale}: the overlay, the labels and the strokes are scaled by Java2D, the
+ * image is rendered by the display pipeline straight at the device resolution and copied pixel for
+ * pixel, so the destination never resamples it.
  *
  * @param <E> the type of ImageElement
  */
@@ -58,8 +74,10 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
    */
   private Graphics2D currentG2d;
 
-  private double imagePrintingResolution = 1.0;
+  private double renderScale = 1.0;
 
+  private final boolean sourceAnnotations;
+  private boolean fixedLayerFont;
   private boolean crosslines = true;
 
   /**
@@ -86,7 +104,8 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
     // Copy info layer settings (without global preferences so export is independent)
     this.infoLayer = sourceView.getInfoLayer().getLayerCopy(this, false);
-    infoLayer.setVisible(sourceView.getInfoLayer().getVisible());
+    this.sourceAnnotations = sourceView.getInfoLayer().getVisible();
+    infoLayer.setVisible(sourceAnnotations);
     infoLayer.setShowBottomScale(false);
     // Suppress interactive-only items in the export overlay
     infoLayer.setDisplayPreferencesValue(LayerItem.PIXEL, false);
@@ -155,6 +174,128 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     crosslines = profile.crosslines();
   }
 
+  /**
+   * The graphics of the source view are copied into a model of this view: labels are laid out for
+   * this geometry without moving those of the source, and nothing is registered on the source
+   * model. Graphics on hidden layers are left out.
+   */
+  @Override
+  public void updateGraphicManager(E img, boolean updateGraphics) {
+    if (updateGraphics) {
+      graphicManager = copyForRendering(sourceView.getGraphicManager());
+    }
+  }
+
+  static GraphicModel copyForRendering(GraphicModel source) {
+    XmlGraphicModel copy = new XmlGraphicModel();
+    if (source == null) {
+      return copy;
+    }
+    Map<GraphicLayer, GraphicLayer> layers = new HashMap<>();
+    List<Graphic> graphics = new ArrayList<>();
+    for (Graphic graphic : source.getModels()) {
+      GraphicLayer layer = graphic.getLayer();
+      if (layer == null || !LangUtil.nullToTrue(layer.getVisible())) {
+        continue;
+      }
+      Graphic copied = graphic.copy();
+      copied.setLayer(layers.computeIfAbsent(layer, ExportImage::copyLayer));
+      graphics.add(copied);
+    }
+    copy.setModels(graphics);
+    return copy;
+  }
+
+  private static GraphicLayer copyLayer(GraphicLayer layer) {
+    DefaultLayer copy = new DefaultLayer(layer.getType());
+    copy.setName(layer.getName());
+    copy.setLevel(layer.getLevel());
+    copy.setLocked(layer.getLocked());
+    copy.setSelectable(layer.getSelectable());
+    copy.setSerializable(layer.getSerializable());
+    return copy;
+  }
+
+  /** What the source view showed, for fitting this view into a cell. */
+  public CellFit.SourceGeometry getSourceGeometry() {
+    Rectangle2D canvas = (Rectangle2D) actionsInView.get("origin.image.bound");
+    Double zoom = (Double) actionsInView.get("origin.zoom");
+    Point2D center = (Point2D) actionsInView.get("origin.center.offset");
+    PlanarImage img = getSourceImage();
+    E image = getImage();
+    double width = img == null ? 512 : img.width() * (image == null ? 1.0 : image.getRescaleX());
+    double height = img == null ? 512 : img.height() * (image == null ? 1.0 : image.getRescaleY());
+    Integer rotation = (Integer) actionsInView.get(ActionW.ROTATION.cmd());
+    return new CellFit.SourceGeometry(
+        canvas,
+        zoom == null ? 0.0 : zoom,
+        center == null ? new Point2D.Double() : center,
+        width,
+        height,
+        rotation == null ? 0 : rotation);
+  }
+
+  /** Shows the overlay when asked for and the source view showed it. */
+  public void showAnnotations(boolean show) {
+    infoLayer.setVisible(show && sourceAnnotations);
+  }
+
+  /**
+   * Prepares this view to fill a cell: its logical size and zoom from {@code fit}, its image
+   * rendered at {@code scale} device pixels per logical pixel with an interpolation chosen for the
+   * resulting magnification, and its overlay in the base font instead of the one the screen
+   * heuristic picks for a small view. The display operations run once, with every parameter set.
+   */
+  public void configureForPrint(CellFit fit, double scale) {
+    this.fixedLayerFont = true;
+    infoLayer.setMinimumSizeChecked(false);
+    boolean enabled = imageLayer.isEnableDispOperations();
+    imageLayer.setEnableDispOperations(false);
+    try {
+      setRenderScale(scale);
+      setSize(fit.viewportWidth(), fit.viewportHeight());
+      double magnification = fit.zoom() * scale;
+      getDisplayOpManager()
+          .setParamValue(
+              AffineTransformOp.OP_NAME,
+              AffineTransformOp.P_INTERPOLATION,
+              magnification > 1.0 ? Interpolation.BICUBIC : Interpolation.BILINEAR);
+      zoom(fit.zoom());
+      if (fit.bestFit()) {
+        center();
+      } else {
+        setCenter(fit.center().getX(), fit.center().getY());
+      }
+    } finally {
+      imageLayer.setEnableDispOperations(enabled);
+    }
+    updateAffineTransform();
+  }
+
+  /**
+   * Device pixels per logical pixel. The image is rendered at that resolution; everything else is
+   * scaled by Java2D when drawn.
+   */
+  public void setRenderScale(double renderScale) {
+    if (renderScale <= 0) {
+      throw new IllegalArgumentException("Render scale must be positive");
+    }
+    if (this.renderScale != renderScale) {
+      this.renderScale = renderScale;
+      updateAffineTransform();
+    }
+  }
+
+  @Override
+  protected double getRenderScale() {
+    return renderScale;
+  }
+
+  @Override
+  public Font getLayerFont() {
+    return fixedLayerFont ? FontItem.DEFAULT_SEMIBOLD.getFont() : super.getLayerFont();
+  }
+
   @Override
   public void drawLayers(
       Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
@@ -162,7 +303,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
       super.drawLayers(g2d, transform, inverseTransform);
       return;
     }
-    // The cross-lines live in the shared graphic model, so they are skipped here, not removed
+    // The cross-lines were copied with the other graphics, so they are skipped here, not removed
     if (LangUtil.nullToTrue((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()))) {
       Object[] oldRenderingHints =
           GuiUtils.setRenderingHints(g2d, true, false, requiredTextAntialiasing());
@@ -178,24 +319,13 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     }
   }
 
-  public double getImagePrintingResolution() {
-    return imagePrintingResolution;
-  }
-
-  public void setImagePrintingResolution(double imagePrintingResolution) {
-    this.imagePrintingResolution = imagePrintingResolution;
-  }
-
   @Override
   public void disposeView() {
     disableMouseAndKeyListener();
     removeFocusListener(this);
     ToolTipManager.sharedInstance().unregisterComponent(this);
     imageLayer.removeLayerChangeListener(this);
-    // The graphic model is the one of the source view: only unregister the listeners of this view,
-    // removeGraphicManager() would also delete its non-serializable graphics (presentation states)
-    graphicManager.removeChangeListener(layerModelHandler);
-    graphicManager.removeGraphicChangeHandler(getGraphicsChangeHandler());
+    // The graphic model is a copy of this view: nothing to unregister from the source view
     setViewModel(null);
   }
 
@@ -214,31 +344,31 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     }
   }
 
+  /**
+   * Draws this view into {@code g2d}, whose unit is the device pixel: the view covers its logical
+   * size times the render scale.
+   */
   @Override
   public void draw(Graphics2D g2d) {
     currentG2d = g2d;
+    AffineTransform oldTransform = g2d.getTransform();
     Stroke oldStroke = g2d.getStroke();
     Paint oldColor = g2d.getPaint();
+    Font oldFont = g2d.getFont();
 
+    if (renderScale != 1.0) {
+      g2d.scale(renderScale, renderScale);
+    }
     // Set font size according to the view size
     g2d.setFont(getLayerFont());
     Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, true, true);
 
-    // Update graphic label positions to match this view's bounds
+    // Lay out the labels of the copied graphics for this view
     graphicManager.updateLabels(Boolean.TRUE, this);
 
     Point2D offset = getClipViewCoordinatesOffset();
     g2d.translate(offset.getX(), offset.getY());
-
-    // TODO fix rotation issue
-    Integer rotationAngle = (Integer) actionsInView.get(ActionW.ROTATION.cmd());
-    if ((rotationAngle == null || rotationAngle == 0)
-        && g2d.getClass().getName().contains("print")) {
-      imageLayer.drawImageForPrinter(g2d, imagePrintingResolution, this);
-    } else {
-      imageLayer.drawImage(g2d);
-    }
-
+    drawImage(g2d);
     drawLayers(g2d, affineTransform, inverseTransform);
     g2d.translate(-offset.getX(), -offset.getY());
 
@@ -246,13 +376,44 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
       infoLayer.paint(g2d);
     }
     GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
+    g2d.setFont(oldFont);
     g2d.setPaint(oldColor);
     g2d.setStroke(oldStroke);
-
-    // Restore graphic label positions relative to the original source view
-    graphicManager.updateLabels(Boolean.TRUE, sourceView);
-
+    g2d.setTransform(oldTransform);
     currentG2d = null;
+  }
+
+  /**
+   * The image raster is at device resolution already: it is drawn under the inverse of the render
+   * scale so that it lands pixel for pixel. Rounding noise in the composite transform is snapped
+   * away, since a scale of 1.0000001 would still make Java2D resample.
+   */
+  private void drawImage(Graphics2D g2d) {
+    if (renderScale == 1.0) {
+      imageLayer.drawImage(g2d);
+      return;
+    }
+    Graphics2D gi = (Graphics2D) g2d.create();
+    try {
+      gi.scale(1.0 / renderScale, 1.0 / renderScale);
+      AffineTransform t = gi.getTransform();
+      if (isUnitScale(t)) {
+        gi.setTransform(
+            new AffineTransform(
+                1, 0, 0, 1, Math.round(t.getTranslateX()), Math.round(t.getTranslateY())));
+      }
+      imageLayer.drawImage(gi);
+    } finally {
+      gi.dispose();
+    }
+  }
+
+  private static boolean isUnitScale(AffineTransform t) {
+    double eps = 1e-6;
+    return Math.abs(t.getScaleX() - 1.0) < eps
+        && Math.abs(t.getScaleY() - 1.0) < eps
+        && Math.abs(t.getShearX()) < eps
+        && Math.abs(t.getShearY()) < eps;
   }
 
   @Override
@@ -283,5 +444,20 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
   @Override
   public boolean hasValidContent() {
     return getSourceImage() != null;
+  }
+
+  /** Turns the double buffering of a component off for an off-screen paint. */
+  public static boolean disableDoubleBuffering(JComponent c) {
+    if (c == null) {
+      return false;
+    }
+    c.setDoubleBuffered(false);
+    return c.isDoubleBuffered();
+  }
+
+  public static void restoreDoubleBuffering(JComponent c, boolean wasBuffered) {
+    if (c != null) {
+      c.setDoubleBuffered(wasBuffered);
+    }
   }
 }

@@ -157,7 +157,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
   private boolean shouldPaint(DicomImageElement image, FontMetrics fontMetrics, Rectangle bound) {
     int minSize = fontMetrics.stringWidth(Messages.getString("InfoLayer.msg_outside_levels")) * 2;
-    return visible && image != null && minSize <= bound.width && minSize / 2 <= bound.height;
+    return visible && image != null && fitsMinimumSize(bound, minSize, minSize / 2);
   }
 
   private void paintContent(Graphics2D g2, DicomImageElement image, Rectangle bound) {

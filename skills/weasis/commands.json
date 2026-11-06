@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.23",
+  "apiVersion": "2.24",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -2973,6 +2973,400 @@
               "arity": "0",
               "required": false,
               "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "print",
+      "description": "Print a viewer layout: destinations, page, preview rendering, sending.",
+      "since": "5.0",
+      "verbs": [
+        {
+          "name": "destinations",
+          "description": "Lists where a page can go: the system printers (the default one first) and the DICOM printers, with their papers and resolution.",
+          "usage": "print:destinations [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
+        {
+          "name": "page",
+          "description": "Builds a print job from a viewer, the selected one by default: its whole layout, or one pane. Returns the job handle, the page and the cell figures.",
+          "usage": "print:page [-h] [--json] [--series] [--annotations=<on|off>] [--background=<white|black>] [--frames=<first>-<last>] [--grid=<cols>x<rows>] [--header=<on|off>] [--masking=<profile-id>] [--orientation=<portrait|landscape>] [--pane=<pane-index>] [--paper=<paper>] [--position=<center|top-left>] [--step=<n>] [--text=<auto|small|normal|large>] [--to=<destination>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Print only this pane of the layout, counting from 1."
+            },
+            {
+              "names": [
+                "--to"
+              ],
+              "label": "<destination>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Destination id or title from 'print:destinations': its papers and printable area apply (default: default margins on the paper of the locale)."
+            },
+            {
+              "names": [
+                "--paper"
+              ],
+              "label": "<paper>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Paper id, such as A4, Letter or 14x17in (default: the destination's)."
+            },
+            {
+              "names": [
+                "--orientation"
+              ],
+              "label": "<portrait|landscape>",
+              "type": "enum",
+              "values": [
+                "PORTRAIT",
+                "LANDSCAPE"
+              ],
+              "arity": "1",
+              "required": false,
+              "description": "Page orientation (default: landscape when the layout is wider than tall)."
+            },
+            {
+              "names": [
+                "--text"
+              ],
+              "label": "<auto|small|normal|large>",
+              "type": "enum",
+              "values": [
+                "auto",
+                "small",
+                "normal",
+                "large"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "auto",
+              "description": "Text size of annotations and labels on paper (default: auto, 8 pt or 6 pt)."
+            },
+            {
+              "names": [
+                "--background"
+              ],
+              "label": "<white|black>",
+              "type": "enum",
+              "values": [
+                "white",
+                "black"
+              ],
+              "arity": "1",
+              "required": false,
+              "description": "Page background (default: the destination's, white for paper)."
+            },
+            {
+              "names": [
+                "--annotations"
+              ],
+              "label": "<on|off>",
+              "type": "enum",
+              "values": [
+                "on",
+                "off"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "on",
+              "description": "Print the overlay and the graphics (default: on)."
+            },
+            {
+              "names": [
+                "--position"
+              ],
+              "label": "<center|top-left>",
+              "type": "enum",
+              "values": [
+                "center",
+                "top-left"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "center",
+              "description": "Where an image sits in its cell (default: center)."
+            },
+            {
+              "names": [
+                "--masking"
+              ],
+              "label": "<profile-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Identity masking profile applied to the page (default: none)."
+            },
+            {
+              "names": [
+                "--header"
+              ],
+              "label": "<on|off>",
+              "type": "enum",
+              "values": [
+                "on",
+                "off"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "off",
+              "description": "Header line with patient, study and page number above the cells (default: off).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Print the frames of the series of the pane (--pane, else the selected one) on pages of --grid cells, instead of the layout as shown.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--grid"
+              ],
+              "label": "<cols>x<rows>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "4x3",
+              "description": "Cells per page with --series (default: 4x3).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--step"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "1",
+              "description": "With --series, one frame out of n (default: 1).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--frames"
+              ],
+              "label": "<first>-<last>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --series, the range of frames, counting from 1 (default: all).",
+              "since": "5.0"
+            }
+          ]
+        },
+        {
+          "name": "render",
+          "description": "Renders the page of a job to a PNG file at a resolution, as the printer would receive it: the preview of an agent and the test surface of a layout.",
+          "usage": "print:render [-h] [--gray] [--json] [--dpi=<dpi>] --job=<job-id> --out=<file.png> [--page=<n>] [--to=<destination>]",
+          "needs": [
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--job"
+              ],
+              "label": "<job-id>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Job from 'print:page'."
+            },
+            {
+              "names": [
+                "--to"
+              ],
+              "label": "<destination>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Render for this destination: its printable area and resolution apply."
+            },
+            {
+              "names": [
+                "--dpi"
+              ],
+              "label": "<dpi>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Resolution of the raster (default: the destination's, else 150)."
+            },
+            {
+              "names": [
+                "--gray"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Render in 8-bit gray, as a gray film printer receives it."
+            },
+            {
+              "names": [
+                "--page"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "1",
+              "description": "The page to render, counting from 1 (default: 1).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<file.png>",
+              "type": "output-path",
+              "arity": "1",
+              "required": true,
+              "description": "The PNG file to write.",
+              "needs": [
+                "file-write"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "send",
+          "description": "Prints a job on a destination and releases it. Sending patient images to a device is closed to callers unless the network.write policy of this instance allows it, as for dicom:send.",
+          "usage": "print:send [-h] [--json] [--copies=<n>] [--dpi=<dpi>] --job=<job-id> [--out=<file.pdf>] --to=<destination>",
+          "needs": [
+            "file-write",
+            "send-dicom"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--job"
+              ],
+              "label": "<job-id>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Job from 'print:page'."
+            },
+            {
+              "names": [
+                "--to"
+              ],
+              "label": "<destination>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Destination id or title from 'print:destinations'."
+            },
+            {
+              "names": [
+                "--copies"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "1",
+              "description": "Number of copies (default: 1)."
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<file.pdf>",
+              "type": "output-path",
+              "arity": "1",
+              "required": false,
+              "description": "The file to write, for the PDF file destination (file:pdf).",
+              "needs": [
+                "file-write"
+              ],
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--dpi"
+              ],
+              "label": "<dpi>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Resolution of the pages written to the file (default: 300).",
+              "since": "5.0"
             }
           ]
         }
@@ -6153,7 +6547,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --set=<magnification> | --fit=<zoom-fit>]",
           "parameters": [],
           "options": [
             {
@@ -6188,6 +6582,20 @@
             },
             {
               "names": [
+                "--by"
+              ],
+              "label": "<steps>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
                 "--set"
               ],
               "label": "<magnification>",
@@ -6214,20 +6622,6 @@
               "arity": "1",
               "required": true,
               "description": "default, real-size or best-fit.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
-                "--by"
-              ],
-              "label": "<steps>",
-              "type": "integer",
-              "arity": "1",
-              "required": true,
-              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"

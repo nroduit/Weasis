@@ -9,9 +9,8 @@
  */
 package org.weasis.core.ui.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.weasis.core.util.StringUtil;
+import java.awt.Color;
+import org.weasis.core.ui.print.TextSize;
 
 /**
  * @author Marcelo Porto (marcelo@animati.com.br)
@@ -19,52 +18,19 @@ import org.weasis.core.util.StringUtil;
  * @since 18/11/2011
  */
 public class PrintOptions {
-  private static final Logger LOGGER = LoggerFactory.getLogger(PrintOptions.class);
-
-  public enum DotPerInches {
-    DPI_100(100),
-    DPI_150(150),
-    DPI_200(200),
-    DPI_250(250),
-    DPI_300(300);
-
-    private final int dpi;
-
-    DotPerInches(int dpi) {
-      this.dpi = dpi;
-    }
-
-    public int getDpi() {
-      return dpi;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(dpi);
-    }
-
-    public static DotPerInches getInstance(String val, DotPerInches defaultValue) {
-      if (StringUtil.hasText(val)) {
-        try {
-          return DotPerInches.valueOf(val);
-        } catch (Exception e) {
-          LOGGER.error("Cannot find DotPerInches: {}", val, e);
-        }
-      }
-      return defaultValue;
-    }
-  }
-
   private boolean showingAnnotations;
   private boolean center;
   private boolean colorPrint;
-  private DotPerInches dpi;
+  private TextSize textSize;
+  private Color background;
+  private Color border;
+  private boolean header;
 
   public PrintOptions() {
     this.showingAnnotations = true;
     this.center = true;
     this.colorPrint = true;
-    this.dpi = DotPerInches.DPI_150;
+    this.background = Color.WHITE;
   }
 
   public boolean isShowingAnnotations() {
@@ -91,11 +57,39 @@ public class PrintOptions {
     this.colorPrint = colorPrint;
   }
 
-  public DotPerInches getDpi() {
-    return dpi;
+  /** The text size on paper, or {@code null} for the default of each cell width. */
+  public TextSize getTextSize() {
+    return textSize;
   }
 
-  public void setDpi(DotPerInches dpi) {
-    this.dpi = dpi == null ? DotPerInches.DPI_150 : dpi;
+  public void setTextSize(TextSize textSize) {
+    this.textSize = textSize;
+  }
+
+  /** The page background; white by default for paper, black for film. */
+  public Color getBackground() {
+    return background;
+  }
+
+  public void setBackground(Color background) {
+    this.background = background == null ? Color.WHITE : background;
+  }
+
+  /** The border drawn around each cell, or {@code null} for none. */
+  public Color getBorder() {
+    return border;
+  }
+
+  public void setBorder(Color border) {
+    this.border = border;
+  }
+
+  /** Whether a header line (patient, study, page number) is printed above the cells. */
+  public boolean isHeader() {
+    return header;
+  }
+
+  public void setHeader(boolean header) {
+    this.header = header;
   }
 }

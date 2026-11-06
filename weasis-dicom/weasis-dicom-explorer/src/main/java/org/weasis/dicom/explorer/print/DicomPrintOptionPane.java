@@ -19,49 +19,68 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.ui.util.PrintOptions;
+import org.weasis.core.ui.print.Paper;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
-import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 
+/**
+ * The DICOM print attributes of a node. In {@link Scope#NODE} every default of the node is shown;
+ * in {@link Scope#JOB} only what the print dialog does not already own.
+ *
+ * @author Marcelo Porto (marcelo@animati.com.br)
+ * @author Nicolas Roduit
+ */
 public class DicomPrintOptionPane extends JPanel {
 
-  JComboBox<String> borderDensityComboBox;
-  JCheckBox colorPrintCheckBox;
-  JComboBox<String> filmDestinationComboBox;
-  JComboBox<String> filmOrientationComboBox;
-  JComboBox<FilmSize> filmSizeIdComboBox;
-  JComboBox<String> imageDisplayFormatComboBox;
-  JComboBox<String> magnificationTypeComboBox;
-  //  JSpinner maxDensitySpinner;
-  //  JSpinner minDensitySpinner;
-  JComboBox<String> mediumTypeComboBox;
-  JSpinner numOfCopiesSpinner;
-  JCheckBox printAnnotationsCheckBox;
-  JSeparator printOptionsSeparator;
-  JComboBox<String> priorityComboBox;
-  JComboBox<String> smoothingTypeComboBox;
-  JComboBox<String> trimComboBox;
-  DefaultComboBoxModel<String> portraitDisplayFormatsModel;
-  JCheckBox checkboxSelectedView;
-  JComboBox<PrintOptions.DotPerInches> comboBoxDPI;
-  JComboBox<String> comboBoxEmpty;
-
-  public DicomPrintOptionPane() {
-    super();
-    portraitDisplayFormatsModel =
-        new DefaultComboBoxModel<>(new String[] {DicomPrintOptions.DEF_IMG_DISP_FORMAT});
-    initComponents();
+  public enum Scope {
+    NODE,
+    JOB
   }
 
-  private void initComponents() {
-    setLayout(new MigLayout("fillx", "[right]rel[left]15lp[right]rel[left]")); // NON-NLS
-    setBorder(GuiUtils.getTitledBorder(Messages.getString("DicomPrintDialog.option_title")));
+  private final Scope scope;
 
-    add(
-        new JLabel(Messages.getString("DicomPrintDialog.med_type") + StringUtil.COLON),
-        GuiUtils.NEWLINE);
-    mediumTypeComboBox = new JComboBox<>();
+  final JComboBox<String> mediumTypeComboBox = new JComboBox<>();
+  final JComboBox<String> priorityComboBox =
+      new JComboBox<>(new String[] {DicomPrintOptions.DEF_PRIORITY, "MED", "HIGH"}); // NON-NLS
+  final JComboBox<String> filmDestinationComboBox =
+      new JComboBox<>(new String[] {DicomPrintOptions.DEF_FILM_DEST, "PROCESSOR"}); // NON-NLS
+  final JSpinner numOfCopiesSpinner =
+      new JSpinner(new SpinnerNumberModel(DicomPrintOptions.DEF_NUM_COPIES, 1, 100, 1));
+  final JCheckBox colorPrintCheckBox =
+      new JCheckBox(Messages.getString("DicomPrintDialog.print_color"));
+  final JComboBox<String> filmOrientationComboBox =
+      new JComboBox<>(
+          new String[] {DicomPrintOptions.DEF_FILM_ORIENTATION, "LANDSCAPE"}); // NON-NLS
+  final JComboBox<Paper> filmSizeIdComboBox =
+      new JComboBox<>(DicomPrintOptions.filmSizes().toArray(Paper[]::new));
+  final JComboBox<String> imageDisplayFormatComboBox =
+      new JComboBox<>(new String[] {DicomPrintOptions.DEF_IMG_DISP_FORMAT});
+  final JComboBox<String> magnificationTypeComboBox =
+      new JComboBox<>(
+          new String[] {
+            "REPLICATE", "BILINEAR", DicomPrintOptions.DEF_MAGNIFICATION_TYPE
+          }); // NON-NLS
+  final JComboBox<String> smoothingTypeComboBox =
+      new JComboBox<>(
+          new String[] {DicomPrintOptions.DEF_SMOOTHING_TYPE, "SHARP", "SMOOTH"}); // NON-NLS
+  final JComboBox<String> borderDensityComboBox =
+      new JComboBox<>(new String[] {"BLACK", DicomPrintOptions.DEF_BORDER_DENSITY}); // NON-NLS
+  final JComboBox<String> trimComboBox =
+      new JComboBox<>(new String[] {DicomPrintOptions.DEF_TRIM, "YES"}); // NON-NLS
+  final JComboBox<String> emptyDensityComboBox =
+      new JComboBox<>(new String[] {DicomPrintOptions.DEF_EMPTY_DENSITY, "WHITE"}); // NON-NLS
+  final JCheckBox printAnnotationsCheckBox =
+      new JCheckBox(Messages.getString("PrintDialog.annotate"));
+  final JComboBox<Integer> filmResolutionComboBox =
+      new JComboBox<>(DicomPrintOptions.FILM_RESOLUTIONS.toArray(Integer[]::new));
+
+  public DicomPrintOptionPane() {
+    this(Scope.NODE);
+  }
+
+  public DicomPrintOptionPane(Scope scope) {
+    super();
+    this.scope = scope;
     mediumTypeComboBox.setModel(
         new DefaultComboBoxModel<>(
             new String[] {
@@ -71,120 +90,85 @@ public class DicomPrintOptionPane extends JPanel {
               "MAMMO BLUE FILM", // NON-NLS
               "PAPER" // NON-NLS
             }));
-    add(mediumTypeComboBox);
+    imageDisplayFormatComboBox.setMaximumRowCount(10);
+    printAnnotationsCheckBox.setSelected(true);
+    initComponents();
+  }
 
-    add(new JLabel(Messages.getString("DicomPrintDialog.priority") + StringUtil.COLON));
-    priorityComboBox =
-        new JComboBox<>(
-            new DefaultComboBoxModel<>(
-                new String[] {DicomPrintOptions.DEF_PRIORITY, "MED", "HIGH"})); // NON-NLS
+  private void initComponents() {
+    setLayout(new MigLayout("fillx", "[right]rel[left]15lp[right]rel[left]")); // NON-NLS
+    setBorder(GuiUtils.getTitledBorder(Messages.getString("DicomPrintDialog.option_title")));
+
+    add(label("DicomPrintDialog.med_type"), GuiUtils.NEWLINE);
+    add(mediumTypeComboBox);
+    add(label("DicomPrintDialog.priority"));
     add(priorityComboBox);
 
-    add(
-        new JLabel(Messages.getString("DicomPrintDialog.film_dest") + StringUtil.COLON),
-        GuiUtils.NEWLINE);
-
-    filmDestinationComboBox =
-        new JComboBox<>(
-            new DefaultComboBoxModel<>(
-                new String[] {DicomPrintOptions.DEF_FILM_DEST, "PROCESSOR"}));
+    add(label("DicomPrintDialog.film_dest"), GuiUtils.NEWLINE);
     add(filmDestinationComboBox);
+    if (scope == Scope.NODE) {
+      add(label("DicomPrintDialog.copies"));
+      add(numOfCopiesSpinner);
+    }
 
-    add(new JLabel(Messages.getString("DicomPrintDialog.copies") + StringUtil.COLON));
-    numOfCopiesSpinner =
-        new JSpinner(new SpinnerNumberModel(DicomPrintOptions.DEF_NUM_COPIES, 1, 100, 1));
-    add(numOfCopiesSpinner);
-
-    colorPrintCheckBox = new JCheckBox(Messages.getString("DicomPrintDialog.print_color"));
     add(colorPrintCheckBox, "newline, alignx leading, spanx 2"); // NON-NLS
+    add(new JSeparator(), "newline, spanx"); // NON-NLS
 
-    printOptionsSeparator = new JSeparator();
-    add(printOptionsSeparator, "newline, spanx"); // NON-NLS
+    if (scope == Scope.NODE) {
+      add(label("DicomPrintDialog.film_orientation"), GuiUtils.NEWLINE);
+      add(filmOrientationComboBox);
+      add(label("DicomPrintDialog.size_id"));
+      add(filmSizeIdComboBox);
 
-    add(
-        new JLabel(Messages.getString("DicomPrintDialog.film_orientation") + StringUtil.COLON),
-        GuiUtils.NEWLINE);
-    filmOrientationComboBox =
-        new JComboBox<>(
-            new DefaultComboBoxModel<>(
-                new String[] {DicomPrintOptions.DEF_FILM_ORIENTATION, "LANDSCAPE"}));
-    add(filmOrientationComboBox);
+      add(label("DicomPrintDialog.disp_format"), GuiUtils.NEWLINE);
+      add(imageDisplayFormatComboBox);
+      add(label("DicomPrintDialog.film_resolution"));
+      add(filmResolutionComboBox);
+    }
 
-    add(new JLabel(Messages.getString("DicomPrintDialog.size_id") + StringUtil.COLON));
-    filmSizeIdComboBox = new JComboBox<>(new DefaultComboBoxModel<>(FilmSize.values()));
-    add(filmSizeIdComboBox);
-
-    add(
-        new JLabel(Messages.getString("DicomPrintDialog.disp_format") + StringUtil.COLON),
-        GuiUtils.NEWLINE);
-    imageDisplayFormatComboBox = new JComboBox<>(portraitDisplayFormatsModel);
-    imageDisplayFormatComboBox.setMaximumRowCount(10);
-    add(imageDisplayFormatComboBox);
-
-    add(new JLabel(Messages.getString("DicomPrintDialog.magn_type") + StringUtil.COLON));
-    magnificationTypeComboBox =
-        new JComboBox<>(
-            new DefaultComboBoxModel<>(
-                new String[] {
-                  "REPLICATE", "BILINEAR", DicomPrintOptions.DEF_MAGNIFICATION_TYPE
-                })); // NON-NLS
+    add(label("DicomPrintDialog.magn_type"), GuiUtils.NEWLINE);
     add(magnificationTypeComboBox);
-
-    add(
-        new JLabel(Messages.getString("DicomPrintDialog.smooth") + StringUtil.COLON),
-        GuiUtils.NEWLINE);
-    smoothingTypeComboBox =
-        new JComboBox<>(
-            new DefaultComboBoxModel<>(
-                new String[] {DicomPrintOptions.DEF_SMOOTHING_TYPE, "SHARP", "SMOOTH"})); // NON-NLS
+    add(label("DicomPrintDialog.smooth"));
     add(smoothingTypeComboBox);
 
-    add(new JLabel(Messages.getString("DicomPrintDialog.border") + StringUtil.COLON));
-    borderDensityComboBox =
-        new JComboBox<>(
-            new DefaultComboBoxModel<>(
-                new String[] {"BLACK", DicomPrintOptions.DEF_BORDER_DENSITY}));
+    add(label("DicomPrintDialog.border"), GuiUtils.NEWLINE);
     add(borderDensityComboBox);
-
-    //    add(new JLabel(Messages.getString("DicomPrintDialog.min_density") + StringUtil.COLON),
-    // GuiUtils.NEWLINE);
-    //     minDensitySpinner = new JSpinner(new SpinnerNumberModel(0, 0, 255, 1));
-    //     // Not used for 8 bits images
-    //     minDensitySpinner.setEnabled(false);
-    //     add(minDensitySpinner);
-    //
-    //    add(new JLabel(Messages.getString("DicomPrintDialog.max_density") + StringUtil.COLON));
-    //     maxDensitySpinner = new JSpinner(new SpinnerNumberModel(255, 0, 255, 1));
-    //     // Not used for 8 bits images
-    //     maxDensitySpinner.setEnabled(false);
-    //     add(maxDensitySpinner);
-
-    add(
-        new JLabel(Messages.getString("DicomPrintDialog.trim") + StringUtil.COLON),
-        GuiUtils.NEWLINE);
-    trimComboBox =
-        new JComboBox<>(
-            new DefaultComboBoxModel<>(new String[] {DicomPrintOptions.DEF_TRIM, "YES"}));
+    add(label("DicomPrintDialog.trim"));
     add(trimComboBox);
 
-    add(new JLabel(Messages.getString("DicomPrintDialog.empty_density") + StringUtil.COLON));
-    comboBoxEmpty =
-        new JComboBox<>(
-            new DefaultComboBoxModel<>(
-                new String[] {DicomPrintOptions.DEF_EMPTY_DENSITY, "WHITE"}));
-    add(comboBoxEmpty);
+    if (scope == Scope.NODE) {
+      add(label("DicomPrintDialog.empty_density"), GuiUtils.NEWLINE);
+      add(emptyDensityComboBox);
+      add(printAnnotationsCheckBox, "newline, alignx leading, spanx 2"); // NON-NLS
+    }
+  }
 
-    printAnnotationsCheckBox = new JCheckBox(Messages.getString("PrintDialog.annotate"));
-    printAnnotationsCheckBox.setSelected(true);
-    add(printAnnotationsCheckBox, "newline, alignx leading, spanx 2"); // NON-NLS
+  private static JLabel label(String key) {
+    return new JLabel(Messages.getString(key) + StringUtil.COLON);
+  }
 
-    checkboxSelectedView = new JCheckBox(Messages.getString("PrintDialog.selected_view"));
-    add(checkboxSelectedView, "newline, alignx leading, spanx 2"); // NON-NLS
-
-    add(new JLabel(Messages.getString("DicomPrintDialog.dpi") + StringUtil.COLON));
-
-    comboBoxDPI = new JComboBox<>(new DefaultComboBoxModel<>(PrintOptions.DotPerInches.values()));
-    add(comboBoxDPI);
+  /** Runs {@code listener} whenever one of the shown settings changes. */
+  public void addChangeListener(Runnable listener) {
+    for (JComboBox<?> combo :
+        new JComboBox<?>[] {
+          mediumTypeComboBox,
+          priorityComboBox,
+          filmDestinationComboBox,
+          filmOrientationComboBox,
+          filmSizeIdComboBox,
+          imageDisplayFormatComboBox,
+          magnificationTypeComboBox,
+          smoothingTypeComboBox,
+          borderDensityComboBox,
+          trimComboBox,
+          emptyDensityComboBox,
+          filmResolutionComboBox
+        }) {
+      combo.addActionListener(e -> listener.run());
+    }
+    numOfCopiesSpinner.addChangeListener(e -> listener.run());
+    colorPrintCheckBox.addActionListener(e -> listener.run());
+    printAnnotationsCheckBox.addActionListener(e -> listener.run());
   }
 
   public void applyOptions(DicomPrintOptions options) {
@@ -194,7 +178,6 @@ public class DicomPrintOptionPane extends JPanel {
       filmDestinationComboBox.setSelectedItem(options.getFilmDestination());
       numOfCopiesSpinner.setValue(options.getNumOfCopies());
       colorPrintCheckBox.setSelected(options.isColorPrint());
-
       filmOrientationComboBox.setSelectedItem(options.getFilmOrientation());
       filmSizeIdComboBox.setSelectedItem(options.getFilmSizeId());
       imageDisplayFormatComboBox.setSelectedItem(options.getImageDisplayFormat());
@@ -202,12 +185,9 @@ public class DicomPrintOptionPane extends JPanel {
       smoothingTypeComboBox.setSelectedItem(options.getSmoothingType());
       borderDensityComboBox.setSelectedItem(options.getBorderDensity());
       trimComboBox.setSelectedItem(options.getTrim());
-      comboBoxEmpty.setSelectedItem(options.getEmptyDensity());
-      // minDensitySpinner.setValue(options.getMinDensity());
-      // maxDensitySpinner.setValue(options.getMaxDensity());
+      emptyDensityComboBox.setSelectedItem(options.getEmptyDensity());
       printAnnotationsCheckBox.setSelected(options.isShowingAnnotations());
-      checkboxSelectedView.setSelected(options.isPrintOnlySelectedView());
-      comboBoxDPI.setSelectedItem(options.getDpi());
+      filmResolutionComboBox.setSelectedItem(options.getFilmResolution());
     }
   }
 
@@ -217,19 +197,17 @@ public class DicomPrintOptionPane extends JPanel {
     options.setFilmDestination((String) filmDestinationComboBox.getSelectedItem());
     options.setNumOfCopies((Integer) numOfCopiesSpinner.getValue());
     options.setColorPrint(colorPrintCheckBox.isSelected());
-
     options.setFilmOrientation((String) filmOrientationComboBox.getSelectedItem());
-    options.setFilmSizeId((FilmSize) filmSizeIdComboBox.getSelectedItem());
+    options.setFilmSizeId((Paper) filmSizeIdComboBox.getSelectedItem());
     options.setImageDisplayFormat((String) imageDisplayFormatComboBox.getSelectedItem());
     options.setMagnificationType((String) magnificationTypeComboBox.getSelectedItem());
     options.setSmoothingType((String) smoothingTypeComboBox.getSelectedItem());
     options.setBorderDensity((String) borderDensityComboBox.getSelectedItem());
     options.setTrim((String) trimComboBox.getSelectedItem());
-    options.setEmptyDensity((String) comboBoxEmpty.getSelectedItem());
-    // options.setMinDensity((Integer) minDensitySpinner.getValue());
-    // options.setMaxDensity((Integer) maxDensitySpinner.getValue());
+    options.setEmptyDensity((String) emptyDensityComboBox.getSelectedItem());
     options.setShowingAnnotations(printAnnotationsCheckBox.isSelected());
-    options.setPrintOnlySelectedView(checkboxSelectedView.isSelected());
-    options.setDpi((PrintOptions.DotPerInches) comboBoxDPI.getSelectedItem());
+    if (filmResolutionComboBox.getSelectedItem() instanceof Integer dpi) {
+      options.setFilmResolution(dpi);
+    }
   }
 }

@@ -75,7 +75,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
     FontMetrics fontMetrics = g2.getFontMetrics();
     final Rectangle bound = view2DPane.getJComponent().getBounds();
     int minSize = fontMetrics.stringWidth(Messages.getString("InfoLayer.error_msg")) * 3;
-    if (!visible || image == null || minSize > bound.width || minSize > bound.height) {
+    if (!visible || image == null || !fitsMinimumSize(bound, minSize, minSize)) {
       return;
     }
 

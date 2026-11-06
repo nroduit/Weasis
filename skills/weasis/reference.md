@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.23, protocol 2, application development.
+Command API 2.24, protocol 2, application development.
 
 ## color
 
@@ -780,6 +780,81 @@ Usage: `mpr:volumes [-h] [--json]`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 
 
+## print
+
+Print a viewer layout: destinations, page, preview rendering, sending.
+
+### print:destinations
+
+Lists where a page can go: the system printers (the default one first) and the DICOM printers, with their papers and resolution.
+
+Usage: `print:destinations [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+### print:page
+
+Builds a print job from a viewer, the selected one by default: its whole layout, or one pane. Returns the job handle, the page and the cell figures.
+
+Usage: `print:page [-h] [--json] [--series] [--annotations=<on|off>] [--background=<white|black>] [--frames=<first>-<last>] [--grid=<cols>x<rows>] [--header=<on|off>] [--masking=<profile-id>] [--orientation=<portrait|landscape>] [--pane=<pane-index>] [--paper=<paper>] [--position=<center|top-left>] [--step=<n>] [--text=<auto|small|normal|large>] [--to=<destination>] [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --pane | pane-index |  | Print only this pane of the layout, counting from 1. |
+| --to | string |  | Destination id or title from 'print:destinations': its papers and printable area apply (default: default margins on the paper of the locale). |
+| --paper | string |  | Paper id, such as A4, Letter or 14x17in (default: the destination's). |
+| --orientation | enum |  | Page orientation (default: landscape when the layout is wider than tall). |
+| --text | enum | auto | Text size of annotations and labels on paper (default: auto, 8 pt or 6 pt). |
+| --background | enum |  | Page background (default: the destination's, white for paper). |
+| --annotations | enum | on | Print the overlay and the graphics (default: on). |
+| --position | enum | center | Where an image sits in its cell (default: center). |
+| --masking | string |  | Identity masking profile applied to the page (default: none). |
+| --header | enum | off | Header line with patient, study and page number above the cells (default: off). (since 5.0) |
+| --series | boolean |  | Print the frames of the series of the pane (--pane, else the selected one) on pages of --grid cells, instead of the layout as shown. (since 5.0) |
+| --grid | string | 4x3 | Cells per page with --series (default: 4x3). (since 5.0) |
+| --step | integer | 1 | With --series, one frame out of n (default: 1). (since 5.0) |
+| --frames | string |  | With --series, the range of frames, counting from 1 (default: all). (since 5.0) |
+
+### print:render
+
+Renders the page of a job to a PNG file at a resolution, as the printer would receive it: the preview of an agent and the test surface of a layout.
+
+Usage: `print:render [-h] [--gray] [--json] [--dpi=<dpi>] --job=<job-id> --out=<file.png> [--page=<n>] [--to=<destination>]`
+
+Needs: file write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --job | string |  | Job from 'print:page'. |
+| --to | string |  | Render for this destination: its printable area and resolution apply. |
+| --dpi | integer |  | Resolution of the raster (default: the destination's, else 150). |
+| --gray | boolean |  | Render in 8-bit gray, as a gray film printer receives it. |
+| --page | integer | 1 | The page to render, counting from 1 (default: 1). (since 5.0) |
+| --out | output-path |  | The PNG file to write. |
+
+### print:send
+
+Prints a job on a destination and releases it. Sending patient images to a device is closed to callers unless the network.write policy of this instance allows it, as for dicom:send.
+
+Usage: `print:send [-h] [--json] [--copies=<n>] [--dpi=<dpi>] --job=<job-id> [--out=<file.pdf>] --to=<destination>`
+
+Needs: file write, send dicom
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --job | string |  | Job from 'print:page'. |
+| --to | string |  | Destination id or title from 'print:destinations'. |
+| --copies | integer | 1 | Number of copies (default: 1). |
+| --out | output-path |  | The file to write, for the PDF file destination (file:pdf). (since 5.0) |
+| --dpi | integer |  | Resolution of the pages written to the file (default: 300). (since 5.0) |
+
+
 ## redact
 
 Regions burned over the pixels of a view, and the device library they can come from.
@@ -1552,16 +1627,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --set=<magnification> | --fit=<zoom-fit>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
 | --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
-| --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
 
 ### Events of view2d:
 

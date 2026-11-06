@@ -64,8 +64,8 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
@@ -651,13 +651,13 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     double scaleCanvas = Math.min(placeholder.x / canvasWidth, placeholder.y / canvasHeight);
 
     AffineTransform originalTransform = g2d.getTransform();
-    boolean wasBuffered = ImagePrint.disableDoubleBuffering(pane);
+    boolean wasBuffered = ExportImage.disableDoubleBuffering(pane);
     g2d.translate(f.getImageableX(), f.getImageableY());
     printHeader(g2d, (int) (f.getImageableWidth() / 2));
     g2d.translate(0, textOffset);
     g2d.scale(scaleCanvas, scaleCanvas);
     pane.paint(g2d);
-    ImagePrint.restoreDoubleBuffering(pane, wasBuffered);
+    ExportImage.restoreDoubleBuffering(pane, wasBuffered);
     g2d.setTransform(originalTransform);
   }
 

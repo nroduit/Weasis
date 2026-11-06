@@ -216,6 +216,7 @@ Existing docs:
 | `weasis-core/docs/Memory-Management.md` | native memory arenas, budgets, caches |
 | `weasis-core/docs/MigLayoutModel-Best-Practices.md` | `MigLayoutModel` layout conventions |
 | `weasis-core/docs/Preferences-Migration.md` | plugin-scoped preferences on `java.util.prefs`, file/remote sync, preference pages |
+| `weasis-core/docs/Printing.md` | printing: page model in millimeters, one renderer for preview, system printer and DICOM film, resolution rule, destinations and the print dialog |
 | `weasis-core/docs/Shortcut-Management.md` | shortcut registry and contexts, `KeyBinding`, dispatch tables, menu accelerators, mouse button matching |
 | `weasis-core/docs/Workspace-Docking.md` | workspace docking engine: manager, views, drag, snapshots, `workspace:` commands |
 | `weasis-dicom/weasis-dicom-codec/docs/Hanging-Protocols.md` | hanging protocols: protocol model and layers, series features and selectors, engine and plan, applier, sessions, DICOM exchange |

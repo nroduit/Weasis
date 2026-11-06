@@ -24,7 +24,6 @@ import java.util.function.Supplier;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpEventListener;
@@ -40,7 +39,6 @@ import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.editor.image.Canvas;
 import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
@@ -295,155 +293,6 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
         reusable ? previous : new BufferedImage(image.width(), image.height(), type);
     image.get(0, 0, ((DataBufferByte) result.getRaster().getDataBuffer()).getData());
     return result;
-  }
-
-  public void drawImageForPrinter(Graphics2D g2d, double viewScale, Canvas canvas) {
-    // Get the clipping rectangle
-    if (!visible || displayImage.isEmpty()) {
-      return;
-    }
-
-    PlanarImage currentImage = this.displayImage.get();
-    Shape clip = g2d.getClip();
-    if (clip instanceof Rectangle2D) {
-      Rectangle2D rect =
-          new Rectangle2D.Double(0, 0, currentImage.width() - 1.0, currentImage.height() - 1.0);
-      rect = rect.createIntersection((Rectangle2D) clip);
-      if (rect.isEmpty()) {
-        return;
-      }
-      g2d.setClip(rect);
-    }
-
-    // Rectangle2D modelArea = canvas.getViewModel().getModelArea();
-    // double rWidth = modelArea.getWidth();
-    // double rHeight = modelArea.getHeight();
-    //
-    // OpManager dispOp = getDisplayOpManager();
-    // boolean flip = LangUtil.getNULLtoFalse((Boolean) canvas.getActionValue(ActionW.FLIP.cmd()));
-    // Integer rotationAngle = (Integer) canvas.getActionValue(ActionW.ROTATION.cmd());
-    //
-    // double curScale = canvas.getViewModel().getViewScale();
-    // // Do not print lower than 72 dpi (drawRenderedImage can only decrease the size for printer
-    // not interpolate)
-    // double imageRes = viewScale < curScale ? curScale : viewScale;
-    //
-    // AffineTransform affineTransform = AffineTransform.getScaleInstance(flip ? -imageRes :
-    // imageRes, imageRes);
-    // if (rotationAngle != null && rotationAngle > 0) {
-    // affineTransform.rotate(Math.toRadians(rotationAngle), rWidth / 2.0, rHeight / 2.0);
-    // }
-    // if (flip) {
-    // affineTransform.translate(-rWidth, 0.0);
-    // }
-    //
-    // ImageOpNode node = dispOp.getNode(AffineTransformOp.OP_NAME);
-    // if (node != null) {
-    // double diffRatio = curScale / imageRes;
-    // Rectangle2D imgBounds = affineTransform.createTransformedShape(modelArea).getBounds2D();
-    //
-    // double diffx = 0.0;
-    // double diffy = 0.0;
-    // Rectangle2D viewBounds = new Rectangle2D.Double(0, 0, canvas.getJComponent().getWidth(),
-    // canvas.getJComponent().getHeight());
-    // Rectangle2D srcBounds = canvas.getImageViewBounds(viewBounds.getWidth(),
-    // viewBounds.getHeight());
-    //
-    // Rectangle2D dstBounds;
-    // if (viewBounds.contains(srcBounds)) {
-    // dstBounds = srcBounds;
-    // } else {
-    // dstBounds = viewBounds.createIntersection(srcBounds);
-    //
-    // if (srcBounds.getX() < 0.0) {
-    // diffx += srcBounds.getX();
-    // }
-    // if (srcBounds.getY() < 0.0) {
-    // diffy += srcBounds.getY();
-    // }
-    // }
-    //
-    // double[] fmx = new double[6];
-    // affineTransform.getMatrix(fmx);
-    // // adjust transformation matrix => move the center to keep all the image
-    // fmx[4] -= imgBounds.getX() - diffx;
-    // fmx[5] -= imgBounds.getY() - diffy;
-    // affineTransform.setTransform(fmx[0], fmx[1], fmx[2], fmx[3], fmx[4], fmx[5]);
-    //
-    // // Convert to openCV affine matrix
-    // double[] m = new double[] { fmx[0], fmx[2], fmx[4], fmx[1], fmx[3], fmx[5] };
-    // Object oldMatrix = node.getParam(AffineTransformOp.P_AFFINE_MATRIX);
-    // Object oldBounds = node.getParam(AffineTransformOp.P_DST_BOUNDS);
-    // node.setParam(AffineTransformOp.P_AFFINE_MATRIX, m);
-    // node.setParam(AffineTransformOp.P_DST_BOUNDS, dstBounds);
-    // PlanarImage img = disOpManager.process();
-    // node.setParam(AffineTransformOp.P_AFFINE_MATRIX, oldMatrix);
-    // node.setParam(AffineTransformOp.P_DST_BOUNDS, oldBounds);
-    //
-    //
-    // g2d.drawRenderedImage(ImageProcessor.toBufferedImage(img),
-    // AffineTransform.getScaleInstance(diffRatio,
-    // diffRatio));
-    // }
-
-    List<Double> matrix =
-        (List<Double>)
-            disOpManager
-                .getParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX)
-                .orElse(null);
-    Rectangle2D bound =
-        disOpManager
-            .getParamValue(
-                AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS, Rectangle2D.class)
-            .orElse(null);
-    if (matrix == null || bound == null) {
-      return;
-    }
-
-    List<Double> m = new ArrayList<>(matrix);
-    double ratioX = m.get(0);
-    double ratioY = m.get(4);
-    double offsetX = m.get(2);
-    double offsetY = m.get(5);
-
-    double imageResX = viewScale;
-    double imageResY = viewScale;
-    // Do not print lower than 72 dpi (drawRenderedImage can only decrease the size for printer not
-    // interpolate)
-    imageResX = Math.max(imageResX, ratioX);
-    imageResY = Math.max(imageResY, ratioY);
-    m.set(0, imageResX);
-    m.set(4, imageResY);
-
-    double rx = ratioX / imageResX;
-    double ry = ratioY / imageResY;
-    Rectangle2D b =
-        new Rectangle2D.Double(
-            bound.getX() / rx, bound.getY() / ry, bound.getWidth() / rx, bound.getHeight() / ry);
-    m.set(2, offsetX / rx);
-    m.set(5, offsetY / ry);
-    disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, m);
-    disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS, b);
-    if (!bound.equals(b)) disOpManager.process();
-
-    m.set(0, ratioX);
-    m.set(4, ratioY);
-    m.set(2, offsetX);
-    m.set(5, offsetY);
-    disOpManager.setParamValue(
-        AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, matrix);
-    disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS, bound);
-
-    if (g2d.getDeviceConfiguration().getDefaultTransform().getScaleX() > 1.0) {
-      g2d.setRenderingHint(
-          RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-    }
-    g2d.drawImage(
-        ImageConversion.toBufferedImage(displayImage.orElse(null)),
-        AffineTransform.getScaleInstance(rx, ry),
-        null);
-
-    g2d.setClip(clip);
   }
 
   public void dispose() {

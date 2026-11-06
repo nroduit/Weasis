@@ -70,9 +70,11 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         continue;
       }
       String constraints = modelCell.get().getFullConstraints();
-      Component export = exportOf(sourceEntry);
-      cellManager.addComponent(cell.position(), export);
-      grid.add(export, constraints);
+      Component comp = exportOf(sourceEntry);
+      if (comp != null) {
+        cellManager.addComponent(cell.position(), comp);
+        grid.add(comp, constraints);
+      }
     }
 
     layoutModel.applyConstraintsToLayout(grid);
@@ -104,9 +106,35 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
   }
 
   /**
+   * Creates an export layout of {@code model} whose cells, in the order of the model, hold the
+   * given components; a {@code null} leaves the cell empty.
+   */
+  public ExportLayout(MigLayoutModel model, List<? extends Component> cells) {
+    super(new BorderLayout());
+    MigLayoutModel layoutModel = model.copy();
+    this.cellManager = new LayoutCellManager<>(layoutModel);
+    initGrid();
+    grid.setLayout(
+        new MigLayout(
+            layoutModel.getLayoutConstraints(),
+            layoutModel.getColumnConstraints(),
+            layoutModel.getRowConstraints()));
+    List<MigCell> modelCells = layoutModel.getCells();
+    for (int i = 0; i < modelCells.size() && i < cells.size(); i++) {
+      Component comp = cells.get(i);
+      if (comp != null) {
+        cellManager.addComponent(modelCells.get(i).position(), comp);
+        grid.add(comp, modelCells.get(i).getFullConstraints());
+      }
+    }
+    layoutModel.applyConstraintsToLayout(grid);
+    grid.revalidate();
+  }
+
+  /**
    * The export of a cell: an {@link ExportImage} for a view canvas or a stack pane, an {@link
    * ExportTiles} for a tiled pane and an empty panel otherwise, as a live component such as a
-   * histogram must remain in its viewer.
+   * histogram must remain in its viewer; {@code null} for a pane without a canvas.
    */
   private Component exportOf(LayoutCellManager.CellEntry<E> sourceEntry) {
     ViewCanvas<E> viewCanvas = sourceEntry.getViewCanvas().orElse(null);
@@ -117,13 +145,14 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
       @SuppressWarnings("unchecked")
       ViewportPane<E> typedPane = (ViewportPane<E>) pane;
       if (!typedPane.isTiled()) {
-        return exportImage(typedPane.getSelectedCanvas());
+        ViewCanvas<E> canvas = typedPane.getSelectedCanvas();
+        return canvas == null ? null : exportImage(canvas);
       }
       List<ExportImage<E>> tiles = new ArrayList<>();
       for (ViewCanvas<E> canvas : typedPane.getAllViewCanvases()) {
         tiles.add(exportImage(canvas));
       }
-      return new ExportTiles<>(typedPane.getTiledCols(), tiles);
+      return new ExportTiles<>(typedPane.getTiledCols(), typedPane.getTiledRows(), tiles);
     }
     return new JPanel();
   }
@@ -134,44 +163,31 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
     return export;
   }
 
-  /** The location of a tile relative to its cell, and its size, in the unit of the cell size. */
-  public record TileBox(
-      ExportImage<? extends ImageElement> image, double x, double y, double width, double height) {}
-
-  /** The export of a tiled pane: its canvases in reading order, drawn inside the pane's cell. */
+  /**
+   * The export of a tiled pane: its canvases in reading order, to be laid out in a grid of {@code
+   * cols} by {@code rows} inside the cell of the pane.
+   */
   public static final class ExportTiles<E extends ImageElement> extends JPanel {
     private final int cols;
+    private final int rows;
     private final List<ExportImage<E>> tiles;
 
-    ExportTiles(int cols, List<ExportImage<E>> tiles) {
+    ExportTiles(int cols, int rows, List<ExportImage<E>> tiles) {
       this.cols = Math.max(1, cols);
+      this.rows = Math.max(1, rows);
       this.tiles = List.copyOf(tiles);
+    }
+
+    public int getCols() {
+      return cols;
+    }
+
+    public int getRows() {
+      return rows;
     }
 
     public List<ExportImage<E>> getTiles() {
       return tiles;
-    }
-
-    /**
-     * Divides a cell into one box per tile, separated by {@code gap}.
-     *
-     * @param cellWidth the width of the cell
-     * @param cellHeight the height of the cell
-     * @param gap the space between two tiles
-     * @return the boxes in reading order
-     */
-    public List<TileBox> layoutTiles(double cellWidth, double cellHeight, double gap) {
-      int rows = (tiles.size() + cols - 1) / cols;
-      double width = Math.max(1.0, (cellWidth - (cols - 1) * gap) / cols);
-      double height = Math.max(1.0, (cellHeight - (rows - 1) * gap) / rows);
-      List<TileBox> boxes = new ArrayList<>(tiles.size());
-      for (int i = 0; i < tiles.size(); i++) {
-        int col = i % cols;
-        int row = i / cols;
-        boxes.add(
-            new TileBox(tiles.get(i), col * (width + gap), row * (height + gap), width, height));
-      }
-      return boxes;
     }
   }
 

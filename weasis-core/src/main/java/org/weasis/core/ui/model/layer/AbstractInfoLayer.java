@@ -86,6 +86,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   protected final Rectangle pixelInfoBound;
   protected final Rectangle preloadingProgressBound;
   protected int border = P_BORDER;
+  protected boolean minimumSizeChecked = true;
   protected double thickLength = 15.0;
   protected boolean showBottomScale = true;
   protected String name;
@@ -288,6 +289,21 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   @Override
   public void setBorder(int border) {
     this.border = border;
+  }
+
+  @Override
+  public boolean isMinimumSizeChecked() {
+    return minimumSizeChecked;
+  }
+
+  @Override
+  public void setMinimumSizeChecked(boolean checked) {
+    this.minimumSizeChecked = checked;
+  }
+
+  /** Whether {@code bound} is large enough for the annotations, when that is checked. */
+  protected boolean fitsMinimumSize(Rectangle bound, int minWidth, int minHeight) {
+    return !minimumSizeChecked || (minWidth <= bound.width && minHeight <= bound.height);
   }
 
   @Override

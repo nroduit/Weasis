@@ -15,254 +15,144 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Color;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
+import org.weasis.core.ui.print.Paper;
+import org.weasis.core.ui.print.TextSize;
 import org.weasis.core.ui.util.PrintOptions;
-import org.weasis.core.ui.util.PrintOptions.DotPerInches;
-import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 
 /**
- * Tests {@link DicomPrintOptions} — the carrier for DICOM Print SCU N-CREATE attributes (Basic Film
- * Box / Image Box, DICOM PS3.4 §H). The defaults here drive every printed film: a regression to the
- * wrong density / smoothing / orientation silently produces non-diagnostic prints.
+ * The carrier of the DICOM Print attributes (film session and film box, PS3.3 C.13): its defaults
+ * drive every printed film, so they are pinned here.
  */
+@DisplayNameGeneration(ReplaceUnderscores.class)
 class DicomPrintOptionsTest {
 
-  // -- Inheritance ----------------------------------------------------------
-
   @Test
-  void extendsPrintOptions() {
+  void extends_the_page_options() {
     assertInstanceOf(PrintOptions.class, new DicomPrintOptions());
   }
 
-  // -- Default values (pinned against drift) -------------------------------
-
   @Test
-  void defaults_filmAttributesMatchClass() {
+  void defaults_are_the_film_standard_values() {
     DicomPrintOptions opts = new DicomPrintOptions();
-
     assertAll(
-        () -> assertEquals("BLUE FILM", opts.getMediumType(), "medium type"),
-        () -> assertEquals("LOW", opts.getPriority(), "priority"),
-        () -> assertEquals("MAGAZINE", opts.getFilmDestination(), "film destination"),
-        () -> assertEquals(1, opts.getNumOfCopies(), "default copy count"),
-        () -> assertEquals("PORTRAIT", opts.getFilmOrientation(), "film orientation"),
-        () -> assertEquals(FilmSize.IN8X10, opts.getFilmSizeId(), "film size"),
-        () ->
-            assertEquals(
-                "STANDARD\\1,1", opts.getImageDisplayFormat(), "image display format 1x1 grid"),
-        () -> assertEquals("CUBIC", opts.getMagnificationType(), "cubic interpolation by default"),
-        () -> assertEquals("MEDIUM", opts.getSmoothingType(), "medium smoothing"),
-        () -> assertEquals("WHITE", opts.getBorderDensity(), "white border"),
-        () -> assertEquals("NO", opts.getTrim(), "no trim"),
-        () -> assertEquals("BLACK", opts.getEmptyDensity(), "empty cell density"),
-        () -> assertEquals(0, opts.getMinDensity(), "min density floor"),
-        () -> assertEquals(255, opts.getMaxDensity(), "max density ceiling"),
-        () -> assertFalse(opts.isPrintOnlySelectedView(), "default: print all visible views"));
+        () -> assertEquals("BLUE FILM", opts.getMediumType()),
+        () -> assertEquals("LOW", opts.getPriority()),
+        () -> assertEquals("MAGAZINE", opts.getFilmDestination()),
+        () -> assertEquals(1, opts.getNumOfCopies()),
+        () -> assertEquals("PORTRAIT", opts.getFilmOrientation()),
+        () -> assertEquals(Paper.IN_8X10, opts.getFilmSizeId()),
+        () -> assertEquals("STANDARD\\1,1", opts.getImageDisplayFormat()),
+        () -> assertEquals("CUBIC", opts.getMagnificationType()),
+        () -> assertEquals("MEDIUM", opts.getSmoothingType()),
+        () -> assertEquals("WHITE", opts.getBorderDensity()),
+        () -> assertEquals("NO", opts.getTrim()),
+        () -> assertEquals("BLACK", opts.getEmptyDensity()),
+        () -> assertEquals(0, opts.getMinDensity()),
+        () -> assertEquals(255, opts.getMaxDensity()),
+        () -> assertEquals(150, opts.getFilmResolution()),
+        () -> assertTrue(opts.isShowingAnnotations()),
+        () -> assertFalse(opts.isColorPrint(), "film is gray unless asked"));
   }
 
   @Test
-  void defaults_inheritedAnnotationFlagsAreSafe() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
+  void film_sizes_are_the_papers_with_a_dicom_id() {
     assertAll(
-        () ->
-            assertTrue(
-                opts.isShowingAnnotations(),
-                "annotations on by default (DEF_SHOW_ANNOTATIONS = true)"),
-        () ->
-            assertFalse(
-                opts.isColorPrint(),
-                "DICOM print defaults to grayscale (DEF_COLOR = false), even though local print"
-                    + " defaults to colour"),
-        () -> assertEquals(DotPerInches.DPI_150, opts.getDpi(), "150 DPI default"));
+        () -> assertTrue(DicomPrintOptions.filmSizes().contains(Paper.IN_14X17)),
+        () -> assertTrue(DicomPrintOptions.filmSizes().contains(Paper.A4)),
+        () -> assertFalse(DicomPrintOptions.filmSizes().contains(Paper.A5)),
+        () -> assertTrue(DicomPrintOptions.filmSizes().stream().allMatch(Paper::hasFilmSizeId)));
   }
 
   @Test
-  void defaultConstants_areTheExpectedFilmStandardValues() {
-    // Pin the public DEF_* constants — they're referenced from other modules; renaming/changing
-    // them silently propagates to callers.
+  void a_stored_film_size_is_a_dicom_id_or_the_name_of_the_old_enum() {
+    Paper def = Paper.IN_8X10;
     assertAll(
-        () -> assertEquals("BLUE FILM", DicomPrintOptions.DEF_MEDIUM_TYPE),
-        () -> assertEquals("LOW", DicomPrintOptions.DEF_PRIORITY),
-        () -> assertEquals("MAGAZINE", DicomPrintOptions.DEF_FILM_DEST),
-        () -> assertEquals(1, DicomPrintOptions.DEF_NUM_COPIES),
-        () -> assertFalse(DicomPrintOptions.DEF_COLOR),
-        () -> assertEquals("PORTRAIT", DicomPrintOptions.DEF_FILM_ORIENTATION),
-        () -> assertEquals("STANDARD\\1,1", DicomPrintOptions.DEF_IMG_DISP_FORMAT),
-        () -> assertEquals(FilmSize.IN8X10, DicomPrintOptions.DEF_FILM_SIZE),
-        () -> assertEquals("CUBIC", DicomPrintOptions.DEF_MAGNIFICATION_TYPE),
-        () -> assertEquals("MEDIUM", DicomPrintOptions.DEF_SMOOTHING_TYPE),
-        () -> assertEquals("WHITE", DicomPrintOptions.DEF_BORDER_DENSITY),
-        () -> assertEquals("NO", DicomPrintOptions.DEF_TRIM),
-        () -> assertEquals("BLACK", DicomPrintOptions.DEF_EMPTY_DENSITY),
-        () -> assertTrue(DicomPrintOptions.DEF_SHOW_ANNOTATIONS),
-        () -> assertFalse(DicomPrintOptions.DEF_PRINT_SEL_VIEW),
-        () -> assertEquals(DotPerInches.DPI_150, DicomPrintOptions.DEF_DPI));
+        () -> assertEquals(Paper.IN_14X17, DicomPrintOptions.filmSizeOf("14INX17IN", def)),
+        () -> assertEquals(Paper.IN_14X17, DicomPrintOptions.filmSizeOf("IN14X17", def)),
+        () -> assertEquals(Paper.LETTER, DicomPrintOptions.filmSizeOf("IN8_5X11", def)),
+        () -> assertEquals(Paper.CM_24X30, DicomPrintOptions.filmSizeOf("CM24X30", def)),
+        () -> assertEquals(Paper.A4, DicomPrintOptions.filmSizeOf("A4", def)),
+        () -> assertEquals(def, DicomPrintOptions.filmSizeOf("UNKNOWN", def)),
+        () -> assertEquals(def, DicomPrintOptions.filmSizeOf(null, def)),
+        () -> assertEquals(def, DicomPrintOptions.filmSizeOf(" ", def)));
   }
 
-  // -- Setter round-trips ---------------------------------------------------
+  @Test
+  void a_stored_film_resolution_is_a_number_or_the_name_of_the_old_enum() {
+    assertAll(
+        () -> assertEquals(300, DicomPrintOptions.filmResolutionOf("300", 150)),
+        () -> assertEquals(300, DicomPrintOptions.filmResolutionOf("DPI_300", 150)),
+        () -> assertEquals(150, DicomPrintOptions.filmResolutionOf("DPI_X", 150)),
+        () -> assertEquals(150, DicomPrintOptions.filmResolutionOf("-5", 150)),
+        () -> assertEquals(150, DicomPrintOptions.filmResolutionOf(null, 150)));
+  }
 
   @Test
-  void setMediumType_roundTrip() {
+  void setters_round_trip_and_null_film_size_falls_back() {
     DicomPrintOptions opts = new DicomPrintOptions();
-
     opts.setMediumType("CLEAR FILM");
-
-    assertEquals("CLEAR FILM", opts.getMediumType());
-  }
-
-  @Test
-  void setPriority_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
     opts.setPriority("HIGH");
-
-    assertEquals("HIGH", opts.getPriority());
-  }
-
-  @Test
-  void setFilmDestination_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
     opts.setFilmDestination("PROCESSOR");
-
-    assertEquals("PROCESSOR", opts.getFilmDestination());
-  }
-
-  @Test
-  void setNumOfCopies_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
     opts.setNumOfCopies(5);
-
-    assertEquals(5, opts.getNumOfCopies());
-  }
-
-  @Test
-  void setFilmOrientation_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
     opts.setFilmOrientation("LANDSCAPE");
-
-    assertEquals("LANDSCAPE", opts.getFilmOrientation());
-  }
-
-  @Test
-  void setFilmSizeId_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
-    opts.setFilmSizeId(FilmSize.A4);
-
-    assertEquals(FilmSize.A4, opts.getFilmSizeId());
-  }
-
-  @Test
-  void setFilmSizeId_nullCoercesToDefault() {
-    // Critical: a null film-size preference must NOT propagate as null — downstream code uses
-    // FilmSize.getWidth(dpi) which would NPE. The setter falls back to 8×10 inch (the
-    // standard medical-imaging film size).
-    DicomPrintOptions opts = new DicomPrintOptions();
-    opts.setFilmSizeId(FilmSize.A4);
-
-    opts.setFilmSizeId(null);
-
-    assertEquals(FilmSize.IN8X10, opts.getFilmSizeId());
-  }
-
-  @Test
-  void setImageDisplayFormat_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
+    opts.setFilmSizeId(Paper.A4);
     opts.setImageDisplayFormat("STANDARD\\2,3");
-
-    assertEquals("STANDARD\\2,3", opts.getImageDisplayFormat());
-  }
-
-  @Test
-  void setMagnificationType_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
     opts.setMagnificationType("REPLICATE");
-
-    assertEquals("REPLICATE", opts.getMagnificationType());
-  }
-
-  @Test
-  void setSmoothingType_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
     opts.setSmoothingType("SHARP");
-
-    assertEquals("SHARP", opts.getSmoothingType());
-  }
-
-  @Test
-  void setBorderDensity_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
     opts.setBorderDensity("BLACK");
-
-    assertEquals("BLACK", opts.getBorderDensity());
-  }
-
-  @Test
-  void setTrim_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
     opts.setTrim("YES");
-
-    assertEquals("YES", opts.getTrim());
-  }
-
-  @Test
-  void setEmptyDensity_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
     opts.setEmptyDensity("WHITE");
-
-    assertEquals("WHITE", opts.getEmptyDensity());
-  }
-
-  @Test
-  void setMinAndMaxDensity_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
     opts.setMinDensity(10);
     opts.setMaxDensity(245);
+    opts.setFilmResolution(300);
+    assertAll(
+        () -> assertEquals("CLEAR FILM", opts.getMediumType()),
+        () -> assertEquals("HIGH", opts.getPriority()),
+        () -> assertEquals("PROCESSOR", opts.getFilmDestination()),
+        () -> assertEquals(5, opts.getNumOfCopies()),
+        () -> assertEquals("LANDSCAPE", opts.getFilmOrientation()),
+        () -> assertEquals(Paper.A4, opts.getFilmSizeId()),
+        () -> assertEquals("STANDARD\\2,3", opts.getImageDisplayFormat()),
+        () -> assertEquals("REPLICATE", opts.getMagnificationType()),
+        () -> assertEquals("SHARP", opts.getSmoothingType()),
+        () -> assertEquals("BLACK", opts.getBorderDensity()),
+        () -> assertEquals("YES", opts.getTrim()),
+        () -> assertEquals("WHITE", opts.getEmptyDensity()),
+        () -> assertEquals(10, opts.getMinDensity()),
+        () -> assertEquals(245, opts.getMaxDensity()),
+        () -> assertEquals(300, opts.getFilmResolution()));
+
+    opts.setFilmSizeId(null);
+    opts.setFilmResolution(0);
+    assertAll(
+        () -> assertEquals(Paper.IN_8X10, opts.getFilmSizeId()),
+        () -> assertEquals(150, opts.getFilmResolution()));
+  }
+
+  @Test
+  void a_copy_is_independent_of_its_source() {
+    DicomPrintOptions source = new DicomPrintOptions();
+    source.setColorPrint(true);
+    source.setFilmSizeId(Paper.A3);
+    source.setFilmResolution(300);
+    source.setTextSize(TextSize.LARGE);
+    source.setBackground(Color.WHITE);
+    source.setMediumType("PAPER");
+
+    DicomPrintOptions copy = source.copy();
+    copy.setMediumType("CLEAR FILM");
+    copy.setColorPrint(false);
 
     assertAll(
-        () -> assertEquals(10, opts.getMinDensity()),
-        () -> assertEquals(245, opts.getMaxDensity()));
-  }
-
-  @Test
-  void setPrintOnlySelectedView_roundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
-    opts.setPrintOnlySelectedView(true);
-    assertTrue(opts.isPrintOnlySelectedView());
-
-    opts.setPrintOnlySelectedView(false);
-    assertFalse(opts.isPrintOnlySelectedView());
-  }
-
-  // -- Inherited setters ---------------------------------------------------
-
-  @Test
-  void setShowingAnnotations_inheritedRoundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
-    opts.setShowingAnnotations(false);
-
-    assertFalse(opts.isShowingAnnotations(), "inherited setter still works");
-  }
-
-  @Test
-  void setColorPrint_inheritedRoundTrip() {
-    DicomPrintOptions opts = new DicomPrintOptions();
-
-    opts.setColorPrint(true);
-
-    assertTrue(opts.isColorPrint());
+        () -> assertEquals(Paper.A3, copy.getFilmSizeId()),
+        () -> assertEquals(300, copy.getFilmResolution()),
+        () -> assertEquals(TextSize.LARGE, copy.getTextSize()),
+        () -> assertEquals(Color.WHITE, copy.getBackground()),
+        () -> assertEquals("PAPER", source.getMediumType()),
+        () -> assertTrue(source.isColorPrint()));
   }
 }

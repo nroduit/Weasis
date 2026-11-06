@@ -97,7 +97,7 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
         fontMetrics.stringWidth(
                 org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.msg_outside_levels"))
             * 2;
-    return visible && minSize <= bound.width && minSize / 2 <= bound.height;
+    return visible && fitsMinimumSize(bound, minSize, minSize / 2);
   }
 
   @Override

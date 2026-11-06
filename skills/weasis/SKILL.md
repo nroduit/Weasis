@@ -24,8 +24,8 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.17 and protocol
-1, and answers these namespaces: color, config, dicom, explorer, hp, image, mpr, redact, script, state, subtraction, view2d, view3d, weasis, workspace.
+This instance runs Weasis development with command API 2.24 and protocol
+1, and answers these namespaces: color, config, dicom, events, explorer, hp, image, mpr, print, redact, script, state, subtraction, view2d, view3d, weasis, workspace.
 
 Check the connection first:
 
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.17 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.24 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -176,9 +176,19 @@ line naming the current spelling. Use the current one everywhere.
    `--canvas` shows the selected pane alone on the monitor, as F11 does, hiding the menu, the
    toolbar and the side panels until `--canvas --off`. `workspace:move --view <id> --screen
    <role>` moves the window of a view (the main window too) to the screen of that role.
+8. **Print** a layout, a pane or a series: `print:page` (the selected viewer, or `--view <id>`,
+   `--pane 2` for one pane; `--series --grid 4x3 --step 2 --frames 1-40` for the frames of the
+   pane's series, a page per grid; `--to <destination>`, `--paper A4 --orientation landscape
+   --text normal --background white --header on`) returns a job handle, the number of pages, the
+   page in millimeters and the figures of a cell (size, image pixels per inch of paper, magnified
+   or reduced). `print:render --job <h> --page 2 --out /tmp/weasis/page.png --dpi 150` writes a
+   page as the printer would receive it, to look at it before anything is printed.
+   `print:destinations` lists the system printers, the DICOM printers and the PDF file;
+   `print:send --job <h> --to <destination>` prints (`--to file:pdf --out /tmp/weasis/pages.pdf`
+   writes a PDF), when the policy of the instance allows sending.
 9. **Hanging protocols** (engine and built-in library, no UI yet): a study loaded by any verb
    opens already hung by its best protocol (setting `weasis.hp.open`, `PROTOCOL` by default,
-   `FIRST_SERIES` for the old behaviour). `hp:list` shows the protocols of every layer, the
+   `FIRST_SERIES` for the old behavior). `hp:list` shows the protocols of every layer, the
    built-in ones cover CT, MR, radiography, mammography, ultrasound, angiography, PET and a
    last-resort one cell per series;
    `hp:match [--study <uid>]` returns the protocols that apply to a loaded study, best first,

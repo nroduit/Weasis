@@ -12,10 +12,11 @@ package org.weasis.core.ui.util;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-import org.weasis.core.ui.util.PrintOptions.DotPerInches;
+import org.weasis.core.ui.print.TextSize;
 
 /**
  * Tests {@link PrintOptions} — the configuration carrier for the local-print path. A regression in
@@ -27,14 +28,31 @@ class PrintOptionsTest {
   // -- Constructor defaults -------------------------------------------------
 
   @Test
-  void constructor_defaultsToShowAnnotationsCenterColorAndDpi150() {
+  void constructor_defaultsToShowAnnotationsCenterAndColor() {
     PrintOptions opts = new PrintOptions();
 
     assertAll(
         () -> assertTrue(opts.isShowingAnnotations(), "annotations on by default"),
         () -> assertTrue(opts.isCenter(), "center on by default"),
         () -> assertTrue(opts.isColorPrint(), "color-print on by default"),
-        () -> assertEquals(DotPerInches.DPI_150, opts.getDpi(), "DPI defaults to 150"));
+        () -> assertNull(opts.getTextSize(), "text size follows the cell width by default"),
+        () -> assertEquals(java.awt.Color.WHITE, opts.getBackground(), "paper is white"),
+        () -> assertNull(opts.getBorder(), "no cell border by default"));
+  }
+
+  @Test
+  void textSize_background_and_border_roundTrip() {
+    PrintOptions opts = new PrintOptions();
+    opts.setTextSize(TextSize.LARGE);
+    opts.setBackground(java.awt.Color.BLACK);
+    opts.setBorder(java.awt.Color.WHITE);
+    assertAll(
+        () -> assertEquals(TextSize.LARGE, opts.getTextSize()),
+        () -> assertEquals(java.awt.Color.BLACK, opts.getBackground()),
+        () -> assertEquals(java.awt.Color.WHITE, opts.getBorder()));
+
+    opts.setBackground(null);
+    assertEquals(java.awt.Color.WHITE, opts.getBackground(), "a null background means paper");
   }
 
   // -- Setter round-trips ---------------------------------------------------
@@ -69,66 +87,5 @@ class PrintOptionsTest {
 
     opts.setColorPrint(true);
     assertTrue(opts.isColorPrint());
-  }
-
-  @Test
-  void setDpi_roundTripForEveryEnumValue() {
-    PrintOptions opts = new PrintOptions();
-    for (DotPerInches dpi : DotPerInches.values()) {
-      opts.setDpi(dpi);
-      assertEquals(dpi, opts.getDpi(), "round-trip for " + dpi);
-    }
-  }
-
-  @Test
-  void setDpi_nullCoercesToDefault150() {
-    // Critical: a null preference value must NOT propagate as a null DPI — every downstream
-    // dimension calculation would NPE otherwise. The setter coerces to 150 DPI as a safe
-    // fallback.
-    PrintOptions opts = new PrintOptions();
-    opts.setDpi(DotPerInches.DPI_300);
-
-    opts.setDpi(null);
-
-    assertEquals(DotPerInches.DPI_150, opts.getDpi());
-  }
-
-  // -- DotPerInches enum ----------------------------------------------------
-
-  @Test
-  void dotPerInches_valuesMatchEnumNames() {
-    assertAll(
-        () -> assertEquals(100, DotPerInches.DPI_100.getDpi()),
-        () -> assertEquals(150, DotPerInches.DPI_150.getDpi()),
-        () -> assertEquals(200, DotPerInches.DPI_200.getDpi()),
-        () -> assertEquals(250, DotPerInches.DPI_250.getDpi()),
-        () -> assertEquals(300, DotPerInches.DPI_300.getDpi()));
-  }
-
-  @Test
-  void dotPerInches_toStringIsTheNumericValue() {
-    // The UI combo box uses toString() to render the value. A regression to "DPI_150" would
-    // show ugly raw enum names in the print dialog.
-    assertEquals("150", DotPerInches.DPI_150.toString());
-  }
-
-  @Test
-  void dotPerInches_getInstanceResolvesKnownName() {
-    assertEquals(DotPerInches.DPI_300, DotPerInches.getInstance("DPI_300", DotPerInches.DPI_150));
-  }
-
-  @Test
-  void dotPerInches_getInstanceUnknownReturnsDefault() {
-    assertEquals(DotPerInches.DPI_200, DotPerInches.getInstance("NOT_A_DPI", DotPerInches.DPI_200));
-  }
-
-  @Test
-  void dotPerInches_getInstanceNullReturnsDefault() {
-    assertEquals(DotPerInches.DPI_200, DotPerInches.getInstance(null, DotPerInches.DPI_200));
-  }
-
-  @Test
-  void dotPerInches_getInstanceBlankReturnsDefault() {
-    assertEquals(DotPerInches.DPI_200, DotPerInches.getInstance("   ", DotPerInches.DPI_200));
   }
 }

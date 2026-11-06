@@ -24,7 +24,6 @@ import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
-import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.opencv.op.ImageConversion;
 
 /**
@@ -129,10 +128,10 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
             originViewModel.getModelOffsetY(),
             originViewModel.getViewScale());
         exportImage.setBounds(canvas.getX(), canvas.getY(), canvas.getWidth(), canvas.getHeight());
-        boolean wasBuffered = ImagePrint.disableDoubleBuffering(exportImage);
+        boolean wasBuffered = ExportImage.disableDoubleBuffering(exportImage);
         exportImage.zoom(originViewModel.getViewScale());
         exportImage.draw(g);
-        ImagePrint.restoreDoubleBuffering(exportImage, wasBuffered);
+        ExportImage.restoreDoubleBuffering(exportImage, wasBuffered);
         g.dispose();
       }
     } finally {
@@ -175,10 +174,10 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
       Graphics2D g = img.createGraphics();
       Point[] corners;
       try {
-        boolean wasBuffered = ImagePrint.disableDoubleBuffering(exportImage);
+        boolean wasBuffered = ExportImage.disableDoubleBuffering(exportImage);
         exportImage.zoom(1.0);
         exportImage.draw(g);
-        ImagePrint.restoreDoubleBuffering(exportImage, wasBuffered);
+        ExportImage.restoreDoubleBuffering(exportImage, wasBuffered);
         corners =
             new Point[] {
               exportImage.getMouseCoordinatesFromImage(modelArea.getMinX(), modelArea.getMinY()),

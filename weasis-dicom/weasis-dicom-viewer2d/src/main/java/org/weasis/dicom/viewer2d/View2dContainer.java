@@ -96,7 +96,7 @@ import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.exp.ExportToolBar;
 import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.main.DicomExplorer;
-import org.weasis.dicom.explorer.print.DicomPrintDialog;
+import org.weasis.dicom.explorer.print.DicomPrintDestination;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.HangingWhyTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
@@ -916,9 +916,12 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             null,
             event -> {
               ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
-              DicomPrintDialog<DicomImageElement> dialog =
-                  new DicomPrintDialog<>(
-                      SwingUtilities.getWindowAncestor(View2dContainer.this), title2, eventManager);
+              PrintDialog<DicomImageElement> dialog =
+                  new PrintDialog<>(
+                      SwingUtilities.getWindowAncestor(View2dContainer.this),
+                      title2,
+                      eventManager,
+                      DicomPrintDestination.ID_PREFIX);
               ColorLayerUI.showCenterScreen(dialog, layer);
             });
     actions.add(printStd2);

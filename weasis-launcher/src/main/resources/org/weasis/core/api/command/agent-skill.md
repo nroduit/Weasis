@@ -123,8 +123,18 @@ line naming the current spelling. Use the current one everywhere.
    `workspace:stack`, `workspace:maximize`, `workspace:save --out layout.json` and
    `workspace:load --file layout.json`. `workspace:list` shows, for each view, its grid, its
    synchronization and what every pane holds.
+8. **Print** a layout, a pane or a series: `print:page` (the selected viewer, or `--view <id>`,
+   `--pane 2` for one pane; `--series --grid 4x3 --step 2 --frames 1-40` for the frames of the
+   pane's series, a page per grid; `--to <destination>`, `--paper A4 --orientation landscape
+   --text normal --background white --header on`) returns a job handle, the number of pages, the
+   page in millimeters and the figures of a cell (size, image pixels per inch of paper, magnified
+   or reduced). `print:render --job <h> --page 2 --out /tmp/weasis/page.png --dpi 150` writes a
+   page as the printer would receive it, to look at it before anything is printed.
+   `print:destinations` lists the system printers, the DICOM printers and the PDF file;
+   `print:send --job <h> --to <destination>` prints (`--to file:pdf --out /tmp/weasis/pages.pdf`
+   writes a PDF), when the policy of the instance allows sending.
 <!--if:subtraction-->
-8. **Subtract** a pre-contrast series from its post-contrast acquisition. `subtraction:preview`
+9. **Subtract** a pre-contrast series from its post-contrast acquisition. `subtraction:preview`
    on the pane of the post-contrast series shows the difference live, slice by slice, without
    building anything (`--mask <uid>` chooses the mask, else the series without contrast agent is
    proposed; `--factor 0.8` keeps part of the anatomy; `--off` puts the plain series back).
@@ -139,7 +149,7 @@ line naming the current spelling. Use the current one everywhere.
    The result is a series: scroll, window, measure and capture it like any other.
 <!--endif-->
 <!--if:view3d-->
-9. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
+10. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
    and still have no usable 3D.
 <!--endif-->

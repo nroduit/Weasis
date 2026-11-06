@@ -18,9 +18,7 @@ import org.weasis.core.api.media.data.AttributeSource;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.XmlAttributeSource;
 import org.weasis.core.api.util.JsonUtil;
-import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.dicom.codec.TransferSyntax;
-import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 import org.weasis.dicom.explorer.print.DicomPrintOptions;
 
 public class DicomPrintNode extends DefaultDicomNode {
@@ -42,7 +40,9 @@ public class DicomPrintNode extends DefaultDicomNode {
   private static final String T_TRIM = "trim"; // NON-NLS
   private static final String T_EMPTY_DENSITY = "emptyDensity";
   private static final String T_SHOW_ANNOTATIONS = "showingAnnotations";
-  private static final String T_PRINT_SEL_VIEW = "printOnlySelectedView";
+  private static final String T_FILM_RESOLUTION = "filmResolution";
+
+  /** The 4.x name of the film resolution, an enum constant such as {@code DPI_150}. */
   private static final String T_DPI = "dpi"; // NON-NLS
 
   private final DicomPrintOptions printOptions;
@@ -81,7 +81,7 @@ public class DicomPrintNode extends DefaultDicomNode {
     p.add(T_NUM_COPIES, printOptions.getNumOfCopies());
     p.add(T_COLOR, printOptions.isColorPrint());
     JsonUtil.addIfPresent(p, T_FILM_ORIENTATION, printOptions.getFilmOrientation());
-    p.add(T_FILM_SIZE, printOptions.getFilmSizeId().name());
+    JsonUtil.addIfPresent(p, T_FILM_SIZE, printOptions.getFilmSizeId().filmSizeId());
     JsonUtil.addIfPresent(p, T_IMG_DISP_FORMAT, printOptions.getImageDisplayFormat());
     JsonUtil.addIfPresent(p, T_MAGNIFICATION_TYPE, printOptions.getMagnificationType());
     JsonUtil.addIfPresent(p, T_SMOOTHING_TYPE, printOptions.getSmoothingType());
@@ -89,8 +89,7 @@ public class DicomPrintNode extends DefaultDicomNode {
     JsonUtil.addIfPresent(p, T_TRIM, printOptions.getTrim());
     JsonUtil.addIfPresent(p, T_EMPTY_DENSITY, printOptions.getEmptyDensity());
     p.add(T_SHOW_ANNOTATIONS, printOptions.isShowingAnnotations());
-    p.add(T_PRINT_SEL_VIEW, printOptions.isPrintOnlySelectedView());
-    p.add(T_DPI, printOptions.getDpi().name());
+    p.add(T_FILM_RESOLUTION, printOptions.getFilmResolution());
     b.add(T_PRINT, p);
   }
 
@@ -113,7 +112,8 @@ public class DicomPrintNode extends DefaultDicomNode {
     options.setFilmOrientation(
         p.getString(T_FILM_ORIENTATION, DicomPrintOptions.DEF_FILM_ORIENTATION));
     options.setFilmSizeId(
-        FilmSize.getInstance(p.getString(T_FILM_SIZE, null), DicomPrintOptions.DEF_FILM_SIZE));
+        DicomPrintOptions.filmSizeOf(
+            p.getString(T_FILM_SIZE, null), DicomPrintOptions.DEF_FILM_SIZE));
     options.setImageDisplayFormat(
         p.getString(T_IMG_DISP_FORMAT, DicomPrintOptions.DEF_IMG_DISP_FORMAT));
     options.setMagnificationType(
@@ -124,10 +124,12 @@ public class DicomPrintNode extends DefaultDicomNode {
     options.setEmptyDensity(p.getString(T_EMPTY_DENSITY, DicomPrintOptions.DEF_EMPTY_DENSITY));
     options.setShowingAnnotations(
         JsonUtil.getBoolean(p, T_SHOW_ANNOTATIONS, DicomPrintOptions.DEF_SHOW_ANNOTATIONS));
-    options.setPrintOnlySelectedView(
-        JsonUtil.getBoolean(p, T_PRINT_SEL_VIEW, DicomPrintOptions.DEF_PRINT_SEL_VIEW));
-    options.setDpi(
-        PrintOptions.DotPerInches.getInstance(p.getString(T_DPI, null), DicomPrintOptions.DEF_DPI));
+    options.setFilmResolution(
+        JsonUtil.getInt(
+            p,
+            T_FILM_RESOLUTION,
+            DicomPrintOptions.filmResolutionOf(
+                p.getString(T_DPI, null), DicomPrintOptions.DEF_FILM_RESOLUTION)));
     return node;
   }
 
@@ -156,7 +158,7 @@ public class DicomPrintNode extends DefaultDicomNode {
         TagUtil.getTagAttribute(
             source, T_FILM_ORIENTATION, DicomPrintOptions.DEF_FILM_ORIENTATION));
     node.printOptions.setFilmSizeId(
-        FilmSize.getInstance(
+        DicomPrintOptions.filmSizeOf(
             xmler.getAttributeValue(null, T_FILM_SIZE), DicomPrintOptions.DEF_FILM_SIZE));
     node.printOptions.setImageDisplayFormat(
         TagUtil.getTagAttribute(source, T_IMG_DISP_FORMAT, DicomPrintOptions.DEF_IMG_DISP_FORMAT));
@@ -174,12 +176,9 @@ public class DicomPrintNode extends DefaultDicomNode {
     node.printOptions.setShowingAnnotations(
         TagUtil.getBooleanTagAttribute(
             source, T_SHOW_ANNOTATIONS, DicomPrintOptions.DEF_SHOW_ANNOTATIONS));
-    node.printOptions.setPrintOnlySelectedView(
-        TagUtil.getBooleanTagAttribute(
-            source, T_PRINT_SEL_VIEW, DicomPrintOptions.DEF_PRINT_SEL_VIEW));
-    node.printOptions.setDpi(
-        PrintOptions.DotPerInches.getInstance(
-            xmler.getAttributeValue(null, T_DPI), DicomPrintOptions.DEF_DPI));
+    node.printOptions.setFilmResolution(
+        DicomPrintOptions.filmResolutionOf(
+            xmler.getAttributeValue(null, T_DPI), DicomPrintOptions.DEF_FILM_RESOLUTION));
 
     return node;
   }

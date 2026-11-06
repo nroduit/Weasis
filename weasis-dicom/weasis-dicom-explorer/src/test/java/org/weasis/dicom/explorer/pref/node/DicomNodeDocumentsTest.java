@@ -39,13 +39,12 @@ import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LayeredEntries.Merged;
 import org.weasis.core.api.util.LegacyConverters;
 import org.weasis.core.api.util.ListDocument;
-import org.weasis.core.ui.util.PrintOptions.DotPerInches;
+import org.weasis.core.ui.print.Paper;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.Documents;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.Type;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode.WebType;
-import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 import org.weasis.dicom.explorer.print.DicomPrintOptions;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
@@ -176,7 +175,7 @@ class DicomNodeDocumentsTest {
         () -> assertEquals(2, print.getInt("numberOfCopies")),
         () -> assertTrue(print.getBoolean("colorPrint")),
         () -> assertEquals("LANDSCAPE", print.getString("filmOrientation")),
-        () -> assertEquals("IN14X17", print.getString("filmSizeId")),
+        () -> assertEquals("14INX17IN", print.getString("filmSizeId")),
         () -> assertEquals("STANDARD\\2,2", print.getString("imageDisplayFormat")),
         () -> assertEquals("BILINEAR", print.getString("magnificationType")),
         () -> assertEquals("SHARP", print.getString("smoothingType")),
@@ -184,8 +183,7 @@ class DicomNodeDocumentsTest {
         () -> assertEquals("YES", print.getString("trim")),
         () -> assertEquals("WHITE", print.getString("emptyDensity")),
         () -> assertFalse(print.getBoolean("showingAnnotations")),
-        () -> assertTrue(print.getBoolean("printOnlySelectedView")),
-        () -> assertEquals("DPI_300", print.getString("dpi")));
+        () -> assertEquals(300, print.getInt("filmResolution")));
 
     // And the JSON reads back into the same options
     DicomPrintNode node = (DicomPrintNode) AbstractDicomNode.fromJson(printer, Type.PRINTER);
@@ -194,10 +192,9 @@ class DicomNodeDocumentsTest {
         () -> assertEquals("CLEAR FILM", options.getMediumType()),
         () -> assertEquals(2, options.getNumOfCopies()),
         () -> assertTrue(options.isColorPrint()),
-        () -> assertEquals(FilmSize.IN14X17, options.getFilmSizeId()),
+        () -> assertEquals(Paper.IN_14X17, options.getFilmSizeId()),
         () -> assertFalse(options.isShowingAnnotations()),
-        () -> assertTrue(options.isPrintOnlySelectedView()),
-        () -> assertEquals(DotPerInches.DPI_300, options.getDpi()));
+        () -> assertEquals(300, options.getFilmResolution()));
   }
 
   @Test

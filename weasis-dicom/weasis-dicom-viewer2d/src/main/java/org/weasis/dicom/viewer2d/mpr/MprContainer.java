@@ -73,7 +73,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.exp.ExportToolBar;
 import org.weasis.dicom.explorer.imp.ImportToolBar;
-import org.weasis.dicom.explorer.print.DicomPrintDialog;
+import org.weasis.dicom.explorer.print.DicomPrintDestination;
 import org.weasis.dicom.viewer2d.DcmHeaderToolBar;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.LutToolBar;
@@ -528,9 +528,12 @@ public class MprContainer extends DicomViewerPlugin
             null,
             event -> {
               ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MprContainer.this);
-              DicomPrintDialog<?> dialog =
-                  new DicomPrintDialog<>(
-                      SwingUtilities.getWindowAncestor(MprContainer.this), title2, eventManager);
+              PrintDialog<DicomImageElement> dialog =
+                  new PrintDialog<>(
+                      SwingUtilities.getWindowAncestor(MprContainer.this),
+                      title2,
+                      eventManager,
+                      DicomPrintDestination.ID_PREFIX);
               ColorLayerUI.showCenterScreen(dialog, layer);
             });
     actions.add(printStd2);

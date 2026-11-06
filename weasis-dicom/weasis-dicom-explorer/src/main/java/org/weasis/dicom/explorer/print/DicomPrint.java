@@ -9,16 +9,11 @@
  */
 package org.weasis.dicom.explorer.print;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
@@ -28,7 +23,7 @@ import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
-import java.util.List;
+import java.util.Comparator;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
@@ -45,367 +40,163 @@ import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.layout.MigCell;
-import org.weasis.core.api.gui.layout.MigLayoutModel;
-import org.weasis.core.api.image.AffineTransformOp;
-import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.editor.image.ExportImage;
+import org.weasis.core.ui.print.PageRenderer;
+import org.weasis.core.ui.print.PageSource;
+import org.weasis.core.ui.print.PageSpec;
+import org.weasis.core.ui.print.Paper;
+import org.weasis.core.ui.print.PrintResolution;
 import org.weasis.core.ui.util.ExportLayout;
-import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.core.ui.util.PrintOptions;
-import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomPrintNode;
-import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 import org.weasis.dicom.param.DeviceOpService;
-import org.weasis.opencv.data.PlanarImage;
 
+/**
+ * The DICOM printer sink: the page is rendered as one film raster at the film resolution of the
+ * node and sent as the single image box of a film box (Basic Grayscale or Color Print Management,
+ * PS3.4 H), the printer scaling it to its own matrix.
+ */
 public class DicomPrint {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrint.class);
 
-  private final DicomPrintNode dcmNode;
-  private final DicomPrintOptions printOptions;
-  private Interpolation interpolation;
-  private double placeholderX;
-  private double placeholderY;
+  private static final String DEFAULT_CALLING_AET = "WEASIS_AE"; // NON-NLS
 
-  private int lastx;
-  private double lastwx;
-  private double[] lastwy;
-  private double wx;
+  private final DicomPrintNode node;
+  private final DicomPrintOptions options;
 
-  public DicomPrint(DicomPrintNode dicomPrintNode, DicomPrintOptions printOptions) {
-    if (dicomPrintNode == null) {
-      throw new IllegalArgumentException();
+  public DicomPrint(DicomPrintNode node, DicomPrintOptions options) {
+    if (node == null) {
+      throw new IllegalArgumentException("No print node");
     }
-    this.dcmNode = dicomPrintNode;
-    this.printOptions = printOptions == null ? dicomPrintNode.getPrintOptions() : printOptions;
+    this.node = node;
+    this.options = options == null ? node.getPrintOptions() : options;
   }
 
-  public BufferedImage printImage(ExportLayout<? extends ImageElement> layout) {
-    if (layout == null) {
-      return null;
-    }
-
-    BufferedImage bufferedImage = initialize(layout);
-    Graphics2D g2d = (Graphics2D) bufferedImage.getGraphics();
-
-    if (g2d != null) {
-      Color borderColor =
-          "WHITE".equals(printOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK;
-      Color background = "WHITE".equals(printOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK;
-      g2d.setBackground(background);
-      if (!Color.BLACK.equals(background)) {
-        // Change background color
-        g2d.clearRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
-      }
-
-      // Calculate column and row weights from cells
-      Dimension dimGrid = layout.getLayoutModel().getGridSize();
-      double[] columnWeights = calculateColumnWeights(dimGrid);
-      double[] rowWeights = calculateRowWeights(dimGrid);
-
-      final List<MigCell> cells = layout.getLayoutModel().getCells();
-      for (MigCell cell : cells) {
-        if (cell.x() == 0) {
-          wx = 0.0;
-        } else if (lastx < cell.x()) {
-          wx += lastwx;
-        }
-        double wy = lastwy[cell.x()];
-
-        double x = 5 + (placeholderX * wx) + (MathUtil.isEqualToZero(wx) ? 0 : cell.x() * 5);
-        double y = 5 + (placeholderY * wy) + (MathUtil.isEqualToZero(wy) ? 0 : cell.y() * 5);
-        lastx = cell.x();
-        lastwx = columnWeights[cell.x()];
-        for (int i = cell.x(); i < cell.x() + cell.spanX(); i++) {
-          lastwy[i] += rowWeights[cell.y()];
-        }
-
-        // Calculate effective weights for this cell
-        double weightx = calculateCellWeightX(cell, columnWeights);
-        double weighty = calculateCellWeightY(cell, rowWeights);
-        Color border = borderColor.equals(background) ? null : borderColor;
-        Component component = layout.findComponentForCell(cell);
-        if (component instanceof ExportImage<?> image) {
-          drawImage(g2d, image, x, y, weightx, weighty, border);
-        } else if (component instanceof ExportLayout.ExportTiles<?> tiles) {
-          for (ExportLayout.TileBox tile :
-              tiles.layoutTiles(
-                  placeholderX * weightx,
-                  placeholderY * weighty,
-                  MigLayoutModel.DEFAULT_INTERCELL_GAP)) {
-            drawImage(
-                g2d,
-                tile.image(),
-                x + tile.x(),
-                y + tile.y(),
-                tile.width() / placeholderX,
-                tile.height() / placeholderY,
-                border);
-          }
-        }
-      }
-    }
-
-    return bufferedImage;
-  }
-
-  /** Draws an image in its cell, with a border unless {@code border} is {@code null}. */
-  private void drawImage(
-      Graphics2D g2d,
-      ExportImage<? extends ImageElement> image,
-      double cellX,
-      double cellY,
-      double weightx,
-      double weighty,
-      Color border) {
-    Point2D.Double pad = new Point2D.Double(0.0, 0.0);
-    formatImage(image, pad, weightx, weighty);
-    double x = cellX + pad.x;
-    double y = cellY + pad.y;
-
-    boolean wasBuffered = ImagePrint.disableDoubleBuffering(image);
-    // Set us to the upper left corner
-    g2d.translate(x, y);
-    g2d.setClip(image.getBounds());
-    image.draw(g2d);
-    ImagePrint.restoreDoubleBuffering(image, wasBuffered);
-    g2d.translate(-x, -y);
-
-    if (border != null) {
-      g2d.setClip(null);
-      g2d.setColor(border);
-      g2d.setStroke(new BasicStroke(2));
-      Dimension viewSize = image.getSize();
-      g2d.drawRect((int) x - 1, (int) y - 1, viewSize.width + 1, viewSize.height + 1);
+  /** Renders and sends every page as a film, {@code copies} times, from {@code callingNode}. */
+  public void print(
+      PageSource pages, PageSpec spec, PrintOptions page, int copies, DefaultDicomNode callingNode)
+      throws Exception {
+    int count = pages.pageCount();
+    for (int i = 0; i < count; i++) {
+      send(render(pages.page(i), spec, page, i, count), spec, copies, callingNode);
     }
   }
 
-  @SuppressWarnings("SuspiciousNameCombination")
-  private BufferedImage initialize(ExportLayout<? extends ImageElement> layout) {
-    Dimension dimGrid = layout.getLayoutModel().getGridSize();
-    FilmSize filmSize = printOptions.getFilmSizeId();
-    PrintOptions.DotPerInches dpi = printOptions.getDpi();
-
-    int width = filmSize.getWidth(dpi);
-    int height = filmSize.getHeight(dpi);
-
-    if ("LANDSCAPE".equals(printOptions.getFilmOrientation())) {
-      int tmp = width;
-      width = height;
-      height = tmp;
-    }
-
-    String mType = printOptions.getMagnificationType();
-    interpolation = Interpolation.BILINEAR;
-
-    if ("REPLICATE".equals(mType)) {
-      interpolation = Interpolation.NEAREST_NEIGHBOUR;
-    } else if ("CUBIC".equals(mType)) {
-      interpolation = Interpolation.BICUBIC;
-    }
-
-    // Printable size
-    placeholderX = width - (dimGrid.width + 1) * 5.0;
-    placeholderY = height - (dimGrid.height + 1) * 5.0;
-
-    lastx = 0;
-    lastwx = 0.0;
-    lastwy = new double[dimGrid.width];
-    wx = 0.0;
-
-    if (printOptions.isColorPrint()) {
-      return createRGBBufferedImage(width, height);
-    } else {
-      return createGrayBufferedImage(width, height);
-    }
+  /** The film raster: the page at the film resolution of the node, in gray or in color. */
+  public BufferedImage render(
+      ExportLayout<? extends ImageElement> layout, PageSpec spec, PrintOptions page) {
+    return render(layout, spec, page, 0, 1);
   }
 
-  private double[] calculateColumnWeights(Dimension dimGrid) {
-    double[] weights = new double[dimGrid.width];
-    double uniformWeight = 1.0 / dimGrid.width;
-    for (int i = 0; i < dimGrid.width; i++) {
-      weights[i] = uniformWeight;
-    }
-    return weights;
+  /** The film raster of page {@code pageIndex} of {@code pageCount}. */
+  public BufferedImage render(
+      ExportLayout<? extends ImageElement> layout,
+      PageSpec spec,
+      PrintOptions page,
+      int pageIndex,
+      int pageCount) {
+    double pixelsPerMm = PrintResolution.pixelsPerMm(options.getFilmResolution());
+    Dimension size = PageRenderer.pageSize(spec, pixelsPerMm);
+    BufferedImage film =
+        options.isColorPrint()
+            ? createRGBBufferedImage(size.width, size.height)
+            : createGrayBufferedImage(size.width, size.height);
+    return PageRenderer.renderPage(layout, spec, pixelsPerMm, page, film, pageIndex, pageCount);
   }
 
-  private double[] calculateRowWeights(Dimension dimGrid) {
-    double[] weights = new double[dimGrid.height];
-    double uniformWeight = 1.0 / dimGrid.height;
-    for (int i = 0; i < dimGrid.height; i++) {
-      weights[i] = uniformWeight;
-    }
-    return weights;
-  }
-
-  private double calculateCellWeightX(MigCell cell, double[] columnWeights) {
-    double totalWeight = 0.0;
-    for (int i = cell.x(); i < cell.x() + cell.spanX() && i < columnWeights.length; i++) {
-      totalWeight += columnWeights[i];
-    }
-    return totalWeight;
-  }
-
-  private double calculateCellWeightY(MigCell cell, double[] rowWeights) {
-    double totalWeight = 0.0;
-    for (int i = cell.y(); i < cell.y() + cell.spanY() && i < rowWeights.length; i++) {
-      totalWeight += rowWeights[i];
-    }
-    return totalWeight;
-  }
-
-  private void formatImage(
-      ExportImage<? extends ImageElement> image,
-      Point2D.Double pad,
-      double weightx,
-      double weighty) {
-    if (!printOptions.isShowingAnnotations() && image.getInfoLayer().getVisible()) {
-      image.getInfoLayer().setVisible(false);
-    }
-
-    Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound");
-    Point2D originCenterOffset = (Point2D) image.getActionValue("origin.center.offset");
-    Double originZoom = (Double) image.getActionValue("origin.zoom");
-    PlanarImage img = image.getSourceImage();
-    if (img != null && originCenterOffset != null && originZoom != null) {
-      boolean bestfit = originZoom <= 0.0;
-      double canvasWidth;
-      double canvasHeight;
-      if (bestfit || originSize == null) {
-        canvasWidth = img.width() * image.getImage().getRescaleX();
-        canvasHeight = img.height() * image.getImage().getRescaleY();
-      } else {
-        canvasWidth = originSize.getWidth() / originZoom;
-        canvasHeight = originSize.getHeight() / originZoom;
-      }
-      double scaleCanvas =
-          Math.min(placeholderX * weightx / canvasWidth, placeholderY * weighty / canvasHeight);
-
-      // Set the print area in pixel
-      double cw = canvasWidth * scaleCanvas;
-      double ch = canvasHeight * scaleCanvas;
-      image.setSize((int) (cw + 0.5), (int) (ch + 0.5));
-
-      if (printOptions.isCenter()) {
-        pad.x = (placeholderX * weightx - cw) * 0.5;
-        pad.y = (placeholderY * weighty - ch) * 0.5;
-      } else {
-        pad.x = 0.0;
-        pad.y = 0.0;
-      }
-
-      image
-          .getDisplayOpManager()
-          .setParamValue(
-              AffineTransformOp.OP_NAME, AffineTransformOp.P_INTERPOLATION, interpolation);
-      double scaleFactor = Math.min(cw / canvasWidth, ch / canvasHeight);
-      // Resize in best fit window
-      image.zoom(scaleFactor);
-      if (bestfit) {
-        image.center();
-      } else {
-        image.setCenter(originCenterOffset.getX(), originCenterOffset.getY());
-      }
-    }
+  /** The attributes of the film session (PS3.3 C.13.1). */
+  public static Attributes filmSessionAttributes(DicomPrintOptions options, int copies) {
+    Attributes attrs = new Attributes();
+    attrs.setInt(Tag.NumberOfCopies, VR.IS, Math.max(1, copies));
+    attrs.setString(Tag.PrintPriority, VR.CS, options.getPriority());
+    attrs.setString(Tag.MediumType, VR.CS, options.getMediumType());
+    attrs.setString(Tag.FilmDestination, VR.CS, options.getFilmDestination());
+    return attrs;
   }
 
   /**
-   * Creates a BufferedImage with a custom color model that can be used to store 3 channel RGB data
-   * in a byte array data buffer
+   * The attributes of the film box (PS3.3 C.13.3): the film size and orientation of the page, the
+   * density of the empty area from its background, the rest from the options.
    */
-  public static BufferedImage createRGBBufferedImage(int destWidth, int destHeight) {
-    ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
-    ColorModel cm =
-        new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
-    WritableRaster r = cm.createCompatibleWritableRaster(destWidth, destHeight);
-    return new BufferedImage(cm, r, false, null);
+  public static Attributes filmBoxAttributes(DicomPrintOptions options, PageSpec spec) {
+    Attributes attrs = new Attributes();
+    attrs.setString(Tag.FilmSizeID, VR.CS, filmSizeIdOf(spec.paper()));
+    attrs.setString(Tag.FilmOrientation, VR.CS, spec.orientation().name());
+    attrs.setString(Tag.ImageDisplayFormat, VR.ST, options.getImageDisplayFormat());
+    attrs.setString(Tag.MagnificationType, VR.CS, options.getMagnificationType());
+    attrs.setString(Tag.SmoothingType, VR.CS, options.getSmoothingType());
+    attrs.setString(Tag.Trim, VR.CS, options.getTrim());
+    attrs.setString(Tag.BorderDensity, VR.CS, options.getBorderDensity());
+    attrs.setString(
+        Tag.EmptyImageDensity,
+        VR.CS,
+        Color.WHITE.equals(spec.background()) ? "WHITE" : "BLACK"); // NON-NLS
+    attrs.setInt(Tag.MinDensity, VR.US, options.getMinDensity());
+    attrs.setInt(Tag.MaxDensity, VR.US, options.getMaxDensity());
+    return attrs;
   }
 
-  public static BufferedImage createGrayBufferedImage(int destWidth, int destHeight) {
-    ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
-    ColorModel cm =
-        new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
-    WritableRaster r = cm.createCompatibleWritableRaster(destWidth, destHeight);
-    return new BufferedImage(cm, r, false, null);
+  /** The DICOM film size of a paper, or of the closest film when the paper has none. */
+  public static String filmSizeIdOf(Paper paper) {
+    if (paper.hasFilmSizeId()) {
+      return paper.filmSizeId();
+    }
+    return DicomPrintOptions.filmSizes().stream()
+        .min(
+            Comparator.comparingDouble(
+                p ->
+                    Math.abs(p.widthMm() - paper.widthMm())
+                        + Math.abs(p.heightMm() - paper.heightMm())))
+        .orElse(DicomPrintOptions.DEF_FILM_SIZE)
+        .filmSizeId();
   }
 
-  public void printImage(BufferedImage image, DefaultDicomNode selectedItem) throws Exception {
-    Attributes filmSessionAttrs = new Attributes();
-    Attributes filmBoxAttrs = new Attributes();
-    Attributes imageBoxAttrs = new Attributes();
+  /** Sends the film raster to the printer: film session, film box, image box, print action. */
+  public void send(BufferedImage film, PageSpec spec, int copies, DefaultDicomNode callingNode)
+      throws Exception {
+    boolean color = options.isColorPrint();
+    String printManagementSOPClass =
+        color ? UID.BasicColorPrintManagementMeta : UID.BasicGrayscalePrintManagementMeta;
+    String imageBoxSOPClass = color ? UID.BasicColorImageBox : UID.BasicGrayscaleImageBox;
+
     Attributes dicomImage = new Attributes();
-    final String printManagementSOPClass =
-        printOptions.isColorPrint()
-            ? UID.BasicColorPrintManagementMeta
-            : UID.BasicGrayscalePrintManagementMeta;
-    final String imageBoxSOPClass =
-        printOptions.isColorPrint() ? UID.BasicColorImageBox : UID.BasicGrayscaleImageBox;
+    storeRasterInDicom(film, dicomImage, color);
+    Attributes imageBoxAttrs = new Attributes();
+    imageBoxAttrs.setInt(Tag.ImageBoxPosition, VR.US, 1);
+    imageBoxAttrs
+        .ensureSequence(color ? Tag.BasicColorImageSequence : Tag.BasicGrayscaleImageSequence, 1)
+        .add(dicomImage);
 
-    storeRasterInDicom(image, dicomImage, printOptions.isColorPrint());
+    Attributes filmSessionAttrs = filmSessionAttributes(options, copies);
+    Attributes filmBoxAttrs = filmBoxAttributes(options, spec);
+    String filmSessionUID = UIDUtils.createUID();
+    String filmBoxUID = UIDUtils.createUID();
+    Attributes filmSessionRef = new Attributes();
+    filmSessionRef.setString(Tag.ReferencedSOPClassUID, VR.UI, UID.BasicFilmSession);
+    filmSessionRef.setString(Tag.ReferencedSOPInstanceUID, VR.UI, filmSessionUID);
+    Sequence seq = filmBoxAttrs.ensureSequence(Tag.ReferencedFilmSessionSequence, 1);
+    seq.add(filmSessionRef);
 
-    // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
-
-    String weasisAet = selectedItem == null ? "WEASIS_AE" : selectedItem.getAeTitle(); // NON-NLS
-    Device device = new Device(weasisAet);
-    ApplicationEntity ae = new ApplicationEntity(weasisAet);
+    String callingAet = callingNode == null ? DEFAULT_CALLING_AET : callingNode.getAeTitle();
+    Device device = new Device(callingAet);
+    ApplicationEntity ae = new ApplicationEntity(callingAet);
     Connection conn = new Connection();
-
-    ApplicationEntity remoteAE = new ApplicationEntity(dcmNode.getAeTitle());
-    Connection remoteConn = new Connection();
-
     ae.addConnection(conn);
     ae.setAssociationInitiator(true);
-    ae.setAETitle(weasisAet);
-
-    remoteConn.setPort(dcmNode.getPort());
-    remoteConn.setHostname(dcmNode.getHostname());
-    remoteConn.setSocketCloseDelay(90);
-
-    remoteAE.setAssociationAcceptor(true);
-    remoteAE.addConnection(remoteConn);
-
     device.addConnection(conn);
     device.addApplicationEntity(ae);
-    ae.addConnection(conn);
 
-    filmSessionAttrs.setInt(Tag.NumberOfCopies, VR.IS, printOptions.getNumOfCopies());
-    filmSessionAttrs.setString(Tag.PrintPriority, VR.CS, printOptions.getPriority());
-    filmSessionAttrs.setString(Tag.MediumType, VR.CS, printOptions.getMediumType());
-    filmSessionAttrs.setString(Tag.FilmDestination, VR.CS, printOptions.getFilmDestination());
-    filmBoxAttrs.setString(Tag.FilmSizeID, VR.CS, printOptions.getFilmSizeId().toString());
-    filmBoxAttrs.setString(Tag.FilmOrientation, VR.CS, printOptions.getFilmOrientation());
-    filmBoxAttrs.setString(Tag.MagnificationType, VR.CS, printOptions.getMagnificationType());
-    filmBoxAttrs.setString(Tag.SmoothingType, VR.CS, printOptions.getSmoothingType());
-    filmBoxAttrs.setString(Tag.Trim, VR.CS, printOptions.getTrim());
-    filmBoxAttrs.setString(Tag.BorderDensity, VR.CS, printOptions.getBorderDensity());
-    filmBoxAttrs.setInt(Tag.MinDensity, VR.US, printOptions.getMinDensity());
-    filmBoxAttrs.setInt(Tag.MaxDensity, VR.US, printOptions.getMaxDensity());
-    filmBoxAttrs.setString(Tag.ImageDisplayFormat, VR.ST, printOptions.getImageDisplayFormat());
-    imageBoxAttrs.setInt(Tag.ImageBoxPosition, VR.US, 1);
-
-    Sequence seq =
-        imageBoxAttrs.ensureSequence(
-            printOptions.isColorPrint()
-                ? Tag.BasicColorImageSequence
-                : Tag.BasicGrayscaleImageSequence,
-            1);
-    seq.add(dicomImage);
-    final String filmSessionUID = UIDUtils.createUID();
-    final String filmBoxUID = UIDUtils.createUID();
-    Attributes filmSessionSequenceObject = new Attributes();
-    filmSessionSequenceObject.setString(Tag.ReferencedSOPClassUID, VR.UI, UID.BasicFilmSession);
-    filmSessionSequenceObject.setString(Tag.ReferencedSOPInstanceUID, VR.UI, filmSessionUID);
-    seq = filmBoxAttrs.ensureSequence(Tag.ReferencedFilmSessionSequence, 1);
-    seq.add(filmSessionSequenceObject);
+    Connection remoteConn = new Connection();
+    remoteConn.setPort(node.getPort());
+    remoteConn.setHostname(node.getHostname());
+    remoteConn.setSocketCloseDelay(90);
 
     AAssociateRQ rq = new AAssociateRQ();
     rq.addPresentationContext(
         new PresentationContext(1, printManagementSOPClass, UID.ImplicitVRLittleEndian));
-    rq.setCallingAET(ae.getAETitle());
-    rq.setCalledAET(remoteAE.getAETitle());
+    rq.setCallingAET(callingAet);
+    rq.setCalledAET(node.getAeTitle());
 
     var service = new DeviceOpService(device);
     service.start();
@@ -413,7 +204,6 @@ public class DicomPrint {
       Association as = ae.connect(remoteConn, rq);
       try {
         // See http://dicom.nema.org/medical/dicom/current/output/chtml/part02/sect_E.4.2.html
-        // Create a Basic Film Session
         dimseRSPHandler(
             as.ncreate(
                 printManagementSOPClass,
@@ -421,7 +211,7 @@ public class DicomPrint {
                 filmSessionUID,
                 filmSessionAttrs,
                 UID.ImplicitVRLittleEndian));
-        // Create a Basic Film Box. We need to get the Image Box UID from the response
+        // The film box response carries the UID of the image box to fill
         DimseRSP ncreateFilmBoxRSP =
             as.ncreate(
                 printManagementSOPClass,
@@ -433,7 +223,6 @@ public class DicomPrint {
         ncreateFilmBoxRSP.next();
         Attributes imageBoxSequence =
             ncreateFilmBoxRSP.getDataset().getNestedDataset(Tag.ReferencedImageBoxSequence);
-        // Send N-SET message with the Image Box
         dimseRSPHandler(
             as.nset(
                 printManagementSOPClass,
@@ -441,7 +230,6 @@ public class DicomPrint {
                 imageBoxSequence.getString(Tag.ReferencedSOPInstanceUID),
                 imageBoxAttrs,
                 UID.ImplicitVRLittleEndian));
-        // Send N-ACTION message with the print action
         dimseRSPHandler(
             as.naction(
                 printManagementSOPClass,
@@ -450,7 +238,7 @@ public class DicomPrint {
                 1,
                 null,
                 UID.ImplicitVRLittleEndian));
-        // The print action ends here. This will only delete the Film Box and Film Session
+        // The print action ends here. This only deletes the film box and the film session
         as.ndelete(printManagementSOPClass, UID.BasicFilmBox, filmBoxUID);
         as.ndelete(printManagementSOPClass, UID.BasicFilmSession, filmSessionUID);
       } finally {
@@ -484,6 +272,24 @@ public class DicomPrint {
     }
   }
 
+  /** A raster of 3 bytes per pixel in RGB order, the layout of a color image box. */
+  public static BufferedImage createRGBBufferedImage(int destWidth, int destHeight) {
+    ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+    ColorModel cm =
+        new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+    WritableRaster r = cm.createCompatibleWritableRaster(destWidth, destHeight);
+    return new BufferedImage(cm, r, false, null);
+  }
+
+  public static BufferedImage createGrayBufferedImage(int destWidth, int destHeight) {
+    ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
+    ColorModel cm =
+        new ComponentColorModel(cs, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+    WritableRaster r = cm.createCompatibleWritableRaster(destWidth, destHeight);
+    return new BufferedImage(cm, r, false, null);
+  }
+
+  /** Fills the pixel module of an image box with the raster: 8-bit RGB or MONOCHROME2. */
   public static void storeRasterInDicom(
       BufferedImage image, Attributes dcmObj, Boolean printInColor) {
     byte[] bytesOut = null;
@@ -497,18 +303,16 @@ public class DicomPrint {
       dcmObj.setInt(Tag.BitsAllocated, VR.US, 8);
       dcmObj.setInt(Tag.BitsStored, VR.US, 8);
       dcmObj.setInt(Tag.HighBit, VR.US, 7);
-      // Assumed that the displayed image has always an 1/1 aspect ratio.
+      // The page raster has square pixels
       dcmObj.setInt(Tag.PixelAspectRatio, VR.IS, 1, 1);
-      // Issue with some PrintSCP servers
-      // dcmObj.putString(Tag.TransferSyntaxUID, VR.UI, UID.ImplicitVRLittleEndian);
 
       DataBuffer dataBuffer;
       if (printInColor) {
         // Must be PixelInterleavedSampleModel
         dcmObj.setInt(Tag.PlanarConfiguration, VR.US, 0);
-        dataBuffer = image.getRaster().getDataBuffer();
+        dataBuffer = toInterleavedRGB(image).getRaster().getDataBuffer();
       } else {
-        dataBuffer = convertRGBImageToMonochrome(image).getRaster().getDataBuffer();
+        dataBuffer = toMonochrome(image).getRaster().getDataBuffer();
       }
 
       if (dataBuffer instanceof DataBufferByte dataBufferByte) {
@@ -531,16 +335,38 @@ public class DicomPrint {
     return bytesOut;
   }
 
-  private static BufferedImage convertRGBImageToMonochrome(BufferedImage colorImage) {
-    if (colorImage.getType() == BufferedImage.TYPE_BYTE_GRAY) {
-      return colorImage;
+  private static boolean isByteInterleaved(BufferedImage image, int bands) {
+    return image.getColorModel() instanceof ComponentColorModel
+        && image.getColorModel().getNumComponents() == bands
+        && image.getRaster().getDataBuffer() instanceof DataBufferByte
+        && image.getType() != BufferedImage.TYPE_3BYTE_BGR;
+  }
+
+  private static BufferedImage toInterleavedRGB(BufferedImage image) {
+    if (isByteInterleaved(image, 3)) {
+      return image;
     }
-    BufferedImage image =
-        new BufferedImage(
-            colorImage.getWidth(), colorImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
-    Graphics g = image.getGraphics();
-    g.drawImage(colorImage, 0, 0, null);
-    g.dispose();
-    return image;
+    BufferedImage rgb = createRGBBufferedImage(image.getWidth(), image.getHeight());
+    draw(image, rgb);
+    return rgb;
+  }
+
+  private static BufferedImage toMonochrome(BufferedImage image) {
+    if (isByteInterleaved(image, 1)) {
+      return image;
+    }
+    BufferedImage gray =
+        new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+    draw(image, gray);
+    return gray;
+  }
+
+  private static void draw(BufferedImage source, BufferedImage target) {
+    Graphics g = target.getGraphics();
+    try {
+      g.drawImage(source, 0, 0, null);
+    } finally {
+      g.dispose();
+    }
   }
 }

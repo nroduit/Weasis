@@ -408,6 +408,14 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
         (int) Math.floor(p2.getX() + p.getX() + 0.5), (int) Math.floor(p2.getY() + p.getY() + 0.5));
   }
 
+  /**
+   * Device pixels per view pixel at which the image is rendered: 1 on screen, more for a printer
+   * whose graphics are scaled by the same factor when the view is drawn.
+   */
+  protected double getRenderScale() {
+    return 1.0;
+  }
+
   protected void updateAffineTransform(
       Image2DViewer<? extends ImageElement> view2d,
       ImageOpNode node,
@@ -460,11 +468,20 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
       fmx[5] -= imgBounds.getY() - diffY;
       affineTransform.setTransform(fmx[0], fmx[1], fmx[2], fmx[3], fmx[4], fmx[5]);
 
-      // Convert to openCV affine matrix
-      List<Double> m = List.of(fmx[0], fmx[2], fmx[4], fmx[1], fmx[3], fmx[5]);
+      // Convert to openCV affine matrix, at the resolution the image is rendered at
+      double rs = getRenderScale();
+      List<Double> m =
+          List.of(fmx[0] * rs, fmx[2] * rs, fmx[4] * rs, fmx[1] * rs, fmx[3] * rs, fmx[5] * rs);
       node.setParam(AffineTransformOp.P_AFFINE_MATRIX, m);
-
-      node.setParam(AffineTransformOp.P_DST_BOUNDS, dstBounds);
+      node.setParam(
+          AffineTransformOp.P_DST_BOUNDS,
+          rs == 1.0
+              ? dstBounds
+              : new Rectangle2D.Double(
+                  dstBounds.getX() * rs,
+                  dstBounds.getY() * rs,
+                  dstBounds.getWidth() * rs,
+                  dstBounds.getHeight() * rs));
       imageLayer.updateDisplayOperations();
     }
 

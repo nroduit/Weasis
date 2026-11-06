@@ -19,8 +19,6 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.JPanel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +31,6 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewportPane;
 import org.weasis.core.ui.util.ExportLayout.ExportTiles;
-import org.weasis.core.ui.util.ExportLayout.TileBox;
 
 @DisplayName("ExportLayout")
 class ExportLayoutTest {
@@ -113,31 +110,10 @@ class ExportLayoutTest {
     ExportLayout<ImageElement> layout = new ExportLayout<>(container(cells));
 
     ExportTiles<?> tiles = assertInstanceOf(ExportTiles.class, layout.findComponentForCell(cell));
-    assertEquals(4, tiles.getTiles().size());
-  }
-
-  @Test
-  @DisplayName("divides a cell between the tiles in reading order, with the gap between them")
-  void layoutTilesInReadingOrder() {
-    List<ExportImage<ImageElement>> images = new ArrayList<>();
-    for (int i = 0; i < 4; i++) {
-      @SuppressWarnings("unchecked")
-      ExportImage<ImageElement> image = mock(ExportImage.class);
-      images.add(image);
-    }
-
-    List<TileBox> boxes = new ExportTiles<>(2, images).layoutTiles(105, 205, 5);
-
     assertAll(
-        () -> assertSame(images.get(2), boxes.get(2).image()),
-        () -> assertEquals(50, boxes.get(0).width()),
-        () -> assertEquals(100, boxes.get(0).height()),
-        () -> assertEquals(55, boxes.get(1).x()),
-        () -> assertEquals(0, boxes.get(1).y()),
-        () -> assertEquals(0, boxes.get(2).x()),
-        () -> assertEquals(105, boxes.get(2).y()),
-        () -> assertEquals(55, boxes.get(3).x()),
-        () -> assertEquals(105, boxes.get(3).y()));
+        () -> assertEquals(4, tiles.getTiles().size()),
+        () -> assertEquals(2, tiles.getCols()),
+        () -> assertEquals(2, tiles.getRows()));
   }
 
   @Test

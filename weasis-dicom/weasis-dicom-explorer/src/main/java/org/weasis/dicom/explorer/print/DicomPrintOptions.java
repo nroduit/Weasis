@@ -9,10 +9,17 @@
  */
 package org.weasis.dicom.explorer.print;
 
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.weasis.core.ui.print.Paper;
 import org.weasis.core.ui.util.PrintOptions;
-import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
+import org.weasis.core.util.StringUtil;
 
 /**
+ * The attributes of a DICOM print job (PS3.3 C.13: film session, film box) and the resolution of
+ * the film raster, configured on the print node as defaults and adjusted for a job.
+ *
  * @author Marcelo Porto (marcelo@animati.com.br)
  * @author Nicolas Roduit
  * @since 09/01/2012
@@ -25,22 +32,31 @@ public class DicomPrintOptions extends PrintOptions {
   public static final boolean DEF_COLOR = false;
   public static final String DEF_FILM_ORIENTATION = "PORTRAIT";
   public static final String DEF_IMG_DISP_FORMAT = "STANDARD\\1,1"; // NON-NLS
-  public static final FilmSize DEF_FILM_SIZE = FilmSize.IN8X10;
+  public static final Paper DEF_FILM_SIZE = Paper.IN_8X10;
   public static final String DEF_MAGNIFICATION_TYPE = "CUBIC";
   public static final String DEF_SMOOTHING_TYPE = "MEDIUM";
   public static final String DEF_BORDER_DENSITY = "WHITE";
   public static final String DEF_TRIM = "NO";
   public static final String DEF_EMPTY_DENSITY = "BLACK";
   public static final boolean DEF_SHOW_ANNOTATIONS = true;
-  public static final boolean DEF_PRINT_SEL_VIEW = false;
-  public static final PrintOptions.DotPerInches DEF_DPI = PrintOptions.DotPerInches.DPI_150;
+
+  /** The resolution of the film raster sent to the printer, which scales it to its own matrix. */
+  public static final int DEF_FILM_RESOLUTION = 150;
+
+  public static final List<Integer> FILM_RESOLUTIONS = List.of(100, 150, 200, 250, 300, 400, 600);
+
+  /** The film sizes of the 4.x enum, such as {@code IN8_5X11} or {@code CM24X30}. */
+  private static final Pattern LEGACY_INCH = Pattern.compile("IN(\\d+(?:_\\d+)?)X(\\d+)");
+
+  private static final Pattern LEGACY_CM = Pattern.compile("CM(\\d+)X(\\d+)");
+  private static final Pattern LEGACY_DPI = Pattern.compile("DPI_(\\d+)");
 
   private String mediumType;
   private String priority;
   private String filmDestination;
   private int numOfCopies;
   private String filmOrientation;
-  private FilmSize filmSizeId;
+  private Paper filmSize;
   private String imageDisplayFormat;
   private String magnificationType;
   private String smoothingType;
@@ -49,7 +65,7 @@ public class DicomPrintOptions extends PrintOptions {
   private String emptyDensity;
   private int minDensity;
   private int maxDensity;
-  private boolean printOnlySelectedView;
+  private int filmResolution;
 
   public DicomPrintOptions() {
     super();
@@ -59,7 +75,7 @@ public class DicomPrintOptions extends PrintOptions {
     this.numOfCopies = DEF_NUM_COPIES;
     setColorPrint(DEF_COLOR);
     this.filmOrientation = DEF_FILM_ORIENTATION;
-    this.filmSizeId = DEF_FILM_SIZE;
+    this.filmSize = DEF_FILM_SIZE;
     this.imageDisplayFormat = DEF_IMG_DISP_FORMAT;
     this.magnificationType = DEF_MAGNIFICATION_TYPE;
     this.smoothingType = DEF_SMOOTHING_TYPE;
@@ -69,8 +85,70 @@ public class DicomPrintOptions extends PrintOptions {
     this.minDensity = 0;
     this.maxDensity = 255;
     setShowingAnnotations(DEF_SHOW_ANNOTATIONS);
-    this.printOnlySelectedView = DEF_PRINT_SEL_VIEW;
-    setDpi(DEF_DPI);
+    this.filmResolution = DEF_FILM_RESOLUTION;
+  }
+
+  /** The papers a film printer knows: those of the catalogue with a DICOM film size id. */
+  public static List<Paper> filmSizes() {
+    return Paper.CATALOGUE.stream().filter(Paper::hasFilmSizeId).toList();
+  }
+
+  /** The paper of a stored film size: a DICOM {@code FilmSizeID} or the name of the 4.x enum. */
+  public static Paper filmSizeOf(String stored, Paper defaultValue) {
+    if (!StringUtil.hasText(stored)) {
+      return defaultValue;
+    }
+    String id = stored.trim();
+    Matcher inch = LEGACY_INCH.matcher(id);
+    Matcher cm = LEGACY_CM.matcher(id);
+    if (inch.matches()) {
+      id = inch.group(1) + "INX" + inch.group(2) + "IN"; // NON-NLS
+    } else if (cm.matches()) {
+      id = cm.group(1) + "CMX" + cm.group(2) + "CM"; // NON-NLS
+    }
+    return Paper.fromFilmSizeId(id).orElse(defaultValue);
+  }
+
+  /** The resolution of a stored value: a number of dots per inch or the name of the 4.x enum. */
+  public static int filmResolutionOf(String stored, int defaultValue) {
+    if (!StringUtil.hasText(stored)) {
+      return defaultValue;
+    }
+    Matcher legacy = LEGACY_DPI.matcher(stored.trim());
+    String digits = legacy.matches() ? legacy.group(1) : stored.trim();
+    try {
+      int dpi = Integer.parseInt(digits);
+      return dpi > 0 ? dpi : defaultValue;
+    } catch (NumberFormatException e) {
+      return defaultValue;
+    }
+  }
+
+  /** A copy, to adjust for one job without touching the defaults of the node. */
+  public DicomPrintOptions copy() {
+    DicomPrintOptions c = new DicomPrintOptions();
+    c.setShowingAnnotations(isShowingAnnotations());
+    c.setCenter(isCenter());
+    c.setColorPrint(isColorPrint());
+    c.setTextSize(getTextSize());
+    c.setBackground(getBackground());
+    c.setBorder(getBorder());
+    c.mediumType = mediumType;
+    c.priority = priority;
+    c.filmDestination = filmDestination;
+    c.numOfCopies = numOfCopies;
+    c.filmOrientation = filmOrientation;
+    c.filmSize = filmSize;
+    c.imageDisplayFormat = imageDisplayFormat;
+    c.magnificationType = magnificationType;
+    c.smoothingType = smoothingType;
+    c.borderDensity = borderDensity;
+    c.trim = trim;
+    c.emptyDensity = emptyDensity;
+    c.minDensity = minDensity;
+    c.maxDensity = maxDensity;
+    c.filmResolution = filmResolution;
+    return c;
   }
 
   public String getBorderDensity() {
@@ -105,12 +183,13 @@ public class DicomPrintOptions extends PrintOptions {
     this.filmOrientation = filmOrientation;
   }
 
-  public FilmSize getFilmSizeId() {
-    return filmSizeId;
+  /** The film, a paper with a DICOM film size id. */
+  public Paper getFilmSizeId() {
+    return filmSize;
   }
 
-  public void setFilmSizeId(FilmSize filmSize) {
-    this.filmSizeId = filmSize == null ? DEF_FILM_SIZE : filmSize;
+  public void setFilmSizeId(Paper filmSize) {
+    this.filmSize = filmSize == null ? DEF_FILM_SIZE : filmSize;
   }
 
   public String getImageDisplayFormat() {
@@ -185,11 +264,12 @@ public class DicomPrintOptions extends PrintOptions {
     this.trim = trim;
   }
 
-  public boolean isPrintOnlySelectedView() {
-    return printOnlySelectedView;
+  /** The resolution of the film raster in dots per inch. */
+  public int getFilmResolution() {
+    return filmResolution;
   }
 
-  public void setPrintOnlySelectedView(boolean printOnlySelectedView) {
-    this.printOnlySelectedView = printOnlySelectedView;
+  public void setFilmResolution(int filmResolution) {
+    this.filmResolution = filmResolution > 0 ? filmResolution : DEF_FILM_RESOLUTION;
   }
 }

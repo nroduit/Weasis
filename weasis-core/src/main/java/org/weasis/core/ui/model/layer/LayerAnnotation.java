@@ -40,6 +40,14 @@ public interface LayerAnnotation<E extends ImageElement> extends Layer {
 
   void setBorder(int border);
 
+  /**
+   * Whether the layer stays blank on a view too small for its text, as on screen. An export view
+   * turns it off: its size is chosen for the paper, the text is readable whatever the view size.
+   */
+  boolean isMinimumSizeChecked();
+
+  void setMinimumSizeChecked(boolean checked);
+
   void paint(Graphics2D g2d);
 
   LayerAnnotation<E> getLayerCopy(ViewCanvas<E> view2DPane, boolean useGlobalPreferences);
