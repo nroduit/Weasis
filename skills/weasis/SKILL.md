@@ -248,7 +248,7 @@ line naming the current spelling. Use the current one everywhere.
    and are purged by the retention settings `weasis.hp.sessions.max` and
    `weasis.hp.sessions.max.days`; `weasis.hp.keepOnClose` keeps the display as a session when
    Weasis closes and `weasis.hp.restore` (auto, offer, never) says what happens when a study
-   with a kept session is opened again (`config:setting weasis.hp.restore --set auto`). `state:export --session <id> | --study <uid> --out <dir>
+   with a kept session is opened again (`config:setting weasis.hp.restore` reads it). `state:export --session <id> | --study <uid> --out <dir>
    [--dicom]` writes a session to a directory, as its JSON or, with `--dicom`, as a Basic
    Structured Display object with one Grayscale Softcopy Presentation State per pane (window,
    rotation, flip, inversion, magnification, graphics) for a PACS or another viewer; the studies

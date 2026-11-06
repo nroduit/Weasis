@@ -2,6 +2,27 @@
 
 Command API 2.25, protocol 2, application development.
 
+## acquire
+
+Image acquisition (Dicomizer): patient context.
+
+### acquire:patient
+
+Loads the patient context of the acquisition and returns the context it set, masked for a remote caller.
+
+Usage: `acquire:patient [-h] [--json] (--xml=<text> | --xml-gzip=<base64> | --xml-gzip-urlsafe=<base64> | --url=<remote-url>)`
+
+Needs: network read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --xml | string |  | XML text (UTF-8) holding the DICOM tags. (since 5.0) |
+| --xml-gzip | string |  | XML encoded as GZIP then Base64. (since 5.0) |
+| --xml-gzip-urlsafe | string |  | XML encoded as GZIP then URL-safe Base64. (since 5.0) |
+| --url | remote-url |  | URL of an XML file holding the DICOM tags. (since 5.0) |
+
+
 ## color
 
 Color management of the display: switch, display profile, view conversion.
@@ -1425,15 +1446,15 @@ Usage: `view2d:graphics [-h] [--json] [--no-measurements] [--after=<n>] [--layer
 
 Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.
 
-Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--best-for=<n> | --grid=<grid-id> | --panes=<n>]`
+Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--best-for=<n> | --panes=<n> | --grid=<grid-id>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --best-for | integer |  | Returns the best grid for this number of panes without applying it. (since 5.0) |
-| --grid | grid-id |  | Applies this grid, by id from the bare verb. |
 | --panes | integer |  | Applies the best grid for this number of panes. |
+| --grid | grid-id |  | Applies this grid, by id from the bare verb. |
 
 ### view2d:hang (since 5.0)
 
@@ -1627,7 +1648,7 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --by=<steps> | --fit=<zoom-fit>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
@@ -1635,8 +1656,8 @@ Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--se
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
-| --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
+| --fit | enum |  | default, real-size or best-fit. |
 
 ### Events of view2d:
 
@@ -1932,6 +1953,72 @@ Usage: `workspace:unmaximize [-h] [--json] --view=<view-id>`
 | `workspace:window.opened` | 5.0 | window: integer, detached: boolean | A window hosting a workspace appeared. |
 
 
+## wsi
+
+Whole slides (modality SM) shown in the slide viewer: the pyramid and the calibration of a slide, and the place and magnification its view shows. Base level pixels are the image coordinates of the 'view2d:' verbs on a slide.
+
+### wsi:annotations (since 5.0)
+
+The bulk annotation groups of the slide of a pane (DICOM Microscopy Bulk Simple Annotations of the study: nuclei, cells, regions), each with its label, graphic type, count, colour and whether it is drawn; --group with --show or --hide draws or hides groups (all of them without --group). The groups come back after the change.
+
+Usage: `wsi:annotations [-h] [--hide] [--json] [--show] [--pane=<pane-index>] [--view=<view-id>] [--group=<group-id>[,<group-id>...]]...`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --group | string |  | Groups by their id from the list, comma separated (default: every group). |
+| --show | boolean |  | Draw the groups. |
+| --hide | boolean |  | Hide the groups. |
+
+### wsi:export (since 5.0)
+
+Writes the measurements and drawings of the slide of a pane as a DICOM Structured Report (TID 1500 Measurement Report, one planar region per graphic on the base level of the slide, lengths and areas in micrometers), a file that 'dicom:load' brings back as regions over the slide and that other viewers read.
+
+Usage: `wsi:export [-h] [--force] [--json] --out=<output-path> [--pane=<pane-index>] [--view=<view-id>]`
+
+Needs: file write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --out | output-path |  | The DICOM file to write (.dcm). |
+| --force | boolean |  | Replace the file when it exists and was not written by this session. |
+
+### wsi:goto (since 5.0)
+
+Shows a place of the slide: --at centres the view on a base level pixel, --zoom sets the scale (1: one base pixel per canvas pixel) or --objective the magnification shown (20 for 20x), --focal-plane and --optical-path pick the plane of a Z-stack and the channel of a multi-path slide; --complete answers once every tile of the view is loaded, so that a capture is sharp. With no argument the display comes back unchanged.
+
+Usage: `wsi:goto [-h] [--complete] [--json] [--at=<image-point>] [--focal-plane=<index>] [--objective=<number>] [--optical-path=<optical-path-id>] [--pane=<pane-index>] [--view=<view-id>] [--zoom=<magnification>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --at | image-point |  | Base level pixel x,y put at the centre of the view. |
+| --zoom | magnification |  | Scale of the view, 1 being one base level pixel per canvas pixel. |
+| --objective | number |  | Magnification shown, as an objective power: 20 shows the slide as a 20x objective would (needs the objective power or the pixel spacing of the slide). |
+| --focal-plane | integer |  | Focal plane of a Z-stack shown, from 1 ('focalPlanes' of 'wsi:info'). |
+| --optical-path | string |  | Optical path shown, by its identifier ('opticalPaths' of 'wsi:info'). |
+| --complete | boolean |  | Answer once every tile of the view is loaded, after 10 s at the latest. |
+
+### wsi:info (since 5.0)
+
+Describes the slide of a pane: its size in base level pixels, pixel spacing, objective magnification, pyramid levels, focal planes, optical paths and associated images, and what the pane shows: zoom, magnification, centre, viewport, level and tiles.
+
+Usage: `wsi:info [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+
+
 ## Events
 
 What the instance publishes on its event bus; `weasis-cli events` streams them, `events:recent` polls them.
@@ -2000,70 +2087,4 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | `workspace:window.activated` (coalesced) | 5.0 | window: integer | The active window changed, once it stayed so for 100 ms; from the engine, not AWT. |
 | `workspace:window.closed` | 5.0 | window: integer, detached: boolean | A floating viewer window closed. |
 | `workspace:window.opened` | 5.0 | window: integer, detached: boolean | A window hosting a workspace appeared. |
-
-## wsi
-
-Whole slides (modality SM) shown in the slide viewer: the pyramid and the calibration of a slide, and the place and magnification its view shows. Base level pixels are the image coordinates of the 'view2d:' verbs on a slide.
-
-### wsi:annotations (since 5.0)
-
-The bulk annotation groups of the slide of a pane (DICOM Microscopy Bulk Simple Annotations of the study: nuclei, cells, regions), each with its label, graphic type, count, colour and whether it is drawn; --group with --show or --hide draws or hides groups (all of them without --group). The groups come back after the change.
-
-Usage: `wsi:annotations [-h] [--hide] [--json] [--show] [--pane=<pane-index>] [--view=<view-id>] [--group=<group-id>[,<group-id>...]]...`
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --group | string |  | Groups by their id from the list, comma separated (default: every group). |
-| --show | boolean |  | Draw the groups. |
-| --hide | boolean |  | Hide the groups. |
-
-### wsi:export (since 5.0)
-
-Writes the measurements and drawings of the slide of a pane as a DICOM Structured Report (TID 1500 Measurement Report, one planar region per graphic on the base level of the slide, lengths and areas in micrometers), a file that 'dicom:load' brings back as regions over the slide and that other viewers read.
-
-Usage: `wsi:export [-h] [--force] [--json] --out=<output-path> [--pane=<pane-index>] [--view=<view-id>]`
-
-Needs: file write
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --out | output-path |  | The DICOM file to write (.dcm). |
-| --force | boolean |  | Replace the file when it exists and was not written by this session. |
-
-### wsi:goto (since 5.0)
-
-Shows a place of the slide: --at centres the view on a base level pixel, --zoom sets the scale (1: one base pixel per canvas pixel) or --objective the magnification shown (20 for 20x), --focal-plane and --optical-path pick the plane of a Z-stack and the channel of a multi-path slide; --complete answers once every tile of the view is loaded, so that a capture is sharp. With no argument the display comes back unchanged.
-
-Usage: `wsi:goto [-h] [--complete] [--json] [--at=<image-point>] [--focal-plane=<index>] [--objective=<number>] [--optical-path=<optical-path-id>] [--pane=<pane-index>] [--view=<view-id>] [--zoom=<magnification>]`
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --at | image-point |  | Base level pixel x,y put at the centre of the view. |
-| --zoom | magnification |  | Scale of the view, 1 being one base level pixel per canvas pixel. |
-| --objective | number |  | Magnification shown, as an objective power: 20 shows the slide as a 20x objective would (needs the objective power or the pixel spacing of the slide). |
-| --focal-plane | integer |  | Focal plane of a Z-stack shown, from 1 ('focalPlanes' of 'wsi:info'). |
-| --optical-path | string |  | Optical path shown, by its identifier ('opticalPaths' of 'wsi:info'). |
-| --complete | boolean |  | Answer once every tile of the view is loaded, after 10 s at the latest. |
-
-### wsi:info (since 5.0)
-
-Describes the slide of a pane: its size in base level pixels, pixel spacing, objective magnification, pyramid levels, focal planes, optical paths and associated images, and what the pane shows: zoom, magnification, centre, viewport, level and tiles.
-
-Usage: `wsi:info [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-
 
