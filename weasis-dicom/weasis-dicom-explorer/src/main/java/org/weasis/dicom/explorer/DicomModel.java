@@ -913,6 +913,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     if (original.size(null) > 0) {
       // Always split when it is a video or an encapsulated document
       if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
+        logSplitReason(original, media, "video or encapsulated document is always split"); // NON-NLS
         splitSeries(dicomReader, original, media);
       } else {
         findMatchingSeriesOrSplit(original, media);
@@ -928,6 +929,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
       if (original.size(null) > 0) {
         // When the series already contains elements (images), always split video and document
+        logSplitReason(original, media, "video or encapsulated document is always split"); // NON-NLS
         splitSeries(dicomReader, original, media);
       } else {
         replaceSeries(dicomReader, original, media);
@@ -972,6 +974,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       k++;
     }
     // No matching series exists, so split series
+    if (LOGGER.isDebugEnabled()) {
+      logSplitReason(original, media, getSplitReason(rules, original, media));
+    }
     splitSeries(dicomReader, original, media);
   }
 
@@ -1190,22 +1195,51 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   }
 
   private static boolean isSimilar(List<Rule> list, Series<?> s, final MediaElement media) {
+    return getSplitReason(list, s, media) == null;
+  }
+
+  /**
+   * Returns why the media cannot be added to the series, or {@code null} when it is similar.
+   *
+   * @param list the splitting rules to apply
+   * @param s the series to compare with (its first media is the reference)
+   * @param media the new media
+   * @return the reason of the split, or {@code null} when the media belongs to the series
+   */
+  private static String getSplitReason(List<Rule> list, Series<?> s, final MediaElement media) {
     final MediaElement firstMedia = s.getMedia(0, null, null);
     if (firstMedia == null || hasSameConcatenationUID(firstMedia, media)) {
       // No image or has the same concatenation UID
-      return true;
+      return null;
     }
     // Not similar when the instances have different classes (even when inheriting class)
     if (firstMedia.getClass() != media.getClass()) {
-      return false;
+      return "different media type (series=%s, new=%s)" // NON-NLS
+          .formatted(firstMedia.getClass().getSimpleName(), media.getClass().getSimpleName());
     }
 
     for (Rule rule : list) {
       if (!rule.isTagValueMatching(firstMedia, media)) {
-        return false;
+        TagW tag = rule.getTag();
+        return "rule %s%s failed (series=[%s], new=[%s])" // NON-NLS
+            .formatted(
+                tag.getKeyword(),
+                rule.getCondition() == null ? "" : " with condition", // NON-NLS
+                tag.getFormattedTagValue(firstMedia.getTagValue(tag), null),
+                tag.getFormattedTagValue(media.getTagValue(tag), null));
       }
     }
-    return true;
+    return null;
+  }
+
+  private static void logSplitReason(DicomSeries original, MediaElement media, String reason) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug(
+          "Split series {} for {}: {}", // NON-NLS
+          TagD.getTagValue(original, Tag.SeriesInstanceUID, String.class),
+          media.getMediaURI(),
+          reason);
+    }
   }
 
   public void get(String[] argv) throws IOException {
