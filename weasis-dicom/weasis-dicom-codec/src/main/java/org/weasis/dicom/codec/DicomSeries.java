@@ -22,6 +22,8 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.cv.CvUtil;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagView;
@@ -98,9 +100,23 @@ public class DicomSeries extends Series<DicomImageElement> {
     }
   }
 
+  /** Whether the instances are VL Whole Slide Microscopy images: the series is one slide. */
+  public boolean isWholeSlide() {
+    MediaElement first = getMedia(MEDIA_POSITION.FIRST, null, null);
+    if (first == null) {
+      first = getFirstSpecialElement();
+    }
+    return first != null
+        && first.getMediaReader() instanceof DicomMediaIO reader
+        && DicomMediaIO.SERIES_WSI_MIMETYPE.equals(reader.getMimeType());
+  }
+
   @Override
   public String getToolTips() {
     StringBuilder toolTips = getToolTips(this);
+    if (isWholeSlide()) {
+      addWholeSlideToolTips(toolTips);
+    }
     if (getFileSize() > 0.0) {
       toolTips.append(Messages.getString("DicomSeries.size"));
       toolTips.append(StringUtil.COLON_AND_SPACE);
@@ -109,6 +125,37 @@ public class DicomSeries extends Series<DicomImageElement> {
     }
     toolTips.append(GuiUtils.HTML_END);
     return toolTips.toString();
+  }
+
+  // Levels and base size from the pyramid instances kept as special elements
+  private void addWholeSlideToolTips(StringBuilder toolTips) {
+    List<DicomSpecialElement> elements = getAllDicomSpecialElement();
+    int levels = 0;
+    int width = 0;
+    int height = 0;
+    for (DicomSpecialElement element : elements) {
+      String[] imageType = TagD.getTagValue(element, Tag.ImageType, String[].class);
+      Integer columns = TagD.getTagValue(element, Tag.TotalPixelMatrixColumns, Integer.class);
+      Integer rows = TagD.getTagValue(element, Tag.TotalPixelMatrixRows, Integer.class);
+      if (imageType != null
+          && imageType.length > 2
+          && "VOLUME".equals(imageType[2])
+          && columns != null
+          && rows != null) {
+        levels++;
+        if (columns > width) {
+          width = columns;
+          height = rows;
+        }
+      }
+    }
+    if (levels > 0) {
+      toolTips.append(Messages.getString("DicomSeries.slide"));
+      toolTips.append(StringUtil.COLON_AND_SPACE);
+      toolTips.append(
+          Messages.getString("DicomSeries.slide_levels").formatted(levels, width, height));
+      toolTips.append(GuiUtils.HTML_BR);
+    }
   }
 
   public static StringBuilder getToolTips(Series<?> series) {
@@ -147,6 +194,9 @@ public class DicomSeries extends Series<DicomImageElement> {
 
   @Override
   public String getMimeType() {
+    if (isWholeSlide()) {
+      return DicomMediaIO.SERIES_WSI_MIMETYPE;
+    }
     String modality = TagD.getTagValue(this, Tag.Modality, String.class);
     DicomSpecialElementFactory factory = DicomMediaIO.DCM_ELEMENT_FACTORIES.get(modality);
     if (factory != null) {

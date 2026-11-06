@@ -40,7 +40,7 @@ public abstract class NativeCache<K, V extends PlanarImage> implements NativeMem
 
   protected final Map<K, V> hash;
   private final Map<K, Integer> pinCount;
-  private final long maxNativeMemory;
+  private volatile long maxNativeMemory;
   private final AtomicLong useNativeMemory;
 
   protected NativeCache(long maxNativeMemory) {
@@ -54,6 +54,16 @@ public abstract class NativeCache<K, V extends PlanarImage> implements NativeMem
   @Override
   public long usedNativeMemory() {
     return useNativeMemory.get();
+  }
+
+  public long maxNativeMemory() {
+    return maxNativeMemory;
+  }
+
+  /** Changes the budget; the entries beyond it are evicted. */
+  protected void setMaxNativeMemory(long bytes) {
+    maxNativeMemory = Math.max(0, bytes);
+    expungeStaleEntries();
   }
 
   public V get(K key) {

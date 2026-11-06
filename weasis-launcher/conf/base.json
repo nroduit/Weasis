@@ -94,8 +94,8 @@
     },
     {
       "code": "weasis.plugins.75",
-      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-au/${app.version}/weasis-dicom-au-${app.version}.jar file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-wave/${app.version}/weasis-dicom-wave-${app.version}.jar",
-      "description": "DICOM AU and ECG",
+      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-au/${app.version}/weasis-dicom-au-${app.version}.jar file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-wave/${app.version}/weasis-dicom-wave-${app.version}.jar file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-wsi/${app.version}/weasis-dicom-wsi-${app.version}.jar",
+      "description": "DICOM AU, ECG and whole slide images",
       "type": "A",
       "category": "PLUGIN_INSTALL"
     },

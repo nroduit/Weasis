@@ -59,6 +59,14 @@
       "measurementProfile": "cross-sectional"
     },
     {
+      "id": "weasis.sm",
+      "name": "Whole slide reading",
+      "shell": { "tools": { "slots": ["measure", "display"] } },
+      "mouse": { "left": "pan", "middle": "pan", "right": "context-menu", "wheel": "zoom" },
+      "measurementProfile": "pathology",
+      "toolsOnce": true
+    },
+    {
       "id": "weasis.default",
       "name": "Default reading",
       "shell": { "tools": { "slots": ["display", "hp-why"] } }

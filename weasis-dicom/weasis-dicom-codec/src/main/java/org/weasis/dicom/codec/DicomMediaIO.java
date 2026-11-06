@@ -90,6 +90,7 @@ public class DicomMediaIO implements DcmMediaReader {
   public static final String SERIES_SEG_MIMETYPE = "seg/dicom"; // NON-NLS
 
   public static final String SERIES_ENCAP_DOC_MIMETYPE = "encap/dicom"; // NON-NLS
+  public static final String SERIES_WSI_MIMETYPE = "wsi/dicom"; // NON-NLS
   public static final String UNREADABLE = "unreadable/dicom"; // NON-NLS
   public static final String SERIES_XDSI = "xds-i/dicom"; // NON-NLS
 
@@ -390,6 +391,9 @@ public class DicomMediaIO implements DcmMediaReader {
         } else {
           if (md.isSegmentationStorage()) {
             mimeType = SERIES_SEG_MIMETYPE; // Do not display SEG images
+          } else if (UID.VLWholeSlideMicroscopyImageStorage.equals(
+              header.getString(Tag.SOPClassUID))) {
+            mimeType = SERIES_WSI_MIMETYPE; // A slide is read by its tiles, not as frames
           } else {
             mimeType = IMAGE_MIMETYPE;
           }
@@ -508,6 +512,16 @@ public class DicomMediaIO implements DcmMediaReader {
       setTag(
           TagD.get(Tag.ConcatenationFrameOffsetNumber),
           header.getInt(Tag.ConcatenationFrameOffsetNumber, 0));
+    }
+
+    if (SERIES_WSI_MIMETYPE.equals(mimeType)) {
+      setTagNoNull(TagD.get(Tag.ImageType), header.getStrings(Tag.ImageType));
+      setTagNoNull(
+          TagD.get(Tag.TotalPixelMatrixColumns),
+          DicomUtils.getIntegerFromDicomElement(header, Tag.TotalPixelMatrixColumns, null));
+      setTagNoNull(
+          TagD.get(Tag.TotalPixelMatrixRows),
+          DicomUtils.getIntegerFromDicomElement(header, Tag.TotalPixelMatrixRows, null));
     }
 
     // -------- End of Mandatory Tags --------
@@ -806,6 +820,8 @@ public class DicomMediaIO implements DcmMediaReader {
         image = new DicomImageElement[] {new DicomVideoElement(this, null)};
       } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
         image = new DicomImageElement[] {new DicomEncapDocElement(this, null)};
+      } else if (SERIES_WSI_MIMETYPE.equals(mimeType)) {
+        specialElement = buildWholeSlideElement();
       } else {
         specialElement = buildImageElement(buildSpecialElement);
       }
@@ -831,6 +847,23 @@ public class DicomMediaIO implements DcmMediaReader {
     return factory == null || buildSpecialElement == null
         ? null
         : buildSpecialElement.apply(factory);
+  }
+
+  /**
+   * A whole slide instance holds up to tens of thousands of tiles as frames: only the thumbnail of
+   * the slide is an image (the series thumbnail); the pyramid levels, the label and the overview
+   * are kept as one element each, for the information and for the slide viewer that reads their
+   * tiles. The label and the overview are never images of the series: they may show the identity of
+   * the patient, whatever Burned In Annotation says.
+   */
+  private DicomSpecialElement buildWholeSlideElement() {
+    String[] imageType = TagD.getTagValue(this, Tag.ImageType, String[].class);
+    if (imageType != null && imageType.length > 2 && "THUMBNAIL".equals(imageType[2])) {
+      image = new DicomImageElement[] {new DicomImageElement(this, 0)};
+      return null;
+    }
+    image = new DicomImageElement[0];
+    return new DicomSpecialElement(this);
   }
 
   private void buildMultiframe() {

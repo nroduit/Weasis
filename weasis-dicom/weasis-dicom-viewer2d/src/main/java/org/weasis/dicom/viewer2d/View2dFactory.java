@@ -135,7 +135,8 @@ public class View2dFactory implements SeriesViewerFactory {
 
   @Override
   public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
-    return viewer instanceof View2dContainer;
+    // A subclass is the viewer of another factory (the slide viewer)
+    return viewer != null && viewer.getClass() == View2dContainer.class;
   }
 
   @Override

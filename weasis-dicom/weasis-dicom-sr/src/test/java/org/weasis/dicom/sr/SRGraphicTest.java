@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.sr;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -123,6 +124,26 @@ class SRGraphicTest {
     assertNotNull(g.build(frame(tiledImage(true, 12), 1), false));
     assertNotNull(g.build(frame(tiledImage(true, 12), 2), false));
     assertNull(g.build(frame(tiledImage(true, 12), 3), false));
+  }
+
+  @Test
+  void a_whole_matrix_view_scales_volume_coordinates_and_places_frame_coordinates() {
+    Attributes volume = scoord("VOLUME", "POINT", 550, 300);
+    Attributes frame = scoord("FRAME", "POINT", 10, 10);
+    java.awt.geom.AffineTransform half = java.awt.geom.AffineTransform.getScaleInstance(2, 2);
+    Graphic scaled = new SRGraphic("1.1", volume, false).buildOnMatrix(null, half, false);
+    Graphic placed =
+        new SRGraphic("1.2", frame, false)
+            .buildOnMatrix(new java.awt.Point(2 * TILE, TILE), half, false);
+    assertAll(
+        () -> assertEquals(2 * 550 - 0.5, scaled.getShape().getBounds2D().getCenterX(), 1e-6),
+        () -> assertEquals(2 * 300 - 0.5, scaled.getShape().getBounds2D().getCenterY(), 1e-6),
+        () ->
+            assertEquals(
+                2 * (2 * TILE + 10) - 0.5, placed.getShape().getBounds2D().getCenterX(), 1e-6),
+        () ->
+            assertEquals(
+                2 * (TILE + 10) - 0.5, placed.getShape().getBounds2D().getCenterY(), 1e-6));
   }
 
   @Test

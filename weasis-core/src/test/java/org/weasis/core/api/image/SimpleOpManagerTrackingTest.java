@@ -12,6 +12,7 @@ package org.weasis.core.api.image;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -40,6 +41,7 @@ class SimpleOpManagerTrackingTest {
   static class CountingOp extends AbstractOp {
     int runs;
     boolean passThrough;
+    boolean noOutput;
     boolean failOnce;
     boolean owns;
     final List<PlanarImage> outputs = new ArrayList<>();
@@ -60,7 +62,7 @@ class SimpleOpManagerTrackingTest {
         failOnce = false;
         throw new IllegalStateException("expected failure");
       }
-      PlanarImage output = passThrough ? getSourceImage() : image();
+      PlanarImage output = noOutput ? null : passThrough ? getSourceImage() : image();
       outputs.add(output);
       params.put(Param.OUTPUT_IMG, output);
     }
@@ -141,6 +143,18 @@ class SimpleOpManagerTrackingTest {
     PlanarImage before = manager.getLastNodeOutputImage().orElseThrow();
     assertEquals(List.of(0, 0, 0), pass());
     assertSame(before, manager.getLastNodeOutputImage().orElseThrow());
+  }
+
+  @Test
+  void a_node_without_output_leaves_the_nodes_below_without_input_and_without_run() {
+    middle.noOutput = true;
+    middle.setParam(VALUE, 1);
+    assertEquals(List.of(0, 1, 0), pass());
+    assertTrue(manager.getLastNodeOutputImage().isEmpty());
+    middle.noOutput = false;
+    middle.setParam(VALUE, 2);
+    assertEquals(List.of(0, 1, 1), pass(), "the input is back: the node runs");
+    assertTrue(manager.getLastNodeOutputImage().isPresent());
   }
 
   @Test

@@ -148,6 +148,22 @@ line naming the current spelling. Use the current one everywhere.
    `subtraction:info --series <uid>` describe what was built, `subtraction:delete` removes it.
    The result is a series: scroll, window, measure and capture it like any other.
 <!--endif-->
+<!--if:wsi-->
+9. **Read a whole slide** (modality SM) in its own viewer: `dicom:open --series <uid>` opens it
+   there. `wsi:info` describes the slide (size in base pixels, pixel spacing, objective
+   magnification, pyramid levels) and what the pane shows (zoom, centre, level, tiles loaded).
+   `wsi:goto --at x,y` centres the view on a base pixel, `--objective 20` shows it at 20× and
+   `--zoom 0.5` at a scale, `--focal-plane 2` and `--optical-path DAPI` pick the plane of a
+   Z-stack and the channel of a multi-path slide (`wsi:info` lists them), `--complete` answers
+   once every tile of the view is loaded, so the next `view2d:capture` is sharp. Measurements on
+   a slide are in µm; the `view2d:` verbs work as on an image, with base pixels as image
+   coordinates. `wsi:annotations` lists the bulk annotation groups of the slide (nuclei, cells,
+   regions of a DICOM Microscopy Bulk Simple Annotations object loaded with the study), drawn
+   over the tiles up to a cap; `--group 1 --hide` or `--show` chooses what is drawn.
+   `wsi:export --out <file>` writes the measurements and drawings of the pane as a DICOM
+   Structured Report (TID 1500, regions on the base level in µm); a report of a slide loaded with
+   the study, by `dicom:load`, is drawn over the slide.
+<!--endif-->
 <!--if:view3d-->
 10. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well

@@ -29,6 +29,7 @@ import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.editor.UiProfiles;
 import org.weasis.core.ui.editor.image.DefaultView2d.BulkDragSequence;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
@@ -596,6 +597,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
                 vImg.getEventManager()
                     .getAction(ActionW.DRAW_GRAPHICS)
                     .ifPresent(c -> c.setSelectedItem(BuiltinGraphicTools.SELECTION));
+                UiProfiles.afterDrawing(vImg.getEventManager());
               });
       ds = null;
     }

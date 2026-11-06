@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.ListDocument;
 import org.weasis.core.ui.docking.ShellState;
@@ -48,13 +49,27 @@ public record UiProfile(
     List<String> toolbars,
     List<String> menus,
     Map<MouseButton, MouseActionType> mouse,
-    String measurementProfile) {
+    String measurementProfile,
+    boolean toolsOnce) {
 
   public static final String NAME = "name"; // NON-NLS
   public static final String TOOLBARS = "toolbars"; // NON-NLS
   public static final String MENUS = "menus"; // NON-NLS
   public static final String MOUSE = "mouse"; // NON-NLS
   public static final String MEASUREMENT_PROFILE = "measurementProfile"; // NON-NLS
+  public static final String TOOLS_ONCE = "toolsOnce"; // NON-NLS
+
+  /** A profile whose drawing tools stay selected. */
+  public UiProfile(
+      String id,
+      String name,
+      ShellState shell,
+      List<String> toolbars,
+      List<String> menus,
+      Map<MouseButton, MouseActionType> mouse,
+      String measurementProfile) {
+    this(id, name, shell, toolbars, menus, mouse, measurementProfile, false);
+  }
 
   public UiProfile {
     Objects.requireNonNull(id);
@@ -94,12 +109,23 @@ public record UiProfile(
 
   /** This profile with another shell template, as the user shaped the slots. */
   public UiProfile withShell(ShellState template) {
-    return new UiProfile(id, name, template, toolbars, menus, mouse, measurementProfile);
+    return new UiProfile(id, name, template, toolbars, menus, mouse, measurementProfile, toolsOnce);
   }
 
   /** This profile with another toolbar list. */
   public UiProfile withToolbars(List<String> ids) {
-    return new UiProfile(id, name, shell, ids, menus, mouse, measurementProfile);
+    return new UiProfile(id, name, shell, ids, menus, mouse, measurementProfile, toolsOnce);
+  }
+
+  /**
+   * The action the left button goes back to after one graphic drawn with a one-shot tool: the
+   * profile's left binding when its tools are one-shot ({@code toolsOnce}); empty otherwise.
+   */
+  public Optional<String> leftActionAfterDrawing() {
+    if (!toolsOnce || mouse == null || mouse.get(MouseButton.LEFT) == null) {
+      return Optional.empty();
+    }
+    return Optional.of(mouse.get(MouseButton.LEFT).command());
   }
 
   public JsonObject toJson() {
@@ -120,6 +146,9 @@ public record UiProfile(
       json.add(MOUSE, bindings);
     }
     JsonUtil.addIfPresent(json, MEASUREMENT_PROFILE, measurementProfile);
+    if (toolsOnce) {
+      json.add(TOOLS_ONCE, true);
+    }
     return json.build();
   }
 
@@ -157,6 +186,7 @@ public record UiProfile(
         json.containsKey(TOOLBARS) ? new ArrayList<>(JsonUtil.getStringList(json, TOOLBARS)) : null,
         json.containsKey(MENUS) ? new ArrayList<>(JsonUtil.getStringList(json, MENUS)) : null,
         mouse,
-        json.getString(MEASUREMENT_PROFILE, null));
+        json.getString(MEASUREMENT_PROFILE, null),
+        json.getBoolean(TOOLS_ONCE, false));
   }
 }

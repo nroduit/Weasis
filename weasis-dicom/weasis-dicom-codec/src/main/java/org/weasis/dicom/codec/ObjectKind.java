@@ -29,6 +29,8 @@ public enum ObjectKind {
   RT_PLAN("RTPLAN"), // NON-NLS
   /** RT Dose. */
   RT_DOSE("RTDOSE"), // NON-NLS
+  /** Microscopy Bulk Simple Annotations. */
+  ANNOTATION("ANN"), // NON-NLS
   /** Any other hidden special element. */
   OTHER(null);
 
@@ -53,6 +55,7 @@ public enum ObjectKind {
       case RT_STRUCTURE_SET -> "rtstruct"; // NON-NLS
       case RT_PLAN -> "rtplan"; // NON-NLS
       case RT_DOSE -> "rtdose"; // NON-NLS
+      case ANNOTATION -> "ann"; // NON-NLS
       case OTHER -> "other"; // NON-NLS
     };
   }

@@ -131,11 +131,12 @@ class MeasurementProfileJsonTest {
   void the_bundled_document_has_a_default_and_modality_profiles() {
     List<MeasurementProfile> profiles = MeasurementProfileRegistry.loadBuiltIn();
     assertAll(
-        () -> assertEquals(4, profiles.size()),
+        () -> assertEquals(5, profiles.size()),
         () -> assertTrue(profiles.stream().anyMatch(MeasurementProfile::isDefault)),
         () -> assertTrue(profiles.stream().anyMatch(p -> p.matches("CT"))),
         () -> assertTrue(profiles.stream().anyMatch(p -> p.matches("DX"))),
         () -> assertTrue(profiles.stream().anyMatch(p -> p.matches("US"))),
+        () -> assertTrue(profiles.stream().anyMatch(p -> p.matches("SM"))),
         () -> assertFalse(profiles.stream().anyMatch(p -> p.matches("MG"))));
   }
 

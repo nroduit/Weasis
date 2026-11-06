@@ -126,6 +126,14 @@ public final class UiProfiles {
   }
 
   /**
+   * A graphic was drawn with a one-shot tool: when the active profile has one-shot tools, the left
+   * button goes back to its binding (a pan on a slide) instead of staying on the drawing action.
+   */
+  public static void afterDrawing(ImageViewerEventManager<?> manager) {
+    active().flatMap(UiProfile::leftActionAfterDrawing).ifPresent(manager::changeLeftMouseAction);
+  }
+
+  /**
    * Activates the profile the context asks for, or releases the active one when the context names
    * none or the filtering is off ({@link Relevance#CONTEXTUAL}). Runs on the event dispatch thread.
    *

@@ -40,7 +40,9 @@ which node is affected: they set parameters on the nodes, then ask for a pass.
 
 During a pass, a node either **runs** or is **skipped**. A skipped node keeps the output of its last
 run. A disabled node passes its input through. A node whose `process()` throws passes its input
-through and runs again on the next pass.
+through and runs again on the next pass. A node without input image (the node above produced
+none, e.g. the affine transform of an image outside the view) does not run and has no output, so
+the nodes below it have no input either; it runs again once its input comes back.
 
 `SimpleOpManager.isLastPassReused()` tells whether the last pass ran no node at all; the layer then
 keeps its paint buffer.

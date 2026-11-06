@@ -94,8 +94,8 @@
     },
     {
       "code": "weasis.plugins.75",
-      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-au-${app.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-dicom-wave-${app.version}.jar${xz.ext}",
-      "description": "DICOM AU and ECG",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-au-${app.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-dicom-wave-${app.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-dicom-wsi-${app.version}.jar${xz.ext}",
+      "description": "DICOM AU, ECG and whole slide images",
       "type": "A",
       "category": "PLUGIN_INSTALL"
     },

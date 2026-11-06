@@ -67,6 +67,23 @@ class UiProfileTest {
   }
 
   @Test
+  void oneShotToolsGoBackToTheLeftBindingOfTheProfile() {
+    UiProfile slide =
+        UiProfile.fromJson(
+            json("{\"id\": \"sm\", \"toolsOnce\": true, \"mouse\": {\"left\": \"pan\"}}"));
+    UiProfile ct = UiProfile.fromJson(json("{\"id\": \"ct\", \"mouse\": {\"left\": \"zoom\"}}"));
+    UiProfile bare = UiProfile.fromJson(json("{\"id\": \"x\", \"toolsOnce\": true}"));
+    assertAll(
+        () -> assertTrue(slide.toolsOnce()),
+        () -> assertEquals("pan", slide.leftActionAfterDrawing().orElseThrow()),
+        () -> assertTrue(slide.toJson().getBoolean("toolsOnce")),
+        () -> assertEquals(slide, UiProfile.fromJson(slide.toJson())),
+        () -> assertTrue(ct.leftActionAfterDrawing().isEmpty(), "tools stay selected"),
+        () -> assertFalse(ct.toJson().containsKey("toolsOnce")),
+        () -> assertTrue(bare.leftActionAfterDrawing().isEmpty(), "no left binding"));
+  }
+
+  @Test
   void aSectionLeftOutStatesNothing() {
     UiProfile parsed = UiProfile.fromJson(json("{\"id\": \"bare\"}"));
     assertAll(

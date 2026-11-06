@@ -957,6 +957,12 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
         return;
       }
 
+      // One series is one slide (PS3.3 A.32.8): its levels differ in size, never split by image
+      if (DicomMediaIO.SERIES_WSI_MIMETYPE.equals(dicomReader.getMimeType())) {
+        original.addMedia(media);
+        return;
+      }
+
       if (original instanceof FilesExtractor) {
         handleFilesExtractorSeries(original, media, dicomReader);
       } else {

@@ -18,6 +18,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -339,6 +340,29 @@ class UiProfilesTest {
     assertAll(
         () -> assertEquals("winLevel", bindings.get(MouseActions.T_LEFT), "the user's again"),
         () -> assertFalse(UiProfiles.active().isPresent()));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void aOneShotDrawingGivesTheLeftButtonBackToTheProfile() {
+    ImageViewerEventManager<?> manager = mock(ImageViewerEventManager.class);
+    UiProfiles.activate(ct(), null);
+    UiProfiles.afterDrawing(manager);
+    verify(manager, never()).changeLeftMouseAction(anyString());
+
+    UiProfile slide =
+        new UiProfile(
+            "test.sm", // NON-NLS
+            null,
+            null,
+            null,
+            null,
+            Map.of(MouseButton.LEFT, MouseActionType.PAN),
+            null,
+            true);
+    UiProfiles.activate(slide, null);
+    UiProfiles.afterDrawing(manager);
+    verify(manager).changeLeftMouseAction(MouseActionType.PAN.command());
   }
 
   @Test

@@ -151,6 +151,33 @@ public record SRGraphic(
   }
 
   /**
+   * Builds the graphic of a 2D item in the Total Pixel Matrix of a tiled image, for a view that
+   * shows the whole matrix (a slide): VOLUME coordinates are taken as they are, FRAME coordinates
+   * are moved by the origin of the referenced frame.
+   *
+   * @param frameOrigin the position of the referenced frame in the matrix, null when unknown
+   * @param matrixToModel matrix pixels to the model of the view, e.g. the downsample of the level
+   * @return the graphic, or null for an SCOORD3D item or one that cannot be built
+   */
+  public Graphic buildOnMatrix(
+      Point frameOrigin, AffineTransform matrixToModel, boolean highlighted) {
+    if (threeD) {
+      return null;
+    }
+    Attributes data =
+        isVolumeOrigin() || frameOrigin == null
+            ? item
+            : PrGraphicUtil.matrixToFrame(item, new Point(-frameOrigin.x, -frameOrigin.y), 0);
+    float thickness = highlighted ? HIGHLIGHT_THICKNESS : LINE_THICKNESS;
+    Graphic graphic = build2D(data, COLOR, thickness, true, matrixToModel);
+    if (graphic != null && highlighted && label != null && !label.isBlank()) {
+      graphic.setLabelVisible(Boolean.TRUE);
+      graphic.setLabel(new String[] {label}, null);
+    }
+    return graphic;
+  }
+
+  /**
    * Translates Total Pixel Matrix coordinates into the frame's own pixel coordinates and keeps the
    * graphic only when it overlaps the frame.
    */

@@ -1031,6 +1031,8 @@ public class View2dCommands implements CommandExtension {
               + "renders the image alone at its own size, for exact comparisons.")
   @Since("5.0")
   static class Capture extends AbstractVerb {
+    private static final long CAPTURE_WAIT_MS = 10_000;
+
     @Mixin ViewOptions target;
 
     @Option(
@@ -1100,8 +1102,10 @@ public class View2dCommands implements CommandExtension {
               ? maxPixels
               : frame == CaptureFrame.IMAGE ? Integer.MAX_VALUE : DEFAULT_MAX_PIXELS;
       String format = format(out.value());
-      Rendered r =
-          GuiExecutor.invokeAndRethrow(() -> render(target.withImage(), frame, annotations));
+      Target resolved = GuiExecutor.invokeAndRethrow(target::withImage);
+      // A whole slide is painted from tiles that load in the background
+      resolved.view().awaitDisplayed(CAPTURE_WAIT_MS);
+      Rendered r = GuiExecutor.invokeAndRethrow(() -> render(resolved, frame, annotations));
 
       BufferedImage source = r.image();
       Rectangle cropped =

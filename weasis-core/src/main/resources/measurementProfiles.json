@@ -38,6 +38,16 @@
         "weasis.angle", "weasis.arrow", "weasis.text"
       ],
       "statistics": []
+    },
+    {
+      "id": "pathology",
+      "name": "Pathology (whole slide)",
+      "modalities": ["SM"],
+      "tools": [
+        "weasis.line", "weasis.polyline", "weasis.rectangle", "weasis.ellipse", "weasis.circle",
+        "weasis.freehand", "weasis.bidirectional", "weasis.angle", "weasis.arrow", "weasis.text"
+      ],
+      "statistics": []
     }
   ]
 }

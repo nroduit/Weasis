@@ -695,7 +695,8 @@ public class DicomPrSerializer {
     buildGraphicLabel(graphic, textSeq);
   }
 
-  private static GraphicTypeInfo getGraphicTypeInfo(Graphic graphic) {
+  /** The GSPS graphic type and points of a graphic, or a shape to flatten when none fits. */
+  public static GraphicTypeInfo getGraphicTypeInfo(Graphic graphic) {
     switch (graphic) {
       case ObliqueRectangleGraphic rectangleShape -> {
         boolean isEllipse = graphic instanceof EllipseGraphic;
@@ -797,7 +798,8 @@ public class DicomPrSerializer {
     fillStyleSeq.add(fillAttributes);
   }
 
-  private static double[] getGraphicsPoints(List<Point2D> pts) {
+  /** Model points as DICOM PIXEL units, column then row. */
+  public static double[] getGraphicsPoints(List<Point2D> pts) {
     double[] coordinates = new double[pts.size() * 2];
     for (int i = 0; i < pts.size(); i++) {
       Point2D point = pts.get(i);
@@ -930,6 +932,6 @@ public class DicomPrSerializer {
   }
 
   /** Helper class to encapsulate graphic type information. */
-  private record GraphicTypeInfo(
+  public record GraphicTypeInfo(
       String graphicType, List<Point2D> points, boolean requiresShapeTransformation) {}
 }

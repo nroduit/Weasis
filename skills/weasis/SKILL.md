@@ -24,8 +24,8 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.24 and protocol
-1, and answers these namespaces: color, config, dicom, events, explorer, hp, image, mpr, print, redact, script, state, subtraction, view2d, view3d, weasis, workspace.
+This instance runs Weasis development with command API 2.25 and protocol
+2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, mpr, print, redact, script, state, subtraction, ui, view2d, view3d, weasis, workspace, wsi.
 
 Check the connection first:
 
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.24 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.25 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -293,7 +293,21 @@ line naming the current spelling. Use the current one everywhere.
    ready, `mpr:prefetch --series <uid>` builds one ahead of time. The built-in CT protocol
    fills an empty coronal or sagittal cell with such a reformat of the axial series (cell indicator
    *fallback*).
-12. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
+12. **Read a whole slide** (modality SM) in its own viewer: `dicom:open --series <uid>` opens it
+   there. `wsi:info` describes the slide (size in base pixels, pixel spacing, objective
+   magnification, pyramid levels) and what the pane shows (zoom, centre, level, tiles loaded).
+   `wsi:goto --at x,y` centres the view on a base pixel, `--objective 20` shows it at 20× and
+   `--zoom 0.5` at a scale, `--focal-plane 2` and `--optical-path DAPI` pick the plane of a
+   Z-stack and the channel of a multi-path slide (`wsi:info` lists them), `--complete` answers
+   once every tile of the view is loaded, so the next `view2d:capture` is sharp. Measurements on
+   a slide are in µm; the `view2d:` verbs work as on an image, with base pixels as image
+   coordinates. `wsi:annotations` lists the bulk annotation groups of the slide (nuclei, cells,
+   regions of a DICOM Microscopy Bulk Simple Annotations object loaded with the study), drawn
+   over the tiles up to a cap; `--group 1 --hide` or `--show` chooses what is drawn.
+   `wsi:export --out <file>` writes the measurements and drawings of the pane as a DICOM
+   Structured Report (TID 1500, regions on the base level in µm); a report of a slide loaded with
+   the study, by `dicom:load`, is drawn over the slide.
+13. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
    and still have no usable 3D.
 

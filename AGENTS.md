@@ -86,7 +86,7 @@ Three things are enough to navigate the codebase.
 
 ```text
 weasis-launcher  →  weasis-core  →  weasis-base/*       (generic image viewer: explorer, ui, viewer2d)
-                                 →  weasis-dicom/*      (DICOM: codec, explorer, viewer2d, 3d, rt, sr, au, wave, qr, send, isowriter, ai-agent)
+                                 →  weasis-dicom/*      (DICOM: codec, explorer, viewer2d, 3d, rt, sr, au, wave, wsi, qr, send, isowriter, ai-agent)
                                  →  weasis-acquire/*    (image acquisition / Dicomizer: explorer, editor)
                                  →  weasis-imageio, weasis-opencv  (image and native dependencies)
 ```

@@ -355,6 +355,13 @@ public class SimpleOpManager implements OpManager {
         var previous = operations.get(i - 1);
         current.setParam(Param.INPUT_IMG, previous.getParam(Param.OUTPUT_IMG));
       }
+      if (current.getParam(Param.INPUT_IMG) == null) {
+        // Nothing to process (e.g. an image outside the view): no output, and a run when the
+        // input comes back
+        current.setParam(Param.OUTPUT_IMG, null);
+        lastRuns.remove(current);
+        continue;
+      }
       if (tracking && isUpToDate(current)) {
         skipped++;
         if (trace != null) {

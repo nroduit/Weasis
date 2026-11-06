@@ -115,8 +115,10 @@ closed on the selected viewer at once.
 
 A `UiProfile` (`org.weasis.core.ui.editor`) is what a reading needs around the viewers: a
 `ShellState` template (the tool id of each slot by role, widths and ratios left to the user),
-the toolbar ids shown and their order, the context-menu entries, the mouse bindings and the
-measurement profile id; a section it leaves out states nothing. The profiles are a layered
+the toolbar ids shown and their order, the context-menu entries, the mouse bindings, the
+measurement profile id and whether its drawing tools are one-shot (`toolsOnce`: after a graphic
+drawn with *Draw only once*, the left button goes back to the binding of the profile, a pan on a
+slide, instead of staying on the drawing action); a section it leaves out states nothing. The profiles are a layered
 JSON document, `uiProfiles.json` (built-in, site, user), read by `UiProfiles`; the DICOM codec
 ships one per protocol of the built-in library, and a protocol names its profile per reading
 step or for the whole protocol in its Weasis extensions.

@@ -251,6 +251,16 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         return DecFormatter.percentTwoDecimal(getRealValue());
       }
 
+      // A view that asks for it zooms through an animation, at the cursor when it says so
+      @Override
+      protected void wheel(MouseWheelEvent e) {
+        if (e.getSource() instanceof DefaultView2d<?> view && view.isSmoothZoom()) {
+          view.getZoomAnimator().wheel(e, view.wheelAnchor(e));
+        } else {
+          super.wheel(e);
+        }
+      }
+
       @Override
       public int toSliderValue(double viewScale) {
         double v = Math.log(viewScale) / Math.log(DefaultViewModel.SCALE_MAX) * getSliderMax();

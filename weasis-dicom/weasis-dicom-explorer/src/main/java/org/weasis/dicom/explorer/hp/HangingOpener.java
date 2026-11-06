@@ -183,10 +183,14 @@ public final class HangingOpener {
     this.maxWaitMillis = maxWaitMillis;
   }
 
-  /** Whether the engine can hang this series: an image series the 2D viewer shows. */
+  /**
+   * Whether the engine can hang this series: an image series the 2D viewer shows. A whole slide
+   * series has its thumbnail as image but opens in the slide viewer.
+   */
   public static boolean isImageSeries(Series<?> series) {
     return series instanceof DicomSeries ds
         && !DicomModel.isHiddenModality(ds)
+        && !ds.isWholeSlide()
         && ds.size(null) > 0
         && ds.getMedia(0, null, null) instanceof DicomImageElement;
   }

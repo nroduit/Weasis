@@ -36,6 +36,7 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.model.GraphicModel;
@@ -337,6 +338,13 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     return super.getGraphics();
   }
 
+  // The labels are computed with the calibration of the source view: a slide measures in the
+  // pixels of its base level, not in those of the thumbnail this copy holds as its image
+  @Override
+  public MeasurableLayer getMeasurableLayer() {
+    return sourceView.getMeasurableLayer();
+  }
+
   @Override
   public void paintComponent(Graphics g) {
     if (g instanceof Graphics2D g2d) {
@@ -388,9 +396,10 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
    * scale so that it lands pixel for pixel. Rounding noise in the composite transform is snapped
    * away, since a scale of 1.0000001 would still make Java2D resample.
    */
-  private void drawImage(Graphics2D g2d) {
+  @Override
+  protected void drawImage(Graphics2D g2d) {
     if (renderScale == 1.0) {
-      imageLayer.drawImage(g2d);
+      paintImage(g2d);
       return;
     }
     Graphics2D gi = (Graphics2D) g2d.create();
@@ -402,9 +411,18 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
             new AffineTransform(
                 1, 0, 0, 1, Math.round(t.getTranslateX()), Math.round(t.getTranslateY())));
       }
-      imageLayer.drawImage(gi);
+      paintImage(gi);
     } finally {
       gi.dispose();
+    }
+  }
+
+  /** Paints the image as the source view does, through its tiles for a whole slide. */
+  private void paintImage(Graphics2D g2d) {
+    if (sourceView instanceof DefaultView2d<E> source) {
+      source.drawImage(g2d, this);
+    } else {
+      imageLayer.drawImage(g2d);
     }
   }
 

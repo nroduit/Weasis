@@ -88,6 +88,8 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.UICore;
+import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.image.SynchData.SyncState;
@@ -175,6 +177,32 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   private Point2D probePosition;
 
   protected final RenderedImageLayer<E> imageLayer;
+
+  private final SmoothZoomAnimator zoomAnimator =
+      new SmoothZoomAnimator(
+          new SmoothZoomAnimator.Target() {
+            @Override
+            public double getScale() {
+              return getViewModel().getViewScale();
+            }
+
+            @Override
+            public double clampScale(double scale) {
+              ViewModel m = getViewModel();
+              return adjustViewScale(
+                  DefaultViewModel.cropViewScale(scale, m.getViewScaleMin(), m.getViewScaleMax()));
+            }
+
+            @Override
+            public void zoomTo(double scale, Point2D anchor) {
+              zoom(scale, anchor);
+            }
+
+            @Override
+            public double snapScale(double from, double to) {
+              return snapViewScale(from, to);
+            }
+          });
 
   /** Image currently pinned in the memory cache on behalf of this viewport (may be null). */
   private E pinnedImage;
@@ -1510,7 +1538,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     Point2D p = getClipViewCoordinatesOffset();
     g2d.translate(p.getX(), p.getY());
-    imageLayer.drawImage(g2d);
+    drawImage(g2d);
     drawLayers(g2d, affineTransform, inverseTransform);
     g2d.translate(-p.getX(), -p.getY());
 
@@ -1526,6 +1554,30 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     g2d.setFont(defaultFont);
     g2d.setPaint(oldColor);
     g2d.setStroke(oldStroke);
+  }
+
+  /**
+   * Paints the image under the graphics, with the graphics translated to the clip offset of the
+   * view; a view that paints its image otherwise (tiles of a whole slide) overrides it.
+   */
+  protected void drawImage(Graphics2D g2d) {
+    imageLayer.drawImage(g2d);
+  }
+
+  /**
+   * Paints the image of this view into an off-screen copy of it (a capture); a view that paints its
+   * image otherwise (tiles of a whole slide) overrides it with the transform of the copy.
+   */
+  protected void drawImage(Graphics2D g2d, DefaultView2d<E> export) {
+    export.imageLayer.drawImage(g2d);
+  }
+
+  /**
+   * Waits, off the event dispatch thread, until the pane shows all it should (the tiles of a whole
+   * slide), at most that long; nothing for an image.
+   */
+  public void awaitDisplayed(long millis) {
+    // an image is displayed at once
   }
 
   private void drawAffineInvariant(Graphics2D g2d) {}
@@ -1568,6 +1620,36 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     zoom(viewScale, null);
   }
 
+  /** The animation of the zoom of this view, see {@link #isSmoothZoom()}. */
+  public SmoothZoomAnimator getZoomAnimator() {
+    return zoomAnimator;
+  }
+
+  /** Whether the wheel zooms this view through an animation; off unless a view asks for it. */
+  public boolean isSmoothZoom() {
+    return false;
+  }
+
+  /**
+   * The scale an animated relative zoom (wheel, double click) goes to, see {@link
+   * SmoothZoomAnimator.Target#snapScale}: {@code to}, unless a view prefers a scale close to it.
+   */
+  protected double snapViewScale(double from, double to) {
+    return to;
+  }
+
+  /** Whether the wheel zooms at the cursor, by default as the user setting says. */
+  public boolean isZoomAtCursor() {
+    return Settings.get(CoreSettings.ZOOM_AT_CURSOR);
+  }
+
+  /** The anchor of a wheel zoom: the cursor as an offset from the center, or null. */
+  public Point2D wheelAnchor(MouseEvent e) {
+    return isZoomAtCursor()
+        ? new Point2D.Double(e.getX() - getWidth() / 2.0, e.getY() - getHeight() / 2.0)
+        : null;
+  }
+
   /**
    * Zooms around an anchor, see {@link GraphicsPane#zoomAt(double, Point2D)}.
    *
@@ -1576,6 +1658,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
    *     around the center
    */
   public void zoom(Double viewScale, Point2D anchor) {
+    if (!zoomAnimator.isApplying()) {
+      zoomAnimator.stop(); // another zoom takes over
+    }
     double ratio = getZoomRatioFromType(viewScale);
     actionsInView.put(ActionW.ZOOM.cmd(), ratio);
     if (anchor == null || MathUtil.isEqualToZero(viewScale)) {
@@ -1992,6 +2077,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public void disposeView() {
+    zoomAnimator.stop();
     disableMouseAndKeyListener();
     removeFocusListener(this);
     ToolTipManager.sharedInstance().unregisterComponent(this);
