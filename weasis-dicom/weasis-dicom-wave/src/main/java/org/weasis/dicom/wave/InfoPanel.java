@@ -28,15 +28,21 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.util.StringUtil;
 
+/** The zoom slider, the lead under the cursor with its range and value, and the heart rate. */
 class InfoPanel extends JPanel {
+
+  private static final DecimalFormat VALUE_FORMAT = new DecimalFormat("#0.###"); // NON-NLS
 
   private final JLabel lead = new JLabel(" ");
   private final JLabel maximum = new JLabel();
   private final JLabel minimum = new JLabel();
 
   private final JLabel currentLabel = new JLabel();
-  private final JLabel milliVolt = new JLabel();
+  private final JLabel value = new JLabel();
   private final JLabel seconds = new JLabel();
+
+  private final JLabel heartRateLabel = new JLabel();
+  private final JLabel heartRate = new JLabel();
 
   public InfoPanel(double zoomRatio) {
     GridBagLayout gridBagLayout = new GridBagLayout();
@@ -84,18 +90,22 @@ class InfoPanel extends JPanel {
     add(zoomSlider, gbcPanel);
 
     JPanel main = new JPanel();
-    main.setLayout(new GridLayout(3, 2, 25, 0));
+    main.setLayout(new GridLayout(3, 3, 25, 0));
     lead.setFont(FontItem.DEFAULT_SEMIBOLD.getFont());
     currentLabel.setFont(FontItem.DEFAULT_SEMIBOLD.getFont());
+    heartRateLabel.setFont(FontItem.DEFAULT_SEMIBOLD.getFont());
 
     main.add(lead);
     main.add(currentLabel);
+    main.add(heartRateLabel);
 
     main.add(minimum);
     main.add(seconds);
+    main.add(heartRate);
 
     main.add(maximum);
-    main.add(milliVolt);
+    main.add(value);
+    main.add(new JLabel());
 
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.insets = new Insets(0, 15, 0, 10);
@@ -117,31 +127,41 @@ class InfoPanel extends JPanel {
     this.lead.setText(lead);
   }
 
-  public void setMinMax(double minimum, double maximum) {
-    StringBuilder min = new StringBuilder(Messages.getString("InfoPanel.min"));
-    min.append(StringUtil.COLON_AND_SPACE);
-    min.append("##.#### mV;"); // NON-NLS
-    min.append(Messages.getString("InfoPanel.min"));
-    min.append(StringUtil.COLON_AND_SPACE);
-    min.append("-##.#### mV"); // NON-NLS
-
-    StringBuilder max = new StringBuilder(Messages.getString("InfoPanel.max"));
-    max.append(StringUtil.COLON_AND_SPACE);
-    max.append("##.#### mV;"); // NON-NLS
-    max.append(Messages.getString("InfoPanel.max"));
-    max.append(StringUtil.COLON_AND_SPACE);
-    max.append("-##.#### mV"); // NON-NLS
-    this.minimum.setText(new DecimalFormat(min.toString()).format(minimum));
-    this.maximum.setText(new DecimalFormat(max.toString()).format(maximum));
+  /** The range of the lead under the cursor, in its display unit. */
+  public void setMinMax(double minimum, double maximum, String unit) {
+    this.minimum.setText(
+        Messages.getString("InfoPanel.min")
+            + StringUtil.COLON_AND_SPACE
+            + VALUE_FORMAT.format(minimum)
+            + " "
+            + unit);
+    this.maximum.setText(
+        Messages.getString("InfoPanel.max")
+            + StringUtil.COLON_AND_SPACE
+            + VALUE_FORMAT.format(maximum)
+            + " "
+            + unit);
   }
 
-  public void setCurrentValues(double sec, double mV) {
+  /** The time and value under the cursor; a negative time clears them. */
+  public void setCurrentValues(double sec, double value, String unit) {
     if (sec < 0) {
-      clearValue(currentLabel, seconds, milliVolt);
+      clearValue(currentLabel, seconds, this.value);
     } else {
       currentLabel.setText(Messages.getString("InfoPanel.cursor"));
-      seconds.setText(MarkerAnnotation.secondFormatter.format(sec));
-      milliVolt.setText(MarkerAnnotation.mVFormatter.format(mV));
+      seconds.setText(WaveFormats.SECONDS.format(sec));
+      this.value.setText(VALUE_FORMAT.format(value) + " " + (unit == null ? "" : unit));
+    }
+  }
+
+  /** The heart rate estimated from the signal; null clears it. */
+  public void setHeartRate(Double bpm) {
+    if (bpm == null) {
+      clearValue(heartRateLabel, heartRate);
+    } else {
+      heartRateLabel.setText(Messages.getString("InfoPanel.hr"));
+      heartRate.setText(
+          "≈ " + WaveFormats.bpm(bpm) + " (" + Messages.getString("InfoPanel.estimated") + ")");
     }
   }
 

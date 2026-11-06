@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2020 Weasis Team and other contributors.
+ * Copyright (c) 2026 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
  * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
@@ -15,6 +15,8 @@ import org.weasis.dicom.macro.Code;
 
 public class Lead {
 
+  private static final String RHYTHM_SUFFIX = " (Rhythm)"; // NON-NLS
+
   public static final Lead I = new Lead("I"); // NON-NLS
   public static final Lead II = new Lead("II");
   public static final Lead III = new Lead("III");
@@ -27,9 +29,15 @@ public class Lead {
   public static final Lead V4 = new Lead("V4"); // NON-NLS
   public static final Lead V5 = new Lead("V5"); // NON-NLS
   public static final Lead V6 = new Lead("V6"); // NON-NLS
-  public static final Lead RHYTHM = new Lead("II (Rhythm)"); // NON-NLS
+
+  /** The rhythm strips: the same channels as II, V1 and V5, displayed over the whole width. */
+  public static final Lead RHYTHM = new Lead("II" + RHYTHM_SUFFIX);
+
+  public static final Lead RHYTHM_V1 = new Lead("V1" + RHYTHM_SUFFIX);
+  public static final Lead RHYTHM_V5 = new Lead("V5" + RHYTHM_SUFFIX);
 
   static final Lead[] DEFAULT_12LEAD = {I, II, III, AVR, AVL, AVF, V1, V2, V3, V4, V5, V6};
+  static final Lead[] RHYTHM_LEADS = {RHYTHM, RHYTHM_V1, RHYTHM_V5};
 
   private final String name;
 
@@ -49,6 +57,21 @@ public class Lead {
 
   public String getName() {
     return name.toUpperCase();
+  }
+
+  /** Whether this lead is a rhythm strip (a full-width copy of another lead). */
+  public boolean isRhythm() {
+    return name.endsWith(RHYTHM_SUFFIX);
+  }
+
+  /** The rhythm strip of a lead, or null when the lead has none. */
+  public static Lead rhythmOf(Lead lead) {
+    for (Lead rhythm : RHYTHM_LEADS) {
+      if (rhythm.name.equals(lead.name + RHYTHM_SUFFIX)) {
+        return rhythm;
+      }
+    }
+    return null;
   }
 
   private static String getCode(String n) {
@@ -90,7 +113,7 @@ public class Lead {
         return lead;
       }
     }
-    return new Lead(title);
+    return new Lead(title == null ? codeValue : title);
   }
 
   private static Lead mdc2Lead(String codeValue) {

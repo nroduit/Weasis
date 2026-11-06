@@ -22,6 +22,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Lays the leads out on the paper: columns of {@link Format#getColumnSeconds()} seconds at the
+ * paper speed, rhythm strips over a full row, superimposed leads over the whole area. The width of
+ * a column is its calibration gutter plus its seconds at the current pixels per second, so the time
+ * scale is the same in every lead.
+ */
 public class WaveLayoutManager implements LayoutManager {
 
   public static final int AUTO_AMPLITUDE = -1;
@@ -29,12 +35,18 @@ public class WaveLayoutManager implements LayoutManager {
   public static final int DEFAULT_AMPLITUDE = 10;
   public static final int DEFAULT_SPEED = 25;
 
+  /** Superimposed leads (a single beat, usually) may fill the viewport up to these scales. */
+  private static final int SUPERIMPOSED_AMPLITUDE = 40;
+
+  private static final int SUPERIMPOSED_SPEED = 100;
+
   private final WaveView view;
   private final WaveLayout layout;
   private final Map<Lead, LeadPanel> components;
 
   private double speed;
   private int amplitude;
+  private double pixelsPerSecond;
 
   public WaveLayoutManager(WaveView view, double speed, int amplitude) {
     this.view = view;
@@ -53,7 +65,7 @@ public class WaveLayoutManager implements LayoutManager {
   }
 
   public List<LeadPanel> getSortedComponents() {
-    return layout.getSortedComponents(view.getCurrentFormat(), components);
+    return layout.getSortedComponents(view.getCurrentFormat(), view.isCabrera(), components);
   }
 
   public double getSpeed() {
@@ -62,6 +74,16 @@ public class WaveLayoutManager implements LayoutManager {
 
   public int getAmplitude() {
     return amplitude;
+  }
+
+  /** Pixels of one second of signal at the current speed and zoom (after the last layout). */
+  public double getPixelsPerSecond() {
+    return pixelsPerSecond;
+  }
+
+  /** Screen pixels per millimetre at a zoom factor. */
+  public static double pixelPerMm(double zoom) {
+    return Toolkit.getDefaultToolkit().getScreenResolution() / 25.4 * zoom;
   }
 
   @Override
@@ -81,32 +103,69 @@ public class WaveLayoutManager implements LayoutManager {
     return preferredLayoutSize(parent);
   }
 
+  /**
+   * The seconds of signal spanned by a row: 10 s for the paper formats, the recording otherwise.
+   */
+  private double rowSeconds(Format format) {
+    double column = format.getColumnSeconds();
+    double seconds = column < 0 ? view.getSeconds() : 10;
+    return min(seconds, view.getSeconds());
+  }
+
+  /** The number of rows the ordered leads take, rhythm strips taking a row each. */
+  private static int rows(List<LeadPanel> ordered, int columns) {
+    int rows = 0;
+    int col = 0;
+    for (LeadPanel p : ordered) {
+      if (p.getChannels().getLead().isRhythm()) {
+        if (col > 0) {
+          rows++;
+          col = 0;
+        }
+        rows++;
+      } else {
+        col++;
+        if (col == columns) {
+          col = 0;
+          rows++;
+        }
+      }
+    }
+    return col > 0 ? rows + 1 : max(1, rows);
+  }
+
   @Override
   public Dimension preferredLayoutSize(Container parent) {
-    double ratio = Toolkit.getDefaultToolkit().getScreenResolution() / 25.4 * view.getZoomRatio();
-    int width = (int) (speed * ratio);
-    int height = (int) (amplitude * ratio);
+    double ratio = pixelPerMm(view.getZoomRatio());
     Format format = view.getCurrentFormat();
-    double sec = (format == Format.DEFAULT) ? view.getSeconds() : 10;
+    List<LeadPanel> ordered = getSortedComponents();
+    int columns = format.isSuperimposed() ? 1 : max(1, format.getXlayoutSize());
+    int rowCount = format.isSuperimposed() ? 1 : rows(ordered, columns);
+    double seconds = rowSeconds(format);
+    int gutter = view.getGutterWidth();
+    Dimension viewport = parent.getParent().getParent().getSize();
 
-    int layoutHeight =
-        format.getYlayoutSize() <= 0 ? view.getChannelNumber() : format.getYlayoutSize();
+    int maxAmplitude = format.isSuperimposed() ? SUPERIMPOSED_AMPLITUDE : DEFAULT_AMPLITUDE;
+    int maxSpeed = format.isSuperimposed() ? SUPERIMPOSED_SPEED : DEFAULT_SPEED;
+    int height = (int) (amplitude * ratio);
     if (amplitude == AUTO_AMPLITUDE) {
-      double h = parent.getParent().getParent().getSize().height * view.getZoomRatio();
-      int auto = (int) (h / view.getMvCells() / layoutHeight);
-      height = max((int) ratio, min(auto, (int) (DEFAULT_AMPLITUDE * ratio)));
+      double h = viewport.height * view.getZoomRatio() - 4;
+      int auto = (int) (h / view.getMvCells() / rowCount);
+      height = max((int) ratio, min(auto, (int) (maxAmplitude * ratio)));
     }
 
+    double pps = speed * ratio;
     if (speed == AUTO_SPEED) {
-      double w = parent.getParent().getParent().getSize().width * view.getZoomRatio();
-      int auto = (int) (w / sec);
-      width = max((int) ratio, min(auto, (int) (DEFAULT_SPEED * ratio)));
+      // The paper speed, or slower so that the whole row fits the viewport
+      double w = viewport.width * view.getZoomRatio() - columns * gutter - 4;
+      pps = seconds <= 0 ? 0 : min(w / seconds, maxSpeed * ratio);
     }
+    this.pixelsPerSecond = max(0, pps);
 
     Insets insets = parent.getInsets();
     return new Dimension(
-        insets.left + insets.right + (int) (sec * width),
-        insets.top + insets.bottom + layoutHeight * view.getMvCells() * height);
+        insets.left + insets.right + columns * gutter + max(1, (int) Math.round(seconds * pps)),
+        insets.top + insets.bottom + rowCount * view.getMvCells() * height);
   }
 
   @Override
@@ -116,31 +175,59 @@ public class WaveLayoutManager implements LayoutManager {
     int maxHeight = parent.getHeight() - insets.top - insets.bottom;
 
     List<LeadPanel> ordered = getSortedComponents();
-    for (Component c : parent.getComponents()) {
+    Format format = view.getCurrentFormat();
+    Component[] children = parent.getComponents();
+    for (Component c : children) {
       c.setVisible(ordered.contains(c));
+      if (c instanceof LeadPanel p) {
+        p.setOverlayIndex(format.isSuperimposed() ? ordered.indexOf(p) : -1);
+        p.setOverlayBase(false);
+      }
     }
 
-    Format format = view.getCurrentFormat();
-    int xLayoutSize = format.getXlayoutSize() <= 0 ? 1 : format.getXlayoutSize();
-    int yLayoutSize = format.getYlayoutSize() <= 0 ? ordered.size() : format.getYlayoutSize();
-    int w = maxWidth / xLayoutSize;
-    int h = maxHeight / yLayoutSize;
-
-    int offsetX = 0;
-    int offsetY = 0;
-
-    for (int i = 0; i < ordered.size(); i++) {
-      LeadPanel p = ordered.get(i);
-      if (p != null) {
-        int mWidth = p.getChannels().getLead().equals(Lead.RHYTHM) ? maxWidth : w;
-        p.setPreferredSize(new Dimension(mWidth, h));
-        p.setBounds(offsetX, offsetY, mWidth, h);
+    if (format.isSuperimposed()) {
+      // Children paint from the last to the first: the last visible one is the base
+      LeadPanel base = null;
+      for (Component c : children) {
+        if (c instanceof LeadPanel p && p.isVisible()) {
+          base = p;
+        }
       }
-      if ((i + 1) % xLayoutSize == 0) {
-        offsetX = 0;
-        offsetY += h;
+      for (LeadPanel p : ordered) {
+        p.setOverlayBase(p == base);
+        p.setPreferredSize(new Dimension(maxWidth, maxHeight));
+        p.setBounds(insets.left, insets.top, maxWidth, maxHeight);
+      }
+      return;
+    }
+
+    int columns = max(1, format.getXlayoutSize());
+    int rowCount = rows(ordered, columns);
+    int w = maxWidth / columns;
+    int h = maxHeight / rowCount;
+    int gutter = view.getGutterWidth();
+    int rhythmWidth =
+        min(maxWidth, gutter + (int) Math.round(rowSeconds(format) * pixelsPerSecond));
+
+    int col = 0;
+    int row = 0;
+    for (LeadPanel p : ordered) {
+      if (p.getChannels().getLead().isRhythm()) {
+        if (col > 0) {
+          row++;
+          col = 0;
+        }
+        p.setPreferredSize(new Dimension(rhythmWidth, h));
+        p.setBounds(insets.left, insets.top + row * h, rhythmWidth, h);
+        row++;
       } else {
-        offsetX += w;
+        p.setPreferredSize(new Dimension(w, h));
+        p.setBounds(insets.left + col * w, insets.top + row * h, w, h);
+        col++;
+        if (col == columns) {
+          col = 0;
+          row++;
+        }
       }
     }
   }

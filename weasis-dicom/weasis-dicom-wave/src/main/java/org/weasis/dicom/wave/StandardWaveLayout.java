@@ -14,24 +14,35 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The leads of a format in reading order: the leads the format names, then the channels the format
+ * does not know (extra leads of a 15-lead ECG, intracardiac channels...), the rhythm strips the
+ * format asks for last.
+ */
 class StandardWaveLayout implements WaveLayout {
 
   @Override
-  public List<LeadPanel> getSortedComponents(Format format, Map<Lead, LeadPanel> components) {
+  public List<LeadPanel> getSortedComponents(
+      Format format, boolean cabrera, Map<Lead, LeadPanel> components) {
     Map<Lead, LeadPanel> copy = new LinkedHashMap<>(components);
     List<LeadPanel> list = new ArrayList<>(copy.size());
-    for (Lead lead : format.getLeads()) {
+    List<LeadPanel> rhythms = new ArrayList<>();
+    for (Lead lead : format.getLeads(cabrera)) {
       LeadPanel val = copy.remove(lead);
       if (val != null) {
-        list.add(val);
+        if (lead.isRhythm()) {
+          rhythms.add(val);
+        } else {
+          list.add(val);
+        }
       }
     }
 
-    copy.remove(Lead.RHYTHM);
+    copy.keySet().removeIf(Lead::isRhythm);
     if (!copy.isEmpty()) {
       list.addAll(copy.values());
     }
-
+    list.addAll(rhythms);
     return list;
   }
 }

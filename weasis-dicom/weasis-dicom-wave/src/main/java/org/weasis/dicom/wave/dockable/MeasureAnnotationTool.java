@@ -11,18 +11,23 @@ package org.weasis.dicom.wave.dockable;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.FlowLayout;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
+import net.miginfocom.swing.MigLayout;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
@@ -40,90 +45,185 @@ import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.util.MeasureTables;
 import org.weasis.core.ui.util.SimpleTableModel;
-import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.wave.Messages;
 
-public class MeasureAnnotationTool extends PluginTool implements SeriesViewerListener {
+/**
+ * The measurement panel of the waveform viewer: the interval summary (heart rate, PR, QRS, QT,
+ * QTc), the calipers of every lead, the annotations of the object and of the related reports, and
+ * the interpretation text. Every section is a name / value table sized to its content; the panel
+ * follows the width of its dock and scrolls vertically only.
+ */
+public class MeasureAnnotationTool extends PluginTool implements SeriesViewerListener, Scrollable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MeasureAnnotationTool.class);
 
   public static final String BUTTON_NAME = "Measurements"; // NON-NLS
 
   private final JScrollPane rootPane;
-  private final JPanel tableMarkerContainer = new JPanel();
-  private JTable tableMarker;
+  private final Section intervals;
+  private final Section calipers;
+  private final Section annotations;
+  private final JPanel interpretationPanel;
+  private final JTextArea interpretation = new JTextArea();
 
-  private final JPanel tableTagContainer = new JPanel();
-  private JTable tableTag;
+  /** Rows added by other objects annotating the displayed waveform (SR TCOORD items). */
+  private List<Object[]> externalAnnotations = List.of();
+
+  private Attributes lastAttributes;
 
   public MeasureAnnotationTool() {
     super("wave-measure", BUTTON_NAME, Insertable.Type.TOOL, 30); // NON-NLS
     this.rootPane = new JScrollPane();
     setIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
-    setDockableWidth(280);
-    jbInit();
+    rootPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    setDockableWidth(300);
+
+    setLayout(new MigLayout("ins 0 3 8 3, gap 0 6, wrap 1, fillx", "[grow, fill]")); // NON-NLS
+    intervals = new Section(Messages.getString("MeasureAnnotationTool.intervals"), true);
+    calipers = new Section(Messages.getString("markers"), false);
+    annotations = new Section(Messages.getString("annotations"), false);
+    add(intervals, "growx"); // NON-NLS
+    add(calipers, "growx"); // NON-NLS
+    add(annotations, "growx"); // NON-NLS
+
+    interpretationPanel = new JPanel(new BorderLayout());
+    interpretationPanel.setBorder(
+        GuiUtils.getTitledBorder(Messages.getString("MeasureAnnotationTool.interpretation")));
+    interpretation.setEditable(false);
+    interpretation.setLineWrap(true);
+    interpretation.setWrapStyleWord(true);
+    interpretation.setFont(FontItem.SMALL.getFont());
+    interpretation.setOpaque(false);
+    interpretation.setBorder(BorderFactory.createEmptyBorder(2, 4, 4, 4));
+    interpretationPanel.add(interpretation, BorderLayout.CENTER);
+    interpretationPanel.setVisible(false);
+    add(interpretationPanel, "growx"); // NON-NLS
+    intervals.setVisible(false);
+    calipers.setVisible(false);
   }
 
-  private void jbInit() {
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    add(getMarkerPanel());
-    add(getAnnotationsPanel());
+  /**
+   * A titled name / value table that takes the height of its rows and hides when empty. A compact
+   * section is as wide as its content (short names, short values); otherwise the table stretches to
+   * the width of the dock, the name column takes what the values leave and shortened texts carry
+   * their full value as tooltip.
+   */
+  private static final class Section extends JPanel {
+    private static final int CELL_MARGIN = 8;
+    private static final int MIN_NAME_WIDTH = 60;
+    private static final int MAX_VALUE_SHARE_PERCENT = 55;
+
+    private final JPanel container = new JPanel(new BorderLayout());
+    private final JTable table;
+    private final boolean compact;
+
+    Section(String title, boolean compact) {
+      super(new BorderLayout());
+      this.compact = compact;
+      setBorder(GuiUtils.getTitledBorder(title));
+      table =
+          createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
+      table.setFont(FontItem.SMALL.getFont());
+      MeasureTables.installCopyMenu(table);
+      add(container, BorderLayout.CENTER);
+    }
+
+    void setRows(String[] headers, List<Object[]> rows, TableCellRenderer valueRenderer) {
+      container.removeAll();
+      if (rows == null || rows.isEmpty()) {
+        setVisible(false);
+      } else {
+        table.setModel(new SimpleTableModel(headers, rows.toArray(new Object[0][])));
+        TableCellRenderer values = valueRenderer == null ? new TooltipRenderer() : valueRenderer;
+        table.getColumnModel().getColumn(1).setCellRenderer(values);
+        if (compact) {
+          MeasureTables.fit(table, container);
+        } else {
+          stretch();
+        }
+        setVisible(true);
+      }
+      container.revalidate();
+      container.repaint();
+    }
+
+    /** Header above the rows, the table as wide as the dock, the value column at its content. */
+    private void stretch() {
+      table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+      TableColumn names = table.getColumnModel().getColumn(0);
+      TableColumn values = table.getColumnModel().getColumn(1);
+      names.setCellRenderer(new TooltipRenderer());
+      names.setMinWidth(GuiUtils.getScaleLength(MIN_NAME_WIDTH));
+      names.setMaxWidth(Integer.MAX_VALUE);
+      int valueWidth = contentWidth(1);
+      values.setMinWidth(Math.min(valueWidth, GuiUtils.getScaleLength(MIN_NAME_WIDTH)));
+      values.setPreferredWidth(valueWidth);
+      values.setMaxWidth(Integer.MAX_VALUE);
+      names.setPreferredWidth(Math.max(GuiUtils.getScaleLength(MIN_NAME_WIDTH), contentWidth(0)));
+      container.add(table.getTableHeader(), BorderLayout.PAGE_START);
+      container.add(table, BorderLayout.CENTER);
+      int height =
+          table.getRowHeight() * table.getRowCount()
+              + table.getTableHeader().getPreferredSize().height
+              + GuiUtils.insetHeight(container);
+      container.setPreferredSize(new Dimension(GuiUtils.getScaleLength(100), height));
+    }
+
+    @Override
+    public void doLayout() {
+      if (!compact && table.getRowCount() > 0) {
+        // The values keep their content width up to a share of the dock; the names get the rest
+        int total = Math.max(0, container.getWidth());
+        int valueWidth = Math.min(contentWidth(1), total * MAX_VALUE_SHARE_PERCENT / 100);
+        TableColumn values = table.getColumnModel().getColumn(1);
+        TableColumn names = table.getColumnModel().getColumn(0);
+        values.setPreferredWidth(valueWidth);
+        names.setPreferredWidth(
+            Math.max(GuiUtils.getScaleLength(MIN_NAME_WIDTH), total - valueWidth));
+      }
+      super.doLayout();
+    }
+
+    /** Width that shows the header and every cell of a column in full. */
+    private int contentWidth(int column) {
+      TableColumn tableColumn = table.getColumnModel().getColumn(column);
+      int width =
+          table
+              .getTableHeader()
+              .getDefaultRenderer()
+              .getTableCellRendererComponent(
+                  table, tableColumn.getHeaderValue(), false, false, -1, column)
+              .getPreferredSize()
+              .width;
+      for (int row = 0; row < table.getRowCount(); row++) {
+        width =
+            Math.max(
+                width,
+                table
+                    .prepareRenderer(table.getCellRenderer(row, column), row, column)
+                    .getPreferredSize()
+                    .width);
+      }
+      return width + table.getIntercellSpacing().width + GuiUtils.getScaleLength(CELL_MARGIN);
+    }
   }
 
-  public final JPanel getAnnotationsPanel() {
-    final JPanel transform = new JPanel();
-    transform.setAlignmentY(Component.TOP_ALIGNMENT);
-    transform.setAlignmentX(Component.LEFT_ALIGNMENT);
-    transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-    transform.setBorder(
-        BorderFactory.createCompoundBorder(
-            BorderFactory.createEmptyBorder(10, 3, 0, 3),
-            GuiUtils.getTitledBorder(Messages.getString("annotations"))));
-
-    JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    transform.add(panel1);
-    transform.add(Box.createVerticalStrut(5));
-    tableTag =
-        createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
-    tableTag.setFont(FontItem.SMALL.getFont());
-
-    tableTag.getTableHeader().setReorderingAllowed(false);
-    tableTagContainer.setPreferredSize(GuiUtils.getDimension(50, 80));
-    tableTagContainer.setLayout(new BorderLayout());
-    transform.add(tableTagContainer);
-
-    return transform;
-  }
-
-  public JPanel getMarkerPanel() {
-    final JPanel transform = new JPanel();
-    transform.setAlignmentY(Component.TOP_ALIGNMENT);
-    transform.setAlignmentX(Component.LEFT_ALIGNMENT);
-    transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-    transform.setBorder(
-        BorderFactory.createCompoundBorder(
-            BorderFactory.createEmptyBorder(10, 3, 0, 3),
-            GuiUtils.getTitledBorder(Messages.getString("markers"))));
-
-    JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    transform.add(panel1);
-    transform.add(Box.createVerticalStrut(5));
-    tableMarker =
-        createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
-    tableMarker.setFont(FontItem.SMALL.getFont());
-
-    tableMarker.getTableHeader().setReorderingAllowed(false);
-    tableMarkerContainer.setPreferredSize(GuiUtils.getDimension(50, 80));
-    tableMarkerContainer.setLayout(new BorderLayout());
-    transform.add(tableMarkerContainer);
-
-    return transform;
+  /** A cell whose full text is its tooltip, for the texts the column shortens. */
+  private static class TooltipRenderer extends DefaultTableCellRenderer {
+    @Override
+    public Component getTableCellRendererComponent(
+        JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      setToolTipText(value == null ? null : value.toString());
+      return this;
+    }
   }
 
   @Override
@@ -140,78 +240,78 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     return table;
   }
 
-  /** Rows added by other objects annotating the displayed waveform (SR TCOORD items). */
-  private List<Object[]> externalAnnotations = List.of();
+  // ---- Scrollable: follow the width of the dock, scroll vertically ----
 
-  private Attributes lastAttributes;
+  @Override
+  public Dimension getPreferredScrollableViewportSize() {
+    return getPreferredSize();
+  }
 
-  /** Replaces the rows contributed by other objects and rebuilds the table. */
+  @Override
+  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+    return GuiUtils.getScaleLength(16);
+  }
+
+  @Override
+  public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+    return orientation == SwingConstants.VERTICAL ? visibleRect.height : visibleRect.width;
+  }
+
+  @Override
+  public boolean getScrollableTracksViewportWidth() {
+    return true;
+  }
+
+  @Override
+  public boolean getScrollableTracksViewportHeight() {
+    return false;
+  }
+
+  // ---- content ----
+
+  /** Replaces the rows contributed by other objects and rebuilds the annotation table. */
   public void setExternalAnnotations(List<Object[]> rows) {
     this.externalAnnotations = rows == null ? List.of() : List.copyOf(rows);
     readAnnotations(lastAttributes);
   }
 
+  /** The annotations of the object (acquisition context, filters, measurements) and its text. */
   public void readAnnotations(Attributes attributes) {
     this.lastAttributes = attributes;
-    tableTagContainer.removeAll();
-
-    // just clear tableContainer if measList is null
+    StringBuilder text = new StringBuilder();
+    List<Object[]> list = new ArrayList<>();
     if (attributes != null) {
-      List<Object[]> list = new ArrayList<>();
       readAcquisitionContextSequence(attributes, list);
       readFiltersFrequency(attributes, list);
-      readWaveformAnnotations(attributes, list);
+      readWaveformAnnotations(attributes, list, text);
       list.addAll(externalAnnotations);
-
-      Object[][] labels = new Object[list.size()][];
-      for (int i = 0; i < labels.length; i++) {
-        labels[i] = list.get(i);
-      }
-      String[] headers = {
-        Messages.getString("MeasureAnnotationTool.tag"),
-        Messages.getString("MeasureAnnotationTool.value")
-      };
-      tableTag.setModel(new SimpleTableModel(headers, labels));
-      tableTag.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-      TableColumnAdjuster.adjustPreferredSizeForViewPort(tableTag, tableTagContainer);
-    } else {
-      tableTagContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }
-    tableTagContainer.revalidate();
-    tableTagContainer.repaint();
+    String[] headers = {
+      Messages.getString("MeasureAnnotationTool.tag"),
+      Messages.getString("MeasureAnnotationTool.value")
+    };
+    annotations.setRows(headers, list, new TagRenderer());
+    interpretation.setText(text.toString());
+    interpretationPanel.setVisible(!text.isEmpty());
+    revalidate();
+    repaint();
   }
 
-  public void updateMeasuredItems(List<Object[]> list) {
-    tableMarkerContainer.removeAll();
-
-    if (list != null && !list.isEmpty()) {
-      Object[][] labels = new Object[list.size()][];
-      for (int i = 0; i < labels.length; i++) {
-        labels[i] = list.get(i);
-      }
-      String[] headers = {
-        Messages.getString("MeasureAnnotationTool.lead"),
-        Messages.getString("MeasureAnnotationTool.tag"),
-        Messages.getString("MeasureAnnotationTool.value")
-      };
-      tableMarker.setModel(new SimpleTableModel(headers, labels));
-      tableMarker.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-      TableColumnAdjuster.adjustPreferredSizeForViewPort(tableMarker, tableMarkerContainer);
-    } else {
-      tableMarkerContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
-    }
-    tableMarkerContainer.revalidate();
-    tableMarkerContainer.repaint();
-  }
-
-  public static int getNumberOfMeasures(boolean[] select) {
-    int k = 0;
-    for (boolean b : select) {
-      if (b) {
-        k++;
-      }
-    }
-    return k;
+  /**
+   * The interval summary and the calipers, as name / value rows.
+   *
+   * @param intervalRows heart rate, R-R, PR, QRS, QT, QTc...
+   * @param caliperRows one row per measure of every caliper, the lead in the name
+   */
+  public void updateCalipers(List<Object[]> intervalRows, List<Object[]> caliperRows) {
+    String[] headers = {
+      Messages.getString("MeasureAnnotationTool.tag"),
+      Messages.getString("MeasureAnnotationTool.value")
+    };
+    intervals.setRows(headers, intervalRows, null);
+    calipers.setRows(headers, caliperRows, null);
+    revalidate();
+    repaint();
   }
 
   private void readAcquisitionContextSequence(Attributes attributes, List<Object[]> list) {
@@ -293,14 +393,18 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     }
   }
 
-  private void readWaveformAnnotations(Attributes attributes, List<Object[]> list) {
+  private void readWaveformAnnotations(
+      Attributes attributes, List<Object[]> list, StringBuilder interpretationText) {
     Sequence anSeq = attributes.getSequence(Tag.WaveformAnnotationSequence);
     if (anSeq != null) {
       for (Attributes item : anSeq) {
         try {
           String text = item.getString(Tag.UnformattedTextValue);
           if (StringUtil.hasText(text)) {
-            addValueToModel(list, Messages.getString("text"), text);
+            if (!interpretationText.isEmpty()) {
+              interpretationText.append('\n');
+            }
+            interpretationText.append(text.trim());
             continue;
           }
           Optional<Attributes> mSeq =
@@ -345,7 +449,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     }
   }
 
-  public static class TagRenderer extends DefaultTableCellRenderer {
+  public static class TagRenderer extends TooltipRenderer {
 
     public TagRenderer() {
       setFont(FontItem.SMALL.getFont());

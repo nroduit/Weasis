@@ -14,5 +14,6 @@ import java.util.Map;
 
 public interface WaveLayout {
 
-  List<LeadPanel> getSortedComponents(Format format, Map<Lead, LeadPanel> components);
+  List<LeadPanel> getSortedComponents(
+      Format format, boolean cabrera, Map<Lead, LeadPanel> components);
 }

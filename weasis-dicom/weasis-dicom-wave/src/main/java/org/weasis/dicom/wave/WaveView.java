@@ -19,15 +19,8 @@ import java.awt.Graphics2D;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
-import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferShort;
 import java.awt.print.PageFormat;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -45,14 +38,14 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import org.dcm4che3.data.Attributes;
-import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
 import org.dcm4che3.img.util.DicomUtils;
-import org.dcm4che3.util.StreamUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -66,6 +59,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
@@ -74,26 +68,51 @@ import org.weasis.dicom.codec.WaveformAnnotationSource;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.wave.dockable.MeasureAnnotationTool;
+import org.weasis.dicom.waveform.WaveformReaders;
+import org.weasis.opencv.waveform.WaveformReader;
 
 public class WaveView extends JPanel implements SeriesViewerListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(WaveView.class);
   private static final String PREFERENCE_NODE = "weasis.dicom.wave"; // NON-NLS
   private static final String P_LAST_FORMAT = "last.format"; // NON-NLS
+  private static final String P_CABRERA = "cabrera"; // NON-NLS
+  private static final String P_CALIBRATION = "calibration.pulse"; // NON-NLS
+  private static final String P_FILTER_BASELINE = "filter.baseline"; // NON-NLS
+  private static final String P_FILTER_LOWPASS = "filter.lowpass"; // NON-NLS
+  private static final String P_FILTER_NOTCH = "filter.notch"; // NON-NLS
+
+  /** Signal scanned for the amplitude range when the object has no Channel Minimum / Maximum. */
+  private static final int MAX_SCAN_SECONDS = 600;
+
+  /** Signal used for the heart rate estimate. */
+  private static final int HEART_RATE_SECONDS = 60;
+
+  /** Width in millimetres of the gutter holding the calibration pulse. */
+  private static final double GUTTER_MM = 6;
+
+  /** Height in pixels of the patient header of an exported or printed page. */
+  static final int HEADER_HEIGHT = 50;
 
   private Series<?> series;
 
   private InfoPanel infoPanel;
   private JPanel pane;
+  private JScrollPane scrollPane;
+  private OverviewPanel overviewPanel;
 
   private int mvCells;
   private double seconds;
   private int channelNumber;
   private int sampleNumber;
   private Format currentFormat;
+  private boolean cabrera;
+  private boolean calibrationPulse;
+  private SignalFilter filter;
   private int samplesPerSecond;
   private WaveDataReadable waveData;
   private final List<ChannelDefinition> channels;
   private double zoomRatio = 1.0;
+  private Double heartRate;
 
   private WaveLayoutManager waveLayoutManager;
 
@@ -101,6 +120,17 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
   /** The displayed waveform object, kept to refresh the external annotations. */
   private Attributes currentAttributes;
+
+  /** The displayed element, kept to switch between its multiplex groups. */
+  private DicomSpecialElement currentElement;
+
+  /** Index of the displayed item of the Waveform Sequence. */
+  private int multiplexGroup;
+
+  private final List<String> multiplexGroupLabels = new ArrayList<>();
+
+  /** The temporal annotations the object itself carries (Waveform Annotation Sequence). */
+  private final List<WaveformAnnotation> objectAnnotations = new ArrayList<>();
 
   public WaveView() {
     this(null);
@@ -112,6 +142,8 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     setPreferredSize(GuiUtils.getDimension(1024, 1024));
 
     this.channels = new ArrayList<>();
+    this.filter = SignalFilter.NONE;
+    this.calibrationPulse = true;
 
     String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
     String formatName = null;
@@ -119,79 +151,144 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     if (prefs != null) {
       Preferences p = prefs.node(PREFERENCE_NODE);
       formatName = p.get(P_LAST_FORMAT, null);
+      this.cabrera = p.getBoolean(P_CABRERA, false);
+      this.calibrationPulse = p.getBoolean(P_CALIBRATION, true);
+      this.filter =
+          new SignalFilter(
+              p.getBoolean(P_FILTER_BASELINE, false),
+              p.getDouble(P_FILTER_LOWPASS, 0),
+              p.getDouble(P_FILTER_NOTCH, 0));
     }
     this.currentFormat = Format.getValue(formatName);
+    this.addComponentListener(
+        new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent e) {
+            if (pane != null) {
+              pane.revalidate();
+            }
+          }
+        });
     setSeries(series);
   }
 
+  /** Lists the interval summary and every caliper in the annotation tool. */
   public void updateMarkersTable() {
-    List<Object[]> list = new ArrayList<>();
+    if (annotationTool == null) {
+      return;
+    }
+    List<Object[]> intervalRows = new ArrayList<>();
+    List<Object[]> caliperRows = new ArrayList<>();
     if (waveLayoutManager != null) {
+      List<Caliper> all = new ArrayList<>();
       for (LeadPanel lead : waveLayoutManager.getSortedComponents()) {
-        MarkerAnnotation m = lead.getMarkerAnnotation();
-        if (m.getStartSeconds() != null) {
-          String leadName = m.getLead().toString();
-          list.add(
+        all.addAll(lead.getCalipers());
+      }
+      IntervalSummary summary = IntervalSummary.of(all, heartRate);
+      if (summary.rr() != null) {
+        String source =
+            switch (summary.rrSource()) {
+              case IntervalSummary.SOURCE_BEATS -> " (" + summary.beats() + " QRS)"; // NON-NLS
+              case IntervalSummary.SOURCE_ESTIMATE ->
+                  " (" + Messages.getString("InfoPanel.estimated") + ")";
+              default -> "";
+            };
+        intervalRows.add(
+            new Object[] {
+              Messages.getString("WaveView.heart_rate"),
+              WaveFormats.bpm(summary.heartRate()) + source
+            });
+        intervalRows.add(new Object[] {"R-R", WaveFormats.millis(summary.rr())}); // NON-NLS
+      }
+      if (summary.pr() != null) {
+        intervalRows.add(new Object[] {"PR", WaveFormats.millis(summary.pr())}); // NON-NLS
+      }
+      if (summary.qrs() != null) {
+        intervalRows.add(new Object[] {"QRS", WaveFormats.millis(summary.qrs())}); // NON-NLS
+      }
+      if (summary.qt() != null) {
+        intervalRows.add(new Object[] {"QT", WaveFormats.millis(summary.qt())}); // NON-NLS
+        if (summary.qtcBazett() != null) {
+          intervalRows.add(
+              new Object[] {"QTc (Bazett)", WaveFormats.millis(summary.qtcBazett())}); // NON-NLS
+          intervalRows.add(
               new Object[] {
-                leadName,
-                Messages.getString("WaveView.start_time"),
-                MarkerAnnotation.secondFormatter.format(m.getStartSeconds())
+                "QTc (Fridericia)", WaveFormats.millis(summary.qtcFridericia()) // NON-NLS
               });
-          list.add(
-              new Object[] {
-                leadName,
-                Messages.getString("WaveView.start_val"),
-                MarkerAnnotation.mVFormatter.format(m.getStartMilliVolt())
-              });
+        }
+      }
 
-          if (m.getStopSeconds() != null) {
-            list.add(
-                new Object[] {
-                  leadName,
-                  Messages.getString("WaveView.stop_time"),
-                  MarkerAnnotation.secondFormatter.format(m.getStopSeconds())
-                });
-            list.add(
-                new Object[] {
-                  leadName,
-                  Messages.getString("WaveView.stop_val"),
-                  MarkerAnnotation.mVFormatter.format(m.getStopMilliVolt())
-                });
+      for (LeadPanel lead : waveLayoutManager.getSortedComponents()) {
+        String unit = lead.getUnit();
+        int n = 0;
+        for (Caliper c : lead.getCalipers()) {
+          if (c.isEmpty()) {
+            continue;
           }
-          if (m.getDuration() != null) {
-            list.add(
+          n++;
+          String name =
+              lead.getDisplayTitle()
+                  + " \u00B7 "
+                  + (c.getLabel() != null
+                      ? c.getLabel()
+                      : Messages.getString("WaveView.caliper") + " " + n)
+                  + " ";
+          if (c.isTime()) {
+            double fs = samplesPerSecond;
+            caliperRows.add(
                 new Object[] {
-                  leadName,
-                  Messages.getString("WaveView.duration"),
-                  MarkerAnnotation.secondFormatter.format(m.getDuration())
+                  name + Messages.getString("WaveView.start_time"),
+                  WaveFormats.SECONDS.format(c.getStart() / fs)
                 });
-            list.add(
+            caliperRows.add(
                 new Object[] {
-                  leadName,
-                  Messages.getString("WaveView.diff"),
-                  MarkerAnnotation.mVFormatter.format(m.getDiffmV())
+                  name + Messages.getString("WaveView.duration"),
+                  WaveFormats.millis(c.getDuration())
                 });
-            list.add(
+            if (c.getBeats() >= 2) {
+              caliperRows.add(
+                  new Object[] {
+                    name + Messages.getString("WaveView.beats"),
+                    c.getBeats()
+                        + ", R-R " // NON-NLS
+                        + WaveFormats.millis(c.getMeanRR())
+                        + ", "
+                        + WaveFormats.bpm(c.getMeanRate())
+                  });
+            } else {
+              caliperRows.add(
+                  new Object[] {
+                    name + Messages.getString("WaveView.rate"), WaveFormats.bpm(c.getRate())
+                  });
+            }
+            caliperRows.add(
                 new Object[] {
-                  leadName,
-                  Messages.getString("WaveView.amplitude"),
-                  MarkerAnnotation.mVFormatter.format(m.getAmplitude())
+                  name + Messages.getString("WaveView.diff"), WaveFormats.value(c.getDelta(), unit)
+                });
+            caliperRows.add(
+                new Object[] {
+                  name + Messages.getString("WaveView.amplitude"),
+                  WaveFormats.value(c.getPeakToPeak(), unit)
+                });
+          } else {
+            caliperRows.add(
+                new Object[] {
+                  name + Messages.getString("WaveView.diff"), WaveFormats.value(c.getDelta(), unit)
                 });
           }
         }
       }
     }
-
-    annotationTool.updateMeasuredItems(list);
+    annotationTool.updateCalipers(intervalRows, caliperRows);
   }
 
   public void clearMeasurements() {
     if (waveLayoutManager != null) {
       for (LeadPanel lead : waveLayoutManager.getSortedComponents()) {
-        lead.removeAllMarkers();
+        lead.removeAllCalipers();
       }
     }
-    annotationTool.updateMeasuredItems(null);
+    updateMarkersTable();
   }
 
   public double getZoomRatio() {
@@ -268,11 +365,17 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     if (prefs != null && currentFormat != null) {
       Preferences p = prefs.node(PREFERENCE_NODE);
       p.put(P_LAST_FORMAT, currentFormat.name());
+      p.putBoolean(P_CABRERA, cabrera);
+      p.putBoolean(P_CALIBRATION, calibrationPulse);
+      p.putBoolean(P_FILTER_BASELINE, filter.baseline());
+      p.putDouble(P_FILTER_LOWPASS, filter.lowPassHz());
+      p.putDouble(P_FILTER_NOTCH, filter.notchHz());
     }
     if (series != null) {
       closingSeries(series);
       series = null;
     }
+    closeWaveData();
     setAnnotationTool(null);
   }
 
@@ -290,14 +393,22 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
   private void displayECG(DicomSpecialElement media) throws Exception {
     removeAll();
+    this.currentElement = media;
     if (media == null) {
       return;
     }
     DicomMediaIO dicomImageLoader = media.getMediaReader();
     Attributes attributes = dicomImageLoader.getDicomObject();
     if (attributes != null) {
-      // TODO handle several Waveforms: display a combo
-      Attributes dcm = Optional.of(attributes.getNestedDataset(Tag.WaveformSequence)).get();
+      Sequence waveformSeq = attributes.getSequence(Tag.WaveformSequence);
+      if (waveformSeq == null || waveformSeq.isEmpty()) {
+        throw new IllegalStateException("No Waveform Sequence");
+      }
+      readMultiplexGroupLabels(waveformSeq);
+      if (multiplexGroup < 0 || multiplexGroup >= waveformSeq.size()) {
+        multiplexGroup = 0;
+      }
+      Attributes dcm = waveformSeq.get(multiplexGroup);
 
       this.channelNumber =
           DicomUtils.getIntegerFromDicomElement(dcm, Tag.NumberOfWaveformChannels, 0);
@@ -307,19 +418,27 @@ public class WaveView extends JPanel implements SeriesViewerListener {
         channels.add(new ChannelDefinition(chDefSeq.get(i), i));
       }
 
-      // TODO show when derived
-      String originality = dcm.getString(Tag.WaveformOriginality);
-
-      this.sampleNumber =
-          DicomUtils.getIntegerFromDicomElement(dcm, Tag.NumberOfWaveformSamples, 0);
+      readWaveformData(dicomImageLoader, dcm);
+      // Leads index the multiplexed samples by position: keep only the channels the data holds
+      int dataChannels = waveData.getNbOfChannels();
+      if (channelNumber != dataChannels || channels.size() != dataChannels) {
+        LOGGER.warn(
+            "Waveform channels mismatch: {} declared, {} definitions, {} in the data",
+            channelNumber,
+            channels.size(),
+            dataChannels);
+        if (channels.size() > dataChannels) {
+          channels.subList(dataChannels, channels.size()).clear();
+        }
+      }
+      this.channelNumber = channels.size();
       double frequency = DicomUtils.getDoubleFromDicomElement(dcm, Tag.SamplingFrequency, 1.0);
       this.seconds = sampleNumber / frequency;
-      this.samplesPerSecond = (int) (sampleNumber / seconds);
-
-      readWaveformData(dcm);
+      this.samplesPerSecond = (int) Math.round(frequency);
       getMinMax(channels);
+      this.heartRate = estimateHeartRate();
 
-      JScrollPane scrollPane = new JScrollPane();
+      this.scrollPane = new JScrollPane();
       scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
       scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
@@ -337,80 +456,247 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       scrollPane.setViewportView(channelWrap);
 
       addChannelPanels();
-      if (getChannelNumber() < 12) {
+      if (getChannelNumber() < 12 && currentFormat != Format.SUPERIMPOSED) {
         this.currentFormat = Format.DEFAULT;
       }
       setFormat(currentFormat);
 
       // Panel which includes the Buttons for zooming
       ToolPanel tools = new ToolPanel(this);
-      tools.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
       // Panel with information about the channel the mouse cursor is over
       this.infoPanel = new InfoPanel(zoomRatio);
+      infoPanel.setHeartRate(heartRate);
 
       JPanel wrap = new JPanel(new BorderLayout());
       wrap.add(tools, BorderLayout.NORTH);
       wrap.add(infoPanel, BorderLayout.SOUTH);
 
+      JPanel center = new JPanel(new BorderLayout());
+      this.overviewPanel = new OverviewPanel(this, scrollPane.getViewport(), pane);
+      overviewPanel.setVisible(seconds > OverviewPanel.MIN_SECONDS);
+      center.add(overviewPanel, BorderLayout.NORTH);
+      center.add(scrollPane, BorderLayout.CENTER);
+
       this.add(wrap, BorderLayout.NORTH);
-      this.add(scrollPane, BorderLayout.CENTER);
-      this.addComponentListener(
-          new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-              pane.revalidate();
-            }
-          });
+      this.add(center, BorderLayout.CENTER);
     }
     updateMarkersTable();
     this.currentAttributes = attributes;
-    annotationTool.readAnnotations(attributes);
-    applyExternalAnnotations();
+    readObjectAnnotations(attributes);
+    if (annotationTool != null) {
+      annotationTool.readAnnotations(attributes);
+    }
+    applyAnnotations();
+  }
+
+  /**
+   * The heart rate estimated from lead II (or the first channel) over the first minute, baseline
+   * removed and low-passed at 40 Hz; null when no regular beats are found.
+   */
+  private Double estimateHeartRate() {
+    if (waveData == null || channels.isEmpty() || samplesPerSecond < 50) {
+      return null;
+    }
+    ChannelDefinition reference = channels.get(0);
+    for (ChannelDefinition c : channels) {
+      if (Lead.II.equals(c.getLead())) {
+        reference = c;
+        break;
+      }
+    }
+    if (!reference.isVoltage()) {
+      return null;
+    }
+    int count = (int) Math.min(sampleNumber, (long) HEART_RATE_SECONDS * samplesPerSecond);
+    int[] raw = new int[count];
+    waveData.readRaw(0, count, reference, raw);
+    double[] signal = new double[count];
+    for (int i = 0; i < count; i++) {
+      signal[i] = reference.toPhysical(raw[i]);
+    }
+    new SignalFilter(true, 40, 0).apply(signal, count, samplesPerSecond);
+    try {
+      return HeartRate.estimate(signal, samplesPerSecond);
+    } catch (RuntimeException e) {
+      LOGGER.warn("Heart rate estimate", e);
+      return null;
+    }
+  }
+
+  /** One label per item of the Waveform Sequence: its Multiplex Group Label and duration. */
+  private void readMultiplexGroupLabels(Sequence waveformSeq) {
+    multiplexGroupLabels.clear();
+    for (int i = 0; i < waveformSeq.size(); i++) {
+      Attributes item = waveformSeq.get(i);
+      String label = item.getString(Tag.MultiplexGroupLabel);
+      if (!StringUtil.hasText(label)) {
+        label = Messages.getString("WaveView.group") + " " + (i + 1);
+      }
+      double frequency = DicomUtils.getDoubleFromDicomElement(item, Tag.SamplingFrequency, 0.0);
+      int samples = DicomUtils.getIntegerFromDicomElement(item, Tag.NumberOfWaveformSamples, 0);
+      if (frequency > 0 && samples > 0) {
+        label += " (" + WaveFormats.SECONDS.format(samples / frequency) + ")";
+      }
+      multiplexGroupLabels.add(label);
+    }
+  }
+
+  /** The labels of the multiplex groups of the displayed object, in sequence order. */
+  public List<String> getMultiplexGroupLabels() {
+    return multiplexGroupLabels;
+  }
+
+  public int getMultiplexGroup() {
+    return multiplexGroup;
+  }
+
+  /**
+   * Displays another item of the Waveform Sequence (e.g. the median beat instead of the rhythm).
+   */
+  public void setMultiplexGroup(int index) {
+    if (index == multiplexGroup || index < 0 || index >= multiplexGroupLabels.size()) {
+      return;
+    }
+    this.multiplexGroup = index;
+    try {
+      displayECG(currentElement);
+    } catch (Exception e) {
+      LOGGER.error("Cannot display the multiplex group {}", index, e);
+    }
+    revalidate();
+    repaint();
   }
 
   /** Rebuilds the markers coming from other objects (SR TCOORD items) after the model changed. */
   public void refreshAnnotations() {
-    applyExternalAnnotations();
+    applyAnnotations();
   }
 
   /**
-   * Collects the annotations of the patient's {@link WaveformAnnotationSource} elements applying to
-   * the displayed waveform, draws them as markers on the matching leads and lists them in the
-   * annotation tool.
+   * The temporal items of the object's Waveform Annotation Sequence: those with a Temporal Range
+   * Type and sample positions, time offsets or date-times (numeric results and free text are listed
+   * by the annotation tool instead).
    */
-  private void applyExternalAnnotations() {
+  private void readObjectAnnotations(Attributes attributes) {
+    objectAnnotations.clear();
+    Sequence seq =
+        attributes == null ? null : attributes.getSequence(Tag.WaveformAnnotationSequence);
+    if (seq == null) {
+      return;
+    }
+    for (Attributes item : seq) {
+      String type = item.getString(Tag.TemporalRangeType);
+      if (!StringUtil.hasText(type)) {
+        continue;
+      }
+      int[] positions = item.getInts(Tag.ReferencedSamplePositions);
+      double[] offsets = item.getDoubles(Tag.ReferencedTimeOffsets);
+      String[] dateTimes = item.getStrings(Tag.ReferencedDateTime);
+      if ((positions == null || positions.length == 0)
+          && (offsets == null || offsets.length == 0)
+          && (dateTimes == null || dateTimes.length == 0)) {
+        continue;
+      }
+      String label = null;
+      Attributes name = item.getNestedDataset(Tag.ConceptNameCodeSequence);
+      if (name != null) {
+        label = name.getString(Tag.CodeMeaning);
+      }
+      if (!StringUtil.hasText(label)) {
+        label = item.getString(Tag.UnformattedTextValue);
+      }
+      int[] channelRefs = item.getInts(Tag.ReferencedWaveformChannels);
+      objectAnnotations.add(
+          new WaveformAnnotation(
+              label,
+              type,
+              positions == null || positions.length == 0 ? null : positions,
+              offsets == null || offsets.length == 0 ? null : offsets,
+              dateTimes == null || dateTimes.length == 0 ? null : dateTimes,
+              channelRefs));
+    }
+  }
+
+  /** Whether an annotation applies to a 1-based channel of the displayed multiplex group. */
+  private boolean appliesTo(WaveformAnnotation annotation, int channelNumber) {
+    int[] refs = annotation.channels();
+    if (refs == null || refs.length < 2) {
+      return true;
+    }
+    for (int i = 0; i + 1 < refs.length; i += 2) {
+      boolean group = refs[i] == 0 || refs[i] == multiplexGroup + 1;
+      boolean channel = refs[i + 1] == 0 || refs[i + 1] == channelNumber;
+      if (group && channel) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Draws the temporal annotations of the object and of the patient's {@link
+   * WaveformAnnotationSource} elements (SR TCOORD items) on the matching leads, and lists the
+   * external ones in the annotation tool.
+   */
+  private void applyAnnotations() {
     if (currentAttributes == null || pane == null) {
       return;
     }
-    List<WaveformAnnotation> annotations = new ArrayList<>();
+    List<WaveformAnnotation> external = new ArrayList<>();
     if (series != null && series.getTagValue(TagW.ExplorerModel) instanceof DicomModel model) {
       MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
       String sopUID = currentAttributes.getString(Tag.SOPInstanceUID);
       for (WaveformAnnotationSource source :
           model.getSpecialElementsFromPatient(WaveformAnnotationSource.class, patient)) {
-        annotations.addAll(source.getWaveformAnnotations(sopUID));
+        external.addAll(source.getWaveformAnnotations(sopUID));
       }
     }
     Instant start = acquisitionStart(currentAttributes);
     for (Component c : pane.getComponents()) {
       if (c instanceof LeadPanel lead) {
         int channelNumber = lead.getChannels().getPosition() + 1;
-        List<Integer> positions = new ArrayList<>();
-        for (WaveformAnnotation annotation : annotations) {
-          if (annotation.appliesToChannel(channelNumber)) {
-            positions.addAll(toSampleIndexes(annotation, start));
+        List<LeadAnnotation> items = new ArrayList<>();
+        for (WaveformAnnotation annotation : objectAnnotations) {
+          if (appliesTo(annotation, channelNumber)) {
+            items.addAll(toLeadAnnotations(annotation, start, false));
           }
         }
-        lead.setAnnotationPositions(positions);
+        for (WaveformAnnotation annotation : external) {
+          if (annotation.appliesToChannel(channelNumber)) {
+            items.addAll(toLeadAnnotations(annotation, start, true));
+          }
+        }
+        lead.setAnnotations(items);
       }
     }
     if (annotationTool != null) {
       List<Object[]> rows = new ArrayList<>();
-      for (WaveformAnnotation annotation : annotations) {
+      for (WaveformAnnotation annotation : external) {
         rows.add(new Object[] {annotation.label(), describe(annotation)});
       }
       annotationTool.setExternalAnnotations(rows);
     }
+  }
+
+  /** The lead annotations of one item: points, or segments when the range type pairs positions. */
+  private List<LeadAnnotation> toLeadAnnotations(
+      WaveformAnnotation annotation, Instant start, boolean external) {
+    List<Integer> indexes = toSampleIndexes(annotation, start);
+    List<LeadAnnotation> items = new ArrayList<>();
+    String type = annotation.temporalRangeType();
+    boolean segments = "SEGMENT".equals(type) || "MULTISEGMENT".equals(type); // NON-NLS
+    if (segments && indexes.size() >= 2) {
+      for (int i = 0; i + 1 < indexes.size(); i += 2) {
+        int a = indexes.get(i);
+        int b = indexes.get(i + 1);
+        items.add(new LeadAnnotation(Math.min(a, b), Math.max(a, b), annotation.label(), external));
+      }
+    } else {
+      for (int index : indexes) {
+        items.add(new LeadAnnotation(index, index, annotation.label(), external));
+      }
+    }
+    return items;
   }
 
   /** The 0-based sample indexes of an annotation, whatever its temporal encoding. */
@@ -436,13 +722,14 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     return indexes;
   }
 
-  /** Start of the first multiplex group: Acquisition DateTime plus Multiplex Group Time Offset. */
-  private static Instant acquisitionStart(Attributes attributes) {
+  /** Start of the displayed multiplex group: Acquisition DateTime plus its time offset. */
+  private Instant acquisitionStart(Attributes attributes) {
     Instant start = toInstant(TagD.getDicomDateTime(attributes.getString(Tag.AcquisitionDateTime)));
     if (start == null) {
       return null;
     }
-    Attributes group = attributes.getNestedDataset(Tag.WaveformSequence);
+    Sequence seq = attributes.getSequence(Tag.WaveformSequence);
+    Attributes group = seq == null || multiplexGroup >= seq.size() ? null : seq.get(multiplexGroup);
     double offsetMs = group == null ? 0 : group.getDouble(Tag.MultiplexGroupTimeOffset, 0);
     return start.plusNanos(Math.round(offsetMs * 1_000_000));
   }
@@ -472,42 +759,39 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     return text.toString();
   }
 
-  private void readWaveformData(Attributes dcm) throws IOException {
-    Object wdata = dcm.getValue(Tag.WaveformData);
-    ByteArrayOutputStream array;
-    if (wdata instanceof BulkData bulkData) {
-      try (BufferedInputStream input = new BufferedInputStream(bulkData.openStream())) {
-        array = new ByteArrayOutputStream(bulkData.length());
-        StreamUtils.copy(input, array);
-      } catch (Exception e) {
-        LOGGER.error("Reading Waveform data");
-        return;
-      }
-    } else {
-      throw new IOException("Cannot read Waveform data");
+  /**
+   * Opens the Waveform Data through a {@link WaveformReader}: native data is memory-mapped per
+   * window and T.261 streams (Supplement 253) are decoded per frame sequence, so only the windows
+   * being displayed are in memory whatever the length of the recording.
+   */
+  private void readWaveformData(DicomMediaIO reader, Attributes dcm) throws IOException {
+    closeWaveData();
+    String tsuid = TagD.getTagValue(reader, Tag.TransferSyntaxUID, String.class);
+    if (tsuid == null) {
+      tsuid = UID.ExplicitVRLittleEndian;
     }
+    WaveformReader waveformReader = WaveformReaders.open(dcm, tsuid);
+    WaveformWindowData windowData = new WaveformWindowData(waveformReader);
+    // Once more of the recording is summarised, zoomed-out leads can be painted from the summary
+    windowData.setSummaryListener(
+        () ->
+            GuiExecutor.execute(
+                () -> {
+                  if (pane != null && waveData == windowData) {
+                    pane.repaint();
+                    if (overviewPanel != null) {
+                      overviewPanel.repaint();
+                    }
+                  }
+                }));
+    this.waveData = windowData;
+    this.sampleNumber = waveData.getNbSamplesPerChannel();
+  }
 
-    int bitsAllocated = DicomUtils.getIntegerFromDicomElement(dcm, Tag.WaveformBitsAllocated, 0);
-
-    ByteBuffer byteBuffer = ByteBuffer.wrap(array.toByteArray());
-    byteBuffer.order(dcm.bigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-
-    if (bitsAllocated == 16) {
-      short[] shortData;
-
-      shortData = new short[byteBuffer.limit() / 2];
-      for (int i = 0; i < shortData.length; i++) {
-        shortData[i] = byteBuffer.getShort();
-      }
-      DataBufferShort dataBuffer = new DataBufferShort(shortData, shortData.length, 0);
-      waveData = new WaveShortData(dataBuffer, channelNumber, sampleNumber);
-
-    } else if (bitsAllocated == 8) {
-      byte[] byteData = byteBuffer.array();
-      DataBufferByte dataBuffer = new DataBufferByte(byteData, byteData.length, 0);
-      waveData = new WaveByteData(dataBuffer, channelNumber, sampleNumber);
-    } else {
-      throw new IOException("Unexpected bitsAllocated value: " + bitsAllocated);
+  private void closeWaveData() {
+    if (waveData != null) {
+      waveData.close();
+      waveData = null;
     }
   }
 
@@ -516,46 +800,91 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       LeadPanel panel = new LeadPanel(this, waveData, channel);
       pane.add(channel.getTitle(), panel);
 
-      if (Lead.II == channel.getLead()) {
-        LeadPanel rhythm =
-            new LeadPanel(this, waveData, new ChannelDefinition(channel, Lead.RHYTHM.toString()));
-        pane.add("rhythm", rhythm); // NON-NLS
+      Lead rhythm = Lead.rhythmOf(channel.getLead());
+      if (rhythm != null) {
+        LeadPanel strip =
+            new LeadPanel(this, waveData, new ChannelDefinition(channel, rhythm.toString()));
+        pane.add(rhythm.toString(), strip);
       }
     }
   }
 
+  /** The smallest of 1, 2, 5 times a power of ten that is at least {@code value}. */
+  static double niceCeil(double value) {
+    if (value <= 0 || Double.isNaN(value) || Double.isInfinite(value)) {
+      return 1;
+    }
+    double power = Math.pow(10, Math.floor(Math.log10(value)));
+    for (double step : new double[] {1, 2, 5, 10}) {
+      if (step * power >= value - 1e-9) {
+        return step * power;
+      }
+    }
+    return 10 * power;
+  }
+
+  /**
+   * The amplitude range of the leads (sensitivity and baseline applied, in the display unit), from
+   * the Channel Minimum / Maximum Value attributes when the object carries them, otherwise scanned
+   * over at most {@link #MAX_SCAN_SECONDS} of signal so that opening a long recording never reads
+   * it as a whole. A channel whose mean level exceeds its peak-to-peak span (a DC-coupled channel
+   * with an electrode offset) is displayed around that level, which becomes its display offset.
+   * Voltage channels share the millivolt grid; any other channel gets a round cell value so that
+   * its range fills the same number of cells.
+   */
   private void getMinMax(List<ChannelDefinition> channels) {
     WaveDataReadable db = waveData;
-    if (db != null) {
-      double minAll = Double.MAX_VALUE;
-      double maxAll = Double.MIN_VALUE;
-
-      for (int i = 0; i < channelNumber; i++) {
-        double min = Double.MAX_VALUE;
-        double max = Double.MIN_VALUE;
-        ChannelDefinition c = channels.get(i);
-        for (int j = 0; j < sampleNumber; j++) {
-          double val = db.getSample(j, c);
-          if (val < min) {
-            min = val;
-          }
-          if (val > max) {
-            max = val;
-          }
-        }
-        c.setMinValue(min);
-        c.setMaxValue(max);
-        if (min < minAll) {
-          minAll = min;
-        }
-        if (max > maxAll) {
-          maxAll = max;
-        }
+    if (db == null) {
+      return;
+    }
+    double maxVoltage = 0;
+    boolean anyVoltage = false;
+    int scanned = (int) Math.min(sampleNumber, (long) MAX_SCAN_SECONDS * samplesPerSecond);
+    int[] range = new int[2];
+    for (int i = 0; i < channelNumber; i++) {
+      ChannelDefinition c = channels.get(i);
+      double scale = c.getAmplitudeUnitScalingFactor();
+      double min;
+      double max;
+      if (c.getStoredMinimum() != null && c.getStoredMaximum() != null) {
+        min = c.getStoredMinimum() * scale + c.getBaseline();
+        max = c.getStoredMaximum() * scale + c.getBaseline();
+      } else {
+        db.rawMinMax(0, scanned, c, range);
+        min = range[0] * scale + c.getBaseline();
+        max = range[1] * scale + c.getBaseline();
       }
+      if (min > max) {
+        double tmp = min;
+        min = max;
+        max = tmp;
+      }
+      double offset = 0;
+      double level = db.rawMean(0, scanned, c) * scale + c.getBaseline();
+      if (Math.abs(level) > max - min) {
+        offset = level;
+        min -= offset;
+        max -= offset;
+      }
+      c.setDisplayOffset(offset);
+      c.setMinValue(c.toDisplay(min));
+      c.setMaxValue(c.toDisplay(max));
+      if (c.isVoltage()) {
+        anyVoltage = true;
+        maxVoltage =
+            Math.max(maxVoltage, Math.max(Math.abs(c.toDisplay(min)), Math.abs(c.toDisplay(max))));
+      }
+    }
 
-      double minmaxuV = Math.max(Math.abs(maxAll), Math.abs(minAll));
-      double minmaxmV = minmaxuV / 1000;
-      this.mvCells = (int) Math.ceil(minmaxmV) * 2;
+    this.mvCells = anyVoltage ? Math.max(2, (int) Math.ceil(maxVoltage) * 2) : 4;
+    for (int i = 0; i < channelNumber; i++) {
+      ChannelDefinition c = channels.get(i);
+      if (c.isVoltage()) {
+        c.setCellValue(1.0);
+      } else {
+        double extent = Math.max(Math.abs(c.getMinValue()), Math.abs(c.getMaxValue()));
+        c.setCellValue(niceCeil(extent / (mvCells / 2.0)));
+      }
     }
   }
 
@@ -569,36 +898,162 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     this.pane.revalidate();
   }
 
+  public boolean isCabrera() {
+    return cabrera;
+  }
+
+  /** Switches between the standard and the Cabrera lead sequences (see {@link Format}). */
+  public void setCabrera(boolean cabrera) {
+    if (this.cabrera != cabrera) {
+      this.cabrera = cabrera;
+      if (pane != null) {
+        setFormat(currentFormat);
+      }
+    }
+  }
+
+  public boolean isCalibrationPulse() {
+    return calibrationPulse;
+  }
+
+  /** Shows or hides the 1 mV calibration pulse in a gutter left of every lead. */
+  public void setCalibrationPulse(boolean calibrationPulse) {
+    if (this.calibrationPulse != calibrationPulse) {
+      this.calibrationPulse = calibrationPulse;
+      if (pane != null) {
+        pane.revalidate();
+        pane.repaint();
+      }
+    }
+  }
+
+  public SignalFilter getFilter() {
+    return filter;
+  }
+
+  /** Sets the display filters of every lead and measures the calipers again. */
+  public void setFilter(SignalFilter filter) {
+    this.filter = filter == null ? SignalFilter.NONE : filter;
+    if (pane != null) {
+      for (Component c : pane.getComponents()) {
+        if (c instanceof LeadPanel lead) {
+          lead.remeasure();
+        }
+      }
+      updateMarkersTable();
+      pane.repaint();
+    }
+  }
+
+  private Caliper.Kind caliperKind = Caliper.Kind.TIME;
+  private String caliperLabel;
+  private boolean calipersOnAllLeads = true;
+
+  /** The kind of the calipers the next press creates (Alt forces an amplitude caliper). */
+  public Caliper.Kind getCaliperKind() {
+    return caliperKind;
+  }
+
+  public void setCaliperKind(Caliper.Kind kind) {
+    this.caliperKind = kind == null ? Caliper.Kind.TIME : kind;
+  }
+
+  /** The label given to the next calipers (RR, PR, QRS, QT...), or null. */
+  public String getCaliperLabel() {
+    return caliperLabel;
+  }
+
+  public void setCaliperLabel(String label) {
+    this.caliperLabel = label == null || label.isBlank() ? null : label;
+  }
+
+  /** Whether the time calipers of a lead are drawn as guides on every other lead. */
+  public boolean isCalipersOnAllLeads() {
+    return calipersOnAllLeads;
+  }
+
+  public void setCalipersOnAllLeads(boolean on) {
+    this.calipersOnAllLeads = on;
+    if (pane != null) {
+      pane.repaint();
+    }
+  }
+
+  /** The complete time calipers of the other leads, drawn as guides. */
+  public List<Caliper> getTimeCalipersOfOtherLeads(LeadPanel lead) {
+    List<Caliper> result = new ArrayList<>();
+    if (pane == null) {
+      return result;
+    }
+    for (Component c : pane.getComponents()) {
+      if (c instanceof LeadPanel other && other != lead && other.isVisible()) {
+        for (Caliper caliper : other.getCalipers()) {
+          if (caliper.isTime() && !caliper.isEmpty()) {
+            result.add(caliper);
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  /** Width in pixels of the calibration gutter of every lead (0 when the pulse is hidden). */
+  public int getGutterWidth() {
+    return calibrationPulse ? (int) Math.round(GUTTER_MM * getPixelPerMm()) : 0;
+  }
+
+  /** Screen pixels per millimetre of paper at the current zoom. */
+  public double getPixelPerMm() {
+    return WaveLayoutManager.pixelPerMm(zoomRatio);
+  }
+
+  /** Pixels of one second of signal at the current speed and zoom. */
+  public double getPixelsPerSecond() {
+    return waveLayoutManager == null ? 0 : waveLayoutManager.getPixelsPerSecond();
+  }
+
+  /** The title of the superimposed lead at a position, for the shared legend. */
+  public String getOverlayTitle(int index) {
+    if (waveLayoutManager != null) {
+      List<LeadPanel> ordered = waveLayoutManager.getSortedComponents();
+      if (index >= 0 && index < ordered.size()) {
+        return ordered.get(index).getDisplayTitle();
+      }
+    }
+    return "";
+  }
+
+  /** The heart rate estimated from the signal, or null. */
+  public Double getHeartRate() {
+    return heartRate;
+  }
+
   public void setFormat(Format format) {
     currentFormat = format == null ? Format.DEFAULT : format;
-    if (currentFormat == Format.TWO) {
-      List<LeadPanel> ordered = waveLayoutManager.getSortedComponents();
-      for (int i = 0; i < channelNumber; i++) {
-        double startTime = (i % 2) != 0 ? 5.0 : 0;
-        ordered.get(i).setTime(startTime, 5);
+    for (Component c : pane.getComponents()) {
+      if (c instanceof LeadPanel lead) {
+        lead.setInverted(cabrera && Lead.AVR.equals(lead.getChannels().getLead()));
       }
-    } else if (currentFormat == Format.FOUR || currentFormat == Format.FOUR_RHYTHM) {
-      List<LeadPanel> ordered = waveLayoutManager.getSortedComponents();
-      for (int i = 0; i < channelNumber; i++) {
-        int index = i % 4;
-        double startTime;
-        if (index == 1) {
-          startTime = 2.5;
-        } else if (index == 2) {
-          startTime = 5.0;
-        } else if (index == 3) {
-          startTime = 7.5;
-        } else {
-          startTime = 0.0;
-        }
-        ordered.get(i).setTime(startTime, 2.5);
-      }
-    } else {
-      for (Component c : pane.getComponents()) {
-        ((LeadPanel) c).setTime(0, Integer.MAX_VALUE);
+    }
+    double column = currentFormat.getColumnSeconds();
+    List<LeadPanel> ordered = waveLayoutManager.getSortedComponents();
+    int i = 0;
+    for (LeadPanel lead : ordered) {
+      if (lead.getChannels().getLead().isRhythm()) {
+        lead.setTime(0, column < 0 ? Integer.MAX_VALUE : 10);
+      } else if (column < 0) {
+        lead.setTime(0, Integer.MAX_VALUE);
+      } else {
+        int columns = currentFormat.getXlayoutSize();
+        lead.setTime((i % columns) * column, column);
+        i++;
       }
     }
     this.pane.revalidate();
+    this.pane.repaint();
+    if (overviewPanel != null) {
+      overviewPanel.repaint();
+    }
   }
 
   public int getChannelNumber() {
@@ -639,25 +1094,98 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     return infoPanel;
   }
 
-  public void printWave(Graphics2D g2d, PageFormat f) {
-    if ((f == null) || (g2d == null)) {
+  /** The channels of the displayed multiplex group. */
+  public List<ChannelDefinition> getChannels() {
+    return channels;
+  }
+
+  /** The samples of the displayed multiplex group, or null before a series is displayed. */
+  public WaveDataReadable getWaveData() {
+    return waveData;
+  }
+
+  /** The panel holding the leads, or null before a series is displayed. */
+  JPanel getLeadPane() {
+    return pane;
+  }
+
+  /** Scrolls the leads so that the given time is at the left of the viewport. */
+  public void scrollToSeconds(double time) {
+    if (scrollPane == null || pane == null || seconds <= 0) {
       return;
     }
-    Point2D.Double placeholder = new Point2D.Double(f.getImageableWidth(), f.getImageableHeight());
+    int gutter = getGutterWidth();
+    int x = gutter + (int) Math.round(time * getPixelsPerSecond());
+    int max = Math.max(0, pane.getWidth() - scrollPane.getViewport().getWidth());
+    scrollPane
+        .getViewport()
+        .setViewPosition(
+            new java.awt.Point(
+                Math.max(0, Math.min(x, max)), scrollPane.getViewport().getViewPosition().y));
+  }
 
-    double textOffset = 50.0;
-    double canvasWidth = pane.getWidth();
-    double canvasHeight = pane.getHeight() - textOffset;
-    double scaleCanvas = Math.min(placeholder.x / canvasWidth, placeholder.y / canvasHeight);
+  /** Scrolls by a share of the viewport width (1 = one page forward, -1 = one page back). */
+  public void scrollPages(double pages) {
+    if (scrollPane == null || pane == null) {
+      return;
+    }
+    java.awt.Point position = scrollPane.getViewport().getViewPosition();
+    int width = scrollPane.getViewport().getWidth();
+    int max = Math.max(0, pane.getWidth() - width);
+    int x = (int) Math.round(position.x + pages * width);
+    scrollPane
+        .getViewport()
+        .setViewPosition(new java.awt.Point(Math.max(0, Math.min(x, max)), position.y));
+  }
 
-    AffineTransform originalTransform = g2d.getTransform();
+  /** Width in pixels of an exported page: the leads as laid out. */
+  public int getPageWidth() {
+    return pane == null ? 0 : pane.getWidth();
+  }
+
+  /** Height in pixels of an exported page: the patient header above the leads. */
+  public int getPageHeight() {
+    return pane == null ? 0 : pane.getHeight() + HEADER_HEIGHT;
+  }
+
+  /** Paints the patient header and the leads at their current size, pixel units. */
+  public void paintPage(Graphics2D g2d) {
+    if (pane == null) {
+      return;
+    }
+    AffineTransform transform = g2d.getTransform();
+    g2d.setColor(Color.WHITE);
+    g2d.fillRect(0, 0, pane.getWidth(), HEADER_HEIGHT);
+    printHeader(g2d, pane.getWidth() / 2);
+    g2d.translate(0, HEADER_HEIGHT);
     boolean wasBuffered = ExportImage.disableDoubleBuffering(pane);
-    g2d.translate(f.getImageableX(), f.getImageableY());
-    printHeader(g2d, (int) (f.getImageableWidth() / 2));
-    g2d.translate(0, textOffset);
-    g2d.scale(scaleCanvas, scaleCanvas);
     pane.paint(g2d);
     ExportImage.restoreDoubleBuffering(pane, wasBuffered);
+    g2d.setTransform(transform);
+  }
+
+  /**
+   * Prints the page at the paper scale when it fits (one screen millimetre is one printed
+   * millimetre, so 25 mm/s and 10 mm/mV stay true), scaled down to the page otherwise.
+   */
+  public void printWave(Graphics2D g2d, PageFormat f) {
+    if ((f == null) || (g2d == null) || pane == null) {
+      return;
+    }
+    double pointsPerPixel = 72.0 / 25.4 / getPixelPerMm();
+    double headerPoints = HEADER_HEIGHT * pointsPerPixel;
+    double canvasWidth = pane.getWidth();
+    double canvasHeight = pane.getHeight();
+    double fit =
+        Math.min(
+            f.getImageableWidth() / canvasWidth,
+            (f.getImageableHeight() - headerPoints) / canvasHeight);
+    double scale = Math.min(pointsPerPixel, fit);
+
+    AffineTransform originalTransform = g2d.getTransform();
+    g2d.translate(f.getImageableX(), f.getImageableY());
+    g2d.scale(scale, scale);
+    paintPage(g2d);
     g2d.setTransform(originalTransform);
   }
 
@@ -675,7 +1203,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
           DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
       if (dcm != null && patient != null && study != null) {
         g2.setColor(Color.black);
-        g2.setFont(new Font("SanSerif", Font.PLAIN, 9));
+        g2.setFont(new Font("SanSerif", Font.PLAIN, 11));
         FontMetrics fontMetrics = g2.getFontMetrics();
         final int fontHeight = fontMetrics.getHeight();
         float drawY = fontHeight;
@@ -735,12 +1263,29 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                 "ID: $V"), // NON-NLS
             0,
             drawY);
-        TagW studyAcNbTag = TagD.get(Tag.AccessionNumber);
-        g2.drawString(
-            studyAcNbTag.getFormattedTagValue(
-                IdentityMask.maskValue(studyAcNbTag, study.getTagValue(studyAcNbTag)), null),
-            midWidth,
-            drawY);
+        StringBuilder settings = new StringBuilder();
+        settings.append(
+            getSpeed() == WaveLayoutManager.AUTO_SPEED
+                ? String.format("%.1f mm/s", getPixelsPerSecond() / getPixelPerMm()) // NON-NLS
+                : String.format("%.0f mm/s", getSpeed())); // NON-NLS
+        settings.append("  ");
+        settings.append(
+            getAmplitude() == WaveLayoutManager.AUTO_AMPLITUDE
+                ? "auto mm/mV" // NON-NLS
+                : getAmplitude() + " mm/mV"); // NON-NLS
+        if (!filter.isIdentity()) {
+          settings.append("  "); // NON-NLS
+          if (filter.baseline()) {
+            settings.append(Messages.getString("ToolPanel.baseline")).append(' ');
+          }
+          if (filter.lowPassHz() > 0) {
+            settings.append(String.format("LP %.0f Hz ", filter.lowPassHz())); // NON-NLS
+          }
+          if (filter.notchHz() > 0) {
+            settings.append(String.format("notch %.0f Hz", filter.notchHz())); // NON-NLS
+          }
+        }
+        g2.drawString(settings.toString(), midWidth, drawY);
       }
     }
   }

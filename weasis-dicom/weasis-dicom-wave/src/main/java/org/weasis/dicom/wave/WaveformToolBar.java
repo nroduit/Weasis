@@ -45,6 +45,30 @@ public class WaveformToolBar extends WtoolBar {
         });
     add(metaButton);
 
+    final JButton exportButton = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.EXPORT_IMAGE));
+    exportButton.setToolTipText(Messages.getString("WaveformToolBar.export"));
+    exportButton.addActionListener(
+        e -> {
+          ImageViewerPlugin<?> container =
+              WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();
+          if (container instanceof WaveContainer waveContainer) {
+            waveContainer.exportPage();
+          }
+        });
+    add(exportButton);
+
+    final JButton compareButton = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.PREVIOUS));
+    compareButton.setToolTipText(Messages.getString("WaveformToolBar.compare"));
+    compareButton.addActionListener(
+        e -> {
+          ImageViewerPlugin<?> container =
+              WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();
+          if (container instanceof WaveContainer waveContainer) {
+            waveContainer.compareWithPrevious();
+          }
+        });
+    add(compareButton);
+
     jButtonDelete.setToolTipText(Messages.getString("WaveformToolBar.delete"));
     jButtonDelete.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SELECTION_DELETE));
     jButtonDelete.addActionListener(

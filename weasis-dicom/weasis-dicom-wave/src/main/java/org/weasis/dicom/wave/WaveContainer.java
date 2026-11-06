@@ -9,6 +9,8 @@
  */
 package org.weasis.dicom.wave;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.print.PageFormat;
@@ -17,8 +19,11 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
@@ -39,17 +44,26 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.ws.DockSide;
+import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.SeriesViewerUI;
+import org.weasis.core.ui.editor.SplitLayout;
+import org.weasis.core.ui.editor.SplitPosition;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
+import org.weasis.core.ui.editor.ViewerPlacement;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.pref.LauncherToolBar;
 import org.weasis.core.ui.util.ForcedAcceptPrintService;
@@ -229,6 +243,18 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
         }
         menuRoot.add(printMenu);
       }
+      JMenuItem export =
+          new JMenuItem(
+              Messages.getString("ECGontainer.export"),
+              ResourceUtil.getIcon(ActionIcon.EXPORT_IMAGE));
+      export.addActionListener(e -> exportPage());
+      menuRoot.add(export);
+      JMenuItem compare =
+          new JMenuItem(
+              Messages.getString("WaveformToolBar.compare"),
+              ResourceUtil.getIcon(ActionIcon.PREVIOUS));
+      compare.addActionListener(e -> compareWithPrevious());
+      menuRoot.add(compare);
     }
     return menuRoot;
   }
@@ -440,6 +466,137 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
           DicomModel.getFirstSpecialElement(ecgView.getSeries(), DicomSpecialElement.class);
       DicomFieldsView.showHeaderDialog(this, ecgView.getSeries(), dcm);
     }
+  }
+
+  private static final String P_EXPORT_DIR = "weasis.wave.export.dir"; // NON-NLS
+
+  /** Asks for a file and writes the displayed page to it as PNG, JPEG or PDF. */
+  public void exportPage() {
+    if (ecgView == null || ecgView.getPageWidth() <= 0) {
+      return;
+    }
+    WProperties persistence = GuiUtils.getUICore().getLocalPersistence();
+    SystemFileChooser chooser = new SystemFileChooser(persistence.getProperty(P_EXPORT_DIR, ""));
+    chooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
+    chooser.setAcceptAllFileFilterUsed(false);
+    FileNameExtensionFilter pdf = new FileNameExtensionFilter("PDF", WaveExport.PDF); // NON-NLS
+    FileNameExtensionFilter png = new FileNameExtensionFilter("PNG", WaveExport.PNG); // NON-NLS
+    FileNameExtensionFilter jpg = new FileNameExtensionFilter("JPEG", WaveExport.JPEG); // NON-NLS
+    chooser.addChoosableFileFilter(pdf);
+    chooser.addChoosableFileFilter(png);
+    chooser.addChoosableFileFilter(jpg);
+    chooser.setFileFilter(pdf);
+    if (chooser.showSaveDialog(this) != SystemFileChooser.APPROVE_OPTION
+        || chooser.getSelectedFile() == null) {
+      return;
+    }
+    File file = chooser.getSelectedFile();
+    String extension =
+        chooser.getFileFilter() instanceof FileNameExtensionFilter f
+            ? f.getExtensions()[0]
+            : WaveExport.PDF;
+    if (!file.getName().toLowerCase(Locale.ROOT).endsWith("." + extension)) {
+      file = new File(file.getPath() + "." + extension);
+    }
+    persistence.setProperty(P_EXPORT_DIR, file.getParent());
+    try {
+      WaveExport.write(ecgView, file);
+    } catch (IOException | RuntimeException e) {
+      LOGGER.error("Exporting the ECG page", e);
+      JOptionPane.showMessageDialog(
+          this,
+          Messages.getString("WaveContainer.export_error") + "\n" + e.getMessage(),
+          Messages.getString("ECGontainer.export"),
+          JOptionPane.ERROR_MESSAGE);
+    }
+  }
+
+  /**
+   * Opens the previous waveform of the same patient (the latest one acquired before this one, or
+   * the latest other one) in a viewer split beside this one.
+   */
+  public void compareWithPrevious() {
+    if (ecgView == null || ecgView.getSeries() == null) {
+      return;
+    }
+    Series<?> current = ecgView.getSeries();
+    if (!(current.getTagValue(TagW.ExplorerModel) instanceof DicomModel model)) {
+      return;
+    }
+    MediaSeriesGroup patient = model.getParent(current, DicomModel.patient);
+    if (patient == null) {
+      return;
+    }
+    String currentKey = acquisitionKey(current);
+    List<Series<?>> candidates = new ArrayList<>();
+    for (MediaSeriesGroup study : model.getChildren(patient)) {
+      for (MediaSeriesGroup s : model.getChildren(study)) {
+        if (s instanceof Series<?> series
+            && series != current
+            && WaveElementFactory.SERIES_WAVEFORM_MIMETYPE.equals(series.getMimeType())) {
+          candidates.add(series);
+        }
+      }
+    }
+    if (candidates.isEmpty()) {
+      JOptionPane.showMessageDialog(
+          this,
+          Messages.getString("WaveContainer.no_previous"),
+          WaveFactory.NAME,
+          JOptionPane.INFORMATION_MESSAGE);
+      return;
+    }
+    Series<?> previous =
+        WaveComparison.previousOf(candidates, currentKey, WaveContainer::acquisitionKey);
+    if (previous == null) {
+      return;
+    }
+    // Already open in a tab: move that viewer beside this one
+    WorkspaceManager manager = GuiUtils.getUICore().getWorkspaceManager();
+    List<ViewerPlugin<?>> plugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (plugins) {
+      for (ViewerPlugin<?> plugin : plugins) {
+        if (plugin instanceof WaveContainer other
+            && other != this
+            && other.ecgView != null
+            && other.ecgView.getSeries() == previous) {
+          if (manager != null) {
+            manager.split(other, this, DockSide.RIGHT, 0.5);
+          }
+          return;
+        }
+      }
+    }
+    ViewerPluginBuilder.openInDefaultViewer(
+        previous,
+        model,
+        ViewerOpenOptions.builder()
+            .placement(ViewerPlacement.split(SplitLayout.of(SplitPosition.RIGHT)))
+            .build());
+  }
+
+  /** A sortable acquisition date-time of a waveform series (DICOM DT, or DA + TM). */
+  private static String acquisitionKey(Series<?> series) {
+    DicomSpecialElement element =
+        DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
+    if (element == null || element.getMediaReader() == null) {
+      return "";
+    }
+    org.dcm4che3.data.Attributes dcm = element.getMediaReader().getDicomObject();
+    if (dcm == null) {
+      return "";
+    }
+    String dt = dcm.getString(org.dcm4che3.data.Tag.AcquisitionDateTime);
+    if (dt != null && !dt.isEmpty()) {
+      return dt;
+    }
+    String date = dcm.getString(org.dcm4che3.data.Tag.ContentDate, "");
+    String time = dcm.getString(org.dcm4che3.data.Tag.ContentTime, "");
+    if (date.isEmpty()) {
+      date = dcm.getString(org.dcm4che3.data.Tag.StudyDate, "");
+      time = dcm.getString(org.dcm4che3.data.Tag.StudyTime, "");
+    }
+    return date + time;
   }
 
   void printCurrentView() {
