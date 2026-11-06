@@ -42,6 +42,7 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.img.DicomMetaData;
 import org.dcm4che3.img.lut.ModalityLutModule;
 import org.dcm4che3.img.lut.VoiLutModule;
+import org.dcm4che3.img.stream.ImageDescriptor;
 import org.dcm4che3.img.util.DateTimeUtils;
 import org.dcm4che3.img.util.DicomObjectUtil;
 import org.dcm4che3.img.util.DicomUtils;
@@ -479,10 +480,17 @@ public class DicomMediaUtils {
 
       // C.7.6.16.2.9 Pixel Value Transformation Macro:
       // https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.16.2.html#table_C.7.6.16-10
+      // A negative frame index means the Shared Functional Groups, which apply to every frame. The
+      // Per-frame Functional Groups are written afterwards and override the shared values.
+      ImageDescriptor desc = md.getImageDescriptor();
+      int firstFrame = Math.max(frameIndex, 0);
+      int lastFrame = frameIndex < 0 ? desc.getFrames() - 1 : frameIndex;
       Attributes mLutItems = dcm.getNestedDataset(Tag.PixelValueTransformationSequence);
       if (mLutItems != null) {
         ModalityLutModule mlut = new ModalityLutModule(mLutItems);
-        md.getImageDescriptor().setModalityLutForFrame(Math.max(frameIndex, 0), mlut);
+        for (int i = firstFrame; i <= lastFrame; i++) {
+          desc.setModalityLutForFrame(i, mlut);
+        }
       }
 
       // C.7.6.16.2.10 Frame VOI LUT Macro:
@@ -490,7 +498,9 @@ public class DicomMediaUtils {
       Attributes vLutItems = dcm.getNestedDataset(Tag.FrameVOILUTSequence);
       if (vLutItems != null) {
         VoiLutModule vlut = new VoiLutModule(vLutItems);
-        md.getImageDescriptor().setVoiLutForFrame(Math.max(frameIndex, 0), vlut);
+        for (int i = firstFrame; i <= lastFrame; i++) {
+          desc.setVoiLutForFrame(i, vlut);
+        }
       }
 
       // C.7.6.16.2.15 Patient Orientation in Frame Macro:

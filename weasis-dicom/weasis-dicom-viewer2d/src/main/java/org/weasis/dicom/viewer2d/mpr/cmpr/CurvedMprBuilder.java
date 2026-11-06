@@ -35,6 +35,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.mip.MipView;
+import org.weasis.dicom.viewer2d.mip.SeriesBuilder;
 import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.dicom.viewer2d.mpr.Volume;
@@ -174,6 +175,7 @@ public final class CurvedMprBuilder {
 
     Attributes srcHeader = refImg.getMediaReader().getDicomObject();
     Attributes baseHeader = srcHeader == null ? new Attributes() : new Attributes(srcHeader);
+    SeriesBuilder.addFunctionalGroupVoiLut(srcHeader, baseHeader);
     baseHeader.setString(Tag.SeriesInstanceUID, VR.UI, seriesUid);
     String desc = baseHeader.getString(Tag.SeriesDescription);
     String csDesc = "Curved MPR Cross-Sections"; // NON-NLS
@@ -302,6 +304,7 @@ public final class CurvedMprBuilder {
     Attributes src = refImg.getMediaReader().getDicomObject();
     if (src != null) {
       attrs.addSelected(src, VOI_LUT_ATTRS);
+      SeriesBuilder.addFunctionalGroupVoiLut(src, attrs);
     }
     return attrs;
   }
