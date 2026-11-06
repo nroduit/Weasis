@@ -71,18 +71,23 @@ public final class SubtractionController {
       }
       Object choice = selectedMask().orElse(null);
       SubtractionView preview = null;
-      if (choice instanceof FrameMask frames) {
-        preview =
-            enterPreview(
-                manager.getSelectedView2dContainer(),
-                view,
-                view.getSeries(),
-                selectedFactor(),
-                selectedDsa(frames));
-      } else if (choice instanceof MediaSeries<?> mask) {
-        preview =
-            enterPreview(
-                manager.getSelectedView2dContainer(), view, cast(mask), selectedFactor(), null);
+      try {
+        if (choice instanceof FrameMask frames) {
+          preview =
+              enterPreview(
+                  manager.getSelectedView2dContainer(),
+                  view,
+                  view.getSeries(),
+                  selectedFactor(),
+                  selectedDsa(frames));
+        } else if (choice instanceof MediaSeries<?> mask) {
+          preview =
+              enterPreview(
+                  manager.getSelectedView2dContainer(), view, cast(mask), selectedFactor(), null);
+        }
+      } catch (IllegalStateException e) {
+        LOGGER.warn("Cannot show the subtraction preview in the selected pane", e);
+        return;
       }
       if (preview != null && selectedMotionCorrection()) {
         preview.setParameters(preview.getMask(), preview.getFactor(), preview.getDsa(), true);

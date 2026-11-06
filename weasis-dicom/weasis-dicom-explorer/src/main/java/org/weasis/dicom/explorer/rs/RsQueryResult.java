@@ -76,6 +76,16 @@ public class RsQueryResult extends AbstractQueryResult {
   private final AuthMethod authMethod;
 
   public RsQueryResult(RsQueryParams rsQueryParams, AuthMethod authMethod) {
+    this(
+        rsQueryParams,
+        authMethod,
+        GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getBooleanProperty(DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true));
+  }
+
+  RsQueryResult(
+      RsQueryParams rsQueryParams, AuthMethod authMethod, boolean defaultStartDownloading) {
     this.rsQueryParams = rsQueryParams;
     this.authMethod = authMethod;
     this.wadoParameters = new WadoParameters("", true, true);
@@ -88,10 +98,7 @@ public class RsQueryResult extends AbstractQueryResult {
             + DicomContentType.DICOM
             + "\";"
             + rsQueryParams.getProperties().getProperty(RsQueryParams.P_ACCEPT_EXT));
-    defaultStartDownloading =
-        GuiUtils.getUICore()
-            .getSystemPreferences()
-            .getBooleanProperty(DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
+    this.defaultStartDownloading = defaultStartDownloading;
   }
 
   private static String multiParams(String query) {
@@ -125,9 +132,13 @@ public class RsQueryResult extends AbstractQueryResult {
         buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
         LOGGER.debug(QIDO_REQUEST, buf);
+        // The matches are immutable, and the studies are sorted and filtered in place
         List<Attributes> studies =
-            parseJSON(
-                buf.toString(), authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
+            new ArrayList<>(
+                parseJSON(
+                    buf.toString(),
+                    authMethod,
+                    new URLParameters(rsQueryParams.getQueryHeaders())));
         if (!studies.isEmpty()) {
           studies.sort(getStudyComparator());
           applyAllFilters(studies);

@@ -297,6 +297,8 @@ public class MipView extends View2d {
   /**
    * Puts a MIP view in the place of that view in its container, on the same series, image and stack
    * order; the projection parameters are the caller's to set before building.
+   *
+   * @return the MIP view, or {@code null} when the view cannot be replaced (a tile of a TILED pane)
    */
   public static MipView swapIn(
       ImageViewerEventManager<DicomImageElement> eventManager,
@@ -305,7 +307,10 @@ public class MipView extends View2d {
     MipView mip = new MipView(eventManager);
     mip.registerDefaultListeners();
     mip.initMIPSeries(view);
-    container.replaceView(view, mip);
+    if (!container.replaceView(view, mip)) {
+      mip.disposeView();
+      return null;
+    }
     return mip;
   }
 

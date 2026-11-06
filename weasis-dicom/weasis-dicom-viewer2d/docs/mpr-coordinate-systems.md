@@ -1,7 +1,6 @@
 # MPR Coordinate Systems
 
-This document defines the coordinate spaces used by the MPR (Multi-Planar Reconstruction)
-system in Weasis and the transformations between them.
+This document defines the coordinate spaces used by the MPR (Multi-Planar Reconstruction) system in Weasis and the transformations between them.
 
 See [mpr-architecture.md](mpr-architecture.md) for the full system overview.
 
@@ -25,8 +24,7 @@ Isotropic Slice Space       [0, sliceSize]²      ← AxesControl.center, crossh
 Screen / Viewport Space
 ```
 
-All 3D positions follow the DICOM LPS convention (see
-[mpr-architecture.md](mpr-architecture.md#31-patient-coordinate-system-dicom-lps)).
+All 3D positions follow the DICOM LPS convention (see [mpr-architecture.md](mpr-architecture.md#31-patient-coordinate-system-dicom-lps)).
 
 ---
 
@@ -40,19 +38,19 @@ All 3D positions follow the DICOM LPS convention (see
 | **Units** | integer voxel indices |
 | **Defined by** | `Volume.getSize()` (`Vector3i`) |
 
-The raw 3D voxel grid. Physical spacing per voxel is `Volume.getPixelRatio()` (mm). The
-spacing usually differs along the slice axis, so the volume is generally **anisotropic**.
+The raw 3D voxel grid.
+Physical spacing per voxel is `Volume.getPixelRatio()` (mm).
+The spacing usually differs along the slice axis, so the volume is generally **anisotropic**.
 
 ### 2.2 VR-Space (Voxel-Ratio-Scaled Space)
 
 | Property | Value |
 |----------|-------|
 | **Range** | `[0, volSize.x) × [0, volSize.y) × [0, volSize.z)` |
-| **Units** | "isotropised" voxel units (smallest physical spacing maps to 1.0) |
+| **Units** | "isotropized" voxel units (smallest physical spacing maps to 1.0) |
 | **Derived from** | `volSize = Vector3d(size) × voxelRatio` |
 
-Compensates for anisotropic spacing so that equal distances in VR-space correspond
-to equal physical distances.
+Compensates for anisotropic spacing so that equal distances in VR-space correspond to equal physical distances.
 
 ```
 voxelRatio = pixelRatio / min(pixelRatio)     // Volume.getVoxelRatio()
@@ -72,8 +70,8 @@ voxelIndex = vrPosition / voxelRatio          // per component, when sampling
 sliceSize = ceil( length(volSize) )    // Volume.getSliceSize(), the 3D diagonal of VR-space
 ```
 
-The slice image is always a square of `sliceSize × sliceSize` pixels, large enough to contain
-the volume at any rotation. This is where everything user-facing happens:
+The slice image is always a square of `sliceSize × sliceSize` pixels, large enough to contain the volume at any rotation.
+This is where everything user-facing happens:
 
 - **`AxesControl.center`** — the crosshair position (`getCenter()` / `setCenter()`)
 - **Crosshair intersection** — drawn at `AxesControl.getCenterForCanvas(view)`

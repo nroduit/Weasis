@@ -505,7 +505,10 @@ public class SubtractionView extends View2d {
     SubtractionView view = new SubtractionView(selView.getEventManager());
     view.registerDefaultListeners();
     view.initPreview(selView, mask, factor, dsa);
-    container.replaceView(selView, view);
+    if (!container.replaceView(selView, view)) {
+      view.disposeView();
+      throw new IllegalStateException("A tile of a tiled pane cannot show a preview");
+    }
     for (ViewCanvas<DicomImageElement> target : manualSyncTargets) {
       view.syncManuallyWith(target);
     }

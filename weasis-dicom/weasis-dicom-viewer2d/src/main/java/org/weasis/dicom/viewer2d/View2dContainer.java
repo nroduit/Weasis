@@ -101,6 +101,7 @@ import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.HangingWhyTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
 import org.weasis.dicom.viewer2d.fusion.FusionController;
+import org.weasis.dicom.viewer2d.mip.MipMenu;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionController;
 
 public class View2dContainer extends DicomViewerPlugin implements PropertyChangeListener {
@@ -445,9 +446,9 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             }
           }
 
-          BasicActionState volState =
-              EventManager.getInstance().getAction(ActionW.VOLUME).orElse(null);
-          if (volState != null && volState.isActionEnabled()) {
+          BasicActionState mipState =
+              EventManager.getInstance().getAction(MipMenu.AVAILABLE).orElse(null);
+          if (mipState != null && mipState.isActionEnabled()) {
             JMenuItem mip =
                 new JMenuItem(
                     Messages.getString("View2dContainer.mip"),

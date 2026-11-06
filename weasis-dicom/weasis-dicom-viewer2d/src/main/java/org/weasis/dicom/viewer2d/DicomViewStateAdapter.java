@@ -192,6 +192,9 @@ final class DicomViewStateAdapter implements ViewStateAdapter<DicomImageElement>
         return view;
       }
       mip = MipView.swapIn(EventManager.getInstance(), container, view);
+      if (mip == null) {
+        return view;
+      }
     }
     int extent =
         projection.extent() != null

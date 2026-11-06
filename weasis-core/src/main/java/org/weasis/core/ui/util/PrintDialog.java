@@ -131,6 +131,15 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     // One view or several views
     ExportLayout<I> layout =
         singleView ? new ExportLayout<>(selectedView) : new ExportLayout<>(container);
+    if (!layout.hasContent()) {
+      layout.dispose();
+      JOptionPane.showMessageDialog(
+          WinUtil.getValidComponent(this),
+          Messages.getString("PrintDialog.no_print"),
+          null,
+          JOptionPane.ERROR_MESSAGE);
+      return;
+    }
 
     ImagePrint print = new ImagePrint(layout, printOptions);
     // PrinterJob renders the pages on this thread, so the mask is bound for the whole job

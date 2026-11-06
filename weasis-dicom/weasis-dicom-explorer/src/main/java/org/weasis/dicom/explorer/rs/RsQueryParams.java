@@ -284,10 +284,6 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
     return !arcConfig.getPatients().isEmpty();
   }
 
-  public void clearAllPatients() {
-    arcConfig.getPatients().clear();
-  }
-
   public void removePatientId(List<String> patientIdList, boolean containsIssuer) {
     arcConfig.removePatientId(patientIdList, containsIssuer);
   }
