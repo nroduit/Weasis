@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.29",
+  "apiVersion": "2.30",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -6740,7 +6740,7 @@
         {
           "name": "grid",
           "description": "Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.",
-          "usage": "view2d:grid [-h] [--json] [--view=<view-id>] [--panes=<n> | --grid=<grid-id> | --best-for=<n>]",
+          "usage": "view2d:grid [-h] [--json] [--view=<view-id>] [--grid=<grid-id> | --best-for=<n> | --panes=<n>]",
           "parameters": [],
           "options": [
             {
@@ -6762,20 +6762,6 @@
               "arity": "1",
               "required": false,
               "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
-            },
-            {
-              "names": [
-                "--panes"
-              ],
-              "label": "<n>",
-              "type": "integer",
-              "arity": "1",
-              "required": true,
-              "description": "Applies the best grid for this number of panes.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
             },
             {
               "names": [
@@ -6801,6 +6787,20 @@
               "required": true,
               "description": "Returns the best grid for this number of panes without applying it.",
               "since": "5.0",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--panes"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Applies the best grid for this number of panes.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"
@@ -8003,6 +8003,79 @@
       "name": "weasis",
       "description": "The application itself: version, installation and the main window.",
       "verbs": [
+        {
+          "name": "feedback",
+          "description": "The feedback channel of a preview: the link to the issue form of the 5.0 preview with the version and the platform of this instance filled in, and the discussions category for questions; --open opens the form in the browser.",
+          "since": "5.0",
+          "usage": "weasis:feedback [-h] [--json] [--open] [--feature=<text>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--open"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Open the form in the default browser."
+            },
+            {
+              "names": [
+                "--feature"
+              ],
+              "label": "<text>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "The feature of the finding, preselected in the form."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "url",
+                "type": "string",
+                "description": "The issue form with the version and the platform filled in"
+              },
+              {
+                "name": "discussions",
+                "type": "string",
+                "description": "The discussions category of the preview"
+              },
+              {
+                "name": "version",
+                "type": "string",
+                "description": "The version of this instance"
+              },
+              {
+                "name": "preview",
+                "type": "boolean",
+                "description": "Whether this instance is a preview build"
+              },
+              {
+                "name": "platform",
+                "type": "string",
+                "description": "Operating system, architecture and monitors"
+              },
+              {
+                "name": "opened",
+                "type": "boolean",
+                "description": "Whether the form was opened in the browser"
+              }
+            ]
+          }
+        },
         {
           "name": "info",
           "description": "Version and installation details, the version being one of the keys. The 4.x option -v still answers with the version alone.",

@@ -25,6 +25,8 @@ import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandManager;
 import org.weasis.core.api.command.Needs;
 import org.weasis.core.api.command.Renamed;
+import org.weasis.core.api.command.ResultSchema;
+import org.weasis.core.api.command.Returns;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -45,7 +47,8 @@ import picocli.CommandLine.Option;
       WeasisCommands.Info.class,
       WeasisCommands.Show.class,
       WeasisCommands.Minimize.class,
-      WeasisCommands.Quit.class
+      WeasisCommands.Quit.class,
+      WeasisCommands.Feedback.class
     })
 public class WeasisCommands implements CommandExtension {
 
@@ -306,6 +309,60 @@ public class WeasisCommands implements CommandExtension {
       WindowAction action = new WindowAction();
       action.visible = true;
       return action;
+    }
+  }
+
+  @Command(
+      name = "feedback",
+      description =
+          "The feedback channel of a preview: the link to the issue form of the 5.0 preview with "
+              + "the version and the platform of this instance filled in, and the discussions "
+              + "category for questions; --open opens the form in the browser.")
+  @Since("5.0")
+  static class Feedback extends AbstractVerb implements Returns {
+    @Option(names = "--open", description = "Open the form in the default browser.")
+    boolean open;
+
+    @Option(
+        names = "--feature",
+        paramLabel = "<text>",
+        description = "The feature of the finding, preselected in the form.")
+    String feature;
+
+    @Override
+    protected void run() {
+      String platform = FeedbackLink.platform();
+      String url = FeedbackLink.url(AppProperties.WEASIS_VERSION, platform, feature);
+      Prerelease build = Prerelease.of(AppProperties.WEASIS_VERSION);
+      if (open) {
+        GuiExecutor.execute(() -> GuiUtils.openInDefaultBrowser(null, java.net.URI.create(url)));
+      }
+      if (isJson()) {
+        JsonObjectBuilder json =
+            Json.createObjectBuilder()
+                .add("url", url) // NON-NLS
+                .add("discussions", FeedbackLink.DISCUSSIONS) // NON-NLS
+                .add("version", AppProperties.WEASIS_VERSION) // NON-NLS
+                .add("preview", build.isPreview()) // NON-NLS
+                .add("platform", platform) // NON-NLS
+                .add("opened", open); // NON-NLS
+        print(json.build().toString());
+      } else {
+        print(url);
+        print(FeedbackLink.DISCUSSIONS);
+      }
+    }
+
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("url", String.class, "The issue form with the version and the platform filled in")
+          .field("discussions", String.class, "The discussions category of the preview")
+          .field("version", String.class, "The version of this instance")
+          .field("preview", Boolean.class, "Whether this instance is a preview build")
+          .field("platform", String.class, "Operating system, architecture and monitors")
+          .field("opened", Boolean.class, "Whether the form was opened in the browser")
+          .build();
     }
   }
 

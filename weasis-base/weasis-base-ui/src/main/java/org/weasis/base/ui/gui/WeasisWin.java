@@ -1057,6 +1057,13 @@ public class WeasisWin {
     reportMenuItem.addActionListener(
         e -> openBrowser(reportMenuItem, "https://github.com/nroduit/Weasis/issues"));
     helpMenuItem.add(reportMenuItem);
+    if (Prerelease.of(AppProperties.WEASIS_VERSION).isPreview()) {
+      // The feedback channel of the preview: the issue form with the version and the platform
+      // filled in, the same link as weasis:feedback
+      final JMenuItem feedbackMenuItem = new JMenuItem(Messages.getString("send.preview.feedback"));
+      feedbackMenuItem.addActionListener(e -> openBrowser(feedbackMenuItem, FeedbackLink.url()));
+      helpMenuItem.add(feedbackMenuItem);
+    }
     helpMenuItem.add(new JSeparator());
     WProperties p = GuiUtils.getUICore().getSystemPreferences();
     if (p.getBooleanProperty("weasis.plugins.license", false)) {

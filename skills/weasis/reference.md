@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.29, protocol 2, application development.
+Command API 2.30, protocol 2, application development.
 
 ## color
 
@@ -1773,15 +1773,15 @@ Usage: `view2d:graphics [-h] [--json] [--no-measurements] [--after=<n>] [--layer
 
 Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.
 
-Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--panes=<n> | --grid=<grid-id> | --best-for=<n>]`
+Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--grid=<grid-id> | --best-for=<n> | --panes=<n>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --panes | integer |  | Applies the best grid for this number of panes. |
 | --grid | grid-id |  | Applies this grid, by id from the bare verb. |
 | --best-for | integer |  | Returns the best grid for this number of panes without applying it. (since 5.0) |
+| --panes | integer |  | Applies the best grid for this number of panes. |
 
 ### view2d:hang (since 5.0)
 
@@ -2038,6 +2038,27 @@ Usage: `view3d:info [-h] [--json]`
 ## weasis
 
 The application itself: version, installation and the main window.
+
+### weasis:feedback (since 5.0)
+
+The feedback channel of a preview: the link to the issue form of the 5.0 preview with the version and the platform of this instance filled in, and the discussions category for questions; --open opens the form in the browser.
+
+Usage: `weasis:feedback [-h] [--json] [--open] [--feature=<text>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --open | boolean |  | Open the form in the default browser. |
+| --feature | string |  | The feature of the finding, preselected in the form. |
+
+| Result | Type | Description |
+|---|---|---|
+| url | string | The issue form with the version and the platform filled in |
+| discussions | string | The discussions category of the preview |
+| version | string | The version of this instance |
+| preview | boolean | Whether this instance is a preview build |
+| platform | string | Operating system, architecture and monitors |
+| opened | boolean | Whether the form was opened in the browser |
 
 ### weasis:info
 
