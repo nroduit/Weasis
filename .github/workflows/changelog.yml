@@ -17,34 +17,82 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Read the kind of release from the tag
+        id: kind
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+        # A tag with a suffix (v5.0.0-beta.1, v5.0.0-rc.1) is a pre-release: listed apart on GitHub,
+        # never "Latest", invisible to the update check of the installed releases. Its body is the
+        # tester notes committed with the tag (docs/release-notes/<tag>.md); the changelog of the
+        # issues is generated at the release only.
+        run: |
+          case "$TAG" in
+            *-*)
+              label=$(echo "$TAG" | sed -E 's/^v//; s/-([A-Za-z]+)[.-]?([0-9]+)?.*$/ \1 \2/; s/ +$//')
+              {
+                echo "prerelease=true"
+                echo "notes=docs/release-notes/$TAG.md"
+                echo "name=Weasis $label (preview, not for clinical use)"
+              } >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              {
+                echo "prerelease=false"
+                echo "notes="
+                echo "name=$TAG"
+              } >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+          cat "$GITHUB_OUTPUT"
+
+      - name: Check the pre-release notes
+        if: steps.kind.outputs.prerelease == 'true'
+        shell: bash
+        env:
+          NOTES: ${{ steps.kind.outputs.notes }}
+        run: |
+          if [ ! -s "$NOTES" ]; then
+            echo "::error::A pre-release ships with its notes: $NOTES is missing (see docs/release-notes/README.md)."
+            exit 1
+          fi
+          echo "Release body: $NOTES"
+
       - name: Changelog Generator from github issues
+        if: steps.kind.outputs.prerelease != 'true'
         id: generate_changelog_file
         uses: heinrichreimer/github-changelog-generator-action@e60b5a2bd9fcd88dadf6345ff8327863fb8b490f  # v2.4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           compareLink: true
           # Get config from .github_changelog_generator file
+
       - name: Git Auto Commit
+        if: steps.kind.outputs.prerelease != 'true'
         id: commit
         uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d  # v7.2.0
         with:
           branch: master
           commit_message: "Automatic changelog update"
           file_pattern: "CHANGELOG.md"
+
       - name: Extract release notes
+        if: steps.kind.outputs.prerelease != 'true'
         id: extract-release-notes
         uses: ffurrer2/extract-release-notes@273da39a24fb7db106a35526c8162815faffd31d  # v3.1.0
         with:
           prerelease: true
+
       - name: Create release
         uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd  # v1
         with:
-          tag: ${{ github.ref }}
-          name: ${{ github.ref }}
+          tag: ${{ github.ref_name }}
+          name: ${{ steps.kind.outputs.name }}
           draft: false
-          # a tag with a suffix (v5.0.0-beta.1) is a pre-release: invisible to the update check
-          # of the installed releases, listed apart on GitHub
-          prerelease: ${{ contains(github.ref_name, '-') }}
-          body: ${{ steps.extract-release-notes.outputs.release_notes }}
+          prerelease: ${{ steps.kind.outputs.prerelease }}
+          makeLatest: ${{ steps.kind.outputs.prerelease == 'true' && 'false' || 'legacy' }}
+          body: ${{ steps.kind.outputs.prerelease == 'true' && '' || steps.extract-release-notes.outputs.release_notes }}
+          bodyFile: ${{ steps.kind.outputs.notes }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -60,6 +60,7 @@ jobs:
     outputs:
       version: ${{ env.WEASIS_VERSION }}
       cleanversion: ${{ env.WEASIS_CLEAN_VERSION }}
+      fileversion: ${{ env.WEASIS_FILE_VERSION }}
       prerelease: ${{ env.WEASIS_PRERELEASE }}
 
     steps:
@@ -93,9 +94,20 @@ jobs:
         run: |
           CVERSION=$(echo $WEASIS_VERSION | sed -e 's/"//g' -e 's/-.*//' -e 's/\(\([0-9]\+\.\)\{2\}[0-9]\+\)\.[0-9]\+/\1/')
           echo "WEASIS_CLEAN_VERSION=${CVERSION}" >> $GITHUB_ENV
-          # a version with a suffix (5.0.0-beta.1) is a pre-release: its installers do not register
-          # the weasis:// scheme, which stays with the release installed beside it
-          case "$WEASIS_VERSION" in *-*) echo "WEASIS_PRERELEASE=true" >> $GITHUB_ENV ;; *) echo "WEASIS_PRERELEASE=false" >> $GITHUB_ENV ;; esac
+          # A version with a suffix (5.0.0-beta.1) is a pre-release: jpackage gets the clean version
+          # (the MSI and the bundle need x.y.z), the installer files carry the full version and the
+          # installers do not register the weasis:// scheme, which stays with the release installed
+          # beside the preview. Same rules as package-weasis.sh (Linux), see
+          # weasis-distributions/docs/Native-Build-Overview.md.
+          case "$WEASIS_VERSION" in
+            *-*) SUFFIX="${WEASIS_VERSION#*-}"
+                 echo "WEASIS_PRERELEASE=true" >> $GITHUB_ENV
+                 echo "WEASIS_FILE_VERSION=${CVERSION}-${SUFFIX}" >> $GITHUB_ENV
+                 echo "Pre-release **${WEASIS_VERSION}**: package version ${CVERSION}, installer files ${CVERSION}-${SUFFIX}, Linux release 0.$(echo "$SUFFIX" | sed 's/[^A-Za-z0-9.]/./g'), weasis:// not registered" >> $GITHUB_STEP_SUMMARY ;;
+            *)   echo "WEASIS_PRERELEASE=false" >> $GITHUB_ENV
+                 echo "WEASIS_FILE_VERSION=${CVERSION}" >> $GITHUB_ENV
+                 echo "Release **${WEASIS_VERSION}**: package version ${CVERSION}" >> $GITHUB_STEP_SUMMARY ;;
+          esac
 
       - name: Upload the weasis package for building the native distribution
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
@@ -127,6 +139,7 @@ jobs:
           echo ${{needs.build.outputs.cleanversion}}
           echo "WEASIS_VERSION=${{needs.build.outputs.version}}" >> $GITHUB_ENV
           echo "WEASIS_CLEAN_VERSION=${{needs.build.outputs.cleanversion}}" >> $GITHUB_ENV
+          echo "WEASIS_FILE_VERSION=${{needs.build.outputs.fileversion}}" >> $GITHUB_ENV
           echo "WEASIS_PRERELEASE=${{needs.build.outputs.prerelease}}" >> $GITHUB_ENV
 
       - name: Set up JDK
@@ -215,42 +228,26 @@ jobs:
           & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.UI.wixext/$WIX_VERSION
           & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.Util.wixext/$WIX_VERSION
 
-      - name: Leave the weasis:// scheme to the installed release (pre-release only)
-        if: env.WEASIS_PRERELEASE == 'true'
+      - name: Resolve the installer resources
         shell: bash
-        # A preview coexists with the 4.x release of the workstation: its installers register
-        # neither the URL scheme on macOS (Info.plist), on Linux (.desktop MIME type) nor on
-        # Windows (the URIHandlerRegistry component of the MSI); the viewer hub launch keeps
-        # opening the release.
+        # RES is the --resource-dir of the jpackage steps below. A pre-release (5.0.0-beta.1)
+        # coexists with the installed release of the workstation: its installers register the
+        # weasis:// scheme neither on macOS (Info.plist) nor on Windows (the URIHandlerRegistry
+        # component of the MSI), so the viewer hub launch keeps opening the release;
+        # prerelease-resources.sh removes the registration from a copy of the resources.
+        # The Linux packages do the same in package-weasis.sh.
         run: |
-          PLIST="${{ env.RES }}/Info.plist"
-          if [ -f "$PLIST" ]; then
-            python3 - "$PLIST" <<'PY'
-          import re, sys
-          p = sys.argv[1]; t = open(p).read()
-          t2 = re.sub(r'\s*<key>CFBundleURLTypes</key>\s*<array>.*?</array>', '', t, count=1, flags=re.S)
-          open(p, 'w').write(t2); print('Info.plist:', 'URL types removed' if t2 != t else 'nothing to remove')
-          PY
+          RES="${{ env.WEASIS_SCRIPT }}/resources/${{ matrix.wsystem }}"
+          if [ "$WEASIS_PRERELEASE" = "true" ]; then
+            # a relative path, like the resources themselves: no path conversion on Windows
+            bash "${{ env.WEASIS_SCRIPT }}/prerelease-resources.sh" "$RES" "native-dist/prerelease-resources"
+            RES="native-dist/prerelease-resources"
           fi
-          DESKTOP="${{ env.RES }}/Weasis.desktop"
-          if [ -f "$DESKTOP" ]; then
-            sed -i 's#x-scheme-handler/weasis;##' "$DESKTOP" && echo "desktop: scheme handler removed"
-          fi
-          for WXS in "${{ env.RES }}"/msi/*/main.wxs; do
-            [ -f "$WXS" ] || continue
-            python3 - "$WXS" <<'PY'
-          import re, sys
-          p = sys.argv[1]; t = open(p).read()
-          t2 = re.sub(r'\s*<Component Id="URIHandlerRegistry".*?</Component>', '', t, count=1, flags=re.S)
-          t2 = re.sub(r'\s*<ComponentRef Id="URIHandlerRegistry"\s*/>', '', t2)
-          open(p, 'w').write(t2); print(p, 'URI handler removed' if t2 != t else 'nothing to remove')
-          PY
-          done
+          echo "RES=$RES" >> $GITHUB_ENV
+          echo "Resources: $RES"
 
       - name: Build app binary with jpackage
         shell: bash
-        env:
-          RES: "${{ env.WEASIS_SCRIPT }}/resources/${{ matrix.wsystem }}"
         run: |
           machine=${{ matrix.wsystem }}
 
@@ -368,7 +365,6 @@ jobs:
       - name: Build package with jpackage
         shell: bash
         env:
-          RES: "${{ env.WEASIS_SCRIPT }}/resources/${{ matrix.wsystem }}"
           FILE_ASSOC: "${{ env.WEASIS_SCRIPT }}/file-associations.properties"
           VENDOR: "Weasis Team"
           COPYRIGHT: "© 2009-2026 Weasis Team"
@@ -382,7 +378,7 @@ jobs:
             --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --description "Weasis DICOM viewer" --win-upgrade-uuid "$UPGRADE_UID" \
             --win-menu --win-menu-group "${{ env.NAME }}" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" \
             --vendor "${{ env.VENDOR }}" --file-associations "${{ env.FILE_ASSOC }}" --verbose
-            cp ${{ env.WEASIS_OUTPUT }}/*.msi final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.msi
+            cp ${{ env.WEASIS_OUTPUT }}/*.msi final-dist/${{ env.NAME }}-${{ env.WEASIS_FILE_VERSION }}-${ARC_NAME}.msi
           elif [ "$machine" = "macosx" ] ; then
             # Do not set verbose for public build.
             # Do NOT pass --mac-sign here: the app bundle was already signed with proper
@@ -395,7 +391,7 @@ jobs:
             # Sign the unsigned .pkg with the Developer ID Installer certificate.
             # productsign only wraps the outer package; it does not touch the app contents.
             UNSIGNED_PKG="${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}.pkg"
-            SIGNED_PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg"
+            SIGNED_PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_FILE_VERSION }}-${ARC_NAME}.pkg"
             KEYCHAIN="$HOME/Library/Keychains/signing_temp.keychain-db"
             INSTALLER_ID=$(security find-identity -v -p basic "$KEYCHAIN" \
               | grep "Developer ID Installer" | head -1 | awk -F'"' '{print $2}')
@@ -410,7 +406,7 @@ jobs:
         shell: bash
         run: |
           SUBMISSION=$(xcrun notarytool submit \
-            "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg" \
+            "final-dist/${{ env.NAME }}-${{ env.WEASIS_FILE_VERSION }}-${{ matrix.warc }}.pkg" \
             --apple-id "${{ secrets.APPLE_DEVELOPER_AC_USERNAME }}" \
             --team-id "${{ secrets.APPLE_TEAM_ID }}" \
             --password "${{ secrets.WEASIS_PWD }}" \
@@ -433,7 +429,7 @@ jobs:
         run: |
           # The ticket is fetched from Apple's CloudKit, which can drop the connection or not
           # serve a fresh ticket yet (error 68): retry with a growing delay.
-          PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
+          PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_FILE_VERSION }}-${{ matrix.warc }}.pkg"
           for attempt in 1 2 3; do
             xcrun stapler staple "$PKG" && exit 0
             echo "Staple attempt $attempt failed; retrying in $((attempt * 30)) s..."

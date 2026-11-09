@@ -193,6 +193,31 @@ fi
 
 WEASIS_CLEAN_VERSION=$(echo "$WEASIS_VERSION" | sed -e 's/"//g' -e 's/-.*//' -e 's/\(\([0-9]\+\.\)\{2\}[0-9]\+\)\.[0-9]\+/\1/')
 
+# A version with a suffix (5.0.0-beta.1, 5.0.0-SNAPSHOT) is a pre-release. jpackage gets the clean
+# version (the MSI and the bundle need x.y.z), the installer files carry the full version and the
+# Linux packages take a release below 1 (5.0.0-0.beta.1 sorts before 5.0.0-1), so that the release
+# upgrades the preview on every platform; the weasis:// scheme stays with the installed release
+# (prerelease-resources.sh). Same rules as the GitHub workflow, see docs/Native-Build-Overview.md.
+case "$WEASIS_VERSION" in
+  *-*) WEASIS_SUFFIX="${WEASIS_VERSION#*-}" ;;
+  *)   WEASIS_SUFFIX="" ;;
+esac
+WEASIS_FILE_VERSION="$WEASIS_CLEAN_VERSION${WEASIS_SUFFIX:+-$WEASIS_SUFFIX}"
+if [ -n "$WEASIS_SUFFIX" ] ; then
+  LINUX_RELEASE="0.$(echo "$WEASIS_SUFFIX" | sed 's/[^A-Za-z0-9.]/./g')"
+  RES_UNIX="${curPath}/resources/$machine"
+  PRERELEASE_RES="$(mktemp -d)/resources"
+  bash "${curPath}/prerelease-resources.sh" "$RES_UNIX" "$PRERELEASE_RES" || die "Cannot prepare the pre-release resources"
+  if [ "$machine" = "windows" ] ; then
+    RES=$(cygpath -w "$PRERELEASE_RES")
+  else
+    RES="$PRERELEASE_RES"
+  fi
+  echo "Pre-release $WEASIS_VERSION: package version $WEASIS_CLEAN_VERSION, installer files $WEASIS_FILE_VERSION, Linux release $LINUX_RELEASE, weasis:// not registered"
+else
+  LINUX_RELEASE="$REVISON_INC"
+fi
+
 
 # Remove pack jar for launcher
 rm -f "$INPUT_DIR"/*.jar.pack.gz
@@ -305,7 +330,7 @@ if [ "$PACKAGE" = "YES" ] ; then
     --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" --win-upgrade-uuid "$UPGRADE_UID"  \
     --win-menu --win-menu-group "$NAME" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
     --vendor "$VENDOR" --file-associations "${curPath}\file-associations.properties" "${tmpArgs[@]}" --verbose
-    mv "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION.msi" "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION-${arc}.msi"
+    mv "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION.msi" "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_FILE_VERSION-${arc}.msi"
   elif [ "$machine" = "linux" ] ; then
     declare -a installerTypes=("deb" "rpm")
     for installerType in "${installerTypes[@]}"; do
@@ -327,7 +352,7 @@ if [ "$PACKAGE" = "YES" ] ; then
       --add-launcher "${DICOMIZER_CONFIG}" --add-launcher "${CLI_CONFIG}" --resource-dir "$RES" \
       --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \
       --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "${curPath}/file-associations.properties" \
-      --linux-app-release "$REVISON_INC" --linux-package-name "weasis" \
+      --linux-app-release "$LINUX_RELEASE" --linux-package-name "weasis" \
       "${typeArgs[@]}" \
       --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-package-deps "${DEPENDENCIES}" \
       --linux-shortcut "${customOptions[@]}" "${commonOptions[@]}" "${tmpArgs[@]}" --verbose
@@ -344,9 +369,9 @@ if [ "$PACKAGE" = "YES" ] ; then
     --license-file "$INPUT_PATH/Licence.txt" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
     --mac-package-identifier "$IDENTIFIER" "${tmpArgs[@]}" --verbose
 
+    UNSIGNED_PKG="$OUTPUT_PATH/$NAME-$WEASIS_CLEAN_VERSION.pkg"
+    SIGNED_PKG="$OUTPUT_PATH/$NAME-$WEASIS_FILE_VERSION-${arc}.pkg"
     if [[ -n "$CERTIFICATE" ]] ; then
-      UNSIGNED_PKG="$OUTPUT_PATH/$NAME-$WEASIS_CLEAN_VERSION.pkg"
-      SIGNED_PKG="$OUTPUT_PATH/$NAME-$WEASIS_CLEAN_VERSION-${arc}.pkg"
       # Sign the unsigned .pkg with the Developer ID Installer certificate.
       # productsign only wraps the outer package; it does not touch the app contents.
       INSTALLER_ID=$(security find-identity -v -p basic \
@@ -354,6 +379,8 @@ if [ "$PACKAGE" = "YES" ] ; then
       echo "Signing pkg with installer identity: $INSTALLER_ID"
       productsign --sign "$INSTALLER_ID" --timestamp "$UNSIGNED_PKG" "$SIGNED_PKG"
       rm -f "$UNSIGNED_PKG"
+    else
+      mv "$UNSIGNED_PKG" "$SIGNED_PKG"
     fi
   fi
 fi

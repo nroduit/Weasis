@@ -49,7 +49,11 @@
         Property="JP_UPGRADABLE_FOUND"
         Maximum="$(var.JpAppVersion)"
         MigrateFeatures="yes"
-        IncludeMaximum="$(var.JpUpgradeVersionOnlyDetectUpgrade)" />
+        IncludeMaximum="yes" />
+      <!-- IncludeMaximum="yes" (the AllowSameVersionUpgrades of WiX): an installed product of the
+           SAME version is replaced too. A pre-release (5.0.0-beta.1) carries the package version of
+           the release it precedes (5.0.0), so the release and every later beta must upgrade it
+           instead of installing beside it. ICE61 warns about this on purpose. -->
       <UpgradeVersion
         OnlyDetect="$(var.JpUpgradeVersionOnlyDetectDowngrade)"
         Property="JP_DOWNGRADABLE_FOUND"
