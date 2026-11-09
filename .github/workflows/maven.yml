@@ -43,6 +43,22 @@ jobs:
         # dependency:copy-dependencies invocation below can resolve them.
         run: mvn -Pcoverage -B -ntp install
 
+      - name: Scripted smoke suite
+        # The scripts of tests/smoke run through weasis-cli against a Weasis started from the
+        # local repository the install above filled, under a virtual display; each script writes
+        # its own JUnit report next to the surefire ones.
+        run: |
+          sudo apt-get install -y --no-install-recommends xvfb
+          xvfb-run -a -s "-screen 0 1920x1080x24" mvn -B -ntp -pl tests -Dweasis.smoke=true -Dtest=SmokeSuiteTest -Dsurefire.failIfNoSpecifiedTests=false test
+      - name: Upload smoke reports and captures
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: smoke-suite
+          path: |
+            tests/target/surefire-reports/TEST-smoke-*.xml
+            tests/target/smoke-out/
+            tests/target/smoke-xdg/state/weasis/log/
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1

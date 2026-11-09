@@ -1,0 +1,12 @@
+# 01 — load a folder of DICOM files, list what the explorer holds, read a series.
+# Parameters: data (folder written by SmokeData), out (scratch folder).
+
+dicom:unload --all
+$load = dicom:load --path ${data} --wait
+$list = dicom:list
+@expect ${list.patients[0].studies[0].series[0].imageCount} > 0
+@expect ${list.patients[0].studies[0].series[1].imageCount} > 0
+
+$info = dicom:info --series ${ct}
+@expect ${info.modality} == CT
+@expect ${info.imageCount} == 24

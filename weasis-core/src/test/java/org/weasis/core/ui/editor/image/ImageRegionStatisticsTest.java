@@ -64,6 +64,21 @@ class ImageRegionStatisticsTest {
     return map;
   }
 
+  /**
+   * The modality lookup of a DICOM image takes an integer and truncates: a mean of 2023.9999 stored
+   * units answered 999 HU for a uniform region of 1000 HU (found by the smoke suite). The
+   * statistics interpolate the two neighbouring entries instead.
+   */
+  @Test
+  void realValue_interpolatesTheLookupInsteadOfTruncatingAFractionalStoredValue() {
+    MeasurableLayer layer = mock(MeasurableLayer.class);
+    when(layer.pixelToRealValue(any()))
+        .thenAnswer(inv -> (double) (((Number) inv.getArgument(0)).intValue() - 1024));
+    assertEquals(999.9999, ImageRegionStatistics.realValue(layer, 2023.9999), 1e-9);
+    assertEquals(1000.0, ImageRegionStatistics.realValue(layer, 2024.0), EPS);
+    assertEquals(1000.5, ImageRegionStatistics.realValue(layer, 2024.5), EPS);
+  }
+
   @Test
   void getStatistics_distributedHistogramProducesExpectedMeasures() {
     // Symmetric distribution over stored levels 0..6 (binFactor 1), identity modality LUT.

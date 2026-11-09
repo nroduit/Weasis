@@ -642,6 +642,15 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
 
       SynchEvent values = new SynchEvent(canvas);
       if (window != null && level != null && (exact || sameModality(series, canvas.getImage()))) {
+        if (preset == null) {
+          // free values: the preset the pane held before (the one of the series when it was
+          // opened) would otherwise stay named on the window operation, and a capture of the
+          // restored pane would differ from the state it restores
+          OpManager manager = canvas.getDisplayOpManager();
+          manager.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), null);
+          manager.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), false);
+          canvas.setActionsInView(ActionW.PRESET.cmd(), null);
+        }
         values.put(ActionW.WINDOW.cmd(), window);
         values.put(ActionW.LEVEL.cmd(), level);
       }

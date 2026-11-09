@@ -1,0 +1,23 @@
+# 02 — open the CT, set the window, scroll, measure a known distance and a known density, capture.
+# The CT of SmokeData: 24 slices of 128 × 128 with a pixel spacing of 0.5 mm, a 40 × 40 square of
+# 1000 HU at (44, 44) on every slice, -1000 HU elsewhere.
+
+$open = dicom:open --series ${ct} --wait
+@expect ${open.target.viewerType} == 2d
+$wl = view2d:window-level --view ${open.target.view} --window 1500 --level -500
+$scroll = view2d:scroll --view ${open.target.view} --image 12
+@expect ${scroll.target.image} == 12
+
+$line = view2d:measure --view ${open.target.view} --type line --points 20,20,120,20
+@expect ${line.measurements[key=length].unit} == mm
+@expect ${line.measurements[key=length].value} ~ 50 +-0.01
+@expect ${line.measurements[key=length].provenance.kind} == header
+
+$inside = view2d:stats --view ${open.target.view} --rect 50,50,28,28
+@expect ${inside.statistics[key=stats.mean].value} ~ 1000 +-0.5
+$outside = view2d:stats --view ${open.target.view} --rect 2,2,20,20
+@expect ${outside.statistics[key=stats.mean].value} ~ -1000 +-0.5
+
+$shot = view2d:capture --view ${open.target.view} --out ${out}/ct-12.png --force
+@expect ${shot.target.image} == 12
+view2d:clear-ai --view ${open.target.view}

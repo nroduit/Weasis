@@ -1,0 +1,9 @@
+# 04 — the series features the hanging protocols match on, with their provenance.
+
+$features = hp:features --study ${study}
+@expect ${features.studies[0].series[0].features.orientation} == AXIAL
+@expect ${features.studies[0].series[0].provenance.orientation.kind} == header
+@expect ${features.studies[0].series[1].features.orientation} == AXIAL
+
+$match = hp:match --study ${study}
+@expect ${match.study} == ${study}

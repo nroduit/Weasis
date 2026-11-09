@@ -9,7 +9,7 @@
  */
 package org.weasis.tests;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
@@ -20,6 +20,6 @@ class IntegrationTest {
   @Test
   void integrationTest1() {
     LocalDate date1 = TagD.getDicomDate("19930822");
-    assertThat(date1).isEqualTo(LocalDate.of(1993, 8, 22));
+    assertEquals(LocalDate.of(1993, 8, 22), date1);
   }
 }

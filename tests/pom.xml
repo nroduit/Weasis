@@ -13,10 +13,29 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>tests</artifactId>
   <name>Tests</name>
-  <packaging>pom</packaging>
+  <!-- jar, not pom: the smoke suite below is a surefire test, which a pom module never runs -->
+  <packaging>jar</packaging>
+  <description>Aggregated coverage and the scripted smoke suite: the scripts of smoke/ run through
+    weasis-cli against a Weasis started from the local Maven repository, on synthetic DICOM data,
+    when -Dweasis.smoke=true (under Xvfb on a server)</description>
+  <properties>
+    <weasis.smoke>false</weasis.smoke>
+  </properties>
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <weasis.smoke>${weasis.smoke}</weasis.smoke>
+            <weasis.smoke.repo>${settings.localRepository}</weasis.smoke.repo>
+            <weasis.smoke.root>${project.basedir}</weasis.smoke.root>
+            <weasis.smoke.version>${project.version}</weasis.smoke.version>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
@@ -50,6 +69,12 @@
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>org.weasis.launcher</groupId>
+      <artifactId>weasis-launcher</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.weasis.acquire</groupId>
       <artifactId>weasis-acquire-explorer</artifactId>

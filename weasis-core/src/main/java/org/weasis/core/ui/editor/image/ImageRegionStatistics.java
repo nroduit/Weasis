@@ -219,6 +219,22 @@ public class ImageRegionStatistics {
     return measVal;
   }
 
+  /**
+   * The real value of a fractional stored value (a mean, a bin level): the modality lookup takes an
+   * integer and truncates, so a mean of 2023.9999 would answer the value below; the two
+   * neighbouring entries are interpolated instead, which is exact for a rescale slope and intercept
+   * and the nearest reading for a table.
+   */
+  static double realValue(MeasurableLayer layer, double stored) {
+    double floor = Math.floor(stored);
+    double lo = layer.pixelToRealValue(floor);
+    if (stored == floor) {
+      return lo;
+    }
+    double hi = layer.pixelToRealValue(floor + 1);
+    return lo + (stored - floor) * (hi - lo);
+  }
+
   /** Direct ROI statistics in stored-pixel units (min, max, mean, standard deviation, count). */
   private record RoiPixelStats(double min, double max, double mean, double stdDev, double count) {}
 
@@ -359,7 +375,7 @@ public class ImageRegionStatistics {
       for (int k = 0; k < bins.length; k++) {
         boolean valid = MathUtil.isDifferentFromZero(bins[k]) && bins[k] > 0.0f;
         float val = bins[k];
-        double level = layer.pixelToRealValue(k * binFactor + offset);
+        double level = realValue(layer, k * binFactor + offset);
         if (valid && level < min) {
           min = level;
         }
@@ -379,7 +395,7 @@ public class ImageRegionStatistics {
       double log2 = Math.log(2.0);
       for (int k = 0; k < bins.length; k++) {
         double val = bins[k];
-        double level = layer.pixelToRealValue(k * binFactor + offset) - mean;
+        double level = realValue(layer, k * binFactor + offset) - mean;
         m2 += val * Math.pow(level, 2);
         skew += val * Math.pow(level, 3);
         kurtosis += val * Math.pow(level, 4);
@@ -419,7 +435,7 @@ public class ImageRegionStatistics {
         double realB = layer.pixelToRealValue(direct.max());
         dispMin = Math.min(realA, realB);
         dispMax = Math.max(realA, realB);
-        dispMean = layer.pixelToRealValue(direct.mean());
+        dispMean = realValue(layer, direct.mean());
         // Scale the stored-value standard deviation into real-value units (modality LUT slope).
         double scale =
             direct.max() > direct.min()
@@ -438,7 +454,7 @@ public class ImageRegionStatistics {
           measList,
           IMAGE_MEDIAN,
           channelIndex,
-          layer.pixelToRealValue(medianBin(bins, sum / 2.0) * binFactor + offset),
+          realValue(layer, medianBin(bins, sum / 2.0) * binFactor + offset),
           unit);
       addMeasure(measList, IMAGE_MEAN, channelIndex, dispMean, unit);
       addMeasure(measList, IMAGE_SUM, channelIndex, dispMean * pixelCount, unit);
