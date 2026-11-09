@@ -22,17 +22,21 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.util.TagUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.provenance.Provenance;
+import org.weasis.core.api.provenance.Sourced;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
@@ -62,6 +66,7 @@ import org.weasis.dicom.ref.RegionGroup;
  * description) is marked where it happens.
  */
 public final class SeriesFeatureExtractor {
+  private static final Logger LOGGER = LoggerFactory.getLogger(SeriesFeatureExtractor.class);
 
   /** The cache on the series: the features and the image count they were derived from. */
   public static final TagW FEATURES = new TagW("SeriesFeatures", TagType.OBJECT); // NON-NLS
@@ -91,14 +96,35 @@ public final class SeriesFeatureExtractor {
           Map.entry("R-102D0", "XCCM"), // NON-NLS
           Map.entry("399033000", "XCCM")); // NON-NLS
 
+  /** The confidence a classifier needs by default, see {@link SeriesFeatureProvider}. */
+  public static final double DEFAULT_THRESHOLD = 0.8;
+
   private record Cached(int size, SeriesFeatures features) {}
 
   private final DerivationTables tables;
   private final InterestProvider interest;
+  private final List<SeriesFeatureProvider> providers;
+  private final ToDoubleFunction<String> thresholds;
 
   public SeriesFeatureExtractor(DerivationTables tables, InterestProvider interest) {
+    this(tables, interest, List.of(), id -> DEFAULT_THRESHOLD);
+  }
+
+  /**
+   * An extractor that asks the providers after its own pass.
+   *
+   * @param providers the plugins that derive features, in the order they are asked
+   * @param thresholds the confidence a classifier of a provider (by id) needs to fill or replace
+   */
+  public SeriesFeatureExtractor(
+      DerivationTables tables,
+      InterestProvider interest,
+      List<SeriesFeatureProvider> providers,
+      ToDoubleFunction<String> thresholds) {
     this.tables = Objects.requireNonNull(tables);
     this.interest = Objects.requireNonNull(interest);
+    this.providers = List.copyOf(providers);
+    this.thresholds = Objects.requireNonNull(thresholds);
   }
 
   /** The extractor on the shared tables, without images of interest. */
@@ -124,8 +150,88 @@ public final class SeriesFeatureExtractor {
     series.setTag(FEATURES, null);
   }
 
-  /** Derives the features without touching the cache. */
+  /**
+   * Replaces the cached features of a series, after a correction by the user or an agent; the cache
+   * holds until an image is added to the series.
+   */
+  public static void override(MediaSeries<?> series, SeriesFeatures features) {
+    synchronized (series) {
+      series.setTag(FEATURES, new Cached(series.size(null), features));
+    }
+  }
+
+  /** The cached features of a series, when derived already. */
+  public static Optional<SeriesFeatures> cached(MediaSeries<?> series) {
+    return series.getTagValue(FEATURES) instanceof Cached cached
+        ? Optional.of(cached.features())
+        : Optional.empty();
+  }
+
+  /** Derives the features without touching the cache, then asks the providers. */
   public SeriesFeatures extract(MediaSeries<DicomImageElement> series) {
+    SeriesFeatures own = derive(series);
+    return providers.isEmpty() ? own : withProviders(series, own);
+  }
+
+  /**
+   * The values of the providers merged into the features by the precedence rule: a value that wins
+   * replaces the feature and records its provenance, the loser is kept as a contest.
+   */
+  SeriesFeatures withProviders(MediaSeries<DicomImageElement> series, SeriesFeatures own) {
+    SeriesFeatures features = own;
+    for (SeriesFeatureProvider provider : providers) {
+      Map<String, Sourced<?>> derived;
+      try {
+        derived = provider.derive(series, features);
+      } catch (RuntimeException e) {
+        LOGGER.warn("Feature provider {} failed, skipped", provider.id(), e);
+        continue;
+      }
+      if (derived == null) {
+        continue;
+      }
+      double threshold = thresholds.applyAsDouble(provider.id());
+      for (Map.Entry<String, Sourced<?>> entry : derived.entrySet()) {
+        Optional<Key> key = Key.of(entry.getKey());
+        if (key.isEmpty() || entry.getValue() == null || !entry.getValue().isKnown()) {
+          continue;
+        }
+        features = merge(features, key.get(), entry.getValue(), threshold, provider.id());
+      }
+    }
+    return features;
+  }
+
+  private static SeriesFeatures merge(
+      SeriesFeatures features, Key key, Sourced<?> proposal, double threshold, String providerId) {
+    try {
+      @SuppressWarnings("unchecked")
+      Sourced<Object> current = features.sourcedOf(key);
+      @SuppressWarnings("unchecked")
+      Sourced<Object> merged = current.merge((Sourced<Object>) proposal, threshold);
+      SeriesFeatures result = features;
+      if (!Objects.equals(merged.value(), current.value())
+          || !Objects.equals(merged.provenance(), current.provenance())) {
+        Object value =
+            merged.value() instanceof String text && key != Key.LATERALITY && key != Key.VIEW
+                ? features.parse(key, text)
+                : merged.value();
+        result = result.with(key, value, merged.provenance());
+      }
+      for (Sourced.Contest contest : merged.contests()) {
+        if (!current.contests().contains(contest)) {
+          result = result.withContest(key, contest);
+        }
+      }
+      return result;
+    } catch (RuntimeException e) {
+      LOGGER.warn("Feature {} of provider {} ignored: {}", key.id(), providerId, e.getMessage());
+      return features;
+    }
+  }
+
+  /** Derives the features from the headers and the tables alone. */
+  SeriesFeatures derive(MediaSeries<DicomImageElement> series) {
     List<DicomImageElement> images = series.copyOfMedias(null, SortSeriesStack.instanceNumber);
     List<DicomImageElement> sample = sample(images);
     DicomImageElement first = images.isEmpty() ? null : images.getFirst();
@@ -332,8 +438,14 @@ public final class SeriesFeatureExtractor {
       DicomImageElement first,
       Attributes dcm,
       Temporal temporal) {
-    if (dcm == null || temporal == Temporal.STATIC) {
+    if (dcm == null) {
       return null;
+    }
+    if (temporal == Temporal.STATIC) {
+      // a stack of single-frame images, or a multi-frame object without timing or positions
+      return dcm.containsValue(Tag.NumberOfFrames)
+          ? header(Tag.NumberOfFrames, "frames without timing or temporal positions")
+          : header(Tag.NumberOfTemporalPositions, "no temporal positions, single-frame images");
     }
     if (temporal == Temporal.DYNAMIC) {
       return header(Tag.NumberOfTemporalPositions, "temporal positions");

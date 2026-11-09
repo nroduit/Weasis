@@ -628,7 +628,10 @@ public class SeriesListPane extends JPanel implements Scrollable {
       if (r instanceof SeriesRow s) {
         tip = formatted(s.item().series(), Tag.SeriesDescription);
       } else if (r instanceof ObjectRow o) {
-        tip = o.item().descriptor().creator();
+        tip =
+            o.item().descriptor().provenance() == null
+                ? o.item().descriptor().creator()
+                : o.item().descriptor().provenance().describe();
         if (o.item().element() instanceof AbstractKOSpecialElement ko) {
           tip = ko.getDocumentTitle();
         }

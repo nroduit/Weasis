@@ -27,11 +27,13 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Taggable;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.export.ContributingEquipment;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.mip.MipView;
@@ -177,6 +179,18 @@ public final class CurvedMprBuilder {
     Attributes baseHeader = srcHeader == null ? new Attributes() : new Attributes(srcHeader);
     SeriesBuilder.addFunctionalGroupVoiLut(srcHeader, baseHeader);
     baseHeader.setString(Tag.SeriesInstanceUID, VR.UI, seriesUid);
+    ContributingEquipment.weasis(baseHeader, "Curved planar reformat"); // NON-NLS
+    series.setTag(
+        TagW.Provenance,
+        Provenance.computed(
+            "cmpr:build", // NON-NLS
+            "Curved planar reformat", // NON-NLS
+            List.of(
+                Provenance.header(
+                    "(0020,000E)",
+                    srcHeader == null
+                        ? ""
+                        : srcHeader.getString(Tag.SeriesInstanceUID, ""))))); // NON-NLS
     String desc = baseHeader.getString(Tag.SeriesDescription);
     String csDesc = "Curved MPR Cross-Sections"; // NON-NLS
     baseHeader.setString(

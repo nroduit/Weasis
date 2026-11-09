@@ -9,8 +9,12 @@
  */
 package org.weasis.dicom.explorer.hp;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.weasis.core.api.setting.Setting;
 import org.weasis.core.api.setting.SettingType;
+import org.weasis.core.api.setting.Settings;
+import org.weasis.dicom.codec.hp.SeriesFeatureExtractor;
 
 /** The settings of the hanging protocols, declared in the catalog by the explorer. */
 public final class HpSettings {
@@ -89,6 +93,32 @@ public final class HpSettings {
               "Show a notice in the explorer when a remote caller (an agent, a script) changed "
                   + "the display, with a way to restore it")
           .declare();
+
+  private static final Map<String, Setting<Double>> PROVIDER_THRESHOLDS = new ConcurrentHashMap<>();
+
+  /**
+   * The confidence a classifier of a feature provider needs to fill or replace a value, {@code
+   * weasis.hp.provider.<id>.threshold}, declared on first use with the default of the extractor.
+   */
+  public static double providerThreshold(String providerId) {
+    Setting<Double> setting =
+        PROVIDER_THRESHOLDS.computeIfAbsent(
+            providerId,
+            id ->
+                Setting.builder(
+                        SettingType.DOUBLE,
+                        GROUP,
+                        "weasis.hp.provider." + id + ".threshold", // NON-NLS
+                        SeriesFeatureExtractor.DEFAULT_THRESHOLD)
+                    .since("5.0") // NON-NLS
+                    .description(
+                        "Confidence the feature provider "
+                            + id
+                            + " needs to fill or replace a "
+                            + "series feature; below it the provider only contests")
+                    .declare());
+    return Settings.get(setting);
+  }
 
   private HpSettings() {}
 }

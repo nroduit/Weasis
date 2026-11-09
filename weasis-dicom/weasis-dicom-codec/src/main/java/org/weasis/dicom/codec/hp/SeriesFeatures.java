@@ -9,11 +9,19 @@
  */
 package org.weasis.dicom.codec.hp;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObjectBuilder;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.api.provenance.Sourced;
+import org.weasis.core.api.provenance.Sourced.Contest;
+import org.weasis.dicom.codec.hp.FeatureSelector.Key;
 
 /**
  * The normalized features of a series, derived once from its attributes so that hanging protocol
@@ -59,10 +67,56 @@ public record SeriesFeatures(
     List<String> descriptionTokens,
     Interest interest,
     int imageCount,
-    Map<String, Provenance> provenance) {
+    Map<String, Provenance> provenance,
+    Map<String, List<Contest>> contests) {
 
   public SeriesFeatures {
     provenance = provenance == null ? Map.of() : Map.copyOf(provenance);
+    contests = contests == null ? Map.of() : Map.copyOf(contests);
+  }
+
+  /** The features with their provenance and no contest, as the extractor builds them. */
+  public SeriesFeatures(
+      String modality,
+      String sopClass,
+      Role role,
+      Orientation orientation,
+      Anatomy anatomy,
+      String laterality,
+      String view,
+      Contrast contrast,
+      MrWeighting mrWeighting,
+      CtKernel ctKernel,
+      Double sliceThickness,
+      Double spacing,
+      PetCorrection petCorrection,
+      Temporal temporal,
+      String frameOfReference,
+      List<String> descriptionTokens,
+      Interest interest,
+      int imageCount,
+      Map<String, Provenance> provenance) {
+    this(
+        modality,
+        sopClass,
+        role,
+        orientation,
+        anatomy,
+        laterality,
+        view,
+        contrast,
+        mrWeighting,
+        ctKernel,
+        sliceThickness,
+        spacing,
+        petCorrection,
+        temporal,
+        frameOfReference,
+        descriptionTokens,
+        interest,
+        imageCount,
+        provenance,
+        Map.of());
   }
 
   /** The features without provenance, for the callers that predate it and the tests. */
@@ -242,7 +296,159 @@ public record SeriesFeatures(
         descriptionTokens,
         interest,
         imageCount,
-        provenance);
+        provenance,
+        contests);
+  }
+
+  /**
+   * The features with one derived value replaced and its provenance recorded: what a provider or a
+   * correction says. The value is typed as the component is ({@code Role}, {@code MrWeighting}, a
+   * {@code String} laterality or view...); see {@link #parse} for the text form.
+   *
+   * @throws IllegalArgumentException for a feature that is not derived (modality, counts, UIDs)
+   */
+  public SeriesFeatures with(Key key, Object value, Provenance source) {
+    Map<String, Provenance> sources = new LinkedHashMap<>(provenance);
+    if (source != null) {
+      sources.put(key.id(), source);
+    } else {
+      sources.remove(key.id());
+    }
+    Copy copy = new Copy(this, sources, contests);
+    switch (key) {
+      case ROLE -> copy.role = (Role) value;
+      case ORIENTATION -> copy.orientation = (Orientation) value;
+      case ANATOMY -> copy.anatomy = (Anatomy) value;
+      case LATERALITY -> copy.laterality = (String) value;
+      case VIEW -> copy.view = (String) value;
+      case CONTRAST -> copy.contrast = (Contrast) value;
+      case MR_WEIGHTING -> copy.mrWeighting = (MrWeighting) value;
+      case CT_KERNEL_FAMILY -> copy.ctKernel = (CtKernel) value;
+      case TEMPORAL -> copy.temporal = (Temporal) value;
+      default -> throw new IllegalArgumentException(key.id() + " is read, never derived");
+    }
+    return copy.build();
+  }
+
+  /** The features with a losing proposal recorded for a feature. */
+  public SeriesFeatures withContest(Key key, Contest contest) {
+    Map<String, List<Contest>> all = new LinkedHashMap<>(contests);
+    List<Contest> mine = new ArrayList<>(all.getOrDefault(key.id(), List.of()));
+    mine.add(contest);
+    all.put(key.id(), List.copyOf(mine));
+    return new Copy(this, provenance, all).build();
+  }
+
+  /** The losing proposals for a feature, empty when none contested it. */
+  public List<Contest> contestsOf(String key) {
+    return contests.getOrDefault(key, List.of());
+  }
+
+  /** The value in force of a derived feature with its provenance and contests. */
+  public Sourced<Object> sourcedOf(Key key) {
+    return new Sourced<>(key.read(this), provenanceOf(key.id()), contestsOf(key.id()));
+  }
+
+  /**
+   * A derived value from its text, as a command or a provider states it: the enum name for a role,
+   * an orientation, a weighting, a temporal kind, a contrast agent or a kernel family; the text
+   * itself for a laterality or a view; the notation for an anatomy.
+   */
+  public Object parse(Key key, String text) {
+    String t = text == null ? "" : text.trim();
+    String upper = t.toUpperCase(Locale.ROOT);
+    return switch (key) {
+      case ROLE -> Role.valueOf(upper);
+      case ORIENTATION -> Orientation.valueOf(upper);
+      case ANATOMY ->
+          anatomy != null && t.equals(anatomy.notation())
+              ? anatomy
+              : new Anatomy(t, null, null, Set.of());
+      case LATERALITY, VIEW -> t;
+      case CONTRAST ->
+          new Contrast(Contrast.Agent.valueOf(upper), contrast == null ? null : contrast.phase());
+      case MR_WEIGHTING -> MrWeighting.valueOf(upper);
+      case CT_KERNEL_FAMILY ->
+          new CtKernel(ctKernel == null ? null : ctKernel.kernel(), CtKernel.Family.valueOf(upper));
+      case TEMPORAL -> Temporal.valueOf(upper);
+      default -> throw new IllegalArgumentException(key.id() + " is read, never derived");
+    };
+  }
+
+  /** The contests by feature, for {@code hp:features}. */
+  public JsonObjectBuilder contestsJson() {
+    JsonObjectBuilder json = Json.createObjectBuilder();
+    contests.forEach(
+        (key, list) -> {
+          JsonArrayBuilder array = Json.createArrayBuilder();
+          for (Contest contest : list) {
+            JsonObjectBuilder entry = Json.createObjectBuilder();
+            if (contest.value() != null) {
+              entry.add("value", contest.value()); // NON-NLS
+            }
+            if (contest.provenance() != null) {
+              entry.add("provenance", contest.provenance().toJsonBuilder()); // NON-NLS
+            }
+            array.add(entry);
+          }
+          json.add(key, array);
+        });
+    return json;
+  }
+
+  /** A mutable copy for {@link #with}: one field changes, the rest is carried over. */
+  private static final class Copy {
+    private final SeriesFeatures f;
+    private final Map<String, Provenance> sources;
+    private final Map<String, List<Contest>> all;
+    Role role;
+    Orientation orientation;
+    Anatomy anatomy;
+    String laterality;
+    String view;
+    Contrast contrast;
+    MrWeighting mrWeighting;
+    CtKernel ctKernel;
+    Temporal temporal;
+
+    Copy(SeriesFeatures f, Map<String, Provenance> sources, Map<String, List<Contest>> all) {
+      this.f = f;
+      this.sources = sources;
+      this.all = all;
+      this.role = f.role;
+      this.orientation = f.orientation;
+      this.anatomy = f.anatomy;
+      this.laterality = f.laterality;
+      this.view = f.view;
+      this.contrast = f.contrast;
+      this.mrWeighting = f.mrWeighting;
+      this.ctKernel = f.ctKernel;
+      this.temporal = f.temporal;
+    }
+
+    SeriesFeatures build() {
+      return new SeriesFeatures(
+          f.modality,
+          f.sopClass,
+          role,
+          orientation,
+          anatomy,
+          laterality,
+          view,
+          contrast,
+          mrWeighting,
+          ctKernel,
+          f.sliceThickness,
+          f.spacing,
+          f.petCorrection,
+          temporal,
+          f.frameOfReference,
+          f.descriptionTokens,
+          f.interest,
+          f.imageCount,
+          sources,
+          all);
+    }
   }
 
   /** True when the series is a stack of images of one plane that MPR and 3D can use. */

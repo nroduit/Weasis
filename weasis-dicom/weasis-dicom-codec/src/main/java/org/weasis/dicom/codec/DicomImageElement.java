@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -32,6 +33,7 @@ import org.dcm4che3.img.stream.BytesWithImageDescriptor;
 import org.dcm4che3.img.stream.ImageAdapter;
 import org.dcm4che3.img.stream.ImageAdapter.AdaptTransferSyntax;
 import org.dcm4che3.img.util.DicomUtils;
+import org.dcm4che3.util.TagUtils;
 import org.joml.Vector3d;
 import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
@@ -46,6 +48,7 @@ import org.weasis.core.api.image.measure.PlaneGeometry;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.display.OverlayOp;
@@ -183,6 +186,42 @@ public class DicomImageElement extends ImageElement implements DicomElement {
         setPixelSize((double) aspects[1] / (double) aspects[0], 1.0);
       }
     }
+  }
+
+  /**
+   * The attribute the pixel spacing was read from: Imager Pixel Spacing (0018,1164) at the
+   * detector, Nominal Scanned Pixel Spacing (0018,2010) at the scanner, else Pixel Spacing
+   * (0028,0030) with its calibration description; a spacing corrected by the magnification factor
+   * is computed from the detector spacing and (0018,1114); the user's calibration outranks them.
+   */
+  @Override
+  public Provenance calibrationProvenance() {
+    if (isPixelSizeModifiedByUser()
+        || getPixelSpacingUnit() == null
+        || getPixelSpacingUnit() == Unit.PIXEL) {
+      return super.calibrationProvenance();
+    }
+    String description = getPixelSizeCalibrationDescription();
+    if ("At Detector".equals(description)) { // NON-NLS
+      return Provenance.header(TagUtils.toString(Tag.ImagerPixelSpacing), "Imager Pixel Spacing");
+    }
+    if (description != null && description.toLowerCase(Locale.ROOT).contains("magnif")) { // NON-NLS
+      return Provenance.computed(
+          "magnification", // NON-NLS
+          description,
+          List.of(
+              Provenance.header(TagUtils.toString(Tag.ImagerPixelSpacing), "Imager Pixel Spacing"),
+              Provenance.header(
+                  TagUtils.toString(Tag.EstimatedRadiographicMagnificationFactor),
+                  "Estimated Radiographic Magnification Factor")));
+    }
+    if ("At scanner".equals(description)) { // NON-NLS
+      return Provenance.header(
+          TagUtils.toString(Tag.NominalScannedPixelSpacing), "Nominal Scanned Pixel Spacing");
+    }
+    return Provenance.header(
+        TagUtils.toString(Tag.PixelSpacing),
+        description == null ? "Pixel Spacing" : "Pixel Spacing, " + description);
   }
 
   private double[] getMagnifiedPixelSpacing(boolean useMagnificationFactor) {

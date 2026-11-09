@@ -170,6 +170,14 @@ class SubtractionBuilderTest {
         () -> assertEquals(2, attributes.getSequence(Tag.SourceImageSequence).size()),
         () ->
             assertEquals(
+                "109102",
+                attributes
+                    .getNestedDataset(Tag.ContributingEquipmentSequence)
+                    .getNestedDataset(Tag.PurposeOfReferenceCodeSequence)
+                    .getString(Tag.CodeValue),
+                "Weasis is the processing equipment of what it derives"),
+        () ->
+            assertEquals(
                 TagD.getTagValue(source, Tag.SOPInstanceUID, String.class),
                 attributes
                     .getSequence(Tag.SourceImageSequence)

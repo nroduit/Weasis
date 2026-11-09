@@ -31,11 +31,13 @@ import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.export.ContributingEquipment;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.viewer2d.fusion.FusionVolumeResampler;
 import org.weasis.dicom.viewer2d.mip.SeriesBuilder;
@@ -299,6 +301,14 @@ public final class SubtractionBuilder {
     derived.addAll(images);
     images.getFirst().getMediaReader().writeMetaData(derived);
     derived.setTag(TagW.Derivation, DERIVATION);
+    derived.setTag(
+        TagW.Provenance,
+        Provenance.computed(
+            "subtraction:build", // NON-NLS
+            spec.derivationDescription(),
+            List.of(
+                Provenance.header(
+                    "(0020,000E)", source.getString(Tag.SeriesInstanceUID))))); // NON-NLS
     return new Result(
         derived,
         dir,
@@ -553,6 +563,7 @@ public final class SubtractionBuilder {
     Sequence derivation = base.newSequence(Tag.DerivationCodeSequence, 1);
     derivation.add(
         new Code(PIXEL_SUBTRACTION_CODE, DCM, null, "Pixel by pixel subtraction").toItem());
+    ContributingEquipment.weasis(base, spec.derivationDescription());
     String agent = source.getString(Tag.ContrastBolusAgent);
     if (StringUtil.hasText(agent)) {
       base.setString(Tag.ContrastBolusAgent, VR.LO, agent);

@@ -335,7 +335,16 @@ line naming the current spelling. Use the current one everywhere.
    under `documentsChanged`, the rollback under `documents`; site documents are never rolled back.
    The user has the same under *Window → Restore previous display* (named after what the newest
    checkpoint precedes) and, after a batch of remote calls changed the display, a notice at the
-   bottom of the explorer with a *Restore* button (setting `weasis.state.notice.remote`).
+   bottom of the explorer with a *Restore* button (setting `weasis.state.notice.remote`). `hp:features` adds the `provenance` of every derived feature (kind header, table, heuristic,
+   classifier, computed, user; source, detail, confidence, version) and the `contests` a feature
+   provider plugin lost; `hp:feature --series <uid> --set orientation=CORONAL [--by agent]` sets a
+   derived feature by hand as a USER value that outranks everything (`agent:<origin>` when `--by
+   agent`), in memory for the series. `dicom:objects` and `dicom:interest` carry the `provenance` of
+   a SEG (algorithm), an SR (algorithm identification) or a KO / PR (equipment or author);
+   `dicom:list` carries it on a series Weasis computed (MPR, MIP, subtraction, curved reformat);
+   every spatial measurement of `view2d:measure`, `view2d:graphics` and `view2d:stats` names the
+   calibration it rests on (`provenance`: the Pixel Spacing or Imager Pixel Spacing header, a
+   magnification, or the user's calibration).
 
 ## Several commands in one call
 

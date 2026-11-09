@@ -37,6 +37,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -405,6 +406,15 @@ public class MipView extends View2d {
     s.addAll(dicomImages);
     first.getMediaReader().writeMetaData(s);
     s.setTag(TagW.Derivation, "MIP"); // NON-NLS
+    s.setTag(
+        TagW.Provenance,
+        Provenance.computed(
+            "mip:build", // NON-NLS
+            "Maximum intensity projection", // NON-NLS
+            List.of(
+                Provenance.header(
+                    "(0020,000E)", // NON-NLS
+                    TagD.getTagValue(ser, Tag.SeriesInstanceUID, String.class)))));
 
     DataExplorerModel model = (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
     if (model instanceof DicomModel dicomModel) {

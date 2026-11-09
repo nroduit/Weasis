@@ -54,11 +54,30 @@ public final class ReasonProvenance {
     return keyOf(reason).map(key -> features.provenanceOf(key.id()));
   }
 
-  /** The reason with the kind of its source appended, for a panel line. */
+  /**
+   * The reason with the kind of its source appended, for a panel line; a contested value names the
+   * loser too: {@code match mrWeighting in [T2] [header, contested: classifier seqclass 62%:
+   * FLAIR]}.
+   */
   public static String annotate(String reason, SeriesFeatures features) {
-    return provenanceOf(reason, features)
-        .map(p -> reason + "  [" + p.kind().key() + "]") // NON-NLS
-        .orElse(reason);
+    Optional<Key> key = keyOf(reason);
+    if (key.isEmpty() || features == null) {
+      return reason;
+    }
+    Provenance provenance = features.provenanceOf(key.get().id());
+    if (provenance == null) {
+      return reason;
+    }
+    StringBuilder text = new StringBuilder(reason).append("  [").append(provenance.kind().key());
+    for (var contest : features.contestsOf(key.get().id())) {
+      text.append(", contested: "); // NON-NLS
+      text.append(contest.provenance() == null ? "?" : contest.provenance().describe());
+      if (contest.value() != null
+          && (contest.provenance() == null || contest.provenance().detail() == null)) {
+        text.append(": ").append(contest.value());
+      }
+    }
+    return text.append(']').toString();
   }
 
   /**

@@ -69,6 +69,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.TagCategory;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
@@ -929,6 +930,9 @@ final class DicomModelCommands {
             if (se instanceof MediaSeries<?> ms) {
               s.add("imageCount", ms.size(null)); // NON-NLS
             }
+            if (se.getTagValue(TagW.Provenance) instanceof Provenance provenance) {
+              s.add("provenance", provenance.toJsonBuilder()); // NON-NLS
+            }
             if (se instanceof DicomSeries ds) {
               s.add("downloadState", SeriesItem.downloadStateOf(ds).getId()); // NON-NLS
             }
@@ -1369,6 +1373,9 @@ final class DicomModelCommands {
       put(json, "laterality", text(series, Tag.Laterality)); // NON-NLS
       put(json, "seriesDate", text(series, Tag.SeriesDate)); // NON-NLS
       json.add("imageCount", series.size(null)); // NON-NLS
+      if (series.getTagValue(TagW.Provenance) instanceof Provenance provenance) {
+        json.add("provenance", provenance.toJsonBuilder()); // NON-NLS
+      }
       MediaElement first = series.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null);
       if (first != null) {
         put(json, "rows", TagD.getTagValue(first, Tag.Rows, Integer.class)); // NON-NLS
@@ -1520,6 +1527,9 @@ final class DicomModelCommands {
       put(json, "label", d.label()); // NON-NLS
       put(json, "date", d.date() == null ? null : d.date().toString()); // NON-NLS
       put(json, "creator", d.creator()); // NON-NLS
+      if (d.provenance() != null) {
+        json.add("provenance", d.provenance().toJsonBuilder()); // NON-NLS
+      }
       put(json, "seriesInstanceUID", d.seriesUID()); // NON-NLS
       put(json, "sopInstanceUID", d.sopInstanceUID()); // NON-NLS
       JsonArrayBuilder refs = Json.createArrayBuilder();
@@ -1608,10 +1618,16 @@ final class DicomModelCommands {
             TagD.getTagValue(series, Tag.StudyInstanceUID, String.class));
         se.add("images", interest.count()); // NON-NLS
         JsonObjectBuilder sources = Json.createObjectBuilder();
+        JsonObjectBuilder provenances = Json.createObjectBuilder();
         for (InterestSource source : interest.sources()) {
           sources.add(source.getId(), interest.count(source));
+          Provenance provenance = Interest.provenanceOf(series, source);
+          if (provenance != null) {
+            provenances.add(source.getId(), provenance.toJsonBuilder());
+          }
         }
         se.add("sources", sources); // NON-NLS
+        se.add("provenance", provenances); // NON-NLS
         if (withImages) {
           JsonArrayBuilder uids = Json.createArrayBuilder();
           interest.images().forEach(uids::add);

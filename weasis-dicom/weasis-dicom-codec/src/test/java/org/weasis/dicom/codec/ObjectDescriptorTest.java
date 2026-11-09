@@ -27,6 +27,7 @@ import org.dcm4che3.util.UIDUtils;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
@@ -58,6 +59,31 @@ class ObjectDescriptorTest {
         () -> assertEquals(ko.getString(Tag.SeriesInstanceUID), d.seriesUID()),
         () -> assertEquals(ko.getString(Tag.SOPInstanceUID), d.sopInstanceUID()),
         () -> assertEquals(OtherIcon.KEY, d.icon()));
+  }
+
+  @Test
+  void the_provenance_names_the_algorithm_of_a_segmentation_and_the_author_of_a_key_object()
+      throws URISyntaxException {
+    Attributes seg = base("SEG", UID.SegmentationStorage);
+    Attributes segment = item(seg, Tag.SegmentSequence);
+    segment.setString(Tag.SegmentAlgorithmType, VR.CS, "AUTOMATIC");
+    segment.setString(Tag.SegmentAlgorithmName, VR.LO, "LungSeg");
+    seg.setString(Tag.SoftwareVersions, VR.LO, "4.1");
+    ObjectDescriptor automatic = ObjectDescriptor.describe(element(seg));
+
+    Attributes ko = base("KO", UID.KeyObjectSelectionDocumentStorage);
+    conceptName(ko, "113000", "Of Interest");
+    ko.setString(Tag.ContentCreatorName, VR.PN, "Doe^Jane");
+    ko.remove(Tag.ContributingEquipmentSequence);
+    ObjectDescriptor personal = ObjectDescriptor.describe(element(ko));
+
+    assertAll(
+        () -> assertEquals(Provenance.Kind.EXTERNAL, automatic.provenance().kind()),
+        () -> assertEquals("LungSeg", automatic.provenance().source()),
+        () -> assertEquals("automatic segmentation", automatic.provenance().detail()),
+        () -> assertEquals("4.1", automatic.provenance().version()),
+        () -> assertEquals(Provenance.Kind.USER, personal.provenance().kind()),
+        () -> assertEquals("Doe^Jane", personal.provenance().source()));
   }
 
   @Test

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.editor.ViewerPlacement;
@@ -27,6 +28,7 @@ import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
 import org.weasis.dicom.codec.hp.HangingPlan;
 import org.weasis.dicom.codec.hp.PriorStudy;
 import org.weasis.dicom.codec.hp.SeriesFeatureExtractor;
+import org.weasis.dicom.codec.hp.SeriesFeatureProvider;
 import org.weasis.dicom.codec.hp.SeriesFeatures;
 import org.weasis.dicom.codec.hp.StudySeries;
 import org.weasis.dicom.explorer.DicomModel;
@@ -54,7 +56,20 @@ public final class HpStudies {
    * Weasis ({@link Interest}), which the {@code interest} selectors of a protocol test.
    */
   public static SeriesFeatureExtractor extractor() {
-    return new SeriesFeatureExtractor(DerivationTables.getInstance(), HpStudies::interestOf);
+    return new SeriesFeatureExtractor(
+        DerivationTables.getInstance(),
+        HpStudies::interestOf,
+        providers(),
+        HpSettings::providerThreshold);
+  }
+
+  /** The feature providers of the loaded plugins, none without a plugin manager (a test). */
+  static List<SeriesFeatureProvider> providers() {
+    try {
+      return GuiUtils.getUICore().getPluginManager().getExtensions(SeriesFeatureProvider.class);
+    } catch (RuntimeException | LinkageError e) {
+      return List.of();
+    }
   }
 
   /** The images of interest of a series as the features carry them. */

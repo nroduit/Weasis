@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.dcm4che3.data.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.event.Event;
 import org.weasis.core.api.event.EventBus;
 import org.weasis.core.api.event.EventType;
@@ -29,7 +31,9 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.ObjectDescriptor;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
@@ -41,6 +45,7 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
  * the identity profile of a remote caller to the payloads, since this plugin knows the tags.
  */
 final class DicomEventBridge implements PropertyChangeListener {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DicomEventBridge.class);
 
   static final String PATIENT_ADDED = "dicom:patient.added"; // NON-NLS
   static final String PATIENT_REMOVED = "dicom:patient.removed"; // NON-NLS
@@ -201,6 +206,9 @@ final class DicomEventBridge implements PropertyChangeListener {
             .field("type", String.class, "modality of the object")
             .field("sopInstanceUID", String.class, "SOP instance UID")
             .field(SERIES_UID, SeriesUid.class, "series instance UID of the object")
+            .field(
+                "provenanceKind", String.class, "external, user... when the object says") // NON-NLS
+            .field("provenanceSource", String.class, "the algorithm, device or person") // NON-NLS
             .build(),
         EventType.of(LOADING_STARTED, SINCE, "A load, download or export task started.")
             .field("source", String.class, "download, local, export or task")
@@ -320,13 +328,24 @@ final class DicomEventBridge implements PropertyChangeListener {
   }
 
   private void objectAdded(DicomSpecialElement element) {
-    bus.publish(
+    Event.Builder event =
         Event.of(OBJECT_ADDED)
             .put("type", TagD.getTagValue(element, Tag.Modality, String.class)) // NON-NLS
             .put(
                 "sopInstanceUID",
                 TagD.getTagValue(element, Tag.SOPInstanceUID, String.class)) // NON-NLS
-            .put(SERIES_UID, TagD.getTagValue(element, Tag.SeriesInstanceUID, String.class)));
+            .put(SERIES_UID, TagD.getTagValue(element, Tag.SeriesInstanceUID, String.class));
+    try {
+      Provenance provenance = ObjectDescriptor.describe(element).provenance();
+      if (provenance != null) {
+        event
+            .put("provenanceKind", provenance.kind().key()) // NON-NLS
+            .put("provenanceSource", provenance.source()); // NON-NLS
+      }
+    } catch (RuntimeException e) {
+      LOGGER.debug("No provenance for {}", element, e);
+    }
+    bus.publish(event);
   }
 
   private void loading(String name, Object task, boolean canceled) {

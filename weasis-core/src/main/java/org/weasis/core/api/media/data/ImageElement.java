@@ -257,6 +257,22 @@ public class ImageElement extends MediaElement {
     this.pixelSizeCalibrationDescription = pixelSizeCalibrationDescription;
   }
 
+  /**
+   * Where the pixel spacing the measurements use comes from: the user's calibration, a header the
+   * subclass names, or null without a spacing (pixels). The DICOM image names the attribute.
+   */
+  public org.weasis.core.api.provenance.Provenance calibrationProvenance() {
+    if (pixelSizeModifiedByUser) {
+      return org.weasis.core.api.provenance.Provenance.user(
+          "calibration", "pixel spacing set by the user on a known distance"); // NON-NLS
+    }
+    if (pixelSpacingUnit == null || pixelSpacingUnit == Unit.PIXEL) {
+      return null;
+    }
+    return org.weasis.core.api.provenance.Provenance.header(
+        "pixel-spacing", pixelSizeCalibrationDescription); // NON-NLS
+  }
+
   public boolean isPixelSizeModifiedByUser() {
     return pixelSizeModifiedByUser;
   }

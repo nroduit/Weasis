@@ -322,6 +322,7 @@ public class DicomScFrameSink implements FrameSink {
     attributes.setInt(Tag.SeriesNumber, VR.IS, 99);
     attributes.setInt(Tag.InstanceNumber, VR.IS, 1);
     attributes.setString(Tag.ImageType, VR.CS, "DERIVED", "SECONDARY"); // NON-NLS
+    ContributingEquipment.weasis(attributes, "Rendered capture"); // NON-NLS
     attributes.setString(
         Tag.DerivationDescription,
         VR.ST,

@@ -35,6 +35,7 @@ import org.weasis.core.util.Pair;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.export.ContributingEquipment;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
@@ -302,6 +303,7 @@ public class SeriesBuilder {
         VR.LO,
         attributes.getString(Tag.SeriesDescription, "") + " [MIP]"); // NON-NLS
     cpTags.setString(Tag.ImageType, VR.CS, "DERIVED", "SECONDARY", "PROJECTION IMAGE"); // NON-NLS
+    ContributingEquipment.weasis(cpTags, "Maximum intensity projection"); // NON-NLS
     return cpTags;
   }
 

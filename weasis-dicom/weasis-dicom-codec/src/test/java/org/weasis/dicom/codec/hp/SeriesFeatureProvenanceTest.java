@@ -60,7 +60,11 @@ class SeriesFeatureProvenanceTest {
         () -> assertEquals(Kind.COMPUTED, spacing.kind()),
         () -> assertEquals(1, spacing.from().size()),
         () -> assertEquals(Kind.HEADER, f.provenanceOf(Key.SLICE_THICKNESS.id()).kind()),
-        () -> assertNull(f.provenanceOf(Key.TEMPORAL.id()), "a static stack states nothing"),
+        () ->
+            assertEquals(
+                Kind.HEADER,
+                f.provenanceOf(Key.TEMPORAL.id()).kind(),
+                "a static stack says which header has no temporal positions"),
         () -> assertNull(f.provenanceOf(Key.MODALITY.id()), "a raw attribute has no provenance"),
         () -> assertEquals("header", json.getJsonObject("orientation").getString("kind")),
         () -> assertEquals(Kind.HEADER, f.sourced(Key.ROLE).provenance().kind()),

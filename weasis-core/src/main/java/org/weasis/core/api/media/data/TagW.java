@@ -169,6 +169,12 @@ public class TagW {
   /** Short label of a series Weasis derived in this session ({@code SUB}, {@code MIP}). */
   public static final TagW Derivation = new TagW("Derivation", TagType.STRING);
 
+  /**
+   * The {@link org.weasis.core.api.provenance.Provenance} of a series Weasis computed (MPR, MIP,
+   * subtraction, curved reformat).
+   */
+  public static final TagW Provenance = new TagW("Provenance", TagType.OBJECT); // NON-NLS
+
   public static final TagW SuvFactor = new TagW("SUVFactor", TagType.DOUBLE);
 
   /**
@@ -229,6 +235,7 @@ public class TagW {
     addTag(SeriesSelected);
     addTag(SlicePosition);
     addTag(Derivation);
+    addTag(Provenance);
     addTag(SuvFactor);
     addTag(PercentReference);
     addTag(DirectDownloadFile);

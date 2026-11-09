@@ -30,10 +30,12 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.export.ContributingEquipment;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.viewer2d.fusion.FusionVolumeResampler;
 import org.weasis.dicom.viewer2d.mip.SeriesBuilder;
@@ -120,6 +122,15 @@ public final class ReformatBuilder {
       derived.addAll(images);
       images.getFirst().getMediaReader().writeMetaData(derived);
       derived.setTag(TagW.Derivation, DERIVATION);
+      derived.setTag(
+          TagW.Provenance,
+          Provenance.computed(
+              "mpr:build", // NON-NLS
+              base.getString(Tag.DerivationDescription),
+              List.of(
+                  Provenance.header(
+                      "(0020,000E)", // NON-NLS
+                      TagD.getTagValue(middle, Tag.SeriesInstanceUID, String.class)))));
       return new Result(derived, dir, grid.slices(), grid.spacing());
     }
   }
@@ -180,6 +191,7 @@ public final class ReformatBuilder {
             grid.spacing())); // NON-NLS
     Sequence derivation = base.newSequence(Tag.DerivationCodeSequence, 1);
     derivation.add(new Code(MPR_CODE, DCM, null, "Multiplanar reformatting").toItem());
+    ContributingEquipment.weasis(base, base.getString(Tag.DerivationDescription));
     return base;
   }
 

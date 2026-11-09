@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -35,10 +36,13 @@ import org.dcm4che3.data.Tag;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.CommandContext;
+import org.weasis.core.api.command.CommandError;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.OutputPath;
+import org.weasis.core.api.command.ResultSchema;
+import org.weasis.core.api.command.Returns;
 import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.command.ViewId;
@@ -50,6 +54,7 @@ import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.editor.ExternalDisplay;
 import org.weasis.core.ui.editor.ViewerPlacement;
@@ -60,6 +65,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.hp.CorpusStudies;
+import org.weasis.dicom.codec.hp.FeatureSelector.Key;
 import org.weasis.dicom.codec.hp.HangingEngine;
 import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
 import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
@@ -106,6 +112,7 @@ import picocli.CommandLine.ParentCommand;
       HpCommands.Save.class,
       HpCommands.Delete.class,
       HpCommands.Features.class,
+      HpCommands.Feature.class,
       HpCommands.Validate.class,
       HpCommands.Export.class,
       HpCommands.Import.class
@@ -906,7 +913,7 @@ public class HpCommands implements CommandExtension {
           "Why the cells of the active hanging show what they show: per cell the rules that "
               + "selected the series, its score and the alternatives; the why of a hanging.")
   @Since("5.0")
-  static class Explain extends Verb {
+  static class Explain extends Verb implements Returns {
     @Mixin HangingOptions target;
 
     @Option(names = "--cell", paramLabel = "<cell>", description = "Only this cell, from 1.")
@@ -981,6 +988,20 @@ public class HpCommands implements CommandExtension {
         }
       }
       return out.toString().stripTrailing();
+    }
+
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("protocol", String.class, "the protocol that hung the viewer") // NON-NLS
+          .field("step", int.class, "its step, 1-based") // NON-NLS
+          .field("reasons", "array", "why the protocol was chosen, one line each") // NON-NLS
+          .field(
+              "cells",
+              "array",
+              "per cell: the series, the rules that selected it and the 'evidence' of each rule "
+                  + "(feature, value, provenance), the alternatives")
+          .build();
     }
   }
 
@@ -1359,7 +1380,7 @@ public class HpCommands implements CommandExtension {
               + "spacing, temporal, images of interest...), per series of a loaded study or of a "
               + "folder of studies: what a selector can test, and why a series matched or not.")
   @Since("5.0")
-  static class Features extends Verb {
+  static class Features extends Verb implements Returns {
     @Option(
         names = "--study",
         paramLabel = "<study-uid>",
@@ -1444,7 +1465,8 @@ public class HpCommands implements CommandExtension {
         list.add(
             entry
                 .add("features", s.features().toJson()) // NON-NLS
-                .add("provenance", s.features().provenanceJson())); // NON-NLS
+                .add("provenance", s.features().provenanceJson()) // NON-NLS
+                .add("contests", s.features().contestsJson())); // NON-NLS
       }
       return json.add("series", list); // NON-NLS
     }
@@ -1472,9 +1494,132 @@ public class HpCommands implements CommandExtension {
       }
       return out.toString().stripTrailing();
     }
+
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field(
+              "studies",
+              "array",
+              "per study: its series with 'features', the 'provenance' of each derived feature "
+                  + "(kind, source, detail, confidence, version) and the 'contests' of the providers")
+          .build();
+    }
   }
 
   // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "feature",
+      description =
+          "Sets a derived feature of a loaded series by hand (role, orientation, anatomy, "
+              + "laterality, view, contrast, mrWeighting, ctKernel.family, temporal), as a USER "
+              + "value that outranks every header, table, classifier and heuristic; the next "
+              + "matching uses it. '--by agent' records the caller as 'agent:<origin>', so a "
+              + "correction of an agent stays distinguishable from the radiologist's. In memory "
+              + "for the series, until it is loaded again.")
+  @Since("5.0")
+  static class Feature extends Verb implements Returns {
+    @Option(
+        names = "--series",
+        required = true,
+        paramLabel = "<series-uid>",
+        description = "Series Instance UID, from 'dicom:list' or 'features'.")
+    String seriesUid;
+
+    @Option(
+        names = "--set",
+        required = true,
+        paramLabel = "<feature=value>",
+        description = "A feature and its value, repeatable: orientation=CORONAL, mrWeighting=T2.")
+    List<String> values;
+
+    @Option(
+        names = "--by",
+        paramLabel = "<who>",
+        description = "'user' (default) or 'agent': who states the value.")
+    String by;
+
+    @Override
+    protected void run() {
+      Map<Key, String> settings = new LinkedHashMap<>();
+      for (String value : values) {
+        int equals = value.indexOf('=');
+        if (equals <= 0) {
+          throw new IllegalArgumentException("A setting is feature=value: " + value);
+        }
+        Key key =
+            Key.of(value.substring(0, equals).trim())
+                .orElseThrow(
+                    () ->
+                        new IllegalArgumentException(
+                            "Unknown feature " + value.substring(0, equals)));
+        settings.put(key, value.substring(equals + 1).trim());
+      }
+      String source =
+          "agent".equalsIgnoreCase(by) // NON-NLS
+              ? "agent:" + CommandContext.current().origin().name().toLowerCase(Locale.ROOT)
+              : "user"; // NON-NLS
+      JsonObject result =
+          GuiExecutor.invokeAndRethrow(
+              () ->
+                  IdentityMask.callForCommand(
+                      () -> {
+                        DicomModel model = parent.model();
+                        DicomSeries series =
+                            findSeries(model, seriesUid)
+                                .orElseThrow(
+                                    () ->
+                                        new CommandFailure(
+                                            CommandError.of(
+                                                CommandError.UNKNOWN_HANDLE,
+                                                "Unknown series: " + seriesUid)));
+                        SeriesFeatures features = HpStudies.extractor().of(series);
+                        for (Map.Entry<Key, String> setting : settings.entrySet()) {
+                          Object value = features.parse(setting.getKey(), setting.getValue());
+                          features =
+                              features.with(
+                                  setting.getKey(),
+                                  value,
+                                  Provenance.user(
+                                      source, setting.getKey().id() + "=" + setting.getValue()));
+                        }
+                        SeriesFeatureExtractor.override(series, features);
+                        return Json.createObjectBuilder()
+                            .add("series", seriesUid) // NON-NLS
+                            .add("by", source) // NON-NLS
+                            .add("features", features.toJson()) // NON-NLS
+                            .add("provenance", features.provenanceJson()) // NON-NLS
+                            .build();
+                      }));
+      print(isJson() ? result.toString() : "set " + values + " on " + seriesUid); // NON-NLS
+    }
+
+    /** A loaded image series by its UID, over every patient and study of the model. */
+    static Optional<DicomSeries> findSeries(DicomModel model, String uid) {
+      for (MediaSeriesGroup patient : model.getChildren(MediaSeriesGroupNode.rootNode)) {
+        for (MediaSeriesGroup study : model.getChildren(patient)) {
+          for (MediaSeriesGroup series : model.getChildren(study)) {
+            if (series instanceof DicomSeries dicom
+                && uid.equals(TagD.getTagValue(dicom, Tag.SeriesInstanceUID, String.class))) {
+              return Optional.of(dicom);
+            }
+          }
+        }
+      }
+      return Optional.empty();
+    }
+
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("series", String.class, "the series set") // NON-NLS
+          .field("by", String.class, "'user' or 'agent:<origin>', the source recorded") // NON-NLS
+          .field("features", "object", "the features after the change") // NON-NLS
+          .field("provenance", "object", "the provenance of each derived feature") // NON-NLS
+          .build();
+    }
+  }
 
   @Command(
       name = "validate",

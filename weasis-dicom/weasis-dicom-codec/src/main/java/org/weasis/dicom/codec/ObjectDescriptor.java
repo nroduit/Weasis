@@ -19,6 +19,7 @@ import java.util.Set;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.util.StringUtil;
 
@@ -41,6 +42,9 @@ import org.weasis.core.util.StringUtil;
  * @param referencedImages number of images (or frames) referenced, 0 when not counted
  * @param parts segments of a SEG, structures of an RT Structure Set, 0 otherwise
  * @param icon the badge drawn on the referenced thumbnails
+ * @param provenance where the object came from: {@code EXTERNAL} for a device or an algorithm
+ *     (segment algorithm, contributing equipment, manufacturer), {@code USER} for a person's key
+ *     object or presentation state; null when the object says nothing
  */
 public record ObjectDescriptor(
     ObjectKind kind,
@@ -54,7 +58,38 @@ public record ObjectDescriptor(
     Set<String> referencedSeriesUIDs,
     int referencedImages,
     int parts,
-    ResourceIconPath icon) {
+    ResourceIconPath icon,
+    Provenance provenance) {
+
+  /** A descriptor without provenance, for the callers that predate it. */
+  public ObjectDescriptor(
+      ObjectKind kind,
+      String modality,
+      String label,
+      LocalDateTime date,
+      String creator,
+      String studyUID,
+      String seriesUID,
+      String sopInstanceUID,
+      Set<String> referencedSeriesUIDs,
+      int referencedImages,
+      int parts,
+      ResourceIconPath icon) {
+    this(
+        kind,
+        modality,
+        label,
+        date,
+        creator,
+        studyUID,
+        seriesUID,
+        sopInstanceUID,
+        referencedSeriesUIDs,
+        referencedImages,
+        parts,
+        icon,
+        null);
+  }
 
   public ObjectDescriptor {
     Objects.requireNonNull(kind);
@@ -146,7 +181,88 @@ public record ObjectDescriptor(
         referenced,
         images,
         parts,
-        element instanceof HiddenSpecialElement hidden ? hidden.getIconPath() : null);
+        element instanceof HiddenSpecialElement hidden ? hidden.getIconPath() : null,
+        provenanceOf(kind, dicom, creatorOf(dicom)));
+  }
+
+  /**
+   * Where the object came from, read from the carriers the standard gives: the Segment Algorithm
+   * Type and Name of a segmentation, the algorithm identification of an SR (TID 4019, Algorithm
+   * Name 111001 and Version 111003), the Contributing Equipment or the manufacturer of a device
+   * made object; a key object or a presentation state without equipment is the user's, named by the
+   * person who created it when the object says so.
+   */
+  static Provenance provenanceOf(ObjectKind kind, Attributes dicom, String creator) {
+    if (dicom == null) {
+      return null;
+    }
+    String version = dicom.getString(Tag.SoftwareVersions);
+    if (kind == ObjectKind.SEGMENTATION) {
+      Attributes segment = dicom.getNestedDataset(Tag.SegmentSequence);
+      if (segment != null) {
+        String type = segment.getString(Tag.SegmentAlgorithmType);
+        String name = segment.getString(Tag.SegmentAlgorithmName);
+        if ("MANUAL".equals(type)) { // NON-NLS
+          return Provenance.user(
+              StringUtil.hasText(creator) ? creator : "segmentation", "manual segmentation");
+        }
+        if (StringUtil.hasText(name) || StringUtil.hasText(type)) {
+          return Provenance.external(
+              StringUtil.hasText(name) ? name : (creator == null ? "algorithm" : creator),
+              (type == null ? "" : type.toLowerCase(java.util.Locale.ROOT) + " ") + "segmentation",
+              version);
+        }
+      }
+    }
+    Attributes algorithm = algorithmItem(dicom, "111001"); // NON-NLS
+    if (algorithm != null && StringUtil.hasText(algorithm.getString(Tag.TextValue))) {
+      Attributes algorithmVersion = algorithmItem(dicom, "111003"); // NON-NLS
+      return Provenance.external(
+          algorithm.getString(Tag.TextValue),
+          "algorithm of the report", // NON-NLS
+          algorithmVersion == null ? null : algorithmVersion.getString(Tag.TextValue));
+    }
+    Attributes equipment = dicom.getNestedDataset(Tag.ContributingEquipmentSequence);
+    if (equipment != null) {
+      Attributes code = equipment.getNestedDataset(Tag.PurposeOfReferenceCodeSequence);
+      String purpose = code == null ? null : code.getString(Tag.CodeMeaning);
+      String who = equipmentOf(equipment);
+      return Provenance.external(
+          who == null ? "equipment" : who, // NON-NLS
+          purpose == null ? "contributing equipment" : purpose, // NON-NLS
+          equipment.getString(Tag.SoftwareVersions));
+    }
+    boolean personal =
+        kind == ObjectKind.KEY_OBJECT
+            || kind == ObjectKind.REJECTION_NOTE
+            || kind == ObjectKind.PRESENTATION_STATE;
+    String author = dicom.getString(Tag.ContentCreatorName);
+    if (!StringUtil.hasText(author)) {
+      author = dicom.getString(Tag.OperatorsName);
+    }
+    if (personal && StringUtil.hasText(author)) {
+      return Provenance.user(author, kind.getId());
+    }
+    String device = equipmentOf(dicom);
+    if (device != null && !personal) {
+      return Provenance.external(device, kind.getId(), version);
+    }
+    return personal && StringUtil.hasText(creator) ? Provenance.user(creator, kind.getId()) : null;
+  }
+
+  /** The content item of the first level whose concept has the code, for TID 4019. */
+  private static Attributes algorithmItem(Attributes dicom, String code) {
+    Sequence content = dicom.getSequence(Tag.ContentSequence);
+    if (content == null) {
+      return null;
+    }
+    for (Attributes item : content) {
+      Attributes concept = item.getNestedDataset(Tag.ConceptNameCodeSequence);
+      if (concept != null && code.equals(concept.getString(Tag.CodeValue))) {
+        return item;
+      }
+    }
+    return null;
   }
 
   /**

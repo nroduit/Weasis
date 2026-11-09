@@ -66,6 +66,8 @@ class HpCommandsTest {
           "hp:features",
           "hp:features --study 1.2.3",
           "hp:features --corpus /tmp/corpus --json",
+          "hp:feature --series 1.2.3.4 --set mrWeighting=T2",
+          "hp:feature --series 1.2.3.4 --set orientation=AXIAL --set laterality=L --by agent --json",
           "hp:sets",
           "hp:sets --view v1 --json",
           "hp:group --next",

@@ -21,6 +21,7 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -29,6 +30,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.HiddenSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.ObjectDescriptor;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.RejectedKOSpecialElement;
 import org.weasis.dicom.codec.TagD;
@@ -85,6 +87,50 @@ public record Interest(Map<InterestSource, Set<String>> imagesBySource) {
   }
 
   /** Reads the images of interest of a series. */
+  /**
+   * Where the interest of a source comes from: the provenance of the first object of that kind
+   * pointing at the series (a key object by its creator, a segmentation by its algorithm), or the
+   * user for the graphics drawn in Weasis; null when the object says nothing.
+   */
+  public static Provenance provenanceOf(DicomSeries series, InterestSource source) {
+    if (source == InterestSource.GRAPHICS) {
+      return Provenance.user("graphics", "drawn in Weasis"); // NON-NLS
+    }
+    String seriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+    Set<String> origins =
+        seriesUID == null
+            ? null
+            : HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
+    if (origins == null) {
+      return null;
+    }
+    for (String origin : origins) {
+      Set<HiddenSpecialElement> elements =
+          HiddenSeriesManager.getInstance().series2Elements.get(origin);
+      if (elements == null) {
+        continue;
+      }
+      for (HiddenSpecialElement element : elements) {
+        boolean matches =
+            switch (source) {
+              case KEY_OBJECT ->
+                  element instanceof KOSpecialElement
+                      && !(element instanceof RejectedKOSpecialElement);
+              case PRESENTATION_STATE -> element instanceof PRSpecialElement;
+              case SEGMENTATION -> element instanceof SegSpecialElement;
+              default -> false;
+            };
+        if (matches) {
+          Provenance provenance = ObjectDescriptor.describe(element).provenance();
+          if (provenance != null) {
+            return provenance;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   public static Interest of(DicomSeries series) {
     if (series == null) {
       return NONE;

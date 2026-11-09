@@ -82,8 +82,10 @@ import org.weasis.core.api.image.color.IccImageFiles;
 import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.IdentityMask;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
@@ -974,6 +976,28 @@ public class View2dCommands implements CommandExtension {
    */
   static JsonArrayBuilder measurementsJson(
       List<MeasureItem> items, Unit spatial, String pixelValueUnit) {
+    return measurementsJson(items, spatial, pixelValueUnit, null);
+  }
+
+  /** A length, an area or a volume in the spatial unit, not a pixel value or a count. */
+  private static boolean isSpatial(String unit, Unit spatial) {
+    String u = spatial.getUcum();
+    return u != null && (unit.equals(u) || unit.equals(u + "2") || unit.equals(u + "3"));
+  }
+
+  /** The calibration the spatial measurements of a view rest on, null without a spacing. */
+  static Provenance calibrationOf(ViewCanvas<?> view) {
+    return view != null && view.getImage() instanceof ImageElement image
+        ? image.calibrationProvenance()
+        : null;
+  }
+
+  /**
+   * The measurements with, on every spatial one, the provenance of the calibration: the header the
+   * pixel spacing was read from, or the user's calibration.
+   */
+  static JsonArrayBuilder measurementsJson(
+      List<MeasureItem> items, Unit spatial, String pixelValueUnit, Provenance calibration) {
     JsonArrayBuilder array = Json.createArrayBuilder();
     for (MeasureItem item : items) {
       Measurement m = item.getMeasurement();
@@ -992,6 +1016,9 @@ public class View2dCommands implements CommandExtension {
       String unit = MeasurementVocabulary.unitOf(m, spatial, pixelValueUnit);
       if (unit != null) {
         o.add("unit", unit); // NON-NLS
+      }
+      if (calibration != null && unit != null && spatial != null && isSpatial(unit, spatial)) {
+        o.add("provenance", calibration.toJsonBuilder()); // NON-NLS
       }
       qualify(o, item.getLabelExtension());
       array.add(o);
@@ -1415,7 +1442,9 @@ public class View2dCommands implements CommandExtension {
                 return Json.createObjectBuilder()
                     .add("target", ViewDisplayState.target(resolved.container(), view)) // NON-NLS
                     .add("statistics", measurementsJson(stats, spatial, values)) // NON-NLS
-                    .add("geometry", measurementsJson(geometry, spatial, values)) // NON-NLS
+                    .add(
+                        "geometry", // NON-NLS
+                        measurementsJson(geometry, spatial, values, calibrationOf(view)))
                     .build()
                     .toString();
               });
@@ -1519,7 +1548,8 @@ public class View2dCommands implements CommandExtension {
                     .add("layer", layerJson(layer)) // NON-NLS
                     .add(
                         "measurements", // NON-NLS
-                        measurementsJson(items, spatial, measurable.getPixelValueUnit()))
+                        measurementsJson(
+                            items, spatial, measurable.getPixelValueUnit(), calibrationOf(view)))
                     .build()
                     .toString();
               });
@@ -2381,7 +2411,8 @@ public class View2dCommands implements CommandExtension {
                             Measurement.computingAll(
                                 () -> graphic.computeMeasurements(measurable, true, spatial)),
                             spatial,
-                            values));
+                            values,
+                            calibrationOf(view)));
                   }
                   graphics.add(o.build());
                 }
