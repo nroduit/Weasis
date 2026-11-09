@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.CanvasRect;
 import org.weasis.core.api.command.CommandContext;
+import org.weasis.core.api.command.CommandError;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.Degrees;
@@ -118,6 +119,7 @@ import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
+import org.weasis.core.ui.model.utils.GraphicUndoHistory;
 import org.weasis.core.ui.model.utils.ImageStatistics;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.model.utils.bean.Measurement;
@@ -153,6 +155,8 @@ import picocli.CommandLine.TypeConversionException;
             + "and the agent verbs capture, stats and measure. Every verb works on the pane given "
             + "by --view and --pane, the selected one by default, and returns its display state.",
     subcommands = {
+      View2dCommands.Undo.class,
+      View2dCommands.Redo.class,
       View2dCommands.Zoom.class,
       View2dCommands.WindowLevelVerb.class,
       View2dCommands.Pan.class,
@@ -2236,6 +2240,75 @@ public class View2dCommands implements CommandExtension {
                     .toString();
               });
       print(body);
+    }
+  }
+
+  /** Undo or redo of the graphics of a pane: the history the view keeps, driven headlessly. */
+  abstract static class UndoVerb extends AbstractVerb {
+    @Mixin ViewOptions target;
+
+    abstract boolean act(GraphicUndoHistory history);
+
+    abstract String key();
+
+    @Override
+    protected void run() {
+      JsonObject json =
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                Target resolved = target.withImage();
+                DefaultView2d<DicomImageElement> view = resolved.view();
+                GraphicUndoHistory history = view.getGraphicUndo();
+                if (history == null || !history.isEnabled()) {
+                  throw new CommandFailure(
+                      CommandError.of(
+                          CommandError.NOT_APPLICABLE,
+                          "The undo of the drawings is off (weasis.draw.undo.limit is 0)"));
+                }
+                boolean done = act(history);
+                return Json.createObjectBuilder()
+                    .add("target", ViewDisplayState.target(resolved.container(), view)) // NON-NLS
+                    .add(key(), done)
+                    .add("canUndo", history.canUndo()) // NON-NLS
+                    .add("canRedo", history.canRedo()) // NON-NLS
+                    .add("graphics", view.getGraphicManager().getAllGraphics().size()) // NON-NLS
+                    .build();
+              });
+      print(isJson() ? json.toString() : (json.getBoolean(key()) ? key() : "nothing to " + key()));
+    }
+  }
+
+  @Command(
+      name = "undo",
+      description =
+          "Undoes the last change of the drawings of a pane (a graphic added, moved, resized, "
+              + "deleted or pasted, by the mouse or by a command) and returns whether something "
+              + "was undone and what remains to undo or redo. Closing a view or changing its "
+              + "series clears the history.")
+  @Since("5.0")
+  static class Undo extends UndoVerb {
+    @Override
+    boolean act(GraphicUndoHistory history) {
+      return history.undo();
+    }
+
+    @Override
+    String key() {
+      return "undone"; // NON-NLS
+    }
+  }
+
+  @Command(name = "redo", description = "Redoes the last undone change of the drawings of a pane.")
+  @Since("5.0")
+  static class Redo extends UndoVerb {
+    @Override
+    boolean act(GraphicUndoHistory history) {
+      return history.redo();
+    }
+
+    @Override
+    String key() {
+      return "redone"; // NON-NLS
     }
   }
 

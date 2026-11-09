@@ -108,6 +108,11 @@ public interface ViewCanvas<E extends ImageElement>
   Line2D pointerUp = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
   Line2D pointerDown = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
 
+  /** The undo history of the graphics of this view; null when the view keeps none. */
+  default org.weasis.core.ui.model.utils.GraphicUndoHistory getGraphicUndo() {
+    return null;
+  }
+
   default MouseActionAdapter getAction(Feature<?> action) {
     Optional<?> a = getEventManager().getAction(action);
     if (a.isPresent() && a.get() instanceof MouseActionAdapter actionAdapter) {

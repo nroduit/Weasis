@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.26",
+  "apiVersion": "2.27",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -6207,6 +6207,45 @@
           ]
         },
         {
+          "name": "redo",
+          "description": "Redoes the last undone change of the drawings of a pane.",
+          "since": "5.0",
+          "usage": "view2d:redo [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            }
+          ]
+        },
+        {
           "name": "reset",
           "description": "Puts the display of a pane back as the image opened, whole or tool by tool, and returns its state; with no argument the state is returned unchanged.",
           "usage": "view2d:reset [-h] [--all] [--json] [--pane=<pane-index>] [--view=<view-id>] [--tool=<reset-tool>]...",
@@ -6607,6 +6646,45 @@
           ]
         },
         {
+          "name": "undo",
+          "description": "Undoes the last change of the drawings of a pane (a graphic added, moved, resized, deleted or pasted, by the mouse or by a command) and returns whether something was undone and what remains to undo or redo. Closing a view or changing its series clears the history.",
+          "since": "5.0",
+          "usage": "view2d:undo [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the viewer layout, from 1 (default: the selected pane)."
+            }
+          ]
+        },
+        {
           "name": "viewport",
           "description": "Viewport of a pane: --tiled shows its series on a grid of tiles, --stack returns it to one image; the state of the viewer, with its cells, is returned. With no argument the state is returned unchanged.",
           "since": "5.0",
@@ -6768,7 +6846,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]",
           "parameters": [],
           "options": [
             {
@@ -6803,20 +6881,6 @@
             },
             {
               "names": [
-                "--set"
-              ],
-              "label": "<magnification>",
-              "type": "magnification",
-              "arity": "1",
-              "required": true,
-              "description": "Magnification, 1 being one image pixel per canvas pixel.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
                 "--fit"
               ],
               "label": "<zoom-fit>",
@@ -6843,6 +6907,20 @@
               "arity": "1",
               "required": true,
               "description": "Moves the zoom slider by this many steps, negative to zoom out.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--set"
+              ],
+              "label": "<magnification>",
+              "type": "magnification",
+              "arity": "1",
+              "required": true,
+              "description": "Magnification, 1 being one image pixel per canvas pixel.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"

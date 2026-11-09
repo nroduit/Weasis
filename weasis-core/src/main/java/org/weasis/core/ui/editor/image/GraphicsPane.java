@@ -86,7 +86,9 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
   public void setGraphicManager(GraphicModel graphicManager) {
     Objects.requireNonNull(graphicManager);
     GraphicModel graphicManagerOld = this.graphicManager;
-    if (!Objects.equals(graphicManager, graphicManagerOld)) {
+    // by identity: a model read back from its XML equals the one it replaces, and must still
+    // take its place (an undo, a rollback, a presentation state applied again)
+    if (graphicManager != graphicManagerOld) {
       removeGraphicManager(graphicManagerOld, layerModelHandler);
       this.graphicManager = graphicManager;
       graphicManager.addGraphicChangeHandler(graphicsChangeHandler);

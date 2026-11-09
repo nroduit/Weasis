@@ -24,7 +24,7 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.26 and protocol
+This instance runs Weasis development with command API 2.27 and protocol
 2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, mpr, print, redact, script, state, subtraction, ui, view2d, view3d, weasis, workspace, wsi.
 
 Check the connection first:
@@ -128,6 +128,9 @@ line naming the current spelling. Use the current one everywhere.
      `statistics` (`stats.min`, `stats.max`, `stats.mean`, `stats.median`, `stats.stdev`, …) in the
      unit of the image values (`[hnsf'U]` for CT) and the `geometry` of the region.
    - `view2d:graphics` lists every graphic with its measurements, including the user's own.
+   - `view2d:undo` and `view2d:redo` step through the changes of the drawings of a pane (an
+     entry per burst of changes, by the mouse or by a command, fifty kept per view); closing a
+     view or changing its series clears the history.
    - `view2d:annotate --at x,y --text "..."` points at a place with an arrow, and
      `view2d:annotate --label-at x,y --text "..."` writes a caption with nothing else drawn;
      `view2d:clear-ai` removes everything you drew.

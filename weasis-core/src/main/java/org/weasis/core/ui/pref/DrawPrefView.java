@@ -28,6 +28,7 @@ import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.MidpointHandles;
+import org.weasis.core.ui.model.utils.GraphicUndoHistory;
 import org.weasis.core.ui.model.utils.bean.GraphicClipboard;
 import org.weasis.core.ui.model.utils.bean.GraphicClipboard.PasteMode;
 
@@ -45,6 +46,9 @@ public class DrawPrefView extends AbstractItemDialogPage {
       new JSpinner(new SpinnerNumberModel(MidpointHandles.DEFAULT_MIN_SPACING, 0.0, 10.0, 0.5));
 
   private final JComboBox<PasteMode> comboPasteMode = new JComboBox<>(PasteMode.values());
+
+  private final JSpinner spinnerUndoLimit =
+      new JSpinner(new SpinnerNumberModel(GraphicUndoHistory.DEFAULT_LIMIT, 0, 500, 10));
 
   public DrawPrefView(PreferenceDialog dialog) {
     super(MeasureTool.BUTTON_NAME, 700);
@@ -78,6 +82,12 @@ public class DrawPrefView extends AbstractItemDialogPage {
             ITEM_SEPARATOR_LARGE,
             new JLabel(Messages.getString("DrawPrefView.paste_mode")),
             comboPasteMode));
+    add(
+        GuiUtils.getFlowLayoutPanel(
+            0,
+            ITEM_SEPARATOR_LARGE,
+            new JLabel(Messages.getString("DrawPrefView.undo_limit")),
+            spinnerUndoLimit));
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
@@ -102,6 +112,8 @@ public class DrawPrefView extends AbstractItemDialogPage {
         preferences.getDoubleProperty(
             MidpointHandles.P_MIN_SPACING, MidpointHandles.DEFAULT_MIN_SPACING));
     comboPasteMode.setSelectedItem(GraphicClipboard.defaultPasteMode());
+    spinnerUndoLimit.setValue(
+        preferences.getIntProperty(GraphicUndoHistory.P_LIMIT, GraphicUndoHistory.DEFAULT_LIMIT));
   }
 
   private static String pasteModeName(Object value) {
@@ -130,7 +142,10 @@ public class DrawPrefView extends AbstractItemDialogPage {
     preferences.setProperty(
         GraphicClipboard.P_PASTE_MODE,
         comboPasteMode.getSelectedItem() == PasteMode.IN_PLACE ? "inPlace" : "cursor"); // NON-NLS
+    preferences.putIntProperty(
+        GraphicUndoHistory.P_LIMIT, ((Number) spinnerUndoLimit.getValue()).intValue());
     MidpointHandles.reload();
+    GraphicUndoHistory.reload();
   }
 
   @Override
@@ -142,7 +157,10 @@ public class DrawPrefView extends AbstractItemDialogPage {
     preferences.resetProperty(
         MidpointHandles.P_MIN_SPACING, Double.toString(MidpointHandles.DEFAULT_MIN_SPACING));
     preferences.resetProperty(GraphicClipboard.P_PASTE_MODE, "cursor"); // NON-NLS
+    preferences.resetProperty(
+        GraphicUndoHistory.P_LIMIT, Integer.toString(GraphicUndoHistory.DEFAULT_LIMIT));
     MidpointHandles.reload();
+    GraphicUndoHistory.reload();
     initialize();
   }
 }

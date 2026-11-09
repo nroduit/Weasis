@@ -38,6 +38,7 @@ import org.weasis.core.ui.model.graphic.imp.PathConversion;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
+import org.weasis.core.ui.model.utils.GraphicUndoHistory;
 import org.weasis.core.ui.model.utils.bean.GraphicClipboard;
 import org.weasis.core.ui.model.utils.bean.GraphicClipboard.PasteMode;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
@@ -73,6 +74,7 @@ public final class GraphicEditActions {
     JPopupMenu popupMenu = new JPopupMenu();
     popupMenu.add(new TitleMenuItem(Messages.getString("GraphicEditActions.selection")));
     popupMenu.addSeparator();
+    addUndoItems(popupMenu, view);
 
     JMenu selectMenu = buildSelectUnderCursorMenu(popupMenu, view, evt);
     if (selectMenu != null) {
@@ -117,8 +119,38 @@ public final class GraphicEditActions {
     return popupMenu;
   }
 
+  /** Adds *Undo* and *Redo* for the graphics of the view, when the view keeps a history. */
+  public static void addUndoItems(JPopupMenu popupMenu, ViewCanvas<?> view) {
+    GraphicUndoHistory history = view.getGraphicUndo();
+    if (history == null || !history.isEnabled()) {
+      return;
+    }
+    JMenuItem undo = new JMenuItem(Messages.getString("GraphicEditActions.undo"));
+    undo.setEnabled(history.canUndo());
+    undo.addActionListener(_ -> undo(view));
+    popupMenu.add(undo);
+    JMenuItem redo = new JMenuItem(Messages.getString("GraphicEditActions.redo"));
+    redo.setEnabled(history.canRedo());
+    redo.addActionListener(_ -> redo(view));
+    popupMenu.add(redo);
+    popupMenu.addSeparator();
+  }
+
+  /** Undoes the last change of the graphics of the view; false when there is none. */
+  public static boolean undo(ViewCanvas<?> view) {
+    GraphicUndoHistory history = view.getGraphicUndo();
+    return history != null && history.undo();
+  }
+
+  /** Redoes the last undone change of the graphics of the view; false when there is none. */
+  public static boolean redo(ViewCanvas<?> view) {
+    GraphicUndoHistory history = view.getGraphicUndo();
+    return history != null && history.redo();
+  }
+
   /** Adds the paste items to the menu of a right-click on the image, outside any graphic. */
   public static void addPasteItems(JPopupMenu popupMenu, ViewCanvas<?> view, MouseEvent evt) {
+    addUndoItems(popupMenu, view);
     GraphicClipboard clipboard = DefaultView2d.GRAPHIC_CLIPBOARD;
     if (!clipboard.hasContent()) {
       return;

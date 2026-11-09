@@ -78,7 +78,9 @@ public class DrawingsKeyListeners implements KeyListener {
                     v ->
                         GraphicEditActions.paste(
                             v, GraphicClipboard.defaultPasteMode(), v.getCursorImagePoint())))
-        .on(ShortcutManager.ID_DRAW_DUPLICATE, () -> onView(GraphicEditActions::duplicate));
+        .on(ShortcutManager.ID_DRAW_DUPLICATE, () -> onView(GraphicEditActions::duplicate))
+        .on(ShortcutManager.ID_DRAW_UNDO, () -> onView(GraphicEditActions::undo))
+        .on(ShortcutManager.ID_DRAW_REDO, () -> onView(GraphicEditActions::redo));
   }
 
   /** The clipboard actions only exist on a view canvas. */

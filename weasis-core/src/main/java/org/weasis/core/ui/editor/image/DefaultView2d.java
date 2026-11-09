@@ -102,15 +102,18 @@ import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
 import org.weasis.core.ui.model.graphic.imp.seg.SegGraphic;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
+import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.Draggable;
 import org.weasis.core.ui.model.utils.GraphicOutline;
+import org.weasis.core.ui.model.utils.GraphicUndoHistory;
 import org.weasis.core.ui.model.utils.bean.GraphicClipboard;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.Monitor;
+import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.LangUtil;
@@ -979,6 +982,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   public void setSeries(MediaSeries<E> newSeries, E selectedMedia) {
     MediaSeries<E> oldSequence = this.series;
     this.series = newSeries;
+    if (oldSequence != newSeries) {
+      undoSettle.stop();
+      graphicUndo.clear(); // the history belongs to one series
+    }
 
     if (oldSequence == null && newSeries == null) {
       return;
@@ -1198,8 +1205,82 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       }
       List<GraphicSelectionListener> gListeners =
           new ArrayList<>(graphicManager.getGraphicSelectionListeners());
+      GraphicModel previous = graphicManager;
       setGraphicManager(modelList);
       gListeners.forEach(l -> graphicManager.addGraphicSelectionListener(l));
+      trackGraphicUndo(previous, img, modelList);
+    }
+  }
+
+  // ---- undo of the graphics: one history per view, fed by the model it shows ----
+
+  /** Waits for a burst of changes (a drag fires one per pixel) to settle before one entry. */
+  private static final int UNDO_SETTLE_MS = 300;
+
+  private final GraphicUndoHistory graphicUndo = new GraphicUndoHistory(this::restoreGraphics);
+  private final javax.swing.Timer undoSettle =
+      new javax.swing.Timer(UNDO_SETTLE_MS, _ -> graphicUndo.commit());
+  private final java.beans.PropertyChangeListener undoGraphicListener = _ -> scheduleUndoCommit();
+  private final org.weasis.core.ui.model.layer.GraphicModelChangeListener undoModelListener =
+      new org.weasis.core.ui.model.layer.GraphicModelChangeListener() {
+        @Override
+        public void handleModelChanged(GraphicModel modelList) {
+          scheduleUndoCommit();
+        }
+
+        @Override
+        public void handleLayerAdded(GraphicModel modelList, Layer layer) {
+          scheduleUndoCommit();
+        }
+
+        @Override
+        public void handleLayerRemoved(GraphicModel modelList, Layer layer) {
+          scheduleUndoCommit();
+        }
+      };
+
+  @Override
+  public GraphicUndoHistory getGraphicUndo() {
+    return graphicUndo;
+  }
+
+  private void scheduleUndoCommit() {
+    undoSettle.setRepeats(false);
+    undoSettle.restart();
+  }
+
+  private void trackGraphicUndo(GraphicModel previous, E img, GraphicModel model) {
+    if (previous != null && previous != model) {
+      previous.removeGraphicChangeHandler(undoGraphicListener);
+      previous.removeChangeListener(undoModelListener);
+    }
+    undoSettle.stop();
+    if (!graphicUndo.isEnabled()) {
+      return;
+    }
+    graphicUndo.track(img, model);
+    model.addGraphicChangeHandler(undoGraphicListener);
+    model.addChangeListener(undoModelListener);
+  }
+
+  /** Puts a snapshot of the graphics back on an image, and on this view when it shows it. */
+  private void restoreGraphics(ImageElement image, String xml) {
+    GraphicModel restored;
+    try {
+      restored = XmlSerializer.readPresentationModel(new java.io.StringReader(xml));
+    } catch (Exception e) {
+      LOGGER.warn("Cannot restore the graphics", e);
+      return;
+    }
+    if (restored == null) {
+      restored = new XmlGraphicModel(image);
+    }
+    image.setTag(TagW.PresentationModel, restored);
+    if (image == getImage()) {
+      @SuppressWarnings("unchecked")
+      E shown = (E) image;
+      updateGraphicManager(shown, true);
+      repaint();
     }
   }
 
@@ -2078,6 +2159,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   @Override
   public void disposeView() {
     zoomAnimator.stop();
+    undoSettle.stop();
+    graphicUndo.clear();
     disableMouseAndKeyListener();
     removeFocusListener(this);
     ToolTipManager.sharedInstance().unregisterComponent(this);

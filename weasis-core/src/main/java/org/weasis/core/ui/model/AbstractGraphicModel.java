@@ -284,6 +284,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
       }
       models.add(graphic);
       GraphicEventBridge.added(this, graphic);
+      fireChanged();
     }
   }
 
@@ -304,6 +305,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     if (graphic != null) {
       if (models.remove(graphic)) {
         GraphicEventBridge.removed(this, graphic);
+        fireChanged();
       }
       graphic.removeAllPropertyChangeListener();
 
@@ -784,6 +786,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   @Override
   public void clear() {
     models.clear();
+    fireChanged();
   }
 
   @Override

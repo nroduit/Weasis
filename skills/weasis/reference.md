@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.26, protocol 2, application development.
+Command API 2.27, protocol 2, application development.
 
 ## color
 
@@ -1564,6 +1564,18 @@ Usage: `view2d:preset [-h] [--json] [--pane=<pane-index>] [--preset=<preset-id>]
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --preset | preset-id |  | Preset id, or its name as the viewer shows it. (since 5.0) |
 
+### view2d:redo (since 5.0)
+
+Redoes the last undone change of the drawings of a pane.
+
+Usage: `view2d:redo [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+
 ### view2d:reset
 
 Puts the display of a pane back as the image opened, whole or tool by tool, and returns its state; with no argument the state is returned unchanged.
@@ -1649,6 +1661,18 @@ Usage: `view2d:sync [-h] [--json] [--mode=<sync-mode>] [--view=<view-id>]`
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --mode | enum |  | none, stack or tile, among the modes the viewer offers. (since 5.0) |
 
+### view2d:undo (since 5.0)
+
+Undoes the last change of the drawings of a pane (a graphic added, moved, resized, deleted or pasted, by the mouse or by a command) and returns whether something was undone and what remains to undo or redo. Closing a view or changing its series clears the history.
+
+Usage: `view2d:undo [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+
 ### view2d:viewport (since 5.0)
 
 Viewport of a pane: --tiled shows its series on a grid of tiles, --stack returns it to one image; the state of the viewer, with its cells, is returned. With no argument the state is returned unchanged.
@@ -1683,16 +1707,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
+| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 
 ### Events of view2d:
 

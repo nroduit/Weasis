@@ -364,6 +364,8 @@ public final class ShortcutManager {
   public static final String ID_DRAW_PASTE = "draw.paste";
   public static final String ID_DRAW_PASTE_IN_PLACE = "draw.pasteInPlace";
   public static final String ID_DRAW_DUPLICATE = "draw.duplicate";
+  public static final String ID_DRAW_UNDO = "draw.undo";
+  public static final String ID_DRAW_REDO = "draw.redo";
 
   /**
    * Mask of the menu shortcuts of the platform: Ctrl on Windows and Linux, Cmd on macOS. The
@@ -685,6 +687,18 @@ public final class ShortcutManager {
         Messages.getString("ShortcutManager.duplicate_graphics"),
         CATEGORY_DRAWINGS,
         KeyEvent.VK_D,
+        MENU_SHORTCUT_MASK | InputEvent.SHIFT_DOWN_MASK);
+    register(
+        ID_DRAW_UNDO,
+        Messages.getString("ShortcutManager.undo_graphics"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_Z,
+        MENU_SHORTCUT_MASK);
+    register(
+        ID_DRAW_REDO,
+        Messages.getString("ShortcutManager.redo_graphics"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_Z,
         MENU_SHORTCUT_MASK | InputEvent.SHIFT_DOWN_MASK);
 
     // ---- Pan with keyboard (PannerListener.keyPressed()) ----
