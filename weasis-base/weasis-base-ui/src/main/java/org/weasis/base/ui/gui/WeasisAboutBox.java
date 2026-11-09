@@ -13,6 +13,7 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.event.WindowEvent;
+import java.text.MessageFormat;
 import java.util.Enumeration;
 import java.util.Properties;
 import javax.swing.JButton;
@@ -30,6 +31,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.util.SimpleTableModel;
+import org.weasis.launcher.Prerelease;
 
 public class WeasisAboutBox extends JDialog {
 
@@ -81,6 +83,7 @@ public class WeasisAboutBox extends JDialog {
         """
         <div align="center">
           <h2>%s %s</h2>
+          %s
           <a href="%s">%s</a><br>
           %s<br>
           %s <a href="%s">%s</a><br>
@@ -91,6 +94,7 @@ public class WeasisAboutBox extends JDialog {
             .formatted(
                 AppProperties.WEASIS_NAME,
                 AppProperties.WEASIS_VERSION,
+                previewLine(),
                 preferences.getProperty("weasis.releasenotes", ""),
                 Messages.getString("WeasisWin.release"),
                 preferences.getProperty("weasis.copyrights", ""),
@@ -151,5 +155,16 @@ public class WeasisAboutBox extends JDialog {
       dataArray[i][1] = sysProps.getProperty(dataArray[i][0].toString());
     }
     return dataArray;
+  }
+
+  /** The preview line of a build that is not a release, empty for a release. */
+  static String previewLine() {
+    Prerelease build = Prerelease.of(AppProperties.WEASIS_VERSION);
+    if (!build.isPreview()) {
+      return "";
+    }
+    return "<p><b>"
+        + MessageFormat.format(Messages.getString("WeasisAboutBox.preview"), build.label())
+        + "</b></p>";
   }
 }

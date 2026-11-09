@@ -42,7 +42,9 @@ jobs:
           tag: ${{ github.ref }}
           name: ${{ github.ref }}
           draft: false
-          prerelease: false
+          # a tag with a suffix (v5.0.0-beta.1) is a pre-release: invisible to the update check
+          # of the installed releases, listed apart on GitHub
+          prerelease: ${{ contains(github.ref_name, '-') }}
           body: ${{ steps.extract-release-notes.outputs.release_notes }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

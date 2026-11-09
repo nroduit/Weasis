@@ -76,6 +76,7 @@ import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -135,6 +136,7 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.setting.CoreSettings;
 import org.weasis.core.api.setting.Scope;
 import org.weasis.core.api.setting.Settings;
+import org.weasis.core.api.setting.SettingsFileStore;
 import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.ResourceUtil;
@@ -184,6 +186,7 @@ import org.weasis.core.ui.util.MaskingProfileSelector;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.util.StringUtil;
+import org.weasis.launcher.Prerelease;
 
 public class WeasisWin {
   private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWin.class);
@@ -908,6 +911,63 @@ public class WeasisWin {
       }
     }
     LOGGER.info("End of loading the GUI...");
+    showPreviewNoticeOnce();
+  }
+
+  /** The persistence key of the version whose preview notice the user acknowledged. */
+  static final String P_PREVIEW_ACKNOWLEDGED = "weasis.preview.acknowledged"; // NON-NLS
+
+  /**
+   * A preview or a development build says once per version that it is not for clinical use: a
+   * dialog at the first start of that version, acknowledged by the user, then the title and the
+   * About box keep the mark. {@code weasis:info} reports the same.
+   */
+  private void showPreviewNoticeOnce() {
+    Prerelease build = Prerelease.of(AppProperties.WEASIS_VERSION);
+    if (!build.isPreview() || GraphicsEnvironment.isHeadless()) {
+      return;
+    }
+    WProperties persistence = GuiUtils.getUICore().getLocalPersistence();
+    if (build.version().equals(persistence.getProperty(P_PREVIEW_ACKNOWLEDGED))) {
+      return;
+    }
+    GuiExecutor.execute(
+        () -> {
+          String message =
+              MessageFormat.format(
+                  Messages.getString("WeasisWin.preview_notice"),
+                  AppProperties.WEASIS_NAME,
+                  build.baseVersion(),
+                  build.label());
+          // modeless: a modal dialog at start would hold the event thread and the command
+          // server with it, so an agent driving a preview could not reach it before a click
+          JOptionPane pane = new JOptionPane(message, JOptionPane.WARNING_MESSAGE);
+          JDialog dialog =
+              pane.createDialog(
+                  frame,
+                  MessageFormat.format(
+                      Messages.getString("WeasisWin.preview_notice_title"), build.label()));
+          dialog.setModal(false);
+          dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+          pane.addPropertyChangeListener(
+              JOptionPane.VALUE_PROPERTY,
+              e -> {
+                if (e.getNewValue() != null && e.getNewValue() != JOptionPane.UNINITIALIZED_VALUE) {
+                  dialog.dispose();
+                }
+              });
+          dialog.addWindowListener(
+              new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                  persistence.setProperty(P_PREVIEW_ACKNOWLEDGED, build.version());
+                  // written now: an instance stopped from outside may skip its shutdown
+                  SettingsFileStore.machine().store(AppProperties.CORE_PLUGIN_ID, "", persistence);
+                  SettingsFileStore.machine().flushAll();
+                }
+              });
+          dialog.setVisible(true);
+        });
   }
 
   private JMenuBar createMenuBar() {
@@ -1575,6 +1635,10 @@ public class WeasisWin {
 
   private void updateTitle() {
     String title = AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION; // NON-NLS
+    Prerelease build = Prerelease.of(AppProperties.WEASIS_VERSION);
+    if (build.isPreview()) {
+      title += " — " + Messages.getString("WeasisWin.preview_title"); // NON-NLS
+    }
     if (IdentityMask.isSessionMasking()) {
       title += " — " + MaskingIndicator.label(IdentityMask.sessionProfile());
     }

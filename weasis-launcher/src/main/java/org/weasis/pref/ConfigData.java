@@ -35,6 +35,7 @@ import org.semver4j.Semver;
 import org.slf4j.LoggerFactory;
 import org.weasis.launcher.BootstrapContract;
 import org.weasis.launcher.FileUtil;
+import org.weasis.launcher.Prerelease;
 import org.weasis.launcher.Utils;
 import org.weasis.launcher.WeasisLauncher.Type;
 import org.weasis.launcher.integrity.Integrity;
@@ -276,7 +277,15 @@ public class ConfigData {
     addProperty(P_WEASIS_PATH, dirs.data().toString(), true);
     System.setProperty(P_WEASIS_PATH, dirs.data().toString());
     dirs.createDirectories();
-    if (portable == null) {
+    Prerelease build = Prerelease.of(getProperty(P_WEASIS_VERSION, null));
+    if (portable != null) {
+      // a portable installation keeps everything in its own folder
+    } else if (build.isPreview()) {
+      // a preview never moves the settings of the 4.x release the user still runs; the import
+      // of a 4.x installation is an explicit action of the preferences
+      LOGGER.info(
+          "Preview build {}: the one-time migration of ~/.weasis stays off", build.version());
+    } else {
       PlatformDirectories.migrateLegacyLayout(dirs.config(), dirs.data(), dirs.state());
     }
     LOGGER.info("Properties: {}", properties);
