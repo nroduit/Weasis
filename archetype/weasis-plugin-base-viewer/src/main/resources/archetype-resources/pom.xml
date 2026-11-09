@@ -2,31 +2,50 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <!-- A Weasis 5 plugin: a pf4j plugin jar whose manifest headers come from the Weasis parent pom
+       (Plugin-Id, Plugin-Version, Plugin-Requires, Weasis-Command-API) plus the ones below.
+       The Weasis modules are compile-time only (provided): the platform loads them. -->
   <parent>
     <artifactId>weasis-parent</artifactId>
     <groupId>org.weasis</groupId>
-    <!--suppress MavenPropertyInParent -->
-    <version>${revision}${changelist}</version>
-    <!-- Must be adapted to your relative path -->
+    <version>${weasisVersion}</version>
+    <!-- Resolved from the local or remote Maven repository (mvn install of the Weasis checkout);
+         the relative path only serves a checkout placed beside this project. -->
     <relativePath>../Weasis/weasis-parent/pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>${groupId}</groupId>
   <artifactId>${artifactId}</artifactId>
   <packaging>jar</packaging>
-  <name>Tool panel sample [${project.artifactId}]</name>
-  <properties>
-  </properties>
   <version>${version}</version>
+  <name>Sample plugin: a tool, a toolbar and a command namespace [${project.artifactId}]</name>
   <build>
     <plugins>
       <plugin>
-        <groupId>biz.aQute.bnd</groupId>
-        <artifactId>bnd-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Plugin-Provider>${groupId}</Plugin-Provider>
+              <Plugin-License>EPL-2.0 OR Apache-2.0</Plugin-License>
+              <!-- The command namespaces this plugin registers and the capabilities its verbs
+                   need: the plugin manager refuses a namespace or a capability not declared here. -->
+              <Weasis-Namespaces>sample</Weasis-Namespaces>
+              <Weasis-Capabilities></Weasis-Capabilities>
+            </manifestEntries>
+          </archive>
+        </configuration>
       </plugin>
     </plugins>
   </build>
   <dependencies>
+    <dependency>
+      <groupId>org.weasis.launcher</groupId>
+      <artifactId>weasis-launcher</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.weasis.core</groupId>
       <artifactId>weasis-core</artifactId>
@@ -38,6 +57,16 @@
       <artifactId>weasis-base-viewer2d</artifactId>
       <version>${project.parent.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.json</groupId>
+      <artifactId>jakarta.json-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

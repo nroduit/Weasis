@@ -32,7 +32,7 @@ You are welcome to reopen the discussion once the missing details are available.
 1. **Discuss significant changes first.** For anything beyond a small fix, open an issue or a [discussion](https://github.com/nroduit/Weasis/discussions) before investing time, so the approach can be aligned with the maintainers.
 2. **Keep pull requests focused.** One logical change per PR.
    Avoid mixing refactoring, formatting, and functional changes.
-3. **Follow the project conventions.** Read the README for build instructions and [AGENTS.md](AGENTS.md) for the code, test, writing and commit conventions.
+3. **Follow the project conventions.** Read [docs/README.md](docs/README.md) for the module map and the build, and [AGENTS.md](AGENTS.md) for the code, test, writing and commit conventions.
    Run `mvn spotless:apply` before committing (the build fails on formatting or missing license headers) and make sure `mvn -B -ntp verify` passes.
 4. **Explain the motivation.** The PR description must state what problem is being solved and why this approach was chosen — not just restate the diff.
 5. **Test your change.** Describe how it was verified (unit tests, manual testing with which dataset/OS).

@@ -4,9 +4,21 @@
   name="weasis-base-viewer"
   xmlns="https://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.1.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <requiredProperties>
+    <!-- The Weasis version the plugin is built against: the parent pom and the provided modules -->
+    <requiredProperty key="weasisVersion">
+      <defaultValue>5.0.0-SNAPSHOT</defaultValue>
+    </requiredProperty>
+  </requiredProperties>
   <fileSets>
     <fileSet filtered="true" packaged="true" encoding="UTF-8">
       <directory>src/main/java</directory>
+      <includes>
+        <include>**/*.java</include>
+      </includes>
+    </fileSet>
+    <fileSet filtered="true" packaged="true" encoding="UTF-8">
+      <directory>src/test/java</directory>
       <includes>
         <include>**/*.java</include>
       </includes>
@@ -15,6 +27,12 @@
       <directory>src/main/resources</directory>
       <includes>
         <include>**/*</include>
+      </includes>
+    </fileSet>
+    <fileSet filtered="true" encoding="UTF-8">
+      <directory></directory>
+      <includes>
+        <include>README.md</include>
       </includes>
     </fileSet>
   </fileSets>

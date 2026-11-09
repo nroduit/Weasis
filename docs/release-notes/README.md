@@ -10,7 +10,7 @@ pre-release tags are excluded from it (`.github_changelog_generator`).
 
 One text per pre-release, the same structure every time, written for the testers:
 
-```
+```text
 Weasis 5.0 beta N — preview, not for clinical use
 
 What this preview is

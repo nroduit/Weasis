@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
+import org.weasis.plugin.SingletonExtension;
 
 @Extension
 @SingletonExtension

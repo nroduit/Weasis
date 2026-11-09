@@ -53,6 +53,8 @@ cd archetype && mvn install                         # publish the archetypes loc
 mvn archetype:generate -DarchetypeCatalog=local     # weasis-plugin-{base,dicom}-viewer-archetype
 ```
 
+A generated plugin holds a tool, a toolbar and a command namespace with its namespace test; the guide is `docs/plugins.md`.
+
 ## Definition of done
 
 A change is complete when:
@@ -203,10 +205,14 @@ Rules for `docs/`:
 - **User-facing behavior belongs on the user site**: link to the relevant page (for example `https://nroduit.github.io/en/tutorials/mpr/`) instead of duplicating it.
 - Write docs in English (see [Writing conventions](#writing-conventions)), next to the module they describe.
 
-Existing docs:
+Existing docs (`docs/README.md` is the entry point and indexes them by subject):
 
 | Doc | Topic |
 |---|---|
+| `docs/README.md` | developer entry point: module map, build and run, index of the concept pages |
+| `docs/plugins.md` | writing a plugin: the pf4j model, extension points, a command namespace, loading, packaging and signing, changes from 4.x |
+| `docs/testing-with-commands.md` | scripts with `@expect`, the smoke suite, the tests a namespace carries |
+| `docs/release-notes/` | the tester notes of the pre-releases, one file per tag |
 | `weasis-core/docs/Animation-Export.md` | APNG / GIF / DICOM SC export of 3D rotations, cine loops and recordings |
 | `weasis-core/docs/ColorMap-Design.md` | JSON color maps for 2D, fusion and 3D |
 | `weasis-core/docs/Color-Management.md` | ICC profiles of color images, conversion to the display profile, profiles of written files |

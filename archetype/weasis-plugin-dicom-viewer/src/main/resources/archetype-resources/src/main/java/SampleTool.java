@@ -13,12 +13,13 @@ import org.weasis.core.ui.docking.PluginTool;
 
 public class SampleTool extends PluginTool {
 
+    public static final String TOOL_ID = "sample";
     public static final String BUTTON_NAME = "Sample Tool";
 
     private final JScrollPane rootPane = new JScrollPane();
 
     public SampleTool(Type type) {
-        super("sample", BUTTON_NAME, type, 120);
+        super(TOOL_ID, BUTTON_NAME, type, 120);
         setIcon(
             new FlatSVGIcon(
                 (Objects.requireNonNull(SampleTool.class.getResource("/icon/svg/tools.svg")))));

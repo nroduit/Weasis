@@ -36,7 +36,8 @@ See [CHANGELOG](CHANGELOG.md)
 
 ## Build Weasis
 
-See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-weasis)
+See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-weasis).
+Developers and plugin authors start at [docs/README.md](docs/README.md): the module map, how to build and run, the plugin guide and the concept pages of each module.
 
 ## General Features
 
