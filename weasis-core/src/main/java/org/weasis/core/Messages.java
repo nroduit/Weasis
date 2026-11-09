@@ -11,11 +11,15 @@ package org.weasis.core;
 
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import org.weasis.launcher.Translations;
 
 public class Messages {
   private static final String BUNDLE_NAME = "org.weasis.core.messages"; // NON-NLS
 
-  private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
+  // Through the launcher: weasis-core can be on the application class path, which does not see the
+  // translation packages
+  private static final ResourceBundle RESOURCE_BUNDLE =
+      Translations.getBundle(BUNDLE_NAME, Messages.class);
 
   private Messages() {}
 

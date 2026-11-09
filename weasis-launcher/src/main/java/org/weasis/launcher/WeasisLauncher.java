@@ -49,7 +49,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.ResourceBundle.Control;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -679,13 +678,12 @@ Starting PF4J Plugins...
     JComponent.setDefaultLocale(locale);
 
     if (Locale.ENGLISH.equals(locale)) {
-      // if English no need to load i18n bundle fragments
+      // if English no need to load the translation packages
       modulesi18n.clear();
     } else {
-      // Get the default i18n suffix for properties files
-      String suffix = Control.getControl(Control.FORMAT_PROPERTIES).toBundleName("", locale);
-      SwingResources.loadResources("/swing/basic" + suffix + ".properties"); // NON-NLS
-      SwingResources.loadResources("/swing/synth" + suffix + ".properties"); // NON-NLS
+      // The launcher strings and the Swing dialogs, before the first window is displayed
+      String cacheDir = serverProp.get(P_PLUGIN_DIR_PROP);
+      Translations.loadLauncher(cacheDir == null ? null : Path.of(cacheDir), modulesi18n);
     }
 
     String nativeLook;

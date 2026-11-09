@@ -145,6 +145,7 @@ A viewer feature usually touches a base class in `weasis-core` and its subclasse
   Every user-visible string goes through it, never as a literal in the code.
   Properties files matching `messages*.properties` under `src/main/java/` are picked up as resources by `weasis-parent/pom.xml`.
   The translations come from the external `weasis-i18n-dist` artifact at distribution time (see `weasis-distributions/pom.xml`): never edit a non-English `messages_*.properties` file in this repository.
+  At runtime each module gets its `<module>-i18n.jar.xz` package, cached in the `i18n` folder of the plugin cache and published through the shared library class loader (`Translations`, `WeasisPluginManager.loadCommonLibraries`); the launcher, including the Swing dialogs, reads `weasis-launcher-i18n` before its first window, and weasis-core gets its bundle through `Translations.getBundle` because it can be on the application class path.
 - **DICOM and IHE conformance**: follow the DICOM standard (tag semantics, value representations, attribute types and conditions, IOD and module rules) and the IHE Radiology profiles Weasis implements:
   - **BIR** (Basic Image Review, RAD TF-1 §31 / TF-2 §4.16): image annotations, lossy compression and presentation state indications, the required viewing tools and their behavior.
   - **PDI** (Portable Data for Imaging, RAD TF-1 §15 / TF-2 §4.47): reading and writing interchange media (DICOMDIR, file-set layout, viewer on media).

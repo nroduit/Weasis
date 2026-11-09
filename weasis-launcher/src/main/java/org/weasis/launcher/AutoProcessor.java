@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tukaani.xz.XZInputStream;
@@ -126,16 +125,7 @@ public class AutoProcessor {
 
     weasisLoader.setMax(pluginList.size());
 
-    // Get currently loaded plugins
-    Map<String, PluginWrapper> loadedPlugins = new HashMap<>();
-    for (PluginWrapper plugin : pluginManager.getPlugins()) {
-      loadedPlugins.put(plugin.getPluginId(), plugin);
-    }
-
-    boolean httpCache =
-        Boolean.TRUE
-            .toString()
-            .equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString()));
+    boolean httpCache = Translations.useHttpCache();
 
     int pluginIter = 0;
     Set<String> classpathJars = WeasisPluginManager.classpathJarNames();
@@ -164,8 +154,9 @@ public class AutoProcessor {
           if (pluginPath != null) {
             LOGGER.info("Downloaded plugin: {} to {}", pluginName, pluginPath);
           }
-          // Download translation bundles if available
-          downloadTranslationPlugin(cacheDir, pluginName, modulesi18n, httpCache, loadedPlugins);
+          // Download the translation package if available
+          Translations.fetch(
+              cacheDir, Translations.moduleOf(pluginName, modulesi18n), modulesi18n, httpCache);
         }
 
       } catch (Exception ex) {
@@ -235,7 +226,7 @@ public class AutoProcessor {
    * @param httpCache Whether to use HTTP cache
    * @return The path to the downloaded plugin, or null if failed
    */
-  private static Path downloadPlugin(
+  static Path downloadPlugin(
       Path pluginsDir, String location, String pluginName, boolean httpCache, boolean cacheable)
       throws IOException {
 
@@ -341,57 +332,6 @@ public class AutoProcessor {
       LOGGER.error("Failed to download plugin from: {}", location, e);
       FileUtil.delete(tmpPath);
       return null;
-    }
-  }
-
-  /**
-   * Downloads translation plugin if available.
-   *
-   * @param pluginsDir The plugins directory
-   * @param pluginName The base plugin name
-   * @param modulesi18n Translation modules properties
-   * @param httpCache Whether to use HTTP cache
-   * @param loadedPlugins Currently loaded plugins
-   */
-  private static void downloadTranslationPlugin(
-      Path pluginsDir,
-      String pluginName,
-      Properties modulesi18n,
-      boolean httpCache,
-      Map<String, PluginWrapper> loadedPlugins) {
-
-    if (modulesi18n.isEmpty()) {
-      return;
-    }
-
-    String i18nFileName = pluginName + "-i18n.jar.xz"; // NON-NLS
-    String versionQualifier = modulesi18n.getProperty(i18nFileName);
-
-    if (versionQualifier != null) {
-      String baseURL = System.getProperty(ConfigData.P_WEASIS_I18N);
-      if (baseURL != null) {
-        String uri = baseURL + (baseURL.endsWith("/") ? i18nFileName : "/" + i18nFileName);
-        String i18nPluginName = pluginName + "-i18n";
-
-        try {
-          // Check if translation plugin needs update
-          PluginWrapper existingPlugin = loadedPlugins.get(i18nPluginName);
-          boolean needsDownload = true;
-
-          if (existingPlugin != null) {
-            String existingVersion = existingPlugin.getDescriptor().getVersion();
-            needsDownload = !versionQualifier.equals(existingVersion);
-          }
-
-          if (needsDownload) {
-            downloadPlugin(pluginsDir, uri, i18nPluginName, httpCache, true);
-            LOGGER.info("Downloaded translation plugin: {}", i18nPluginName);
-          }
-
-        } catch (Exception e) {
-          LOGGER.error("Cannot download translation plugin: {}", uri, e);
-        }
-      }
     }
   }
 

@@ -46,8 +46,8 @@ public class SwingResources {
    *
    * <p>Pattern which is converted to the xxx.titleAndMnemonic key: (xxxTitle, xxxMnemonic)
    */
-  public static void loadResources(String path) {
-    InputStream inStream = WeasisLauncher.class.getResourceAsStream(path);
+  public static void loadResources(ClassLoader loader, String path) {
+    InputStream inStream = loader.getResourceAsStream(path);
     if (inStream != null) {
       Properties swingDialogs = new Properties();
       try {

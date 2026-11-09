@@ -183,13 +183,14 @@ public class WeasisPluginManager extends DefaultPluginManager {
   }
 
   /**
-   * Publishes the shared library JARs (e.g. weasis-core) of {@link ConfigData#F_LIB_FOLDER} through
-   * {@link #getCommonLibClassLoader()}, the parent of every plugin class loader. Must be called
-   * after {@code AutoProcessor} has downloaded them and before plugins are loaded and started,
-   * otherwise plugins fail with {@code NoClassDefFoundError} on {@code org.weasis.core.*} classes
-   * on the first launch with a clean cache. Idempotent: each JAR is added at most once, and jars
-   * already present on the application classpath (packaged app: {@code common-lib/} in the app
-   * image) are skipped so they stay AOT-cacheable.
+   * Publishes the shared library JARs (e.g. weasis-core) of {@link ConfigData#F_LIB_FOLDER}, and
+   * the translation packages of {@link ConfigData#F_TRANSLATION_FOLDER}, through {@link
+   * #getCommonLibClassLoader()}, the parent of every plugin class loader. Must be called after
+   * {@code AutoProcessor} has downloaded them and before plugins are loaded and started, otherwise
+   * plugins fail with {@code NoClassDefFoundError} on {@code org.weasis.core.*} classes on the
+   * first launch with a clean cache. Idempotent: each JAR is added at most once, and jars already
+   * present on the application classpath (packaged app: {@code common-lib/} in the app image) are
+   * skipped so they stay AOT-cacheable.
    */
   public void loadCommonLibraries() {
     // Threads started from here on inherit a context class loader that sees the shared libraries.
@@ -200,22 +201,28 @@ public class WeasisPluginManager extends DefaultPluginManager {
       return;
     }
 
-    Path libDir = pluginsDir.resolveSibling(ConfigData.F_LIB_FOLDER);
-    if (!Files.isDirectory(libDir)) {
-      LOGGER.debug("Common library directory does not exist: {}", libDir);
-      return;
-    }
-
     Set<String> classpathJars = classpathJarNames();
-    try (Stream<Path> stream = Files.list(libDir)) {
-      stream
-          .filter(path -> path.toString().endsWith(".jar"))
-          .forEach(path -> addCommonLibrary(path, classpathJars));
-    } catch (IOException e) {
-      LOGGER.error("Failed to list common libraries from: {}", libDir, e);
-    }
+    addCommonLibraries(pluginsDir.resolveSibling(ConfigData.F_LIB_FOLDER), classpathJars);
+    // The translation packages: the messages_<lang>.properties of a plugin or of a shared library
+    // are found by its own Messages through the parent delegation of its class loader
+    addCommonLibraries(pluginsDir.resolveSibling(ConfigData.F_TRANSLATION_FOLDER), classpathJars);
     if (commonLibExtensionFinder != null) {
       commonLibExtensionFinder.invalidateIndex();
+    }
+  }
+
+  private void addCommonLibraries(Path dir, Set<String> classpathJars) {
+    if (!Files.isDirectory(dir)) {
+      LOGGER.debug("Common library directory does not exist: {}", dir);
+      return;
+    }
+    try (Stream<Path> stream = Files.list(dir)) {
+      stream
+          .filter(path -> path.toString().endsWith(".jar"))
+          .sorted()
+          .forEach(path -> addCommonLibrary(path, classpathJars));
+    } catch (IOException e) {
+      LOGGER.error("Failed to list common libraries from: {}", dir, e);
     }
   }
 
