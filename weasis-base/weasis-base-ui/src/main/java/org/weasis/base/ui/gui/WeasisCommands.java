@@ -30,7 +30,9 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.launcher.CommandProtocol;
+import org.weasis.launcher.Prerelease;
 import org.weasis.launcher.integrity.Integrity;
+import org.weasis.plugin.manager.LoadedPlugins;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -61,6 +63,12 @@ public class WeasisCommands implements CommandExtension {
     Map<String, String> specs = new LinkedHashMap<>();
     specs.put("name", String.valueOf(AppProperties.WEASIS_NAME)); // NON-NLS
     specs.put("version", String.valueOf(AppProperties.WEASIS_VERSION)); // NON-NLS
+    Prerelease build = Prerelease.of(AppProperties.WEASIS_VERSION);
+    specs.put("preview", String.valueOf(build.isPreview())); // NON-NLS
+    if (build.isPreview()) {
+      specs.put("prerelease", build.suffix()); // NON-NLS
+      specs.put("packageVersion", build.baseVersion()); // NON-NLS
+    }
     specs.put("installationPath", String.valueOf(AppProperties.WEASIS_PATH)); // NON-NLS
     specs.put("tempPath", String.valueOf(AppProperties.APP_TEMP_DIR)); // NON-NLS
     specs.put("profile", String.valueOf(AppProperties.WEASIS_PROFILE)); // NON-NLS
@@ -100,6 +108,12 @@ public class WeasisCommands implements CommandExtension {
     boolean all;
 
     @Option(
+        names = "--plugins",
+        description = "The loaded-plugins manifest: policy, lock, fingerprint and every plugin.")
+    @Since("5.0")
+    boolean plugins;
+
+    @Option(
         names = "--integrity",
         description =
             "The integrity of the configuration and the plugins: the level reached (signed, "
@@ -121,6 +135,11 @@ public class WeasisCommands implements CommandExtension {
         if (report != null) {
           json.add("integrity", integrityJson(report)); // NON-NLS
         }
+        if (plugins) {
+          JsonArrayBuilder list = Json.createArrayBuilder();
+          LoadedPlugins.current().plugins().forEach(p -> list.add(PluginCommands.json(p)));
+          json.add("plugins", PluginCommands.policyJson().add("plugins", list)); // NON-NLS
+        }
         print(json.build().toString());
       } else {
         specs.forEach((k, v) -> print("  " + k + ": " + v));
@@ -135,6 +154,30 @@ public class WeasisCommands implements CommandExtension {
                   + report.entries()
                   + " verified");
           report.failures().forEach(f -> print("    failed: " + f)); // NON-NLS
+        }
+        if (plugins) {
+          LoadedPlugins manifest = LoadedPlugins.current();
+          print(
+              "  plugins: policy "
+                  + (manifest.policy() == null ? "" : manifest.policy().key()) // NON-NLS
+                  + (manifest.locked() ? " (locked)" : "")
+                  + ", fingerprint "
+                  + manifest.fingerprint());
+          manifest
+              .plugins()
+              .forEach(
+                  p ->
+                      print(
+                          "    "
+                              + p.id()
+                              + "@"
+                              + p.version()
+                              + " "
+                              + p.source()
+                              + " "
+                              + p.tier().key()
+                              + " "
+                              + p.state()));
         }
       }
     }

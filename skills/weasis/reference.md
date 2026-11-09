@@ -824,6 +824,159 @@ Usage: `mpr:volumes [-h] [--json]`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 
 
+## plugins
+
+The plugins of this instance: the loaded set with its sources, tiers and states, the site policy, and the user's own plugins (import, remove, enable, disable), effective at the next start.
+
+### plugins:add (since 5.0)
+
+Imports a plugin jar into the user folder: reads its manifest and signature, says its id, version, tier and capabilities, refuses what the policy or the checks refuse; loaded at the next start.
+
+Usage: `plugins:add [-h] [--json] --file=<input-path>`
+
+Needs: file read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --file | input-path |  | The plugin jar. |
+
+| Result | Type | Description |
+|---|---|---|
+| id | string | plugin id |
+| version | string | plugin version |
+| source | string | package, site or user |
+| tier | string | core, verified, site or unverified |
+| state | string | started, disabled, refused, candidate or failed |
+| file | string | the jar |
+| sha256 | string | the digest of the jar, when computed |
+| publisherKeyId | string | the key that signed it |
+| capabilities | array | the declared capabilities |
+| reason | string | why it is not started |
+| restart | boolean | always true: loaded at the next start |
+
+### plugins:disable (since 5.0)
+
+Disables a user plugin for the next start.
+
+Usage: `plugins:disable [-h] [--json] <plugin-id>`
+
+| Parameter | Type | Description |
+|---|---|---|
+| <plugin-id> | string | The plugin id, from 'list'. |
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+| Result | Type | Description |
+|---|---|---|
+| id | string | plugin id |
+| enabled | boolean | the state recorded |
+| restart | boolean | always true |
+
+### plugins:enable (since 5.0)
+
+Enables a user plugin for the next start.
+
+Usage: `plugins:enable [-h] [--json] <plugin-id>`
+
+| Parameter | Type | Description |
+|---|---|---|
+| <plugin-id> | string | The plugin id, from 'list'. |
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+| Result | Type | Description |
+|---|---|---|
+| id | string | plugin id |
+| enabled | boolean | the state recorded |
+| restart | boolean | always true |
+
+### plugins:info (since 5.0)
+
+One plugin of the manifest, by id.
+
+Usage: `plugins:info [-h] [--json] <plugin-id>`
+
+| Parameter | Type | Description |
+|---|---|---|
+| <plugin-id> | string | The plugin id, from 'list'. |
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+| Result | Type | Description |
+|---|---|---|
+| id | string | plugin id |
+| version | string | plugin version |
+| source | string | package, site or user |
+| tier | string | core, verified, site or unverified |
+| state | string | started, disabled, refused, candidate or failed |
+| file | string | the jar |
+| sha256 | string | the digest of the jar, when computed |
+| publisherKeyId | string | the key that signed it |
+| capabilities | array | the declared capabilities |
+| reason | string | why it is not started |
+
+### plugins:list (since 5.0)
+
+The loaded-plugins manifest of this start: every plugin with its source (package, site, user), tier (core, verified, site, unverified), capabilities and state, the site policy, whether the set is locked, and the fingerprint of the set.
+
+Usage: `plugins:list [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+| Result | Type | Description |
+|---|---|---|
+| policy | string | the site policy in force |
+| locked | boolean | whether the set is frozen by the site |
+| fingerprint | string | SHA-256 of the started set, for the validation record |
+| userFolder | string | the drop-in folder of the user |
+| manifest | string | the loaded-plugins.json file |
+| plugins | array | the plugins, each as 'info' prints it |
+
+### plugins:remove (since 5.0)
+
+Removes a user plugin: its jar and its registry entry.
+
+Usage: `plugins:remove [-h] [--json] <plugin-id>`
+
+| Parameter | Type | Description |
+|---|---|---|
+| <plugin-id> | string | The plugin id, from 'list'. |
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+| Result | Type | Description |
+|---|---|---|
+| id | string | plugin id |
+| removed | boolean | always true |
+| restart | boolean | always true |
+
+### plugins:verify (since 5.0)
+
+Checks the user's plugins again now: the digest of each jar against its import and its signature against the site keys; what would change at the next start.
+
+Usage: `plugins:verify [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+| Result | Type | Description |
+|---|---|---|
+| plugins | array | per imported plugin: id, file, ok, sha256, tier, reason |
+| candidates | array | jars of the folder not imported |
+
+
 ## print
 
 Print a viewer layout: destinations, page, preview rendering, sending.
@@ -1620,15 +1773,15 @@ Usage: `view2d:graphics [-h] [--json] [--no-measurements] [--after=<n>] [--layer
 
 Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.
 
-Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--grid=<grid-id> | --best-for=<n> | --panes=<n>]`
+Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--panes=<n> | --grid=<grid-id> | --best-for=<n>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --panes | integer |  | Applies the best grid for this number of panes. |
 | --grid | grid-id |  | Applies this grid, by id from the bare verb. |
 | --best-for | integer |  | Returns the best grid for this number of panes without applying it. (since 5.0) |
-| --panes | integer |  | Applies the best grid for this number of panes. |
 
 ### view2d:hang (since 5.0)
 
@@ -1890,11 +2043,12 @@ The application itself: version, installation and the main window.
 
 Version and installation details, the version being one of the keys. The 4.x option -v still answers with the version alone.
 
-Usage: `weasis:info [-h] [--integrity] [--json]`
+Usage: `weasis:info [-h] [--integrity] [--json] [--plugins]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
+| --plugins | boolean |  | The loaded-plugins manifest: policy, lock, fingerprint and every plugin. (since 5.0) |
 | --integrity | boolean |  | The integrity of the configuration and the plugins: the level reached (signed, digest, none), the signing key, the entries verified and the failures. (since 5.0) |
 
 ### weasis:minimize (since 5.0)

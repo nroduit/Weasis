@@ -16,6 +16,8 @@
     <!-- $ mvn clean install -Drevision=4.2.2 -Dchangelist=-SNAPSHOT -->
     <revision>5.0.0</revision>
     <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
+    <!-- Keep equal to CommandManager.API_VERSION: CommandManagerTest checks it -->
+    <weasis.command.api>2.29</weasis.command.api>
 
     <java-version>25</java-version>
     <jdk-version>25</jdk-version>
@@ -154,6 +156,9 @@
                 <Plugin-Description>${project.name}</Plugin-Description>
                 <Plugin-Provider>Weasis Team</Plugin-Provider>
                 <Plugin-License>EPL-2.0 OR Apache-2.0</Plugin-License>
+                <!-- The command API the plugin was built against, read by the plugin manager
+                     (org.weasis.core.api.command.CommandManager.API_VERSION) -->
+                <Weasis-Command-API>${weasis.command.api}</Weasis-Command-API>
               </manifestEntries>
             </archive>
           </configuration>

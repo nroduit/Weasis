@@ -15,6 +15,9 @@ import org.pf4j.PluginDescriptor;
 public class ManifestPluginDescriptor extends DefaultPluginDescriptor {
   private String nativeFolder;
   private String nativeFiles;
+  private String namespaces;
+  private String capabilities;
+  private String commandApi;
 
   public ManifestPluginDescriptor(PluginDescriptor base) {
     super(
@@ -42,5 +45,32 @@ public class ManifestPluginDescriptor extends DefaultPluginDescriptor {
 
   public void setNativeFiles(String nativeFiles) {
     this.nativeFiles = nativeFiles;
+  }
+
+  /** The {@code Weasis-Namespaces} header: the command namespaces the plugin may register. */
+  public String getNamespaces() {
+    return namespaces;
+  }
+
+  public void setNamespaces(String namespaces) {
+    this.namespaces = namespaces;
+  }
+
+  /** The {@code Weasis-Capabilities} header: what the plugin declares it needs. */
+  public String getCapabilities() {
+    return capabilities;
+  }
+
+  public void setCapabilities(String capabilities) {
+    this.capabilities = capabilities;
+  }
+
+  /** The {@code Weasis-Command-API} header: the command API the plugin was built against. */
+  public String getCommandApi() {
+    return commandApi;
+  }
+
+  public void setCommandApi(String commandApi) {
+    this.commandApi = commandApi;
   }
 }

@@ -16,23 +16,32 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.pf4j.CompoundPluginDescriptorFinder;
 import org.pf4j.DefaultPluginManager;
 import org.pf4j.ExtensionFactory;
 import org.pf4j.ExtensionFinder;
+import org.pf4j.PluginDescriptor;
 import org.pf4j.PluginDescriptorFinder;
 import org.pf4j.PluginFactory;
 import org.pf4j.PluginLoader;
+import org.pf4j.PluginRuntimeException;
 import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;
 import org.pf4j.VersionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.launcher.BootstrapContract;
+import org.weasis.plugin.manager.LoadedPlugin;
+import org.weasis.plugin.manager.LoadedPlugins;
+import org.weasis.plugin.manager.PluginGate;
+import org.weasis.plugin.manager.PluginPolicy;
 import org.weasis.pref.ConfigData;
 
 public class WeasisPluginManager extends DefaultPluginManager {
@@ -44,8 +53,85 @@ public class WeasisPluginManager extends DefaultPluginManager {
   // Created by createExtensionFinder(), which pf4j calls lazily from the superclass.
   private CommonLibExtensionFinder commonLibExtensionFinder;
 
+  private PluginGate gate;
+  private final Map<Path, LoadedPlugin> decisions = new LinkedHashMap<>();
+  private Path userRoot;
+
   public WeasisPluginManager() {
     super();
+  }
+
+  /** The gate every jar passes before its classes load; without one everything is loaded. */
+  public void setGate(PluginGate gate) {
+    this.gate = gate;
+  }
+
+  public PluginGate getGate() {
+    return gate;
+  }
+
+  /** Adds the drop-in folder of the user as a second root, its jars judged by the gate. */
+  public void addUserRoot(Path root) {
+    this.userRoot = root;
+    if (root != null && Files.isDirectory(root)) {
+      pluginsRoots.add(root);
+    }
+  }
+
+  public Path getUserRoot() {
+    return userRoot;
+  }
+
+  /** The descriptor of a jar that is not loaded, for an import dialog or a verb. */
+  public PluginDescriptor describe(Path jar) {
+    return getPluginDescriptorFinder().find(jar);
+  }
+
+  @Override
+  protected PluginWrapper loadPluginFromPath(Path pluginPath) {
+    if (gate == null) {
+      return super.loadPluginFromPath(pluginPath);
+    }
+    PluginDescriptor descriptor = getPluginDescriptorFinder().find(pluginPath);
+    PluginGate.Decision decision = gate.decide(pluginPath, descriptor);
+    decisions.put(pluginPath, decision.plugin());
+    if (!decision.load()) {
+      throw new PluginRuntimeException(
+          "Plugin {} not loaded: {}", descriptor.getPluginId(), decision.plugin().reason());
+    }
+    return super.loadPluginFromPath(pluginPath);
+  }
+
+  /**
+   * The manifest of this start: every jar the gate saw with its state after the start, and the jars
+   * the roots held that pf4j never offered (a candidate of the drop-in folder).
+   */
+  public LoadedPlugins manifest(Path cacheDir) {
+    List<LoadedPlugin> lines = new ArrayList<>();
+    for (Map.Entry<Path, LoadedPlugin> e : decisions.entrySet()) {
+      LoadedPlugin line = e.getValue();
+      if (LoadedPlugin.STARTED.equals(line.state())) {
+        PluginWrapper wrapper = getPlugin(line.id());
+        if (wrapper == null) {
+          line = line.withState(LoadedPlugin.FAILED, "not loaded");
+        } else if (wrapper.getPluginState() != PluginState.STARTED) {
+          Throwable failure = wrapper.getFailedException();
+          line =
+              line.withState(
+                  wrapper.getPluginState() == PluginState.DISABLED
+                      ? LoadedPlugin.DISABLED
+                      : LoadedPlugin.FAILED,
+                  failure == null ? wrapper.getPluginState().toString() : failure.getMessage());
+        }
+      }
+      lines.add(line);
+    }
+    PluginPolicy policy = gate == null ? null : gate.policy();
+    return new LoadedPlugins(
+        lines,
+        policy == null ? null : policy.policy(),
+        policy != null && policy.lock(),
+        cacheDir == null ? null : cacheDir.resolve(LoadedPlugins.FILE));
   }
 
   public WeasisPluginManager(Path pluginsDir) {

@@ -22,4 +22,12 @@ class VocabularyTest {
   void theWeasisNamespaceFollowsTheVocabulary() {
     assertEquals(List.of(), CommandVocabulary.violations("weasis", new WeasisCommands()));
   }
+
+  @Test
+  void thePluginsNamespaceFollowsTheVocabularyAndDeclaresItsResults() {
+    assertEquals(
+        List.of(), CommandVocabulary.violations("plugins", new PluginCommands())); // NON-NLS
+    assertEquals(
+        List.of(), CommandVocabulary.resultViolations("plugins", new PluginCommands())); // NON-NLS
+  }
 }

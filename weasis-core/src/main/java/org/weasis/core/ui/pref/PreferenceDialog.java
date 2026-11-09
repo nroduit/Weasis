@@ -113,6 +113,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
     list.add(dicomPrefView);
     DrawPrefView drawPrefView = new DrawPrefView(this);
     list.add(drawPrefView);
+    list.add(new PluginsPrefView());
 
     PluginManager pluginManager = GuiUtils.getUICore().getPluginManager();
     if (pluginManager != null) {

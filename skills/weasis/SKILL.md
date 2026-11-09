@@ -51,8 +51,15 @@ weasis-cli help view2d:capture               # one verb: synopsis, parameters an
 weasis-cli help --markdown                   # the full reference, always current
 weasis-cli help --json                       # the same as a JSON descriptor (commands.json)
                                              # each verb carries `result`: the keys of its answer
+weasis-cli weasis:info --json                # version, paths, API; `preview: true` with `prerelease`
+                                             # (beta.1, SNAPSHOT) on a build that is not for clinical use
 weasis-cli weasis:info --integrity           # the integrity of the plugin set: level (signed, digest,
                                              # none), signing key, entries verified, failures
+weasis-cli plugins:list --json               # the loaded-plugins manifest: policy, lock, fingerprint,
+                                             # every plugin with source, trust tier, state and reason;
+                                             # plugins:add --file <jar> / remove / enable / disable <id>
+                                             # change the user's plugins for the next start, within
+                                             # the site policy (core-only refuses them)
 weasis-cli --version                         # client version, command API and protocol versions
 ```
 

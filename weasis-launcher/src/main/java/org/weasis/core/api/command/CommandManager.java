@@ -29,6 +29,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.pf4j.PluginManager;
+import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.event.Event;
@@ -152,6 +153,11 @@ public class CommandManager {
 
     for (CommandExtension extension : extensions) {
       String namespace = extension.getNamespace();
+      String refusal = ownership(extension, namespace);
+      if (refusal != null) {
+        LOGGER.warn("Command namespace {} refused: {}", namespace, refusal);
+        continue;
+      }
       if (commands.putIfAbsent(namespace, extension) == null) {
         LOGGER.info("Registered command namespace: {}", namespace);
         extension.getNamespaceAliases().forEach(alias -> namespaceAliases.put(alias, namespace));
@@ -160,6 +166,59 @@ public class CommandManager {
         LOGGER.warn("Command namespace already registered: {}", namespace);
       }
     }
+  }
+
+  /**
+   * The consistency checks of a plugin's namespace (M5 of the plugin manager): a plugin that is not
+   * part of the package registers verbs only in the namespaces its manifest declares ({@code
+   * Weasis-Namespaces}), never in a namespace of the package, and its verbs need no capability the
+   * manifest does not declare ({@code Weasis-Capabilities}). Null when the namespace may be
+   * registered, else the reason.
+   */
+  String ownership(CommandExtension extension, String namespace) {
+    if (!(pluginManager instanceof org.weasis.plugin.WeasisPluginManager manager)) {
+      return null;
+    }
+    PluginWrapper wrapper = manager.whichPlugin(extension.getClass());
+    if (wrapper == null
+        || manager.getGate() == null
+        || manager.getGate().isPackage(wrapper.getPluginPath())) {
+      return null;
+    }
+    java.util.Set<String> declared =
+        org.weasis.plugin.manager.PluginGate.namespacesOf(wrapper.getDescriptor());
+    if (!declared.contains(namespace.toLowerCase(java.util.Locale.ROOT))) {
+      return "the plugin "
+          + wrapper.getPluginId()
+          + " does not declare the namespace "
+          + namespace
+          + " (Weasis-Namespaces)";
+    }
+    CommandExtension owner = commands.get(namespace);
+    if (owner != null) {
+      PluginWrapper other = manager.whichPlugin(owner.getClass());
+      return "the namespace "
+          + namespace
+          + " belongs to "
+          + (other == null ? "the application" : other.getPluginId());
+    }
+    java.util.List<String> declaredCapabilities =
+        org.weasis.plugin.manager.PluginGate.capabilitiesOf(wrapper.getDescriptor());
+    Object model = extension.getCommandModel();
+    if (model != null) {
+      for (picocli.CommandLine.Model.CommandSpec spec : CommandModel.verbSpecs(model)) {
+        for (Capability needed : CommandModel.capabilities(spec)) {
+          if (!declaredCapabilities.contains(needed.name())) {
+            return "the verb "
+                + spec.name()
+                + " needs the capability "
+                + needed.name()
+                + " which the plugin does not declare (Weasis-Capabilities)";
+          }
+        }
+      }
+    }
+    return null;
   }
 
   public void reloadCommands() {

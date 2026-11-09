@@ -79,6 +79,10 @@ import org.weasis.core.api.event.EventBus;
 import org.weasis.core.api.event.WeasisEvents;
 import org.weasis.launcher.LookAndFeels.ReadableLookAndFeelInfo;
 import org.weasis.plugin.WeasisPluginManager;
+import org.weasis.plugin.manager.LoadedPlugins;
+import org.weasis.plugin.manager.PluginGate;
+import org.weasis.plugin.manager.PluginPolicy;
+import org.weasis.plugin.manager.UserPluginRegistry;
 import org.weasis.pref.ConfigData;
 
 /**
@@ -151,6 +155,32 @@ public class WeasisLauncher {
       Path pluginsDir = Paths.get(cacheDir, ConfigData.F_PLUGIN_FOLDER);
       WeasisPluginManager pluginManager = configData.getPluginManager();
       pluginManager.addPluginCachePath(pluginsDir);
+      // The plugin manager: the site policy read from the served configuration before any
+      // plugin class loads, the user's drop-in folder as a second root judged by the gate
+      PluginPolicy pluginPolicy =
+          PluginPolicy.of(
+              key -> configData.getProperty(key, null),
+              Optional.ofNullable(configData.getProperty(ConfigData.P_WEASIS_CONFIG_DIR, null))
+                  .map(Path::of)
+                  .orElse(null));
+      UserPluginRegistry registry =
+          pluginPolicy.dropInDir() == null
+              ? null
+              : new UserPluginRegistry(pluginPolicy.dropInDir()).load();
+      Map<String, String> lockedSet =
+          pluginPolicy.lock() ? PluginGate.readLockedSet(pluginPolicy.lockedList()) : null;
+      pluginManager.setGate(
+          new PluginGate(
+              pluginPolicy, pluginsDir, registry, CommandManager.API_VERSION, lockedSet));
+      if (pluginPolicy.policy() != PluginPolicy.Policy.OFF
+          && pluginPolicy.policy() != PluginPolicy.Policy.CORE_ONLY) {
+        pluginManager.addUserRoot(pluginPolicy.dropInDir());
+      }
+      LOGGER.info(
+          "Plugin policy {}{}, user plugins in {}",
+          pluginPolicy.policy().key(),
+          pluginPolicy.lock() ? " (locked set)" : "",
+          pluginPolicy.dropInDir());
 
       loader.setPluginManager(serverProp, pluginManager, modulesi18n);
       loader.writeLabel(
@@ -174,6 +204,20 @@ public class WeasisLauncher {
 
       // Start plugins (instrumented: logs per-plugin *PERF* start times to rank slow activators)
       pluginManager.startPluginsTimed();
+      LoadedPlugins manifest = pluginManager.manifest(Paths.get(cacheDir)).store();
+      LoadedPlugins.install(manifest);
+      manifest
+          .plugins()
+          .forEach(
+              p ->
+                  LOGGER.info(
+                      "Plugin {}@{} source={} tier={} state={}{}",
+                      p.id(),
+                      p.version(),
+                      p.source(),
+                      p.tier().key(),
+                      p.state(),
+                      p.reason() == null ? "" : " (" + p.reason() + ")"));
 
       // End of splash screen
       loader.close();

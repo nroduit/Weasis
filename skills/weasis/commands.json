@@ -3145,6 +3145,408 @@
       ]
     },
     {
+      "name": "plugins",
+      "description": "The plugins of this instance: the loaded set with its sources, tiers and states, the site policy, and the user's own plugins (import, remove, enable, disable), effective at the next start.",
+      "since": "5.0",
+      "verbs": [
+        {
+          "name": "add",
+          "description": "Imports a plugin jar into the user folder: reads its manifest and signature, says its id, version, tier and capabilities, refuses what the policy or the checks refuse; loaded at the next start.",
+          "since": "5.0",
+          "usage": "plugins:add [-h] [--json] --file=<input-path>",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--file"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": true,
+              "description": "The plugin jar.",
+              "needs": [
+                "file-read"
+              ]
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "id",
+                "type": "string",
+                "description": "plugin id"
+              },
+              {
+                "name": "version",
+                "type": "string",
+                "description": "plugin version"
+              },
+              {
+                "name": "source",
+                "type": "string",
+                "description": "package, site or user"
+              },
+              {
+                "name": "tier",
+                "type": "string",
+                "description": "core, verified, site or unverified"
+              },
+              {
+                "name": "state",
+                "type": "string",
+                "description": "started, disabled, refused, candidate or failed"
+              },
+              {
+                "name": "file",
+                "type": "string",
+                "description": "the jar"
+              },
+              {
+                "name": "sha256",
+                "type": "string",
+                "description": "the digest of the jar, when computed"
+              },
+              {
+                "name": "publisherKeyId",
+                "type": "string",
+                "description": "the key that signed it"
+              },
+              {
+                "name": "capabilities",
+                "type": "array",
+                "description": "the declared capabilities"
+              },
+              {
+                "name": "reason",
+                "type": "string",
+                "description": "why it is not started"
+              },
+              {
+                "name": "restart",
+                "type": "boolean",
+                "description": "always true: loaded at the next start"
+              }
+            ]
+          }
+        },
+        {
+          "name": "disable",
+          "description": "Disables a user plugin for the next start.",
+          "since": "5.0",
+          "usage": "plugins:disable [-h] [--json] <plugin-id>",
+          "parameters": [
+            {
+              "label": "<plugin-id>",
+              "type": "string",
+              "arity": "1",
+              "description": "The plugin id, from 'list'."
+            }
+          ],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "id",
+                "type": "string",
+                "description": "plugin id"
+              },
+              {
+                "name": "enabled",
+                "type": "boolean",
+                "description": "the state recorded"
+              },
+              {
+                "name": "restart",
+                "type": "boolean",
+                "description": "always true"
+              }
+            ]
+          }
+        },
+        {
+          "name": "enable",
+          "description": "Enables a user plugin for the next start.",
+          "since": "5.0",
+          "usage": "plugins:enable [-h] [--json] <plugin-id>",
+          "parameters": [
+            {
+              "label": "<plugin-id>",
+              "type": "string",
+              "arity": "1",
+              "description": "The plugin id, from 'list'."
+            }
+          ],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "id",
+                "type": "string",
+                "description": "plugin id"
+              },
+              {
+                "name": "enabled",
+                "type": "boolean",
+                "description": "the state recorded"
+              },
+              {
+                "name": "restart",
+                "type": "boolean",
+                "description": "always true"
+              }
+            ]
+          }
+        },
+        {
+          "name": "info",
+          "description": "One plugin of the manifest, by id.",
+          "since": "5.0",
+          "usage": "plugins:info [-h] [--json] <plugin-id>",
+          "parameters": [
+            {
+              "label": "<plugin-id>",
+              "type": "string",
+              "arity": "1",
+              "description": "The plugin id, from 'list'."
+            }
+          ],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "id",
+                "type": "string",
+                "description": "plugin id"
+              },
+              {
+                "name": "version",
+                "type": "string",
+                "description": "plugin version"
+              },
+              {
+                "name": "source",
+                "type": "string",
+                "description": "package, site or user"
+              },
+              {
+                "name": "tier",
+                "type": "string",
+                "description": "core, verified, site or unverified"
+              },
+              {
+                "name": "state",
+                "type": "string",
+                "description": "started, disabled, refused, candidate or failed"
+              },
+              {
+                "name": "file",
+                "type": "string",
+                "description": "the jar"
+              },
+              {
+                "name": "sha256",
+                "type": "string",
+                "description": "the digest of the jar, when computed"
+              },
+              {
+                "name": "publisherKeyId",
+                "type": "string",
+                "description": "the key that signed it"
+              },
+              {
+                "name": "capabilities",
+                "type": "array",
+                "description": "the declared capabilities"
+              },
+              {
+                "name": "reason",
+                "type": "string",
+                "description": "why it is not started"
+              }
+            ]
+          }
+        },
+        {
+          "name": "list",
+          "description": "The loaded-plugins manifest of this start: every plugin with its source (package, site, user), tier (core, verified, site, unverified), capabilities and state, the site policy, whether the set is locked, and the fingerprint of the set.",
+          "since": "5.0",
+          "usage": "plugins:list [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "policy",
+                "type": "string",
+                "description": "the site policy in force"
+              },
+              {
+                "name": "locked",
+                "type": "boolean",
+                "description": "whether the set is frozen by the site"
+              },
+              {
+                "name": "fingerprint",
+                "type": "string",
+                "description": "SHA-256 of the started set, for the validation record"
+              },
+              {
+                "name": "userFolder",
+                "type": "string",
+                "description": "the drop-in folder of the user"
+              },
+              {
+                "name": "manifest",
+                "type": "string",
+                "description": "the loaded-plugins.json file"
+              },
+              {
+                "name": "plugins",
+                "type": "array",
+                "description": "the plugins, each as 'info' prints it"
+              }
+            ]
+          }
+        },
+        {
+          "name": "remove",
+          "description": "Removes a user plugin: its jar and its registry entry.",
+          "since": "5.0",
+          "usage": "plugins:remove [-h] [--json] <plugin-id>",
+          "parameters": [
+            {
+              "label": "<plugin-id>",
+              "type": "string",
+              "arity": "1",
+              "description": "The plugin id, from 'list'."
+            }
+          ],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "id",
+                "type": "string",
+                "description": "plugin id"
+              },
+              {
+                "name": "removed",
+                "type": "boolean",
+                "description": "always true"
+              },
+              {
+                "name": "restart",
+                "type": "boolean",
+                "description": "always true"
+              }
+            ]
+          }
+        },
+        {
+          "name": "verify",
+          "description": "Checks the user's plugins again now: the digest of each jar against its import and its signature against the site keys; what would change at the next start.",
+          "since": "5.0",
+          "usage": "plugins:verify [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "plugins",
+                "type": "array",
+                "description": "per imported plugin: id, file, ok, sha256, tier, reason"
+              },
+              {
+                "name": "candidates",
+                "type": "array",
+                "description": "jars of the folder not imported"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "print",
       "description": "Print a viewer layout: destinations, page, preview rendering, sending.",
       "since": "5.0",
@@ -6338,7 +6740,7 @@
         {
           "name": "grid",
           "description": "Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.",
-          "usage": "view2d:grid [-h] [--json] [--view=<view-id>] [--grid=<grid-id> | --best-for=<n> | --panes=<n>]",
+          "usage": "view2d:grid [-h] [--json] [--view=<view-id>] [--panes=<n> | --grid=<grid-id> | --best-for=<n>]",
           "parameters": [],
           "options": [
             {
@@ -6360,6 +6762,20 @@
               "arity": "1",
               "required": false,
               "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
+            },
+            {
+              "names": [
+                "--panes"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Applies the best grid for this number of panes.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
             },
             {
               "names": [
@@ -6385,20 +6801,6 @@
               "required": true,
               "description": "Returns the best grid for this number of panes without applying it.",
               "since": "5.0",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
-                "--panes"
-              ],
-              "label": "<n>",
-              "type": "integer",
-              "arity": "1",
-              "required": true,
-              "description": "Applies the best grid for this number of panes.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"
@@ -7604,7 +8006,7 @@
         {
           "name": "info",
           "description": "Version and installation details, the version being one of the keys. The 4.x option -v still answers with the version alone.",
-          "usage": "weasis:info [-h] [--integrity] [--json]",
+          "usage": "weasis:info [-h] [--integrity] [--json] [--plugins]",
           "parameters": [],
           "options": [
             {
@@ -7616,6 +8018,17 @@
               "arity": "0",
               "required": false,
               "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--plugins"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "The loaded-plugins manifest: policy, lock, fingerprint and every plugin.",
+              "since": "5.0"
             },
             {
               "names": [

@@ -633,4 +633,17 @@ class CommandManagerTest {
                 CommandAudit.optionNames(new String[] {"--a", "1", "--b=2", "-x", "-"})),
         () -> assertEquals("a\\\"b\\\\c\\n", CommandAudit.escape("a\"b\\c\n")));
   }
+
+  /** The manifest header every plugin carries names the API of this launcher, not an old one. */
+  @Test
+  void theCommandApiOfTheParentPomIsTheOneOfTheLauncher() throws java.io.IOException {
+    java.nio.file.Path pom = java.nio.file.Path.of("..", "weasis-parent", "pom.xml");
+    org.junit.jupiter.api.Assumptions.assumeTrue(java.nio.file.Files.isRegularFile(pom));
+    java.util.regex.Matcher m =
+        java.util.regex.Pattern.compile("<weasis\\.command\\.api>([^<]+)<")
+            .matcher(java.nio.file.Files.readString(pom));
+    org.junit.jupiter.api.Assertions.assertTrue(
+        m.find(), "weasis.command.api in weasis-parent/pom.xml");
+    org.junit.jupiter.api.Assertions.assertEquals(CommandManager.API_VERSION, m.group(1).trim());
+  }
 }

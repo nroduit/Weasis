@@ -484,6 +484,15 @@ public final class CommandModel {
     return description == null ? "" : description;
   }
 
+  /** The specifications of the verbs of a model, the root alone when it has no subcommands. */
+  static List<CommandSpec> verbSpecs(Object model) {
+    CommandSpec root = newCommandLine(model).getCommandSpec();
+    if (root.subcommands().isEmpty()) {
+      return List.of(root);
+    }
+    return visibleVerbs(root).toList();
+  }
+
   /** The verbs of the model in name order, each with its description; empty without subcommands. */
   public static List<CommandHelp.Entry> verbs(Object model) {
     return visibleVerbs(newCommandLine(model).getCommandSpec())

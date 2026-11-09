@@ -15,6 +15,35 @@
       "category": "PLUGIN_CONFIG"
     },
     {
+      "code": "weasis.plugins.policy",
+      "value": "any",
+      "description": "Plugin manager: which plugins a user may add beside the package (core-only | verified | site | any | off); read by the launcher before any plugin loads, served by the site",
+      "type": "A",
+      "category": "PLUGIN_CONFIG"
+    },
+    {
+      "code": "weasis.plugins.lock",
+      "value": "false",
+      "description": "Plugin manager: when true the loaded set must equal weasis.plugins.locked (locked-plugins.json), any difference is refused",
+      "type": "A",
+      "javaType": "BOOLEAN",
+      "category": "PLUGIN_CONFIG"
+    },
+    {
+      "code": "weasis.plugins.publishers",
+      "value": "",
+      "description": "Plugin manager: the publishers the site trusts, a publishers.json path or inline id=base64 Ed25519 keys separated by commas",
+      "type": "A",
+      "category": "PLUGIN_CONFIG"
+    },
+    {
+      "code": "weasis.plugins.deny",
+      "value": "",
+      "description": "Plugin manager: capabilities a plugin may not declare on this site, comma separated (SEND_DICOM, NETWORK_WRITE...)",
+      "type": "A",
+      "category": "PLUGIN_CONFIG"
+    },
+    {
       "code": "weasis.plugins.max.level",
       "value": "130",
       "description": "The maximum numeric level of the weasis.plugins.N entries processed for this profile",
