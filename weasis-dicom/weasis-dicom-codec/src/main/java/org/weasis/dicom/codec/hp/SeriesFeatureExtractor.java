@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -26,20 +27,24 @@ import java.util.stream.Collectors;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
+import org.dcm4che3.util.TagUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.codec.hp.DerivationTables.MrSample;
+import org.weasis.dicom.codec.hp.FeatureSelector.Key;
 import org.weasis.dicom.codec.hp.SeriesFeatures.Anatomy;
 import org.weasis.dicom.codec.hp.SeriesFeatures.Contrast;
 import org.weasis.dicom.codec.hp.SeriesFeatures.CtKernel;
 import org.weasis.dicom.codec.hp.SeriesFeatures.Interest;
+import org.weasis.dicom.codec.hp.SeriesFeatures.MrWeighting;
 import org.weasis.dicom.codec.hp.SeriesFeatures.Orientation;
 import org.weasis.dicom.codec.hp.SeriesFeatures.PetCorrection;
 import org.weasis.dicom.codec.hp.SeriesFeatures.Role;
@@ -137,15 +142,12 @@ public final class SeriesFeatureExtractor {
 
     Role role = role(modality, sopClass, imageType, tokens);
     boolean image = role != Role.DOCUMENT && role != Role.KEY_IMAGES;
-    return new SeriesFeatures(
-        modality,
-        sopClass,
-        role,
-        image ? orientation(sample) : Orientation.UNKNOWN,
-        anatomy(first, dcm),
-        laterality(series, dcm, shared),
-        view(dcm),
-        contrast(dcm, tokens),
+    Orientation orientation = image ? orientation(sample) : Orientation.UNKNOWN;
+    Anatomy anatomy = anatomy(first, dcm);
+    String laterality = laterality(series, dcm, shared);
+    String view = view(dcm);
+    Contrast contrast = contrast(dcm, tokens);
+    MrWeighting weighting =
         "MR".equals(modality) // NON-NLS
             ? tables.mrWeighting(
                 new MrSample(
@@ -157,16 +159,196 @@ public final class SeriesFeatureExtractor {
                     te,
                     ti,
                     bValue(sample, dcm, shared)))
-            : null,
-        "CT".equals(modality) ? kernel(series, dcm, shared) : null, // NON-NLS
-        image ? sliceThickness(sample, shared) : null,
-        image ? spacing(sample) : null,
-        "PT".equals(modality) ? petCorrection(dcm) : null, // NON-NLS
-        temporal(series, first, dcm),
+            : null;
+    CtKernel kernel = "CT".equals(modality) ? kernel(series, dcm, shared) : null; // NON-NLS
+    Double thickness = image ? sliceThickness(sample, shared) : null;
+    Double spacing = image ? spacing(sample) : null;
+    PetCorrection pet = "PT".equals(modality) ? petCorrection(dcm) : null; // NON-NLS
+    Temporal temporal = temporal(series, first, dcm);
+    Map<String, Provenance> provenance = new LinkedHashMap<>();
+    provenance.put(Key.ROLE.id(), roleProvenance(role, sopClass, imageType, tokens));
+    if (image && orientation != Orientation.UNKNOWN) {
+      provenance.put(
+          Key.ORIENTATION.id(),
+          header(Tag.ImageOrientationPatient, "the plane of " + sample.size() + " sampled images"));
+    }
+    if (anatomy != null) {
+      provenance.put(Key.ANATOMY.id(), anatomyProvenance(dcm, anatomy));
+    }
+    if (laterality != null) {
+      provenance.put(Key.LATERALITY.id(), lateralityProvenance(series, dcm, shared, laterality));
+    }
+    if (view != null) {
+      provenance.put(Key.VIEW.id(), viewProvenance(dcm, view));
+    }
+    contrastProvenance(dcm, tokens, contrast, provenance);
+    if (weighting != null) {
+      provenance.put(
+          Key.MR_WEIGHTING.id(),
+          Provenance.table(
+              DerivationTables.MR_WEIGHTING,
+              "scanning sequence, timing, inversion, diffusion, image type and description through the weighting table"));
+    }
+    if (kernel != null) {
+      provenance.put(Key.CT_KERNEL.id(), header(Tag.ConvolutionKernel, kernel.kernel()));
+      provenance.put(
+          Key.CT_KERNEL_FAMILY.id(),
+          Provenance.table(DerivationTables.KERNELS, "kernel " + kernel.kernel()));
+    }
+    if (thickness != null) {
+      provenance.put(
+          Key.SLICE_THICKNESS.id(), header(Tag.SliceThickness, String.valueOf(thickness)));
+    }
+    if (spacing != null) {
+      provenance.put(
+          Key.SPACING.id(),
+          Provenance.computed(
+              "spacing", // NON-NLS
+              "median distance between the sampled image positions",
+              List.of(header(Tag.ImagePositionPatient, "Image Position (Patient)"))));
+    }
+    if (pet != null) {
+      provenance.put(
+          Key.PET_ATTENUATION_CORRECTED.id(), header(Tag.CorrectedImage, "Corrected Image"));
+      provenance.put(
+          Key.PET_SUV_CAPABLE.id(),
+          header(Tag.CorrectedImage, "Corrected Image, Units and Decay Correction"));
+    }
+    Provenance temporalProvenance = temporalProvenance(series, first, dcm, temporal);
+    if (temporalProvenance != null) {
+      provenance.put(Key.TEMPORAL.id(), temporalProvenance);
+    }
+    return new SeriesFeatures(
+        modality,
+        sopClass,
+        role,
+        orientation,
+        anatomy,
+        laterality,
+        view,
+        contrast,
+        weighting,
+        kernel,
+        thickness,
+        spacing,
+        pet,
+        temporal,
         text(series, first, Tag.FrameOfReferenceUID),
         tokens,
         Optional.ofNullable(interest.interestOf(series)).orElse(Interest.NONE),
-        images.size());
+        images.size(),
+        provenance);
+  }
+
+  // ---- provenance: where each derived feature came from, said at derivation
+
+  static Provenance header(int tag, String detail) {
+    return Provenance.header(TagUtils.toString(tag), detail);
+  }
+
+  /**
+   * The role follows Image Type and the SOP class, except the dose report read in a description.
+   */
+  static Provenance roleProvenance(
+      Role role, String sopClass, List<String> imageType, List<String> tokens) {
+    Set<String> types = upper(imageType);
+    if (role == Role.DOSE_REPORT
+        && !types.contains("DOSE_INFO") // NON-NLS
+        && !types.contains("DOSE_REPORT") // NON-NLS
+        && isSecondaryCapture(sopClass)
+        && tokens.contains("DOSE")) { // NON-NLS
+      return Provenance.heuristic(
+          "role.dose.description", "DOSE in the description of a secondary capture"); // NON-NLS
+    }
+    if (role == Role.KEY_IMAGES || role == Role.DOCUMENT) {
+      return header(Tag.SOPClassUID, sopClass == null ? "" : sopClass);
+    }
+    return header(Tag.ImageType, String.join("\\", imageType));
+  }
+
+  /** A coded region is a header; a region mapped from Body Part Examined goes through a table. */
+  static Provenance anatomyProvenance(Attributes dcm, Anatomy anatomy) {
+    if (dcm != null && dcm.containsValue(Tag.AnatomicRegionSequence)) {
+      return header(
+          Tag.AnatomicRegionSequence,
+          anatomy.meaning() == null ? anatomy.notation() : anatomy.meaning());
+    }
+    return Provenance.table(
+        "anatomic-regions", // NON-NLS
+        "Body Part Examined mapped to the region " + anatomy.notation());
+  }
+
+  static Provenance lateralityProvenance(
+      MediaSeries<DicomImageElement> series, Attributes dcm, Attributes shared, String value) {
+    if (string(dcm, Tag.ImageLaterality) != null) {
+      return header(Tag.ImageLaterality, value);
+    }
+    Object series0 = series.getTagValue(TagD.get(Tag.Laterality));
+    if (series0 instanceof String || string(dcm, Tag.Laterality) != null) {
+      return header(Tag.Laterality, value);
+    }
+    return header(Tag.FrameLaterality, value);
+  }
+
+  static Provenance viewProvenance(Attributes dcm, String value) {
+    if (dcm != null && dcm.getNestedDataset(Tag.ViewCodeSequence) != null) {
+      return header(Tag.ViewCodeSequence, value);
+    }
+    return header(Tag.ViewPosition, value);
+  }
+
+  /**
+   * The agent is a header when the Contrast/Bolus module says so, a heuristic when a token does.
+   */
+  static void contrastProvenance(
+      Attributes dcm, List<String> tokens, Contrast contrast, Map<String, Provenance> provenance) {
+    if (contrast == null || contrast.agent() == null || contrast == Contrast.UNKNOWN) {
+      return;
+    }
+    boolean module =
+        dcm != null
+            && (dcm.containsValue(Tag.ContrastBolusAgent)
+                || dcm.containsValue(Tag.ContrastBolusAgentSequence)
+                || dcm.containsValue(Tag.ContrastBolusRoute)
+                || dcm.containsValue(Tag.ContrastBolusVolume)
+                || dcm.contains(Tag.ContrastBolusAgent));
+    provenance.put(
+        Key.CONTRAST.id(),
+        module
+            ? header(Tag.ContrastBolusAgent, "Contrast/Bolus module")
+            : Provenance.heuristic(
+                "contrast.description", "C+, CE or CONTRAST in the description")); // NON-NLS
+    if (contrast.phase() != null) {
+      provenance.put(
+          Key.CONTRAST_PHASE.id(),
+          Provenance.heuristic(
+              "contrast.phase.description", // NON-NLS
+              "the phase is not a DICOM attribute of the image: read from the description"));
+    }
+  }
+
+  static Provenance temporalProvenance(
+      MediaSeries<DicomImageElement> series,
+      DicomImageElement first,
+      Attributes dcm,
+      Temporal temporal) {
+    if (dcm == null || temporal == Temporal.STATIC) {
+      return null;
+    }
+    if (temporal == Temporal.DYNAMIC) {
+      return header(Tag.NumberOfTemporalPositions, "temporal positions");
+    }
+    boolean cineTiming =
+        dcm.containsValue(Tag.CineRate)
+            || dcm.containsValue(Tag.FrameTime)
+            || dcm.containsValue(Tag.FrameTimeVector)
+            || dcm.containsValue(Tag.RecommendedDisplayFrameRate);
+    if (cineTiming) {
+      return header(Tag.FrameTime, "frame timing of a multi-frame image");
+    }
+    return Provenance.heuristic(
+        "temporal.multiframe.modality", // NON-NLS
+        "a multi-frame XA, RF or US object without frame timing is read as a cine run");
   }
 
   private static List<DicomImageElement> sample(List<DicomImageElement> images) {

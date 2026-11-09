@@ -24,11 +24,13 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.api.setting.Scope;
 import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.LayeredDocument;
 import org.weasis.core.api.util.ListDocument;
 import org.weasis.dicom.codec.hp.FeatureSelector;
+import org.weasis.dicom.codec.hp.SeriesFeatures;
 
 /**
  * The correction log: every time a user puts another series in a cell a protocol hung, what the
@@ -70,7 +72,34 @@ public final class Corrections {
       String chosen,
       JsonObject expectedFeatures,
       JsonObject chosenFeatures,
-      List<FeatureSelector> proposal) {
+      List<FeatureSelector> proposal,
+      String overriddenKind) {
+
+    /** A correction that does not say what kind of value it overrode. */
+    public Correction(
+        String id,
+        String protocol,
+        int imageSet,
+        int displaySet,
+        int cell,
+        String expected,
+        String chosen,
+        JsonObject expectedFeatures,
+        JsonObject chosenFeatures,
+        List<FeatureSelector> proposal) {
+      this(
+          id,
+          protocol,
+          imageSet,
+          displaySet,
+          cell,
+          expected,
+          chosen,
+          expectedFeatures,
+          chosenFeatures,
+          proposal,
+          null);
+    }
 
     public JsonObject toJson() {
       JsonObjectBuilder json =
@@ -88,7 +117,11 @@ public final class Corrections {
           .add("chosenFeatures", chosenFeatures); // NON-NLS
       JsonArrayBuilder rule = Json.createArrayBuilder();
       proposal.forEach(s -> rule.add(s.toJson()));
-      return json.add("proposal", rule).build(); // NON-NLS
+      json.add("proposal", rule); // NON-NLS
+      if (overriddenKind != null) {
+        json.add("overriddenKind", overriddenKind); // NON-NLS
+      }
+      return json.build();
     }
 
     public static Correction fromJson(JsonObject json) {
@@ -109,8 +142,27 @@ public final class Corrections {
           json.getString("chosen", null), // NON-NLS
           json.getJsonObject("expectedFeatures"), // NON-NLS
           json.getJsonObject("chosenFeatures"), // NON-NLS
-          proposal);
+          proposal,
+          json.getString("overriddenKind", null)); // NON-NLS
     }
+  }
+
+  /**
+   * The kind of provenance of the value the correction overrode: the feature the proposed rule
+   * tests, read on the series the engine had chosen; null when nothing is known. "3 of 5
+   * corrections overrode a heuristic" is what this makes countable.
+   */
+  static String overriddenKind(SeriesFeatures expected, List<FeatureSelector> proposal) {
+    if (expected == null || proposal == null) {
+      return null;
+    }
+    for (FeatureSelector selector : proposal) {
+      Provenance provenance = expected.provenanceOf(selector.feature().id());
+      if (provenance != null) {
+        return provenance.kind().key();
+      }
+    }
+    return null;
   }
 
   private Corrections() {}
@@ -150,12 +202,16 @@ public final class Corrections {
           Map<String, Integer> cells = new TreeMap<>();
           Map<String, Integer> displaySets = new TreeMap<>();
           Map<String, Integer> rules = new TreeMap<>();
+          Map<String, Integer> kinds = new TreeMap<>();
           String last = null;
           for (Correction c : list) {
             cells.merge(String.valueOf(c.cell()), 1, Integer::sum);
             displaySets.merge(String.valueOf(c.displaySet()), 1, Integer::sum);
             if (!c.proposal().isEmpty()) {
               rules.merge(ruleOf(c.proposal()), 1, Integer::sum);
+            }
+            if (c.overriddenKind() != null) {
+              kinds.merge(c.overriddenKind(), 1, Integer::sum);
             }
             if (last == null || c.id().compareTo(last) > 0) {
               last = c.id();
@@ -167,7 +223,8 @@ public final class Corrections {
                   .add("corrections", list.size()) // NON-NLS
                   .add("cells", counts(cells)) // NON-NLS
                   .add("displaySets", counts(displaySets)) // NON-NLS
-                  .add("rules", counts(rules)); // NON-NLS
+                  .add("rules", counts(rules)) // NON-NLS
+                  .add("overriddenKinds", counts(kinds)); // NON-NLS
           if (last != null) {
             entry.add("last", last); // NON-NLS
           }

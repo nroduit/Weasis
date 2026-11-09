@@ -10,7 +10,10 @@
 package org.weasis.dicom.codec.hp;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import org.weasis.core.api.provenance.Provenance;
+import org.weasis.core.api.provenance.Sourced;
 
 /**
  * The normalized features of a series, derived once from its attributes so that hanging protocol
@@ -55,7 +58,71 @@ public record SeriesFeatures(
     String frameOfReference,
     List<String> descriptionTokens,
     Interest interest,
-    int imageCount) {
+    int imageCount,
+    Map<String, Provenance> provenance) {
+
+  public SeriesFeatures {
+    provenance = provenance == null ? Map.of() : Map.copyOf(provenance);
+  }
+
+  /** The features without provenance, for the callers that predate it and the tests. */
+  public SeriesFeatures(
+      String modality,
+      String sopClass,
+      Role role,
+      Orientation orientation,
+      Anatomy anatomy,
+      String laterality,
+      String view,
+      Contrast contrast,
+      MrWeighting mrWeighting,
+      CtKernel ctKernel,
+      Double sliceThickness,
+      Double spacing,
+      PetCorrection petCorrection,
+      Temporal temporal,
+      String frameOfReference,
+      List<String> descriptionTokens,
+      Interest interest,
+      int imageCount) {
+    this(
+        modality,
+        sopClass,
+        role,
+        orientation,
+        anatomy,
+        laterality,
+        view,
+        contrast,
+        mrWeighting,
+        ctKernel,
+        sliceThickness,
+        spacing,
+        petCorrection,
+        temporal,
+        frameOfReference,
+        descriptionTokens,
+        interest,
+        imageCount,
+        Map.of());
+  }
+
+  /** Where a feature came from, by the id of its key; null for a raw or unknown one. */
+  public Provenance provenanceOf(String key) {
+    return provenance.get(key);
+  }
+
+  /** A feature with its provenance. */
+  public Sourced<Object> sourced(FeatureSelector.Key key) {
+    return new Sourced<>(key.read(this), provenance.get(key.id()));
+  }
+
+  /** The provenance of every derived feature, by key id. */
+  public jakarta.json.JsonObject provenanceJson() {
+    jakarta.json.JsonObjectBuilder json = jakarta.json.Json.createObjectBuilder();
+    provenance.forEach((key, p) -> json.add(key, p.toJsonBuilder()));
+    return json.build();
+  }
 
   /** What the series is for, from Image Type (0008,0008) and the SOP class. */
   public enum Role {
@@ -174,7 +241,8 @@ public record SeriesFeatures(
         frameOfReference,
         descriptionTokens,
         interest,
-        imageCount);
+        imageCount,
+        provenance);
   }
 
   /** True when the series is a stack of images of one plane that MPR and 3D can use. */

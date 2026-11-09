@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.hp.HangingProtocolDocuments;
@@ -36,6 +37,7 @@ import org.weasis.dicom.codec.hp.HangingPlan.Match;
 import org.weasis.dicom.codec.hp.PriorStudy;
 import org.weasis.dicom.codec.hp.ProtocolDeriver;
 import org.weasis.dicom.codec.hp.ProtocolJson;
+import org.weasis.dicom.codec.hp.SeriesFeatures;
 import org.weasis.dicom.codec.hp.StudySeries;
 import org.weasis.dicom.codec.hp.WeasisExtensions;
 import org.weasis.dicom.explorer.DicomModel;
@@ -56,6 +58,23 @@ public final class ActiveHanging {
     ViewerPlugin<?> target =
         viewer != null ? viewer : GuiUtils.getUICore().getSelectedPlugin().orElse(null);
     return target == null ? Optional.empty() : HangingPlanApplier.activeOn(target);
+  }
+
+  /** The features of a series of the hanging's study or priors, as the engine saw them. */
+  public static Optional<SeriesFeatures> featuresOf(Applied applied, String seriesUid) {
+    if (seriesUid == null
+        || !(applied.context().model() instanceof DicomModel model)
+        || applied.context().study() == null) {
+      return Optional.empty();
+    }
+    List<StudySeries> all =
+        new ArrayList<>(HpCommands.studySeries(model, applied.context().study()));
+    HpCommands.priorsOf(model, applied.context().study(), all).forEach(p -> all.addAll(p.series()));
+    return all.stream()
+        .filter(s -> seriesUid.equals(s.uid()))
+        .map(StudySeries::features)
+        .filter(Objects::nonNull)
+        .findFirst();
   }
 
   /**
@@ -172,7 +191,8 @@ public final class ActiveHanging {
                 ? JsonValue.EMPTY_JSON_OBJECT
                 : expected.features().toJson(),
             chosen.features() == null ? JsonValue.EMPTY_JSON_OBJECT : chosen.features().toJson(),
-            proposal);
+            proposal,
+            Corrections.overriddenKind(expected == null ? null : expected.features(), proposal));
     Corrections.record(correction);
 
     List<HangingPlan.Alternative> alternatives = new ArrayList<>();

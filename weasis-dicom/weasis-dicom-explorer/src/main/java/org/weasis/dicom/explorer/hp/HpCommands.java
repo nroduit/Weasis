@@ -70,7 +70,9 @@ import org.weasis.dicom.codec.hp.ProtocolExchange;
 import org.weasis.dicom.codec.hp.ProtocolExchange.Imported;
 import org.weasis.dicom.codec.hp.ProtocolJson;
 import org.weasis.dicom.codec.hp.ProtocolJson.Document;
+import org.weasis.dicom.codec.hp.ReasonProvenance;
 import org.weasis.dicom.codec.hp.SeriesFeatureExtractor;
+import org.weasis.dicom.codec.hp.SeriesFeatures;
 import org.weasis.dicom.codec.hp.StudySeries;
 import org.weasis.dicom.codec.hp.ValidationReport;
 import org.weasis.dicom.explorer.DicomModel;
@@ -928,7 +930,18 @@ public class HpCommands implements CommandExtension {
                     applied.plan().toJson().getJsonArray("steps").getJsonObject(applied.step());
                 for (JsonObject c : step.getJsonArray("cells").getValuesAs(JsonObject.class)) {
                   if (cell == null || c.getInt("cell") == cell) { // NON-NLS
-                    cells.add(c);
+                    // the evidence: each rule with the value it tested and where that value came
+                    // from
+                    SeriesFeatures features =
+                        ActiveHanging.featuresOf(applied, c.getString("series", null)).orElse(null);
+                    List<String> rules =
+                        c.getJsonArray("reasons").getValuesAs(JsonString.class).stream()
+                            .map(JsonString::getString)
+                            .toList();
+                    cells.add(
+                        Json.createObjectBuilder(c)
+                            .add(
+                                "evidence", ReasonProvenance.evidence(rules, features))); // NON-NLS
                   }
                 }
                 return json.add("cells", cells).build(); // NON-NLS
@@ -1428,7 +1441,10 @@ public class HpCommands implements CommandExtension {
         if (number != null) {
           entry.add("number", number); // NON-NLS
         }
-        list.add(entry.add("features", s.features().toJson())); // NON-NLS
+        list.add(
+            entry
+                .add("features", s.features().toJson()) // NON-NLS
+                .add("provenance", s.features().provenanceJson())); // NON-NLS
       }
       return json.add("series", list); // NON-NLS
     }

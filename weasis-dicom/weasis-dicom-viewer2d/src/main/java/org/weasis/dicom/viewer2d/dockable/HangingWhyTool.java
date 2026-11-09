@@ -42,6 +42,8 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.hp.HangingPlan.Alternative;
 import org.weasis.dicom.codec.hp.HangingPlan.CellPlan;
+import org.weasis.dicom.codec.hp.ReasonProvenance;
+import org.weasis.dicom.codec.hp.SeriesFeatures;
 import org.weasis.dicom.explorer.hp.ActiveHanging;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier.Applied;
@@ -169,7 +171,8 @@ public class HangingWhyTool extends PluginTool implements SeriesViewerListener {
             Messages.getString("HangingWhyTool.match"),
             c.match().name().toLowerCase(Locale.ROOT),
             c.score()));
-    c.reasons().forEach(reasons::addElement);
+    SeriesFeatures features = ActiveHanging.featuresOf(applied, c.series()).orElse(null);
+    c.reasons().forEach(r -> reasons.addElement(ReasonProvenance.annotate(r, features)));
     for (Alternative a : c.alternatives()) {
       alternatives.addElement(
           new Choice(

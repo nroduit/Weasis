@@ -211,7 +211,8 @@ line naming the current spelling. Use the current one everywhere.
    `hp:sets [--view <id>]` is the active hanging of a viewer (protocol, step of how many, cells
    with view ids, candidates of the study); `hp:group --next | --previous | --index <n> |
    --protocol <id>` shows another reading step or hangs another candidate on the same viewer,
-   what the protocol bar of the viewer does; `hp:explain [--cell <n>]` gives the rules, score and
+   what the protocol bar of the viewer does; `hp:explain [--cell <n>]` gives the rules (each with its `evidence`: the feature tested, the value
+   and its provenance, a `header`, a `table` or a `heuristic`), score and
    alternatives behind each cell; `hp:show --id <protocol-id>` prints a protocol as JSON and
    `hp:validate --file <file>` checks a protocol file for rule errors before trying it.
    `hp:save --name <text> [--dry-run]` is *Save as protocol*: it derives a user protocol from
