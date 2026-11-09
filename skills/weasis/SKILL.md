@@ -24,7 +24,7 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.27 and protocol
+This instance runs Weasis development with command API 2.28 and protocol
 2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, mpr, print, redact, script, state, subtraction, ui, view2d, view3d, weasis, workspace, wsi.
 
 Check the connection first:
@@ -106,6 +106,9 @@ line naming the current spelling. Use the current one everywhere.
    `dicom:info` lists the `viewerTypes` able to display the series; `weasis-cli -y dicom:open
    --series <uid> --viewer-type mpr --wait` opens it in a new view of that type (`2d`, `mpr`,
    `3d`, …) and returns once the volume is built, so you can capture right away.
+   `dicom:echo --node <id|description|aet>` checks that a configured archive answers (one
+   C-ECHO with the TLS of its node; a failure names an untrusted or expired certificate, a
+   protocol mismatch or a closed port) before a query or a retrieve is attempted.
    `dicom:load --path <path>` loads files from disk and says what it queued; add
    `--wait first-series` to answer once one series is ready, or `--wait all` for everything.
 3. **Look**: `weasis-cli view2d:capture --out /tmp/weasis/view.png`, then read the PNG. The result

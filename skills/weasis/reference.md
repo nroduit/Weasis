@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.27, protocol 2, application development.
+Command API 2.28, protocol 2, application development.
 
 ## color
 
@@ -147,6 +147,19 @@ Needs: file read
 ## dicom
 
 The DICOM explorer: loading, listing, opening and closing studies, and reading attributes.
+
+### dicom:echo (since 5.0)
+
+C-ECHO to a configured DICOM node or printer, with the TLS of its document: the readiness probe of an archive before a query, a retrieve or a send. The answer gives the round trip; a failure names what failed (an untrusted or expired certificate, no protocol in common, a closed port) instead of a generic connection error.
+
+Usage: `dicom:echo [-h] [--json] [--aet=<aet>] --node=<node> [--timeout=<seconds>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --node | string |  | The node: its id, its description or its AE title, from the DICOM nodes. |
+| --aet | string |  | Calling AE title (default: weasis.aet, else the first calling node, else WEASIS_AE). |
+| --timeout | integer | 10 | Connect and accept time-out (default: 10). |
 
 ### dicom:info (since 5.0)
 
@@ -1707,16 +1720,16 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 | --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
-| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
 
 ### Events of view2d:
 

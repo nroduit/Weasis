@@ -133,6 +133,12 @@ public class SendDicomView extends ExportDicomView {
       connectOptions.setConnectTimeout(3000);
       connectOptions.setAcceptTimeout(5000);
       params.setConnectOptions(connectOptions);
+      try {
+        node.applyTls(params);
+      } catch (java.io.IOException e) {
+        showErrorMessage(null, null, new DicomState(Status.UnableToProcess, e.getMessage(), null));
+        return false;
+      }
       final DicomState state =
           CStore.process(
               params, new DicomNode(weasisAet), node.getDicomNode(), files, dicomProgress);

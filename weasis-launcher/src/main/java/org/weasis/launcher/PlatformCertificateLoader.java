@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.Enumeration;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -108,8 +109,21 @@ public class PlatformCertificateLoader {
     // Create and set SSL context
     SSLContext sslContext = createSSLContext(mergedTrustStore);
     SSLContext.setDefault(sslContext);
+    merged = mergedTrustStore;
 
     return mergedTrustStore;
+  }
+
+  private static volatile KeyStore merged;
+
+  /**
+   * The trust store the default SSL context was built from (the platform certificates merged with
+   * the JDK ones), once the asynchronous set-up is done; empty when it failed. DICOM over TLS
+   * authenticates the archive with the same certificates as HTTPS.
+   */
+  public static Optional<KeyStore> trustStore() {
+    awaitReady();
+    return Optional.ofNullable(merged);
   }
 
   public static KeyStore loadPlatformTrustStore() throws Exception {

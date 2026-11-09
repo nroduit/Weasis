@@ -786,6 +786,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       connectOptions.setConnectTimeout(3000);
       connectOptions.setAcceptTimeout(5000);
       params.setConnectOptions(connectOptions);
+      try {
+        node.applyTls(params);
+      } catch (java.io.IOException e) {
+        showTlsError(e);
+        return;
+      }
       if (fuzzy) {
         params.setQueryOptions(EnumSet.of(QueryOption.FUZZY));
       }
@@ -1170,6 +1176,16 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     return null;
   }
 
+  /** The trust store of a node cannot be read: said before any association is tried. */
+  private void showTlsError(java.io.IOException e) {
+    LOGGER.warn("TLS configuration of the node", e);
+    JOptionPane.showMessageDialog(
+        WinUtil.getValidComponent(WinUtil.getParentWindow(this)),
+        e.getMessage(),
+        getTitle(),
+        JOptionPane.ERROR_MESSAGE);
+  }
+
   private List<Attributes> findSeries(DefaultDicomNode node, String studyUid) {
     DefaultDicomNode callingNode = (DefaultDicomNode) comboCallingNode.getSelectedItem();
     if (callingNode == null) {
@@ -1180,6 +1196,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     connectOptions.setConnectTimeout(3000);
     connectOptions.setAcceptTimeout(5000);
     params.setConnectOptions(connectOptions);
+    try {
+      node.applyTls(params);
+    } catch (java.io.IOException e) {
+      showTlsError(e);
+      return null;
+    }
 
     DicomParam[] keys = {
       new DicomParam(Tag.StudyInstanceUID, studyUid),

@@ -191,6 +191,7 @@ public class DicomPrint {
     remoteConn.setPort(node.getPort());
     remoteConn.setHostname(node.getHostname());
     remoteConn.setSocketCloseDelay(90);
+    node.getTls().configure(conn, remoteConn, node.getId());
 
     AAssociateRQ rq = new AAssociateRQ();
     rq.addPresentationContext(

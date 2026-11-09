@@ -45,6 +45,18 @@ class DicomModelCommandsTest {
     return CommandModel.execute(new DicomModelCommands(model), verb, args);
   }
 
+  @Test
+  void anEchoNeedsANodeAndParsesItsOptions() {
+    assertAll(
+        () -> assertEquals(CommandResult.USAGE, run("echo").status()),
+        () ->
+            assertDoesNotThrow(
+                () ->
+                    CommandModel.parse(
+                        new DicomModelCommands(new DicomModel()),
+                        "dicom:echo --node pacs --aet WEASIS --timeout 5 --json")));
+  }
+
   /** {@code dicom:select} became {@code dicom:open} and, unlike the loading verbs, was dropped. */
   @Test
   void theEarlierNameOfOpenIsGone() {

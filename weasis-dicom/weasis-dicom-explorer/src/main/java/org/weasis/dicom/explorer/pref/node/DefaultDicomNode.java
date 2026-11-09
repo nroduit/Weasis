@@ -11,6 +11,7 @@ package org.weasis.dicom.explorer.pref.node;
 
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import java.io.IOException;
 import javax.xml.stream.XMLStreamReader;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.XmlAttributeSource;
@@ -18,6 +19,7 @@ import org.weasis.core.api.util.EntryIds;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TransferSyntax;
+import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.TlsOptions;
 
@@ -31,7 +33,7 @@ public class DefaultDicomNode extends AbstractDicomNode {
   protected String aeTitle;
   protected String hostname;
   protected int port;
-  protected TlsOptions tlsOptions;
+  protected NodeTls tls = NodeTls.OFF;
 
   public DefaultDicomNode(
       String description, String aeTitle, String hostname, Integer port, UsageType usageType) {
@@ -46,10 +48,11 @@ public class DefaultDicomNode extends AbstractDicomNode {
     return """
       <html>
         %s<br>
-        %s: <b>%s@%s:%d</b>
+        %s: <b>%s@%s:%d</b>%s
       </html>
       """
-        .formatted(this, getType().toString(), aeTitle, hostname, port);
+        .formatted(
+            this, getType().toString(), aeTitle, hostname, port, tls.enabled() ? " (TLS)" : "");
   }
 
   /** The key of the node in its document: {@code aeTitle@hostname:port}. */
@@ -91,12 +94,27 @@ public class DefaultDicomNode extends AbstractDicomNode {
     this.port = port == null ? 104 : port;
   }
 
-  public TlsOptions getTlsOptions() {
-    return tlsOptions;
+  /** The TLS of the node, {@link NodeTls#OFF} for an association in clear. */
+  public NodeTls getTls() {
+    return tls;
   }
 
-  public void setTlsOptions(TlsOptions tlsOptions) {
-    this.tlsOptions = tlsOptions;
+  public void setTls(NodeTls tls) {
+    this.tls = tls == null ? NodeTls.OFF : tls;
+  }
+
+  /** The options of a TLS association to this node, or null when TLS is off. */
+  public TlsOptions getTlsOptions() throws IOException {
+    return tls.tlsOptions(getId());
+  }
+
+  /**
+   * Puts the TLS of this node on the parameters of an association to it; nothing when TLS is off.
+   *
+   * @throws IOException when the trust store of the node cannot be read
+   */
+  public void applyTls(AdvancedParams params) throws IOException {
+    tls.apply(params, getId());
   }
 
   public DicomNode getDicomNode() {
@@ -112,6 +130,9 @@ public class DefaultDicomNode extends AbstractDicomNode {
     b.add(T_AETITLE, aeTitle);
     JsonUtil.addIfPresent(b, T_HOST, hostname);
     b.add(T_PORT, port);
+    if (tls.enabled()) {
+      b.add(NodeTls.T_TLS, tls.toJson());
+    }
   }
 
   static DefaultDicomNode fromJson(JsonObject json) {
@@ -123,6 +144,7 @@ public class DefaultDicomNode extends AbstractDicomNode {
             JsonUtil.getInt(json, T_PORT, 104),
             usageType(json, UsageType.BOTH));
     node.readJson(json);
+    node.setTls(NodeTls.fromJson(json));
     return node;
   }
 
@@ -135,8 +157,7 @@ public class DefaultDicomNode extends AbstractDicomNode {
             TagUtil.getIntegerTagAttribute(new XmlAttributeSource(xmler), T_PORT, 104),
             UsageType.valueOf(xmler.getAttributeValue(null, T_USAGE_TYPE)));
     node.setTsuid(TransferSyntax.getTransferSyntax(xmler.getAttributeValue(null, T_TSUID)));
-
-    // TODO add tls
+    // the legacy XML carried no TLS: a converted node is in clear until its document says otherwise
     return node;
   }
 }

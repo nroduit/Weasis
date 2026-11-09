@@ -104,8 +104,14 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
         connectOptions.setConnectTimeout(3000);
         connectOptions.setAcceptTimeout(5000);
         params.setConnectOptions(connectOptions);
+        try {
+          node.applyTls(params);
+        } catch (java.io.IOException e) {
+          errorMessage = e.getMessage();
+          type = null;
+        }
 
-        if (RetrieveType.CGET == type || RetrieveType.CMOVE == type) {
+        if (errorMessage == null && (RetrieveType.CGET == type || RetrieveType.CMOVE == type)) {
           errorMessage = queueSeriesRetrieve(params, callingNode, node, type, null);
         } else if (RetrieveType.WADO == type) {
           WadoParameters wadoParameters = buildWadoUriParameters(node);

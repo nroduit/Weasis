@@ -14,6 +14,7 @@ import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
@@ -92,6 +93,8 @@ import org.weasis.dicom.explorer.items.ObjectItem;
 import org.weasis.dicom.explorer.items.SeriesItem;
 import org.weasis.dicom.explorer.items.StudyContents;
 import org.weasis.dicom.explorer.main.InterestOpener;
+import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
+import org.weasis.dicom.explorer.pref.node.DicomEcho;
 import org.weasis.dicom.explorer.rs.RsQueryParams;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -117,7 +120,8 @@ import picocli.CommandLine.TypeConversionException;
       DicomModelCommands.Info.class,
       DicomModelCommands.TagValue.class,
       DicomModelCommands.ListObjects.class,
-      DicomModelCommands.ListInterest.class
+      DicomModelCommands.ListInterest.class,
+      DicomModelCommands.EchoNode.class
     })
 final class DicomModelCommands {
 
@@ -1251,6 +1255,83 @@ final class DicomModelCommands {
             + name
             + "' for this series. Viewer types: "
             + types);
+  }
+
+  @Command(
+      name = "echo",
+      description =
+          "C-ECHO to a configured DICOM node or printer, with the TLS of its document: the "
+              + "readiness probe of an archive before a query, a retrieve or a send. The answer "
+              + "gives the round trip; a failure names what failed (an untrusted or expired "
+              + "certificate, no protocol in common, a closed port) instead of a generic "
+              + "connection error.")
+  @Since("5.0")
+  static class EchoNode extends Verb {
+    @Option(
+        names = "--node",
+        required = true,
+        paramLabel = "<node>",
+        description = "The node: its id, its description or its AE title, from the DICOM nodes.")
+    String node;
+
+    @Option(
+        names = "--aet",
+        paramLabel = "<aet>",
+        description =
+            "Calling AE title (default: weasis.aet, else the first calling node, else WEASIS_AE).")
+    String aet;
+
+    @Option(
+        names = "--timeout",
+        paramLabel = "<seconds>",
+        defaultValue = "10",
+        description = "Connect and accept time-out (default: ${DEFAULT-VALUE}).")
+    int timeout;
+
+    @Override
+    protected void run() {
+      DefaultDicomNode target =
+          DicomEcho.findNode(node)
+              .orElseThrow(
+                  () ->
+                      CommandFailure.unknownHandle(
+                          "Unknown node: " + node, "the DICOM node preferences")); // NON-NLS
+      DicomEcho.Result result;
+      try {
+        result = DicomEcho.echo(target, aet, timeout);
+      } catch (IOException e) {
+        throw new CommandFailure(CommandError.of(CommandError.NOT_APPLICABLE, e.getMessage()));
+      }
+      JsonObjectBuilder json =
+          Json.createObjectBuilder()
+              .add(
+                  "node", // NON-NLS
+                  Json.createObjectBuilder()
+                      .add("id", String.valueOf(target.getId())) // NON-NLS
+                      .add("description", String.valueOf(target.getDescription())) // NON-NLS
+                      .add("aet", target.getAeTitle()) // NON-NLS
+                      .add("host", String.valueOf(target.getHostname())) // NON-NLS
+                      .add("port", target.getPort()) // NON-NLS
+                      .add("tls", target.getTls().describe())) // NON-NLS
+              .add("callingAet", aet == null ? DicomEcho.defaultCallingAet() : aet) // NON-NLS
+              .add("success", result.success()) // NON-NLS
+              .add("status", result.status()) // NON-NLS
+              .add("millis", result.millis()); // NON-NLS
+      if (!result.success()) {
+        json.add("message", String.valueOf(result.message())); // NON-NLS
+        if (result.tlsKind() != null) {
+          json.add("tlsFailure", result.tlsKind().key()); // NON-NLS
+        }
+        throw new CommandFailure(
+            CommandError.of(
+                CommandError.FAILED,
+                "Echo to " + target.getAeTitle() + " failed: " + result.message()));
+      }
+      print(
+          isJson()
+              ? json.build().toString()
+              : "echo " + target.getAeTitle() + " ok in " + result.millis() + " ms"); // NON-NLS
+    }
   }
 
   @Command(

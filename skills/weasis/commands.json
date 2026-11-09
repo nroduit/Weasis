@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.27",
+  "apiVersion": "2.28",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -418,6 +418,56 @@
       "name": "dicom",
       "description": "The DICOM explorer: loading, listing, opening and closing studies, and reading attributes.",
       "verbs": [
+        {
+          "name": "echo",
+          "description": "C-ECHO to a configured DICOM node or printer, with the TLS of its document: the readiness probe of an archive before a query, a retrieve or a send. The answer gives the round trip; a failure names what failed (an untrusted or expired certificate, no protocol in common, a closed port) instead of a generic connection error.",
+          "since": "5.0",
+          "usage": "dicom:echo [-h] [--json] [--aet=<aet>] --node=<node> [--timeout=<seconds>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--node"
+              ],
+              "label": "<node>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "The node: its id, its description or its AE title, from the DICOM nodes."
+            },
+            {
+              "names": [
+                "--aet"
+              ],
+              "label": "<aet>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Calling AE title (default: weasis.aet, else the first calling node, else WEASIS_AE)."
+            },
+            {
+              "names": [
+                "--timeout"
+              ],
+              "label": "<seconds>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "10",
+              "description": "Connect and accept time-out (default: 10)."
+            }
+          ]
+        },
         {
           "name": "info",
           "description": "Technical description of a series: modality, body part, image count, geometry and pixel spacing. Identifiers follow the identity policy.",
@@ -6846,7 +6896,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--fit=<zoom-fit> | --by=<steps> | --set=<magnification>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
           "parameters": [],
           "options": [
             {
@@ -6881,6 +6931,20 @@
             },
             {
               "names": [
+                "--set"
+              ],
+              "label": "<magnification>",
+              "type": "magnification",
+              "arity": "1",
+              "required": true,
+              "description": "Magnification, 1 being one image pixel per canvas pixel.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
                 "--fit"
               ],
               "label": "<zoom-fit>",
@@ -6907,20 +6971,6 @@
               "arity": "1",
               "required": true,
               "description": "Moves the zoom slider by this many steps, negative to zoom out.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
-                "--set"
-              ],
-              "label": "<magnification>",
-              "type": "magnification",
-              "arity": "1",
-              "required": true,
-              "description": "Magnification, 1 being one image pixel per canvas pixel.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"
