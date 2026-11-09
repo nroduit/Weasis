@@ -53,6 +53,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -100,7 +101,9 @@ import org.semver4j.Semver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
+import org.weasis.core.api.command.CommandManager;
 import org.weasis.core.api.command.ScreenRole;
+import org.weasis.core.api.command.StateBoundary;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
@@ -162,11 +165,14 @@ import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.editor.image.GraphicEditActions;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SequenceHandler;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.launcher.Launcher.Type;
+import org.weasis.core.ui.model.utils.GraphicUndoHistory;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.CaptureButton;
@@ -185,6 +191,14 @@ public class WeasisWin {
   public static final List<String> functions = List.of("info", "ui"); // NON-NLS
 
   private final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file"));
+  private final DynamicMenu menuEdit =
+      new DynamicMenu(Messages.getString("WeasisWin.edit")) {
+
+        @Override
+        public void popupMenuWillBecomeVisible() {
+          buildMenuEdit(this);
+        }
+      };
   private final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display"));
   private final JMenu menuTools = new JMenu(Messages.getString("WeasisWin.tools"));
   private final DynamicMenu menuWindow =
@@ -901,6 +915,8 @@ public class WeasisWin {
     ActionCatalog.addSource(() -> ActionCatalog.ofMenuBar(menuBar));
     buildMenuFile();
     menuBar.add(menuFile);
+    menuBar.add(menuEdit);
+    menuEdit.addPopupMenuListener();
     buildMenuView();
     menuBar.add(menuView);
     buildMenuTools();
@@ -1393,6 +1409,80 @@ public class WeasisWin {
     newWindow.setEnabled(plugin != null && plugin.isDetachable());
     newWindow.addActionListener(e -> control.detach(plugin, null));
     menu.add(newWindow);
+    menu.addSeparator();
+    menu.add(restoreDisplayItem());
+  }
+
+  /**
+   * The Edit menu: undo and redo of the drawings of the selected view, enabled when its history has
+   * something to undo or redo.
+   */
+  private void buildMenuEdit(JMenu menu) {
+    menu.removeAll();
+    ViewCanvas<?> view =
+        getSelectedPlugin() instanceof ImageViewerPlugin<?> viewer
+            ? viewer.getSelectedViewCanvas()
+            : null;
+    GraphicUndoHistory history = view == null ? null : view.getGraphicUndo();
+    JMenuItem undo = new JMenuItem(Messages.getString("WeasisWin.undo_drawing"));
+    undo.setAccelerator(ShortcutManager.getInstance().getKeyStroke(ShortcutManager.ID_DRAW_UNDO));
+    undo.setEnabled(history != null && history.isEnabled() && history.canUndo());
+    undo.addActionListener(_ -> GraphicEditActions.undo(view));
+    menu.add(undo);
+    JMenuItem redo = new JMenuItem(Messages.getString("WeasisWin.redo_drawing"));
+    redo.setAccelerator(ShortcutManager.getInstance().getKeyStroke(ShortcutManager.ID_DRAW_REDO));
+    redo.setEnabled(history != null && history.isEnabled() && history.canRedo());
+    redo.addActionListener(_ -> GraphicEditActions.redo(view));
+    menu.add(redo);
+  }
+
+  /**
+   * <i>Restore previous display</i>: puts the display back to the newest checkpoint (taken before a
+   * script, a remote batch, a hanging, a restore), named by what it preceded; disabled when there
+   * is none. A rollback that cannot restore everything says what stays.
+   */
+  private JMenuItem restoreDisplayItem() {
+    StateBoundary boundary = CommandManager.stateBoundary();
+    Optional<StateBoundary.Latest> latest = boundary.newest();
+    String label =
+        latest
+            .filter(l -> !l.label().isBlank())
+            .map(
+                l ->
+                    MessageFormat.format(
+                        Messages.getString("WeasisWin.restore_display_before"), l.label()))
+            .orElse(Messages.getString("WeasisWin.restore_display"));
+    JMenuItem restore = new JMenuItem(label);
+    restore.setEnabled(latest.isPresent());
+    latest.ifPresent(
+        l ->
+            restore.addActionListener(
+                _ ->
+                    CompletableFuture.supplyAsync(() -> boundary.rollback(l.id()))
+                        .whenComplete(
+                            (notRestored, error) ->
+                                GuiExecutor.execute(() -> reportRestore(notRestored, error)))));
+    return restore;
+  }
+
+  private void reportRestore(List<String> notRestored, Throwable error) {
+    if (error != null) {
+      Throwable cause = error.getCause() == null ? error : error.getCause();
+      LOGGER.warn("Cannot restore the previous display", cause);
+      JOptionPane.showMessageDialog(
+          frame,
+          MessageFormat.format(Messages.getString("WeasisWin.restore_failed"), cause.getMessage()),
+          Messages.getString("WeasisWin.restore_display"),
+          JOptionPane.WARNING_MESSAGE);
+    } else if (notRestored != null && !notRestored.isEmpty()) {
+      StringBuilder message = new StringBuilder(Messages.getString("WeasisWin.restore_partial"));
+      notRestored.forEach(line -> message.append("\n- ").append(line));
+      JOptionPane.showMessageDialog(
+          frame,
+          message.toString(),
+          Messages.getString("WeasisWin.restore_display"),
+          JOptionPane.INFORMATION_MESSAGE);
+    }
   }
 
   private void buildMenuTools() {

@@ -55,6 +55,7 @@ public final class LayeredDocument {
   private List<JsonObject> builtIn = List.of();
   private JsonObject site;
   private Path userFile;
+  private boolean watchingRestores;
   private final Map<String, JsonObject> user = new LinkedHashMap<>();
   private boolean readOnly;
   private Merged<JsonObject> merged = Merged.empty();
@@ -87,8 +88,25 @@ public final class LayeredDocument {
       this.userFile = userFile;
       readUser();
       remerge();
+      if (!watchingRestores) {
+        // a rollback that puts the user file back to an earlier version re-reads it here
+        watchingRestores = true;
+        DocumentStore.onDocumentRestored(this::restored);
+      }
     }
     notifyListeners();
+  }
+
+  /** Re-reads the user layer when the file put back by a rollback is this document's. */
+  private void restored(Path file) {
+    Path mine = userFile();
+    if (mine != null && mine.toAbsolutePath().normalize().equals(file)) {
+      synchronized (this) {
+        readUser();
+        remerge();
+      }
+      notifyListeners();
+    }
   }
 
   /** Re-reads the user file with another site document, or none. */

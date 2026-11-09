@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import org.dcm4che3.data.Tag;
@@ -45,6 +47,9 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.setting.Settings;
+import org.weasis.core.api.setting.SettingsPackage;
+import org.weasis.core.api.util.DocumentVersions;
+import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.ui.docking.Shell;
 import org.weasis.core.ui.docking.ShellState;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
@@ -57,6 +62,7 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.event.UiActivityBridge;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.dicom.codec.TagD;
@@ -88,6 +94,11 @@ public final class CheckpointService implements StateBoundary {
   private static final String CHECKPOINT_SEQ = "checkpointSeq"; // NON-NLS
 
   private static final CheckpointService GLOBAL = new CheckpointService();
+
+  /** How long a checkpoint or a rollback waits for a held mouse button before refusing. */
+  static final long MOUSE_DEFERRAL_MS = 2_000;
+
+  private final List<Consumer<Checkpoint>> remoteBoundaryListeners = new CopyOnWriteArrayList<>();
 
   /** The checkpoints of this instance. */
   public static CheckpointService global() {
@@ -138,18 +149,28 @@ public final class CheckpointService implements StateBoundary {
     // does not fill the stack with copies; a checkpoint asked for by name is always kept
     Checkpoint top = stack.peekFirst();
     if (top != null && top.automatic() && checkpoint.automatic() && top.sameDisplayAs(checkpoint)) {
-      stack.pollFirst();
+      DocumentVersions.close(stack.pollFirst().id());
     }
     stack.addFirst(checkpoint);
+    DocumentVersions.open(checkpoint.id());
     int max = Math.max(1, limit.getAsInt());
     while (stack.size() > max) {
-      stack.pollLast();
+      DocumentVersions.close(stack.pollLast().id());
     }
     return checkpoint;
   }
 
   synchronized void clear() {
+    stack.forEach(c -> DocumentVersions.close(c.id()));
     stack.clear();
+  }
+
+  /**
+   * Called after a checkpoint the application took at the boundary of a remote batch, so the
+   * explorer can tell the user that an agent changed the display and offer to restore it.
+   */
+  public void onRemoteBoundary(Consumer<Checkpoint> listener) {
+    remoteBoundaryListeners.add(Objects.requireNonNull(listener));
   }
 
   // ---------------------------------------------------------------------------- capture
@@ -175,6 +196,7 @@ public final class CheckpointService implements StateBoundary {
       throw new IllegalStateException("No workspace available (headless)");
     }
     DicomModel dicomModel = model.get();
+    awaitMouseReleased("A checkpoint");
     Checkpoint checkpoint =
         GuiExecutor.invokeAndRethrow(
             () -> {
@@ -189,7 +211,38 @@ public final class CheckpointService implements StateBoundary {
                 .put(CHECKPOINT, checkpoint.id())
                 .put(CHECKPOINT_SEQ, checkpoint.seq())
                 .put("label", label == null ? "" : label)); // NON-NLS
+    if (automatic && origin == CommandOrigin.REMOTE) {
+      remoteBoundaryListeners.forEach(listener -> listener.accept(checkpoint));
+    }
     return checkpoint;
+  }
+
+  /**
+   * A mouse drag on a view keeps state in its mouse handler (a drawing, a window change, a pan):
+   * capturing or replacing the display under it would leave the handler on a dead view, so the work
+   * waits for the release, up to {@link #MOUSE_DEFERRAL_MS}, then refuses. On the event thread
+   * itself the release cannot arrive, so the check is immediate.
+   */
+  static void awaitMouseReleased(String what) {
+    if (!UiActivityBridge.isMouseButtonHeld()) {
+      return;
+    }
+    if (!javax.swing.SwingUtilities.isEventDispatchThread()) {
+      long deadline = System.nanoTime() + MOUSE_DEFERRAL_MS * 1_000_000;
+      while (UiActivityBridge.isMouseButtonHeld() && System.nanoTime() < deadline) {
+        try {
+          Thread.sleep(50);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          break;
+        }
+      }
+      if (!UiActivityBridge.isMouseButtonHeld()) {
+        return;
+      }
+    }
+    throw new IllegalStateException(
+        what + " cannot run while a mouse button is held (waited " + MOUSE_DEFERRAL_MS + " ms)");
   }
 
   /** The display as a checkpoint; on the event dispatch thread. */
@@ -303,7 +356,30 @@ public final class CheckpointService implements StateBoundary {
       List<String> studiesLoaded,
       List<String> studiesClosed,
       boolean selectionChanged,
-      boolean shellChanged) {
+      boolean shellChanged,
+      List<String> documentsChanged) {
+
+    /** A diff of the display alone, no document written. */
+    public Diff(
+        List<String> viewsAdded,
+        List<String> viewsRemoved,
+        List<String> viewsChanged,
+        List<String> graphicsChanged,
+        List<String> studiesLoaded,
+        List<String> studiesClosed,
+        boolean selectionChanged,
+        boolean shellChanged) {
+      this(
+          viewsAdded,
+          viewsRemoved,
+          viewsChanged,
+          graphicsChanged,
+          studiesLoaded,
+          studiesClosed,
+          selectionChanged,
+          shellChanged,
+          List.of());
+    }
 
     public boolean isEmpty() {
       return viewsAdded.isEmpty()
@@ -313,7 +389,8 @@ public final class CheckpointService implements StateBoundary {
           && studiesLoaded.isEmpty()
           && studiesClosed.isEmpty()
           && !selectionChanged
-          && !shellChanged;
+          && !shellChanged
+          && documentsChanged.isEmpty();
     }
 
     public JsonObjectBuilder toJson() {
@@ -326,7 +403,8 @@ public final class CheckpointService implements StateBoundary {
           .add("studiesLoaded", array(studiesLoaded)) // NON-NLS
           .add("studiesClosed", array(studiesClosed)) // NON-NLS
           .add("selectionChanged", selectionChanged) // NON-NLS
-          .add("shellChanged", shellChanged); // NON-NLS
+          .add("shellChanged", shellChanged) // NON-NLS
+          .add("documentsChanged", array(documentsChanged)); // NON-NLS
     }
   }
 
@@ -370,7 +448,8 @@ public final class CheckpointService implements StateBoundary {
         loaded,
         closed,
         !Objects.equals(from.selectedView(), to.selectedView()),
-        shell);
+        shell,
+        DocumentVersions.documentsBefore(from.id(), to.at()));
   }
 
   /** The diff between a checkpoint and the display now. */
@@ -393,7 +472,8 @@ public final class CheckpointService implements StateBoundary {
       Checkpoint checkpoint,
       List<String> views,
       List<String> notRestored,
-      List<String> closedStudies) {
+      List<String> closedStudies,
+      List<String> documents) {
 
     public JsonObjectBuilder toJson() {
       return checkpoint
@@ -402,6 +482,7 @@ public final class CheckpointService implements StateBoundary {
           .add("views", array(views)) // NON-NLS
           .add("notRestored", array(notRestored)) // NON-NLS
           .add("closedStudies", array(closedStudies)) // NON-NLS
+          .add("documents", array(documents)) // NON-NLS
           .add("notCaptured", array(Checkpoint.NOT_CAPTURED)); // NON-NLS
     }
   }
@@ -418,8 +499,11 @@ public final class CheckpointService implements StateBoundary {
       throw new IllegalStateException("No workspace available (headless)");
     }
     DicomModel dicomModel = model.get();
+    awaitMouseReleased("A rollback");
     List<String> notRestored = new ArrayList<>();
-    // (a) data, off the event thread: the derived series the checkpoint needs are built again
+    // (a) data, off the event thread: the documents written since go back to their version, the
+    // derived series the checkpoint needs are built again
+    List<String> documents = restoreDocuments(checkpoint, notRestored);
     if (dicomModel != null && !checkpoint.derived().isEmpty()) {
       try {
         SessionActions.rebuildDerived(checkpoint.toSession(null, false, List.of()));
@@ -495,7 +579,7 @@ public final class CheckpointService implements StateBoundary {
               }
               return mgr.getViews().stream().map(WorkspaceView::viewId).toList();
             });
-    Rollback result = new Rollback(checkpoint, views, List.copyOf(notRestored), closed);
+    Rollback result = new Rollback(checkpoint, views, List.copyOf(notRestored), closed, documents);
     bus.get()
         .publish(
             Event.of(ROLLBACK_DONE)
@@ -503,8 +587,50 @@ public final class CheckpointService implements StateBoundary {
                 .put(CHECKPOINT, checkpoint.id())
                 .put(CHECKPOINT_SEQ, checkpoint.seq())
                 .put("views", views.size()) // NON-NLS
-                .put("notRestored", notRestored.size())); // NON-NLS
+                .put("notRestored", notRestored.size()) // NON-NLS
+                .put("documents", documents.size())); // NON-NLS
     return result;
+  }
+
+  /**
+   * The documents of the user back to their version at the checkpoint: the backup package of a
+   * settings import that followed it is imported again first (it carries the settings that are not
+   * documents), then every document written since gets its kept version; the registries reload.
+   */
+  static List<String> restoreDocuments(Checkpoint checkpoint, List<String> notRestored) {
+    List<String> documents = new ArrayList<>();
+    Optional<java.nio.file.Path> backup = DocumentVersions.importBackup(checkpoint.id());
+    if (backup.isPresent()) {
+      try {
+        DocumentVersions.suspended(
+            () -> {
+              try {
+                SettingsPackage.importPackage(
+                    backup.get(),
+                    SettingsPackage.Mode.REPLACE,
+                    false,
+                    SettingsPackage.currentEnvironment(),
+                    null);
+              } catch (java.io.IOException e) {
+                throw new IllegalStateException(e.getMessage(), e);
+              }
+            });
+        documents.add("settings backup " + backup.get().getFileName());
+      } catch (RuntimeException e) {
+        notRestored.add("settings backup " + backup.get().getFileName() + ": " + e.getMessage());
+      }
+    }
+    DocumentVersions.Restored restored = DocumentVersions.restore(checkpoint.id());
+    documents.addAll(restored.documents());
+    notRestored.addAll(restored.problems());
+    if (!documents.isEmpty()) {
+      try {
+        SiteDocuments.reloadAll();
+      } catch (RuntimeException e) {
+        notRestored.add("registries not reloaded: " + e.getMessage());
+      }
+    }
+    return List.copyOf(documents);
   }
 
   /** Gives every image of the checkpoint its graphics back; on the event dispatch thread. */
@@ -609,6 +735,11 @@ public final class CheckpointService implements StateBoundary {
   }
 
   @Override
+  public Optional<Latest> newest() {
+    return latest().map(c -> new Latest(c.id(), c.label() == null ? "" : c.label()));
+  }
+
+  @Override
   public List<String> rollback(String checkpointId) {
     Checkpoint checkpoint =
         find(checkpointId)
@@ -646,6 +777,7 @@ public final class CheckpointService implements StateBoundary {
             .field(CHECKPOINT_SEQ, long.class, "event sequence number of the checkpoint")
             .field("views", int.class, "views shown after the rollback") // NON-NLS
             .field("notRestored", int.class, "what could not be restored, count") // NON-NLS
+            .field("documents", int.class, "documents put back to their version, count") // NON-NLS
             .build());
   }
 }

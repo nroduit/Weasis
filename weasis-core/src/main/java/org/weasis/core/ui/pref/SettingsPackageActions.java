@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.text.MessageFormat;
+import java.util.Optional;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -21,12 +22,14 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
+import org.weasis.core.api.command.CommandManager;
 import org.weasis.core.api.setting.SettingsPackage;
 import org.weasis.core.api.setting.SettingsPackage.Change;
 import org.weasis.core.api.setting.SettingsPackage.Environment;
 import org.weasis.core.api.setting.SettingsPackage.Layer;
 import org.weasis.core.api.setting.SettingsPackage.Mode;
 import org.weasis.core.api.setting.SettingsPackage.Plan;
+import org.weasis.core.api.util.DocumentVersions;
 import org.weasis.core.api.util.SiteDocuments;
 
 /** The Export and Import buttons of the preference dialog: a settings package of the user. */
@@ -107,6 +110,9 @@ final class SettingsPackageActions {
       if (choice != 0 && choice != 1) {
         return;
       }
+      Optional<String> checkpoint =
+          CommandManager.stateBoundary()
+              .checkpoint("before settings import " + file.getFileName(), null);
       Plan done =
           SettingsPackage.importPackage(
               file,
@@ -114,6 +120,7 @@ final class SettingsPackageActions {
               false,
               env,
               SettingsPackage.backupFolder());
+      checkpoint.ifPresent(id -> DocumentVersions.importBackup(id, done.backup()));
       SiteDocuments.reloadAll();
       JOptionPane.showMessageDialog(
           parent,

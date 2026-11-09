@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +71,7 @@ public final class DocumentStore {
   private static volatile Path userFolder;
   private static volatile Path machineFolder;
   private static final List<Runnable> USER_WRITTEN = new CopyOnWriteArrayList<>();
+  private static final List<Consumer<Path>> RESTORED = new CopyOnWriteArrayList<>();
 
   /** The object of an entry listing the entries of other documents it refers to, by id. */
   public static final String REFERENCES = "references"; // NON-NLS
@@ -139,12 +141,38 @@ public final class DocumentStore {
     USER_WRITTEN.add(listener);
   }
 
+  /** Told by every writer of a document before it writes: the previous version may be kept. */
+  static void writing(Path file) {
+    DocumentVersions.keep(file);
+  }
+
   /** Told by every writer of a document; notifies when it is a user document. */
   static void written(Path file) {
     Path folder = userFolder;
     if (folder != null && file.toAbsolutePath().startsWith(folder.toAbsolutePath())) {
       USER_WRITTEN.forEach(Runnable::run);
     }
+  }
+
+  /**
+   * Called after a document was put back to an earlier version by a rollback, with its file, so the
+   * registry that holds it re-reads it; the writers of the document are not involved.
+   */
+  public static void onDocumentRestored(Consumer<Path> listener) {
+    RESTORED.add(listener);
+  }
+
+  /** Told by a rollback that wrote a document back; notifies the registries, then the writers. */
+  static void restored(Path file) {
+    Path key = file.toAbsolutePath().normalize();
+    for (Consumer<Path> listener : RESTORED) {
+      try {
+        listener.accept(key);
+      } catch (RuntimeException e) {
+        LOGGER.warn("A registry could not reload {}", key, e);
+      }
+    }
+    written(file);
   }
 
   /**

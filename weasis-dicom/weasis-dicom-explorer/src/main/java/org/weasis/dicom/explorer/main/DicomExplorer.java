@@ -104,6 +104,7 @@ public class DicomExplorer extends PluginTool
   private final Runnable maskListener = () -> GuiExecutor.execute(this::onMaskingChanged);
   private final JScrollPane thumbnailView;
   private final LoadingPanel loadingPanel;
+  private final RemoteChangeNotice remoteNotice;
   private final SeriesSelectionModel selectionList;
   private final JButton koOpen;
   // Display mode of the selected patient: thumbnails (the panes) or the compact list
@@ -164,6 +165,7 @@ public class DicomExplorer extends PluginTool
     this.selectedPatient = new PatientPane(this);
     this.thumbnailView = new JScrollPane();
     this.loadingPanel = new LoadingPanel();
+    this.remoteNotice = new RemoteChangeNotice();
     this.selectionList = new SeriesSelectionModel(this);
 
     // Initialize combo box models
@@ -229,9 +231,10 @@ public class DicomExplorer extends PluginTool
       add(getMainPanel(), "");
       add(thumbnailView, "newline, top");
       add(loadingPanel, "newline,");
+      add(remoteNotice, "newline, hidemode 3"); // NON-NLS
     } else {
       setLayout(new MigLayout("fillx, ins 0", "[right]rel[grow,fill]"));
-      add(GuiUtils.getVerticalBoxLayoutPanel(getMainPanel(), loadingPanel));
+      add(GuiUtils.getVerticalBoxLayoutPanel(getMainPanel(), loadingPanel, remoteNotice));
       add(thumbnailView);
     }
   }

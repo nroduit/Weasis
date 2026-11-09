@@ -81,5 +81,14 @@ public final class HpSettings {
                   + "a hanging, a restore); the oldest is dropped beyond this number")
           .declare();
 
+  /** Whether the explorer shows a notice after an agent changed the display, with a restore. */
+  public static final Setting<Boolean> REMOTE_NOTICE =
+      Setting.builder(SettingType.BOOLEAN, GROUP, "weasis.state.notice.remote", true) // NON-NLS
+          .since("5.0") // NON-NLS
+          .description(
+              "Show a notice in the explorer when a remote caller (an agent, a script) changed "
+                  + "the display, with a way to restore it")
+          .declare();
+
   private HpSettings() {}
 }

@@ -145,6 +145,7 @@ public final class ListDocument {
     if (parent != null) {
       Files.createDirectories(parent);
     }
+    DocumentStore.writing(file);
     Path temp = Files.createTempFile(parent, file.getFileName().toString(), ".tmp"); // NON-NLS
     try {
       JsonUtil.write(temp, json);

@@ -4298,7 +4298,81 @@
               "required": false,
               "description": "What the checkpoint precedes, for the list."
             }
-          ]
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "checkpoint",
+                "type": "string",
+                "description": "checkpoint id"
+              },
+              {
+                "name": "seq",
+                "type": "integer",
+                "description": "event sequence number at the boundary"
+              },
+              {
+                "name": "at",
+                "type": "string",
+                "description": "when it was taken, ISO-8601"
+              },
+              {
+                "name": "label",
+                "type": "string",
+                "description": "what the checkpoint precedes"
+              },
+              {
+                "name": "origin",
+                "type": "string",
+                "description": "who asked for the work it precedes"
+              },
+              {
+                "name": "views",
+                "type": "integer",
+                "description": "views it holds"
+              },
+              {
+                "name": "graphics",
+                "type": "integer",
+                "description": "images with graphics it holds"
+              },
+              {
+                "name": "studies",
+                "type": "integer",
+                "description": "studies loaded at the boundary"
+              },
+              {
+                "name": "documents",
+                "type": "integer",
+                "description": "documents written since"
+              },
+              {
+                "name": "selectedView",
+                "type": "string",
+                "description": "the view selected at the boundary"
+              },
+              {
+                "name": "protocol",
+                "type": "string",
+                "description": "the protocol hung at the boundary"
+              },
+              {
+                "name": "step",
+                "type": "integer",
+                "description": "its step, 1-based"
+              },
+              {
+                "name": "automatic",
+                "type": "boolean",
+                "description": "taken by the application at a boundary"
+              },
+              {
+                "name": "taken",
+                "type": "boolean",
+                "description": "always true"
+              }
+            ]
+          }
         },
         {
           "name": "checkpoints",
@@ -4317,7 +4391,21 @@
               "required": false,
               "description": "Structured JSON output (default for remote calls)."
             }
-          ]
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "checkpoints",
+                "type": "array",
+                "description": "the checkpoints, newest first, as 'checkpoint' prints them"
+              },
+              {
+                "name": "changedSinceLatest",
+                "type": "object",
+                "description": "the diff from the newest one to the display now"
+              }
+            ]
+          }
         },
         {
           "name": "delete",
@@ -4346,7 +4434,21 @@
               "required": true,
               "description": "Session id from 'list'."
             }
-          ]
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "session",
+                "type": "string",
+                "description": "session id"
+              },
+              {
+                "name": "deleted",
+                "type": "boolean",
+                "description": "always true"
+              }
+            ]
+          }
         },
         {
           "name": "diff",
@@ -4385,7 +4487,26 @@
               "required": false,
               "description": "The newer checkpoint (default: the display now)."
             }
-          ]
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "from",
+                "type": "string",
+                "description": "the older checkpoint id"
+              },
+              {
+                "name": "to",
+                "type": "string",
+                "description": "the newer checkpoint id, or 'now'"
+              },
+              {
+                "name": "diff",
+                "type": "object",
+                "description": "empty, viewsAdded, viewsRemoved, viewsChanged, graphicsChanged, studiesLoaded, studiesClosed, selectionChanged, shellChanged, documentsChanged"
+              }
+            ]
+          }
         },
         {
           "name": "export",
@@ -4450,7 +4571,31 @@
               "required": false,
               "description": "Writes DICOM objects instead of the JSON."
             }
-          ]
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "session",
+                "type": "string",
+                "description": "session id"
+              },
+              {
+                "name": "files",
+                "type": "array",
+                "description": "the files written"
+              },
+              {
+                "name": "boxes",
+                "type": "integer",
+                "description": "with --dicom: image boxes of the structured display"
+              },
+              {
+                "name": "warnings",
+                "type": "array",
+                "description": "with --dicom: what the object cannot carry"
+              }
+            ]
+          }
         },
         {
           "name": "keep",
@@ -4499,7 +4644,61 @@
               "required": false,
               "description": "Promotes a checkpoint from 'checkpoints' to a session instead of the display."
             }
-          ]
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "session",
+                "type": "string",
+                "description": "session id"
+              },
+              {
+                "name": "pinned",
+                "type": "boolean",
+                "description": "kept out of the retention by number"
+              },
+              {
+                "name": "created",
+                "type": "string",
+                "description": "when it was kept, ISO-8601"
+              },
+              {
+                "name": "updated",
+                "type": "string",
+                "description": "when it was last used, ISO-8601"
+              },
+              {
+                "name": "label",
+                "type": "string",
+                "description": "the label given, when there is one"
+              },
+              {
+                "name": "studies",
+                "type": "array",
+                "description": "study UIDs of the session"
+              },
+              {
+                "name": "archives",
+                "type": "array",
+                "description": "the archives the studies come from"
+              },
+              {
+                "name": "protocol",
+                "type": "string",
+                "description": "the protocol that hung it, when one did"
+              },
+              {
+                "name": "step",
+                "type": "integer",
+                "description": "the step of the protocol, 1-based"
+              },
+              {
+                "name": "kept",
+                "type": "boolean",
+                "description": "always true"
+              }
+            ]
+          }
         },
         {
           "name": "list",
@@ -4518,7 +4717,16 @@
               "required": false,
               "description": "Structured JSON output (default for remote calls)."
             }
-          ]
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "sessions",
+                "type": "array",
+                "description": "the sessions, most recently used first, as 'keep' prints them"
+              }
+            ]
+          }
         },
         {
           "name": "restore",
@@ -4557,7 +4765,66 @@
               "required": false,
               "description": "The most recent session showing this study instead of an id."
             }
-          ]
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "session",
+                "type": "string",
+                "description": "session id"
+              },
+              {
+                "name": "pinned",
+                "type": "boolean",
+                "description": "kept out of the retention by number"
+              },
+              {
+                "name": "created",
+                "type": "string",
+                "description": "when it was kept, ISO-8601"
+              },
+              {
+                "name": "updated",
+                "type": "string",
+                "description": "when it was last used, ISO-8601"
+              },
+              {
+                "name": "label",
+                "type": "string",
+                "description": "the label given, when there is one"
+              },
+              {
+                "name": "studies",
+                "type": "array",
+                "description": "study UIDs of the session"
+              },
+              {
+                "name": "archives",
+                "type": "array",
+                "description": "the archives the studies come from"
+              },
+              {
+                "name": "protocol",
+                "type": "string",
+                "description": "the protocol that hung it, when one did"
+              },
+              {
+                "name": "step",
+                "type": "integer",
+                "description": "the step of the protocol, 1-based"
+              },
+              {
+                "name": "restored",
+                "type": "boolean",
+                "description": "always true"
+              },
+              {
+                "name": "views",
+                "type": "array",
+                "description": "ids of the views shown after the restore"
+              }
+            ]
+          }
         },
         {
           "name": "rollback",
@@ -4606,7 +4873,116 @@
               "required": false,
               "description": "Only say what differs between the checkpoint and the display."
             }
-          ]
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "checkpoint",
+                "type": "string",
+                "description": "checkpoint id"
+              },
+              {
+                "name": "seq",
+                "type": "integer",
+                "description": "event sequence number at the boundary"
+              },
+              {
+                "name": "at",
+                "type": "string",
+                "description": "when it was taken, ISO-8601"
+              },
+              {
+                "name": "label",
+                "type": "string",
+                "description": "what the checkpoint precedes"
+              },
+              {
+                "name": "origin",
+                "type": "string",
+                "description": "who asked for the work it precedes"
+              },
+              {
+                "name": "views",
+                "type": "integer",
+                "description": "views it holds"
+              },
+              {
+                "name": "graphics",
+                "type": "integer",
+                "description": "images with graphics it holds"
+              },
+              {
+                "name": "studies",
+                "type": "integer",
+                "description": "studies loaded at the boundary"
+              },
+              {
+                "name": "documents",
+                "type": "integer",
+                "description": "documents written since"
+              },
+              {
+                "name": "selectedView",
+                "type": "string",
+                "description": "the view selected at the boundary"
+              },
+              {
+                "name": "protocol",
+                "type": "string",
+                "description": "the protocol hung at the boundary"
+              },
+              {
+                "name": "step",
+                "type": "integer",
+                "description": "its step, 1-based"
+              },
+              {
+                "name": "automatic",
+                "type": "boolean",
+                "description": "taken by the application at a boundary"
+              },
+              {
+                "name": "restored",
+                "type": "boolean",
+                "description": "true once the display is back"
+              },
+              {
+                "name": "views",
+                "type": "array",
+                "description": "ids of the views shown after the rollback"
+              },
+              {
+                "name": "notRestored",
+                "type": "array",
+                "description": "what stayed as it was, one line each"
+              },
+              {
+                "name": "closedStudies",
+                "type": "array",
+                "description": "study UIDs closed by --close-new"
+              },
+              {
+                "name": "documents",
+                "type": "array",
+                "description": "documents put back to their version"
+              },
+              {
+                "name": "notCaptured",
+                "type": "array",
+                "description": "what a checkpoint never holds"
+              },
+              {
+                "name": "dryRun",
+                "type": "boolean",
+                "description": "with --dry-run: nothing was changed"
+              },
+              {
+                "name": "diff",
+                "type": "object",
+                "description": "with --dry-run: what differs, as 'diff' prints it"
+              }
+            ]
+          }
         }
       ],
       "events": [
@@ -4658,6 +5034,11 @@
               "name": "notRestored",
               "type": "integer",
               "description": "what could not be restored, count"
+            },
+            {
+              "name": "documents",
+              "type": "integer",
+              "description": "documents put back to their version, count"
             }
           ]
         }
@@ -8842,6 +9223,11 @@
             "name": "notRestored",
             "type": "integer",
             "description": "what could not be restored, count"
+          },
+          {
+            "name": "documents",
+            "type": "integer",
+            "description": "documents put back to their version, count"
           }
         ]
       }

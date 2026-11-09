@@ -61,6 +61,11 @@ class StateCommandsTest {
   }
 
   @Test
+  void everyVerbDeclaresItsResult() {
+    assertEquals(List.of(), CommandVocabulary.resultViolations("state", new StateCommands()));
+  }
+
+  @Test
   void aRollbackWithoutACheckpointIsRefusedWithAHandleHint() {
     StateCommands commands =
         new StateCommands().withCheckpoints(() -> new CheckpointService(() -> 10, EventBus::new));

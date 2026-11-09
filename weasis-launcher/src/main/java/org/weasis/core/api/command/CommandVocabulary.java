@@ -35,6 +35,8 @@ import picocli.CommandLine.Model.PositionalParamSpec;
 public final class CommandVocabulary {
 
   private static final Pattern LONG_OPTION = Pattern.compile("--[a-z0-9]+(-[a-z0-9]+)*");
+  private static final Pattern RESULT_KEY = Pattern.compile("[a-z][a-zA-Z0-9]*");
+  private static final Pattern RESULT_TYPE = Pattern.compile("[a-z][a-z0-9-]*");
 
   /** The option that reads a file, and the option that writes one: one type each. */
   private static final String FILE_OPTION = "--file"; // NON-NLS
@@ -60,6 +62,38 @@ public final class CommandVocabulary {
       }
       for (PositionalParamSpec parameter : spec.positionalParameters()) {
         checkLabel(verb, parameter.paramLabel(), parameter, violations);
+      }
+    }
+    return violations;
+  }
+
+  /**
+   * The results of a namespace: every verb of the 5.0 era declares what it answers ({@link
+   * Returns}), its keys are camelCase and typed by a word of the vocabulary.
+   */
+  public static List<String> resultViolations(String namespace, Object model) {
+    List<String> violations = new ArrayList<>();
+    CommandSpec root = CommandModel.newCommandLine(model).getCommandSpec();
+    for (CommandSpec spec : verbs(root)) {
+      String verb = namespace + ":" + spec.name();
+      if (CommandModel.since(spec.userObject()) == null) {
+        continue;
+      }
+      ResultSchema result = CommandModel.resultOf(spec);
+      if (result == null) {
+        violations.add(verb + ": declares no result (implement Returns)");
+        continue;
+      }
+      for (var field : result.fields()) {
+        if (!RESULT_KEY.matcher(field.name()).matches()) {
+          violations.add(verb + " " + field.name() + ": a result key is camelCase");
+        }
+        if (field.type() == null || !RESULT_TYPE.matcher(field.type()).matches()) {
+          violations.add(verb + " " + field.name() + ": type " + field.type() + " is not a word");
+        }
+        if (field.description() == null || field.description().isBlank()) {
+          violations.add(verb + " " + field.name() + ": no description");
+        }
       }
     }
     return violations;

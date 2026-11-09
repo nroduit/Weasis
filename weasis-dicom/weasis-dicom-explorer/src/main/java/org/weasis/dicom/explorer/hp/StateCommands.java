@@ -34,6 +34,8 @@ import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.OutputPath;
+import org.weasis.core.api.command.ResultSchema;
+import org.weasis.core.api.command.Returns;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -132,8 +134,40 @@ public class StateCommands implements CommandExtension {
     return manager;
   }
 
-  abstract static class Verb extends AbstractVerb {
+  abstract static class Verb extends AbstractVerb implements Returns {
     @ParentCommand StateCommands parent;
+  }
+
+  /** The keys of a session summary, as {@link #summary(Session)} writes them. */
+  static ResultSchema.Builder sessionSummary(ResultSchema.Builder result) {
+    return result
+        .field("session", String.class, "session id") // NON-NLS
+        .field("pinned", boolean.class, "kept out of the retention by number") // NON-NLS
+        .field("created", String.class, "when it was kept, ISO-8601") // NON-NLS
+        .field("updated", String.class, "when it was last used, ISO-8601") // NON-NLS
+        .field("label", String.class, "the label given, when there is one") // NON-NLS
+        .field("studies", "array", "study UIDs of the session") // NON-NLS
+        .field("archives", "array", "the archives the studies come from") // NON-NLS
+        .field("protocol", String.class, "the protocol that hung it, when one did") // NON-NLS
+        .field("step", int.class, "the step of the protocol, 1-based"); // NON-NLS
+  }
+
+  /** The keys of a checkpoint summary, as {@link Checkpoint#summary()} writes them. */
+  static ResultSchema.Builder checkpointSummary(ResultSchema.Builder result) {
+    return result
+        .field("checkpoint", String.class, "checkpoint id") // NON-NLS
+        .field("seq", long.class, "event sequence number at the boundary") // NON-NLS
+        .field("at", String.class, "when it was taken, ISO-8601") // NON-NLS
+        .field("label", String.class, "what the checkpoint precedes") // NON-NLS
+        .field("origin", String.class, "who asked for the work it precedes") // NON-NLS
+        .field("views", int.class, "views it holds") // NON-NLS
+        .field("graphics", int.class, "images with graphics it holds") // NON-NLS
+        .field("studies", int.class, "studies loaded at the boundary") // NON-NLS
+        .field("documents", int.class, "documents written since") // NON-NLS
+        .field("selectedView", String.class, "the view selected at the boundary") // NON-NLS
+        .field("protocol", String.class, "the protocol hung at the boundary") // NON-NLS
+        .field("step", int.class, "its step, 1-based") // NON-NLS
+        .field("automatic", boolean.class, "taken by the application at a boundary"); // NON-NLS
   }
 
   /** The series ids of every view of a snapshot. */
@@ -269,6 +303,13 @@ public class StateCommands implements CommandExtension {
       }
       return checkpoint.toSession(label, pin, sources);
     }
+
+    @Override
+    public ResultSchema result() {
+      return sessionSummary(ResultSchema.of())
+          .field("kept", boolean.class, "always true") // NON-NLS
+          .build();
+    }
   }
 
   /** A checkpoint by id, or the latest one when {@code id} is null. */
@@ -305,6 +346,13 @@ public class StateCommands implements CommandExtension {
       JsonObject json = checkpoint.summary().add("taken", true).build(); // NON-NLS
       print(isJson() ? json.toString() : "checkpoint " + checkpoint.id()); // NON-NLS
     }
+
+    @Override
+    public ResultSchema result() {
+      return checkpointSummary(ResultSchema.of())
+          .field("taken", boolean.class, "always true") // NON-NLS
+          .build();
+    }
   }
 
   @Command(
@@ -331,6 +379,15 @@ public class StateCommands implements CommandExtension {
         }
       }
       print(isJson() ? json.build().toString() : checkpoints.size() + " checkpoint(s)"); // NON-NLS
+    }
+
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field(
+              "checkpoints", "array", "the checkpoints, newest first, as 'checkpoint' prints them")
+          .field("changedSinceLatest", "object", "the diff from the newest one to the display now")
+          .build();
     }
   }
 
@@ -376,6 +433,20 @@ public class StateCommands implements CommandExtension {
       JsonObject json = result.toJson().build();
       print(isJson() ? json.toString() : "rolled back to " + checkpoint.id()); // NON-NLS
     }
+
+    @Override
+    public ResultSchema result() {
+      return checkpointSummary(ResultSchema.of())
+          .field("restored", boolean.class, "true once the display is back") // NON-NLS
+          .field("views", "array", "ids of the views shown after the rollback") // NON-NLS
+          .field("notRestored", "array", "what stayed as it was, one line each") // NON-NLS
+          .field("closedStudies", "array", "study UIDs closed by --close-new") // NON-NLS
+          .field("documents", "array", "documents put back to their version") // NON-NLS
+          .field("notCaptured", "array", "what a checkpoint never holds") // NON-NLS
+          .field("dryRun", boolean.class, "with --dry-run: nothing was changed") // NON-NLS
+          .field("diff", "object", "with --dry-run: what differs, as 'diff' prints it") // NON-NLS
+          .build();
+    }
   }
 
   @Command(
@@ -415,6 +486,19 @@ public class StateCommands implements CommandExtension {
               .build();
       print(isJson() ? json.toString() : (diff.isEmpty() ? "no change" : json.toString()));
     }
+
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("from", String.class, "the older checkpoint id") // NON-NLS
+          .field("to", String.class, "the newer checkpoint id, or 'now'") // NON-NLS
+          .field(
+              "diff",
+              "object",
+              "empty, viewsAdded, viewsRemoved, viewsChanged, graphicsChanged, studiesLoaded, "
+                  + "studiesClosed, selectionChanged, shellChanged, documentsChanged")
+          .build();
+    }
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -447,6 +531,14 @@ public class StateCommands implements CommandExtension {
             .append('\n');
       }
       print(out.toString().stripTrailing());
+    }
+
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field(
+              "sessions", "array", "the sessions, most recently used first, as 'keep' prints them")
+          .build();
     }
   }
 
@@ -505,6 +597,14 @@ public class StateCommands implements CommandExtension {
       views.forEach(ids::add);
       JsonObject json = summary(session).add("restored", true).add("views", ids).build(); // NON-NLS
       print(isJson() ? json.toString() : "restored session " + session.id()); // NON-NLS
+    }
+
+    @Override
+    public ResultSchema result() {
+      return sessionSummary(ResultSchema.of())
+          .field("restored", boolean.class, "always true") // NON-NLS
+          .field("views", "array", "ids of the views shown after the restore") // NON-NLS
+          .build();
     }
   }
 
@@ -602,6 +702,17 @@ public class StateCommands implements CommandExtension {
       }
       print(json.build().toString());
     }
+
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("session", String.class, "session id") // NON-NLS
+          .field("files", "array", "the files written") // NON-NLS
+          .field(
+              "boxes", int.class, "with --dicom: image boxes of the structured display") // NON-NLS
+          .field("warnings", "array", "with --dicom: what the object cannot carry") // NON-NLS
+          .build();
+    }
   }
 
   @Command(name = "delete", description = "Deletes a session of the user.")
@@ -632,6 +743,14 @@ public class StateCommands implements CommandExtension {
               .add("deleted", true) // NON-NLS
               .build()
               .toString());
+    }
+
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("session", String.class, "session id") // NON-NLS
+          .field("deleted", boolean.class, "always true") // NON-NLS
+          .build();
     }
   }
 }

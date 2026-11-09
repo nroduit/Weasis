@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import org.weasis.core.api.command.CommandOrigin;
+import org.weasis.core.api.util.DocumentVersions;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.GroupNode;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.Node;
@@ -161,7 +162,8 @@ public record Checkpoint(
     }
     json.add("views", views().size()) // NON-NLS
         .add("graphics", graphics.size()) // NON-NLS
-        .add("studies", studies.size()); // NON-NLS
+        .add("studies", studies.size()) // NON-NLS
+        .add("documents", DocumentVersions.documents(id).size()); // NON-NLS
     if (selectedView != null) {
       json.add("selectedView", selectedView); // NON-NLS
     }

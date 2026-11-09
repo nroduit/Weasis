@@ -50,6 +50,7 @@ weasis-cli help view2d                       # the verbs of one namespace, one l
 weasis-cli help view2d:capture               # one verb: synopsis, parameters and options
 weasis-cli help --markdown                   # the full reference, always current
 weasis-cli help --json                       # the same as a JSON descriptor (commands.json)
+                                             # each verb carries `result`: the keys of its answer
 weasis-cli --version                         # client version, command API and protocol versions
 ```
 
@@ -329,7 +330,12 @@ line naming the current spelling. Use the current one everywhere.
    the study, by `dicom:load`, is drawn over the slide.
 13. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
-   and still have no usable 3D.
+   and still have no usable 3D. A document of the user written after a checkpoint (a session kept, a protocol or a preset
+   saved, a settings package imported) goes back to its version on rollback: `state:diff` lists it
+   under `documentsChanged`, the rollback under `documents`; site documents are never rolled back.
+   The user has the same under *Window → Restore previous display* (named after what the newest
+   checkpoint precedes) and, after a batch of remote calls changed the display, a notice at the
+   bottom of the explorer with a *Restore* button (setting `weasis.state.notice.remote`).
 
 ## Several commands in one call
 
@@ -352,7 +358,9 @@ step fails, the display is put back to it for a remote caller (`--keep` leaves i
 step left it; `--rollback` forces the return for a launch script); the summary names the
 `checkpoint`, whether it `rolledBack`, and what stayed under `notRestored`.
 `script:check --file <file>` parses a plan without running it, which is the cheapest way to
-validate one before proposing it.
+validate one before proposing it. `examples/transaction-check.weasis` is the pattern of a batch that proves it left no trace:
+a checkpoint first, the work, a rollback, then `@expect ${after.diff.empty} == true` on a
+`state:diff --from` the checkpoint.
 
 ## Watching for changes
 

@@ -1091,6 +1091,23 @@ Usage: `state:checkpoint [-h] [--json] [--label=<text>]`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --label | string |  | What the checkpoint precedes, for the list. |
 
+| Result | Type | Description |
+|---|---|---|
+| checkpoint | string | checkpoint id |
+| seq | integer | event sequence number at the boundary |
+| at | string | when it was taken, ISO-8601 |
+| label | string | what the checkpoint precedes |
+| origin | string | who asked for the work it precedes |
+| views | integer | views it holds |
+| graphics | integer | images with graphics it holds |
+| studies | integer | studies loaded at the boundary |
+| documents | integer | documents written since |
+| selectedView | string | the view selected at the boundary |
+| protocol | string | the protocol hung at the boundary |
+| step | integer | its step, 1-based |
+| automatic | boolean | taken by the application at a boundary |
+| taken | boolean | always true |
+
 ### state:checkpoints (since 5.0)
 
 The checkpoints of this instance, newest first, with what each one holds and what changed since the latest.
@@ -1100,6 +1117,11 @@ Usage: `state:checkpoints [-h] [--json]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
+
+| Result | Type | Description |
+|---|---|---|
+| checkpoints | array | the checkpoints, newest first, as 'checkpoint' prints them |
+| changedSinceLatest | object | the diff from the newest one to the display now |
 
 ### state:delete (since 5.0)
 
@@ -1112,6 +1134,11 @@ Usage: `state:delete [-h] [--json] --session=<session-id>`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --session | string |  | Session id from 'list'. |
 
+| Result | Type | Description |
+|---|---|---|
+| session | string | session id |
+| deleted | boolean | always true |
+
 ### state:diff (since 5.0)
 
 What changed between two checkpoints, or between a checkpoint and the display now: views added, removed and changed, graphics, studies loaded and closed, the selection and the shell.
@@ -1123,6 +1150,12 @@ Usage: `state:diff [-h] [--json] --from=<checkpoint-id> [--to=<checkpoint-id>]`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --from | string |  | The older checkpoint, from 'checkpoints'. |
 | --to | string |  | The newer checkpoint (default: the display now). |
+
+| Result | Type | Description |
+|---|---|---|
+| from | string | the older checkpoint id |
+| to | string | the newer checkpoint id, or 'now' |
+| diff | object | empty, viewsAdded, viewsRemoved, viewsChanged, graphicsChanged, studiesLoaded, studiesClosed, selectionChanged, shellChanged, documentsChanged |
 
 ### state:export (since 5.0)
 
@@ -1140,6 +1173,13 @@ Needs: file write
 | --out | output-path |  | Target directory, created when missing. |
 | --dicom | boolean |  | Writes DICOM objects instead of the JSON. |
 
+| Result | Type | Description |
+|---|---|---|
+| session | string | session id |
+| files | array | the files written |
+| boxes | integer | with --dicom: image boxes of the structured display |
+| warnings | array | with --dicom: what the object cannot carry |
+
 ### state:keep (since 5.0)
 
 Keep this display: saves the workspace as a session of the user (windows, viewers, the series and presentation of every pane, the shell, the protocol and step that hung it) and returns its id. The session holds study and series identifiers, never credentials.
@@ -1153,6 +1193,19 @@ Usage: `state:keep [-h] [--json] [--pin] [--from-checkpoint=<checkpoint-id>] [--
 | --pin | boolean |  | Keeps the session out of the retention by number. |
 | --from-checkpoint | string |  | Promotes a checkpoint from 'checkpoints' to a session instead of the display. |
 
+| Result | Type | Description |
+|---|---|---|
+| session | string | session id |
+| pinned | boolean | kept out of the retention by number |
+| created | string | when it was kept, ISO-8601 |
+| updated | string | when it was last used, ISO-8601 |
+| label | string | the label given, when there is one |
+| studies | array | study UIDs of the session |
+| archives | array | the archives the studies come from |
+| protocol | string | the protocol that hung it, when one did |
+| step | integer | the step of the protocol, 1-based |
+| kept | boolean | always true |
+
 ### state:list (since 5.0)
 
 The sessions of the user, the most recently used first.
@@ -1162,6 +1215,10 @@ Usage: `state:list [-h] [--json]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
+
+| Result | Type | Description |
+|---|---|---|
+| sessions | array | the sessions, most recently used first, as 'keep' prints them |
 
 ### state:restore (since 5.0)
 
@@ -1174,6 +1231,20 @@ Usage: `state:restore [-h] [--json] [--session=<session-id>] [--study=<study-uid
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --session | string |  | Session id from 'list'. |
 | --study | study-uid |  | The most recent session showing this study instead of an id. |
+
+| Result | Type | Description |
+|---|---|---|
+| session | string | session id |
+| pinned | boolean | kept out of the retention by number |
+| created | string | when it was kept, ISO-8601 |
+| updated | string | when it was last used, ISO-8601 |
+| label | string | the label given, when there is one |
+| studies | array | study UIDs of the session |
+| archives | array | the archives the studies come from |
+| protocol | string | the protocol that hung it, when one did |
+| step | integer | the step of the protocol, 1-based |
+| restored | boolean | always true |
+| views | array | ids of the views shown after the restore |
 
 ### state:rollback (since 5.0)
 
@@ -1188,12 +1259,36 @@ Usage: `state:rollback [-h] [--close-new] [--dry-run] [--json] [--to=<checkpoint
 | --close-new | boolean |  | Close the studies loaded since the checkpoint. |
 | --dry-run | boolean |  | Only say what differs between the checkpoint and the display. |
 
+| Result | Type | Description |
+|---|---|---|
+| checkpoint | string | checkpoint id |
+| seq | integer | event sequence number at the boundary |
+| at | string | when it was taken, ISO-8601 |
+| label | string | what the checkpoint precedes |
+| origin | string | who asked for the work it precedes |
+| views | integer | views it holds |
+| graphics | integer | images with graphics it holds |
+| studies | integer | studies loaded at the boundary |
+| documents | integer | documents written since |
+| selectedView | string | the view selected at the boundary |
+| protocol | string | the protocol hung at the boundary |
+| step | integer | its step, 1-based |
+| automatic | boolean | taken by the application at a boundary |
+| restored | boolean | true once the display is back |
+| views | array | ids of the views shown after the rollback |
+| notRestored | array | what stayed as it was, one line each |
+| closedStudies | array | study UIDs closed by --close-new |
+| documents | array | documents put back to their version |
+| notCaptured | array | what a checkpoint never holds |
+| dryRun | boolean | with --dry-run: nothing was changed |
+| diff | object | with --dry-run: what differs, as 'diff' prints it |
+
 ### Events of state:
 
 | Event | Since | Payload | Description |
 |---|---|---|---|
 | `state:checkpoint.taken` | 5.0 | checkpoint: string, checkpointSeq: integer, label: string | A checkpoint of the display was taken. |
-| `state:rollback.done` | 5.0 | checkpoint: string, checkpointSeq: integer, views: integer, notRestored: integer | The display was put back to a checkpoint. |
+| `state:rollback.done` | 5.0 | checkpoint: string, checkpointSeq: integer, views: integer, notRestored: integer, documents: integer | The display was put back to a checkpoint. |
 
 
 ## subtraction
@@ -2132,7 +2227,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | Event | Since | Payload | Description |
 |---|---|---|---|
 | `state:checkpoint.taken` | 5.0 | checkpoint: string, checkpointSeq: integer, label: string | A checkpoint of the display was taken. |
-| `state:rollback.done` | 5.0 | checkpoint: string, checkpointSeq: integer, views: integer, notRestored: integer | The display was put back to a checkpoint. |
+| `state:rollback.done` | 5.0 | checkpoint: string, checkpointSeq: integer, views: integer, notRestored: integer, documents: integer | The display was put back to a checkpoint. |
 
 ### view2d:
 

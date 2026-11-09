@@ -57,6 +57,8 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
       new JComboBox<>(HpSettings.Restore.values());
   private final JCheckBox keepOnClose =
       new JCheckBox(Messages.getString("HangingProtocolPrefView.keep"));
+  private final JCheckBox remoteNotice =
+      new JCheckBox(Messages.getString("HangingProtocolPrefView.remote_notice"));
   private final JSpinner sessionsMax = new JSpinner(new SpinnerNumberModel(100, 0, 10000, 1));
   private final JSpinner sessionsDays = new JSpinner(new SpinnerNumberModel(90, 0, 3650, 1));
   private final ProtocolTable table = new ProtocolTable();
@@ -79,6 +81,7 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
             new JLabel(Messages.getString("HangingProtocolPrefView.restore") + StringUtilColon()),
             restore));
     behaviour.add(GuiUtils.getFlowLayoutPanel(keepOnClose));
+    behaviour.add(GuiUtils.getFlowLayoutPanel(remoteNotice));
     behaviour.add(
         GuiUtils.getFlowLayoutPanel(
             new JLabel(
@@ -126,6 +129,7 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
     opening.setSelectedItem(Settings.get(HpSettings.OPENING));
     restore.setSelectedItem(Settings.get(HpSettings.RESTORE));
     keepOnClose.setSelected(Settings.get(HpSettings.KEEP_ON_CLOSE));
+    remoteNotice.setSelected(Settings.get(HpSettings.REMOTE_NOTICE));
     sessionsMax.setValue(Settings.get(HpSettings.SESSIONS_MAX));
     sessionsDays.setValue(Settings.get(HpSettings.SESSIONS_MAX_DAYS));
     table.reload();
@@ -222,6 +226,7 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
     Settings.reset(HpSettings.OPENING);
     Settings.reset(HpSettings.RESTORE);
     Settings.reset(HpSettings.KEEP_ON_CLOSE);
+    Settings.reset(HpSettings.REMOTE_NOTICE);
     Settings.reset(HpSettings.SESSIONS_MAX);
     Settings.reset(HpSettings.SESSIONS_MAX_DAYS);
     load();
@@ -232,6 +237,7 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
     Settings.set(HpSettings.OPENING, (HpSettings.Opening) opening.getSelectedItem());
     Settings.set(HpSettings.RESTORE, (HpSettings.Restore) restore.getSelectedItem());
     Settings.set(HpSettings.KEEP_ON_CLOSE, keepOnClose.isSelected());
+    Settings.set(HpSettings.REMOTE_NOTICE, remoteNotice.isSelected());
     Settings.set(HpSettings.SESSIONS_MAX, (Integer) sessionsMax.getValue());
     Settings.set(HpSettings.SESSIONS_MAX_DAYS, (Integer) sessionsDays.getValue());
   }

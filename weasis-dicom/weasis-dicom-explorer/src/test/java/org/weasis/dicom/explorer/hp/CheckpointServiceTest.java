@@ -10,20 +10,30 @@
 package org.weasis.dicom.explorer.hp;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.weasis.core.api.command.CommandOrigin;
 import org.weasis.core.api.event.EventBus;
 import org.weasis.core.api.event.EventType;
+import org.weasis.core.api.setting.Scope;
+import org.weasis.core.api.util.DocumentStore;
+import org.weasis.core.api.util.DocumentVersions;
+import org.weasis.core.api.util.ListDocument;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.GroupNode;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.ViewDescriptor;
@@ -145,6 +155,62 @@ class CheckpointServiceTest {
   }
 
   @Test
+  void theDocumentsWrittenAfterACheckpointAreInTheDiffAndComeBackOnRollback(@TempDir Path dir)
+      throws IOException {
+    DocumentStore.configure(dir.resolve("pref"), null);
+    CheckpointService service = new CheckpointService(() -> 5, EventBus::new);
+    ViewDescriptor a = new ViewDescriptor("a", "2d", state("s1", 1)); // NON-NLS
+    Checkpoint before = checkpoint("before", workspace(a), Map.of(), Set.of("study1"), "a");
+    try {
+      service.push(before);
+      Path protocols = DocumentStore.folder(Scope.USER).resolve("hp-protocols.json");
+      ListDocument.writeAtomic(
+          protocols, Json.createObjectBuilder().add("saved", "by a script").build()); // NON-NLS
+      Checkpoint after =
+          new Checkpoint(
+              "after",
+              2,
+              Instant.now().plusSeconds(1),
+              null,
+              CommandOrigin.REMOTE,
+              workspace(a),
+              Map.of(),
+              Set.of("study1"),
+              "a",
+              null,
+              0,
+              Map.of(),
+              List.of(),
+              true);
+      CheckpointService.Diff diff = CheckpointService.diff(before, after);
+      int documentsKept = before.summary().build().getInt("documents"); // NON-NLS
+      List<String> notRestored = new ArrayList<>();
+      List<String> documents = CheckpointService.restoreDocuments(before, notRestored);
+      assertAll(
+          () -> assertEquals(List.of("hp-protocols.json"), diff.documentsChanged()),
+          () -> assertFalse(diff.isEmpty(), "a document written is a change of state"),
+          () -> assertEquals(1, documentsKept),
+          () -> assertEquals(List.of("hp-protocols.json"), documents),
+          () -> assertEquals(List.of(), notRestored),
+          () ->
+              assertFalse(Files.exists(protocols), "the document did not exist at the checkpoint"),
+          () -> assertTrue(CheckpointService.diff(before, after).documentsChanged().isEmpty()));
+      service.clear();
+      assertEquals(List.of(), DocumentVersions.open(), "a dropped checkpoint keeps no version");
+    } finally {
+      service.clear();
+      DocumentVersions.clear();
+      DocumentStore.configure(null, null);
+    }
+  }
+
+  @Test
+  void aCheckpointWaitsForNoMouseWhenNoneIsHeld() {
+    assertDoesNotThrow(() -> CheckpointService.awaitMouseReleased("A checkpoint"));
+    assertTrue(CheckpointService.MOUSE_DEFERRAL_MS >= 2_000, "the spec says 2 s");
+  }
+
+  @Test
   void theSummaryAndTheEventsAreNamedInTheStateNamespace() {
     ViewDescriptor a = new ViewDescriptor("a", "2d", state("s1", 1)); // NON-NLS
     Checkpoint checkpoint =
@@ -161,6 +227,18 @@ class CheckpointServiceTest {
         () ->
             assertEquals(
                 List.of("state:checkpoint.taken", "state:rollback.done"), names), // NON-NLS
-        () -> assertTrue(Checkpoint.NOT_CAPTURED.size() >= 3));
+        () -> assertTrue(Checkpoint.NOT_CAPTURED.size() >= 3),
+        () ->
+            assertTrue(
+                CheckpointService.eventTypes().get(1).fields().stream()
+                    .anyMatch(f -> f.name().equals("documents")),
+                "the rollback event counts the documents put back"));
+    CheckpointService service = new CheckpointService(() -> 5, EventBus::new);
+    assertTrue(service.newest().isEmpty(), "no checkpoint, no menu entry");
+    service.push(checkpoint);
+    assertAll(
+        () -> assertEquals("cp", service.newest().orElseThrow().id()),
+        () -> assertEquals("before cp", service.newest().orElseThrow().label()));
+    service.clear();
   }
 }

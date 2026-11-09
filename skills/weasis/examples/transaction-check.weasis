@@ -1,0 +1,22 @@
+# transaction-check.weasis — a batch that leaves no trace: checkpoint, change, roll back, prove it.
+# Run it with: weasis-cli --script transaction-check.weasis --set series=<series-uid>
+#
+# The checkpoint is the boundary; the diff after the rollback is the proof that nothing else
+# changed. "@expect ${after.diff.empty} == true" is the assertion a scripted suite ends with.
+
+$cp = state:checkpoint --label "before transaction-check"
+@expect ${cp.taken} == true
+
+$open = dicom:open --series ${series} --wait
+view2d:window-level --view ${open.target.view} --window 1600 --level -550
+$line = view2d:measure --view ${open.target.view} --type line --points 316,272,332,288
+@expect ${line.measurements[key=length].unit} == mm
+
+$during = state:diff --from ${cp.checkpoint}
+@expect ${during.diff.empty} == false
+
+$back = state:rollback --to ${cp.checkpoint} --close-new
+@expect ${back.restored} == true
+
+$after = state:diff --from ${cp.checkpoint}
+@expect ${after.diff.empty} == true

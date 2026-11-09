@@ -570,6 +570,25 @@ public final class CommandModel {
       }
       sb.append('\n');
     }
+    ResultSchema result = resultOf(spec);
+    if (result != null && !result.fields().isEmpty()) {
+      sb.append("| Result | Type | Description |\n|---|---|---|\n");
+      for (var field : result.fields()) {
+        sb.append("| ")
+            .append(cell(field.name()))
+            .append(" | ")
+            .append(field.type())
+            .append(" | ")
+            .append(cell(field.description()))
+            .append(" |\n");
+      }
+      sb.append('\n');
+    }
+  }
+
+  /** The result a verb declares through {@link Returns}, or null. */
+  static ResultSchema resultOf(CommandSpec spec) {
+    return spec.userObject() instanceof Returns returns ? returns.result() : null;
   }
 
   /** The description of an argument with its since / deprecated markers. */
@@ -711,7 +730,13 @@ public final class CommandModel {
       }
       out.endObject();
     }
-    out.endArray().endObject();
+    out.endArray();
+    ResultSchema result = resultOf(spec);
+    if (result != null) {
+      out.name("result"); // NON-NLS
+      result.write(out);
+    }
+    out.endObject();
   }
 
   private static void jsonNeeds(JsonWriter out, List<Capability> needs) {

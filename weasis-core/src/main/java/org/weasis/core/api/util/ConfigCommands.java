@@ -17,13 +17,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.Capability;
+import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandExtension;
+import org.weasis.core.api.command.CommandManager;
 import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.Needs;
 import org.weasis.core.api.command.OutputPath;
@@ -320,6 +323,13 @@ public class ConfigCommands implements CommandExtension {
 
     @Override
     protected void run() throws IOException {
+      Optional<String> checkpoint =
+          dryRun
+              ? Optional.empty()
+              : CommandManager.stateBoundary()
+                  .checkpoint(
+                      "before settings import " + file.value().getFileName(),
+                      CommandContext.current().origin());
       Plan plan =
           SettingsPackage.importPackage(
               file.value(),
@@ -328,9 +338,12 @@ public class ConfigCommands implements CommandExtension {
               SettingsPackage.currentEnvironment(),
               SettingsPackage.backupFolder());
       if (!dryRun) {
+        checkpoint.ifPresent(id -> DocumentVersions.importBackup(id, plan.backup()));
         SiteDocuments.reloadAll();
       }
-      print(toJson(plan, dryRun, replace).toString());
+      JsonObjectBuilder json = Json.createObjectBuilder(toJson(plan, dryRun, replace));
+      checkpoint.ifPresent(id -> json.add("checkpoint", id)); // NON-NLS
+      print(json.build().toString());
     }
   }
 

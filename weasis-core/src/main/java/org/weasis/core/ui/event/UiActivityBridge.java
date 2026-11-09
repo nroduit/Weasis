@@ -32,8 +32,11 @@ import org.weasis.core.api.event.WeasisEvents;
 public final class UiActivityBridge implements AWTEventListener {
 
   private static final long ACTIVITY_INTERVAL = TimeUnit.SECONDS.toNanos(2);
+  private static final int ANY_BUTTON_DOWN =
+      InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK;
 
   private final ToIntFunction<Window> windowNumber;
+  private static volatile boolean mouseButtonHeld;
   private volatile long lastActivity;
 
   private UiActivityBridge(ToIntFunction<Window> windowNumber) {
@@ -57,8 +60,24 @@ public final class UiActivityBridge implements AWTEventListener {
                 | AWTEvent.WINDOW_EVENT_MASK);
   }
 
+  /**
+   * Whether a mouse button is held now: a drag on a view keeps state in its mouse handler, so a
+   * checkpoint or a rollback waits for the release.
+   */
+  public static boolean isMouseButtonHeld() {
+    return mouseButtonHeld;
+  }
+
   @Override
   public void eventDispatched(AWTEvent event) {
+    if (event instanceof java.awt.event.MouseEvent mouse) {
+      if (mouse.getID() == java.awt.event.MouseEvent.MOUSE_PRESSED) {
+        mouseButtonHeld = true;
+      } else if (mouse.getID() == java.awt.event.MouseEvent.MOUSE_RELEASED
+          && (mouse.getModifiersEx() & ANY_BUTTON_DOWN) == 0) {
+        mouseButtonHeld = false;
+      }
+    }
     if (event instanceof InputEvent input && isUserInput(input)) {
       long now = System.nanoTime();
       if (now - lastActivity < ACTIVITY_INTERVAL) {

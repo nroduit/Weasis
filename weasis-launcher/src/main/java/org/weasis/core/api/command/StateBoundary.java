@@ -51,4 +51,17 @@ public interface StateBoundary {
    * @throws IllegalArgumentException when the checkpoint is unknown
    */
   List<String> rollback(String checkpointId);
+
+  /** The newest checkpoint, for the menu entry that restores it; empty when there is none. */
+  default Optional<Latest> newest() {
+    return Optional.empty();
+  }
+
+  /**
+   * The newest checkpoint as the user surface shows it.
+   *
+   * @param id the checkpoint id a rollback takes
+   * @param label what the checkpoint precedes, may be empty
+   */
+  record Latest(String id, String label) {}
 }
