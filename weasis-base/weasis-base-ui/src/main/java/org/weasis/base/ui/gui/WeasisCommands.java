@@ -10,6 +10,7 @@
 package org.weasis.base.ui.gui;
 
 import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import java.awt.Frame;
 import java.awt.Rectangle;
@@ -29,6 +30,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.launcher.CommandProtocol;
+import org.weasis.launcher.integrity.Integrity;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -97,6 +99,14 @@ public class WeasisCommands implements CommandExtension {
         hidden = true)
     boolean all;
 
+    @Option(
+        names = "--integrity",
+        description =
+            "The integrity of the configuration and the plugins: the level reached (signed, "
+                + "digest, none), the signing key, the entries verified and the failures.")
+    @Since("5.0")
+    boolean integrity;
+
     @Override
     protected void run() {
       if (version) {
@@ -104,13 +114,47 @@ public class WeasisCommands implements CommandExtension {
         return;
       }
       Map<String, String> specs = specifications();
+      Integrity.Report report = integrity ? Integrity.report() : null;
       if (isJson()) {
         JsonObjectBuilder json = Json.createObjectBuilder();
         specs.forEach(json::add);
+        if (report != null) {
+          json.add("integrity", integrityJson(report)); // NON-NLS
+        }
         print(json.build().toString());
       } else {
         specs.forEach((k, v) -> print("  " + k + ": " + v));
+        if (report != null) {
+          print(
+              "  integrity: "
+                  + report.level().key() // NON-NLS
+                  + (report.keyId() == null ? "" : " (key " + report.keyId() + ")")
+                  + ", "
+                  + report.verified()
+                  + "/"
+                  + report.entries()
+                  + " verified");
+          report.failures().forEach(f -> print("    failed: " + f)); // NON-NLS
+        }
       }
+    }
+
+    static JsonObjectBuilder integrityJson(Integrity.Report report) {
+      JsonObjectBuilder json =
+          Json.createObjectBuilder()
+              .add("level", report.level().key()) // NON-NLS
+              .add("entries", report.entries()) // NON-NLS
+              .add("verified", report.verified()) // NON-NLS
+              .add("lowered", report.lowered()); // NON-NLS
+      if (report.keyId() != null) {
+        json.add("keyId", report.keyId()); // NON-NLS
+      }
+      if (report.source() != null) {
+        json.add("source", report.source()); // NON-NLS
+      }
+      JsonArrayBuilder failures = Json.createArrayBuilder();
+      report.failures().forEach(failures::add);
+      return json.add("failures", failures); // NON-NLS
     }
   }
 

@@ -108,7 +108,7 @@
     },
     {
       "code": "weasis.plugins.110",
-      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-send/${app.version}/weasis-dicom-send-${app.version}.jar file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-isowriter/${app.version}/weasis-dicom-isowriter-${app.version}.jar file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-qr/${app.version}/weasis-dicom-qr-${app.version}.jar",
+      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-send/${app.version}/weasis-dicom-send-${app.version}.jar file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-audit/${app.version}/weasis-dicom-audit-${app.version}.jar file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-isowriter/${app.version}/weasis-dicom-isowriter-${app.version}.jar file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-qr/${app.version}/weasis-dicom-qr-${app.version}.jar",
       "description": "DICOM send, Q/R and ISO writer",
       "type": "A",
       "category": "PLUGIN_INSTALL"

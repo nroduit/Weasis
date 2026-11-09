@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.28",
+  "apiVersion": "2.29",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -1280,6 +1280,16 @@
               "name": "seriesInstanceUID",
               "type": "series-uid",
               "description": "series instance UID of the object"
+            },
+            {
+              "name": "provenanceKind",
+              "type": "string",
+              "description": "external, user... when the object says"
+            },
+            {
+              "name": "provenanceSource",
+              "type": "string",
+              "description": "the algorithm, device or person"
             }
           ]
         },
@@ -2128,7 +2138,31 @@
               "required": false,
               "description": "Only this cell, from 1."
             }
-          ]
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "protocol",
+                "type": "string",
+                "description": "the protocol that hung the viewer"
+              },
+              {
+                "name": "step",
+                "type": "integer",
+                "description": "its step, 1-based"
+              },
+              {
+                "name": "reasons",
+                "type": "array",
+                "description": "why the protocol was chosen, one line each"
+              },
+              {
+                "name": "cells",
+                "type": "array",
+                "description": "per cell: the series, the rules that selected it and the 'evidence' of each rule (feature, value, provenance), the alternatives"
+              }
+            ]
+          }
         },
         {
           "name": "export",
@@ -2196,6 +2230,79 @@
           ]
         },
         {
+          "name": "feature",
+          "description": "Sets a derived feature of a loaded series by hand (role, orientation, anatomy, laterality, view, contrast, mrWeighting, ctKernel.family, temporal), as a USER value that outranks every header, table, classifier and heuristic; the next matching uses it. '--by agent' records the caller as 'agent:<origin>', so a correction of an agent stays distinguishable from the radiologist's. In memory for the series, until it is loaded again.",
+          "since": "5.0",
+          "usage": "hp:feature [-h] [--json] [--by=<who>] --series=<series-uid> --set=<feature=value> [--set=<feature=value>]...",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Series Instance UID, from 'dicom:list' or 'features'."
+            },
+            {
+              "names": [
+                "--set"
+              ],
+              "label": "<feature=value>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "A feature and its value, repeatable: orientation=CORONAL, mrWeighting=T2."
+            },
+            {
+              "names": [
+                "--by"
+              ],
+              "label": "<who>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "'user' (default) or 'agent': who states the value."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "series",
+                "type": "string",
+                "description": "the series set"
+              },
+              {
+                "name": "by",
+                "type": "string",
+                "description": "'user' or 'agent:<origin>', the source recorded"
+              },
+              {
+                "name": "features",
+                "type": "object",
+                "description": "the features after the change"
+              },
+              {
+                "name": "provenance",
+                "type": "object",
+                "description": "the provenance of each derived feature"
+              }
+            ]
+          }
+        },
+        {
           "name": "features",
           "description": "The series features the matching works on (modality, role, orientation, anatomy, laterality, view, contrast, MR weighting, CT kernel and family, thickness, spacing, temporal, images of interest...), per series of a loaded study or of a folder of studies: what a selector can test, and why a series matched or not.",
           "since": "5.0",
@@ -2238,7 +2345,16 @@
                 "file-read"
               ]
             }
-          ]
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "studies",
+                "type": "array",
+                "description": "per study: its series with 'features', the 'provenance' of each derived feature (kind, source, detail, confidence, version) and the 'contests' of the providers"
+              }
+            ]
+          }
         },
         {
           "name": "group",
@@ -6222,7 +6338,7 @@
         {
           "name": "grid",
           "description": "Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.",
-          "usage": "view2d:grid [-h] [--json] [--view=<view-id>] [--panes=<n> | --grid=<grid-id> | --best-for=<n>]",
+          "usage": "view2d:grid [-h] [--json] [--view=<view-id>] [--grid=<grid-id> | --best-for=<n> | --panes=<n>]",
           "parameters": [],
           "options": [
             {
@@ -6244,20 +6360,6 @@
               "arity": "1",
               "required": false,
               "description": "Viewer id from 'workspace:list' (default: the selected viewer)."
-            },
-            {
-              "names": [
-                "--panes"
-              ],
-              "label": "<n>",
-              "type": "integer",
-              "arity": "1",
-              "required": true,
-              "description": "Applies the best grid for this number of panes.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
             },
             {
               "names": [
@@ -6283,6 +6385,20 @@
               "required": true,
               "description": "Returns the best grid for this number of panes without applying it.",
               "since": "5.0",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--panes"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Applies the best grid for this number of panes.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"
@@ -7488,7 +7604,7 @@
         {
           "name": "info",
           "description": "Version and installation details, the version being one of the keys. The 4.x option -v still answers with the version alone.",
-          "usage": "weasis:info [-h] [--json]",
+          "usage": "weasis:info [-h] [--integrity] [--json]",
           "parameters": [],
           "options": [
             {
@@ -7500,6 +7616,17 @@
               "arity": "0",
               "required": false,
               "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--integrity"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "The integrity of the configuration and the plugins: the level reached (signed, digest, none), the signing key, the entries verified and the failures.",
+              "since": "5.0"
             }
           ]
         },
@@ -8912,6 +9039,16 @@
             "name": "seriesInstanceUID",
             "type": "series-uid",
             "description": "series instance UID of the object"
+          },
+          {
+            "name": "provenanceKind",
+            "type": "string",
+            "description": "external, user... when the object says"
+          },
+          {
+            "name": "provenanceSource",
+            "type": "string",
+            "description": "the algorithm, device or person"
           }
         ]
       },

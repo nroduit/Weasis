@@ -37,6 +37,7 @@ import org.weasis.launcher.BootstrapContract;
 import org.weasis.launcher.FileUtil;
 import org.weasis.launcher.Utils;
 import org.weasis.launcher.WeasisLauncher.Type;
+import org.weasis.launcher.integrity.Integrity;
 import org.weasis.plugin.WeasisPluginManager;
 
 public class ConfigData {
@@ -936,15 +937,40 @@ public class ConfigData {
   private boolean readConfiguration(URI propURI) {
     String cache = System.getProperty(BootstrapContract.P_CONFIG_CACHE);
     String cacheUri = System.getProperty(BootstrapContract.P_CONFIG_CACHE_URI);
+    boolean remote = !"file".equalsIgnoreCase(propURI.getScheme()); // NON-NLS
     if (Utils.hasText(cache) && propURI.toString().equals(cacheUri)) {
       Path file = Path.of(cache);
       if (Files.isRegularFile(file) && preferences.readJson(file.toUri())) {
         configOutput.append("\n  Configuration read from the bootstrap cache = "); // NON-NLS
         configOutput.append(file);
-        return true;
+        return checkIntegrity(file.toUri(), remote);
       }
     }
-    return preferences.readJson(propURI);
+    return preferences.readJson(propURI) && checkIntegrity(propURI, remote);
+  }
+
+  /**
+   * Reads the integrity list and the signature of the configuration; a remote configuration that
+   * does not reach the required level is refused, which makes the launcher fall back to the
+   * installed one.
+   */
+  private boolean checkIntegrity(URI propURI, boolean remote) {
+    try {
+      Integrity.load(propURI, remote);
+      Integrity.Report report = Integrity.report();
+      configOutput.append("\n  Configuration integrity = "); // NON-NLS
+      configOutput.append(report.level().key());
+      if (report.keyId() != null) {
+        configOutput.append(" (key ").append(report.keyId()).append(')');
+      }
+      return true;
+    } catch (Integrity.Refused e) {
+      LOGGER.error("{}", e.getMessage());
+      return false;
+    } catch (IOException e) {
+      LOGGER.warn("Cannot check the integrity of {}", propURI, e);
+      return true;
+    }
   }
 
   /**

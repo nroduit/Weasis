@@ -28,6 +28,7 @@ import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tukaani.xz.XZInputStream;
+import org.weasis.launcher.integrity.Integrity;
 import org.weasis.plugin.WeasisPluginManager;
 import org.weasis.pref.ConfigData;
 
@@ -251,17 +252,25 @@ public class AutoProcessor {
 
     if (cacheable) {
       if (Files.exists(targetPath)) {
-        LOGGER.debug("Plugin already exists in cache: {}", targetPath);
-        return targetPath;
+        if (Integrity.verifyCached(pluginsDir, targetPath, fileName)) {
+          LOGGER.debug("Plugin already exists in cache: {}", targetPath);
+          return targetPath;
+        }
+        LOGGER.warn("Cached plugin {} failed its integrity check, downloaded again", fileName);
+        FileUtil.delete(targetPath);
       } else {
         Path otherPath =
             pluginsDir
                 .resolve(isTranslation ? ConfigData.F_TRANSLATION_FOLDER : ConfigData.F_LIB_FOLDER)
                 .resolve(fileName);
         if (Files.exists(otherPath)) {
-          targetPath = otherPath;
-          LOGGER.debug("File already exists in cache: {}", targetPath);
-          return targetPath;
+          if (Integrity.verifyCached(pluginsDir, otherPath, fileName)) {
+            targetPath = otherPath;
+            LOGGER.debug("File already exists in cache: {}", targetPath);
+            return targetPath;
+          }
+          LOGGER.warn("Cached file {} failed its integrity check, downloaded again", fileName);
+          FileUtil.delete(otherPath);
         }
       }
     }
@@ -288,6 +297,12 @@ public class AutoProcessor {
           Files.copy(input, tmpPath, StandardCopyOption.REPLACE_EXISTING);
           LOGGER.info("Downloaded plugin to tmp: {}", fileName);
         }
+      }
+
+      // The digest the configuration promises, before anything else reads the file
+      if (!Integrity.check(tmpPath, fileName)) {
+        FileUtil.delete(tmpPath);
+        throw new IOException("Integrity check failed for " + fileName);
       }
 
       // Validate the downloaded plugin

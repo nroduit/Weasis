@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.28, protocol 2, application development.
+Command API 2.29, protocol 2, application development.
 
 ## color
 
@@ -308,7 +308,7 @@ Usage: `dicom:unload [-h] [--all] [--json] [--patient=<patient-handle>]... [--se
 | `dicom:loading.progress` (coalesced) | 5.0 | series: series-uid, images: integer | Images arrived in a series; one event per series per tick. |
 | `dicom:loading.started` | 5.0 | source: string, series: series-uid | A load, download or export task started. |
 | `dicom:loading.stopped` | 5.0 | source: string, series: series-uid, canceled: boolean | A load, download or export task ended. |
-| `dicom:object.added` | 5.0 | type: string, sopInstanceUID: string, seriesInstanceUID: series-uid | A non-image object (KO, PR, SR, SEG, RT) is available. |
+| `dicom:object.added` | 5.0 | type: string, sopInstanceUID: string, seriesInstanceUID: series-uid, provenanceKind: string, provenanceSource: string | A non-image object (KO, PR, SR, SEG, RT) is available. |
 | `dicom:patient.added` | 5.0 | patientID: patient-handle, patientName: string, patientBirthDate: string | A patient entered the explorer. |
 | `dicom:patient.removed` | 5.0 | patientID: patient-handle | A patient and everything under it left the explorer. |
 | `dicom:series.added` | 5.0 | id: series-uid, seriesInstanceUID: series-uid, studyInstanceUID: study-uid, modality: string, seriesDescription: string, imageCount: integer | A series entered the explorer; its images may still be loading. |
@@ -524,6 +524,13 @@ Usage: `hp:explain [-h] [--json] [--cell=<cell>] [--view=<view-id>]`
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --cell | integer |  | Only this cell, from 1. |
 
+| Result | Type | Description |
+|---|---|---|
+| protocol | string | the protocol that hung the viewer |
+| step | integer | its step, 1-based |
+| reasons | array | why the protocol was chosen, one line each |
+| cells | array | per cell: the series, the rules that selected it and the 'evidence' of each rule (feature, value, provenance), the alternatives |
+
 ### hp:export (since 5.0)
 
 Writes a protocol of any layer to a file: its JSON entry, or with --dicom a DICOM Hanging Protocol Storage object (also when the file ends with .dcm). The Weasis extensions (feature selectors, viewer types, display by reference, UI profile) travel in a private block of the object, or are dropped with --plain for a reader that must not see them.
@@ -540,6 +547,26 @@ Needs: file write
 | --dicom | boolean |  | Writes a DICOM object instead of JSON. |
 | --plain | boolean |  | Leaves the Weasis extensions out. |
 
+### hp:feature (since 5.0)
+
+Sets a derived feature of a loaded series by hand (role, orientation, anatomy, laterality, view, contrast, mrWeighting, ctKernel.family, temporal), as a USER value that outranks every header, table, classifier and heuristic; the next matching uses it. '--by agent' records the caller as 'agent:<origin>', so a correction of an agent stays distinguishable from the radiologist's. In memory for the series, until it is loaded again.
+
+Usage: `hp:feature [-h] [--json] [--by=<who>] --series=<series-uid> --set=<feature=value> [--set=<feature=value>]...`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | string |  | Series Instance UID, from 'dicom:list' or 'features'. |
+| --set | string |  | A feature and its value, repeatable: orientation=CORONAL, mrWeighting=T2. |
+| --by | string |  | 'user' (default) or 'agent': who states the value. |
+
+| Result | Type | Description |
+|---|---|---|
+| series | string | the series set |
+| by | string | 'user' or 'agent:<origin>', the source recorded |
+| features | object | the features after the change |
+| provenance | object | the provenance of each derived feature |
+
 ### hp:features (since 5.0)
 
 The series features the matching works on (modality, role, orientation, anatomy, laterality, view, contrast, MR weighting, CT kernel and family, thickness, spacing, temporal, images of interest...), per series of a loaded study or of a folder of studies: what a selector can test, and why a series matched or not.
@@ -553,6 +580,10 @@ Needs: file read
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --study | study-uid |  | Study Instance UID from 'dicom:list'. |
 | --corpus | input-path |  | A folder of DICOM studies read without a viewer, walked recursively. |
+
+| Result | Type | Description |
+|---|---|---|
+| studies | array | per study: its series with 'features', the 'provenance' of each derived feature (kind, source, detail, confidence, version) and the 'contests' of the providers |
 
 ### hp:group (since 5.0)
 
@@ -1589,15 +1620,15 @@ Usage: `view2d:graphics [-h] [--json] [--no-measurements] [--after=<n>] [--layer
 
 Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.
 
-Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--panes=<n> | --grid=<grid-id> | --best-for=<n>]`
+Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--grid=<grid-id> | --best-for=<n> | --panes=<n>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --panes | integer |  | Applies the best grid for this number of panes. |
 | --grid | grid-id |  | Applies this grid, by id from the bare verb. |
 | --best-for | integer |  | Returns the best grid for this number of panes without applying it. (since 5.0) |
+| --panes | integer |  | Applies the best grid for this number of panes. |
 
 ### view2d:hang (since 5.0)
 
@@ -1859,11 +1890,12 @@ The application itself: version, installation and the main window.
 
 Version and installation details, the version being one of the keys. The 4.x option -v still answers with the version alone.
 
-Usage: `weasis:info [-h] [--json]`
+Usage: `weasis:info [-h] [--integrity] [--json]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
+| --integrity | boolean |  | The integrity of the configuration and the plugins: the level reached (signed, digest, none), the signing key, the entries verified and the failures. (since 5.0) |
 
 ### weasis:minimize (since 5.0)
 
@@ -2203,7 +2235,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | `dicom:loading.progress` (coalesced) | 5.0 | series: series-uid, images: integer | Images arrived in a series; one event per series per tick. |
 | `dicom:loading.started` | 5.0 | source: string, series: series-uid | A load, download or export task started. |
 | `dicom:loading.stopped` | 5.0 | source: string, series: series-uid, canceled: boolean | A load, download or export task ended. |
-| `dicom:object.added` | 5.0 | type: string, sopInstanceUID: string, seriesInstanceUID: series-uid | A non-image object (KO, PR, SR, SEG, RT) is available. |
+| `dicom:object.added` | 5.0 | type: string, sopInstanceUID: string, seriesInstanceUID: series-uid, provenanceKind: string, provenanceSource: string | A non-image object (KO, PR, SR, SEG, RT) is available. |
 | `dicom:patient.added` | 5.0 | patientID: patient-handle, patientName: string, patientBirthDate: string | A patient entered the explorer. |
 | `dicom:patient.removed` | 5.0 | patientID: patient-handle | A patient and everything under it left the explorer. |
 | `dicom:series.added` | 5.0 | id: series-uid, seriesInstanceUID: series-uid, studyInstanceUID: study-uid, modality: string, seriesDescription: string, imageCount: integer | A series entered the explorer; its images may still be loading. |
