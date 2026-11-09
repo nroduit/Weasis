@@ -73,6 +73,12 @@ final class Contract {
   /** Stage 2 refuses this environment: no recovery, the error names the reason. */
   static final int EXIT_REFUSED = 78;
 
+  /**
+   * Stage 2 has told the user that this system cannot run the application (a glibc below the floor
+   * of the native libraries): no retry with the embedded set, no second dialog.
+   */
+  static final int EXIT_UNSUPPORTED = 79;
+
   /** Suffix of the embedded set files, which keeps them off the class path jpackage builds. */
   static final String EMBEDDED_SUFFIX = ".embedded";
 

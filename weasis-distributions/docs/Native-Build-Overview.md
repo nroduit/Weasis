@@ -39,6 +39,9 @@ The 3D viewer adds no native library of its own: it calls the system OpenGL, EGL
 
 `GLIBC_2.27` (February 2018) covers Ubuntu 18.04, Debian 10, RHEL 8 and later.
 
+The floor is also the configuration value `weasis.native.glibc.min` of `base.json` (both copies), kept with the native library versions: the launcher checks it at start, before any native library loads (`GlibcFloor`, reading `gnu_get_libc_version()` through the FFM API), and a Linux below it, or without glibc, is told that the system is not supported and stops with exit code 79, which the bootstrap neither retries nor comments.
+Bump the value with the OpenCV artifact when its highest `GLIBC_` symbol moves; the pre-tag checks of the release compare it with the floor stated here.
+
 Rules:
 
 - Do not add a native binary compiled on the build host: it would raise the floor to the host glibc.

@@ -60,6 +60,12 @@ public final class BootstrapContract {
   /** Stage 2 refuses this environment: stage 1 shows the error, no recovery. */
   public static final int EXIT_REFUSED = 78;
 
+  /**
+   * Stage 2 has told the user that this system cannot run the application (a glibc below the floor
+   * of the native libraries): stage 1 neither retries nor adds a dialog.
+   */
+  public static final int EXIT_UNSUPPORTED = 79;
+
   /** Suffix of the embedded set files, which keeps them off the class path jpackage builds. */
   public static final String EMBEDDED_SUFFIX = ".embedded";
 

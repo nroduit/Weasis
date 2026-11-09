@@ -126,6 +126,11 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
         refuse("this runtime does not satisfy the package: " + String.join("; ", unsatisfied));
       }
     }
+    // Before any native library loads: a Linux below the glibc floor of the bundled natives is
+    // told so and stops, instead of failing on the first native load.
+    GlibcFloor.enforce(
+        configData.getConfigValue(GlibcFloor.P_GLIBC_MIN, null),
+        System.getProperty(ConfigData.P_WEASIS_NAME, "Weasis")); // NON-NLS
     if (!Singleton.invoke(configData)) {
       AppLauncher instance = new AppLauncher(configData);
 

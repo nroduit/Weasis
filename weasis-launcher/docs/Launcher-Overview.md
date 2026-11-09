@@ -60,9 +60,14 @@ Two plain JARs, neither a plugin, start the application:
    `.bootstrap`) against the JVM it runs in.
 5. **Base directory resolution** — the per-OS config/data/cache/state directories are
    resolved and published as system properties (see [Base Directories](#base-directories)).
-6. **Single-instance check** — `Singleton` decides whether to hand the arguments to an
+6. **System check** — on Linux, `GlibcFloor` compares the glibc of the process
+   (`gnu_get_libc_version()` through the FFM API, nothing loaded) with the floor of the bundled
+   native libraries (`weasis.native.glibc.min` of the configuration); an older system, or one
+   without glibc, gets the message in a dialog and on the error stream and stops with exit
+   code 79, which stage 1 neither retries nor comments.
+7. **Single-instance check** — `Singleton` decides whether to hand the arguments to an
    already-running instance or to start a new one.
-7. **Plugin framework start** — the PF4J plugin manager loads and starts the plugins
+8. **Plugin framework start** — the PF4J plugin manager loads and starts the plugins
    (`loadPlugins()` / `startPlugins()`); the launcher then prints `READY` for stage 1.
 
 ## Bootstrap and Launcher Set
@@ -484,9 +489,12 @@ The client is `org.weasis.launcher.CommandClient` in the launcher jar. The packa
 they register the `weasis://` scheme; it goes through the bootstrap like the others (kind
 `cli`: no configuration fetch, the launcher set the application ran last, a JVM tuned for a
 short-lived process). A build or an IDE runs the same class from the launcher jar, and neither
-needs the configuration or the plugins. The client can start the sibling `Weasis` launcher
-when no instance is running, pick an instance by id prefix when several run for the same user,
-and answer yes on the caller's behalf to the questions a verb would ask.
+needs the configuration or the plugins. The client can start the `Weasis` launcher of its image
+when no instance is running (`--launch`: the launcher is found from the application directory
+stage 1 names, `weasis.bootstrap.appdir`, since the client itself runs in the JVM of the
+runtime; a source build names its command in `WEASIS_LAUNCH_COMMAND`), pick an instance by id
+prefix when several run for the same user, and answer yes on the caller's behalf to the
+questions a verb would ask.
 
 `weasis-cli` has its own per-user AOT cache: a call answers first, then the bootstrap trains
 the cache in a detached child, and the next calls start with it; a cache that crashes the

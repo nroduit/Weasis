@@ -406,6 +406,12 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.dicom</groupId>
+                  <artifactId>weasis-dicom-audit</artifactId>
+                  <version>${app.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.dicom</groupId>
                   <artifactId>weasis-dicom-qr</artifactId>
                   <version>${app.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>

@@ -379,4 +379,48 @@ class CommandClientTest {
         () -> assertTrue(SingletonFiles.isPrivate(all.getFirst().file())),
         () -> assertTrue(SingletonFiles.list(dir.resolve("missing")).isEmpty()));
   }
+
+  /** A jpackage image: the client runs in {@code lib/runtime/bin/java}, the launcher is in bin/. */
+  @Test
+  void theLauncherOfTheImageIsFoundFromTheApplicationDirectory(@TempDir Path image)
+      throws IOException {
+    Path linuxApp = Files.createDirectories(image.resolve("linux/lib/app"));
+    Path linuxLauncher = Files.createDirectories(image.resolve("linux/bin")).resolve("Weasis");
+    Files.writeString(linuxLauncher, "#!/bin/sh\n");
+    assertTrue(linuxLauncher.toFile().setExecutable(true));
+    Path macApp = Files.createDirectories(image.resolve("Weasis.app/Contents/app"));
+    Path macLauncher =
+        Files.createDirectories(image.resolve("Weasis.app/Contents/MacOS")).resolve("Weasis");
+    Files.writeString(macLauncher, "#!/bin/sh\n");
+    assertTrue(macLauncher.toFile().setExecutable(true));
+    Path winApp = Files.createDirectories(image.resolve("win/app"));
+    Path winLauncher = image.resolve("win/Weasis.exe");
+    Files.writeString(winLauncher, "MZ");
+    assertTrue(winLauncher.toFile().setExecutable(true));
+    Path runtimeJava = image.resolve("linux/lib/runtime/bin/java");
+
+    assertAll(
+        () ->
+            assertEquals(
+                java.util.Optional.of(linuxLauncher),
+                CommandClient.siblingLauncher(linuxApp.toString(), runtimeJava)),
+        () ->
+            assertEquals(
+                java.util.Optional.of(macLauncher),
+                CommandClient.siblingLauncher(macApp.toString(), null)),
+        () ->
+            assertEquals(
+                java.util.Optional.of(winLauncher),
+                CommandClient.siblingLauncher(winApp.toString(), null)),
+        () ->
+            assertEquals(
+                java.util.Optional.of(linuxLauncher),
+                CommandClient.siblingLauncher(null, linuxLauncher.resolveSibling("weasis-cli")),
+                "a launcher started directly: the directory of the process"),
+        () ->
+            assertTrue(
+                CommandClient.siblingLauncher(null, runtimeJava).isEmpty(),
+                "the JVM of the runtime has no launcher beside it"),
+        () -> assertTrue(CommandClient.siblingLauncher(null, null).isEmpty()));
+  }
 }

@@ -159,8 +159,8 @@ public class WeasisLauncher {
       // plugin class loads, the user's drop-in folder as a second root judged by the gate
       PluginPolicy pluginPolicy =
           PluginPolicy.of(
-              key -> configData.getProperty(key, null),
-              Optional.ofNullable(configData.getProperty(ConfigData.P_WEASIS_CONFIG_DIR, null))
+              key -> configData.getConfigValue(key, null),
+              Optional.ofNullable(configData.getConfigValue(ConfigData.P_WEASIS_CONFIG_DIR, null))
                   .map(Path::of)
                   .orElse(null));
       UserPluginRegistry registry =

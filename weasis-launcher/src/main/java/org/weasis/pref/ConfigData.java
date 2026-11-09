@@ -1103,6 +1103,23 @@ public class ConfigData {
     return properties.getProperty(key, defaultValue);
   }
 
+  /**
+   * A value of the served configuration ({@code base.json} and the profile files) that a launch
+   * argument or a system property may override: the launcher's own properties first, then the
+   * preferences the configuration files were read into, else the default. The keys the launcher
+   * reads before any plugin loads (the plugin policy, the glibc floor) go through here.
+   */
+  public String getConfigValue(String key, String defaultValue) {
+    String value = properties.getProperty(key);
+    if (!Utils.hasText(value)) {
+      value = System.getProperty(key);
+    }
+    if (!Utils.hasText(value)) {
+      value = preferences.getValue(key, null);
+    }
+    return Utils.hasText(value) ? value : defaultValue;
+  }
+
   public static void setNativeLibSpecification() {
     // The value format intentionally follows the OSGi os-names specification:
     // See https://docs.osgi.org/reference/osnames.html

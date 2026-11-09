@@ -429,21 +429,47 @@ public final class CommandClient implements Callable<Integer> {
 
   // jpackage puts every launcher of the application in the same directory.
   private static Optional<Path> siblingLauncher() {
-    return ProcessHandle.current()
-        .info()
-        .command()
-        .map(Path::of)
-        .map(Path::getParent)
-        .flatMap(
-            dir -> {
-              for (String name : List.of("Weasis", "Weasis.exe", "weasis")) { // NON-NLS
-                Path candidate = dir.resolve(name);
-                if (Files.isExecutable(candidate)) {
-                  return Optional.of(candidate);
-                }
-              }
-              return Optional.empty();
-            });
+    return siblingLauncher(
+        System.getProperty(BootstrapContract.P_APPDIR),
+        ProcessHandle.current().info().command().map(Path::of).orElse(null));
+  }
+
+  /**
+   * The main launcher of the image this client belongs to. In a packaged launch this process is the
+   * stage-2 JVM of the bootstrap ({@code lib/runtime/bin/java}), so the image is found from the
+   * application directory stage 1 names ({@code weasis.bootstrap.appdir}: {@code <image>/lib/app}
+   * on Linux, {@code Contents/app} on macOS, {@code <image>/app} on Windows); the directory of the
+   * process command serves a launcher started directly.
+   */
+  static Optional<Path> siblingLauncher(String appDir, Path processCommand) {
+    for (Path dir : launcherDirectories(appDir, processCommand)) {
+      for (String name : List.of("Weasis", "Weasis.exe", "weasis")) { // NON-NLS
+        Path candidate = dir.resolve(name);
+        if (Files.isExecutable(candidate) && !Files.isDirectory(candidate)) {
+          return Optional.of(candidate);
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
+  /** The directories where the launchers of the image may be, most specific first. */
+  static List<Path> launcherDirectories(String appDir, Path processCommand) {
+    List<Path> dirs = new ArrayList<>();
+    if (appDir != null && !appDir.isBlank()) {
+      Path parent = Path.of(appDir).toAbsolutePath().getParent();
+      if (parent != null) {
+        dirs.add(parent.resolve("MacOS")); // Contents/app -> Contents/MacOS // NON-NLS
+        dirs.add(parent); // app -> <image> (Windows)
+        if (parent.getParent() != null) {
+          dirs.add(parent.getParent().resolve("bin")); // lib/app -> <image>/bin // NON-NLS
+        }
+      }
+    }
+    if (processCommand != null && processCommand.getParent() != null) {
+      dirs.add(processCommand.getParent());
+    }
+    return dirs;
   }
 
   /** Sends {@code argv} to a running instance and returns the server's result. */

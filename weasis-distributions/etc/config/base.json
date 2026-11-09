@@ -15,6 +15,13 @@
       "category": "PLUGIN_CONFIG"
     },
     {
+      "code": "weasis.native.glibc.min",
+      "value": "2.27",
+      "description": "Linux: the glibc the bundled native libraries need (the highest GLIBC_ symbol of the OpenCV build, see Native-Build-Overview.md), checked at launch before any native library loads; empty disables the check",
+      "type": "A",
+      "category": "LAUNCH"
+    },
+    {
       "code": "weasis.plugins.policy",
       "value": "core-only",
       "description": "Plugin manager: which plugins a user may add beside the package (core-only | verified | site | any | off); read by the launcher before any plugin loads, served by the site",

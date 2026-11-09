@@ -185,6 +185,11 @@ public final class Bootstrap {
               + stateDir.resolve("log")); // NON-NLS
       return outcome.exitCode();
     }
+    if (outcome.exitCode() == Contract.EXIT_UNSUPPORTED) {
+      // stage 2 showed the message itself; the embedded set bundles the same natives
+      decision.put("reason", "\"unsupported system\""); // NON-NLS
+      return outcome.exitCode();
+    }
     if (!outcome.earlyFailure()) {
       return outcome.exitCode();
     }
