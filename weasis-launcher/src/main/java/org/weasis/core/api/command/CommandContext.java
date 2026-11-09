@@ -64,6 +64,11 @@ public final class CommandContext {
     return CURRENT.isBound() ? CURRENT.get() : new CommandContext(CommandOrigin.LAUNCH_ARGS);
   }
 
+  /** True inside a command: a step of a script, or a verb run by another verb. */
+  public static boolean isNested() {
+    return CURRENT.isBound();
+  }
+
   /** Runs {@code op} with {@code context} bound as the current one. */
   public static <T, X extends Throwable> T runWith(
       CommandContext context, ScopedValue.CallableOp<T, X> op) throws X {

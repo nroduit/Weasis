@@ -73,10 +73,77 @@ class ScriptCommandsTest {
   }
 
   private static CommandResult run(Path script, String... options) {
+    return run(CommandOrigin.REMOTE, script, options);
+  }
+
+  private static CommandResult run(CommandOrigin origin, Path script, String... options) {
     List<String> argv =
         new java.util.ArrayList<>(List.of("script:run", "--file", script.toString()));
     argv.addAll(List.of(options));
-    return manager().run(argv, CommandOrigin.REMOTE);
+    return manager().run(argv, origin);
+  }
+
+  /** A boundary that remembers what was asked of it, in place of the viewer's. */
+  static final class RecordingBoundary implements StateBoundary {
+    final List<String> labels = new java.util.ArrayList<>();
+    final List<String> rollbacks = new java.util.ArrayList<>();
+
+    @Override
+    public java.util.Optional<String> checkpoint(String label, CommandOrigin origin) {
+      labels.add(label);
+      return java.util.Optional.of("cp-" + labels.size());
+    }
+
+    @Override
+    public List<String> rollback(String checkpointId) {
+      rollbacks.add(checkpointId);
+      return List.of();
+    }
+  }
+
+  @Test
+  void aFailedRemoteScriptRollsBackToTheCheckpointTakenBeforeItsFirstStep(@TempDir Path dir)
+      throws IOException {
+    Path script = write(dir, "fail.weasis", "math:add --a 1 --b 1\n@expect 1 == 2\n");
+    RecordingBoundary boundary = new RecordingBoundary();
+    CommandManager.setStateBoundary(boundary);
+    try {
+      CommandResult remote = run(script);
+      assertAll(
+          () -> assertEquals(List.of("before script fail.weasis"), boundary.labels),
+          () -> assertEquals(List.of("cp-1"), boundary.rollbacks),
+          () -> assertTrue(remote.body().contains("\"checkpoint\":\"cp-1\""), remote.body()),
+          () -> assertTrue(remote.body().contains("\"rolledBack\":true"), remote.body()));
+
+      CommandResult kept = run(script, "--keep");
+      CommandResult launch = run(CommandOrigin.LAUNCH_ARGS, script);
+      CommandResult forced = run(CommandOrigin.LAUNCH_ARGS, script, "--rollback");
+      assertAll(
+          "--keep and a launch script leave the display, --rollback forces the return",
+          () -> assertEquals(4, boundary.labels.size()),
+          () -> assertEquals(List.of("cp-1", "cp-4"), boundary.rollbacks),
+          () -> assertTrue(kept.body().contains("\"rolledBack\":false"), kept.body()),
+          () -> assertTrue(launch.body().contains("\"rolledBack\":false"), launch.body()),
+          () -> assertTrue(forced.body().contains("\"rolledBack\":true"), forced.body()));
+    } finally {
+      CommandManager.setStateBoundary(null);
+    }
+  }
+
+  @Test
+  void aSuccessfulScriptKeepsItsCheckpointForAManualRollback(@TempDir Path dir) throws IOException {
+    Path script = write(dir, "ok.weasis", "math:add --a 1 --b 1\n");
+    RecordingBoundary boundary = new RecordingBoundary();
+    CommandManager.setStateBoundary(boundary);
+    try {
+      CommandResult result = run(script);
+      assertAll(
+          () -> assertEquals(1, boundary.labels.size()),
+          () -> assertTrue(boundary.rollbacks.isEmpty()),
+          () -> assertTrue(result.body().contains("\"rolledBack\":false"), result.body()));
+    } finally {
+      CommandManager.setStateBoundary(null);
+    }
   }
 
   private static Path write(Path dir, String name, String text) throws IOException {

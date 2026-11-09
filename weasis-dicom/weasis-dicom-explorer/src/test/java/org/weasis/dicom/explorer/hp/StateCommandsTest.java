@@ -20,6 +20,7 @@ import org.junit.jupiter.api.function.Executable;
 import org.weasis.core.api.command.CommandModel;
 import org.weasis.core.api.command.CommandResult;
 import org.weasis.core.api.command.CommandVocabulary;
+import org.weasis.core.api.event.EventBus;
 
 class StateCommandsTest {
 
@@ -32,7 +33,15 @@ class StateCommandsTest {
           "state:restore --study 1.2.3",
           "state:delete --session 2026-10-17T10:00:00Z",
           "state:export --session 2026-10-17T10:00:00Z --out /tmp/session",
-          "state:export --study 1.2.3 --out /tmp/session --dicom --json");
+          "state:export --study 1.2.3 --out /tmp/session --dicom --json",
+          "state:keep --from-checkpoint 2026-11-07T10:00:00Z --label promoted",
+          "state:checkpoint --label \"before the demo\"",
+          "state:checkpoints --json",
+          "state:rollback",
+          "state:rollback --to 2026-11-07T10:00:00Z --close-new",
+          "state:rollback --dry-run --json",
+          "state:diff --from 2026-11-07T10:00:00Z",
+          "state:diff --from 2026-11-07T10:00:00Z --to 2026-11-07T10:05:00Z --json");
 
   @Test
   void documentedCommandLinesParse() {
@@ -49,6 +58,19 @@ class StateCommandsTest {
   @Test
   void theNamespaceFollowsTheVocabulary() {
     assertEquals(List.of(), CommandVocabulary.violations("state", new StateCommands())); // NON-NLS
+  }
+
+  @Test
+  void aRollbackWithoutACheckpointIsRefusedWithAHandleHint() {
+    StateCommands commands =
+        new StateCommands().withCheckpoints(() -> new CheckpointService(() -> 10, EventBus::new));
+    CommandResult result = CommandModel.execute(commands, "rollback", new String[0]); // NON-NLS
+    assertAll(
+        () -> assertTrue(result.status() != CommandResult.OK, String.valueOf(result.status())),
+        () ->
+            assertTrue(
+                String.valueOf(result).contains("No checkpoint taken yet"),
+                String.valueOf(result)));
   }
 
   @Test

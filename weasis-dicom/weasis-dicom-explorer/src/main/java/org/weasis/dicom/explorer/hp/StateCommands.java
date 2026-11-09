@@ -24,11 +24,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import org.dcm4che3.data.Tag;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
+import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.OutputPath;
@@ -73,13 +75,18 @@ import picocli.CommandLine.ParentCommand;
       StateCommands.ListSessions.class,
       StateCommands.Restore.class,
       StateCommands.Delete.class,
-      StateCommands.Export.class
+      StateCommands.Export.class,
+      StateCommands.TakeCheckpoint.class,
+      StateCommands.ListCheckpoints.class,
+      StateCommands.Rollback.class,
+      StateCommands.Diff.class
     })
 @Since("5.0")
 public class StateCommands implements CommandExtension {
 
   private Supplier<DicomModel> modelSupplier = HpCommands::findModel;
   private Supplier<SessionStore> storeSupplier = SessionStore::new;
+  private Supplier<CheckpointService> checkpointSupplier = CheckpointService::global;
 
   @Override
   public String getNamespace() {
@@ -96,6 +103,17 @@ public class StateCommands implements CommandExtension {
     this.modelSupplier = Objects.requireNonNull(model);
     this.storeSupplier = Objects.requireNonNull(store);
     return this;
+  }
+
+  /** Replaces the checkpoint service, for headless tests. */
+  StateCommands withCheckpoints(Supplier<CheckpointService> checkpoints) {
+    this.checkpointSupplier = Objects.requireNonNull(checkpoints);
+    return this;
+  }
+
+  @Override
+  public List<org.weasis.core.api.event.EventType> getEventTypes() {
+    return CheckpointService.eventTypes();
   }
 
   DicomModel model() {
@@ -213,13 +231,22 @@ public class StateCommands implements CommandExtension {
     @Option(names = "--pin", description = "Keeps the session out of the retention by number.")
     boolean pin;
 
+    @Option(
+        names = "--from-checkpoint",
+        paramLabel = "<checkpoint-id>",
+        description =
+            "Promotes a checkpoint from 'checkpoints' to a session instead of the display.")
+    String fromCheckpoint;
+
     @Override
     protected void run() {
       Session session =
-          GuiExecutor.invokeAndRethrow(
-              () ->
-                  IdentityMask.callForCommand(
-                      () -> SessionActions.capture(parent.model(), manager(), label, pin)));
+          fromCheckpoint != null
+              ? fromCheckpoint()
+              : GuiExecutor.invokeAndRethrow(
+                  () ->
+                      IdentityMask.callForCommand(
+                          () -> SessionActions.capture(parent.model(), manager(), label, pin)));
       List<String> forbidden = Session.forbiddenKeys(session.toJson());
       if (!forbidden.isEmpty()) {
         throw new IllegalStateException("The session would hold " + forbidden + ", not kept");
@@ -231,6 +258,162 @@ public class StateCommands implements CommandExtension {
       }
       JsonObject json = summary(session).add("kept", true).build(); // NON-NLS
       print(isJson() ? json.toString() : "kept session " + session.id()); // NON-NLS
+    }
+
+    private Session fromCheckpoint() {
+      Checkpoint checkpoint = parent.checkpoint(fromCheckpoint);
+      DicomModel model = parent.model();
+      List<Session.Source> sources = sourcesOf(model, checkpoint.workspace());
+      if (sources.isEmpty()) {
+        throw new IllegalStateException("The checkpoint shows no loaded study");
+      }
+      return checkpoint.toSession(label, pin, sources);
+    }
+  }
+
+  /** A checkpoint by id, or the latest one when {@code id} is null. */
+  Checkpoint checkpoint(String id) {
+    CheckpointService service = checkpointSupplier.get();
+    Optional<Checkpoint> found = id == null ? service.latest() : service.find(id);
+    return found.orElseThrow(
+        () ->
+            CommandFailure.unknownHandle(
+                id == null ? "No checkpoint taken yet" : "Unknown checkpoint: " + id,
+                "state:checkpoints")); // NON-NLS
+  }
+
+  // ---------------------------------------------------------------------------------------------
+
+  @Command(
+      name = "checkpoint",
+      description =
+          "Takes a checkpoint of the display (layout, views, graphics of the shown images, loaded "
+              + "studies, selection, hanging) and returns its id: the point a 'rollback' puts the "
+              + "display back to. Kept in memory, bounded per instance; 'keep' makes it a session.")
+  @Since("5.0")
+  static class TakeCheckpoint extends Verb {
+    @Option(
+        names = "--label",
+        paramLabel = "<text>",
+        description = "What the checkpoint precedes, for the list.")
+    String label;
+
+    @Override
+    protected void run() {
+      Checkpoint checkpoint =
+          parent.checkpointSupplier.get().take(label, CommandContext.current().origin());
+      JsonObject json = checkpoint.summary().add("taken", true).build(); // NON-NLS
+      print(isJson() ? json.toString() : "checkpoint " + checkpoint.id()); // NON-NLS
+    }
+  }
+
+  @Command(
+      name = "checkpoints",
+      description =
+          "The checkpoints of this instance, newest first, with what each one holds and what "
+              + "changed since the latest.")
+  @Since("5.0")
+  static class ListCheckpoints extends Verb {
+    @Override
+    protected void run() {
+      CheckpointService service = parent.checkpointSupplier.get();
+      List<Checkpoint> checkpoints = service.list();
+      JsonArrayBuilder array = Json.createArrayBuilder();
+      for (Checkpoint checkpoint : checkpoints) {
+        array.add(checkpoint.summary());
+      }
+      JsonObjectBuilder json = Json.createObjectBuilder().add("checkpoints", array); // NON-NLS
+      if (!checkpoints.isEmpty()) {
+        try {
+          json.add("changedSinceLatest", service.diffFromNow(checkpoints.getFirst()).toJson());
+        } catch (RuntimeException e) {
+          json.add("changedSinceLatest", e.getMessage()); // NON-NLS
+        }
+      }
+      print(isJson() ? json.build().toString() : checkpoints.size() + " checkpoint(s)"); // NON-NLS
+    }
+  }
+
+  @Command(
+      name = "rollback",
+      description =
+          "Puts the display back to the latest checkpoint, or to --to: the layout, the views and "
+              + "their presentation, the graphics of the shown images, the selection and the "
+              + "hanging. A study closed since is reported, not reloaded; studies loaded since "
+              + "stay open unless --close-new. What a checkpoint never holds (what left the "
+              + "application) is listed under 'notCaptured'.")
+  @Since("5.0")
+  static class Rollback extends Verb {
+    @Option(
+        names = "--to",
+        paramLabel = "<checkpoint-id>",
+        description = "Checkpoint id from 'checkpoints' (default: the latest).")
+    String to;
+
+    @Option(names = "--close-new", description = "Close the studies loaded since the checkpoint.")
+    boolean closeNew;
+
+    @Option(
+        names = "--dry-run",
+        description = "Only say what differs between the checkpoint and the display.")
+    boolean dryRun;
+
+    @Override
+    protected void run() {
+      CheckpointService service = parent.checkpointSupplier.get();
+      Checkpoint checkpoint = parent.checkpoint(to);
+      if (dryRun) {
+        JsonObject json =
+            checkpoint
+                .summary()
+                .add("dryRun", true) // NON-NLS
+                .add("diff", service.diffFromNow(checkpoint).toJson()) // NON-NLS
+                .build();
+        print(isJson() ? json.toString() : json.toString());
+        return;
+      }
+      CheckpointService.Rollback result = service.rollback(checkpoint, closeNew);
+      JsonObject json = result.toJson().build();
+      print(isJson() ? json.toString() : "rolled back to " + checkpoint.id()); // NON-NLS
+    }
+  }
+
+  @Command(
+      name = "diff",
+      description =
+          "What changed between two checkpoints, or between a checkpoint and the display now: "
+              + "views added, removed and changed, graphics, studies loaded and closed, the "
+              + "selection and the shell.")
+  @Since("5.0")
+  static class Diff extends Verb {
+    @Option(
+        names = "--from",
+        required = true,
+        paramLabel = "<checkpoint-id>",
+        description = "The older checkpoint, from 'checkpoints'.")
+    String from;
+
+    @Option(
+        names = "--to",
+        paramLabel = "<checkpoint-id>",
+        description = "The newer checkpoint (default: the display now).")
+    String to;
+
+    @Override
+    protected void run() {
+      CheckpointService service = parent.checkpointSupplier.get();
+      Checkpoint older = parent.checkpoint(from);
+      CheckpointService.Diff diff =
+          to == null
+              ? service.diffFromNow(older)
+              : CheckpointService.diff(older, parent.checkpoint(to));
+      JsonObject json =
+          Json.createObjectBuilder()
+              .add("from", older.id()) // NON-NLS
+              .add("to", to == null ? "now" : to) // NON-NLS
+              .add("diff", diff.toJson()) // NON-NLS
+              .build();
+      print(isJson() ? json.toString() : (diff.isEmpty() ? "no change" : json.toString()));
     }
   }
 
@@ -305,6 +488,11 @@ public class StateCommands implements CommandExtension {
                               : "No session shows the study " + studyUid,
                           "state:list")); // NON-NLS
       DicomModel model = parent.model();
+      // The previous display is one rollback away
+      parent
+          .checkpointSupplier
+          .get()
+          .checkpoint("before state:restore " + session.id(), CommandContext.current().origin());
       SessionActions.rebuildDerived(session);
       List<String> views =
           GuiExecutor.invokeAndRethrow(() -> SessionActions.restore(session, model, manager()));

@@ -37,7 +37,8 @@ public record CommandPolicy(
     boolean shutdownAllowed,
     boolean pixelAttestAllowed,
     boolean locked,
-    EventRules events) {
+    EventRules events,
+    boolean remoteCheckpoint) {
 
   /** The seven-part policy with the default event rules, for the callers that predate them. */
   public CommandPolicy(
@@ -61,6 +62,28 @@ public record CommandPolicy(
 
   public CommandPolicy {
     events = events == null ? EventRules.defaults() : events;
+  }
+
+  /** The eight-part policy with the remote checkpoint on, for the callers that predate it. */
+  public CommandPolicy(
+      RemotePolicy remote,
+      FileRules files,
+      NetworkRules network,
+      boolean assumeYesAllowed,
+      boolean shutdownAllowed,
+      boolean pixelAttestAllowed,
+      boolean locked,
+      EventRules events) {
+    this(
+        remote,
+        files,
+        network,
+        assumeYesAllowed,
+        shutdownAllowed,
+        pixelAttestAllowed,
+        locked,
+        events,
+        true);
   }
 
   /** Prefix of the system properties that override one key each. */
@@ -225,7 +248,22 @@ public record CommandPolicy(
         flag(lookup, "shutdown", true), // NON-NLS
         flag(lookup, "pixels.attest", false), // NON-NLS
         flag(lookup, "locked", false), // NON-NLS
-        events);
+        events,
+        flag(lookup, "remote.checkpoint", true)); // NON-NLS
+  }
+
+  /** The same policy with the checkpoint before a remote batch on or off. */
+  public CommandPolicy withRemoteCheckpoint(boolean on) {
+    return new CommandPolicy(
+        remote,
+        files,
+        network,
+        assumeYesAllowed,
+        shutdownAllowed,
+        pixelAttestAllowed,
+        locked,
+        events,
+        on);
   }
 
   /** The same policy with other event rules. */

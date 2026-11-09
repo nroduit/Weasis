@@ -1202,6 +1202,8 @@ public class DicomExplorer extends PluginTool
       StudyPane studyPane = paneManager.getStudyPane(paneManager.getStudyForSeries(series));
       if (studyPane != null) {
         GuiExecutor.execute(studyPane::updateText);
+        // The metadata of the first image changes the features the protocols match on
+        StudyHints.refresh(studyPane, getDataExplorerModel());
       }
     }
   }
@@ -1752,6 +1754,10 @@ public class DicomExplorer extends PluginTool
     if (patient != null) {
       koOpen.setVisible(
           HiddenSeriesManager.hasHiddenSpecialElements(KOSpecialElement.class, patient));
+      // Every study of the patient is complete now: the hint names the protocol that would hang it
+      for (StudyPane studyPane : paneManager.getStudyList(patient)) {
+        StudyHints.refresh(studyPane, getDataExplorerModel());
+      }
     }
   }
 

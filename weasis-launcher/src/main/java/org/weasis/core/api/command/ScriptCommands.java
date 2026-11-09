@@ -145,6 +145,22 @@ public class ScriptCommands implements CommandExtension {
     boolean brief;
 
     @Option(
+        names = "--keep",
+        description =
+            "Leave the display as the failing step left it, instead of restoring the checkpoint "
+                + "taken before the first step (the default for a remote caller).")
+    @Since("5.0")
+    boolean keep;
+
+    @Option(
+        names = "--rollback",
+        description =
+            "Restore the checkpoint taken before the first step when a step fails (the default "
+                + "for a remote caller; a script of the launch arguments keeps the display).")
+    @Since("5.0")
+    boolean rollback;
+
+    @Option(
         names = "--report",
         paramLabel = "<output-path>",
         description = "Write a JUnit XML report of the run to this file.")
@@ -156,6 +172,9 @@ public class ScriptCommands implements CommandExtension {
       List<ScriptStep> steps = steps();
       ScriptValues values = new ScriptValues();
       parameters.forEach(values::setParameter);
+      if (keep && rollback) {
+        throw new IllegalArgumentException("Give --keep or --rollback, not both");
+      }
       ScriptRunner.Options options =
           new ScriptRunner.Options(
               keepGoing,
@@ -164,11 +183,14 @@ public class ScriptCommands implements CommandExtension {
               to == null ? Integer.MAX_VALUE : to,
               timeout,
               brief,
-              CommandContext.current().assumeYes());
+              CommandContext.current().assumeYes(),
+              file.value().getFileName().toString(),
+              keep ? Boolean.FALSE : rollback ? Boolean.TRUE : null);
       long start = System.nanoTime();
+      ScriptRunner runner = runner();
       List<ScriptRunner.StepResult> results =
-          runner().run(steps, values, options, result -> print(stepJson(result)));
-      print(summary(results, steps.size(), start));
+          runner.run(steps, values, options, result -> print(stepJson(result)));
+      print(summary(results, steps.size(), start, runner));
       if (report != null) {
         Files.createDirectories(
             report.value().toAbsolutePath().getParent() == null
@@ -222,7 +244,8 @@ public class ScriptCommands implements CommandExtension {
           : new JsonWriter(false).value(text).toString();
     }
 
-    private String summary(List<ScriptRunner.StepResult> results, int steps, long start) {
+    private String summary(
+        List<ScriptRunner.StepResult> results, int steps, long start, ScriptRunner runner) {
       long failed = results.stream().filter(result -> !result.isOk()).count();
       JsonWriter out = new JsonWriter(false);
       out.beginObject()
@@ -237,9 +260,18 @@ public class ScriptCommands implements CommandExtension {
           .name("skipped") // NON-NLS
           .value(Math.max(0, steps - results.size()))
           .name("elapsedMs") // NON-NLS
-          .value(java.time.Duration.ofNanos(System.nanoTime() - start).toMillis())
-          .endObject()
-          .endObject();
+          .value(java.time.Duration.ofNanos(System.nanoTime() - start).toMillis());
+      if (runner.checkpointId() != null) {
+        // The transaction: where the display can be put back, and whether it was
+        out.name("checkpoint").value(runner.checkpointId()); // NON-NLS
+        out.name("rolledBack").value(runner.rolledBack()); // NON-NLS
+        if (!runner.notRestored().isEmpty()) {
+          out.name("notRestored").beginArray(); // NON-NLS
+          runner.notRestored().forEach(out::value);
+          out.endArray();
+        }
+      }
+      out.endObject().endObject();
       return out.toString();
     }
 

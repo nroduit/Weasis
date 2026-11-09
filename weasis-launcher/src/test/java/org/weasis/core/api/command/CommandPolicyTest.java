@@ -84,6 +84,17 @@ class CommandPolicyTest {
   }
 
   @Test
+  void theCheckpointBeforeARemoteBatchIsOnUnlessTheInstanceTurnsItOff() {
+    CommandPolicy off =
+        CommandPolicy.from(
+            key -> "remote.checkpoint".equals(key) ? "false" : null, RemotePolicy.allowAll());
+    assertAll(
+        () -> assertTrue(CommandPolicy.defaults().remoteCheckpoint()),
+        () -> assertFalse(off.remoteCheckpoint()),
+        () -> assertTrue(off.withRemoteCheckpoint(true).remoteCheckpoint()));
+  }
+
+  @Test
   void theNetworkIsClosedUntilTheInstanceOpensIt() {
     CommandPolicy closed = CommandPolicy.defaults();
     CommandPolicy open =

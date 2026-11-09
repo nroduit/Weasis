@@ -33,7 +33,21 @@ public final class ScriptRunner {
       int to,
       long timeoutSeconds,
       boolean brief,
-      boolean assumeYes) {
+      boolean assumeYes,
+      String label,
+      Boolean rollback) {
+
+    /** The options of a run that keeps no label and decides the rollback by its origin. */
+    public Options(
+        boolean keepGoing,
+        long delayMillis,
+        int from,
+        int to,
+        long timeoutSeconds,
+        boolean brief,
+        boolean assumeYes) {
+      this(keepGoing, delayMillis, from, to, timeoutSeconds, brief, assumeYes, null, null);
+    }
 
     public static Options defaults() {
       return new Options(false, 0, 0, Integer.MAX_VALUE, 0, false, false);
@@ -59,6 +73,15 @@ public final class ScriptRunner {
 
   /** The sequence number before the last command step ran: what a wait considers "after". */
   private long watermark;
+
+  /** The checkpoint taken before the first step, when the display could be captured. */
+  private String checkpointId;
+
+  /** Whether the display was rolled back to the checkpoint after a failing step. */
+  private boolean rolledBack;
+
+  /** What the rollback could not restore, one line each. */
+  private List<String> notRestored = List.of();
 
   public ScriptRunner(CommandManager manager, CommandOrigin origin) {
     this.manager = manager;
@@ -112,10 +135,14 @@ public final class ScriptRunner {
     List<StepResult> results = new ArrayList<>();
     long start = System.nanoTime();
     int number = 0;
+    boolean failed = false;
     for (ScriptStep step : steps) {
       number++;
       if (number <= options.from() || number > options.to()) {
         continue;
+      }
+      if (results.isEmpty()) {
+        openTransaction(options);
       }
       if (options.delayMillis() > 0 && !results.isEmpty()) {
         sleep(options.delayMillis());
@@ -124,6 +151,7 @@ public final class ScriptRunner {
       results.add(result);
       report.accept(result);
       if (!result.isOk() && !options.keepGoing()) {
+        failed = true;
         break;
       }
       if (expired(start, options)) {
@@ -137,10 +165,63 @@ public final class ScriptRunner {
                 "",
                 "The script ran longer than " + options.timeoutSeconds() + " s"));
         report.accept(results.getLast());
+        failed = true;
         break;
       }
     }
+    if (failed && rollsBack(options)) {
+      rollback();
+    }
     return results;
+  }
+
+  /** The checkpoint taken before the first step, or null when none could be taken. */
+  public String checkpointId() {
+    return checkpointId;
+  }
+
+  /** True when the display was put back to the checkpoint after a failing step. */
+  public boolean rolledBack() {
+    return rolledBack;
+  }
+
+  /** What the rollback could not restore; empty when it restored everything or did not run. */
+  public List<String> notRestored() {
+    return notRestored;
+  }
+
+  /**
+   * The boundary of the run: a checkpoint of the display before the first step, labeled with the
+   * script, so a failed run can be rolled back and a successful one undone by hand.
+   */
+  private void openTransaction(Options options) {
+    String label = "before script" + (options.label() == null ? "" : " " + options.label());
+    try {
+      checkpointId = CommandManager.stateBoundary().checkpoint(label, origin).orElse(null);
+    } catch (RuntimeException e) {
+      checkpointId = null;
+    }
+  }
+
+  /**
+   * A failed script from a remote caller leaves the display as it was before the run, unless the
+   * caller asked to keep the intermediate state; a script of the launch arguments or of a link
+   * keeps it by default, the presenter continues from there.
+   */
+  private boolean rollsBack(Options options) {
+    if (checkpointId == null) {
+      return false;
+    }
+    return options.rollback() != null ? options.rollback() : origin == CommandOrigin.REMOTE;
+  }
+
+  private void rollback() {
+    try {
+      notRestored = List.copyOf(CommandManager.stateBoundary().rollback(checkpointId));
+      rolledBack = true;
+    } catch (RuntimeException e) {
+      notRestored = List.of("Rollback failed: " + e.getMessage());
+    }
   }
 
   private StepResult one(ScriptStep step, int number, ScriptValues values, Options options) {

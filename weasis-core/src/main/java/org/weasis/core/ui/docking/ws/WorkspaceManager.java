@@ -81,6 +81,30 @@ public final class WorkspaceManager {
   private final Set<Window> immersive = Collections.newSetFromMap(new IdentityHashMap<>());
   private Supplier<TransferHandler> dropHandlers;
 
+  /** Depth of the restores in progress: the automatic reactions stay quiet while positive. */
+  private final java.util.concurrent.atomic.AtomicInteger restoring =
+      new java.util.concurrent.atomic.AtomicInteger();
+
+  /**
+   * Marks the start of a restore (a rollback, a session, a layout file): while it lasts, the
+   * reactions to the model events that would fight it, such as a viewer opened for a registered
+   * series or a protocol hung on arrival, must stay quiet. Always paired with {@link
+   * #endRestore()}.
+   */
+  public void beginRestore() {
+    restoring.incrementAndGet();
+  }
+
+  /** Ends a restore started by {@link #beginRestore()}. */
+  public void endRestore() {
+    restoring.updateAndGet(depth -> Math.max(0, depth - 1));
+  }
+
+  /** True while a restore replaces the layout and the views. */
+  public boolean isRestoring() {
+    return restoring.get() > 0;
+  }
+
   public WorkspaceManager(Window mainWindow) {
     this.mainWindow = mainWindow;
     this.mainWorkspace = new Workspace(mainWindow);

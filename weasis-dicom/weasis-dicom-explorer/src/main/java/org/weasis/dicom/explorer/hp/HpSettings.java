@@ -72,5 +72,14 @@ public final class HpSettings {
           .description("Days after which a session not used again is deleted, 0 for no limit")
           .declare();
 
+  /** The checkpoints kept in memory per instance, the oldest dropped beyond it. */
+  public static final Setting<Integer> CHECKPOINTS_MAX =
+      Setting.builder(SettingType.INTEGER, GROUP, "weasis.state.checkpoints.max", 10) // NON-NLS
+          .since("5.0") // NON-NLS
+          .description(
+              "Checkpoints of the display kept for a rollback (before a script, a remote batch, "
+                  + "a hanging, a restore); the oldest is dropped beyond this number")
+          .declare();
+
   private HpSettings() {}
 }

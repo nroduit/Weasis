@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.25",
+  "apiVersion": "2.26",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -12,96 +12,6 @@
     "6": "not permitted remotely"
   },
   "namespaces": [
-    {
-      "name": "acquire",
-      "description": "Image acquisition (Dicomizer): patient context.",
-      "verbs": [
-        {
-          "name": "patient",
-          "description": "Loads the patient context of the acquisition and returns the context it set, masked for a remote caller.",
-          "usage": "acquire:patient [-h] [--json] (--xml=<text> | --xml-gzip=<base64> | --xml-gzip-urlsafe=<base64> | --url=<remote-url>)",
-          "needs": [
-            "network-read"
-          ],
-          "parameters": [],
-          "options": [
-            {
-              "names": [
-                "--json"
-              ],
-              "label": "",
-              "type": "boolean",
-              "arity": "0",
-              "required": false,
-              "description": "Structured JSON output (default for remote calls)."
-            },
-            {
-              "names": [
-                "--xml"
-              ],
-              "label": "<text>",
-              "type": "string",
-              "arity": "1",
-              "required": true,
-              "description": "XML text (UTF-8) holding the DICOM tags.",
-              "since": "5.0",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "1"
-              }
-            },
-            {
-              "names": [
-                "--xml-gzip"
-              ],
-              "label": "<base64>",
-              "type": "string",
-              "arity": "1",
-              "required": true,
-              "description": "XML encoded as GZIP then Base64.",
-              "since": "5.0",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "1"
-              }
-            },
-            {
-              "names": [
-                "--xml-gzip-urlsafe"
-              ],
-              "label": "<base64>",
-              "type": "string",
-              "arity": "1",
-              "required": true,
-              "description": "XML encoded as GZIP then URL-safe Base64.",
-              "since": "5.0",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "1"
-              }
-            },
-            {
-              "names": [
-                "--url"
-              ],
-              "label": "<remote-url>",
-              "type": "remote-url",
-              "arity": "1",
-              "required": true,
-              "description": "URL of an XML file holding the DICOM tags.",
-              "needs": [
-                "network-read"
-              ],
-              "since": "5.0",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "1"
-              }
-            }
-          ]
-        }
-      ]
-    },
     {
       "name": "color",
       "description": "Color management of the display: switch, display profile, view conversion.",
@@ -4154,7 +4064,7 @@
           "name": "run",
           "description": "Runs every command of the file and answers one JSON object per step, then a summary.",
           "since": "5.0",
-          "usage": "script:run [-h] [--brief] [--json] [--keep-going] [--delay=<ms>] --file=<input-path> [--from=<n>] [--report=<output-path>] [--timeout=<s>] [--to=<n>] [--set=<name=value>]...",
+          "usage": "script:run [-h] [--brief] [--json] [--keep] [--keep-going] [--rollback] [--delay=<ms>] --file=<input-path> [--from=<n>] [--report=<output-path>] [--timeout=<s>] [--to=<n>] [--set=<name=value>]...",
           "needs": [
             "file-read",
             "file-write"
@@ -4268,6 +4178,28 @@
             },
             {
               "names": [
+                "--keep"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Leave the display as the failing step left it, instead of restoring the checkpoint taken before the first step (the default for a remote caller).",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--rollback"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Restore the checkpoint taken before the first step when a step fails (the default for a remote caller; a script of the launch arguments keeps the display).",
+              "since": "5.0"
+            },
+            {
+              "names": [
                 "--report"
               ],
               "label": "<output-path>",
@@ -4289,6 +4221,54 @@
       "description": "Reading states: keep the display as a session (windows, viewers, every pane's series and presentation, the shell, the protocol that hung it), list, restore and delete the sessions of the user.",
       "since": "5.0",
       "verbs": [
+        {
+          "name": "checkpoint",
+          "description": "Takes a checkpoint of the display (layout, views, graphics of the shown images, loaded studies, selection, hanging) and returns its id: the point a 'rollback' puts the display back to. Kept in memory, bounded per instance; 'keep' makes it a session.",
+          "since": "5.0",
+          "usage": "state:checkpoint [-h] [--json] [--label=<text>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--label"
+              ],
+              "label": "<text>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "What the checkpoint precedes, for the list."
+            }
+          ]
+        },
+        {
+          "name": "checkpoints",
+          "description": "The checkpoints of this instance, newest first, with what each one holds and what changed since the latest.",
+          "since": "5.0",
+          "usage": "state:checkpoints [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ]
+        },
         {
           "name": "delete",
           "description": "Deletes a session of the user.",
@@ -4315,6 +4295,45 @@
               "arity": "1",
               "required": true,
               "description": "Session id from 'list'."
+            }
+          ]
+        },
+        {
+          "name": "diff",
+          "description": "What changed between two checkpoints, or between a checkpoint and the display now: views added, removed and changed, graphics, studies loaded and closed, the selection and the shell.",
+          "since": "5.0",
+          "usage": "state:diff [-h] [--json] --from=<checkpoint-id> [--to=<checkpoint-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--from"
+              ],
+              "label": "<checkpoint-id>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "The older checkpoint, from 'checkpoints'."
+            },
+            {
+              "names": [
+                "--to"
+              ],
+              "label": "<checkpoint-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "The newer checkpoint (default: the display now)."
             }
           ]
         },
@@ -4387,7 +4406,7 @@
           "name": "keep",
           "description": "Keep this display: saves the workspace as a session of the user (windows, viewers, the series and presentation of every pane, the shell, the protocol and step that hung it) and returns its id. The session holds study and series identifiers, never credentials.",
           "since": "5.0",
-          "usage": "state:keep [-h] [--json] [--pin] [--label=<text>]",
+          "usage": "state:keep [-h] [--json] [--pin] [--from-checkpoint=<checkpoint-id>] [--label=<text>]",
           "parameters": [],
           "options": [
             {
@@ -4419,6 +4438,16 @@
               "arity": "0",
               "required": false,
               "description": "Keeps the session out of the retention by number."
+            },
+            {
+              "names": [
+                "--from-checkpoint"
+              ],
+              "label": "<checkpoint-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Promotes a checkpoint from 'checkpoints' to a session instead of the display."
             }
           ]
         },
@@ -4477,6 +4506,108 @@
               "arity": "1",
               "required": false,
               "description": "The most recent session showing this study instead of an id."
+            }
+          ]
+        },
+        {
+          "name": "rollback",
+          "description": "Puts the display back to the latest checkpoint, or to --to: the layout, the views and their presentation, the graphics of the shown images, the selection and the hanging. A study closed since is reported, not reloaded; studies loaded since stay open unless --close-new. What a checkpoint never holds (what left the application) is listed under 'notCaptured'.",
+          "since": "5.0",
+          "usage": "state:rollback [-h] [--close-new] [--dry-run] [--json] [--to=<checkpoint-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--to"
+              ],
+              "label": "<checkpoint-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Checkpoint id from 'checkpoints' (default: the latest)."
+            },
+            {
+              "names": [
+                "--close-new"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Close the studies loaded since the checkpoint."
+            },
+            {
+              "names": [
+                "--dry-run"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Only say what differs between the checkpoint and the display."
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "name": "state:checkpoint.taken",
+          "since": "5.0",
+          "description": "A checkpoint of the display was taken.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "checkpoint",
+              "type": "string",
+              "description": "checkpoint id"
+            },
+            {
+              "name": "checkpointSeq",
+              "type": "integer",
+              "description": "event sequence number at the boundary"
+            },
+            {
+              "name": "label",
+              "type": "string",
+              "description": "what the checkpoint precedes"
+            }
+          ]
+        },
+        {
+          "name": "state:rollback.done",
+          "since": "5.0",
+          "description": "The display was put back to a checkpoint.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "checkpoint",
+              "type": "string",
+              "description": "checkpoint id"
+            },
+            {
+              "name": "checkpointSeq",
+              "type": "integer",
+              "description": "event sequence number of the checkpoint"
+            },
+            {
+              "name": "views",
+              "type": "integer",
+              "description": "views shown after the rollback"
+            },
+            {
+              "name": "notRestored",
+              "type": "integer",
+              "description": "what could not be restored, count"
             }
           ]
         }
@@ -5660,7 +5791,7 @@
         {
           "name": "grid",
           "description": "Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.",
-          "usage": "view2d:grid [-h] [--json] [--view=<view-id>] [--best-for=<n> | --panes=<n> | --grid=<grid-id>]",
+          "usage": "view2d:grid [-h] [--json] [--view=<view-id>] [--panes=<n> | --grid=<grid-id> | --best-for=<n>]",
           "parameters": [],
           "options": [
             {
@@ -5685,21 +5816,6 @@
             },
             {
               "names": [
-                "--best-for"
-              ],
-              "label": "<n>",
-              "type": "integer",
-              "arity": "1",
-              "required": true,
-              "description": "Returns the best grid for this number of panes without applying it.",
-              "since": "5.0",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
                 "--panes"
               ],
               "label": "<n>",
@@ -5721,6 +5837,21 @@
               "arity": "1",
               "required": true,
               "description": "Applies this grid, by id from the bare verb.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--best-for"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Returns the best grid for this number of panes without applying it.",
+              "since": "5.0",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"
@@ -6637,7 +6768,7 @@
         {
           "name": "zoom",
           "description": "Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.",
-          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --by=<steps> | --fit=<zoom-fit>]",
+          "usage": "view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]",
           "parameters": [],
           "options": [
             {
@@ -6686,20 +6817,6 @@
             },
             {
               "names": [
-                "--by"
-              ],
-              "label": "<steps>",
-              "type": "integer",
-              "arity": "1",
-              "required": true,
-              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
-              "group": {
-                "exclusive": true,
-                "multiplicity": "0..1"
-              }
-            },
-            {
-              "names": [
                 "--fit"
               ],
               "label": "<zoom-fit>",
@@ -6712,6 +6829,20 @@
               "arity": "1",
               "required": true,
               "description": "default, real-size or best-fit.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "0..1"
+              }
+            },
+            {
+              "names": [
+                "--by"
+              ],
+              "label": "<steps>",
+              "type": "integer",
+              "arity": "1",
+              "required": true,
+              "description": "Moves the zoom slider by this many steps, negative to zoom out.",
               "group": {
                 "exclusive": true,
                 "multiplicity": "0..1"
@@ -8530,6 +8661,59 @@
             "name": "view",
             "type": "string",
             "description": "the viewer, when the model is shown"
+          }
+        ]
+      }
+    ],
+    "state": [
+      {
+        "name": "state:checkpoint.taken",
+        "since": "5.0",
+        "description": "A checkpoint of the display was taken.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "checkpoint",
+            "type": "string",
+            "description": "checkpoint id"
+          },
+          {
+            "name": "checkpointSeq",
+            "type": "integer",
+            "description": "event sequence number at the boundary"
+          },
+          {
+            "name": "label",
+            "type": "string",
+            "description": "what the checkpoint precedes"
+          }
+        ]
+      },
+      {
+        "name": "state:rollback.done",
+        "since": "5.0",
+        "description": "The display was put back to a checkpoint.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "checkpoint",
+            "type": "string",
+            "description": "checkpoint id"
+          },
+          {
+            "name": "checkpointSeq",
+            "type": "integer",
+            "description": "event sequence number of the checkpoint"
+          },
+          {
+            "name": "views",
+            "type": "integer",
+            "description": "views shown after the rollback"
+          },
+          {
+            "name": "notRestored",
+            "type": "integer",
+            "description": "what could not be restored, count"
           }
         ]
       }

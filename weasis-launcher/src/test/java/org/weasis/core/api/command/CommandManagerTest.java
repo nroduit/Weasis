@@ -151,6 +151,29 @@ class CommandManagerTest {
   }
 
   @Test
+  void aRemoteBatchOpensOneTransactionAndReadingVerbsOpenNone() {
+    ScriptCommandsTest.RecordingBoundary boundary = new ScriptCommandsTest.RecordingBoundary();
+    CommandManager.setStateBoundary(boundary);
+    try {
+      CommandManager manager = manager(new MathExtension());
+      manager.run(List.of("math:add", "--a", "1", "--b", "1"), CommandOrigin.REMOTE);
+      manager.run(List.of("math:add", "--a", "2", "--b", "2"), CommandOrigin.REMOTE);
+      manager.run(List.of("math:add", "--a", "3", "--b", "3"), CommandOrigin.LAUNCH_ARGS);
+      assertAll(
+          "two remote calls within the gap are one batch, a launch command is no batch",
+          () -> assertEquals(1, boundary.labels.size()),
+          () -> assertTrue(boundary.labels.getFirst().startsWith("before remote batch")),
+          () -> assertFalse(CommandManager.opensTransaction("state", "checkpoint")),
+          () -> assertFalse(CommandManager.opensTransaction("dicom", "list")),
+          () -> assertFalse(CommandManager.opensTransaction("view2d", "capture")),
+          () -> assertTrue(CommandManager.opensTransaction("view2d", "zoom")),
+          () -> assertTrue(CommandManager.opensTransaction("hp", "apply")));
+    } finally {
+      CommandManager.setStateBoundary(null);
+    }
+  }
+
+  @Test
   void picocliVerbReturnsBodyAndStatus() {
     CommandManager manager = manager(new MathExtension());
     CommandResult colon =

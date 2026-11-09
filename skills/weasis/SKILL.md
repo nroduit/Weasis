@@ -24,7 +24,7 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.25 and protocol
+This instance runs Weasis development with command API 2.26 and protocol
 2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, mpr, print, redact, script, state, subtraction, ui, view2d, view3d, weasis, workspace, wsi.
 
 Check the connection first:
@@ -253,6 +253,19 @@ line naming the current spelling. Use the current one everywhere.
    Structured Display object with one Grayscale Softcopy Presentation State per pane (window,
    rotation, flip, inversion, magnification, graphics) for a PACS or another viewer; the studies
    must be loaded and what the object cannot carry comes back under `warnings`.
+   **Checkpoints and rollback**: `state:checkpoint [--label <text>]` keeps the display in memory
+   (layout, views and their presentation, the graphics of the shown images, the loaded studies,
+   the selection, the hanging) and returns its id; `state:checkpoints` lists them, newest first,
+   with what changed since the latest; `state:rollback [--to <id>] [--close-new] [--dry-run]`
+   puts the display back (a study closed since is reported, not reloaded; studies loaded since
+   stay open unless `--close-new`; `--dry-run` only prints the diff); `state:diff --from <id>
+   [--to <id>]` says what changed. Weasis takes checkpoints by itself before a script, before a
+   batch of remote calls (a new batch after 30 s of silence), before `hp:apply`, `state:restore`
+   and `workspace:load`, so an agent can always undo its last batch with one `state:rollback`;
+   `state:keep --from-checkpoint <id>` promotes a checkpoint to a session. Nothing that left the
+   application (sends, exports, prints, files written) is undone; the answer lists it under
+   `notCaptured`. The events `state:checkpoint.taken` and `state:rollback.done` bracket a
+   transaction.
    `hp:validate --corpus <dir> [--protocols <file>] [--expected <file>]` runs the matching over
    a folder of studies without any viewer and reports the counts per protocol, the protocol and
    first-step cells of each study and, with an expectations file, which studies hang as expected.
@@ -327,6 +340,10 @@ reads inside it (`[2]` indexes an array, `[key=length]` picks the entry whose `k
 `--set name=value` passes a parameter, and `@expect <value> <op> <value>` checks a value
 (`==`, `!=`, `<`, `<=`, `>`, `>=`, `~ <n> +-<tolerance>`, `matches <regex>`). The answer is one
 JSON object per step, then a summary; a failing step stops the run unless `--keep-going`.
+A run is a transaction: a checkpoint of the display is taken before the first step and, when a
+step fails, the display is put back to it for a remote caller (`--keep` leaves it as the failing
+step left it; `--rollback` forces the return for a launch script); the summary names the
+`checkpoint`, whether it `rolledBack`, and what stayed under `notRestored`.
 `script:check --file <file>` parses a plan without running it, which is the cheapest way to
 validate one before proposing it.
 

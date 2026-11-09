@@ -30,8 +30,10 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -204,6 +206,9 @@ public final class HangingOpener {
     if (!isImageSeries(series)) {
       return false;
     }
+    if (isRestoring()) {
+      return false; // a restore puts the viewers back itself; nothing is hung under it
+    }
     MediaSeriesGroup study = model.getParent(series, DicomModel.study);
     if (study == null) {
       return false;
@@ -228,6 +233,15 @@ public final class HangingOpener {
       }
     }
     return true;
+  }
+
+  private static boolean isRestoring() {
+    try {
+      WorkspaceManager manager = GuiUtils.getUICore().getWorkspaceManager();
+      return manager != null && manager.isRestoring();
+    } catch (IllegalStateException e) {
+      return false; // no UI core in a headless test
+    }
   }
 
   /** The load is over: the studies still waiting are hung now, later series are left alone. */

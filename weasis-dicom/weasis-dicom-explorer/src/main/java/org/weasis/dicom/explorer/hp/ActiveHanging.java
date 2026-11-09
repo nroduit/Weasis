@@ -58,11 +58,18 @@ public final class ActiveHanging {
     return target == null ? Optional.empty() : HangingPlanApplier.activeOn(target);
   }
 
-  /** Hangs another step of the same plan, from 0, on the same viewers. */
+  /**
+   * Hangs another step of the same plan, from 0, on the same viewers. The derivations of the step
+   * (a reformat, a subtraction) are built first, as {@code hp:apply} does: a cell that derives its
+   * series must not fall back to the acquired one because the step was reached by navigation.
+   */
   public static Applied step(Applied current, int step) {
+    // On the event thread: a derivation already built by the opener or a prefetch comes back at
+    // once
+    HangingPlan prepared = HangingPlanApplier.prepare(current.plan(), step);
     return new HangingPlanApplier()
         .apply(
-            current.plan(),
+            prepared,
             step,
             current.context(),
             ViewerPlacement.reuseViewer(),

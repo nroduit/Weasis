@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import org.dcm4che3.data.Tag;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
+import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.InputPath;
@@ -573,6 +574,11 @@ public class HpCommands implements CommandExtension {
       int index,
       ViewerPlacement placement) {
     Planned planned = plan(parent, candidates, studyUid, priorUids, protocolId);
+    // The previous display is one rollback away
+    CheckpointService.global()
+        .checkpoint(
+            "before hp:apply " + planned.plan().protocolId(), // NON-NLS
+            CommandContext.current().origin());
     // The derivations compute pixels: done here, off the event thread, before the hanging
     HangingPlan prepared = HangingPlanApplier.prepare(planned.plan(), index);
     return GuiExecutor.invokeAndRethrow(

@@ -25,6 +25,7 @@ import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
+import org.weasis.core.api.command.CommandManager;
 import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.ListOptions;
 import org.weasis.core.api.command.OutputPath;
@@ -630,6 +631,11 @@ public class WorkspaceCommands implements CommandExtension {
     protected void run() throws Exception {
       WorkspaceSnapshot snapshot = WorkspaceSnapshotIO.read(file.value());
       WorkspaceManager manager = parent.manager();
+      // The previous display is one rollback away
+      CommandManager.stateBoundary()
+          .checkpoint(
+              "before workspace:load " + file.value().getFileName(), // NON-NLS
+              CommandContext.current().origin());
       List<String> folded = new ArrayList<>();
       List<String> skippedTools = new ArrayList<>();
       GuiExecutor.invokeAndRethrow(

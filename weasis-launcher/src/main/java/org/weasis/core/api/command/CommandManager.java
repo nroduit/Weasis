@@ -10,11 +10,14 @@
 package org.weasis.core.api.command;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -73,7 +76,7 @@ public class CommandManager {
    * additive changes (a verb, an option, a JSON key), the major with breaking ones. A verb or an
    * option is never removed within a major; a renamed one keeps its old name as a deprecated alias.
    */
-  public static final String API_VERSION = "2.25"; // NON-NLS
+  public static final String API_VERSION = "2.26"; // NON-NLS
 
   /** Namespace of the event verbs and of the audit lines of the event stream. */
   public static final String EVENTS = "events"; // NON-NLS
@@ -250,6 +253,10 @@ public class CommandManager {
           namespace + ":" + target.verb());
     }
 
+    if (origin == CommandOrigin.REMOTE && !CommandContext.isNested()) {
+      // the steps of a script share the script's transaction
+      remoteBatchBoundary(namespace, target.verb());
+    }
     // A confirmation answers a question of the viewer, never a question of the policy
     boolean yes = assumeYes && (policy.assumeYesAllowed() || origin != CommandOrigin.REMOTE);
     CommandContext context = new CommandContext(origin, yes, policy);
@@ -458,6 +465,74 @@ public class CommandManager {
   }
 
   /** Names the viewer type selected now, for {@code help --context}; set by the UI core. */
+  /**
+   * The display's transaction boundary, registered by the viewer; {@link StateBoundary#NONE} until
+   * then.
+   */
+  private static volatile StateBoundary stateBoundary = StateBoundary.NONE;
+
+  /** A remote batch is one transaction while its calls are closer than this to each other. */
+  static final Duration REMOTE_BATCH_GAP = Duration.ofSeconds(30);
+
+  private volatile long lastRemoteCallNanos = Long.MIN_VALUE;
+
+  /** Registers the boundary the viewer provides, or {@code null} for none. */
+  public static void setStateBoundary(StateBoundary boundary) {
+    stateBoundary = boundary == null ? StateBoundary.NONE : boundary;
+  }
+
+  /** The boundary of the display: a checkpoint before a batch, the rollback when it fails. */
+  public static StateBoundary stateBoundary() {
+    return stateBoundary;
+  }
+
+  /**
+   * Opens a transaction for a remote caller when its previous call is older than {@link
+   * #REMOTE_BATCH_GAP}: the checkpoint lets the user, or the agent, undo the batch in one step.
+   * Verbs that only read or that manage the checkpoints themselves never open one.
+   */
+  private void remoteBatchBoundary(String namespace, String verb) {
+    if (!policy.remoteCheckpoint() || !opensTransaction(namespace, verb)) {
+      return;
+    }
+    long now = System.nanoTime();
+    long last = lastRemoteCallNanos;
+    lastRemoteCallNanos = now;
+    if (last != Long.MIN_VALUE && now - last < REMOTE_BATCH_GAP.toNanos()) {
+      return;
+    }
+    try {
+      stateBoundary.checkpoint(
+          "before remote batch " + Instant.now().truncatedTo(ChronoUnit.SECONDS),
+          CommandOrigin.REMOTE);
+    } catch (RuntimeException e) {
+      LOGGER.debug("No checkpoint before the remote batch", e);
+    }
+  }
+
+  /** The namespaces whose verbs never change the display. */
+  private static final Set<String> READ_ONLY_NAMESPACES =
+      Set.of("help", "events", "config", "script", "state", "weasis"); // NON-NLS
+
+  static boolean opensTransaction(String namespace, String verb) {
+    if (READ_ONLY_NAMESPACES.contains(namespace)) {
+      return false;
+    }
+    return verb == null
+        || !(verb.equals("list") // NON-NLS
+            || verb.equals("info") // NON-NLS
+            || verb.equals("state") // NON-NLS
+            || verb.equals("capture") // NON-NLS
+            || verb.equals("stats") // NON-NLS
+            || verb.equals("explain") // NON-NLS
+            || verb.equals("tag") // NON-NLS
+            || verb.equals("objects") // NON-NLS
+            || verb.equals("match") // NON-NLS
+            || verb.equals("validate") // NON-NLS
+            || verb.equals("features") // NON-NLS
+            || verb.equals("destinations")); // NON-NLS
+  }
+
   public static void setViewerTypeSupplier(Supplier<String> supplier) {
     viewerType = supplier == null ? () -> null : supplier;
   }

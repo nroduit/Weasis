@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer.internal;
 
+import org.weasis.core.api.command.CommandManager;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -20,6 +21,7 @@ import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LocalPersistence;
 import org.weasis.dicom.explorer.UISegmentationVolumeBuildExecutor;
+import org.weasis.dicom.explorer.hp.CheckpointService;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier;
 import org.weasis.dicom.explorer.hp.HpSettings;
 import org.weasis.dicom.explorer.hp.SessionActions;
@@ -50,6 +52,8 @@ public class Activator extends WeasisPlugin {
     AbstractDicomNode.registerLegacyConversions();
     SettingCatalog.declare(HpSettings.class);
     GuiUtils.getUICore().addClosingHook(SessionActions::keepOnClose);
+    // The transaction boundary of the display: checkpoints before a script or a remote batch
+    CommandManager.setStateBoundary(CheckpointService.global());
     // a hanging lands after the viewer was selected: the view context learns the protocol then
     HangingPlanApplier.addListener(
         applied ->

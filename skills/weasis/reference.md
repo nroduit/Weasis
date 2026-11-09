@@ -1,27 +1,6 @@
 # Weasis commands
 
-Command API 2.25, protocol 2, application development.
-
-## acquire
-
-Image acquisition (Dicomizer): patient context.
-
-### acquire:patient
-
-Loads the patient context of the acquisition and returns the context it set, masked for a remote caller.
-
-Usage: `acquire:patient [-h] [--json] (--xml=<text> | --xml-gzip=<base64> | --xml-gzip-urlsafe=<base64> | --url=<remote-url>)`
-
-Needs: network read
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --xml | string |  | XML text (UTF-8) holding the DICOM tags. (since 5.0) |
-| --xml-gzip | string |  | XML encoded as GZIP then Base64. (since 5.0) |
-| --xml-gzip-urlsafe | string |  | XML encoded as GZIP then URL-safe Base64. (since 5.0) |
-| --url | remote-url |  | URL of an XML file holding the DICOM tags. (since 5.0) |
-
+Command API 2.26, protocol 2, application development.
 
 ## color
 
@@ -1064,7 +1043,7 @@ Usage: `script:pause [-h] [--json] --seconds=<s>`
 
 Runs every command of the file and answers one JSON object per step, then a summary.
 
-Usage: `script:run [-h] [--brief] [--json] [--keep-going] [--delay=<ms>] --file=<input-path> [--from=<n>] [--report=<output-path>] [--timeout=<s>] [--to=<n>] [--set=<name=value>]...`
+Usage: `script:run [-h] [--brief] [--json] [--keep] [--keep-going] [--rollback] [--delay=<ms>] --file=<input-path> [--from=<n>] [--report=<output-path>] [--timeout=<s>] [--to=<n>] [--set=<name=value>]...`
 
 Needs: file read, file write
 
@@ -1079,12 +1058,35 @@ Needs: file read, file write
 | --to | integer |  | Last step to run (default: the last one). (since 5.0) |
 | --timeout | integer | 0 | Give up after this long, 0 to wait as long as it takes. (since 5.0) |
 | --brief | boolean |  | Leave the body of each step out of the answer. (since 5.0) |
+| --keep | boolean |  | Leave the display as the failing step left it, instead of restoring the checkpoint taken before the first step (the default for a remote caller). (since 5.0) |
+| --rollback | boolean |  | Restore the checkpoint taken before the first step when a step fails (the default for a remote caller; a script of the launch arguments keeps the display). (since 5.0) |
 | --report | output-path |  | Write a JUnit XML report of the run to this file. (since 5.0) |
 
 
 ## state
 
 Reading states: keep the display as a session (windows, viewers, every pane's series and presentation, the shell, the protocol that hung it), list, restore and delete the sessions of the user.
+
+### state:checkpoint (since 5.0)
+
+Takes a checkpoint of the display (layout, views, graphics of the shown images, loaded studies, selection, hanging) and returns its id: the point a 'rollback' puts the display back to. Kept in memory, bounded per instance; 'keep' makes it a session.
+
+Usage: `state:checkpoint [-h] [--json] [--label=<text>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --label | string |  | What the checkpoint precedes, for the list. |
+
+### state:checkpoints (since 5.0)
+
+The checkpoints of this instance, newest first, with what each one holds and what changed since the latest.
+
+Usage: `state:checkpoints [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 ### state:delete (since 5.0)
 
@@ -1096,6 +1098,18 @@ Usage: `state:delete [-h] [--json] --session=<session-id>`
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --session | string |  | Session id from 'list'. |
+
+### state:diff (since 5.0)
+
+What changed between two checkpoints, or between a checkpoint and the display now: views added, removed and changed, graphics, studies loaded and closed, the selection and the shell.
+
+Usage: `state:diff [-h] [--json] --from=<checkpoint-id> [--to=<checkpoint-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --from | string |  | The older checkpoint, from 'checkpoints'. |
+| --to | string |  | The newer checkpoint (default: the display now). |
 
 ### state:export (since 5.0)
 
@@ -1117,13 +1131,14 @@ Needs: file write
 
 Keep this display: saves the workspace as a session of the user (windows, viewers, the series and presentation of every pane, the shell, the protocol and step that hung it) and returns its id. The session holds study and series identifiers, never credentials.
 
-Usage: `state:keep [-h] [--json] [--pin] [--label=<text>]`
+Usage: `state:keep [-h] [--json] [--pin] [--from-checkpoint=<checkpoint-id>] [--label=<text>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --label | string |  | A label for the list. |
 | --pin | boolean |  | Keeps the session out of the retention by number. |
+| --from-checkpoint | string |  | Promotes a checkpoint from 'checkpoints' to a session instead of the display. |
 
 ### state:list (since 5.0)
 
@@ -1146,6 +1161,26 @@ Usage: `state:restore [-h] [--json] [--session=<session-id>] [--study=<study-uid
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --session | string |  | Session id from 'list'. |
 | --study | study-uid |  | The most recent session showing this study instead of an id. |
+
+### state:rollback (since 5.0)
+
+Puts the display back to the latest checkpoint, or to --to: the layout, the views and their presentation, the graphics of the shown images, the selection and the hanging. A study closed since is reported, not reloaded; studies loaded since stay open unless --close-new. What a checkpoint never holds (what left the application) is listed under 'notCaptured'.
+
+Usage: `state:rollback [-h] [--close-new] [--dry-run] [--json] [--to=<checkpoint-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --to | string |  | Checkpoint id from 'checkpoints' (default: the latest). |
+| --close-new | boolean |  | Close the studies loaded since the checkpoint. |
+| --dry-run | boolean |  | Only say what differs between the checkpoint and the display. |
+
+### Events of state:
+
+| Event | Since | Payload | Description |
+|---|---|---|---|
+| `state:checkpoint.taken` | 5.0 | checkpoint: string, checkpointSeq: integer, label: string | A checkpoint of the display was taken. |
+| `state:rollback.done` | 5.0 | checkpoint: string, checkpointSeq: integer, views: integer, notRestored: integer | The display was put back to a checkpoint. |
 
 
 ## subtraction
@@ -1446,15 +1481,15 @@ Usage: `view2d:graphics [-h] [--json] [--no-measurements] [--after=<n>] [--layer
 
 Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.
 
-Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--best-for=<n> | --panes=<n> | --grid=<grid-id>]`
+Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--panes=<n> | --grid=<grid-id> | --best-for=<n>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --best-for | integer |  | Returns the best grid for this number of panes without applying it. (since 5.0) |
 | --panes | integer |  | Applies the best grid for this number of panes. |
 | --grid | grid-id |  | Applies this grid, by id from the bare verb. |
+| --best-for | integer |  | Returns the best grid for this number of panes without applying it. (since 5.0) |
 
 ### view2d:hang (since 5.0)
 
@@ -1648,7 +1683,7 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --by=<steps> | --fit=<zoom-fit>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
@@ -1656,8 +1691,8 @@ Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--se
 | --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
-| --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
 | --fit | enum |  | default, real-size or best-fit. |
+| --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
 
 ### Events of view2d:
 
@@ -2054,6 +2089,13 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | `graphic:changed` (coalesced) | 5.0 | graphic: graphic-id, view: string | A graphic moved, was resized or relabelled. |
 | `graphic:removed` | 5.0 | graphic: graphic-id, model: string | A graphic was deleted. |
 | `graphic:selection.changed` | 5.0 | graphics: array, view: string | The selected graphics of a view changed. |
+
+### state:
+
+| Event | Since | Payload | Description |
+|---|---|---|---|
+| `state:checkpoint.taken` | 5.0 | checkpoint: string, checkpointSeq: integer, label: string | A checkpoint of the display was taken. |
+| `state:rollback.done` | 5.0 | checkpoint: string, checkpointSeq: integer, views: integer, notRestored: integer | The display was put back to a checkpoint. |
 
 ### view2d:
 
