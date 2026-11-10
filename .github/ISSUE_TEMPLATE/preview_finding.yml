@@ -25,6 +25,7 @@ body:
         - ECG / waveform viewer
         - Whole slide imaging viewer
         - Settings and site layers
+        - Security and audit
         - Commands, scripts and weasis-cli
         - Plugins and developer kit
         - Installation and coexistence with 4.x
