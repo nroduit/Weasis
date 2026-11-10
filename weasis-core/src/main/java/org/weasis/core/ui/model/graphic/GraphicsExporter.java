@@ -17,10 +17,10 @@ import org.pf4j.ExtensionPoint;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 
 /**
- * A format {@code measure:export} writes the graphics of a pane to: the core gives {@code xml}
- * (the presentation model of Weasis) and {@code csv} (the measured values), a DICOM plugin adds
- * {@code sr} (a TID 1500 Measurement Report) and {@code pr} (a Grayscale Softcopy Presentation
- * State). A plugin contributes its formats as a pf4j extension.
+ * A format {@code measure:export} writes the graphics of a pane to: the core gives {@code xml} (the
+ * presentation model of Weasis) and {@code csv} (the measured values), a DICOM plugin adds {@code
+ * sr} (a TID 1500 Measurement Report) and {@code pr} (a Grayscale Softcopy Presentation State). A
+ * plugin contributes its formats as a pf4j extension.
  */
 public interface GraphicsExporter extends ExtensionPoint {
 

@@ -19,9 +19,9 @@ import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import picocli.CommandLine.Option;
 
 /**
- * The {@code --view} and {@code --pane} options a verb takes to name a pane, and their
- * resolution to the canvas: the selected view and pane when none is given. A mixin for any
- * namespace, of the core or of a plugin.
+ * The {@code --view} and {@code --pane} options a verb takes to name a pane, and their resolution
+ * to the canvas: the selected view and pane when none is given. A mixin for any namespace, of the
+ * core or of a plugin.
  */
 public class PaneOptions {
   @Option(

@@ -18,7 +18,6 @@ import java.awt.Point;
 import java.awt.PointerInfo;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.Window;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
@@ -317,7 +316,8 @@ public class FrameGrabber {
     if (p.x < 0 || p.y < 0 || p.x >= component.getWidth() || p.y >= component.getHeight()) {
       return null;
     }
-    ViewCapture.Placement placement = ViewCapture.Placement.of(component.getWidth(), component.getHeight(), frame);
+    ViewCapture.Placement placement =
+        ViewCapture.Placement.of(component.getWidth(), component.getHeight(), frame);
     return new Point(
         placement.x() + (int) Math.round(p.x * placement.ratio()),
         placement.y() + (int) Math.round(p.y * placement.ratio()));

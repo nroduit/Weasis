@@ -52,7 +52,9 @@ class ViewCaptureTest {
     assertAll(
         () -> assertEquals("png", ViewCapture.formatOf(Path.of("a/shot.PNG"))),
         () -> assertEquals("jpg", ViewCapture.formatOf(Path.of("shot.jpeg"))),
-        () -> assertThrows(IllegalArgumentException.class, () -> ViewCapture.formatOf(Path.of("shot.gif"))),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class, () -> ViewCapture.formatOf(Path.of("shot.gif"))),
         () -> assertEquals(CaptureScope.CONTAINER, ViewCapture.Scope.LAYOUT.toCaptureScope()),
         () -> assertEquals("window", ViewCapture.Scope.WINDOW.toString()));
   }

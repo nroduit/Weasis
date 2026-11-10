@@ -13,27 +13,20 @@ import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import java.io.IOException;
-import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.Capability;
 import org.weasis.core.api.command.CommandExtension;
-import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.Needs;
-import org.weasis.core.api.command.PaneIndex;
 import org.weasis.core.api.command.Since;
-import org.weasis.core.api.command.ViewId;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.ColorProfileOp;
 import org.weasis.core.api.image.color.ColorManagement;
 import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.core.api.setting.CoreSettings;
 import org.weasis.core.api.setting.Settings;
-import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -60,7 +53,6 @@ public class ColorCommands implements CommandExtension {
   public Object getCommandModel() {
     return this;
   }
-
 
   @Command(
       name = "status",

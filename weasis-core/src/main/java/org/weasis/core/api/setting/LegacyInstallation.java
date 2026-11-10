@@ -33,12 +33,12 @@ import org.weasis.core.api.util.DocumentStore;
 import org.weasis.pref.PlatformDirectories;
 
 /**
- * The explicit import of a Weasis 4 installation ({@code ~/.weasis}) into this one: the settings
- * of the user ({@code preferences/<user>/<profile>/<module>.xml}), the values of the workstation
- * ({@code data/<plugin>/*.properties}) and the documents the registries declared with their
- * earlier location. A preview build never migrates {@code ~/.weasis} by itself, since the 4.x
- * release the person still runs keeps using it; this import reads it and writes nothing there. A
- * value already set in 5 is kept unless the caller asks to replace it.
+ * The explicit import of a Weasis 4 installation ({@code ~/.weasis}) into this one: the settings of
+ * the user ({@code preferences/<user>/<profile>/<module>.xml}), the values of the workstation
+ * ({@code data/<plugin>/*.properties}) and the documents the registries declared with their earlier
+ * location. A preview build never migrates {@code ~/.weasis} by itself, since the 4.x release the
+ * person still runs keeps using it; this import reads it and writes nothing there. A value already
+ * set in 5 is kept unless the caller asks to replace it.
  */
 public final class LegacyInstallation {
   private static final Logger LOGGER = LoggerFactory.getLogger(LegacyInstallation.class);
@@ -49,7 +49,8 @@ public final class LegacyInstallation {
 
   /** The 4.x data folder whose properties feed a 5 group, when the names differ. */
   private static final Map<String, String> GROUP_OF_FOLDER =
-      Map.of("weasis-core-ui", "weasis-core", "weasis-isowriter", "weasis-dicom-isowriter"); // NON-NLS
+      Map.of(
+          "weasis-core-ui", "weasis-core", "weasis-isowriter", "weasis-dicom-isowriter"); // NON-NLS
 
   public static final String SETTINGS = "settings"; // NON-NLS
   public static final String MACHINE = "machine"; // NON-NLS
@@ -92,8 +93,8 @@ public final class LegacyInstallation {
   }
 
   /**
-   * A launch property: the system preferences of the application hold them (the launcher hands
-   * them to the plugins), the JVM properties stand in outside the application.
+   * A launch property: the system preferences of the application hold them (the launcher hands them
+   * to the plugins), the JVM properties stand in outside the application.
    */
   public static String property(String key, String fallback) {
     try {
@@ -132,7 +133,10 @@ public final class LegacyInstallation {
   /** The roots of the running installation, null outside the application. */
   static Roots current() {
     String prefDir = property("weasis.pref.dir", null); // NON-NLS
-    Path data = AppProperties.WEASIS_PATH == null ? null : AppProperties.WEASIS_PATH.resolve("data"); // NON-NLS
+    Path data =
+        AppProperties.WEASIS_PATH == null
+            ? null
+            : AppProperties.WEASIS_PATH.resolve("data"); // NON-NLS
     if (prefDir == null && data == null) {
       return null;
     }
@@ -256,7 +260,8 @@ public final class LegacyInstallation {
     }
   }
 
-  private static List<Item> documents(Roots legacy, Roots current, boolean replace, boolean dryRun) {
+  private static List<Item> documents(
+      Roots legacy, Roots current, boolean replace, boolean dryRun) {
     List<Item> items = new ArrayList<>();
     if (current == null) {
       return items;

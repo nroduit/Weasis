@@ -156,11 +156,21 @@ public final class ViewCapture {
       } finally {
         g.dispose();
       }
-      paintOwnedWindows(owned, location, (Graphics2D) g2d.create(location.x - origin.x, location.y - origin.y, owned.getWidth(), owned.getHeight()));
+      paintOwnedWindows(
+          owned,
+          location,
+          (Graphics2D)
+              g2d.create(
+                  location.x - origin.x,
+                  location.y - origin.y,
+                  owned.getWidth(),
+                  owned.getHeight()));
     }
   }
 
-  /** The factor that brings {@code width × height} under {@code maxPixels}; 1 when it already is. */
+  /**
+   * The factor that brings {@code width × height} under {@code maxPixels}; 1 when it already is.
+   */
   public static double scaleFor(int width, int height, int maxPixels) {
     long pixels = (long) width * height;
     return pixels <= maxPixels ? 1.0 : Math.sqrt((double) maxPixels / pixels);
@@ -222,7 +232,9 @@ public final class ViewCapture {
   /** Writes a capture; a color capture carries the display profile when the format can embed it. */
   public static void write(BufferedImage image, String format, Path file) throws IOException {
     IccProfile profile = IccImageFiles.displayedProfile().orElse(null);
-    if (profile != null && image.getRaster().getNumBands() == 3 && IccImageFiles.canEmbed(file, profile)) {
+    if (profile != null
+        && image.getRaster().getNumBands() == 3
+        && IccImageFiles.canEmbed(file, profile)) {
       ImageCV mat = ImageConversion.toMat(image);
       try {
         if (!IccImageFiles.write(mat, file, null, profile)) {

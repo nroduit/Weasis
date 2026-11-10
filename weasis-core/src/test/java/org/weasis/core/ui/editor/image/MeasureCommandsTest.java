@@ -24,13 +24,17 @@ class MeasureCommandsTest {
   void theVerbsParse() {
     MeasureCommands model = new MeasureCommands();
     assertAll(
-        () -> assertDoesNotThrow(() -> CommandModel.parse(model, "measure:tools --category measure")),
+        () ->
+            assertDoesNotThrow(() -> CommandModel.parse(model, "measure:tools --category measure")),
         () -> assertDoesNotThrow(() -> CommandModel.parse(model, "measure:profiles")),
-        () -> assertDoesNotThrow(() -> CommandModel.parse(model, "measure:profile --select default")),
+        () ->
+            assertDoesNotThrow(() -> CommandModel.parse(model, "measure:profile --select default")),
         () -> assertDoesNotThrow(() -> CommandModel.parse(model, "measure:profile --automatic")),
         () ->
             assertDoesNotThrow(
-                () -> CommandModel.parse(model, "measure:export --format csv --out /tmp/x.csv --force")),
+                () ->
+                    CommandModel.parse(
+                        model, "measure:export --format csv --out /tmp/x.csv --force")),
         () ->
             assertDoesNotThrow(
                 () ->
@@ -44,7 +48,8 @@ class MeasureCommandsTest {
                 "one action at a time"),
         () ->
             assertThrows(
-                RuntimeException.class, () -> CommandModel.parse(model, "measure:export --out /tmp/x")));
+                RuntimeException.class,
+                () -> CommandModel.parse(model, "measure:export --out /tmp/x")));
   }
 
   @Test

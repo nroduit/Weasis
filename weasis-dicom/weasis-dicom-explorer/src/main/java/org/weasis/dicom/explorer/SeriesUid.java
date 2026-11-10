@@ -13,7 +13,9 @@ import org.weasis.core.api.command.Definition;
 import org.weasis.core.api.command.SemanticType;
 
 /** Identifies one series: its Series Instance UID, or the id of a split series. */
-@Definition(value = "the Series Instance UID, or the series id, of a loaded series, from dicom:list", handle = true)
+@Definition(
+    value = "the Series Instance UID, or the series id, of a loaded series, from dicom:list",
+    handle = true)
 public record SeriesUid(String value) implements SemanticType {
 
   private static final String EXPECTED = "a series UID or series id from 'dicom:list'"; // NON-NLS

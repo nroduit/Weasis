@@ -378,11 +378,17 @@ public class ConfigCommands implements CommandExtension {
     public ResultSchema result() {
       return ResultSchema.of()
           .field("root", String.class, "the Weasis 4 folder read") // NON-NLS
-          .field("preferences", String.class, "its preference folder of the user and profile") // NON-NLS
+          .field(
+              "preferences",
+              String.class,
+              "its preference folder of the user and profile") // NON-NLS
           .field("data", String.class, "its data folder") // NON-NLS
           .field("dryRun", boolean.class, "true when nothing was changed") // NON-NLS
           .field("replace", boolean.class, "true when existing values were replaced") // NON-NLS
-          .field("items", "array", "what was imported: a settings group, a machine group, a document") // NON-NLS
+          .field(
+              "items",
+              "array",
+              "what was imported: a settings group, a machine group, a document") // NON-NLS
           .field("items[].kind", String.class, "settings, machine or document") // NON-NLS
           .field("items[].name", String.class, "the group or the document") // NON-NLS
           .field("items[].source", String.class, "the Weasis 4 file read") // NON-NLS
@@ -393,7 +399,10 @@ public class ConfigCommands implements CommandExtension {
           .field("added", int.class, "total added") // NON-NLS
           .field("replaced", int.class, "total replaced") // NON-NLS
           .field("kept", int.class, "total kept") // NON-NLS
-          .field("checkpoint", String.class, "the checkpoint taken before the import, when one was") // NON-NLS
+          .field(
+              "checkpoint",
+              String.class,
+              "the checkpoint taken before the import, when one was") // NON-NLS
           .build();
     }
 
@@ -417,7 +426,8 @@ public class ConfigCommands implements CommandExtension {
           dryRun
               ? Optional.empty()
               : CommandManager.stateBoundary()
-                  .checkpoint("before the import of Weasis 4 settings", CommandContext.current().origin());
+                  .checkpoint(
+                      "before the import of Weasis 4 settings", CommandContext.current().origin());
       LegacyInstallation.Report report = LegacyInstallation.run(roots.get(), replace, dryRun);
       JsonObjectBuilder json = Json.createObjectBuilder(LegacyInstallation.toJson(report));
       checkpoint.ifPresent(id -> json.add("checkpoint", id)); // NON-NLS

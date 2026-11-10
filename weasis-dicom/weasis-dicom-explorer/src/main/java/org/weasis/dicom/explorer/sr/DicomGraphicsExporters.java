@@ -19,6 +19,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
 import org.pf4j.Extension;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.GraphicModel;
@@ -27,7 +28,6 @@ import org.weasis.core.ui.model.graphic.GraphicsExporter;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.model.utils.bean.Measurement;
-import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.pr.DicomPrSerializer;
@@ -93,7 +93,8 @@ public final class DicomGraphicsExporters {
       if (regions.isEmpty()) {
         throw new IllegalStateException("No graphic of the pane can be written as a region");
       }
-      Attributes report = MeasurementReport.build(source, image, regions, "Weasis measurements"); // NON-NLS
+      Attributes report =
+          MeasurementReport.build(source, image, regions, "Weasis measurements"); // NON-NLS
       MeasurementReport.write(report, file);
       return new Written(
           file,

@@ -85,8 +85,8 @@ class LegacyInstallationTest {
   }
 
   @Test
-  void the_import_fills_the_gaps_and_replaces_only_on_request(@TempDir Path home, @TempDir Path here)
-      throws IOException {
+  void the_import_fills_the_gaps_and_replaces_only_on_request(
+      @TempDir Path home, @TempDir Path here) throws IOException {
     Roots roots = legacy(home);
     SettingsFileStore user = new SettingsFileStore(0);
     user.configure(here.resolve("settings"), List.of());
@@ -119,7 +119,10 @@ class LegacyInstallationTest {
     Report replaced = LegacyInstallation.run(roots, current, user, machine, true, false);
     assertAll(
         () -> assertEquals("3", user.group("weasis-core").node("zoom").get("factor", null)),
-        () -> assertEquals(2, replaced.totals().replaced(), replaced.toString()), // factor + document
-        () -> assertFalse(Files.exists(roots.prefDir().resolve("weasis-core-ui.json")), "4.x untouched"));
+        () ->
+            assertEquals(2, replaced.totals().replaced(), replaced.toString()), // factor + document
+        () ->
+            assertFalse(
+                Files.exists(roots.prefDir().resolve("weasis-core-ui.json")), "4.x untouched"));
   }
 }

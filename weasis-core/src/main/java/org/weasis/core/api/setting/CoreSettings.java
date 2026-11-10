@@ -24,28 +24,36 @@ public final class CoreSettings {
    * configuration's value; the hosts and roots as comma-separated and path-separated lists.
    */
   public static final Setting<String> COMMANDS_NETWORK_READ =
-      Setting.builder(SettingType.STRING, GROUP, "weasis.commands.policy.network.read", "") // NON-NLS
-          .description("Network reads of a remote caller: allow, refuse, or the configuration's value")
+      Setting.builder(
+              SettingType.STRING, GROUP, "weasis.commands.policy.network.read", "") // NON-NLS
+          .description(
+              "Network reads of a remote caller: allow, refuse, or the configuration's value")
           .declare();
 
   public static final Setting<String> COMMANDS_NETWORK_READ_HOSTS =
-      Setting.builder(SettingType.STRING, GROUP, "weasis.commands.policy.network.readHosts", "") // NON-NLS
+      Setting.builder(
+              SettingType.STRING, GROUP, "weasis.commands.policy.network.readHosts", "") // NON-NLS
           .description("Hosts a remote caller may read from, comma-separated; empty for any")
           .declare();
 
   public static final Setting<String> COMMANDS_NETWORK_WRITE =
-      Setting.builder(SettingType.STRING, GROUP, "weasis.commands.policy.network.write", "") // NON-NLS
-          .description("Network writes of a remote caller: allow, refuse, or the configuration's value")
+      Setting.builder(
+              SettingType.STRING, GROUP, "weasis.commands.policy.network.write", "") // NON-NLS
+          .description(
+              "Network writes of a remote caller: allow, refuse, or the configuration's value")
           .declare();
 
   public static final Setting<String> COMMANDS_NETWORK_WRITE_HOSTS =
-      Setting.builder(SettingType.STRING, GROUP, "weasis.commands.policy.network.writeHosts", "") // NON-NLS
+      Setting.builder(
+              SettingType.STRING, GROUP, "weasis.commands.policy.network.writeHosts", "") // NON-NLS
           .description("Hosts a remote caller may write to, comma-separated; empty for any")
           .declare();
 
   public static final Setting<String> COMMANDS_FILE_WRITE_ROOTS =
-      Setting.builder(SettingType.STRING, GROUP, "weasis.commands.policy.files.write.roots", "") // NON-NLS
-          .description("Folders a remote caller may write under, path-separated; empty for the configuration's")
+      Setting.builder(
+              SettingType.STRING, GROUP, "weasis.commands.policy.files.write.roots", "") // NON-NLS
+          .description(
+              "Folders a remote caller may write under, path-separated; empty for the configuration's")
           .declare();
 
   public static final Setting<Boolean> CONFIRM_CLOSING =

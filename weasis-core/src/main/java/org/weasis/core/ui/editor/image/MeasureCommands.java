@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
@@ -137,8 +136,12 @@ public class MeasureCommands implements CommandExtension {
           .field("tools[].category", String.class, "measure or draw") // NON-NLS
           .field("tools[].label", String.class, "the label shown") // NON-NLS
           .field("tools[].points", int.class, "points the tool takes at least") // NON-NLS
-          .field("tools[].measurements", "array", "the measurement keys the tool computes") // NON-NLS
-          .field("tools[].measurements[].key", String.class, "stable name of the measurement") // NON-NLS
+          .field(
+              "tools[].measurements", "array", "the measurement keys the tool computes") // NON-NLS
+          .field(
+              "tools[].measurements[].key",
+              String.class,
+              "stable name of the measurement") // NON-NLS
           .field("tools[].measurements[].name", String.class, "English name") // NON-NLS
           .build();
     }
@@ -168,7 +171,9 @@ public class MeasureCommands implements CommandExtension {
             Json.createObjectBuilder()
                 .add("tool", d.key()) // NON-NLS
                 .add("category", cat) // NON-NLS
-                .add("label", prototype.getUIName() == null ? d.key() : prototype.getUIName()) // NON-NLS
+                .add(
+                    "label",
+                    prototype.getUIName() == null ? d.key() : prototype.getUIName()) // NON-NLS
                 .add("points", d.minPoints()) // NON-NLS
                 .add("measurements", measurements)); // NON-NLS
       }
@@ -184,8 +189,12 @@ public class MeasureCommands implements CommandExtension {
     @Override
     public ResultSchema result() {
       return ResultSchema.of()
-          .field("selected", String.class, "the profile chosen by hand, absent when automatic") // NON-NLS
-          .field("automatic", boolean.class, "true when the modality chooses the profile") // NON-NLS
+          .field(
+              "selected",
+              String.class,
+              "the profile chosen by hand, absent when automatic") // NON-NLS
+          .field(
+              "automatic", boolean.class, "true when the modality chooses the profile") // NON-NLS
           .field("profiles", "array", "the profiles") // NON-NLS
           .field("profiles[].id", String.class, "the profile id") // NON-NLS
           .field("profiles[].name", String.class, "the name shown") // NON-NLS
@@ -275,8 +284,12 @@ public class MeasureCommands implements CommandExtension {
     @Override
     public ResultSchema result() {
       return ResultSchema.of()
-          .field("selected", String.class, "the profile chosen by hand, absent when automatic") // NON-NLS
-          .field("automatic", boolean.class, "true when the modality chooses the profile") // NON-NLS
+          .field(
+              "selected",
+              String.class,
+              "the profile chosen by hand, absent when automatic") // NON-NLS
+          .field(
+              "automatic", boolean.class, "true when the modality chooses the profile") // NON-NLS
           .field("file", String.class, "the file written or read") // NON-NLS
           .field("profiles", "array", "the ids written or read") // NON-NLS
           .build();
@@ -310,7 +323,8 @@ public class MeasureCommands implements CommandExtension {
                                 .orElseThrow(
                                     () ->
                                         CommandFailure.unknownHandle(
-                                            "Unknown profile: " + id, "measure:profiles"))) // NON-NLS
+                                            "Unknown profile: " + id,
+                                            "measure:profiles"))) // NON-NLS
                     .toList();
         registry.exportTo(file, profiles);
         CommandContext.current().addFile(file);
@@ -349,16 +363,14 @@ public class MeasureCommands implements CommandExtension {
         description = "xml, csv, or a format of a plugin; '?' lists the formats of this instance.")
     String format;
 
-    @Option(
-        names = "--out",
-        paramLabel = "<output-path>",
-        description = "The file to write.")
+    @Option(names = "--out", paramLabel = "<output-path>", description = "The file to write.")
     OutputPath out;
 
     @Option(
         names = "--layer",
         paramLabel = "<layer-name>",
-        description = "Only the graphics of this layer (default: the measurement and drawing layers).")
+        description =
+            "Only the graphics of this layer (default: the measurement and drawing layers).")
     LayerName layer;
 
     @Option(names = CommandModel.FORCE, description = "Replace an existing file.")
@@ -374,7 +386,10 @@ public class MeasureCommands implements CommandExtension {
           .field("file", String.class, "the file written") // NON-NLS
           .field("graphics", int.class, "graphics written") // NON-NLS
           .field("skipped", int.class, "graphics the format could not take") // NON-NLS
-          .field("details", "object", "what the format says about the file, e.g. its SOP Instance UID") // NON-NLS
+          .field(
+              "details",
+              "object",
+              "what the format says about the file, e.g. its SOP Instance UID") // NON-NLS
           .build();
     }
 
@@ -395,7 +410,10 @@ public class MeasureCommands implements CommandExtension {
       GraphicsExporter exporter = exporters.get(format.toLowerCase(Locale.ROOT));
       if (exporter == null) {
         throw invalid(
-            "Unknown format '" + format + "'; this instance writes " + String.join(", ", exporters.keySet()));
+            "Unknown format '"
+                + format
+                + "'; this instance writes "
+                + String.join(", ", exporters.keySet()));
       }
       if (out == null) {
         throw invalid("Give --out, the file to write");
@@ -416,7 +434,8 @@ public class MeasureCommands implements CommandExtension {
                 try {
                   return exporter.export(view, graphics, file);
                 } catch (IOException e) {
-                  throw new IllegalStateException("Cannot write " + file + ": " + e.getMessage(), e);
+                  throw new IllegalStateException(
+                      "Cannot write " + file + ": " + e.getMessage(), e);
                 }
               });
       CommandContext.current().addFile(written.file());
@@ -585,7 +604,8 @@ public class MeasureCommands implements CommandExtension {
           .field("pixelSize", double.class, "the size of one pixel after the call") // NON-NLS
           .field("unit", String.class, "the unit of pixelSize") // NON-NLS
           .field("series", boolean.class, "true when the series was calibrated") // NON-NLS
-          .field("removed", boolean.class, "true when the user's calibration was dropped") // NON-NLS
+          .field(
+              "removed", boolean.class, "true when the user's calibration was dropped") // NON-NLS
           .build();
     }
 
@@ -625,7 +645,9 @@ public class MeasureCommands implements CommandExtension {
                 }
                 return Json.createObjectBuilder()
                     .add("pixelSize", image.getPixelSize()) // NON-NLS
-                    .add("unit", String.valueOf(image.getPixelSpacingUnit().getAbbreviation())) // NON-NLS
+                    .add(
+                        "unit",
+                        String.valueOf(image.getPixelSpacingUnit().getAbbreviation())) // NON-NLS
                     .add("series", series) // NON-NLS
                     .add("removed", remove) // NON-NLS
                     .build()

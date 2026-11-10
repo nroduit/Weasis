@@ -40,7 +40,9 @@ class CommandPolicyLayersTest {
     assertAll(
         () -> assertEquals(base, same),
         () -> assertTrue(changed.network().read()),
-        () -> assertEquals(Set.of("pacs.example.org", "hub.example.org"), changed.network().readHosts()),
+        () ->
+            assertEquals(
+                Set.of("pacs.example.org", "hub.example.org"), changed.network().readHosts()),
         () -> assertFalse(changed.network().write()),
         () -> assertEquals(base.network().writeHosts(), changed.network().writeHosts()),
         () -> assertEquals(java.util.List.of(a, b), changed.files().writeRoots()),

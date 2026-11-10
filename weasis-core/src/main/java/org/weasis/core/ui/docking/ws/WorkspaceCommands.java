@@ -22,19 +22,19 @@ import java.util.Map;
 import java.util.function.Supplier;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
-import org.weasis.core.api.command.Returns;
-import org.weasis.core.api.command.ResultSchema;
-import org.weasis.core.api.command.Produces;
-import org.weasis.core.api.command.PaneIndex;
-import org.weasis.core.api.command.ImageIndex;
-import org.weasis.core.api.command.GridId;
 import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.CommandManager;
+import org.weasis.core.api.command.GridId;
+import org.weasis.core.api.command.ImageIndex;
 import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.ListOptions;
 import org.weasis.core.api.command.OutputPath;
+import org.weasis.core.api.command.PaneIndex;
+import org.weasis.core.api.command.Produces;
+import org.weasis.core.api.command.ResultSchema;
+import org.weasis.core.api.command.Returns;
 import org.weasis.core.api.command.ScreenRect;
 import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.command.Since;
@@ -294,18 +294,50 @@ public class WorkspaceCommands implements CommandExtension {
           .field("windows[].groups[].group", int.class, "tab group number, from 1") // NON-NLS
           .field("windows[].groups[].views", "array", "the views of the tab group") // NON-NLS
           .field("windows[].groups[].views[].id", ViewId.class, "the view id") // NON-NLS
-          .field("windows[].groups[].views[].name", String.class, "the title of the view") // NON-NLS
-          .field("windows[].groups[].views[].selected", boolean.class, "true for the selected view") // NON-NLS
-          .field("windows[].groups[].views[].viewerType", String.class, "the viewer type id") // NON-NLS
-          .field("windows[].groups[].views[].tool", "tool-id", "the tool shown, for a tool opened as a view") // NON-NLS
-          .field("windows[].groups[].views[].grid", GridId.class, "the grid of an image view") // NON-NLS
-          .field("windows[].groups[].views[].sync", String.class, "the synchronization mode of an image view") // NON-NLS
-          .field("windows[].groups[].views[].panes", "array", "the panes of an image view") // NON-NLS
-          .field("windows[].groups[].views[].panes[].pane", PaneIndex.class, "the pane index") // NON-NLS
-          .field("windows[].groups[].views[].panes[].selected", boolean.class, "true for the selected pane") // NON-NLS
-          .field("windows[].groups[].views[].panes[].series", "series-uid", "the series shown") // NON-NLS
-          .field("windows[].groups[].views[].panes[].image", ImageIndex.class, "the image shown, from 1") // NON-NLS
-          .field("windows[].groups[].views[].panes[].imageCount", int.class, "images of the series") // NON-NLS
+          .field(
+              "windows[].groups[].views[].name", String.class, "the title of the view") // NON-NLS
+          .field(
+              "windows[].groups[].views[].selected",
+              boolean.class,
+              "true for the selected view") // NON-NLS
+          .field(
+              "windows[].groups[].views[].viewerType",
+              String.class,
+              "the viewer type id") // NON-NLS
+          .field(
+              "windows[].groups[].views[].tool",
+              "tool-id",
+              "the tool shown, for a tool opened as a view") // NON-NLS
+          .field(
+              "windows[].groups[].views[].grid",
+              GridId.class,
+              "the grid of an image view") // NON-NLS
+          .field(
+              "windows[].groups[].views[].sync",
+              String.class,
+              "the synchronization mode of an image view") // NON-NLS
+          .field(
+              "windows[].groups[].views[].panes", "array", "the panes of an image view") // NON-NLS
+          .field(
+              "windows[].groups[].views[].panes[].pane",
+              PaneIndex.class,
+              "the pane index") // NON-NLS
+          .field(
+              "windows[].groups[].views[].panes[].selected",
+              boolean.class,
+              "true for the selected pane") // NON-NLS
+          .field(
+              "windows[].groups[].views[].panes[].series",
+              "series-uid",
+              "the series shown") // NON-NLS
+          .field(
+              "windows[].groups[].views[].panes[].image",
+              ImageIndex.class,
+              "the image shown, from 1") // NON-NLS
+          .field(
+              "windows[].groups[].views[].panes[].imageCount",
+              int.class,
+              "images of the series") // NON-NLS
           .build();
     }
 

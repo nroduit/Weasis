@@ -75,7 +75,9 @@ public final class CommandPolicyLayers {
     }
   }
 
-  /** The policy {@code base} gives with the user's values on top; an empty value changes nothing. */
+  /**
+   * The policy {@code base} gives with the user's values on top; an empty value changes nothing.
+   */
   public static CommandPolicy derive(
       CommandPolicy base,
       String read,

@@ -67,12 +67,16 @@ public class CommandsPrefView extends AbstractItemDialogPage {
         });
   }
 
-  private static JPanel row(String label, javax.swing.JComponent first, javax.swing.JComponent second) {
+  private static JPanel row(
+      String label, javax.swing.JComponent first, javax.swing.JComponent second) {
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING, ITEM_SEPARATOR_SMALL, 0));
     panel.add(new JLabel(label + org.weasis.core.util.StringUtil.COLON));
     panel.add(first);
     if (second != null) {
-      panel.add(new JLabel(Messages.getString("CommandsPrefView.hosts") + org.weasis.core.util.StringUtil.COLON));
+      panel.add(
+          new JLabel(
+              Messages.getString("CommandsPrefView.hosts")
+                  + org.weasis.core.util.StringUtil.COLON));
       panel.add(second);
     }
     return panel;
@@ -133,7 +137,10 @@ public class CommandsPrefView extends AbstractItemDialogPage {
   }
 
   private static void select(JComboBox<String> box, String value) {
-    int index = CommandPolicyLayers.ALLOW.equalsIgnoreCase(value) ? 1 : CommandPolicyLayers.REFUSE.equalsIgnoreCase(value) ? 2 : 0;
+    int index =
+        CommandPolicyLayers.ALLOW.equalsIgnoreCase(value)
+            ? 1
+            : CommandPolicyLayers.REFUSE.equalsIgnoreCase(value) ? 2 : 0;
     box.setSelectedIndex(index);
   }
 
