@@ -11,6 +11,16 @@ package org.weasis.core.api.command;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -19,6 +29,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * What a remote caller is allowed to do, decided by the instance and never by the caller: where a
@@ -87,7 +99,180 @@ public record CommandPolicy(
   }
 
   /** Prefix of the system properties that override one key each. */
+  private static final Logger LOGGER = LoggerFactory.getLogger(CommandPolicy.class);
+
   public static final String PROPERTY_PREFIX = "weasis.commands.policy."; // NON-NLS
+
+  /** The policy file a site puts next to {@code base.json}; the keys are the ones of the properties. */
+  public static final String FILE_NAME = "commands-policy.json"; // NON-NLS
+
+  /** A policy with where it came from, for {@code weasis:info} and the log. */
+  public record Loaded(CommandPolicy policy, String source) {}
+
+  /**
+   * The policy of this instance from its configuration: the defaults, then {@value #FILE_NAME} next
+   * to the last configuration file that has one (the local file, then the site's), then one system
+   * property per key that changes ({@code weasis.commands.policy.<key>}, and the {@code
+   * weasis.commands.remote.*} properties of the remote part). The file is nested JSON, one object
+   * per key segment ({@code {"network": {"read": "allow"}}}); an array joins with commas, a list of
+   * roots with the path separator; {@code ${user.home}}, {@code ${session.tmp}} and any system
+   * property are substituted.
+   */
+  public static Loaded fromConfiguration(List<URI> configurationFiles) {
+    Map<String, String> file = new HashMap<>();
+    String source = null;
+    for (URI configuration : configurationFiles == null ? List.<URI>of() : configurationFiles) {
+      URI sibling = sibling(configuration);
+      if (sibling == null) {
+        continue;
+      }
+      Map<String, String> read = readFile(sibling);
+      if (read != null) {
+        file = read;
+        source = sibling.toString();
+      }
+    }
+    boolean properties =
+        System.getProperties().stringPropertyNames().stream()
+            .anyMatch(
+                k ->
+                    k.startsWith(PROPERTY_PREFIX)
+                        || k.equals(RemotePolicy.ENABLED_PROP)
+                        || k.equals(RemotePolicy.NAMESPACES_PROP));
+    Map<String, String> fileKeys = file;
+    UnaryOperator<String> lookup =
+        key -> {
+          String property = System.getProperty(PROPERTY_PREFIX + key);
+          return property != null ? property : fileKeys.get(key);
+        };
+    RemotePolicy remote = remote(lookup);
+    String where =
+        source == null
+            ? (properties ? "properties" : "defaults") // NON-NLS
+            : (properties ? source + " and properties" : source); // NON-NLS
+    return new Loaded(from(lookup, remote), where);
+  }
+
+  /** The remote part: the file keys {@code remote.*}, the properties of either spelling on top. */
+  private static RemotePolicy remote(UnaryOperator<String> lookup) {
+    RemotePolicy properties = RemotePolicy.fromSystemProperties();
+    String enabled = System.getProperty(RemotePolicy.ENABLED_PROP, lookup.apply("remote.enabled"));
+    String namespaces =
+        System.getProperty(RemotePolicy.NAMESPACES_PROP, lookup.apply("remote.namespaces"));
+    if (enabled == null && namespaces == null) {
+      return properties;
+    }
+    boolean on = enabled == null ? properties.enabled() : !"false".equalsIgnoreCase(enabled);
+    Set<String> names = namespaces == null ? properties.namespaces() : hosts(namespaces);
+    return new RemotePolicy(on, names.isEmpty() ? Set.of(RemotePolicy.ALL) : names);
+  }
+
+  private static URI sibling(URI configuration) {
+    if (configuration == null) {
+      return null;
+    }
+    String text = configuration.toString();
+    int slash = text.lastIndexOf('/');
+    return slash < 0 ? null : URI.create(text.substring(0, slash + 1) + FILE_NAME);
+  }
+
+  /** The flattened keys of the file, null when there is no such file. */
+  @SuppressWarnings("unchecked")
+  static Map<String, String> readFile(URI uri) {
+    try {
+      if ("file".equalsIgnoreCase(uri.getScheme()) && !Files.isRegularFile(Path.of(uri))) { // NON-NLS
+        return null;
+      }
+      try (Reader reader =
+          new InputStreamReader(uri.toURL().openStream(), StandardCharsets.UTF_8)) {
+        Object json = com.formdev.flatlaf.json.Json.parse(reader);
+        Map<String, String> keys = new HashMap<>();
+        if (json instanceof Map<?, ?> map) {
+          flatten("", (Map<String, Object>) map, keys);
+        }
+        return keys;
+      }
+    } catch (IOException | RuntimeException e) {
+      if (!(e instanceof java.io.FileNotFoundException)) {
+        LOGGER.warn("Cannot read the command policy {}", uri, e);
+      }
+      return null;
+    }
+  }
+
+  private static void flatten(String prefix, Map<String, Object> map, Map<String, String> into) {
+    for (Map.Entry<String, Object> e : map.entrySet()) {
+      String key = prefix.isEmpty() ? e.getKey() : prefix + "." + e.getKey();
+      Object value = e.getValue();
+      if (value instanceof Map<?, ?> nested) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> child = (Map<String, Object>) nested;
+        flatten(key, child, into);
+      } else if (value instanceof List<?> list) {
+        String separator = key.endsWith(".roots") ? java.io.File.pathSeparator : ","; // NON-NLS
+        into.put(
+            key,
+            list.stream()
+                .map(String::valueOf)
+                .map(CommandPolicy::substitute)
+                .reduce((a, b) -> a + separator + b)
+                .orElse(""));
+      } else if (value != null) {
+        into.put(key, substitute(String.valueOf(value)));
+      }
+    }
+  }
+
+  /** {@code ${session.tmp}}, {@code ${user.home}} and any system property, in a file value. */
+  static String substitute(String value) {
+    Matcher m = VARIABLE.matcher(value);
+    StringBuilder sb = new StringBuilder();
+    while (m.find()) {
+      String name = m.group(1);
+      String replacement =
+          "session.tmp".equals(name) // NON-NLS
+              ? System.getProperty("weasis.tmp.dir", System.getProperty("java.io.tmpdir", "")) // NON-NLS
+              : System.getProperty(name, m.group());
+      m.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+    }
+    return m.appendTail(sb).toString();
+  }
+
+  private static final Pattern VARIABLE = Pattern.compile("\\$\\{([^}]+)}");
+
+  /** The effective policy as the descriptor and {@code weasis:info} print it. */
+  public void write(JsonWriter out) {
+    out.beginObject();
+    out.name("remote").beginObject().name("enabled").value(remote.enabled()); // NON-NLS
+    out.name("namespaces").beginArray(); // NON-NLS
+    remote.namespaces().stream().sorted().forEach(out::value);
+    out.endArray().endObject();
+    out.name("files").beginObject().name("writeRoots").beginArray(); // NON-NLS
+    files.writeRoots().forEach(p -> out.value(p.toString()));
+    out.endArray()
+        .name("writeToShare") // NON-NLS
+        .value(files.writeToShare())
+        .name("readFromShare") // NON-NLS
+        .value(files.readFromShare())
+        .endObject();
+    out.name("network").beginObject().name("read").value(network.read()); // NON-NLS
+    out.name("readHosts").beginArray(); // NON-NLS
+    network.readHosts().stream().sorted().forEach(out::value);
+    out.endArray().name("write").value(network.write()); // NON-NLS
+    out.name("writeHosts").beginArray(); // NON-NLS
+    network.writeHosts().stream().sorted().forEach(out::value);
+    out.endArray().endObject();
+    out.name("confirmations").beginObject().name("assumeYes").value(assumeYesAllowed).endObject(); // NON-NLS
+    out.name("shutdown").value(shutdownAllowed); // NON-NLS
+    out.name("pixelsAttest").value(pixelAttestAllowed); // NON-NLS
+    out.name("events").beginObject().name("enabled").value(events.enabled()); // NON-NLS
+    out.name("namespaces").beginArray(); // NON-NLS
+    events.namespaces().stream().sorted().forEach(out::value);
+    out.endArray().name("maxSubscribers").value(events.maxSubscribers()).endObject(); // NON-NLS
+    out.name("remoteCheckpoint").value(remoteCheckpoint); // NON-NLS
+    out.name("locked").value(locked); // NON-NLS
+    out.endObject();
+  }
 
   private static final String ALLOW = "allow"; // NON-NLS
   private static final String LOCALHOST = "localhost"; // NON-NLS

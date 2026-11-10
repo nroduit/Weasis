@@ -77,7 +77,7 @@ public class CommandManager {
    * additive changes (a verb, an option, a JSON key), the major with breaking ones. A verb or an
    * option is never removed within a major; a renamed one keeps its old name as a deprecated alias.
    */
-  public static final String API_VERSION = "2.32"; // NON-NLS
+  public static final String API_VERSION = "2.33"; // NON-NLS
 
   /** Namespace of the event verbs and of the audit lines of the event stream. */
   public static final String EVENTS = "events"; // NON-NLS
@@ -97,8 +97,21 @@ public class CommandManager {
   private final ConcurrentMap<String, String> namespaceAliases;
 
   private final CommandAudit audit;
-  private final CommandPolicy policy;
+
+  /** The policy of the configuration: file, properties, defaults; what a user layer builds on. */
+  private final CommandPolicy basePolicy;
+
+  /** The policy in force; the preference page may open or close what the site did not lock. */
+  private volatile CommandPolicy policy;
+
+  private volatile String policySource;
   private final EventBus bus;
+
+  private static volatile CommandManager current;
+
+  /** What runs once the manager of the instance exists; the core registers its policy layer. */
+  private static final List<java.util.function.Consumer<CommandManager>> ON_CURRENT =
+      new java.util.concurrent.CopyOnWriteArrayList<>();
 
   /** The terms of the platform and of the registered namespaces. */
   private volatile Glossary glossary = Glossary.core();
@@ -109,11 +122,18 @@ public class CommandManager {
       new java.util.concurrent.atomic.AtomicInteger();
 
   public CommandManager(PluginManager pluginManager) {
+    this(pluginManager, new CommandPolicy.Loaded(CommandPolicy.fromSystemProperties(), "properties")); // NON-NLS
+  }
+
+  /** The manager of an instance, with the policy its configuration describes. */
+  public CommandManager(PluginManager pluginManager, CommandPolicy.Loaded loaded) {
     this(
         pluginManager,
         new CommandAudit(
             PlatformDirectories.get(PlatformDirectories.BaseDir.STATE).resolve("audit")), // NON-NLS
-        CommandPolicy.fromSystemProperties());
+        loaded.policy(),
+        EventBus.global(),
+        loaded.source());
   }
 
   public CommandManager(PluginManager pluginManager, CommandAudit audit, RemotePolicy remote) {
@@ -126,13 +146,26 @@ public class CommandManager {
 
   public CommandManager(
       PluginManager pluginManager, CommandAudit audit, CommandPolicy policy, EventBus bus) {
+    this(pluginManager, audit, policy, bus, "properties"); // NON-NLS
+  }
+
+  private CommandManager(
+      PluginManager pluginManager,
+      CommandAudit audit,
+      CommandPolicy policy,
+      EventBus bus,
+      String policySource) {
     this.pluginManager = pluginManager;
     this.commands = new ConcurrentHashMap<>();
     this.namespaceAliases = new ConcurrentHashMap<>();
     this.audit = audit;
+    this.basePolicy = policy;
     this.policy = policy;
+    this.policySource = policySource;
     this.bus = bus;
     loadCommands();
+    current = this;
+    ON_CURRENT.forEach(hook -> hook.accept(this));
   }
 
   /** The bus the events of this instance go through. */
@@ -155,6 +188,50 @@ public class CommandManager {
   /** What this instance allows a remote caller to do. */
   public CommandPolicy policy() {
     return policy;
+  }
+
+  /** The policy of the configuration alone, before any change made in the preferences. */
+  public CommandPolicy basePolicy() {
+    return basePolicy;
+  }
+
+  /** Where the policy comes from: the file, the properties, the defaults, the preferences. */
+  public String policySource() {
+    return policySource;
+  }
+
+  /**
+   * Replaces the policy in force, for the preference page: refused when the configuration locks
+   * it. Every change is logged with its source, since it decides what an agent may do.
+   */
+  public boolean updatePolicy(CommandPolicy updated, String source) {
+    if (basePolicy.locked()) {
+      LOGGER.warn("Command policy locked by the configuration: change from {} refused", source);
+      return false;
+    }
+    this.policy = updated;
+    this.policySource = source;
+    JsonWriter out = new JsonWriter();
+    updated.write(out);
+    LOGGER.info("Command policy updated by {}: {}", source, out);
+    return true;
+  }
+
+  /** The manager of this instance, null before it exists. */
+  public static CommandManager current() {
+    return current;
+  }
+
+  /**
+   * Runs {@code hook} with the manager of the instance: now when it exists, else as soon as it is
+   * created (the manager is built when the first command arrives, after the plugins started).
+   */
+  public static void onCurrent(java.util.function.Consumer<CommandManager> hook) {
+    ON_CURRENT.add(hook);
+    CommandManager manager = current;
+    if (manager != null) {
+      hook.accept(manager);
+    }
   }
 
   private void loadCommands() {

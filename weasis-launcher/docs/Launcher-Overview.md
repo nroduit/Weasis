@@ -475,6 +475,22 @@ state. An agent composes such verbs and chains their handles: `dicom:list` gives
 `dicom:open` opens one and `workspace:list` names the view, `view2d:capture` shows the
 image, `view2d:measure` draws a region and `view2d:stats` reads its statistics.
 
+### The policy of a remote caller
+
+What a script or an agent may do on an instance is one `CommandPolicy`, built when the manager
+starts: the defaults (network closed, files written under the session folder and the home of the
+user, every namespace reachable), then `commands-policy.json` next to the last configuration file
+that has one (the local `base.json`, then the site's, so a site profile replaces it), then one
+system property per key (`weasis.commands.policy.<key>`, the `weasis.commands.remote.*` properties
+of the remote part). The file is nested JSON, one object per key segment, arrays for the hosts and
+the roots, `${user.home}`, `${session.tmp}` and any system property substituted; `locked: true`
+freezes it. On top of it, the *Commands* page of the preferences (under *General*) shows the policy
+in force and lets the person open or close the network reads and writes, their hosts and the
+folders a remote caller may write under, as typed settings a site may lock individually; the
+change applies to the next command and is logged with its source. `weasis:info` reports the
+effective policy (`policy`, `policyLocked`, `policySource`), so the first call of an agent tells it
+what is open; a refusal keeps naming the policy key, and `help <ns>:<verb>` what a verb needs.
+
 ### Versions and compatibility
 
 Two numbers, independent of the application version, describe the bridge:

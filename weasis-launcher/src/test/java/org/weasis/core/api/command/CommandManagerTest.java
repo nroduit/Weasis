@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -458,6 +459,30 @@ class CommandManagerTest {
         () -> assertTrue(markdown.body().contains("| --a |"), markdown.body()),
         () -> assertTrue(markdown.body().contains("## echo"), markdown.body()),
         () -> assertFalse(markdown.body().contains("\u001B["), "no ANSI escape codes"));
+  }
+
+  @Test
+  void thePolicyIsUpdatedWithItsSourceUnlessLocked() {
+    CommandManager manager = manager(new MathExtension());
+    CommandPolicy opened = manager.basePolicy().withNetwork(new CommandPolicy.NetworkRules(true, Set.of(), false, Set.of()));
+    assertAll(
+        () -> assertSame(manager, CommandManager.current()),
+        () -> assertTrue(manager.updatePolicy(opened, "test")),
+        () -> assertTrue(manager.policy().network().read()),
+        () -> assertEquals("test", manager.policySource()),
+        () -> assertFalse(manager.basePolicy().network().read(), "the base policy never moves"));
+    CommandManager locked =
+        new CommandManager(
+            mockPluginManager(),
+            CommandAudit.disabled(),
+            CommandPolicy.defaults().withShutdown(false).withNetwork(CommandPolicy.NetworkRules.closed()));
+    assertTrue(locked.updatePolicy(opened, "test"), "not locked: accepted");
+  }
+
+  private static PluginManager mockPluginManager() {
+    PluginManager pluginManager = mock(PluginManager.class);
+    when(pluginManager.getExtensions(CommandExtension.class)).thenReturn(List.of());
+    return pluginManager;
   }
 
   @Test

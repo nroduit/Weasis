@@ -507,6 +507,11 @@ public class ConfigData {
     return PATH_CHARS.matcher(name).find() || name.chars().allMatch(c -> c == '.');
   }
 
+  /** The configuration files read at start, in the order they were read. */
+  public List<URI> getLoadedConfigFiles() {
+    return List.copyOf(loadedConfigFiles);
+  }
+
   public StringBuilder getConfigOutput() {
     return configOutput;
   }

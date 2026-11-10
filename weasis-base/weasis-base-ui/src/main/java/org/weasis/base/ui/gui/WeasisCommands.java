@@ -37,6 +37,10 @@ import org.weasis.launcher.integrity.Integrity;
 import org.weasis.plugin.manager.LoadedPlugins;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import jakarta.json.JsonReader;
+import java.io.StringReader;
+import org.weasis.core.api.command.CommandContext;
+import org.weasis.core.api.command.CommandPolicy;
 
 /** Command namespace {@code weasis}: information about the application and its main window. */
 @Extension
@@ -143,6 +147,17 @@ public class WeasisCommands implements CommandExtension {
           LoadedPlugins.current().plugins().forEach(p -> list.add(PluginCommands.json(p)));
           json.add("plugins", PluginCommands.policyJson().add("plugins", list)); // NON-NLS
         }
+        CommandPolicy policy = CommandContext.current().policy();
+        org.weasis.core.api.command.JsonWriter out = new org.weasis.core.api.command.JsonWriter();
+        policy.write(out);
+        try (JsonReader reader = Json.createReader(new StringReader(out.toString()))) {
+          json.add("policy", reader.readObject()); // NON-NLS
+        }
+        json.add("policyLocked", policy.locked()); // NON-NLS
+        CommandManager manager = CommandManager.current();
+        if (manager != null) {
+          json.add("policySource", manager.policySource()); // NON-NLS
+        }
         print(json.build().toString());
       } else {
         specs.forEach((k, v) -> print("  " + k + ": " + v));
@@ -158,6 +173,19 @@ public class WeasisCommands implements CommandExtension {
                   + " verified");
           report.failures().forEach(f -> print("    failed: " + f)); // NON-NLS
         }
+        CommandPolicy policy = CommandContext.current().policy();
+        CommandManager manager = CommandManager.current();
+        print(
+            "  policy: remote " // NON-NLS
+                + (policy.remote().enabled() ? String.join(",", policy.remote().namespaces()) : "closed") // NON-NLS
+                + ", network read "
+                + (policy.network().read() ? "allow" : "refuse") // NON-NLS
+                + ", write "
+                + (policy.network().write() ? "allow" : "refuse") // NON-NLS
+                + ", write roots "
+                + policy.files().writeRoots()
+                + (policy.locked() ? " (locked)" : "") // NON-NLS
+                + (manager == null ? "" : ", from " + manager.policySource())); // NON-NLS
         if (plugins) {
           LoadedPlugins manifest = LoadedPlugins.current();
           print(

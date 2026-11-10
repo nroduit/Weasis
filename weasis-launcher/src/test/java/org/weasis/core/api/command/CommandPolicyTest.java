@@ -84,6 +84,43 @@ class CommandPolicyTest {
   }
 
   @Test
+  void theFileNextToTheConfigurationIsReadAndAPropertyWins(@TempDir Path conf) throws Exception {
+    Path base = conf.resolve("base.json");
+    Files.writeString(base, "{}");
+    Files.writeString(
+        conf.resolve(CommandPolicy.FILE_NAME),
+        "{\"remote\": {\"enabled\": true, \"namespaces\": [\"view2d\", \"dicom\"]},"
+            + " \"files\": {\"write\": {\"roots\": [\"${user.home}\", \""
+            + conf.toString().replace("\\", "\\\\")
+            + "\"]}},"
+            + " \"network\": {\"read\": \"allow\", \"readHosts\": [\"pacs.example.org\"]},"
+            + " \"locked\": true}");
+    String key = CommandPolicy.PROPERTY_PREFIX + "network.write";
+    System.setProperty(key, "allow");
+    try {
+      CommandPolicy.Loaded loaded = CommandPolicy.fromConfiguration(List.of(base.toUri()));
+      CommandPolicy policy = loaded.policy();
+      assertAll(
+          () -> assertTrue(loaded.source().endsWith(CommandPolicy.FILE_NAME + " and properties"), loaded.source()),
+          () -> assertEquals(Set.of("view2d", "dicom"), policy.remote().namespaces()),
+          () -> assertTrue(policy.network().read()),
+          () -> assertEquals(Set.of("pacs.example.org"), policy.network().readHosts()),
+          () -> assertTrue(policy.network().write(), "the property opened the writes"),
+          () -> assertTrue(policy.files().writeRoots().contains(conf.toAbsolutePath().normalize())),
+          () ->
+              assertTrue(
+                  policy.files().writeRoots().contains(Path.of(System.getProperty("user.home")).toAbsolutePath().normalize())),
+          () -> assertTrue(policy.locked()));
+      CommandPolicy.Loaded none = CommandPolicy.fromConfiguration(List.of(conf.resolve("other/base.json").toUri()));
+      assertAll(
+          () -> assertEquals("properties", none.source()),
+          () -> assertFalse(none.policy().network().read()));
+    } finally {
+      System.clearProperty(key);
+    }
+  }
+
+  @Test
   void theCheckpointBeforeARemoteBatchIsOnUnlessTheInstanceTurnsItOff() {
     CommandPolicy off =
         CommandPolicy.from(

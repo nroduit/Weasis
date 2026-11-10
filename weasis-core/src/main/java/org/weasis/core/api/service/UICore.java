@@ -60,6 +60,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.net.URLParameters;
+import org.weasis.core.api.setting.CommandPolicyLayers;
 import org.weasis.core.api.setting.CoreSettings;
 import org.weasis.core.api.setting.RemoteSettings;
 import org.weasis.core.api.setting.Scope;
@@ -223,6 +224,7 @@ public final class UICore {
             BundlePreferences::getDefaultPreferences,
             configData.getSystemProps()));
     SettingCatalog.declare(CoreSettings.class);
+    CommandPolicyLayers.install();
 
     this.dicomLaunchers = Launcher.loadLaunchers(Launcher.Type.DICOM);
     this.otherLaunchers = Launcher.loadLaunchers(Launcher.Type.OTHER);

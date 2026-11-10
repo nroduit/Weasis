@@ -72,6 +72,7 @@ import org.semver4j.Semver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.CommandManager;
+import org.weasis.core.api.command.CommandPolicy;
 import org.weasis.core.api.command.CommandOrigin;
 import org.weasis.core.api.event.Event;
 import org.weasis.core.api.event.EventBus;
@@ -388,7 +389,10 @@ Starting PF4J Plugins...
   protected CommandManager commandManager() {
     CommandManager manager = commandManager;
     if (manager == null) {
-      manager = new CommandManager(configData.getPluginManager());
+      manager =
+          new CommandManager(
+              configData.getPluginManager(),
+              CommandPolicy.fromConfiguration(configData.getLoadedConfigFiles()));
       if (frameworkLoaded) {
         commandManager = manager;
       }

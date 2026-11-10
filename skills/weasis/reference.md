@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.32, protocol 2, application development.
+Command API 2.33, protocol 2, application development.
 
 ## color
 
