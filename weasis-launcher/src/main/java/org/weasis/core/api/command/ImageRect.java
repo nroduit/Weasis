@@ -15,6 +15,7 @@ import java.awt.geom.Rectangle2D;
  * A rectangle in image pixels: {@code x,y,width,height}, the last two positive. The values are
  * decimal, as the graphics of a view are.
  */
+@Definition(value = "a rectangle in image pixels: x,y,width,height")
 public record ImageRect(double x, double y, double width, double height) implements SemanticType {
 
   private static final String EXPECTED = "four numbers x,y,width,height with a positive size";

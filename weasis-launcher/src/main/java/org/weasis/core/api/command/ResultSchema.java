@@ -61,7 +61,10 @@ public record ResultSchema(List<EventType.Field> fields) {
       return this;
     }
 
-    /** A key typed by a vocabulary word that is not a class: {@code array}, {@code object}. */
+    /**
+     * A key typed by a vocabulary word that is not a class: {@code array}, {@code object}. A nested
+     * key is written as its path, {@code graphics[].id}: the array holds objects with that key.
+     */
     public Builder field(String name, String typeName, String what) {
       fields.add(new EventType.Field(name, typeName, what));
       return this;

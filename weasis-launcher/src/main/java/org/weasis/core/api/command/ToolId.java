@@ -10,6 +10,7 @@
 package org.weasis.core.api.command;
 
 /** Identifies a tool of the shell: a plain lowercase token such as {@code display}. */
+@Definition(value = "the id of a tool of the shell, from workspace:panel", handle = true)
 public record ToolId(String value) implements SemanticType {
   private static final String EXPECTED = "a tool id from 'workspace:panel'"; // NON-NLS
 

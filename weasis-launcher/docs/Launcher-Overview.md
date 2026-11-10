@@ -441,7 +441,17 @@ integer, so the type validates itself at parse time (a malformed value is a usag
 concept), shows the same label everywhere (`--view <view-id>`) and reaches the descriptor under
 that name; `CommandModel` registers one converter per type it finds in a model, so a plugin adds
 its own types without touching the launcher, and `CommandVocabulary` reports the drifts a
-namespace test then refuses. Work that must run on the event dispatch thread goes through
+namespace test then refuses. The words themselves are data: the **glossary** (`Glossary`, read
+from `command-glossary.txt` in the launcher and from the `Term`s a `CommandExtension` contributes
+through `getTerms()`) gives one term per concept with its definition and the synonyms that must
+not appear in command text, and every semantic type carries a `@Definition`. A verb that hands
+out a handle declares it with `@Produces`, and `Returns` describes its body as fields, nested
+keys written as paths (`graphics[].id`); the `TypeCatalog` built at registration then knows,
+for every type, who produces it and who consumes it. `help glossary [term]` and
+`help types [type]` print them, `help --markdown` ends with both tables, `help --json` carries
+`glossary`, `types` and a `produces` list per verb, and the vocabulary checks of a namespace test
+(`CommandVocabulary.allViolations`) refuse a word that no term defines, a banned synonym in a
+description and a produced type missing from the result. Work that must run on the event dispatch thread goes through
 `GuiExecutor.invokeAndRethrow`, which keeps the `CommandContext` bound; output that may carry
 patient identity goes through `IdentityMask.callForCommand`; a namespace that must never be
 reached from the socket overrides `isRemotable()`. A verb or an option carries `@Since`, is
@@ -511,7 +521,9 @@ paths of `weasis-cli` are documented on the user site.
 
 The `skills/weasis` folder at the repository root is an Agent Skill for terminal agents: a
 `SKILL.md` with the workflows and rules, and `reference.md`, a snapshot of `help --markdown`. It
-is shipped with the application next to `weasis-cli`.
+is shipped with the application next to `weasis-cli`. The smoke suite of the `tests` module
+compares both snapshots and `commands.json` with what a running instance generates, so a stale
+snapshot fails the build until it is regenerated (`skills/weasis/README.md`).
 
 ## Logging
 

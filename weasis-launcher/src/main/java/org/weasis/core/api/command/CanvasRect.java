@@ -12,6 +12,7 @@ package org.weasis.core.api.command;
 import java.awt.Rectangle;
 
 /** A rectangle in the canvas pixels of a pane: {@code x,y,width,height}, the last two positive. */
+@Definition(value = "a rectangle in the canvas pixels of a pane: x,y,width,height")
 public record CanvasRect(int x, int y, int width, int height) implements SemanticType {
 
   private static final String EXPECTED = "four integers x,y,width,height with a positive size";

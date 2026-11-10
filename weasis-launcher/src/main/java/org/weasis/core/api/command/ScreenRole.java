@@ -17,6 +17,7 @@ import java.util.Locale;
  * reading screens, {@code color} and {@code portrait} the screens with that capability. A session
  * or a protocol names roles; the workstation maps them to its monitors.
  */
+@Definition(value = "the role a screen plays in the window model")
 public enum ScreenRole implements SemanticType {
   CONTROL,
   DIAGNOSTIC_1,

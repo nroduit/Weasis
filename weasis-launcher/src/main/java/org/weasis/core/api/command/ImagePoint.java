@@ -12,6 +12,7 @@ package org.weasis.core.api.command;
 import java.awt.geom.Point2D;
 
 /** A point in image pixels, origin at the top-left corner of the image: {@code x,y}. */
+@Definition(value = "a point in image pixels, origin at the top-left corner of the image")
 public record ImagePoint(double x, double y) implements SemanticType {
 
   private static final String EXPECTED = "two numbers x,y in image pixels";

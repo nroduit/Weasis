@@ -28,22 +28,181 @@ import picocli.CommandLine.Model.PositionalParamSpec;
  * out: they are the spellings of an earlier major, kept as they were. A namespace pins the rules in
  * its own test, and a plugin author sees the same report.
  *
- * <p>The checks that need the glossary (every noun a term, no banned synonym, every consumed handle
- * with a producer) and the one that compares the shipped snapshots with a fresh generation wait for
- * those parts of the vocabulary work.
+ * <p>With a {@link Glossary}: every word of an option name and of a result key is a term or an
+ * allowed word ({@link #termViolations}), no description uses a synonym the glossary bans ({@link
+ * #synonymViolations}); and the handle graph: a type a verb produces appears in its result, a handle
+ * some verb consumes has a producer ({@link #producesViolations}). The check that compares the
+ * shipped snapshots with a fresh generation runs in the smoke suite, against a running instance.
  */
 public final class CommandVocabulary {
 
   private static final Pattern LONG_OPTION = Pattern.compile("--[a-z0-9]+(-[a-z0-9]+)*");
-  private static final Pattern RESULT_KEY = Pattern.compile("[a-z][a-zA-Z0-9]*");
-  private static final Pattern RESULT_TYPE = Pattern.compile("[a-z][a-z0-9-]*");
+  /**
+   * A result key, or the path of a nested key: {@code patients[].studies[].studyInstanceUID}; the
+   * {@code []} says the key holds an array of objects, and the path goes on inside one of them.
+   */
+  private static final Pattern RESULT_KEY =
+      Pattern.compile("[a-z][a-zA-Z0-9]*(\\[])?(\\.[a-z][a-zA-Z0-9]*(\\[])?)*");
+  /** A result type: a word of the vocabulary, with {@code []} for an array of that type. */
+  private static final Pattern RESULT_TYPE = Pattern.compile("[a-z][a-z0-9-]*(\\[])?");
 
   /** The option that reads a file, and the option that writes one: one type each. */
   private static final String FILE_OPTION = "--file"; // NON-NLS
 
   private static final String OUT_OPTION = "--out"; // NON-NLS
 
+  private static final Pattern CAMEL_BOUNDARY = Pattern.compile("(?<=[a-z0-9])(?=[A-Z])|\\s+");
+
   private CommandVocabulary() {}
+
+  /**
+   * Every check of a namespace at once, with the glossary it declares on top of the core one: the
+   * labels and types, the words, the synonyms and the handle graph. The result declarations ({@link
+   * #resultViolations}) are a separate assertion, since a namespace adopts them verb by verb.
+   */
+  public static List<String> allViolations(String namespace, CommandExtension extension) {
+    return allViolations(
+        namespace, extension.getCommandModel(), Glossary.core().with(extension));
+  }
+
+  /** The same checks on a bare model, with the glossary given. */
+  public static List<String> allViolations(String namespace, Object model, Glossary glossary) {
+    List<String> violations = new ArrayList<>(violations(namespace, model));
+    violations.addAll(termViolations(namespace, model, glossary));
+    violations.addAll(synonymViolations(namespace, model, glossary));
+    violations.addAll(producesViolations(namespace, model));
+    return violations;
+  }
+
+  /**
+   * Check 2: every word of a visible option name and of a result key is a word of a glossary term
+   * or an allowed word, so a new noun is defined before it is used.
+   */
+  public static List<String> termViolations(String namespace, Object model, Glossary glossary) {
+    List<String> violations = new ArrayList<>();
+    CommandSpec root = CommandModel.newCommandLine(model).getCommandSpec();
+    for (CommandSpec spec : verbs(root)) {
+      String verb = namespace + ":" + spec.name();
+      for (OptionSpec option : spec.options()) {
+        if (option.usageHelp() || option.versionHelp() || option.hidden()) {
+          continue;
+        }
+        String name = option.longestName();
+        if (!name.startsWith("--")) {
+          continue;
+        }
+        for (String word : name.substring(2).split("-")) {
+          if (!word.isEmpty() && !glossary.allows(word)) {
+            violations.add(verb + " " + name + ": '" + word + "' is not a word of the glossary");
+          }
+        }
+      }
+      ResultSchema result = CommandModel.resultOf(spec);
+      if (result != null) {
+        for (var field : result.fields()) {
+          for (String word : CAMEL_BOUNDARY.split(field.name().replace("[]", "").replace('.', ' '))) {
+            if (word.isBlank()) {
+              continue;
+            }
+            if (!glossary.allows(word.toLowerCase(java.util.Locale.ROOT))) {
+              violations.add(
+                  verb + " " + field.name() + ": '" + word + "' is not a word of the glossary");
+            }
+          }
+        }
+      }
+    }
+    return violations;
+  }
+
+  /** Check 3: no description of a verb, an option or a parameter uses a banned synonym. */
+  public static List<String> synonymViolations(String namespace, Object model, Glossary glossary) {
+    List<String> violations = new ArrayList<>();
+    Map<String, String> avoided = glossary.avoided();
+    if (avoided.isEmpty()) {
+      return violations;
+    }
+    Map<String, Pattern> patterns = new HashMap<>();
+    for (String synonym : avoided.keySet()) {
+      patterns.put(
+          synonym,
+          Pattern.compile("(?i)\\b" + Pattern.quote(synonym) + "(s|es)?\\b"));
+    }
+    CommandSpec root = CommandModel.newCommandLine(model).getCommandSpec();
+    for (CommandSpec spec : verbs(root)) {
+      String verb = namespace + ":" + spec.name();
+      checkText(verb, "", String.join(" ", spec.usageMessage().description()), patterns, avoided,
+          violations);
+      for (OptionSpec option : spec.options()) {
+        if (option.usageHelp() || option.versionHelp() || option.hidden()) {
+          continue;
+        }
+        checkText(verb, option.longestName(), String.join(" ", option.description()), patterns,
+            avoided, violations);
+      }
+      for (PositionalParamSpec parameter : spec.positionalParameters()) {
+        if (!parameter.hidden()) {
+          checkText(verb, parameter.paramLabel(), String.join(" ", parameter.description()),
+              patterns, avoided, violations);
+        }
+      }
+    }
+    return violations;
+  }
+
+  private static void checkText(
+      String verb,
+      String where,
+      String text,
+      Map<String, Pattern> patterns,
+      Map<String, String> avoided,
+      List<String> violations) {
+    for (Map.Entry<String, Pattern> e : patterns.entrySet()) {
+      if (e.getValue().matcher(text).find()) {
+        violations.add(
+            verb
+                + (where.isEmpty() ? "" : " " + where)
+                + ": says '"
+                + e.getKey()
+                + "', the term is '"
+                + avoided.get(e.getKey())
+                + "'");
+      }
+    }
+  }
+
+  /**
+   * Check 5, the half a namespace can check alone: a type a verb produces is a handle with a
+   * definition and appears among the fields of its result. The other half, that every consumed
+   * handle has a producer somewhere, is {@link TypeCatalog#handlesWithoutProducer()} over every
+   * namespace.
+   */
+  public static List<String> producesViolations(String namespace, Object model) {
+    List<String> violations = new ArrayList<>();
+    CommandSpec root = CommandModel.newCommandLine(model).getCommandSpec();
+    for (CommandSpec spec : verbs(root)) {
+      String verb = namespace + ":" + spec.name();
+      List<Class<?>> produced = CommandModel.producedTypes(spec);
+      if (produced.isEmpty()) {
+        continue;
+      }
+      ResultSchema result = CommandModel.resultOf(spec);
+      for (Class<?> type : produced) {
+        String name = SemanticType.nameOf(type);
+        Definition definition = type.getAnnotation(Definition.class);
+        if (definition == null || !definition.handle()) {
+          violations.add(verb + ": produces " + name + ", which is not defined as a handle");
+        }
+        if (result == null) {
+          violations.add(verb + ": produces " + name + " but declares no result (Returns)");
+        } else if (result.fields().stream()
+            .noneMatch(f -> name.equals(f.type()) || (name + "[]").equals(f.type()))) {
+          violations.add(verb + ": produces " + name + " but no result field has that type");
+        }
+      }
+    }
+    return violations;
+  }
 
   /** The violations of {@code model}, each naming the verb and the value it comes from. */
   public static List<String> violations(String namespace, Object model) {
@@ -86,7 +245,8 @@ public final class CommandVocabulary {
       }
       for (var field : result.fields()) {
         if (!RESULT_KEY.matcher(field.name()).matches()) {
-          violations.add(verb + " " + field.name() + ": a result key is camelCase");
+          violations.add(
+              verb + " " + field.name() + ": a result key is camelCase, nested as a.b[].c");
         }
         if (field.type() == null || !RESULT_TYPE.matcher(field.type()).matches()) {
           violations.add(verb + " " + field.name() + ": type " + field.type() + " is not a word");

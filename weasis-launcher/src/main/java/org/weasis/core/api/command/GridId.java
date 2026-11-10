@@ -10,6 +10,7 @@
 package org.weasis.core.api.command;
 
 /** Identifies one grid of panes a view can take. */
+@Definition(value = "the id of one grid of panes a view can take, from the state the view2d verbs return", handle = true)
 public record GridId(String value) implements SemanticType {
 
   private static final String EXPECTED = "a grid id offered by the viewer";

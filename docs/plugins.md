@@ -76,8 +76,8 @@ public class SampleCommands implements CommandExtension {
 
 What the platform checks, and what the namespace test of the plugin pins:
 
-- `CommandVocabulary.violations(namespace, model)` is empty: every value is labelled (`paramLabel`), long option names are kebab-case, a value that names a concept is a `SemanticType`, a file read is an `InputPath` and a file written an `OutputPath`, no short option.
-- `CommandVocabulary.resultViolations(namespace, model)` is empty: every verb implements `Returns` and declares the keys of its answer.
+- `CommandVocabulary.allViolations(namespace, extension)` is empty: every value is labelled (`paramLabel`), long option names are kebab-case, a value that names a concept is a `SemanticType` with a `@Definition`, a file read is an `InputPath` and a file written an `OutputPath`, no short option; every word of an option name or of a result key is a term of the glossary (`help glossary`) or a word the platform allows, and a term the plugin introduces is declared in `getTerms()`; no description uses a synonym the glossary bans; a verb that hands out a handle says so with `@Produces` and its result has a field of that type.
+- `CommandVocabulary.resultViolations(namespace, model)` is empty: every verb implements `Returns` and declares the keys of its answer, nested keys as paths (`graphics[].id`).
 - A verb that needs the machine declares it with `@Needs(Capability.X)` (`FILE_READ`, `FILE_WRITE`, `NETWORK_READ`, `NETWORK_WRITE`, `SEND_DICOM`, ...); the remote policy of the instance decides which capabilities a remote caller gets.
 - The namespace and the capabilities are declared in the manifest (`Weasis-Namespaces`, `Weasis-Capabilities`): a plugin that is not part of the package may register verbs only in the namespaces it declares, never in a namespace of the package, and its verbs may need no capability it does not declare.
   `Weasis-Command-API` names the command API the plugin was built against; the plugin manager refuses another major.

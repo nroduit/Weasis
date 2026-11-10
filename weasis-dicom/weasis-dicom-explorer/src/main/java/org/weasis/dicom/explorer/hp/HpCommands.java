@@ -43,6 +43,7 @@ import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.ResultSchema;
 import org.weasis.core.api.command.Returns;
+import org.weasis.core.api.command.Term;
 import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.command.ViewId;
@@ -124,6 +125,12 @@ public class HpCommands implements CommandExtension {
   private Supplier<List<Candidate>> candidateSupplier = HangingEngine::candidates;
   private Supplier<List<DicomSeries>> selectionSupplier = HpCommands::explorerSelection;
   private Supplier<HangingPlanApplier> applier = HangingPlanApplier::new;
+
+  @Override
+  public List<Term> getTerms() {
+    return List.of(
+        Term.of("current", "the study being read, as opposed to a prior")); // NON-NLS
+  }
 
   @Override
   public String getNamespace() {
@@ -778,7 +785,7 @@ public class HpCommands implements CommandExtension {
     @Option(
         names = "--view",
         paramLabel = "<view-id>",
-        description = "Viewer id from 'workspace:list' (default: the selected viewer).")
+        description = "View id from 'workspace:list' (default: the selected view).")
     ViewId viewId;
   }
 

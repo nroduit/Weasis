@@ -12,6 +12,7 @@ package org.weasis.core.api.command;
 import java.nio.file.Path;
 
 /** A local file a verb writes. The restriction policies decide where a remote caller may write. */
+@Definition(value = "a local file the verb writes; the policy decides where a remote caller may write")
 public record OutputPath(Path value) implements SemanticType {
 
   private static final String EXPECTED = "a local file path to write";

@@ -42,6 +42,11 @@ public final class AgentSkill {
 
   /** The instructions for a profile that loaded {@code namespaces}. */
   public static String render(Collection<String> namespaces) {
+    return render(namespaces, Glossary.core());
+  }
+
+  /** The instructions with the glossary of the instance rendered into them. */
+  public static String render(Collection<String> namespaces, Glossary glossary) {
     String text = template();
     text = blocks(text, new TreeSet<>(namespaces));
     text =
@@ -51,8 +56,22 @@ public final class AgentSkill {
                 String.valueOf(org.weasis.launcher.CommandProtocol.VERSION)) // NON-NLS
             .replace("@{applicationVersion}", CommandManager.applicationVersion()) // NON-NLS
             .replace("@{namespaces}", String.join(", ", new TreeSet<>(namespaces))) // NON-NLS
-            .replace("@{platform}", platform()); // NON-NLS
+            .replace("@{platform}", platform()) // NON-NLS
+            .replace("@{glossary}", glossaryLines(glossary)); // NON-NLS
     return text;
+  }
+
+  /** The terms an agent must use, one line each, without the long definitions of the help. */
+  private static String glossaryLines(Glossary glossary) {
+    StringBuilder sb = new StringBuilder();
+    for (Term term : glossary.terms()) {
+      sb.append("- **").append(term.term()).append("**: ").append(term.definition());
+      if (!term.avoid().isEmpty()) {
+        sb.append(" (not ").append(String.join(", ", term.avoid())).append(')');
+      }
+      sb.append('\n');
+    }
+    return sb.toString().stripTrailing();
   }
 
   /** Keeps a block when its namespace is there, drops it with its content otherwise. */

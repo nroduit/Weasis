@@ -43,6 +43,9 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.TagUtils;
 import org.weasis.core.api.command.AbstractVerb;
+import org.weasis.core.api.command.Returns;
+import org.weasis.core.api.command.ResultSchema;
+import org.weasis.core.api.command.Produces;
 import org.weasis.core.api.command.Capability;
 import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandError;
@@ -861,7 +864,7 @@ final class DicomModelCommands {
     @Option(
         names = "--view",
         paramLabel = "<view-id>",
-        description = "Viewer id from 'workspace:list'; its selected pane gives the series.")
+        description = "View id from 'workspace:list'; its selected pane gives the series.")
     ViewId viewId;
 
     MediaSeries<? extends MediaElement> resolve(DicomModel model) {
@@ -886,7 +889,38 @@ final class DicomModelCommands {
           "Patients, studies and series loaded in the explorer, as JSON. Identifiers follow the "
               + "identity policy; UIDs are the handles for the other verbs.")
   @Since("5.0")
-  static class ListStudies extends Verb {
+  @Produces({PatientHandle.class, StudyUid.class, SeriesUid.class})
+  static class ListStudies extends Verb implements Returns {
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("patients", "array", "the loaded patients") // NON-NLS
+          .field("patients[].patientID", PatientHandle.class, "the patient handle, masked for a remote caller") // NON-NLS
+          .field("patients[].patientName", String.class, "Patient's Name, masked") // NON-NLS
+          .field("patients[].patientBirthDate", String.class, "Patient's Birth Date, ISO 8601, masked") // NON-NLS
+          .field("patients[].patientSex", String.class, "Patient's Sex") // NON-NLS
+          .field("patients[].studies", "array", "the studies of the patient") // NON-NLS
+          .field("patients[].studies[].studyInstanceUID", StudyUid.class, "the study handle") // NON-NLS
+          .field("patients[].studies[].studyDate", String.class, "Study Date, ISO 8601") // NON-NLS
+          .field("patients[].studies[].studyTime", String.class, "Study Time, ISO 8601") // NON-NLS
+          .field("patients[].studies[].studyDescription", String.class, "Study Description") // NON-NLS
+          .field("patients[].studies[].accessionNumber", String.class, "Accession Number, masked") // NON-NLS
+          .field("patients[].studies[].studyID", String.class, "Study ID, masked") // NON-NLS
+          .field("patients[].studies[].series", "array", "the series of the study") // NON-NLS
+          .field("patients[].studies[].series[].id", SeriesUid.class, "the series handle; the UID, or the UID with a suffix for a split series") // NON-NLS
+          .field("patients[].studies[].series[].seriesInstanceUID", SeriesUid.class, "Series Instance UID") // NON-NLS
+          .field("patients[].studies[].series[].seriesNumber", int.class, "Series Number") // NON-NLS
+          .field("patients[].studies[].series[].modality", String.class, "Modality") // NON-NLS
+          .field("patients[].studies[].series[].seriesDescription", String.class, "Series Description") // NON-NLS
+          .field("patients[].studies[].series[].imageCount", int.class, "images loaded") // NON-NLS
+          .field("patients[].studies[].series[].downloadState", String.class, "complete, partial or none, under a selective download") // NON-NLS
+          .field("patients[].studies[].series[].provenance", "object", "where the series comes from, when it was derived") // NON-NLS
+          .field("total", int.class, "patients before the window") // NON-NLS
+          .field("truncated", boolean.class, "true when the window cut the list") // NON-NLS
+          .field("next", int.class, "offset of the next window, when truncated") // NON-NLS
+          .build();
+    }
+
     @Mixin ListOptions bounds;
 
     @Override
@@ -955,7 +989,7 @@ final class DicomModelCommands {
     @Option(
         names = "--view",
         paramLabel = "<view-id>",
-        description = "Viewer id from 'workspace:list' that receives the series.")
+        description = "View id from 'workspace:list' that receives the series.")
     ViewId viewId;
 
     @Option(
@@ -977,7 +1011,23 @@ final class DicomModelCommands {
               + "the viewer decided while opening (e.g. 'rectified', 'warnings'); the client "
               + "option -y answers its questions instead of showing them.")
   @Since("5.0")
-  static class Open extends Verb {
+  @Produces({ViewId.class})
+  static class Open extends Verb implements Returns {
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("target", "object", "the view and pane the command resolved") // NON-NLS
+          .field("target.view", ViewId.class, "the view") // NON-NLS
+          .field("target.pane", PaneIndex.class, "the pane in its grid") // NON-NLS
+          .field("target.viewerType", String.class, "the viewer type id") // NON-NLS
+          .field("target.series", SeriesUid.class, "the series the pane shows") // NON-NLS
+          .field("target.image", ImageIndex.class, "the image shown, from 1") // NON-NLS
+          .field("target.imageCount", int.class, "images of the series") // NON-NLS
+          .field("ready", boolean.class, "true once the view finished building its content, with --wait") // NON-NLS
+          .field("warnings", "array", "what the view decided while opening, with -y") // NON-NLS
+          .build();
+    }
+
     private static final Duration READY_TIMEOUT = Duration.ofMinutes(10);
 
     @Option(

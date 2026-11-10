@@ -9,9 +9,11 @@
  */
 package org.weasis.dicom.explorer;
 
+import org.weasis.core.api.command.Definition;
 import org.weasis.core.api.command.SemanticType;
 
 /** Identifies one study by its Study Instance UID. */
+@Definition(value = "the Study Instance UID of a loaded study, from dicom:list", handle = true)
 public record StudyUid(String value) implements SemanticType {
 
   private static final String EXPECTED = "a study UID from 'dicom:list'"; // NON-NLS

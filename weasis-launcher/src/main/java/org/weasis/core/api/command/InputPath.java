@@ -13,6 +13,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
 /** A local file a verb reads. The restriction policies decide what a remote caller may read. */
+@Definition(value = "a local file the verb reads; the policy decides what a remote caller may read")
 public record InputPath(Path value) implements SemanticType {
 
   private static final String EXPECTED = "a local file path to read";

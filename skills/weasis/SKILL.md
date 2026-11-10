@@ -24,8 +24,8 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.30 and protocol
-2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, mpr, print, redact, script, state, subtraction, ui, view2d, view3d, weasis, workspace, wsi.
+This instance runs Weasis development with command API 2.31 and protocol
+2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, mpr, plugins, print, redact, script, state, subtraction, ui, view2d, view3d, weasis, workspace, wsi.
 
 Check the connection first:
 
@@ -50,16 +50,6 @@ weasis-cli help view2d                       # the verbs of one namespace, one l
 weasis-cli help view2d:capture               # one verb: synopsis, parameters and options
 weasis-cli help --markdown                   # the full reference, always current
 weasis-cli help --json                       # the same as a JSON descriptor (commands.json)
-                                             # each verb carries `result`: the keys of its answer
-weasis-cli weasis:info --json                # version, paths, API; `preview: true` with `prerelease`
-                                             # (beta.1, SNAPSHOT) on a build that is not for clinical use
-weasis-cli weasis:info --integrity           # the integrity of the plugin set: level (signed, digest,
-                                             # none), signing key, entries verified, failures
-weasis-cli plugins:list --json               # the loaded-plugins manifest: policy, lock, fingerprint,
-                                             # every plugin with source, trust tier, state and reason;
-                                             # plugins:add --file <jar> / remove / enable / disable <id>
-                                             # change the user's plugins for the next start, within
-                                             # the site policy (core-only refuses them)
 weasis-cli --version                         # client version, command API and protocol versions
 ```
 
@@ -68,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.25 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.31 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -105,20 +95,11 @@ line naming the current spelling. Use the current one everywhere.
 
 1. **Discover** what is open: `weasis-cli workspace:list` (viewers) and `weasis-cli dicom:list`
    (patients, studies, series with UIDs and image counts).
-   `explorer:state` says what the explorer panel itself shows (selected patient, filter, which
-   series are visible, selected or not downloaded, the objects of each study);
-   `explorer:facets` lists the values the filter can take with their counts (modalities, objects,
-   images of interest, download states); `explorer:filter --modality CT --objects seg` narrows it, `explorer:select --series <uid>`
-   selects as a click would, `explorer:reveal --series <uid>` scrolls to it and selects it (`visible: false` when the filter hides it), and `explorer:mode list` switches to the compact list (`auto` lets the explorer choose from the
-   content and the panel width; the state says `modeSource`).
 2. **Open** a series when needed: `weasis-cli dicom:open --series <uid>` returns the view id, and
    `--view <id> --pane <n>` puts it in a chosen pane of a view you already have.
    `dicom:info` lists the `viewerTypes` able to display the series; `weasis-cli -y dicom:open
    --series <uid> --viewer-type mpr --wait` opens it in a new view of that type (`2d`, `mpr`,
    `3d`, …) and returns once the volume is built, so you can capture right away.
-   `dicom:echo --node <id|description|aet>` checks that a configured archive answers (one
-   C-ECHO with the TLS of its node; a failure names an untrusted or expired certificate, a
-   protocol mismatch or a closed port) before a query or a retrieve is attempted.
    `dicom:load --path <path>` loads files from disk and says what it queued; add
    `--wait first-series` to answer once one series is ready, or `--wait all` for everything.
 3. **Look**: `weasis-cli view2d:capture --out /tmp/weasis/view.png`, then read the PNG. The result
@@ -128,10 +109,7 @@ line naming the current spelling. Use the current one everywhere.
    --level 40` (or `--window-by` / `--level-by` in slider steps), `view2d:preset` (lists the
    presets with their ids) then `--preset <id>`,
    `view2d:zoom --set 2` or `--fit best-fit`, `view2d:rotate --degrees 90`, `view2d:flip on`,
-   `view2d:sort --key slice-position --inverse true` (head to feet whatever the acquisition
-   direction; keys instance, slice-position, slice-location, content-time, acquisition-time,
-   b-value), `view2d:fusion --series <series-uid> [--color-map <id>] [--opacity 0.5]` to blend
-   a PET or SPECT series over the pane (`--off` removes it), `view2d:grid --panes 2`. Each of them returns the new state, so a capture is only needed to
+   `view2d:grid --panes 2`. Each of them returns the new state, so a capture is only needed to
    *see* the image, not to check what you changed.
 5. **Measure** with the viewer, not with your eyes:
    - `view2d:measure --type line --points x1,y1,x2,y2` draws and returns the length;
@@ -141,57 +119,16 @@ line naming the current spelling. Use the current one everywhere.
      `statistics` (`stats.min`, `stats.max`, `stats.mean`, `stats.median`, `stats.stdev`, …) in the
      unit of the image values (`[hnsf'U]` for CT) and the `geometry` of the region.
    - `view2d:graphics` lists every graphic with its measurements, including the user's own.
-   - `view2d:undo` and `view2d:redo` step through the changes of the drawings of a pane (an
-     entry per burst of changes, by the mouse or by a command, fifty kept per view); closing a
-     view or changing its series clears the history.
    - `view2d:annotate --at x,y --text "..."` points at a place with an arrow, and
      `view2d:annotate --label-at x,y --text "..."` writes a caption with nothing else drawn;
      `view2d:clear-ai` removes everything you drew.
 6. **Read metadata**: `dicom:info --series <uid>` (modality, geometry, spacing, counts) and
    `dicom:tag --series <uid> --tag SliceLocation` (any standard attribute, by keyword or
-   `(gggg,eeee)`; `--image <n>` selects the image, counting from 1). `dicom:objects --study <uid>`
-   lists the non-image objects of a study (key object selections, presentation states,
-   segmentations, RT objects) with their kind, label, creator and the series they reference;
-   `--series <uid>` keeps the objects that reference one series, `--type seg` one kind.
-   `dicom:interest --study <uid> --images` lists the images of interest (referenced by a KO, an
-   annotated PR or a SEG, or drawn on) with their sources; `explorer:filter --interest any` keeps
-   only the series that have some; `dicom:open --series <uid> --interest` opens a series on those
-   images alone.
+   `(gggg,eeee)`; `--image <n>` selects the image, counting from 1).
 7. **Arrange** for comparison: `workspace:split --view <a> --anchor <b> --side right`,
    `workspace:stack`, `workspace:maximize`, `workspace:save --out layout.json` and
-   `workspace:load --file layout.json` (a closed viewer is created again with its series, grid
-   and display when the series are still loaded; MPR and 3D viewers come back with their volume,
-   crosshair, preset and camera). `workspace:list` shows, for each view, its grid, its
-   synchronization and what every pane holds. To hang several series at once,
-   `view2d:hang --grid 2x2 --cell 1=<uid> --cell 2=<uid> --sync stack` fills the cells of one
-   viewer in a single call (`--tiled 1=2x2` tiles a cell, `--file` replays a saved layout,
-   no argument returns the current one); `view2d:viewport --tiled 2x2` shows successive images
-   of one series on tiles, `--stack` goes back to one image. The tool panels around the
-   workspace are slots: `workspace:panel` shows which tool fills each slot (explorer and tools
-   sides, top and bottom), `--side tools --slot bottom --tool measure` opens a tool there
-   (`--side explorer --slot bottom --tool import` or `export` opens the DICOM import or export
-   under the explorer: there is no import or export dialog; `--tool <id> --as-view` shows a tool
-   as a tab of the workspace, where it has the whole width, and `--tool <id> --slot <slot>`
-   brings it back; such a view is listed by `workspace:list` with `tool`). `workspace:context`
-   says what is displayed and why (the viewer type, the selected series, the hanging protocol
-   and step, the modality and anatomy of the series): read it to know which tools and verbs
-   apply before acting. `--tool <id> --hide` / `--show` with `--side` hides or shows a tool for
-   good (the setting `weasis.tool.<id>.visible`, readable with `config:setting`),
-   `--collapse` / `--expand` hide or show a side; `workspace:save` keeps the shell too.
-   Windows: `workspace:detach --view <id> --screen diagnostic-1` floats a view in a viewer
-   window filling the screen of that role (`workspace:screens` lists the roles control,
-   diagnostic-1, diagnostic-2, color, portrait with the monitor each resolves to; `--bounds`
-   gives pixels instead; `--id <screen> --role <role>` gives a monitor a role for good, `--auto`
-   takes it back). The toolbar row follows the active window, a new viewer opens in the
-   window of the selected view, and `workspace:list` names that view under `selected`;
-   `hp:apply --screen control` hangs a reading step in a viewer window on that screen. A
-   saved layout remembers each window's screen role and state: `workspace:load` puts a window
-   back on the monitor of its role, and folds into the main window one whose monitor is
-   missing (listed under `folded`). `workspace:fullscreen [--view <id>]` puts a window on the
-   whole monitor without decorations (`--off` ends it; kept by `workspace:save`), and
-   `--canvas` shows the selected pane alone on the monitor, as F11 does, hiding the menu, the
-   toolbar and the side panels until `--canvas --off`. `workspace:move --view <id> --screen
-   <role>` moves the window of a view (the main window too) to the screen of that role.
+   `workspace:load --file layout.json`. `workspace:list` shows, for each view, its grid, its
+   synchronization and what every pane holds.
 8. **Print** a layout, a pane or a series: `print:page` (the selected viewer, or `--view <id>`,
    `--pane 2` for one pane; `--series --grid 4x3 --step 2 --frames 1-40` for the frames of the
    pane's series, a page per grid; `--to <destination>`, `--paper A4 --orientation landscape
@@ -202,94 +139,7 @@ line naming the current spelling. Use the current one everywhere.
    `print:destinations` lists the system printers, the DICOM printers and the PDF file;
    `print:send --job <h> --to <destination>` prints (`--to file:pdf --out /tmp/weasis/pages.pdf`
    writes a PDF), when the policy of the instance allows sending.
-9. **Hanging protocols** (engine and built-in library, no UI yet): a study loaded by any verb
-   opens already hung by its best protocol (setting `weasis.hp.open`, `PROTOCOL` by default,
-   `FIRST_SERIES` for the old behavior). `hp:list` shows the protocols of every layer, the
-   built-in ones cover CT, MR, radiography, mammography, ultrasound, angiography, PET and a
-   last-resort one cell per series;
-   `hp:match [--study <uid>]` returns the protocols that apply to a loaded study, best first,
-   and the plan of the best one: per reading step the layout to hang and, per cell, the series
-   chosen, how it matched (exact, preferred, fallback, shared, empty), the reasons and the
-   alternatives; `--protocol <id>` plans another one, `--protocols <file>` tries a draft file.
-   `hp:open [--study <uid>] [--protocol <id>] [--prior <uid>]...` is the reading workflow in one
-   call (match on the study with its loaded priors, hang the first step) and `hp:compare
-   --current <uid> --prior <uid>... [--protocol <id>]` hangs a study against the priors you name;
-   `hp:apply [--study <uid>] [--protocol <id>] [--step <n>] [--new-tab]` hangs one reading step
-   of that plan: the 2D cells in one viewer (re-hung when a viewer of the patient is open) and
-   each MPR or 3D cell in its own, and returns the cells with the view ids they went to, so the
-   `view2d:` verbs can address them; empty cells are listed under `unmatched`.
-   `hp:sets [--view <id>]` is the active hanging of a viewer (protocol, step of how many, cells
-   with view ids, candidates of the study); `hp:group --next | --previous | --index <n> |
-   --protocol <id>` shows another reading step or hangs another candidate on the same viewer,
-   what the protocol bar of the viewer does; `hp:explain [--cell <n>]` gives the rules (each with its `evidence`: the feature tested, the value
-   and its provenance, a `header`, a `table` or a `heuristic`), score and
-   alternatives behind each cell; `hp:show --id <protocol-id>` prints a protocol as JSON and
-   `hp:validate --file <file>` checks a protocol file for rule errors before trying it.
-   `hp:save --name <text> [--dry-run]` is *Save as protocol*: it derives a user protocol from
-   the display of the selected 2D viewer (per cell the smallest rule that singles its series
-   out among the study, plus preset, inversion, sort, tiling and synchronization), reports the
-   rules and which loaded studies it applies to, and stores it in the user layer unless
-   `--dry-run`; `hp:delete --id <protocol-id>` removes a user protocol.
-   `hp:export --id <protocol-id> --out <file> [--dicom] [--plain]` writes a protocol of any
-   layer as its JSON entry or as a DICOM Hanging Protocol Storage object (the Weasis extensions
-   travel in a private block unless `--plain`), and `hp:import --file <file> [--id <id>]` reads
-   either form into the user layer, returning the ids, names and levels stored and the warnings
-   (an object without the private block keeps its DICOM selectors alone).
-   Each hung cell shows an indicator of how its series matched (exact, preferred, fallback,
-   shared, nothing matched, corrected) and the *Why* tool of the bottom slot (`workspace:panel
-   --side tools --slot bottom --tool hp-why`) lists the rules and the alternatives of the
-   selected cell. `hp:correct --cell <n> --series <uid> [--apply]` puts another series of the
-   study in a cell, records the correction with the rule that would have chosen it, and
-   `--apply` writes that rule into a user protocol; `hp:corrections` lists the log.
-   A protocol or a reading step names a UI profile (the tool of each shell slot, the toolbars
-   and their order, the context-menu entries, the mouse bindings, the measurement profile):
-   hanging lays it over the workspace, selecting a viewer without a protocol puts the user's
-   own settings back. `ui:profiles` lists the profiles of every layer and the one in force,
-   `ui:profile --id <ui-profile-id>` shows one, `--apply` lays it over the selected viewer,
-   `--clear` releases it, `--delete` removes a user entry; `workspace:context` reports the
-   profile asked for under `ui.profile`. What the view's context or the profile hides stays
-   reachable: the state these verbs return lists it under `hidden.toolbars` / `hidden.tools`,
-   and `ui:reveal --toolbar <id>` or `--tool <id>` shows it again for the selected view only.
-   `ui:context` is the one call that tells you where you are: the facts of the selected view,
-   the profile in force, the shell and toolbar row, what is hidden, and the actions the view
-   shows (menu entries, toolbar buttons, tool panels) with their ids; `ui:actions [--filter
-   <text>] [--relevant]` lists the whole catalog and `ui:action --id <action-id>` runs one as a
-   click would. `help --context` lists only the namespaces that serve the selected viewer type
-   (`view3d` for a 3D view, `view2d` and `redact` otherwise), a smaller surface to pick from.
-10. **Reading states**: `state:keep [--label <text>] [--pin]` keeps the whole display as a
-   session of the user (windows, viewers, every pane's series and presentation, the shell, the
-   protocol and step that hung it) and returns its id; `state:list` lists the sessions, most
-   recently used first; `state:restore --session <id> | --study <uid>` restores one exactly
-   when its studies are loaded (a study not loaded is reported: load it first); `state:delete
-   --session <id>` removes one. Sessions hold study and series identifiers, never credentials,
-   and are purged by the retention settings `weasis.hp.sessions.max` and
-   `weasis.hp.sessions.max.days`; `weasis.hp.keepOnClose` keeps the display as a session when
-   Weasis closes and `weasis.hp.restore` (auto, offer, never) says what happens when a study
-   with a kept session is opened again (`config:setting weasis.hp.restore` reads it). `state:export --session <id> | --study <uid> --out <dir>
-   [--dicom]` writes a session to a directory, as its JSON or, with `--dicom`, as a Basic
-   Structured Display object with one Grayscale Softcopy Presentation State per pane (window,
-   rotation, flip, inversion, magnification, graphics) for a PACS or another viewer; the studies
-   must be loaded and what the object cannot carry comes back under `warnings`.
-   **Checkpoints and rollback**: `state:checkpoint [--label <text>]` keeps the display in memory
-   (layout, views and their presentation, the graphics of the shown images, the loaded studies,
-   the selection, the hanging) and returns its id; `state:checkpoints` lists them, newest first,
-   with what changed since the latest; `state:rollback [--to <id>] [--close-new] [--dry-run]`
-   puts the display back (a study closed since is reported, not reloaded; studies loaded since
-   stay open unless `--close-new`; `--dry-run` only prints the diff); `state:diff --from <id>
-   [--to <id>]` says what changed. Weasis takes checkpoints by itself before a script, before a
-   batch of remote calls (a new batch after 30 s of silence), before `hp:apply`, `state:restore`
-   and `workspace:load`, so an agent can always undo its last batch with one `state:rollback`;
-   `state:keep --from-checkpoint <id>` promotes a checkpoint to a session. Nothing that left the
-   application (sends, exports, prints, files written) is undone; the answer lists it under
-   `notCaptured`. The events `state:checkpoint.taken` and `state:rollback.done` bracket a
-   transaction.
-   `hp:validate --corpus <dir> [--protocols <file>] [--expected <file>]` runs the matching over
-   a folder of studies without any viewer and reports the counts per protocol, the protocol and
-   first-step cells of each study and, with an expectations file, which studies hang as expected.
-   `hp:features [--study <uid> | --corpus <dir>]` lists the series features the selectors test
-   (role, orientation, anatomy, view, laterality, MR weighting, CT kernel family, thickness,
-   temporal...), the way to see why a series matched or not.
-11. **Subtract** a pre-contrast series from its post-contrast acquisition. `subtraction:preview`
+9. **Subtract** a pre-contrast series from its post-contrast acquisition. `subtraction:preview`
    on the pane of the post-contrast series shows the difference live, slice by slice, without
    building anything (`--mask <uid>` chooses the mask, else the series without contrast agent is
    proposed; `--factor 0.8` keeps part of the anatomy; `--off` puts the plain series back).
@@ -301,32 +151,11 @@ line naming the current spelling. Use the current one everywhere.
    another, `--all-phases` builds every phase minus the mask phase, and `--mip` opens the result
    as a maximum intensity projection, the breast overview. `subtraction:list` and
    `subtraction:info --series <uid>` describe what was built, `subtraction:delete` removes it.
-   An X-ray run (XA, RF) is its own mask, the digital subtraction angiography: `subtraction:preview`
-   on the pane of the run subtracts the frames its DICOM names, else frame 1;
-   `subtraction:mask --frames 2-4` averages other frames into the mask (`--tid-offset 2` for a
-   moving mask), `subtraction:shift --rows 0.5 --columns -0.25` moves the mask by sub-pixel steps
-   against patient motion, and `subtraction:create` builds the subtracted run (`--mask-frames`,
-   `--tid-offset`, `--shift rows,columns` without a preview). The run opens on the signed window:
-   iodine dark on a mid-gray background, as the console shows it.
-   A mask on another grid of the same frame of reference is resliced onto the series
-   (`path: resampled` in the result); `--motion-correction` moves the mask of every slice onto
-   it by phase correlation, for a patient who moved between the acquisitions (the result says how
-   many slices moved and by how much). A dual-tracer pair of nuclear medicine (sestamibi minus
-   pertechnetate, possibly two studies of the patient) takes `--normalize` or
-   `--normalize=x,y,width,height`: the mask is weighted so that its mean equals the one of the
-   series over the slices or over that rectangle, and the result reports the weight and the means.
    The result is a series: scroll, window, measure and capture it like any other.
-   Likewise `mpr:reformat --plane CORONAL` (or SAGITTAL, AXIAL) builds the reformat of the
-   selected pane's series (or `--series <uid>`) as a new series of the study on an isotropic grid
-   and opens it; `mpr:list` and `mpr:delete --series <uid>` manage them. The volume of a series is
-   built once for the MPR, the volume rendering and the reformats: `mpr:volumes` says which are
-   ready, `mpr:prefetch --series <uid>` builds one ahead of time. The built-in CT protocol
-   fills an empty coronal or sagittal cell with such a reformat of the axial series (cell indicator
-   *fallback*).
-12. **Read a whole slide** (modality SM) in its own viewer: `dicom:open --series <uid>` opens it
+9. **Read a whole slide** (modality SM) in its own viewer: `dicom:open --series <uid>` opens it
    there. `wsi:info` describes the slide (size in base pixels, pixel spacing, objective
-   magnification, pyramid levels) and what the pane shows (zoom, centre, level, tiles loaded).
-   `wsi:goto --at x,y` centres the view on a base pixel, `--objective 20` shows it at 20× and
+   magnification, pyramid levels) and what the pane shows (zoom, center, level, tiles loaded).
+   `wsi:goto --at x,y` centers the view on a base pixel, `--objective 20` shows it at 20× and
    `--zoom 0.5` at a scale, `--focal-plane 2` and `--optical-path DAPI` pick the plane of a
    Z-stack and the channel of a multi-path slide (`wsi:info` lists them), `--complete` answers
    once every tile of the view is loaded, so the next `view2d:capture` is sharp. Measurements on
@@ -337,23 +166,9 @@ line naming the current spelling. Use the current one everywhere.
    `wsi:export --out <file>` writes the measurements and drawings of the pane as a DICOM
    Structured Report (TID 1500, regions on the base level in µm); a report of a slide loaded with
    the study, by `dicom:load`, is drawn over the slide.
-13. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
+10. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
-   and still have no usable 3D. A document of the user written after a checkpoint (a session kept, a protocol or a preset
-   saved, a settings package imported) goes back to its version on rollback: `state:diff` lists it
-   under `documentsChanged`, the rollback under `documents`; site documents are never rolled back.
-   The user has the same under *Window → Restore previous display* (named after what the newest
-   checkpoint precedes) and, after a batch of remote calls changed the display, a notice at the
-   bottom of the explorer with a *Restore* button (setting `weasis.state.notice.remote`). `hp:features` adds the `provenance` of every derived feature (kind header, table, heuristic,
-   classifier, computed, user; source, detail, confidence, version) and the `contests` a feature
-   provider plugin lost; `hp:feature --series <uid> --set orientation=CORONAL [--by agent]` sets a
-   derived feature by hand as a USER value that outranks everything (`agent:<origin>` when `--by
-   agent`), in memory for the series. `dicom:objects` and `dicom:interest` carry the `provenance` of
-   a SEG (algorithm), an SR (algorithm identification) or a KO / PR (equipment or author);
-   `dicom:list` carries it on a series Weasis computed (MPR, MIP, subtraction, curved reformat);
-   every spatial measurement of `view2d:measure`, `view2d:graphics` and `view2d:stats` names the
-   calibration it rests on (`provenance`: the Pixel Spacing or Imager Pixel Spacing header, a
-   magnification, or the user's calibration).
+   and still have no usable 3D.
 
 ## Several commands in one call
 
@@ -371,14 +186,8 @@ reads inside it (`[2]` indexes an array, `[key=length]` picks the entry whose `k
 `--set name=value` passes a parameter, and `@expect <value> <op> <value>` checks a value
 (`==`, `!=`, `<`, `<=`, `>`, `>=`, `~ <n> +-<tolerance>`, `matches <regex>`). The answer is one
 JSON object per step, then a summary; a failing step stops the run unless `--keep-going`.
-A run is a transaction: a checkpoint of the display is taken before the first step and, when a
-step fails, the display is put back to it for a remote caller (`--keep` leaves it as the failing
-step left it; `--rollback` forces the return for a launch script); the summary names the
-`checkpoint`, whether it `rolledBack`, and what stayed under `notRestored`.
 `script:check --file <file>` parses a plan without running it, which is the cheapest way to
-validate one before proposing it. `examples/transaction-check.weasis` is the pattern of a batch that proves it left no trace:
-a checkpoint first, the work, a rollback, then `@expect ${after.diff.empty} == true` on a
-`state:diff --from` the checkpoint.
+validate one before proposing it.
 
 ## Watching for changes
 
@@ -441,8 +250,88 @@ payload in the next steps. Patient fields in the events are masked exactly as in
 - Loading and unloading studies (`dicom:load`, `dicom:unload`, `image:load`) changes what the user
   sees: do it only when asked.
 
+## Vocabulary
+
+One word per concept, in option names, JSON keys and what you say to the user. `help glossary`
+prints the definitions, `help types` the value types with the verbs that hand them out, and
+`help types view-id` one of them.
+
+- **anatomic region**: the coded region of the anatomy a series shows, with Body Part Examined as alias
+- **anchor**: the view a new split or stack is placed against
+- **annotation**: a text graphic
+- **candidate**: a protocol that matches a study, with its match quality
+- **canvas**: the pixel space of a pane after zoom, pan, rotation and flip
+- **capture**: the pixels of a pane, a view or a window written to an image file
+- **cell**: one image place of a printed page or of a protocol layout
+- **checkpoint**: a saved display state a transaction can roll back to
+- **checkpoint id**: the handle of a checkpoint, from state:checkpoints
+- **close**: remove a view, a study or a patient from the workspace
+- **color map**: a named mapping of the pixel values to colors applied to a pane
+- **current**: the study being read, as opposed to a prior
+- **destination**: where a print job goes: a system printer, a DICOM printer or a file
+- **device entry**: a saved set of redaction regions matched by the attributes of a device (not template)
+- **document**: a JSON file of settings or of a list (nodes, presets, protocols), with its id, schema and layers
+- **download**: transfer the pixel data of a loaded series from its source; a loaded series may be not downloaded under a selective hanging protocol (not fetch)
+- **entry**: one item of a document or a library, with its id
+- **event**: a change of state the instance publishes on its bus, named like the commands
+- **frame**: one frame of a multiframe DICOM instance
+- **graphic**: any drawn object on a pane (measurement, annotation, region) with a graphic id (not shape)
+- **grid**: the arrangement of panes inside a view
+- **handle**: an id a verb returns and another verb accepts; never invented by the caller
+- **image**: one displayable item of a series: an instance, or one frame of a multiframe instance
+- **job**: a print job: the pages prepared for a destination
+- **layer**: the named group a graphic belongs to; the AI layer holds what a remote caller drew
+- **layout**: the arrangement of windows, tab groups and views, saved as a snapshot
+- **level**: one resolution of the pyramid of a slide, or one entry of a layered document
+- **load**: bring data into the explorer model, from files, a URL or an archive
+- **mask**: the series or frames subtracted from another in a subtraction
+- **masking**: identity values hidden in text, lists and events; redaction is reserved for pixels
+- **masking profile**: a named set of rules of the configuration that decides which identity values are hidden
+- **measurement**: a named value with a unit computed from a graphic or a region (not metric)
+- **mip**: a maximum intensity projection through a stack of images
+- **motion correction**: the per-image translation that aligns the mask with the series before subtracting
+- **open**: show a series in a view
+- **page**: one printed page, with its cells
+- **pane**: one image canvas inside the grid of a view, addressed by its index within the view (not canvas index)
+- **patient**: the DICOM patient as loaded in the explorer model (not exam)
+- **phase**: one time point of a dynamic series
+- **plugin**: a module loaded by the plugin manager, with its id, version and signature
+- **policy**: what the instance allows a caller to do: files, network, remote verbs, masking
+- **position**: where an image sits in its cell: center or top-left
+- **preset**: a named window width and window center pair
+- **prior**: an earlier study of the same patient hung beside the current one
+- **protocol**: a hanging protocol: the rules that hang a study, with its display sets and steps
+- **provenance**: where a derived value comes from: the providers, objects and calibration behind it
+- **reason**: why something was done or refused, as the why panel and the refusals say it
+- **redaction**: pixels hidden over an image; masking is reserved for identity values in text
+- **region**: a geometric area given by the caller (rect, ellipse, polygon) in a stated space (not roi, zone)
+- **scope**: what a redaction applies to: the image, the series or the study
+- **screen**: a physical display of the workstation, with a role in the window model
+- **script**: a file of commands run in one call, with variables and expectations
+- **selected**: the view, pane or series that receives a command when no handle is given (not current view, active view, current pane, active pane, focused view)
+- **series**: the DICOM series as loaded in the explorer model
+- **session**: a reading state kept as an exact restore of a study: views, panes, protocol and sidecar
+- **slide**: a whole slide image, with its pyramid of levels
+- **slot**: one of the two places of a side of the shell that holds a tool
+- **step**: one reading step of a protocol, or one line of a script
+- **study**: the DICOM study as loaded in the explorer model
+- **tab group**: a set of views shown as tabs in one area of a window (not container, dock)
+- **target**: the view and pane a command resolved, echoed in every result bound to a view
+- **tid offset**: time interval differencing: the number of frames between a frame and its mask
+- **tile**: one square of a level of a slide
+- **tool**: a panel of the workspace (explorer, image tool, measurements…), shown in a slot or as a view
+- **uid**: a DICOM unique identifier, the handle of a study or a series
+- **unload**: remove data from the explorer model
+- **view**: one tab of the workspace, an instance of a viewer type showing series; its handle is the view id (not viewer id)
+- **viewer type**: a kind of view (2d, mpr, 3d, sr, …) able to open a given series
+- **viewport**: a pane that shows one series as a stack or as tiles of successive images, the stack and tiled modes of 4.8
+- **window**: a top-level frame of the application, main or detached
+- **window center**: DICOM Window Center (0028,1050), the middle of the range of pixel values shown (not window centre)
+- **window level**: the window width and window center pair of a pane, always these words
+- **window width**: DICOM Window Width (0028,1051), the range of the pixel values shown
+
 ## Reference
 
 `weasis-cli help --markdown` prints every verb with its options, `weasis-cli help --json` the same
-as a JSON descriptor. A skill folder may ship them as `reference.md` and `commands.json`; the
+as a JSON descriptor, with the `types` and `glossary` sections at the end. A skill folder may ship them as `reference.md` and `commands.json`; the
 running instance is what counts.

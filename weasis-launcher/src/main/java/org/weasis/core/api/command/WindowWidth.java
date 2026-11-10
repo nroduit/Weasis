@@ -10,6 +10,7 @@
 package org.weasis.core.api.command;
 
 /** Width of the window applied to the pixel values, in their own unit. */
+@Definition(value = "the window width applied to the pixel values, in their own unit")
 public record WindowWidth(double value) implements SemanticType {
 
   private static final String EXPECTED = "a window width greater than 0, in the unit of the pixels";

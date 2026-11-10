@@ -13,6 +13,7 @@ package org.weasis.core.api.command;
  * Identifies one view of the workspace, for the life of that view. Produced by {@code
  * workspace:list} and by the verbs that open a series.
  */
+@Definition(value = "the id of a view, from workspace:list", handle = true)
 public record ViewId(String value) implements SemanticType {
 
   private static final String EXPECTED = "a view id from 'workspace:list'"; // NON-NLS

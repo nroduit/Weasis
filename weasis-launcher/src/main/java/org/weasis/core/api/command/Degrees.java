@@ -10,6 +10,7 @@
 package org.weasis.core.api.command;
 
 /** An angle in degrees, clockwise, reduced to 0-359. */
+@Definition(value = "an angle in degrees, clockwise, reduced to 0-359")
 public record Degrees(int value) implements SemanticType {
 
   private static final String EXPECTED = "an angle in degrees, clockwise";

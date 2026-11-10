@@ -20,6 +20,6 @@ class VocabularyTest {
 
   @Test
   void theImageNamespaceFollowsTheVocabulary() {
-    assertEquals(List.of(), CommandVocabulary.violations("image", new FileModel()));
+    assertEquals(List.of(), CommandVocabulary.allViolations("image", new FileModel()));
   }
 }

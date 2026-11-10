@@ -35,7 +35,9 @@ import org.weasis.core.api.command.ImageRect;
 import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.Needs;
 import org.weasis.core.api.command.OutputPath;
+import org.weasis.core.api.command.Definition;
 import org.weasis.core.api.command.SemanticType;
+import org.weasis.core.api.command.Term;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MaskRegion;
@@ -94,6 +96,7 @@ public class RedactionCommands implements CommandExtension {
   private static final Logger LOGGER = LoggerFactory.getLogger(RedactionCommands.class);
 
   /** Identifies one entry of the device library of masks. */
+  @Definition(value = "the id of a device entry, from redact:library or redact:match", handle = true)
   public record EntryId(String value) implements SemanticType {
 
     private static final String EXPECTED = "an entry id from 'redact:library' or 'redact:match'";
@@ -113,6 +116,7 @@ public class RedactionCommands implements CommandExtension {
   }
 
   /** Identifies one masking profile of the configuration. */
+  @Definition("the id of a masking profile of the configuration")
   public record MaskingProfileId(String value) implements SemanticType {
 
     private static final String EXPECTED = "a masking profile id from the configuration";
@@ -129,6 +133,15 @@ public class RedactionCommands implements CommandExtension {
     public String toString() {
       return value;
     }
+  }
+
+  @Override
+  public List<Term> getTerms() {
+    return List.of(
+        Term.of("scope", "what a redaction applies to: the image, the series or the study"),
+        Term.of(
+            "masking profile",
+            "a named set of rules of the configuration that decides which identity values are hidden"));
   }
 
   @Override

@@ -10,6 +10,7 @@
 package org.weasis.core.api.command;
 
 /** Names a layer of graphics in a view. */
+@Definition(value = "the name of a layer of graphics in a view")
 public record LayerName(String value) implements SemanticType {
 
   private static final String EXPECTED = "a layer name from 'graphics'"; // NON-NLS

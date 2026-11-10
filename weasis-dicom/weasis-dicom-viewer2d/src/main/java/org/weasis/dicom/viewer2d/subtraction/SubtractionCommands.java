@@ -20,6 +20,7 @@ import org.dcm4che3.data.Tag;
 import org.opencv.core.Rect;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
+import org.weasis.core.api.command.Term;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.Since;
@@ -67,6 +68,18 @@ import picocli.CommandLine.Option;
       SubtractionCommands.Delete.class
     })
 public class SubtractionCommands implements CommandExtension {
+
+  @Override
+  public List<Term> getTerms() {
+    return List.of(
+        Term.of("mip", "a maximum intensity projection through a stack of images"), // NON-NLS
+        Term.of(
+            "motion correction",
+            "the per-image translation that aligns the mask with the series before subtracting"),
+        Term.of(
+            "tid offset",
+            "time interval differencing: the number of frames between a frame and its mask"));
+  }
 
   @Override
   public String getNamespace() {

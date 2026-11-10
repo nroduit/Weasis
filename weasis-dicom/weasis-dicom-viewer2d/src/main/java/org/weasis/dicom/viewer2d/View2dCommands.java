@@ -45,6 +45,9 @@ import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.AbstractVerb;
+import org.weasis.core.api.command.Returns;
+import org.weasis.core.api.command.ResultSchema;
+import org.weasis.core.api.command.Produces;
 import org.weasis.core.api.command.CanvasRect;
 import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandError;
@@ -63,6 +66,7 @@ import org.weasis.core.api.command.ListOptions;
 import org.weasis.core.api.command.Magnification;
 import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.PaneIndex;
+import org.weasis.core.api.command.Definition;
 import org.weasis.core.api.command.SemanticType;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.command.ViewId;
@@ -259,7 +263,7 @@ public class View2dCommands implements CommandExtension {
     @Option(
         names = "--view",
         paramLabel = "<view-id>",
-        description = "Viewer id from 'workspace:list' (default: the selected viewer).")
+        description = "View id from 'workspace:list' (default: the selected view).")
     ViewId viewId;
 
     ImageViewerPlugin<DicomImageElement> resolve() {
@@ -274,7 +278,7 @@ public class View2dCommands implements CommandExtension {
     @Option(
         names = "--pane",
         paramLabel = "<pane-index>",
-        description = "Pane index in the viewer layout, from 1 (default: the selected pane).")
+        description = "Pane index in the grid of the view, from 1 (default: the selected pane).")
     PaneIndex pane;
 
     public Target resolve() {
@@ -684,7 +688,20 @@ public class View2dCommands implements CommandExtension {
           "Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and "
               + "--grid apply one and return the state of the viewer, --best-for answers without "
               + "changing anything. An unknown grid id fails.")
-  static class Grid extends AbstractVerb {
+  @Produces({GridId.class})
+  static class Grid extends AbstractVerb implements Returns {
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("grids", "array", "the grids the view offers, when none was applied") // NON-NLS
+          .field("grids[].grid", GridId.class, "the grid id") // NON-NLS
+          .field("grids[].panes", int.class, "panes of the grid") // NON-NLS
+          .field("grids[].selected", boolean.class, "true for the grid in use") // NON-NLS
+          .field("grid", GridId.class, "the grid applied, when one was") // NON-NLS
+          .field("panes", int.class, "panes of the grid applied") // NON-NLS
+          .build();
+    }
+
     @Mixin ViewerOptions target;
 
     @ArgGroup(exclusive = true)
@@ -1490,7 +1507,32 @@ public class View2dCommands implements CommandExtension {
           "Draws a measurement on the AI layer of the view and returns its values, in the spatial "
               + "unit of the viewer (mm when the image is calibrated).")
   @Since("5.0")
-  static class Measure extends AbstractVerb {
+  @Produces({GraphicId.class})
+  static class Measure extends AbstractVerb implements Returns {
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("target", "object", "the view and pane the command resolved") // NON-NLS
+          .field("target.view", ViewId.class, "the view") // NON-NLS
+          .field("target.pane", PaneIndex.class, "the pane in its grid") // NON-NLS
+          .field("target.viewerType", String.class, "the viewer type id") // NON-NLS
+          .field("target.series", SeriesUid.class, "the series the pane shows") // NON-NLS
+          .field("target.image", ImageIndex.class, "the image shown, from 1") // NON-NLS
+          .field("target.imageCount", int.class, "images of the series") // NON-NLS
+          .field("id", GraphicId.class, "the graphic drawn") // NON-NLS
+          .field("type", String.class, "the graphic type") // NON-NLS
+          .field("layer", "object", "the layer of the graphic") // NON-NLS
+          .field("layer.name", LayerName.class, "the layer name, AI for a remote caller") // NON-NLS
+          .field("layer.type", String.class, "the layer type") // NON-NLS
+          .field("measurements", "array", "the measured values of the graphic") // NON-NLS
+          .field("measurements[].key", String.class, "stable name of the measurement") // NON-NLS
+          .field("measurements[].name", String.class, "English name") // NON-NLS
+          .field("measurements[].value", double.class, "the value") // NON-NLS
+          .field("measurements[].unit", String.class, "UCUM code of the unit") // NON-NLS
+          .field("measurements[].provenance", "object", "where the calibration comes from") // NON-NLS
+          .build();
+    }
+
     @Mixin ViewOptions target;
 
     @Option(
@@ -1854,6 +1896,7 @@ public class View2dCommands implements CommandExtension {
   // ------------------------------------------------------------------------------------------
 
   /** Identifies a window/level preset: the id of a configured one, or its name. */
+  @Definition(value = "the id of a window level preset, from view2d:preset", handle = true)
   public record PresetId(String value) implements SemanticType {
 
     private static final String EXPECTED = "a preset id or name from 'preset'"; // NON-NLS
@@ -1879,7 +1922,20 @@ public class View2dCommands implements CommandExtension {
               + "presets of its image when none is given. The presets belong to the image, so the "
               + "pane given by --view and --pane is selected first.")
   @Since("5.0")
-  static class Preset extends AbstractVerb {
+  @Produces({PresetId.class})
+  static class Preset extends AbstractVerb implements Returns {
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("presets", "array", "the presets of the series, the selected one marked") // NON-NLS
+          .field("presets[].preset", PresetId.class, "the preset id") // NON-NLS
+          .field("presets[].name", String.class, "the name shown") // NON-NLS
+          .field("presets[].selected", boolean.class, "true for the preset applied") // NON-NLS
+          .field("presets[].window", WindowWidth.class, "the window width") // NON-NLS
+          .field("presets[].level", WindowCenter.class, "the window center") // NON-NLS
+          .build();
+    }
+
     @Mixin ViewOptions target;
 
     @Option(
@@ -2348,7 +2404,38 @@ public class View2dCommands implements CommandExtension {
           "Lists the graphics of the view: id, type, layer, vertices and measurements, so measured "
               + "values come from the viewer rather than from a picture.")
   @Since("5.0")
-  static class Graphics extends AbstractVerb {
+  @Produces({GraphicId.class})
+  static class Graphics extends AbstractVerb implements Returns {
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("target", "object", "the view and pane the command resolved") // NON-NLS
+          .field("target.view", ViewId.class, "the view") // NON-NLS
+          .field("target.pane", PaneIndex.class, "the pane in its grid") // NON-NLS
+          .field("target.viewerType", String.class, "the viewer type id") // NON-NLS
+          .field("target.series", SeriesUid.class, "the series the pane shows") // NON-NLS
+          .field("target.image", ImageIndex.class, "the image shown, from 1") // NON-NLS
+          .field("target.imageCount", int.class, "images of the series") // NON-NLS
+          .field("graphics", "array", "the graphics of the image") // NON-NLS
+          .field("graphics[].id", GraphicId.class, "the graphic id") // NON-NLS
+          .field("graphics[].type", String.class, "the graphic type") // NON-NLS
+          .field("graphics[].layer", "object", "the layer of the graphic") // NON-NLS
+          .field("graphics[].layer.name", LayerName.class, "the layer name") // NON-NLS
+          .field("graphics[].layer.type", String.class, "the layer type") // NON-NLS
+          .field("graphics[].points", "array", "the points in image pixels, as x,y pairs") // NON-NLS
+          .field("graphics[].labels", "array", "the labels drawn next to the graphic") // NON-NLS
+          .field("graphics[].measurements", "array", "the measured values of the graphic") // NON-NLS
+          .field("graphics[].measurements[].key", String.class, "stable name of the measurement") // NON-NLS
+          .field("graphics[].measurements[].name", String.class, "English name") // NON-NLS
+          .field("graphics[].measurements[].value", double.class, "the value") // NON-NLS
+          .field("graphics[].measurements[].unit", String.class, "UCUM code of the unit") // NON-NLS
+          .field("graphics[].measurements[].provenance", "object", "where the calibration comes from") // NON-NLS
+          .field("total", int.class, "graphics before the window") // NON-NLS
+          .field("truncated", boolean.class, "true when the window cut the list") // NON-NLS
+          .field("next", int.class, "offset of the next window, when truncated") // NON-NLS
+          .build();
+    }
+
     @Mixin ViewOptions target;
 
     @Option(

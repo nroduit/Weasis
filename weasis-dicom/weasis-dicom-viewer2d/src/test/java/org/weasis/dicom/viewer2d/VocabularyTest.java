@@ -22,9 +22,10 @@ class VocabularyTest {
 
   @Test
   void theViewerNamespacesFollowTheVocabulary() {
-    assertEquals(List.of(), CommandVocabulary.violations("view2d", new View2dCommands()));
-    assertEquals(List.of(), CommandVocabulary.violations("redact", new RedactionCommands()));
-    assertEquals(List.of(), CommandVocabulary.violations("subtraction", new SubtractionCommands()));
-    assertEquals(List.of(), CommandVocabulary.violations("mpr", new MprCommands()));
+    assertEquals(List.of(), CommandVocabulary.allViolations("view2d", new View2dCommands()));
+    assertEquals(List.of(), CommandVocabulary.allViolations("redact", new RedactionCommands()));
+    assertEquals(
+        List.of(), CommandVocabulary.allViolations("subtraction", new SubtractionCommands()));
+    assertEquals(List.of(), CommandVocabulary.allViolations("mpr", new MprCommands()));
   }
 }

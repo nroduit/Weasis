@@ -10,6 +10,7 @@
 package org.weasis.core.api.command;
 
 /** Position of an image in the series a pane shows, counted from 1. */
+@Definition(value = "the position of an image in the series a pane shows, counted from 1")
 public record ImageIndex(int value) implements SemanticType {
 
   private static final String EXPECTED = "an image index from 1";

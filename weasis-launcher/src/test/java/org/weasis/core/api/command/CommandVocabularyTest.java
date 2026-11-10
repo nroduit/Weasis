@@ -131,6 +131,80 @@ class CommandVocabularyTest {
         () -> assertTrue(markdown.contains("| items | array | the items |"), markdown));
   }
 
+  /** A namespace that misuses the words: an unknown noun, a banned synonym, a produce without field. */
+  @Command(
+      name = "words",
+      subcommands = {Words.Peek.class, Words.List.class})
+  static final class Words {
+
+    @Command(name = "peek", description = "Reads the current view.")
+    @Since("5.0")
+    static final class Peek implements Callable<Integer> {
+      @Option(names = "--foo-thing", paramLabel = "<text>", description = "Something of a dock.")
+      String foo;
+
+      @Override
+      public Integer call() {
+        return CommandResult.OK;
+      }
+    }
+
+    @Command(name = "list", description = "Lists the views.")
+    @Since("5.0")
+    @Produces({ViewId.class, Degrees.class})
+    static final class List implements Callable<Integer>, Returns {
+      @Override
+      public ResultSchema result() {
+        return ResultSchema.of().field("views", "array", "the views").build(); // NON-NLS
+      }
+
+      @Override
+      public Integer call() {
+        return CommandResult.OK;
+      }
+    }
+  }
+
+  @Test
+  void theGlossaryChecksNameTheWordAndTheTerm() {
+    Glossary glossary = Glossary.core();
+    java.util.List<String> terms = CommandVocabulary.termViolations("words", new Words(), glossary);
+    java.util.List<String> synonyms =
+        CommandVocabulary.synonymViolations("words", new Words(), glossary);
+    java.util.List<String> produces = CommandVocabulary.producesViolations("words", new Words());
+    assertAll(
+        () -> assertTrue(contains(terms, "--foo-thing: 'foo' is not a word"), terms.toString()),
+        () -> assertEquals(2, terms.size(), terms.toString()),
+        () ->
+            assertTrue(
+                contains(synonyms, "words:peek: says 'current view', the term is 'selected'"),
+                synonyms.toString()),
+        () ->
+            assertTrue(
+                contains(synonyms, "--foo-thing: says 'dock', the term is 'tab group'"),
+                synonyms.toString()),
+        () ->
+            assertTrue(
+                contains(produces, "produces view-id but no result field has that type"),
+                produces.toString()),
+        () ->
+            assertTrue(
+                contains(produces, "produces degrees, which is not defined as a handle"),
+                produces.toString()));
+  }
+
+  @Test
+  void theTypeCatalogKnowsProducersAndConsumers() {
+    TypeCatalog catalog = TypeCatalog.of("words", new Words());
+    TypeCatalog.TypeInfo view = catalog.find("view-id").orElseThrow();
+    assertAll(
+        () -> assertEquals(java.util.List.of("words:list"), view.producedBy()),
+        () -> assertTrue(view.handle()),
+        () -> assertTrue(view.definition().contains("workspace:list"), view.definition()),
+        () -> assertEquals(java.util.List.of(), catalog.handlesWithoutProducer()),
+        () -> assertEquals(java.util.List.of(), catalog.undefined()));
+  }
+
   private static boolean contains(List<String> violations, String text) {
     return violations.stream().anyMatch(v -> v.contains(text));
   }

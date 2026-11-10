@@ -461,6 +461,32 @@ class CommandManagerTest {
   }
 
   @Test
+  void helpHasAGlossaryAndATypesLeaf() {
+    CommandManager manager = manager(new MathExtension(), new EchoExtension());
+    CommandResult glossary = manager.run(List.of("help", "glossary"), CommandOrigin.REMOTE);
+    CommandResult term =
+        manager.run(List.of("help", "glossary", "tab", "group"), CommandOrigin.REMOTE);
+    CommandResult unknown = manager.run(List.of("help", "glossary", "zzz"), CommandOrigin.REMOTE);
+    CommandResult types = manager.run(List.of("help", "types"), CommandOrigin.REMOTE);
+    CommandResult json = manager.run(List.of("help", "--json"), CommandOrigin.REMOTE);
+    CommandResult markdown = manager.run(List.of("help", "--markdown"), CommandOrigin.REMOTE);
+    CommandResult agent = manager.run(List.of("help", "--agent"), CommandOrigin.REMOTE);
+    assertAll(
+        () -> assertEquals(CommandResult.OK, glossary.status(), glossary.error()),
+        () -> assertTrue(glossary.body().contains("tab group"), glossary.body()),
+        () -> assertTrue(term.body().startsWith("tab group: a set of views"), term.body()),
+        () -> assertTrue(term.body().contains("Do not use: container, dock"), term.body()),
+        () -> assertEquals(CommandResult.USAGE, unknown.status()),
+        () -> assertTrue(types.body().startsWith("Types of the command surface"), types.body()),
+        () -> assertTrue(json.body().contains("\"glossary\": ["), json.body()),
+        () -> assertTrue(json.body().contains("\"types\": ["), json.body()),
+        () -> assertTrue(markdown.body().contains("## Glossary"), markdown.body()),
+        () -> assertTrue(markdown.body().contains("| tab group |"), markdown.body()),
+        () -> assertTrue(agent.body().contains("- **view**:"), agent.body()),
+        () -> assertFalse(agent.body().contains("@{glossary}"), agent.body()));
+  }
+
+  @Test
   void helpIndexIsParsableAtBothLevels() {
     CommandManager manager = manager(new MathExtension(), new EchoExtension());
     CommandResult root = manager.run(List.of("help", "--index"), CommandOrigin.REMOTE);
@@ -472,7 +498,7 @@ class CommandManagerTest {
         () -> assertTrue(rootIndex.title().startsWith("Weasis commands"), root.body()),
         () ->
             assertEquals(
-                List.of("echo", "events", "math", "script"),
+                List.of("echo", "events", "math", "script", "glossary", "types"),
                 rootIndex.entries().stream().map(CommandHelp.Entry::name).toList()),
         () -> assertEquals("Arithmetic verbs.", rootIndex.entries().get(2).summary()),
         () -> assertEquals("math: Arithmetic verbs.", verbIndex.title()),

@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
  * A location Weasis fetches from or sends to. The restriction policies decide whether a remote
  * caller may open it at all, and which hosts it may reach.
  */
+@Definition(value = "an absolute URL; the policy decides whether a remote caller may use it")
 public record RemoteUrl(URI value) implements SemanticType {
 
   private static final String EXPECTED = "an absolute URL, e.g. https://host/path";

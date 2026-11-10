@@ -10,6 +10,7 @@
 package org.weasis.core.api.command;
 
 /** Identifies one graphic of an image. Produced by the verbs that draw and by {@code graphics}. */
+@Definition(value = "the id of one graphic of an image, from the verbs that draw and from view2d:graphics", handle = true)
 public record GraphicId(String value) implements SemanticType {
 
   private static final String EXPECTED = "a graphic id from 'graphics'"; // NON-NLS

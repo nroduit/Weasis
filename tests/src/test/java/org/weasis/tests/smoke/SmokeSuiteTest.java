@@ -9,6 +9,7 @@
  */
 package org.weasis.tests.smoke;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -26,6 +27,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 /**
@@ -86,6 +88,37 @@ class SmokeSuiteTest {
       scripts = files.filter(f -> f.toString().endsWith(".weasis")).sorted().toList(); // NON-NLS
     }
     return scripts.stream().map(script -> DynamicTest.dynamicTest(name(script), () -> run(script)));
+  }
+
+  /**
+   * The shipped skill snapshots match what this instance generates: {@code commands.json} is {@code
+   * help --json} and {@code reference.md} is {@code help --markdown}, the application version
+   * aside. A stale snapshot is regenerated from a running instance, never edited by hand.
+   */
+  @Test
+  void theSkillSnapshotsMatchTheInstance() throws Exception {
+    assumeTrue(instance != null, "no instance");
+    Path skill = root.resolveSibling("skills").resolve("weasis"); // NON-NLS
+    String json = instance.command("help", "--json").out(); // NON-NLS
+    String markdown = instance.command("help", "--markdown").out(); // NON-NLS
+    assertAll(
+        () ->
+            assertEquals(
+                versionless(Files.readString(skill.resolve("commands.json"))), // NON-NLS
+                versionless(json),
+                "commands.json differs from 'help --json': regenerate the skill snapshots"),
+        () ->
+            assertEquals(
+                versionless(Files.readString(skill.resolve("reference.md"))), // NON-NLS
+                versionless(markdown),
+                "reference.md differs from 'help --markdown': regenerate the skill snapshots"));
+  }
+
+  /** The text without the application version, which differs between a build and a package. */
+  private static String versionless(String text) {
+    return text.replaceAll("\"applicationVersion\": \"[^\"]*\"", "\"applicationVersion\": \"\"")
+        .replaceAll("application [^.\\n]*\\.", "application.")
+        .strip();
   }
 
   private static String name(Path script) {

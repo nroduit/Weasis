@@ -151,8 +151,8 @@ line naming the current spelling. Use the current one everywhere.
 <!--if:wsi-->
 9. **Read a whole slide** (modality SM) in its own viewer: `dicom:open --series <uid>` opens it
    there. `wsi:info` describes the slide (size in base pixels, pixel spacing, objective
-   magnification, pyramid levels) and what the pane shows (zoom, centre, level, tiles loaded).
-   `wsi:goto --at x,y` centres the view on a base pixel, `--objective 20` shows it at 20× and
+   magnification, pyramid levels) and what the pane shows (zoom, center, level, tiles loaded).
+   `wsi:goto --at x,y` centers the view on a base pixel, `--objective 20` shows it at 20× and
    `--zoom 0.5` at a scale, `--focal-plane 2` and `--optical-path DAPI` pick the plane of a
    Z-stack and the channel of a multi-path slide (`wsi:info` lists them), `--complete` answers
    once every tile of the view is loaded, so the next `view2d:capture` is sharp. Measurements on
@@ -252,8 +252,16 @@ payload in the next steps. Patient fields in the events are masked exactly as in
 - Loading and unloading studies (`dicom:load`, `dicom:unload`, `image:load`) changes what the user
   sees: do it only when asked.
 
+## Vocabulary
+
+One word per concept, in option names, JSON keys and what you say to the user. `help glossary`
+prints the definitions, `help types` the value types with the verbs that hand them out, and
+`help types view-id` one of them.
+
+@{glossary}
+
 ## Reference
 
 `weasis-cli help --markdown` prints every verb with its options, `weasis-cli help --json` the same
-as a JSON descriptor. A skill folder may ship them as `reference.md` and `commands.json`; the
+as a JSON descriptor, with the `types` and `glossary` sections at the end. A skill folder may ship them as `reference.md` and `commands.json`; the
 running instance is what counts.

@@ -22,6 +22,12 @@ import java.util.Map;
 import java.util.function.Supplier;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
+import org.weasis.core.api.command.Returns;
+import org.weasis.core.api.command.ResultSchema;
+import org.weasis.core.api.command.Produces;
+import org.weasis.core.api.command.PaneIndex;
+import org.weasis.core.api.command.ImageIndex;
+import org.weasis.core.api.command.GridId;
 import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
@@ -275,7 +281,34 @@ public class WorkspaceCommands implements CommandExtension {
   }
 
   @Command(name = "list", description = "Windows, tab groups and views as JSON.")
-  static class ListViews extends Verb {
+  @Produces({ViewId.class})
+  static class ListViews extends Verb implements Returns {
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("selected", ViewId.class, "the selected view") // NON-NLS
+          .field("windows", "array", "the windows, the main one first") // NON-NLS
+          .field("windows[].window", int.class, "window number, from 1") // NON-NLS
+          .field("windows[].main", boolean.class, "true for the main window") // NON-NLS
+          .field("windows[].groups", "array", "the tab groups of the window") // NON-NLS
+          .field("windows[].groups[].group", int.class, "tab group number, from 1") // NON-NLS
+          .field("windows[].groups[].views", "array", "the views of the tab group") // NON-NLS
+          .field("windows[].groups[].views[].id", ViewId.class, "the view id") // NON-NLS
+          .field("windows[].groups[].views[].name", String.class, "the title of the view") // NON-NLS
+          .field("windows[].groups[].views[].selected", boolean.class, "true for the selected view") // NON-NLS
+          .field("windows[].groups[].views[].viewerType", String.class, "the viewer type id") // NON-NLS
+          .field("windows[].groups[].views[].tool", "tool-id", "the tool shown, for a tool opened as a view") // NON-NLS
+          .field("windows[].groups[].views[].grid", GridId.class, "the grid of an image view") // NON-NLS
+          .field("windows[].groups[].views[].sync", String.class, "the synchronization mode of an image view") // NON-NLS
+          .field("windows[].groups[].views[].panes", "array", "the panes of an image view") // NON-NLS
+          .field("windows[].groups[].views[].panes[].pane", PaneIndex.class, "the pane index") // NON-NLS
+          .field("windows[].groups[].views[].panes[].selected", boolean.class, "true for the selected pane") // NON-NLS
+          .field("windows[].groups[].views[].panes[].series", "series-uid", "the series shown") // NON-NLS
+          .field("windows[].groups[].views[].panes[].image", ImageIndex.class, "the image shown, from 1") // NON-NLS
+          .field("windows[].groups[].views[].panes[].imageCount", int.class, "images of the series") // NON-NLS
+          .build();
+    }
+
     @Mixin ListOptions bounds;
 
     @Override
@@ -697,7 +730,25 @@ public class WorkspaceCommands implements CommandExtension {
               + "--ratio size it. Tool ids are stable across viewer types; an id the side does not "
               + "offer now fails and lists the ones it does.")
   @Since("5.0")
-  static class Panel extends Verb {
+  @Produces({ToolId.class})
+  static class Panel extends Verb implements Returns {
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("explorer", "object", "the explorer side of the shell") // NON-NLS
+          .field("explorer.slots", "tool-id[]", "the tool of each slot, null when empty") // NON-NLS
+          .field("explorer.width", int.class, "content width in pixels") // NON-NLS
+          .field("explorer.ratio", double.class, "share of the first slot") // NON-NLS
+          .field("explorer.collapsed", boolean.class, "true when the side is hidden") // NON-NLS
+          .field("tools", "object", "the tools side of the shell") // NON-NLS
+          .field("tools.slots", "tool-id[]", "the tool of each slot, null when empty") // NON-NLS
+          .field("tools.width", int.class, "content width in pixels") // NON-NLS
+          .field("tools.ratio", double.class, "share of the first slot") // NON-NLS
+          .field("tools.collapsed", boolean.class, "true when the side is hidden") // NON-NLS
+          .field("strip", String.class, "how the hidden tools are shown: mini or none") // NON-NLS
+          .build();
+    }
+
     @Option(
         names = "--side",
         paramLabel = "<side>",

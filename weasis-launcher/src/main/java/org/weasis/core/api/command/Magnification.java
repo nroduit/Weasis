@@ -10,6 +10,7 @@
 package org.weasis.core.api.command;
 
 /** How much an image is magnified in a pane: 1 is one image pixel per canvas pixel. */
+@Definition(value = "how much an image is magnified in a pane: 1 is one image pixel per canvas pixel")
 public record Magnification(double value) implements SemanticType {
 
   private static final String EXPECTED =

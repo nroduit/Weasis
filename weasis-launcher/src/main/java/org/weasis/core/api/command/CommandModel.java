@@ -541,7 +541,11 @@ public final class CommandModel {
     if (!needs.isEmpty()) {
       sb.append(needs).append("\n\n");
     }
-    List<PositionalParamSpec> params =
+    List<String> produces = produces(spec);
+    if (!produces.isEmpty()) {
+      sb.append("Produces: `").append(String.join("`, `", produces)).append("`\n\n");
+    }
+    List<PositionalParamSpec> params=
         spec.positionalParameters().stream().filter(p -> !p.hidden()).toList();
     if (!params.isEmpty()) {
       sb.append("| Parameter | Type | Description |\n|---|---|---|\n");
@@ -557,7 +561,7 @@ public final class CommandModel {
       sb.append('\n');
     }
     List<OptionSpec> options =
-        spec.options().stream()
+        sortedOptions(spec).stream()
             .filter(o -> !o.hidden() && !o.usageHelp() && !o.versionHelp())
             .toList();
     if (!options.isEmpty()) {
@@ -598,6 +602,33 @@ public final class CommandModel {
   /** The result a verb declares through {@link Returns}, or null. */
   static ResultSchema resultOf(CommandSpec spec) {
     return spec.userObject() instanceof Returns returns ? returns.result() : null;
+  }
+
+  /** The handle types a verb declares it hands out ({@link Produces}); empty when none. */
+  static List<Class<?>> producedTypes(CommandSpec spec) {
+    AnnotatedElement element = annotated(spec.userObject());
+    Produces produces = element == null ? null : element.getAnnotation(Produces.class);
+    return produces == null ? List.of() : List.of(produces.value());
+  }
+
+  /** The vocabulary names of the types a verb produces. */
+  static List<String> produces(CommandSpec spec) {
+    return producedTypes(spec).stream().map(SemanticType::nameOf).toList();
+  }
+
+  /** The semantic types the visible options and parameters of a verb take, without repeats. */
+  static List<Class<?>> consumedTypes(CommandSpec spec) {
+    List<Class<?>> types = new ArrayList<>();
+    for (ArgSpec arg : arguments(spec)) {
+      if (arg.hidden() || (arg.isOption() && (((OptionSpec) arg).usageHelp()))) {
+        continue;
+      }
+      Class<?> type = elementType(arg);
+      if (SemanticType.class.isAssignableFrom(type) && !types.contains(type)) {
+        types.add(type);
+      }
+    }
+    return types;
   }
 
   /** The description of an argument with its since / deprecated markers. */
@@ -686,6 +717,12 @@ public final class CommandModel {
     }
     out.name("usage").value(synopsis(spec.qualifiedName(":"), spec)); // NON-NLS
     jsonNeeds(out, capabilities(spec));
+    List<String> produces = produces(spec);
+    if (!produces.isEmpty()) {
+      out.name("produces").beginArray(); // NON-NLS
+      produces.forEach(out::value);
+      out.endArray();
+    }
     out.name("parameters").beginArray(); // NON-NLS
     for (PositionalParamSpec p : spec.positionalParameters()) {
       if (p.hidden()) {
@@ -705,7 +742,7 @@ public final class CommandModel {
     }
     out.endArray();
     out.name("options").beginArray(); // NON-NLS
-    for (OptionSpec o : spec.options()) {
+    for (OptionSpec o : sortedOptions(spec)) {
       if (o.hidden() || o.usageHelp() || o.versionHelp()) {
         continue;
       }
@@ -786,7 +823,82 @@ public final class CommandModel {
     if (synopsis.startsWith(prefix)) {
       synopsis = synopsis.substring(prefix.length());
     }
-    return (qualifiedName + " " + synopsis.replaceAll("\\s+", " ").trim()).trim();
+    return (qualifiedName + " " + sortedGroups(synopsis.replaceAll("\\s+", " ").trim())).trim();
+  }
+
+  /**
+   * The alternatives of an argument group, sorted: Picocli renders them in the order reflection
+   * gives the fields, which differs between JVM starts (a class from the AOT cache lists them in
+   * another order), and the descriptor and the reference are compared with a snapshot. The
+   * options outside a group are sorted by Picocli itself.
+   */
+  static String sortedGroups(String synopsis) {
+    StringBuilder out = new StringBuilder();
+    int i = 0;
+    while (i < synopsis.length()) {
+      char c = synopsis.charAt(i);
+      if (c == '[' || c == '(') {
+        int end = matchingBracket(synopsis, i);
+        if (end < 0) {
+          out.append(synopsis.substring(i));
+          break;
+        }
+        String inner = sortedGroups(synopsis.substring(i + 1, end));
+        out.append(c).append(sortedAlternatives(inner)).append(synopsis.charAt(end));
+        i = end + 1;
+      } else {
+        out.append(c);
+        i++;
+      }
+    }
+    return out.toString();
+  }
+
+  private static int matchingBracket(String text, int open) {
+    int depth = 0;
+    for (int j = open; j < text.length(); j++) {
+      char c = text.charAt(j);
+      if (c == '[' || c == '(') {
+        depth++;
+      } else if (c == ']' || c == ')') {
+        depth--;
+        if (depth == 0) {
+          return j;
+        }
+      }
+    }
+    return -1;
+  }
+
+  /** The {@code a | b | c} alternatives of one group level, sorted; anything else unchanged. */
+  private static String sortedAlternatives(String inner) {
+    List<String> parts = new ArrayList<>();
+    int depth = 0;
+    int start = 0;
+    for (int j = 0; j < inner.length(); j++) {
+      char c = inner.charAt(j);
+      if (c == '[' || c == '(') {
+        depth++;
+      } else if (c == ']' || c == ')') {
+        depth--;
+      } else if (depth == 0 && inner.startsWith(" | ", j)) {
+        parts.add(inner.substring(start, j));
+        start = j + 3;
+        j += 2;
+      }
+    }
+    parts.add(inner.substring(start));
+    if (parts.size() < 2) {
+      return inner;
+    }
+    return parts.stream().map(String::trim).sorted().collect(Collectors.joining(" | "));
+  }
+
+  /** The options of a verb by name, so the descriptor and the reference never depend on reflection. */
+  private static List<OptionSpec> sortedOptions(CommandSpec spec) {
+    return spec.options().stream()
+        .sorted(Comparator.comparing(OptionSpec::longestName))
+        .toList();
   }
 
   private static String cell(String text) {

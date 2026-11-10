@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** An open or closed outline in image pixels: {@code x1,y1,x2,y2,…}, two points at least. */
+@Definition(value = "an outline in image pixels, two points at least")
 public record ImagePolygon(List<Point2D> points) implements SemanticType {
 
   private static final String EXPECTED = "x,y pairs in image pixels, two points at least";

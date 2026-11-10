@@ -20,7 +20,25 @@ class VocabularyTest {
 
   @Test
   void theWorkspaceNamespaceFollowsTheVocabulary() {
-    List<String> violations = CommandVocabulary.violations("workspace", new WorkspaceCommands());
+    List<String> violations = CommandVocabulary.allViolations("workspace", new WorkspaceCommands());
     assertEquals(List.of(), violations);
+  }
+
+  @Test
+  void theOtherCoreNamespacesFollowTheVocabulary() {
+    assertEquals(
+        List.of(),
+        CommandVocabulary.allViolations(
+            "config", new org.weasis.core.api.util.ConfigCommands())); // NON-NLS
+    assertEquals(
+        List.of(),
+        CommandVocabulary.allViolations("print", new org.weasis.core.ui.print.PrintCommands()));
+    assertEquals(
+        List.of(),
+        CommandVocabulary.allViolations("ui", new org.weasis.core.ui.editor.UiCommands()));
+    assertEquals(
+        List.of(),
+        CommandVocabulary.allViolations(
+            "color", new org.weasis.core.ui.editor.image.ColorCommands())); // NON-NLS
   }
 }

@@ -28,6 +28,7 @@ import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.Capability;
 import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandExtension;
+import org.weasis.core.api.command.Term;
 import org.weasis.core.api.command.CommandFailure;
 import org.weasis.core.api.command.Needs;
 import org.weasis.core.api.command.OutputPath;
@@ -74,6 +75,12 @@ public class PrintCommands implements CommandExtension {
   private Supplier<List<PrintDestination>> destinations = PrintDestinations::all;
   private Supplier<Optional<ImageViewerPlugin<?>>> selectedViewer = PrintCommands::selected;
   private PrintJobs jobs = PrintJobs.getInstance();
+
+  @Override
+  public List<Term> getTerms() {
+    return List.of(
+        Term.of("position", "where an image sits in its cell: center or top-left")); // NON-NLS
+  }
 
   @Override
   public String getNamespace() {
@@ -336,7 +343,7 @@ public class PrintCommands implements CommandExtension {
     @Option(
         names = "--view",
         paramLabel = "<view-id>",
-        description = "Viewer id from 'workspace:list' (default: the selected viewer).")
+        description = "View id from 'workspace:list' (default: the selected view).")
     ViewId viewId;
 
     @Option(
@@ -648,7 +655,7 @@ public class PrintCommands implements CommandExtension {
 
     @Option(
         names = "--out",
-        paramLabel = "<file.png>",
+        paramLabel = "<output-path>",
         required = true,
         description = "The PNG file to write.")
     OutputPath out;
@@ -734,7 +741,7 @@ public class PrintCommands implements CommandExtension {
 
     @Option(
         names = "--out",
-        paramLabel = "<file.pdf>",
+        paramLabel = "<output-path>",
         description = "The file to write, for the PDF file destination (file:pdf).")
     @Since("5.0")
     OutputPath out;

@@ -9,12 +9,14 @@
  */
 package org.weasis.dicom.explorer;
 
+import org.weasis.core.api.command.Definition;
 import org.weasis.core.api.command.SemanticType;
 
 /**
  * Identifies one patient: the identifier {@code dicom:list} returned, which is the masked one when
  * a masking policy applies to the caller and the Patient ID otherwise.
  */
+@Definition(value = "the masked patient id of a loaded patient, from dicom:list, stable for the session", handle = true)
 public record PatientHandle(String value) implements SemanticType {
 
   private static final String EXPECTED = "a patient identifier from 'dicom:list'"; // NON-NLS

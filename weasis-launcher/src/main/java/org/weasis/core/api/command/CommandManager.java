@@ -77,10 +77,16 @@ public class CommandManager {
    * additive changes (a verb, an option, a JSON key), the major with breaking ones. A verb or an
    * option is never removed within a major; a renamed one keeps its old name as a deprecated alias.
    */
-  public static final String API_VERSION = "2.30"; // NON-NLS
+  public static final String API_VERSION = "2.31"; // NON-NLS
 
   /** Namespace of the event verbs and of the audit lines of the event stream. */
   public static final String EVENTS = "events"; // NON-NLS
+
+  /** The help leaf listing the terms of the command surface: {@code help glossary [term]}. */
+  public static final String GLOSSARY = "glossary"; // NON-NLS
+
+  /** The help leaf listing the value types and their producers: {@code help types [type]}. */
+  public static final String TYPES = "types"; // NON-NLS
 
   private static volatile Supplier<String> viewerType = () -> null;
 
@@ -93,6 +99,12 @@ public class CommandManager {
   private final CommandAudit audit;
   private final CommandPolicy policy;
   private final EventBus bus;
+
+  /** The terms of the platform and of the registered namespaces. */
+  private volatile Glossary glossary = Glossary.core();
+
+  /** The semantic types of the registered namespaces with their producers; built after loading. */
+  private volatile TypeCatalog types = TypeCatalog.of(Map.of());
   private final java.util.concurrent.atomic.AtomicInteger remoteStreams =
       new java.util.concurrent.atomic.AtomicInteger();
 
@@ -162,10 +174,45 @@ public class CommandManager {
         LOGGER.info("Registered command namespace: {}", namespace);
         extension.getNamespaceAliases().forEach(alias -> namespaceAliases.put(alias, namespace));
         bus.catalog().declare(extension.getEventTypes());
+        declareTerms(namespace, extension);
       } else {
         LOGGER.warn("Command namespace already registered: {}", namespace);
       }
     }
+    types = TypeCatalog.of(commands);
+    List<String> holes = types.handlesWithoutProducer();
+    if (!holes.isEmpty()) {
+      LOGGER.warn("Handle types consumed by a verb and produced by none: {}", holes);
+    }
+  }
+
+  /** Adds the terms of a namespace to the glossary; a term redefined is refused, not the verbs. */
+  private void declareTerms(String namespace, CommandExtension extension) {
+    List<Term> terms;
+    try {
+      terms = extension.getTerms();
+    } catch (RuntimeException e) {
+      LOGGER.warn("The glossary of {} cannot be read", namespace, e);
+      return;
+    }
+    if (terms.isEmpty()) {
+      return;
+    }
+    try {
+      glossary.add(terms, namespace);
+    } catch (IllegalArgumentException e) {
+      LOGGER.warn("Glossary of {} refused: {}", namespace, e.getMessage());
+    }
+  }
+
+  /** The glossary of the command surface: the terms of the platform and of every namespace. */
+  public Glossary glossary() {
+    return glossary;
+  }
+
+  /** The semantic types of the command surface with their producers and consumers. */
+  public TypeCatalog types() {
+    return types;
   }
 
   /**
@@ -500,6 +547,12 @@ public class CommandManager {
     if (namespace.isEmpty()) {
       return rootHelp(format, scope);
     }
+    if (GLOSSARY.equals(namespace)) {
+      return glossaryHelp(words(args), format);
+    }
+    if (TYPES.equals(namespace)) {
+      return typesHelp(verb, format);
+    }
     String resolved = resolve(namespace);
     CommandExtension extension = commands.get(resolved);
     if (extension == null) {
@@ -514,12 +567,84 @@ public class CommandManager {
 
   private CommandResult rootHelp(HelpFormat format, Map<String, CommandExtension> scope) {
     return switch (format) {
-      case AGENT -> CommandResult.ok(AgentSkill.render(scope.keySet()));
+      case AGENT -> CommandResult.ok(AgentSkill.render(scope.keySet(), glossary));
       case NAMES -> CommandResult.ok(namespaceNames(scope));
       case JSON -> CommandResult.ok(jsonHelp(scope));
       case MARKDOWN -> CommandResult.ok(markdownHelp(scope));
-      case INDEX -> CommandResult.ok(CommandHelp.index(rootTitle(), namespaceEntries(scope)));
-      case TEXT -> CommandResult.ok(CommandHelp.table(rootTitle(), namespaceEntries(scope), false));
+      case INDEX -> CommandResult.ok(CommandHelp.index(rootTitle(), rootEntries(scope)));
+      case TEXT -> CommandResult.ok(CommandHelp.table(rootTitle(), rootEntries(scope), false));
+    };
+  }
+
+  /** The namespaces, then the two leaves of the vocabulary, browsable like a namespace. */
+  private static List<CommandHelp.Entry> rootEntries(Map<String, CommandExtension> scope) {
+    List<CommandHelp.Entry> entries = new ArrayList<>(namespaceEntries(scope));
+    entries.add(
+        new CommandHelp.Entry(GLOSSARY, "The terms of the command surface, one line each."));
+    entries.add(
+        new CommandHelp.Entry(
+            TYPES, "The value types of the options and results, with the verbs that produce them."));
+    return entries;
+  }
+
+  /** The words of a help request after its options, joined: {@code help glossary tab group}. */
+  private static String words(List<String> args) {
+    return args.stream().filter(a -> !a.startsWith("-")).collect(Collectors.joining(" "));
+  }
+
+  /** {@code help glossary}: every term, or one term in detail. */
+  private CommandResult glossaryHelp(String term, HelpFormat format) {
+    if (!term.isEmpty()) {
+      Optional<Term> found = glossary.find(term);
+      if (found.isEmpty()) {
+        return CommandResult.usage(
+            "Unknown term '" + term + "'. 'help glossary' lists the terms.");
+      }
+      if (format == HelpFormat.JSON) {
+        JsonWriter out = new JsonWriter();
+        Glossary.empty().add(List.of(found.get()), GLOSSARY).write(out);
+        return CommandResult.ok(out.toString());
+      }
+      return CommandResult.ok(glossary.text(found.get()));
+    }
+    return switch (format) {
+      case JSON -> {
+        JsonWriter out = new JsonWriter();
+        glossary.write(out);
+        yield CommandResult.ok(out.toString());
+      }
+      case MARKDOWN -> CommandResult.ok(glossary.markdown());
+      case NAMES ->
+          CommandResult.ok(
+              glossary.terms().stream().map(Term::term).collect(Collectors.joining(", ")));
+      case INDEX -> CommandResult.ok(glossary.index());
+      default -> CommandResult.ok(glossary.text());
+    };
+  }
+
+  /** {@code help types}: every semantic type with its producers, or one type in detail. */
+  private CommandResult typesHelp(String type, HelpFormat format) {
+    if (!type.isEmpty()) {
+      Optional<TypeCatalog.TypeInfo> found = types.find(type);
+      if (found.isEmpty()) {
+        return CommandResult.usage("Unknown type '" + type + "'. 'help types' lists the types.");
+      }
+      return CommandResult.ok(TypeCatalog.text(found.get()));
+    }
+    return switch (format) {
+      case JSON -> {
+        JsonWriter out = new JsonWriter();
+        types.write(out);
+        yield CommandResult.ok(out.toString());
+      }
+      case MARKDOWN -> CommandResult.ok(types.markdown());
+      case NAMES ->
+          CommandResult.ok(
+              types.types().stream()
+                  .map(TypeCatalog.TypeInfo::name)
+                  .collect(Collectors.joining(", ")));
+      case INDEX -> CommandResult.ok(types.index());
+      default -> CommandResult.ok(types.text());
     };
   }
 
@@ -616,7 +741,7 @@ public class CommandManager {
   private CommandResult namespaceHelp(
       String namespace, CommandExtension extension, HelpFormat format) {
     if (format == HelpFormat.AGENT) {
-      return CommandResult.ok(AgentSkill.render(commands.keySet()));
+      return CommandResult.ok(AgentSkill.render(commands.keySet(), glossary));
     }
     if (format == HelpFormat.JSON) {
       JsonWriter out = new JsonWriter();
@@ -871,6 +996,8 @@ public class CommandManager {
             .append('\n');
       }
     }
+    sb.append((scope == commands ? types : TypeCatalog.of(scope)).markdown());
+    sb.append(glossary.markdown());
     return sb.toString();
   }
 
@@ -907,7 +1034,12 @@ public class CommandManager {
       out.name(namespace);
       bus.catalog().write(out, bus.catalog().types(namespace));
     }
-    out.endObject().endObject();
+    out.endObject();
+    out.name("types"); // NON-NLS
+    (scope == commands ? types : TypeCatalog.of(scope)).write(out);
+    out.name("glossary"); // NON-NLS
+    glossary.write(out);
+    out.endObject();
     return out.toString();
   }
 

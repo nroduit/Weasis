@@ -47,6 +47,16 @@ public interface CommandExtension extends ExtensionPoint {
     return List.of();
   }
 
+  /**
+   * The terms this namespace adds to the glossary of the command surface: the nouns of its option
+   * names and JSON keys that the platform does not define, with their definition, read from a
+   * resource with {@link Glossary#read(Class, String)}. A term the platform already defines with
+   * another text is refused at registration.
+   */
+  default List<Term> getTerms() {
+    return List.of();
+  }
+
   /** False for namespaces that must not be reachable from the singleton socket. */
   default boolean isRemotable() {
     return true;

@@ -12,6 +12,7 @@ package org.weasis.core.api.command;
 import java.awt.Rectangle;
 
 /** A rectangle in screen pixels: {@code x,y,width,height}, the last two positive. */
+@Definition(value = "a rectangle in screen pixels: x,y,width,height")
 public record ScreenRect(int x, int y, int width, int height) implements SemanticType {
 
   private static final String EXPECTED = "four integers x,y,width,height with a positive size";

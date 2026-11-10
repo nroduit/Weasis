@@ -65,13 +65,13 @@ public class ColorCommands implements CommandExtension {
     @Option(
         names = "--view",
         paramLabel = "<view-id>",
-        description = "Viewer id from 'workspace:list' (default: the selected viewer).")
+        description = "View id from 'workspace:list' (default: the selected view).")
     ViewId viewId;
 
     @Option(
         names = "--pane",
         paramLabel = "<pane-index>",
-        description = "Pane index in the viewer layout, from 1 (default: the selected pane).")
+        description = "Pane index in the grid of the view, from 1 (default: the selected pane).")
     PaneIndex pane;
 
     /** The pane, or empty when nothing is selected and no viewer was named. */
@@ -125,7 +125,7 @@ public class ColorCommands implements CommandExtension {
   static class DisplayChoice {
     @Option(
         names = "--display-profile",
-        paramLabel = "<icc-file>",
+        paramLabel = "<input-path>",
         description = "ICC profile file (.icc, .icm) of the display of this workstation.")
     InputPath file;
 

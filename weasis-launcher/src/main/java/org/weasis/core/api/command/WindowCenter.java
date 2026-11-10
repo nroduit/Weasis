@@ -9,10 +9,11 @@
  */
 package org.weasis.core.api.command;
 
-/** Centre of the window applied to the pixel values, in their own unit. */
+/** Center of the window applied to the pixel values, in their own unit. */
+@Definition(value = "the window center applied to the pixel values, in their own unit")
 public record WindowCenter(double value) implements SemanticType {
 
-  private static final String EXPECTED = "a window centre in the unit of the pixels";
+  private static final String EXPECTED = "a window center in the unit of the pixels";
 
   public WindowCenter {
     if (!Double.isFinite(value)) {

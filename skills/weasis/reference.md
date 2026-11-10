@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.30, protocol 2, application development.
+Command API 2.31, protocol 2, application development.
 
 ## color
 
@@ -10,15 +10,15 @@ Color management of the display: switch, display profile, view conversion.
 
 Switches color management or sets the display profile, then prints the status.
 
-Usage: `color:set [-h] [--json] [--enabled=<true|false>] [--display-profile=<icc-file> | --srgb]`
+Usage: `color:set [-h] [--json] [--enabled=<true|false>] [--display-profile=<input-path> | --srgb]`
 
 Needs: file read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --enabled | boolean |  | Convert color images to the display profile. |
 | --display-profile | input-path |  | ICC profile file (.icc, .icm) of the display of this workstation. |
+| --enabled | boolean |  | Convert color images to the display profile. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --srgb | boolean |  | No display profile: the display is sRGB. |
 
 ### color:status
@@ -30,8 +30,8 @@ Usage: `color:status [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 
 ## config
@@ -61,10 +61,10 @@ Needs: file read, file write
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --force | boolean |  | Overwrite a JSON document that exists. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --source | path |  | Root of the resources package holding the XML documents (default: the current one). |
 | --target | path |  | Folder to write the JSON documents into (default: the config folder of the preference directory). |
-| --force | boolean |  | Overwrite a JSON document that exists. |
 
 ### config:list
 
@@ -88,8 +88,8 @@ Needs: file write
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --layer | string | user | user (default), machine, or site (the config folder of a resources package). |
-| --with-machine | boolean |  | With a user package, also the settings and documents of this workstation. |
 | --out | output-path |  | The package to write (default: a dated name in the current folder). |
+| --with-machine | boolean |  | With a user package, also the settings and documents of this workstation. |
 
 ### config:reload
 
@@ -138,10 +138,10 @@ Needs: file read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --file | input-path |  | The package to import. |
-| --replace | boolean |  | Replace each document and settings group of the package whole, instead of merging. |
 | --dry-run | boolean |  | Show what would change, change nothing. |
+| --file | input-path |  | The package to import. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --replace | boolean |  | Replace each document and settings group of the package whole, instead of merging. |
 
 
 ## dicom
@@ -156,9 +156,9 @@ Usage: `dicom:echo [-h] [--json] [--aet=<aet>] --node=<node> [--timeout=<seconds
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --aet | string |  | Calling AE title (default: weasis.aet, else the first calling node, else WEASIS_AE). |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --node | string |  | The node: its id, its description or its AE title, from the DICOM nodes. |
-| --aet | string |  | Calling AE title (default: weasis.aet, else the first calling node, else WEASIS_AE). |
 | --timeout | integer | 10 | Connect and accept time-out (default: 10). |
 
 ### dicom:info (since 5.0)
@@ -171,7 +171,7 @@ Usage: `dicom:info [-h] [--json] (--series=<series-uid> | --view=<view-id>)`
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list'. |
-| --view | view-id |  | Viewer id from 'workspace:list'; its selected pane gives the series. |
+| --view | view-id |  | View id from 'workspace:list'; its selected pane gives the series. |
 
 ### dicom:interest (since 5.0)
 
@@ -181,10 +181,10 @@ Usage: `dicom:interest [-h] [--images] [--json] [--series=<series-uid>] [--study
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --study | study-uid |  | Study Instance UID from 'dicom:list'; default: every loaded study. |
-| --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list': this series only. |
 | --images | boolean |  | Also list the SOP Instance UIDs of the images of interest. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list': this series only. |
+| --study | study-uid |  | Study Instance UID from 'dicom:list'; default: every loaded study. |
 
 ### dicom:list (since 5.0)
 
@@ -192,11 +192,40 @@ Patients, studies and series loaded in the explorer, as JSON. Identifiers follow
 
 Usage: `dicom:list [-h] [--json] [--after=<n>] [--limit=<n>]`
 
+Produces: `patient-handle`, `study-uid`, `series-uid`
+
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --after | integer |  | Skip the first n entries, as the previous answer's 'next' says. (since 5.0) |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --limit | integer |  | At most this many entries (default: all of them). (since 5.0) |
-| --after | integer |  | Skip the first n entries, as the previous answer's 'next' says. (since 5.0) |
+
+| Result | Type | Description |
+|---|---|---|
+| patients | array | the loaded patients |
+| patients[].patientID | patient-handle | the patient handle, masked for a remote caller |
+| patients[].patientName | string | Patient's Name, masked |
+| patients[].patientBirthDate | string | Patient's Birth Date, ISO 8601, masked |
+| patients[].patientSex | string | Patient's Sex |
+| patients[].studies | array | the studies of the patient |
+| patients[].studies[].studyInstanceUID | study-uid | the study handle |
+| patients[].studies[].studyDate | string | Study Date, ISO 8601 |
+| patients[].studies[].studyTime | string | Study Time, ISO 8601 |
+| patients[].studies[].studyDescription | string | Study Description |
+| patients[].studies[].accessionNumber | string | Accession Number, masked |
+| patients[].studies[].studyID | string | Study ID, masked |
+| patients[].studies[].series | array | the series of the study |
+| patients[].studies[].series[].id | series-uid | the series handle; the UID, or the UID with a suffix for a split series |
+| patients[].studies[].series[].seriesInstanceUID | series-uid | Series Instance UID |
+| patients[].studies[].series[].seriesNumber | integer | Series Number |
+| patients[].studies[].series[].modality | string | Modality |
+| patients[].studies[].series[].seriesDescription | string | Series Description |
+| patients[].studies[].series[].imageCount | integer | images loaded |
+| patients[].studies[].series[].downloadState | string | complete, partial or none, under a selective download |
+| patients[].studies[].series[].provenance | object | where the series comes from, when it was derived |
+| total | integer | patients before the window |
+| truncated | boolean | true when the window cut the list |
+| next | integer | offset of the next window, when truncated |
 
 ### dicom:load
 
@@ -209,14 +238,14 @@ Needs: file read, network read
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --path | input-path | [] | A DICOM file or a directory (recursive). (since 5.0) |
-| --url | remote-url | [] | A DICOM file URL. (since 5.0) |
 | --manifest | remote-url | [] | An XML manifest (WADO). (since 5.0) |
-| --zip | remote-url | [] | A ZIP archive of DICOM files. |
 | --manifest-gzip | string | [] | An XML manifest encoded as GZIP then Base64. (since 5.0) |
+| --path | input-path | [] | A DICOM file or a directory (recursive). (since 5.0) |
 | --portable | boolean |  | The DICOM directories configured next to the executable. |
-| --wait | enum | none | Answer when the loading reaches this point: none, first-series or all (default: none, or all when the option carries no value). (since 5.0) |
 | --timeout | integer | 600 | Give up waiting after this long (default: 600). (since 5.0) |
+| --url | remote-url | [] | A DICOM file URL. (since 5.0) |
+| --wait | enum | none | Answer when the loading reaches this point: none, first-series or all (default: none, or all when the option carries no value). (since 5.0) |
+| --zip | remote-url | [] | A ZIP archive of DICOM files. |
 
 ### dicom:load-dicomweb
 
@@ -228,21 +257,21 @@ Needs: network read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --url | remote-url |  | URL of the DICOMweb service. |
-| --request | string | [] | Query parameters of the URL, see weasis-pacs-connector. |
-| -H, --header | string | [] | Custom header for every request. |
-| --query-header | string | [] | Custom header for the query requests (QIDO). |
-| --retrieve-header | string | [] | Custom header for the retrieve requests (WADO). |
-| --query-ext | string |  | Additional query URL parameters (QIDO). |
-| --retrieve-ext | string |  | Additional retrieve URL parameters (WADO). |
 | --accept-ext | string | transfer-syntax=* | Parameters of the multipart/related Accept header (default: transfer-syntax=*). |
 | --auth-uid | string |  | UID of the Weasis authentication method. |
+| -H, --header | string | [] | Custom header for every request. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --oidc-issuer | string |  | Issuer identifier of the OpenID Connect authentication request. (since 5.0) |
 | --oidc-user | string |  | Login hint of the end user (OpenID Connect). (since 5.0) |
+| --query-ext | string |  | Additional query URL parameters (QIDO). |
+| --query-header | string | [] | Custom header for the query requests (QIDO). |
+| --request | string | [] | Query parameters of the URL, see weasis-pacs-connector. |
+| --retrieve-ext | string |  | Additional retrieve URL parameters (WADO). |
+| --retrieve-header | string | [] | Custom header for the retrieve requests (WADO). |
 | --show-whole-study | boolean |  | When downloading a series, list the other series of the study, ready for download. |
-| --wait | enum | none | Answer when the loading reaches this point: none, first-series or all (default: none, or all when the option carries no value). (since 5.0) |
 | --timeout | integer | 600 | Give up waiting after this long (default: 600). (since 5.0) |
+| --url | remote-url |  | URL of the DICOMweb service. |
+| --wait | enum | none | Answer when the loading reaches this point: none, first-series or all (default: none, or all when the option carries no value). (since 5.0) |
 
 ### dicom:objects (since 5.0)
 
@@ -253,8 +282,8 @@ Usage: `dicom:objects [-h] [--json] [--series=<series-uid>] [--study=<study-uid>
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --study | study-uid |  | Study Instance UID from 'dicom:list'; default: every loaded study. |
 | --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list': only the objects that reference this series. |
+| --study | study-uid |  | Study Instance UID from 'dicom:list'; default: every loaded study. |
 | --type | string |  | Only this kind: ko, rejection, pr, seg, rtstruct, rtplan, rtdose, other. |
 
 ### dicom:open (since 5.0)
@@ -263,15 +292,29 @@ Opens a series: in the view given by --view, and in its pane given by --pane, in
 
 Usage: `dicom:open [-h] [--interest] [--json] [--wait[=<wait-level>]] [--pane=<pane-index>] --series=<series-uid> [--view=<view-id> | --viewer-type=<viewer-type>]`
 
+Produces: `view-id`
+
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list'. |
-| --view | view-id |  | Viewer id from 'workspace:list' that receives the series. |
-| --viewer-type | string |  | Opens a new view of this type, by id from 'dicom:info' (e.g. 'mpr'), or by the name the interface shows. (since 5.0) |
-| --pane | pane-index |  | Pane of --view that receives the series, from 1 (default: the selected one). (since 5.0) |
 | --interest | boolean |  | Show the images of interest only (referenced by a KO, an annotated PR or a SEG, or drawn on); the whole series when it has none. (since 5.0) |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane of --view that receives the series, from 1 (default: the selected one). (since 5.0) |
+| --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list'. |
+| --view | view-id |  | View id from 'workspace:list' that receives the series. |
+| --viewer-type | string |  | Opens a new view of this type, by id from 'dicom:info' (e.g. 'mpr'), or by the name the interface shows. (since 5.0) |
 | --wait | enum | none | Answer once the viewer has finished building its content, e.g. the MPR volume: none or all, since a viewer builds in one step (default: none, or all when the option carries no value). |
+
+| Result | Type | Description |
+|---|---|---|
+| target | object | the view and pane the command resolved |
+| target.view | view-id | the view |
+| target.pane | pane-index | the pane in its grid |
+| target.viewerType | string | the viewer type id |
+| target.series | series-uid | the series the pane shows |
+| target.image | image-index | the image shown, from 1 |
+| target.imageCount | integer | images of the series |
+| ready | boolean | true once the view finished building its content, with --wait |
+| warnings | array | what the view decided while opening, with -y |
 
 ### dicom:tag (since 5.0)
 
@@ -281,11 +324,11 @@ Usage: `dicom:tag [-h] [--json] [--image=<image-index>] [--tag=<dicom-keyword>] 
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --image | image-index | 1 | Image index in the series, from 1 (default: 1). |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list'. |
-| --view | view-id |  | Viewer id from 'workspace:list'; its selected pane gives the series. |
 | --tag | string |  | DICOM keyword (e.g. SliceLocation) or hexadecimal tag (gggg,eeee). (since 5.0) |
-| --image | image-index | 1 | Image index in the series, from 1 (default: 1). |
+| --view | view-id |  | View id from 'workspace:list'; its selected pane gives the series. |
 
 ### dicom:unload
 
@@ -295,11 +338,11 @@ Usage: `dicom:unload [-h] [--all] [--json] [--patient=<patient-handle>]... [--se
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --all | boolean |  | Unload every patient. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --patient | patient-handle | [] | Patient identifier to unload, as 'dicom:list' returns it. |
-| --study | study-uid | [] | Study Instance UID to unload. |
 | --series | series-uid | [] | Series Instance UID, or series id, to unload. |
+| --study | study-uid | [] | Study Instance UID to unload. |
 
 ### Events of dicom:
 
@@ -332,8 +375,8 @@ Usage: `events:list [-h] [--json] [--markdown] [--namespace=<namespace>]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --namespace | string |  | Only the events of this namespace. (since 5.0) |
 | --markdown | boolean |  | A Markdown table, for a reference page. (since 5.0) |
+| --namespace | string |  | Only the events of this namespace. (since 5.0) |
 
 ### events:recent (since 5.0)
 
@@ -345,10 +388,10 @@ Needs: events
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --since | integer | 0 | Only the events after this sequence number. (since 5.0) |
-| --last | integer | 50 | At most this many events, the newest ones (default: 50). (since 5.0) |
 | --filter | string |  | Event names to keep, with '*' as a wildcard: 'dicom:*,workspace:view.*'. (since 5.0) |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --last | integer | 50 | At most this many events, the newest ones (default: 50). (since 5.0) |
+| --since | integer | 0 | Only the events after this sequence number. (since 5.0) |
 | --where | string | [] | A payload value an event must carry; repeatable. (since 5.0) |
 
 ### events:subscribers (since 5.0)
@@ -384,14 +427,14 @@ Usage: `explorer:filter [-h] [--clear] [--json] [--text=<text>] [--interest=<int
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --clear | boolean |  | Clears every facet first. |
+| --interest | string | [] | Keep the series with images of interest: any, or pointed at by one of ko, graphics, pr, seg (repeatable, or comma-separated). |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --text | string |  | Free text over series and study attributes, anatomy and its region group. |
-| --study | study-uid | [] | Study Instance UID from 'dicom:list': only its series; repeatable, as a selection on the timeline strip. |
 | --modality | string | [] | Modalities to keep (repeatable, or comma-separated). |
 | --objects | string | [] | Keep the series referenced by an object of one of these kinds: ko, pr, seg, rtstruct, rtplan, rtdose, rejection, other (repeatable, or comma-separated). |
 | --state | string | [] | Download states to keep: complete, pending, downloading. |
-| --interest | string | [] | Keep the series with images of interest: any, or pointed at by one of ko, graphics, pr, seg (repeatable, or comma-separated). |
-| --clear | boolean |  | Clears every facet first. |
+| --study | study-uid | [] | Study Instance UID from 'dicom:list': only its series; repeatable, as a selection on the timeline strip. |
+| --text | string |  | Free text over series and study attributes, anatomy and its region group. |
 
 ### explorer:mode (since 5.0)
 
@@ -455,12 +498,12 @@ Needs: file read
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --study | study-uid |  | Study Instance UID from 'dicom:list'. |
+| --new-tab | boolean |  | Opens new viewers instead of re-hanging the one of the same patient. |
 | --protocol | string |  | Hangs this protocol from 'list' even when another one scores better. |
 | --protocols | input-path |  | A JSON file of protocol entries used instead of the layers, to try a draft. |
-| --step | integer |  | The reading step to hang, from 1 (default: the first). |
-| --new-tab | boolean |  | Opens new viewers instead of re-hanging the one of the same patient. |
 | --screen | screen-role |  | Opens the viewers of the step in a viewer window on the screen of this role (control, diagnostic-1, diagnostic-2, color, portrait, see 'workspace:screens'). |
+| --step | integer |  | The reading step to hang, from 1 (default: the first). |
+| --study | study-uid |  | Study Instance UID from 'dicom:list'. |
 
 ### hp:compare (since 5.0)
 
@@ -470,8 +513,8 @@ Usage: `hp:compare [-h] [--json] --current=<study-uid> [--protocol=<protocol-id>
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --current | study-uid |  | The current study, from 'dicom:list'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --prior | study-uid |  | A prior study of the same patient; repeatable. |
 | --protocol | string |  | Hangs this protocol from 'list' even when another one scores better. |
 
@@ -483,11 +526,11 @@ Usage: `hp:correct [-h] [--apply] [--json] --cell=<cell> --series=<series-uid> [
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --cell | integer |  | The cell to correct, from 1. |
-| --series | string |  | Series Instance UID of the study, from 'dicom:list' or 'explain'. |
 | --apply | boolean |  | Writes the proposed rule into the protocol (user protocols only). |
+| --cell | integer |  | The cell to correct, from 1. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | string |  | Series Instance UID of the study, from 'dicom:list' or 'explain'. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### hp:corrections (since 5.0)
 
@@ -509,8 +552,8 @@ Usage: `hp:delete [-h] [--json] --id=<protocol-id>`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --id | string |  | Protocol id from 'list'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 ### hp:explain (since 5.0)
 
@@ -520,9 +563,9 @@ Usage: `hp:explain [-h] [--json] [--cell=<cell>] [--view=<view-id>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --cell | integer |  | Only this cell, from 1. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 | Result | Type | Description |
 |---|---|---|
@@ -541,10 +584,10 @@ Needs: file write
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --id | string |  | Protocol id from 'list'. |
-| --out | output-path |  | Target file. |
 | --dicom | boolean |  | Writes a DICOM object instead of JSON. |
+| --id | string |  | Protocol id from 'list'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --out | output-path |  | Target file. |
 | --plain | boolean |  | Leaves the Weasis extensions out. |
 
 ### hp:feature (since 5.0)
@@ -555,10 +598,10 @@ Usage: `hp:feature [-h] [--json] [--by=<who>] --series=<series-uid> --set=<featu
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --by | string |  | 'user' (default) or 'agent': who states the value. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --series | string |  | Series Instance UID, from 'dicom:list' or 'features'. |
 | --set | string |  | A feature and its value, repeatable: orientation=CORONAL, mrWeighting=T2. |
-| --by | string |  | 'user' (default) or 'agent': who states the value. |
 
 | Result | Type | Description |
 |---|---|---|
@@ -577,9 +620,9 @@ Needs: file read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --corpus | input-path |  | A folder of DICOM studies read without a viewer, walked recursively. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --study | study-uid |  | Study Instance UID from 'dicom:list'. |
-| --corpus | input-path |  | A folder of DICOM studies read without a viewer, walked recursively. |
 
 | Result | Type | Description |
 |---|---|---|
@@ -593,12 +636,12 @@ Usage: `hp:group [-h] [--json] [--next] [--previous] [--index=<step>] [--protoco
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --index | integer |  | The step to show, from 1. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --next | boolean |  | The next step, the first one again after the last. |
 | --previous | boolean |  | The previous step. |
-| --index | integer |  | The step to show, from 1. |
 | --protocol | string |  | Hangs this candidate of the study instead, from its first step. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### hp:import (since 5.0)
 
@@ -610,9 +653,9 @@ Needs: file read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --file | input-path |  | Source file. |
 | --id | string |  | The id to store a single imported protocol under. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 ### hp:list (since 5.0)
 
@@ -635,9 +678,9 @@ Needs: file read
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --study | study-uid |  | Study Instance UID from 'dicom:list'. |
 | --protocol | string |  | Plans this protocol from 'list' even when another one scores better. |
 | --protocols | input-path |  | A JSON file of protocol entries matched instead of the layers, to try a draft. |
+| --study | study-uid |  | Study Instance UID from 'dicom:list'. |
 
 ### hp:open (since 5.0)
 
@@ -648,10 +691,10 @@ Usage: `hp:open [-h] [--json] [--new-tab] [--protocol=<protocol-id>] [--study=<s
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --study | study-uid |  | Study Instance UID from 'dicom:list'. |
-| --protocol | string |  | Hangs this protocol from 'list' even when another one scores better. |
-| --prior | study-uid |  | A prior study to compare with; repeatable. Default: every loaded prior. |
 | --new-tab | boolean |  | Opens new viewers instead of re-hanging the one of the same patient. |
+| --prior | study-uid |  | A prior study to compare with; repeatable. Default: every loaded prior. |
+| --protocol | string |  | Hangs this protocol from 'list' even when another one scores better. |
+| --study | study-uid |  | Study Instance UID from 'dicom:list'. |
 
 ### hp:save (since 5.0)
 
@@ -661,11 +704,11 @@ Usage: `hp:save [-h] [--dry-run] [--json] [--id=<protocol-id>] --name=<text> [--
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --name | string |  | The protocol name; the id is derived from it unless --id. |
-| --id | string |  | The entry id. |
 | --dry-run | boolean |  | Derives and reports without storing; matches the loaded studies. |
+| --id | string |  | The entry id. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --name | string |  | The protocol name; the id is derived from it unless --id. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### hp:sets (since 5.0)
 
@@ -676,7 +719,7 @@ Usage: `hp:sets [-h] [--json] [--view=<view-id>]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### hp:show (since 5.0)
 
@@ -686,8 +729,8 @@ Usage: `hp:show [-h] [--json] --id=<protocol-id>`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --id | string |  | Protocol id from 'list'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 ### hp:validate (since 5.0)
 
@@ -699,12 +742,12 @@ Needs: file read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --corpus | input-path |  | A folder of DICOM studies, walked recursively. |
-| --file | input-path |  | A JSON file of protocol entries checked for rule errors without any study: image set numbers unique and referenced, selectors known, one time-based item per set, grids the viewer offers. |
-| --protocols | input-path |  | A JSON file holding protocol entries (an array, or an object with a 'protocols' array) validated instead of the layers. |
-| --protocol | string |  | Only this protocol. |
 | --expected | input-path |  | A JSON file of expected hangings, {"studies": {"<study-uid>": {"protocol": <id>, "cells": {"1": <series-uid>}}}}: the report says per study whether the chosen protocol and the cells of its first step are the expected ones. |
+| --file | input-path |  | A JSON file of protocol entries checked for rule errors without any study: image set numbers unique and referenced, selectors known, one time-based item per set, grids the viewer offers. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --protocol | string |  | Only this protocol. |
+| --protocols | input-path |  | A JSON file holding protocol entries (an array, or an object with a 'protocols' array) validated instead of the layers. |
 
 
 ## image
@@ -721,9 +764,9 @@ Needs: file read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --a | input-path |  | First image. (since 5.0) |
 | --b | input-path |  | Second image. (since 5.0) |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --tolerance | integer | 0 | Channel difference below which two pixels count as equal, 0 to 255 (default: 0). (since 5.0) |
 
 ### image:list (since 5.0)
@@ -746,8 +789,8 @@ Needs: file read, network read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --file | input-path | [] | Image file to open. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --url | remote-url | [] | Image URL to download and open. |
 
 ### image:unload
@@ -758,9 +801,9 @@ Usage: `image:unload [-h] [--all] [--json] [--group=<group>]... [--series=<serie
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --all | boolean |  | Close every group. |
 | --group | string | [] | Group to close, as 'image:load' returns it. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --series | string | [] | Series or image to close, as 'image:load' returns it. |
 
 
@@ -809,9 +852,9 @@ Usage: `mpr:reformat [-h] [--json] [--no-open] --plane=<plane> [--series=<series
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --series | series-uid |  | The series reformatted, from 'dicom:list' (default: the selected pane's). |
-| --plane | string |  | AXIAL, CORONAL or SAGITTAL; not the plane the series already lies in. |
 | --no-open | boolean |  | Build the series without opening it. |
+| --plane | string |  | AXIAL, CORONAL or SAGITTAL; not the plane the series already lies in. |
+| --series | series-uid |  | The series reformatted, from 'dicom:list' (default: the selected pane's). |
 
 ### mpr:volumes (since 5.0)
 
@@ -838,8 +881,8 @@ Needs: file read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --file | input-path |  | The plugin jar. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 | Result | Type | Description |
 |---|---|---|
@@ -999,57 +1042,57 @@ Usage: `print:page [-h] [--json] [--series] [--annotations=<on|off>] [--backgrou
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Print only this pane of the layout, counting from 1. |
-| --to | string |  | Destination id or title from 'print:destinations': its papers and printable area apply (default: default margins on the paper of the locale). |
-| --paper | string |  | Paper id, such as A4, Letter or 14x17in (default: the destination's). |
-| --orientation | enum |  | Page orientation (default: landscape when the layout is wider than tall). |
-| --text | enum | auto | Text size of annotations and labels on paper (default: auto, 8 pt or 6 pt). |
-| --background | enum |  | Page background (default: the destination's, white for paper). |
 | --annotations | enum | on | Print the overlay and the graphics (default: on). |
-| --position | enum | center | Where an image sits in its cell (default: center). |
-| --masking | string |  | Identity masking profile applied to the page (default: none). |
-| --header | enum | off | Header line with patient, study and page number above the cells (default: off). (since 5.0) |
-| --series | boolean |  | Print the frames of the series of the pane (--pane, else the selected one) on pages of --grid cells, instead of the layout as shown. (since 5.0) |
-| --grid | string | 4x3 | Cells per page with --series (default: 4x3). (since 5.0) |
-| --step | integer | 1 | With --series, one frame out of n (default: 1). (since 5.0) |
+| --background | enum |  | Page background (default: the destination's, white for paper). |
 | --frames | string |  | With --series, the range of frames, counting from 1 (default: all). (since 5.0) |
+| --grid | string | 4x3 | Cells per page with --series (default: 4x3). (since 5.0) |
+| --header | enum | off | Header line with patient, study and page number above the cells (default: off). (since 5.0) |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --masking | string |  | Identity masking profile applied to the page (default: none). |
+| --orientation | enum |  | Page orientation (default: landscape when the layout is wider than tall). |
+| --pane | pane-index |  | Print only this pane of the layout, counting from 1. |
+| --paper | string |  | Paper id, such as A4, Letter or 14x17in (default: the destination's). |
+| --position | enum | center | Where an image sits in its cell (default: center). |
+| --series | boolean |  | Print the frames of the series of the pane (--pane, else the selected one) on pages of --grid cells, instead of the layout as shown. (since 5.0) |
+| --step | integer | 1 | With --series, one frame out of n (default: 1). (since 5.0) |
+| --text | enum | auto | Text size of annotations and labels on paper (default: auto, 8 pt or 6 pt). |
+| --to | string |  | Destination id or title from 'print:destinations': its papers and printable area apply (default: default margins on the paper of the locale). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### print:render
 
 Renders the page of a job to a PNG file at a resolution, as the printer would receive it: the preview of an agent and the test surface of a layout.
 
-Usage: `print:render [-h] [--gray] [--json] [--dpi=<dpi>] --job=<job-id> --out=<file.png> [--page=<n>] [--to=<destination>]`
+Usage: `print:render [-h] [--gray] [--json] [--dpi=<dpi>] --job=<job-id> --out=<output-path> [--page=<n>] [--to=<destination>]`
 
 Needs: file write
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --job | string |  | Job from 'print:page'. |
-| --to | string |  | Render for this destination: its printable area and resolution apply. |
 | --dpi | integer |  | Resolution of the raster (default: the destination's, else 150). |
 | --gray | boolean |  | Render in 8-bit gray, as a gray film printer receives it. |
-| --page | integer | 1 | The page to render, counting from 1 (default: 1). (since 5.0) |
+| --job | string |  | Job from 'print:page'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --out | output-path |  | The PNG file to write. |
+| --page | integer | 1 | The page to render, counting from 1 (default: 1). (since 5.0) |
+| --to | string |  | Render for this destination: its printable area and resolution apply. |
 
 ### print:send
 
 Prints a job on a destination and releases it. Sending patient images to a device is closed to callers unless the network.write policy of this instance allows it, as for dicom:send.
 
-Usage: `print:send [-h] [--json] [--copies=<n>] [--dpi=<dpi>] --job=<job-id> [--out=<file.pdf>] --to=<destination>`
+Usage: `print:send [-h] [--json] [--copies=<n>] [--dpi=<dpi>] --job=<job-id> [--out=<output-path>] --to=<destination>`
 
 Needs: file write, send dicom
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --job | string |  | Job from 'print:page'. |
-| --to | string |  | Destination id or title from 'print:destinations'. |
 | --copies | integer | 1 | Number of copies (default: 1). |
-| --out | output-path |  | The file to write, for the PDF file destination (file:pdf). (since 5.0) |
 | --dpi | integer |  | Resolution of the pages written to the file (default: 300). (since 5.0) |
+| --job | string |  | Job from 'print:page'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --out | output-path |  | The file to write, for the PDF file destination (file:pdf). (since 5.0) |
+| --to | string |  | Destination id or title from 'print:destinations'. |
 
 
 ## redact
@@ -1060,17 +1103,17 @@ Regions burned over the pixels of a view, and the device library they can come f
 
 Hides an area of the selected view.
 
-Usage: `redact:add [-h] [--json] [--pane=<pane-index>] [--scope=<scope>] [--view=<view-id>] (--rect=<image-rect> | --ellipse=<image-rect> | --polygon=<image-polygon>)`
+Usage: `redact:add [-h] [--json] [--pane=<pane-index>] [--scope=<scope>] [--view=<view-id>] (--ellipse=<image-rect> | --polygon=<image-polygon> | --rect=<image-rect>)`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --rect | image-rect |  | Axis-aligned rectangle, in image pixels. |
 | --ellipse | image-rect |  | Ellipse inscribed in this rectangle. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
 | --polygon | image-polygon |  | Closed outline as x,y pairs (three at least). |
+| --rect | image-rect |  | Axis-aligned rectangle, in image pixels. |
 | --scope | enum | IMAGE | Where it applies: IMAGE, SERIES. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### redact:apply (since 5.0)
 
@@ -1080,11 +1123,11 @@ Usage: `redact:apply [-h] [--json] --entry=<entry-id> [--pane=<pane-index>] [--s
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --entry | entry-id |  | Device entry from 'redact:library'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
 | --scope | enum | IMAGE | Where it applies: IMAGE, SERIES. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### redact:attest (since 5.0)
 
@@ -1096,12 +1139,12 @@ Needs: pixel attest
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --scope | enum | IMAGE | Where it applies: IMAGE, SERIES. |
 | --by | string |  | Who reviewed the pixels; required unless --withdraw. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
 | --reason | string |  | What the review was, such as the catalog and the date it was recorded. |
+| --scope | enum | IMAGE | Where it applies: IMAGE, SERIES. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 | --withdraw | boolean |  | Takes back the attestation of that scope. |
 
 ### redact:clear (since 5.0)
@@ -1113,9 +1156,9 @@ Usage: `redact:clear [-h] [--json] [--pane=<pane-index>] [--scope=<scope>] [--vi
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
 | --scope | enum | IMAGE | Where it applies: IMAGE, SERIES. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### redact:delete (since 5.0)
 
@@ -1125,8 +1168,8 @@ Usage: `redact:delete [-h] [--json] --entry=<entry-id>`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --entry | entry-id |  | Device entry from 'redact:library'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 ### redact:export (since 5.0)
 
@@ -1138,12 +1181,12 @@ Needs: file write
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --out | output-path |  | File to write. |
-| --force | boolean |  | Replace the file when it exists and was not written by this session. (since 5.0) |
-| --karnak | boolean |  | Write the masks block of a Karnak profile. |
 | --complete | boolean |  | Write a whole Karnak profile, not only its masks block. |
+| --force | boolean |  | Replace the file when it exists and was not written by this session. (since 5.0) |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --karnak | boolean |  | Write the masks block of a Karnak profile. |
 | --masking-profile | masking-profile-id |  | Masking profile of a Karnak export (default: the session one). (since 5.0) |
+| --out | output-path |  | File to write. |
 
 ### redact:import (since 5.0)
 
@@ -1155,8 +1198,8 @@ Needs: file read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --file | input-path |  | Document to read. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --karnak | boolean |  | Read the masks block of a Karnak profile. |
 
 ### redact:library (since 5.0)
@@ -1178,8 +1221,8 @@ Usage: `redact:list [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### redact:match (since 5.0)
 
@@ -1190,8 +1233,8 @@ Usage: `redact:match [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### redact:save (since 5.0)
 
@@ -1201,11 +1244,11 @@ Usage: `redact:save [-h] [--json] [--entry=<entry-id>] [--name=<name>] [--pane=<
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --name | string |  | Name of the entry (default: the station name of the series). |
 | --entry | entry-id |  | Entry to replace (default: a new one). |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --name | string |  | Name of the entry (default: the station name of the series). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 
 ## script
@@ -1222,8 +1265,8 @@ Needs: file read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --file | input-path |  | The script to read, one command per line. (since 5.0) |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 ### script:pause (since 5.0)
 
@@ -1246,18 +1289,18 @@ Needs: file read, file write
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --file | input-path |  | The script to read, one command per line. (since 5.0) |
-| --set | string | {} | A parameter the script reads as null. (since 5.0) |
-| --keep-going | boolean |  | Run the remaining steps after a failing one. (since 5.0) |
-| --delay | integer | 0 | Wait this long between steps (default: 0). (since 5.0) |
-| --from | integer | 1 | First step to run, counting from 1. (since 5.0) |
-| --to | integer |  | Last step to run (default: the last one). (since 5.0) |
-| --timeout | integer | 0 | Give up after this long, 0 to wait as long as it takes. (since 5.0) |
 | --brief | boolean |  | Leave the body of each step out of the answer. (since 5.0) |
+| --delay | integer | 0 | Wait this long between steps (default: 0). (since 5.0) |
+| --file | input-path |  | The script to read, one command per line. (since 5.0) |
+| --from | integer | 1 | First step to run, counting from 1. (since 5.0) |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --keep | boolean |  | Leave the display as the failing step left it, instead of restoring the checkpoint taken before the first step (the default for a remote caller). (since 5.0) |
-| --rollback | boolean |  | Restore the checkpoint taken before the first step when a step fails (the default for a remote caller; a script of the launch arguments keeps the display). (since 5.0) |
+| --keep-going | boolean |  | Run the remaining steps after a failing one. (since 5.0) |
 | --report | output-path |  | Write a JUnit XML report of the run to this file. (since 5.0) |
+| --rollback | boolean |  | Restore the checkpoint taken before the first step when a step fails (the default for a remote caller; a script of the launch arguments keeps the display). (since 5.0) |
+| --set | string | {} | A parameter the script reads as null. (since 5.0) |
+| --timeout | integer | 0 | Give up after this long, 0 to wait as long as it takes. (since 5.0) |
+| --to | integer |  | Last step to run (default: the last one). (since 5.0) |
 
 
 ## state
@@ -1331,8 +1374,8 @@ Usage: `state:diff [-h] [--json] --from=<checkpoint-id> [--to=<checkpoint-id>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --from | string |  | The older checkpoint, from 'checkpoints'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --to | string |  | The newer checkpoint (default: the display now). |
 
 | Result | Type | Description |
@@ -1351,11 +1394,11 @@ Needs: file write
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --dicom | boolean |  | Writes DICOM objects instead of the JSON. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
+| --out | output-path |  | Target directory, created when missing. |
 | --session | string |  | Session id from 'list'. |
 | --study | study-uid |  | The most recent session showing this study instead of an id. |
-| --out | output-path |  | Target directory, created when missing. |
-| --dicom | boolean |  | Writes DICOM objects instead of the JSON. |
 
 | Result | Type | Description |
 |---|---|---|
@@ -1372,10 +1415,10 @@ Usage: `state:keep [-h] [--json] [--pin] [--from-checkpoint=<checkpoint-id>] [--
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --from-checkpoint | string |  | Promotes a checkpoint from 'checkpoints' to a session instead of the display. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --label | string |  | A label for the list. |
 | --pin | boolean |  | Keeps the session out of the retention by number. |
-| --from-checkpoint | string |  | Promotes a checkpoint from 'checkpoints' to a session instead of the display. |
 
 | Result | Type | Description |
 |---|---|---|
@@ -1438,10 +1481,10 @@ Usage: `state:rollback [-h] [--close-new] [--dry-run] [--json] [--to=<checkpoint
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --to | string |  | Checkpoint id from 'checkpoints' (default: the latest). |
 | --close-new | boolean |  | Close the studies loaded since the checkpoint. |
 | --dry-run | boolean |  | Only say what differs between the checkpoint and the display. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --to | string |  | Checkpoint id from 'checkpoints' (default: the latest). |
 
 | Result | Type | Description |
 |---|---|---|
@@ -1487,23 +1530,23 @@ Usage: `subtraction:create [-h] [--absolute] [--all-phases] [--json] [--mip] [--
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --series | series-uid |  | The series subtracted from, from 'dicom:list' (default: the series of the selected pane). |
-| --mask | series-uid |  | The series subtracted, from 'dicom:list' (default: the series of the study without contrast agent, else the earliest compatible one). |
-| --phase | integer |  | Phase of a dynamic series to subtract from, from 'subtraction:phases' (default: every slice of the series). |
-| --mask-phase | integer |  | Phase of the mask series to subtract (default: the first phase when the mask is the series itself). |
-| --all-phases | boolean |  | Build one series per phase of the series minus the mask phase; the first one opens. |
-| --mip | boolean |  | Open the result as a maximum intensity projection through all its slices. |
-| --factor | number |  | Weight of the mask: 1 subtracts it fully, below 1 keeps part of the anatomy (default: 1). |
-| --offset | number |  | Value added to every difference (default: 0). |
 | --absolute | boolean |  | Store the absolute difference. |
-| --signed | boolean |  | Open with the signed window, negative differences visible, instead of black below zero. |
+| --all-phases | boolean |  | Build one series per phase of the series minus the mask phase; the first one opens. |
+| --factor | number |  | Weight of the mask: 1 subtracts it fully, below 1 keeps part of the anatomy (default: 1). |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --mask | series-uid |  | The series subtracted, from 'dicom:list' (default: the series of the study without contrast agent, else the earliest compatible one). |
 | --mask-frames | string |  | DSA: mask frames of the run itself, from 1 ('3', '2-4' averaged, '1,3,5'); the series is an X-ray run (default for a run: the frames its DICOM names, else frame 1). |
-| --tid-offset | integer |  | DSA: time-interval mask, each frame minus the frame that many before it. |
-| --shift | string |  | DSA: sub-pixel shift of the mask in pixels, down and right when positive. |
+| --mask-phase | integer |  | Phase of the mask series to subtract (default: the first phase when the mask is the series itself). |
+| --mip | boolean |  | Open the result as a maximum intensity projection through all its slices. |
 | --motion-correction | boolean |  | Move the mask of each slice onto it by the translation phase correlation measures (default: what the pane previews, else off). |
-| --normalize | string |  | Weight the mask so that its mean equals the one of the series, over the whole slices or over a pixel rectangle 'x,y,width,height' of every slice: the dual-tracer normalization of nuclear medicine; overrides --factor. |
 | --no-open | boolean |  | Build the series without opening it. |
+| --normalize | string |  | Weight the mask so that its mean equals the one of the series, over the whole slices or over a pixel rectangle 'x,y,width,height' of every slice: the dual-tracer normalization of nuclear medicine; overrides --factor. |
+| --offset | number |  | Value added to every difference (default: 0). |
+| --phase | integer |  | Phase of a dynamic series to subtract from, from 'subtraction:phases' (default: every slice of the series). |
+| --series | series-uid |  | The series subtracted from, from 'dicom:list' (default: the series of the selected pane). |
+| --shift | string |  | DSA: sub-pixel shift of the mask in pixels, down and right when positive. |
+| --signed | boolean |  | Open with the signed window, negative differences visible, instead of black below zero. |
+| --tid-offset | integer |  | DSA: time-interval mask, each frame minus the frame that many before it. |
 
 ### subtraction:delete (since 5.0)
 
@@ -1546,11 +1589,11 @@ Usage: `subtraction:mask [-h] [--json] [--frames=<frames>] [--pane=<pane-index>]
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --frames | string |  | Mask frame numbers from 1: one ('3'), a range averaged ('2-4') or a list ('1,3,5'). |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
 | --tid-offset | integer |  | Time-interval mask: each frame minus the frame that many positions before it; negative for the frame after it. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### subtraction:phases (since 5.0)
 
@@ -1571,13 +1614,13 @@ Usage: `subtraction:preview [-h] [--json] [--off] [--motion-correction[=<on>]] [
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --mask | series-uid |  | The series subtracted, from 'dicom:list' (default: the series of the study without contrast agent, else the earliest compatible one). |
 | --factor | number |  | Weight of the mask, 1 subtracts it fully (default: 1). |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --mask | series-uid |  | The series subtracted, from 'dicom:list' (default: the series of the study without contrast agent, else the earliest compatible one). |
 | --motion-correction | boolean |  | Moves the mask of each slice onto it by the translation phase correlation measures (true when given without a value; false switches it off). |
 | --off | boolean |  | Leaves the preview, the plain series stays shown. |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### subtraction:shift (since 5.0)
 
@@ -1587,11 +1630,11 @@ Usage: `subtraction:shift [-h] [--json] [--columns=<pixels>] [--pane=<pane-index
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --rows | number |  | Vertical shift of the mask in pixels (default: unchanged). |
 | --columns | number |  | Horizontal shift of the mask in pixels (default: unchanged). |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --rows | number |  | Vertical shift of the mask in pixels (default: unchanged). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 
 ## ui
@@ -1606,8 +1649,8 @@ Usage: `ui:action [-h] [--json] --id=<action-id>`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --id | string |  | From 'actions'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 ### ui:actions (since 5.0)
 
@@ -1617,8 +1660,8 @@ Usage: `ui:actions [-h] [--json] [--relevant] [--filter=<text>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --filter | string |  | Keeps the actions whose label, group or id contain every word, best first. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --relevant | boolean |  | Keeps the actions the selected view shows. |
 
 ### ui:context (since 5.0)
@@ -1639,11 +1682,11 @@ Usage: `ui:profile [-h] [--apply] [--clear] [--delete] [--json] [--id=<ui-profil
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --id | string |  | Profile id from 'profiles'. |
 | --apply | boolean |  | Lays --id over the workspace now. |
 | --clear | boolean |  | Releases the active profile. |
 | --delete | boolean |  | Removes --id from the user layer. |
+| --id | string |  | Profile id from 'profiles'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 ### ui:profiles (since 5.0)
 
@@ -1664,8 +1707,8 @@ Usage: `ui:reveal [-h] [--json] [--tool=<tool-id>] [--toolbar=<toolbar-id>]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --toolbar | string |  | Toolbar id from 'hidden.toolbars'. |
 | --tool | string |  | Tool id from 'hidden.tools'. |
+| --toolbar | string |  | Toolbar id from 'hidden.toolbars'. |
 
 
 ## view2d
@@ -1680,13 +1723,13 @@ Usage: `view2d:annotate [-h] [--canvas] [--json] [--at=<image-point>] [--label-a
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --at | image-point |  | Place the annotation points at; without it the text stands alone. |
-| --text | string |  | Text to show. |
-| --label-at | image-point |  | Position of the text itself (default: above and right of --at). |
 | --canvas | boolean |  | Coordinates are canvas pixels (as in a capture) instead of image pixels. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --label-at | image-point |  | Position of the text itself (default: above and right of --at). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --text | string |  | Text to show. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:capture (since 5.0)
 
@@ -1698,15 +1741,15 @@ Needs: file write
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --out | output-path |  | File to write; the extension selects PNG or JPEG (.jpg). |
-| --force | boolean |  | Replace the file when it exists and was not written by this session. (since 5.0) |
-| --crop | canvas-rect |  | Crop to this region of the canvas before scaling. (since 5.0) |
-| --max-pixels | integer |  | Downscale so the file has at most this many pixels (default: 2000000 for the canvas, none for the image frame). |
-| --frame | enum | canvas | canvas (default): the pane as displayed, its size and zoom; image: one pixel per displayed image pixel, whatever the pane, the zoom and the pan. (since 5.0) |
 | --annotations | enum |  | Text, scale, orientation, drawings and cross-lines: on or off (default: as displayed for the canvas, off for the image frame). (since 5.0) |
+| --crop | canvas-rect |  | Crop to this region of the canvas before scaling. (since 5.0) |
+| --force | boolean |  | Replace the file when it exists and was not written by this session. (since 5.0) |
+| --frame | enum | canvas | canvas (default): the pane as displayed, its size and zoom; image: one pixel per displayed image pixel, whatever the pane, the zoom and the pan. (since 5.0) |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --max-pixels | integer |  | Downscale so the file has at most this many pixels (default: 2000000 for the canvas, none for the image frame). |
+| --out | output-path |  | File to write; the extension selects PNG or JPEG (.jpg). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:clear-ai (since 5.0)
 
@@ -1717,8 +1760,8 @@ Usage: `view2d:clear-ai [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:flip (since 5.0)
 
@@ -1732,10 +1775,10 @@ Usage: `view2d:flip [-h] [--json] [--axis=<flip-axis>] [--pane=<pane-index>] [--
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --axis | enum | horizontal | horizontal or vertical (default: horizontal). (since 5.0) |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:fusion (since 5.0)
 
@@ -1745,13 +1788,13 @@ Usage: `view2d:fusion [-h] [--json] [--off] [--color-map=<color-map-id>] [--opac
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --series | series-uid |  | The overlay series, from 'dicom:list'; it must share the frame of reference. |
 | --color-map | string |  | Color map of the overlay, from 'color:maps'. |
-| --opacity | number |  | Opacity of the overlay, 0 transparent to 1 opaque. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --off | boolean |  | Removes the overlay. |
+| --opacity | number |  | Opacity of the overlay, 0 transparent to 1 opaque. |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --series | series-uid |  | The overlay series, from 'dicom:list'; it must share the frame of reference. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:graphics (since 5.0)
 
@@ -1759,29 +1802,69 @@ Lists the graphics of the view: id, type, layer, vertices and measurements, so m
 
 Usage: `view2d:graphics [-h] [--json] [--no-measurements] [--after=<n>] [--layer=<layer-name>] [--limit=<n>] [--pane=<pane-index>] [--view=<view-id>]`
 
+Produces: `graphic-id`
+
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --layer | layer-name |  | Only the graphics of this layer name, e.g. AI. |
-| --no-measurements | boolean |  | Skip the measurement values. |
-| --limit | integer |  | At most this many entries (default: all of them). (since 5.0) |
 | --after | integer |  | Skip the first n entries, as the previous answer's 'next' says. (since 5.0) |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --layer | layer-name |  | Only the graphics of this layer name, e.g. AI. |
+| --limit | integer |  | At most this many entries (default: all of them). (since 5.0) |
+| --no-measurements | boolean |  | Skip the measurement values. |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
+
+| Result | Type | Description |
+|---|---|---|
+| target | object | the view and pane the command resolved |
+| target.view | view-id | the view |
+| target.pane | pane-index | the pane in its grid |
+| target.viewerType | string | the viewer type id |
+| target.series | series-uid | the series the pane shows |
+| target.image | image-index | the image shown, from 1 |
+| target.imageCount | integer | images of the series |
+| graphics | array | the graphics of the image |
+| graphics[].id | graphic-id | the graphic id |
+| graphics[].type | string | the graphic type |
+| graphics[].layer | object | the layer of the graphic |
+| graphics[].layer.name | layer-name | the layer name |
+| graphics[].layer.type | string | the layer type |
+| graphics[].points | array | the points in image pixels, as x,y pairs |
+| graphics[].labels | array | the labels drawn next to the graphic |
+| graphics[].measurements | array | the measured values of the graphic |
+| graphics[].measurements[].key | string | stable name of the measurement |
+| graphics[].measurements[].name | string | English name |
+| graphics[].measurements[].value | number | the value |
+| graphics[].measurements[].unit | string | UCUM code of the unit |
+| graphics[].measurements[].provenance | object | where the calibration comes from |
+| total | integer | graphics before the window |
+| truncated | boolean | true when the window cut the list |
+| next | integer | offset of the next window, when truncated |
 
 ### view2d:grid
 
 Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.
 
-Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--grid=<grid-id> | --best-for=<n> | --panes=<n>]`
+Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--best-for=<n> | --grid=<grid-id> | --panes=<n>]`
+
+Produces: `grid-id`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --grid | grid-id |  | Applies this grid, by id from the bare verb. |
 | --best-for | integer |  | Returns the best grid for this number of panes without applying it. (since 5.0) |
+| --grid | grid-id |  | Applies this grid, by id from the bare verb. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --panes | integer |  | Applies the best grid for this number of panes. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
+
+| Result | Type | Description |
+|---|---|---|
+| grids | array | the grids the view offers, when none was applied |
+| grids[].grid | grid-id | the grid id |
+| grids[].panes | integer | panes of the grid |
+| grids[].selected | boolean | true for the grid in use |
+| grid | grid-id | the grid applied, when one was |
+| panes | integer | panes of the grid applied |
 
 ### view2d:hang (since 5.0)
 
@@ -1793,14 +1876,14 @@ Needs: file read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --grid | grid-id |  | Grid to apply, by id from 'grid'. |
 | --cell | string |  | Series shown in that cell, from 1; an empty value clears the cell. |
-| --tiled | string |  | Tiles of that cell; 1x1 returns it to a single image. |
-| --sync | enum |  | none, stack or tile, among the modes the viewer offers. |
-| --select | integer |  | Cell to select, from 1. |
 | --file | input-path |  | A layout written by 'workspace:save' or by this verb without argument. |
+| --grid | grid-id |  | Grid to apply, by id from 'grid'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --select | integer |  | Cell to select, from 1. |
+| --sync | enum |  | none, stack or tile, among the modes the viewer offers. |
+| --tiled | string |  | Tiles of that cell; 1x1 returns it to a single image. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:measure (since 5.0)
 
@@ -1808,14 +1891,37 @@ Draws a measurement on the AI layer of the view and returns its values, in the s
 
 Usage: `view2d:measure [-h] [--canvas] [--json] [--pane=<pane-index>] --points=<image-polygon> --type=<type> [--view=<view-id>]`
 
+Produces: `graphic-id`
+
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --type | enum |  | LINE, POLYLINE, RECTANGLE, ELLIPSE, CIRCLE, POLYGON, ANGLE. |
-| --points | image-polygon |  | Vertices as x,y pairs; rectangle and ellipse take two opposite corners. |
 | --canvas | boolean |  | Coordinates are canvas pixels (as in a capture) instead of image pixels. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --points | image-polygon |  | Vertices as x,y pairs; rectangle and ellipse take two opposite corners. |
+| --type | enum |  | LINE, POLYLINE, RECTANGLE, ELLIPSE, CIRCLE, POLYGON, ANGLE. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
+
+| Result | Type | Description |
+|---|---|---|
+| target | object | the view and pane the command resolved |
+| target.view | view-id | the view |
+| target.pane | pane-index | the pane in its grid |
+| target.viewerType | string | the viewer type id |
+| target.series | series-uid | the series the pane shows |
+| target.image | image-index | the image shown, from 1 |
+| target.imageCount | integer | images of the series |
+| id | graphic-id | the graphic drawn |
+| type | string | the graphic type |
+| layer | object | the layer of the graphic |
+| layer.name | layer-name | the layer name, AI for a remote caller |
+| layer.type | string | the layer type |
+| measurements | array | the measured values of the graphic |
+| measurements[].key | string | stable name of the measurement |
+| measurements[].name | string | English name |
+| measurements[].value | number | the value |
+| measurements[].unit | string | UCUM code of the unit |
+| measurements[].provenance | object | where the calibration comes from |
 
 ### view2d:mouse-action
 
@@ -1825,9 +1931,9 @@ Usage: `view2d:mouse-action [-h] [--json] [--action=<mouse-action-type>] [--butt
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --button | enum | left | left, middle, right or wheel (default: left). (since 5.0) |
 | --action | enum |  | sequence, window-level, zoom, pan, rotation, crosshair, measure, draw, context-menu or none. (since 5.0) |
+| --button | enum | left | left, middle, right or wheel (default: left). (since 5.0) |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 ### view2d:pan
 
@@ -1837,11 +1943,11 @@ Usage: `view2d:pan [-h] [--json] [--dx=<canvas-pixels>] [--dy=<canvas-pixels>] [
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --dx | integer |  | Horizontal offset, positive to the right. (since 5.0) |
 | --dy | integer |  | Vertical offset, positive downwards. (since 5.0) |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:preset (since 5.0)
 
@@ -1849,12 +1955,23 @@ Applies a window/level preset to a pane and returns its display state, or lists 
 
 Usage: `view2d:preset [-h] [--json] [--pane=<pane-index>] [--preset=<preset-id>] [--view=<view-id>]`
 
+Produces: `preset-id`
+
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
 | --preset | preset-id |  | Preset id, or its name as the viewer shows it. (since 5.0) |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
+
+| Result | Type | Description |
+|---|---|---|
+| presets | array | the presets of the series, the selected one marked |
+| presets[].preset | preset-id | the preset id |
+| presets[].name | string | the name shown |
+| presets[].selected | boolean | true for the preset applied |
+| presets[].window | window-width | the window width |
+| presets[].level | window-center | the window center |
 
 ### view2d:redo (since 5.0)
 
@@ -1865,8 +1982,8 @@ Usage: `view2d:redo [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:reset
 
@@ -1876,11 +1993,11 @@ Usage: `view2d:reset [-h] [--all] [--json] [--pane=<pane-index>] [--view=<view-i
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --all | boolean |  | Reset everything to the original display. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
 | --tool | enum | [] | window-level, zoom, pan or rotation; repeat it for several. (since 5.0) |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:rotate (since 5.0)
 
@@ -1890,11 +2007,11 @@ Usage: `view2d:rotate [-h] [--json] [--by=<degrees>] [--degrees=<degrees>] [--pa
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --degrees | degrees |  | Absolute angle, clockwise; any integer, reduced to 0-359. |
 | --by | integer |  | Turns by this many degrees, negative counter-clockwise. (since 5.0) |
+| --degrees | degrees |  | Absolute angle, clockwise; any integer, reduced to 0-359. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:scroll
 
@@ -1904,11 +2021,11 @@ Usage: `view2d:scroll [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --by | integer |  | Moves by this many images, negative towards the first one. |
 | --image | image-index |  | Image to show, from 1. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:sort (since 5.0)
 
@@ -1918,28 +2035,28 @@ Usage: `view2d:sort [-h] [--json] [--inverse=<true|false>] [--key=<sort-key>] [-
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --key | string |  | instance, slice-position, slice-location, content-time, acquisition-time, b-value. |
 | --inverse | boolean |  | Reads the stack backwards. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --key | string |  | instance, slice-position, slice-location, content-time, acquisition-time, b-value. |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:stats (since 5.0)
 
 Pixel statistics of a region (min, max, mean, median, standard deviation, ...) in the image value unit, e.g. HU, plus the region geometry in the spatial unit.
 
-Usage: `view2d:stats [-h] [--canvas] [--json] [--pane=<pane-index>] [--view=<view-id>] (--rect=<image-rect> | --ellipse=<image-rect> | --polygon=<image-polygon> | --graphic=<graphic-id>)`
+Usage: `view2d:stats [-h] [--canvas] [--json] [--pane=<pane-index>] [--view=<view-id>] (--ellipse=<image-rect> | --graphic=<graphic-id> | --polygon=<image-polygon> | --rect=<image-rect>)`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --rect | image-rect |  | Axis-aligned rectangle, in image pixels unless --canvas is given. |
-| --ellipse | image-rect |  | Ellipse inscribed in this rectangle. |
-| --polygon | image-polygon |  | Polygon vertices as x,y pairs (three at least). |
-| --graphic | graphic-id |  | Id of an existing area graphic of the view, from 'graphics'. |
 | --canvas | boolean |  | Coordinates are canvas pixels (as in a capture) instead of image pixels. |
+| --ellipse | image-rect |  | Ellipse inscribed in this rectangle. |
+| --graphic | graphic-id |  | Id of an existing area graphic of the view, from 'graphics'. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --polygon | image-polygon |  | Polygon vertices as x,y pairs (three at least). |
+| --rect | image-rect |  | Axis-aligned rectangle, in image pixels unless --canvas is given. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:sync
 
@@ -1950,8 +2067,8 @@ Usage: `view2d:sync [-h] [--json] [--mode=<sync-mode>] [--view=<view-id>]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
 | --mode | enum |  | none, stack or tile, among the modes the viewer offers. (since 5.0) |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:undo (since 5.0)
 
@@ -1962,22 +2079,22 @@ Usage: `view2d:undo [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:viewport (since 5.0)
 
 Viewport of a pane: --tiled shows its series on a grid of tiles, --stack returns it to one image; the state of the viewer, with its cells, is returned. With no argument the state is returned unchanged.
 
-Usage: `view2d:viewport [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--tiled=<cols>x<rows> | --stack]`
+Usage: `view2d:viewport [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--stack | --tiled=<cols>x<rows>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --tiled | string |  | Shows the series of the pane on this grid of tiles, successive images. (since 5.0) |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
 | --stack | boolean |  | Returns the pane to a single image. (since 5.0) |
+| --tiled | string |  | Shows the series of the pane on this grid of tiles, successive images. (since 5.0) |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:window-level
 
@@ -1988,27 +2105,27 @@ Usage: `view2d:window-level [-h] [--json] [--level-by=<steps>] [--pane=<pane-ind
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --window | window-width |  | Width of the window, in the unit of the pixels. (since 5.0) |
 | --level | window-center |  | Centre of the window, in the unit of the pixels. (since 5.0) |
-| --window-by | integer |  | Widens the window by this many slider steps, negative to narrow it. (since 5.0) |
 | --level-by | integer |  | Raises the level by this many slider steps, negative to lower it. (since 5.0) |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
+| --window | window-width |  | Width of the window, in the unit of the pixels. (since 5.0) |
+| --window-by | integer |  | Widens the window by this many slider steps, negative to narrow it. (since 5.0) |
 
 ### view2d:zoom
 
 Changes the zoom of a pane and returns its display state; with no argument the state is returned unchanged.
 
-Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--set=<magnification> | --fit=<zoom-fit> | --by=<steps>]`
+Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by=<steps> | --fit=<zoom-fit> | --set=<magnification>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
-| --fit | enum |  | default, real-size or best-fit. |
 | --by | integer |  | Moves the zoom slider by this many steps, negative to zoom out. |
+| --fit | enum |  | default, real-size or best-fit. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --set | magnification |  | Magnification, 1 being one image pixel per canvas pixel. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### Events of view2d:
 
@@ -2047,9 +2164,9 @@ Usage: `weasis:feedback [-h] [--json] [--open] [--feature=<text>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --feature | string |  | The feature of the finding, preselected in the form. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --open | boolean |  | Open the form in the default browser. |
-| --feature | string |  | The feature of the finding, preselected in the form. |
 
 | Result | Type | Description |
 |---|---|---|
@@ -2068,9 +2185,9 @@ Usage: `weasis:info [-h] [--integrity] [--json] [--plugins]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --integrity | boolean |  | The integrity of the configuration and the plugins: the level reached (signed, digest, none), the signing key, the entries verified and the failures. (since 5.0) |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --plugins | boolean |  | The loaded-plugins manifest: policy, lock, fingerprint and every plugin. (since 5.0) |
-| --integrity | boolean |  | The integrity of the configuration and the plugins: the level reached (signed, digest, none), the signing key, the entries verified and the failures. (since 5.0) |
 
 ### weasis:minimize (since 5.0)
 
@@ -2149,10 +2266,10 @@ Usage: `workspace:detach [-h] [--json] [--bounds=<screen-rect>] [--screen=<scree
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | View id from 'workspace:list'. |
 | --bounds | screen-rect |  | Screen bounds of the new window, as x,y,width,height. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --screen | screen-role |  | Screen by role: control, diagnostic-1, diagnostic-2, color, portrait. |
+| --view | view-id |  | View id from 'workspace:list'. |
 
 ### workspace:fullscreen (since 5.0)
 
@@ -2162,10 +2279,10 @@ Usage: `workspace:fullscreen [-h] [--canvas] [--json] [--off] [--view=<view-id>]
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | View id from 'workspace:list' whose window is meant (default: the active one). |
-| --off | boolean |  | Ends the fullscreen state of that window. |
 | --canvas | boolean |  | The selected pane of the view alone fills the viewer, the window and the monitor (what F11 and a double click do); --off ends it. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --off | boolean |  | Ends the fullscreen state of that window. |
+| --view | view-id |  | View id from 'workspace:list' whose window is meant (default: the active one). |
 
 ### workspace:list
 
@@ -2173,11 +2290,36 @@ Windows, tab groups and views as JSON.
 
 Usage: `workspace:list [-h] [--json] [--after=<n>] [--limit=<n>]`
 
+Produces: `view-id`
+
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --after | integer |  | Skip the first n entries, as the previous answer's 'next' says. (since 5.0) |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --limit | integer |  | At most this many entries (default: all of them). (since 5.0) |
-| --after | integer |  | Skip the first n entries, as the previous answer's 'next' says. (since 5.0) |
+
+| Result | Type | Description |
+|---|---|---|
+| selected | view-id | the selected view |
+| windows | array | the windows, the main one first |
+| windows[].window | integer | window number, from 1 |
+| windows[].main | boolean | true for the main window |
+| windows[].groups | array | the tab groups of the window |
+| windows[].groups[].group | integer | tab group number, from 1 |
+| windows[].groups[].views | array | the views of the tab group |
+| windows[].groups[].views[].id | view-id | the view id |
+| windows[].groups[].views[].name | string | the title of the view |
+| windows[].groups[].views[].selected | boolean | true for the selected view |
+| windows[].groups[].views[].viewerType | string | the viewer type id |
+| windows[].groups[].views[].tool | tool-id | the tool shown, for a tool opened as a view |
+| windows[].groups[].views[].grid | grid-id | the grid of an image view |
+| windows[].groups[].views[].sync | string | the synchronization mode of an image view |
+| windows[].groups[].views[].panes | array | the panes of an image view |
+| windows[].groups[].views[].panes[].pane | pane-index | the pane index |
+| windows[].groups[].views[].panes[].selected | boolean | true for the selected pane |
+| windows[].groups[].views[].panes[].series | series-uid | the series shown |
+| windows[].groups[].views[].panes[].image | image-index | the image shown, from 1 |
+| windows[].groups[].views[].panes[].imageCount | integer | images of the series |
 
 ### workspace:load
 
@@ -2189,8 +2331,8 @@ Needs: file read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --file | input-path |  | Snapshot file to restore. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 
 ### workspace:maximize
 
@@ -2212,8 +2354,8 @@ Usage: `workspace:move [-h] [--json] --screen=<screen-role> --view=<view-id>`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | View id from 'workspace:list'. |
 | --screen | screen-role |  | Screen by role: control, diagnostic-1, diagnostic-2, color, portrait. |
+| --view | view-id |  | View id from 'workspace:list'. |
 
 ### workspace:panel (since 5.0)
 
@@ -2221,22 +2363,38 @@ Shell slots around the workspace: the explorer side (leading) and the tools side
 
 Usage: `workspace:panel [-h] [--as-view] [--clear] [--collapse] [--expand] [--hide] [--json] [--no-strip] [--show] [--ratio=<split-ratio>] [--side=<side>] [--slot=<slot>] [--strip=<tool-id>] [--tool=<tool-id>] [--width=<pixels>]`
 
+Produces: `tool-id`
+
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --side | enum |  | Side by role: EXPLORER, TOOLS. |
-| --slot | enum |  | Slot of the side: TOP, BOTTOM. |
-| --tool | tool-id |  | Opens this tool in --slot of --side, replacing what was there. |
-| --clear | boolean |  | Empties --slot of --side. |
-| --hide | boolean |  | Hides --tool of --side for good: the user's choice, kept in the setting weasis.tool.<id>.visible (see config:setting), until --show. |
-| --show | boolean |  | Shows --tool of --side again after --hide. |
 | --as-view | boolean |  | Shows --tool of --side as a tab of the active window instead of a slot, where it gets width and floats like any view; --tool with --slot brings it back. |
+| --clear | boolean |  | Empties --slot of --side. |
 | --collapse | boolean |  | Hides both slots of --side (tools remembered). |
 | --expand | boolean |  | Shows the remembered tools of --side again. |
-| --width | integer |  | Content width of --side, in pixels. |
-| --ratio | split-ratio |  | Share of the top slot of --side when both slots are shown. |
-| --strip | tool-id |  | Keeps the central strip on this tool (fails when another tool is shown). |
+| --hide | boolean |  | Hides --tool of --side for good: the user's choice, kept in the setting weasis.tool.<id>.visible (see config:setting), until --show. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --no-strip | boolean |  | Empties the central strip. |
+| --ratio | split-ratio |  | Share of the top slot of --side when both slots are shown. |
+| --show | boolean |  | Shows --tool of --side again after --hide. |
+| --side | enum |  | Side by role: EXPLORER, TOOLS. |
+| --slot | enum |  | Slot of the side: TOP, BOTTOM. |
+| --strip | tool-id |  | Keeps the central strip on this tool (fails when another tool is shown). |
+| --tool | tool-id |  | Opens this tool in --slot of --side, replacing what was there. |
+| --width | integer |  | Content width of --side, in pixels. |
+
+| Result | Type | Description |
+|---|---|---|
+| explorer | object | the explorer side of the shell |
+| explorer.slots | tool-id[] | the tool of each slot, null when empty |
+| explorer.width | integer | content width in pixels |
+| explorer.ratio | number | share of the first slot |
+| explorer.collapsed | boolean | true when the side is hidden |
+| tools | object | the tools side of the shell |
+| tools.slots | tool-id[] | the tool of each slot, null when empty |
+| tools.width | integer | content width in pixels |
+| tools.ratio | number | share of the first slot |
+| tools.collapsed | boolean | true when the side is hidden |
+| strip | string | how the hidden tools are shown: mini or none |
 
 ### workspace:save
 
@@ -2248,9 +2406,9 @@ Needs: file write
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --force | boolean |  | Replace the file when it exists and was not written by this session. (since 5.0) |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --out | output-path |  | Write the snapshot to this file and report its path. |
-| --force | boolean |  | Replace the file when it exists and was not written by this session. (since 5.0) |
 
 ### workspace:screens (since 5.0)
 
@@ -2260,10 +2418,10 @@ Usage: `workspace:screens [-h] [--auto] [--json] [--id=<screen-id>] [--role=<scr
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --id | string |  | A screen id from the listing, to give it a role or take it back. |
-| --role | screen-role |  | The role of --id: control, diagnostic-1, diagnostic-2, color, portrait. |
 | --auto | boolean |  | Clears the role of --id; it is derived again. |
+| --id | string |  | A screen id from the listing, to give it a role or take it back. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --role | screen-role |  | The role of --id: control, diagnostic-1, diagnostic-2, color, portrait. |
 
 ### workspace:select
 
@@ -2284,11 +2442,11 @@ Usage: `workspace:split [-h] [--json] --anchor=<view-id> [--ratio=<split-ratio>]
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | View id from 'workspace:list'. |
 | --anchor | view-id |  | View whose group is split. |
-| --side | enum |  | Side of the anchor for the new group: TOP, BOTTOM, LEFT, RIGHT. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
 | --ratio | split-ratio | 0.5 | Share of the space given to the anchor (default: 0.5). |
+| --side | enum |  | Side of the anchor for the new group: TOP, BOTTOM, LEFT, RIGHT. |
+| --view | view-id |  | View id from 'workspace:list'. |
 
 ### workspace:stack
 
@@ -2298,9 +2456,9 @@ Usage: `workspace:stack [-h] [--json] --anchor=<view-id> --view=<view-id>`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --anchor | view-id |  | View whose tab group receives the view. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --view | view-id |  | View id from 'workspace:list'. |
-| --anchor | view-id |  | View whose tab group receives the view. |
 
 ### workspace:unmaximize
 
@@ -2339,12 +2497,12 @@ Usage: `wsi:annotations [-h] [--hide] [--json] [--show] [--pane=<pane-index>] [-
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --group | string |  | Groups by their id from the list, comma separated (default: every group). |
-| --show | boolean |  | Draw the groups. |
 | --hide | boolean |  | Hide the groups. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --show | boolean |  | Draw the groups. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### wsi:export (since 5.0)
 
@@ -2356,11 +2514,11 @@ Needs: file write
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
-| --out | output-path |  | The DICOM file to write (.dcm). |
 | --force | boolean |  | Replace the file when it exists and was not written by this session. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --out | output-path |  | The DICOM file to write (.dcm). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### wsi:goto (since 5.0)
 
@@ -2370,15 +2528,15 @@ Usage: `wsi:goto [-h] [--complete] [--json] [--at=<image-point>] [--focal-plane=
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
 | --at | image-point |  | Base level pixel x,y put at the centre of the view. |
-| --zoom | magnification |  | Scale of the view, 1 being one base level pixel per canvas pixel. |
-| --objective | number |  | Magnification shown, as an objective power: 20 shows the slide as a 20x objective would (needs the objective power or the pixel spacing of the slide). |
-| --focal-plane | integer |  | Focal plane of a Z-stack shown, from 1 ('focalPlanes' of 'wsi:info'). |
-| --optical-path | string |  | Optical path shown, by its identifier ('opticalPaths' of 'wsi:info'). |
 | --complete | boolean |  | Answer once every tile of the view is loaded, after 10 s at the latest. |
+| --focal-plane | integer |  | Focal plane of a Z-stack shown, from 1 ('focalPlanes' of 'wsi:info'). |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --objective | number |  | Magnification shown, as an objective power: 20 shows the slide as a 20x objective would (needs the objective power or the pixel spacing of the slide). |
+| --optical-path | string |  | Optical path shown, by its identifier ('opticalPaths' of 'wsi:info'). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
+| --zoom | magnification |  | Scale of the view, 1 being one base level pixel per canvas pixel. |
 
 ### wsi:info (since 5.0)
 
@@ -2389,8 +2547,8 @@ Usage: `wsi:info [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --view | view-id |  | Viewer id from 'workspace:list' (default: the selected viewer). |
-| --pane | pane-index |  | Pane index in the viewer layout, from 1 (default: the selected pane). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 
 ## Events
@@ -2468,4 +2626,114 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | `workspace:window.activated` (coalesced) | 5.0 | window: integer | The active window changed, once it stayed so for 100 ms; from the engine, not AWT. |
 | `workspace:window.closed` | 5.0 | window: integer, detached: boolean | A floating viewer window closed. |
 | `workspace:window.opened` | 5.0 | window: integer, detached: boolean | A window hosting a workspace appeared. |
+
+## Types
+
+| Type | Definition | From | Used by |
+|---|---|---|---|
+| canvas-rect | a rectangle in the canvas pixels of a pane: x,y,width,height |  | view2d:capture |
+| degrees | an angle in degrees, clockwise, reduced to 0-359 |  | view2d:rotate |
+| entry-id | the id of a device entry, from redact:library or redact:match (handle) |  | redact:apply, redact:delete, redact:save |
+| graphic-id | the id of one graphic of an image, from the verbs that draw and from view2d:graphics (handle) | view2d:graphics, view2d:measure | view2d:stats |
+| grid-id | the id of one grid of panes a view can take, from the state the view2d verbs return (handle) | view2d:grid | view2d:grid, view2d:hang |
+| image-index | the position of an image in the series a pane shows, counted from 1 |  | dicom:tag, view2d:scroll |
+| image-point | a point in image pixels, origin at the top-left corner of the image |  | view2d:annotate, wsi:goto |
+| image-polygon | an outline in image pixels, two points at least |  | redact:add, view2d:measure, view2d:stats |
+| image-rect | a rectangle in image pixels: x,y,width,height |  | redact:add, view2d:stats |
+| input-path | a local file the verb reads; the policy decides what a remote caller may read |  | color:set, config:unpack, dicom:load, hp:apply, hp:features, hp:import, hp:match, hp:validate, image:compare, image:load, plugins:add, redact:import, script:check, script:run, view2d:hang, workspace:load |
+| layer-name | the name of a layer of graphics in a view |  | view2d:graphics |
+| magnification | how much an image is magnified in a pane: 1 is one image pixel per canvas pixel |  | view2d:zoom, wsi:goto |
+| masking-profile-id | the id of a masking profile of the configuration |  | redact:export |
+| output-path | a local file the verb writes; the policy decides where a remote caller may write |  | config:catalog, config:pack, hp:export, print:render, print:send, redact:export, script:run, state:export, view2d:capture, workspace:save, wsi:export |
+| pane-index | the position of a pane in the grid of a view, counted from 1 |  | color:status, dicom:open, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:flip, view2d:fusion, view2d:graphics, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, wsi:annotations, wsi:export, wsi:goto, wsi:info |
+| patient-handle | the masked patient id of a loaded patient, from dicom:list, stable for the session (handle) | dicom:list | dicom:unload |
+| preset-id | the id of a window level preset, from view2d:preset (handle) | view2d:preset | view2d:preset |
+| remote-url | an absolute URL; the policy decides whether a remote caller may use it |  | dicom:load, dicom:load-dicomweb, image:load |
+| screen-rect | a rectangle in screen pixels: x,y,width,height |  | workspace:detach |
+| screen-role | the role a screen plays in the window model |  | hp:apply, workspace:detach, workspace:move, workspace:screens |
+| series-uid | the Series Instance UID, or the series id, of a loaded series, from dicom:list (handle) | dicom:list | dicom:info, dicom:interest, dicom:objects, dicom:open, dicom:tag, dicom:unload, explorer:reveal, explorer:select, mpr:delete, mpr:prefetch, mpr:reformat, subtraction:create, subtraction:delete, subtraction:info, subtraction:phases, subtraction:preview, view2d:fusion |
+| split-ratio | the share of the space given to the first side of a split, strictly between 0 and 1 |  | workspace:panel, workspace:split |
+| study-uid | the Study Instance UID of a loaded study, from dicom:list (handle) | dicom:list | dicom:interest, dicom:objects, dicom:unload, explorer:filter, hp:apply, hp:compare, hp:features, hp:match, hp:open, state:export, state:restore, subtraction:list |
+| tool-id | the id of a tool of the shell, from workspace:panel (handle) | workspace:panel | workspace:panel |
+| view-id | the id of a view, from workspace:list (handle) | dicom:open, workspace:list | color:status, dicom:info, dicom:open, dicom:tag, hp:correct, hp:explain, hp:group, hp:save, hp:sets, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:flip, view2d:fusion, view2d:graphics, view2d:grid, view2d:hang, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:sync, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, workspace:close, workspace:detach, workspace:fullscreen, workspace:maximize, workspace:move, workspace:select, workspace:split, workspace:stack, workspace:unmaximize, wsi:annotations, wsi:export, wsi:goto, wsi:info |
+| window-center | the window center applied to the pixel values, in their own unit |  | view2d:window-level |
+| window-width | the window width applied to the pixel values, in their own unit |  | view2d:window-level |
+
+## Glossary
+
+| Term | Definition | Do not use |
+|---|---|---|
+| anatomic region | the coded region of the anatomy a series shows, with Body Part Examined as alias |  |
+| anchor | the view a new split or stack is placed against |  |
+| annotation | a text graphic |  |
+| candidate | a protocol that matches a study, with its match quality |  |
+| canvas | the pixel space of a pane after zoom, pan, rotation and flip |  |
+| capture | the pixels of a pane, a view or a window written to an image file |  |
+| cell | one image place of a printed page or of a protocol layout |  |
+| checkpoint | a saved display state a transaction can roll back to |  |
+| checkpoint id | the handle of a checkpoint, from state:checkpoints |  |
+| close | remove a view, a study or a patient from the workspace |  |
+| color map | a named mapping of the pixel values to colors applied to a pane |  |
+| current | the study being read, as opposed to a prior |  |
+| destination | where a print job goes: a system printer, a DICOM printer or a file |  |
+| device entry | a saved set of redaction regions matched by the attributes of a device | template |
+| document | a JSON file of settings or of a list (nodes, presets, protocols), with its id, schema and layers |  |
+| download | transfer the pixel data of a loaded series from its source; a loaded series may be not downloaded under a selective hanging protocol | fetch |
+| entry | one item of a document or a library, with its id |  |
+| event | a change of state the instance publishes on its bus, named like the commands |  |
+| frame | one frame of a multiframe DICOM instance |  |
+| graphic | any drawn object on a pane (measurement, annotation, region) with a graphic id | shape |
+| grid | the arrangement of panes inside a view |  |
+| handle | an id a verb returns and another verb accepts; never invented by the caller |  |
+| image | one displayable item of a series: an instance, or one frame of a multiframe instance |  |
+| job | a print job: the pages prepared for a destination |  |
+| layer | the named group a graphic belongs to; the AI layer holds what a remote caller drew |  |
+| layout | the arrangement of windows, tab groups and views, saved as a snapshot |  |
+| level | one resolution of the pyramid of a slide, or one entry of a layered document |  |
+| load | bring data into the explorer model, from files, a URL or an archive |  |
+| mask | the series or frames subtracted from another in a subtraction |  |
+| masking | identity values hidden in text, lists and events; redaction is reserved for pixels |  |
+| masking profile | a named set of rules of the configuration that decides which identity values are hidden |  |
+| measurement | a named value with a unit computed from a graphic or a region | metric |
+| mip | a maximum intensity projection through a stack of images |  |
+| motion correction | the per-image translation that aligns the mask with the series before subtracting |  |
+| open | show a series in a view |  |
+| page | one printed page, with its cells |  |
+| pane | one image canvas inside the grid of a view, addressed by its index within the view | canvas index |
+| patient | the DICOM patient as loaded in the explorer model | exam |
+| phase | one time point of a dynamic series |  |
+| plugin | a module loaded by the plugin manager, with its id, version and signature |  |
+| policy | what the instance allows a caller to do: files, network, remote verbs, masking |  |
+| position | where an image sits in its cell: center or top-left |  |
+| preset | a named window width and window center pair |  |
+| prior | an earlier study of the same patient hung beside the current one |  |
+| protocol | a hanging protocol: the rules that hang a study, with its display sets and steps |  |
+| provenance | where a derived value comes from: the providers, objects and calibration behind it |  |
+| reason | why something was done or refused, as the why panel and the refusals say it |  |
+| redaction | pixels hidden over an image; masking is reserved for identity values in text |  |
+| region | a geometric area given by the caller (rect, ellipse, polygon) in a stated space | roi, zone |
+| scope | what a redaction applies to: the image, the series or the study |  |
+| screen | a physical display of the workstation, with a role in the window model |  |
+| script | a file of commands run in one call, with variables and expectations |  |
+| selected | the view, pane or series that receives a command when no handle is given | current view, active view, current pane, active pane, focused view |
+| series | the DICOM series as loaded in the explorer model |  |
+| session | a reading state kept as an exact restore of a study: views, panes, protocol and sidecar |  |
+| slide | a whole slide image, with its pyramid of levels |  |
+| slot | one of the two places of a side of the shell that holds a tool |  |
+| step | one reading step of a protocol, or one line of a script |  |
+| study | the DICOM study as loaded in the explorer model |  |
+| tab group | a set of views shown as tabs in one area of a window | container, dock |
+| target | the view and pane a command resolved, echoed in every result bound to a view |  |
+| tid offset | time interval differencing: the number of frames between a frame and its mask |  |
+| tile | one square of a level of a slide |  |
+| tool | a panel of the workspace (explorer, image tool, measurements…), shown in a slot or as a view |  |
+| uid | a DICOM unique identifier, the handle of a study or a series |  |
+| unload | remove data from the explorer model |  |
+| view | one tab of the workspace, an instance of a viewer type showing series; its handle is the view id | viewer id |
+| viewer type | a kind of view (2d, mpr, 3d, sr, …) able to open a given series |  |
+| viewport | a pane that shows one series as a stack or as tiles of successive images, the stack and tiled modes of 4.8 |  |
+| window | a top-level frame of the application, main or detached |  |
+| window center | DICOM Window Center (0028,1050), the middle of the range of pixel values shown | window centre |
+| window level | the window width and window center pair of a pane, always these words |  |
+| window width | DICOM Window Width (0028,1051), the range of the pixel values shown |  |
 

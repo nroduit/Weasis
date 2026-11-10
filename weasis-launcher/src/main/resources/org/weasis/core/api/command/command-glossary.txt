@@ -1,0 +1,69 @@
+# Glossary of the command surface: term | definition | synonyms not to use in command text.
+# A term is a lower-case English noun phrase, used as is in option names (--view), JSON keys
+# (view, views) and descriptions. A namespace adds its own terms through CommandExtension.getTerms.
+window | a top-level frame of the application, main or detached
+tab group | a set of views shown as tabs in one area of a window | container, dock
+view | one tab of the workspace, an instance of a viewer type showing series; its handle is the view id | viewer id
+viewer type | a kind of view (2d, mpr, 3d, sr, …) able to open a given series
+pane | one image canvas inside the grid of a view, addressed by its index within the view | canvas index
+viewport | a pane that shows one series as a stack or as tiles of successive images, the stack and tiled modes of 4.8
+grid | the arrangement of panes inside a view
+anchor | the view a new split or stack is placed against
+layout | the arrangement of windows, tab groups and views, saved as a snapshot
+selected | the view, pane or series that receives a command when no handle is given | current view, active view, current pane, active pane, focused view
+patient | the DICOM patient as loaded in the explorer model | exam
+study | the DICOM study as loaded in the explorer model
+series | the DICOM series as loaded in the explorer model
+image | one displayable item of a series: an instance, or one frame of a multiframe instance
+frame | one frame of a multiframe DICOM instance
+load | bring data into the explorer model, from files, a URL or an archive
+unload | remove data from the explorer model
+download | transfer the pixel data of a loaded series from its source; a loaded series may be not downloaded under a selective hanging protocol | fetch
+open | show a series in a view
+close | remove a view, a study or a patient from the workspace
+graphic | any drawn object on a pane (measurement, annotation, region) with a graphic id | shape
+measurement | a named value with a unit computed from a graphic or a region | metric
+annotation | a text graphic
+layer | the named group a graphic belongs to; the AI layer holds what a remote caller drew
+region | a geometric area given by the caller (rect, ellipse, polygon) in a stated space | roi, zone
+window width | DICOM Window Width (0028,1051), the range of the pixel values shown
+window center | DICOM Window Center (0028,1050), the middle of the range of pixel values shown | window centre
+window level | the window width and window center pair of a pane, always these words
+preset | a named window width and window center pair
+color map | a named mapping of the pixel values to colors applied to a pane
+redaction | pixels hidden over an image; masking is reserved for identity values in text
+masking | identity values hidden in text, lists and events; redaction is reserved for pixels
+device entry | a saved set of redaction regions matched by the attributes of a device | template
+anatomic region | the coded region of the anatomy a series shows, with Body Part Examined as alias
+handle | an id a verb returns and another verb accepts; never invented by the caller
+uid | a DICOM unique identifier, the handle of a study or a series
+target | the view and pane a command resolved, echoed in every result bound to a view
+capture | the pixels of a pane, a view or a window written to an image file
+canvas | the pixel space of a pane after zoom, pan, rotation and flip
+screen | a physical display of the workstation, with a role in the window model
+slot | one of the two places of a side of the shell that holds a tool
+tool | a panel of the workspace (explorer, image tool, measurements…), shown in a slot or as a view
+protocol | a hanging protocol: the rules that hang a study, with its display sets and steps
+session | a reading state kept as an exact restore of a study: views, panes, protocol and sidecar
+step | one reading step of a protocol, or one line of a script
+checkpoint | a saved display state a transaction can roll back to
+candidate | a protocol that matches a study, with its match quality
+provenance | where a derived value comes from: the providers, objects and calibration behind it
+reason | why something was done or refused, as the why panel and the refusals say it
+prior | an earlier study of the same patient hung beside the current one
+mask | the series or frames subtracted from another in a subtraction
+phase | one time point of a dynamic series
+job | a print job: the pages prepared for a destination
+page | one printed page, with its cells
+cell | one image place of a printed page or of a protocol layout
+destination | where a print job goes: a system printer, a DICOM printer or a file
+slide | a whole slide image, with its pyramid of levels
+tile | one square of a level of a slide
+level | one resolution of the pyramid of a slide, or one entry of a layered document
+document | a JSON file of settings or of a list (nodes, presets, protocols), with its id, schema and layers
+entry | one item of a document or a library, with its id
+plugin | a module loaded by the plugin manager, with its id, version and signature
+policy | what the instance allows a caller to do: files, network, remote verbs, masking
+event | a change of state the instance publishes on its bus, named like the commands
+script | a file of commands run in one call, with variables and expectations
+checkpoint id | the handle of a checkpoint, from state:checkpoints

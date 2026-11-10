@@ -10,6 +10,7 @@
 package org.weasis.core.api.command;
 
 /** Share of the space given to the first side of a split, strictly between 0 and 1. */
+@Definition(value = "the share of the space given to the first side of a split, strictly between 0 and 1")
 public record SplitRatio(double value) implements SemanticType {
 
   private static final String EXPECTED = "a share between 0 and 1, both excluded";

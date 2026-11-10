@@ -1,0 +1,26 @@
+# Words allowed in option names and result keys that are not nouns of the glossary: verbs,
+# adjectives, prepositions and the units or codes that have no other spelling. One word per
+# token, any number per line. A new word in an option name is added here on purpose, or the
+# option is named with a term of the glossary.
+a b by at to from with as for of on off in out no not all any and or
+after before since last next previous first new whole plain brief dry force keep wait show hide
+clear apply accept expand collapse pull push replace select run delete pin withdraw strip stack
+complete relevant enabled signed tiled portable inverse absolute auto best fit max min count
+set add remove reset restore save build create check list info state explain tag match validate
+features destinations apply where going rollback dry-run
+filter stats query retrieve request ext dicom accept
+capability publisher restart sha256 tier version fingerprint locked folder removed discussion
+opened platform preview
+automatic origin changed latest seq taken deleted diff box warning archive created kept pinned
+updated restored closed captured
+crop pixel xml urlsafe normalize
+id ids name names type types index key value values text label mode kind role side
+width height bounds size scale factor ratio opacity color gray background dpi paper orientation copies
+columns rows points rect ellipse polygon degrees dx dy shift offset axis plane focal optical
+objective zoom path file url uid json markdown report corpus source issuer aet node auth oidc user
+machine session seconds timeout delay limit tolerance expected reason integrity manifest zip gzip
+karnak srgb display header toolbar button action namespace feature interest objects relevant
+sync modality modalities group groups tab panes images frames measurements annotations protocols
+phases plugins graphics studies patients views entries objects steps checkpoints sessions
+explorer collapsed main birth date sex instance time description accession number total truncated ready unit
+profile
