@@ -476,6 +476,13 @@
       "category": "GENERAL"
     },
     {
+      "code": "weasis.ui.orientation",
+      "value": "auto",
+      "description": "Direction of the interface: \"auto\" (default) from the language (right to left for Arabic, Persian, Hebrew, Urdu...), \"ltr\" left to right, \"rtl\" right to left. The images never mirror. Applied at the next start.",
+      "type": "F",
+      "category": "GENERAL"
+    },
+    {
       "code": "weasis.auth.back.port",
       "value": "0",
       "description": "Define the port for the authentication callback. 0 means random port",

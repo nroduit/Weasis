@@ -58,7 +58,7 @@ public final class CrossSectionDialog {
         new JPanel(
             new MigLayout(
                 "fillx, ins 8lp, wrap 2", // NON-NLS
-                "[align right][grow, fill, 80lp::]", // NON-NLS
+                "[align trailing][grow, fill, 80lp::]", // NON-NLS
                 "[]6lp[]6lp[]")); // NON-NLS
     panel.add(new JLabel("Slab width (%s)".formatted(unitLabel) + StringUtil.COLON)); // NON-NLS
     panel.add(widthSpinner);
@@ -75,7 +75,7 @@ public final class CrossSectionDialog {
           heightSpinner.setValue(defaults.heightMm());
           spacingSpinner.setValue(defaults.spacingMm());
         });
-    panel.add(reset, "span 2, align right"); // NON-NLS
+    panel.add(reset, "span 2, align trailing"); // NON-NLS
 
     int result =
         JOptionPane.showConfirmDialog(

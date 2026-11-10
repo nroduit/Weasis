@@ -245,32 +245,32 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   private JPanel createHeaderPanel() {
     JPanel headerPanel = new JPanel();
-    headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+    headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.PAGE_AXIS));
 
     // Load panel
     btnLoad.setToolTipText(Messages.getString("populate.rt.objects"));
-    JPanel loadPanel = createFlowPanel(FlowLayout.LEFT);
+    JPanel loadPanel = createFlowPanel(FlowLayout.LEADING);
     loadPanel.add(btnLoad);
     loadPanel.add(progressBar);
     progressBar.setVisible(false);
     headerPanel.add(loadPanel);
 
     // Structure set panel
-    JPanel structPanel = createFlowPanel(FlowLayout.LEFT);
+    JPanel structPanel = createFlowPanel(FlowLayout.LEADING);
     structPanel.add(new JLabel(Messages.getString("structures") + StringUtil.COLON));
     GuiUtils.setPreferredWidth(comboRtStructureSet, 230, 150);
     structPanel.add(comboRtStructureSet);
     headerPanel.add(structPanel);
 
     // Plan panel
-    JPanel planPanel = createFlowPanel(FlowLayout.LEFT);
+    JPanel planPanel = createFlowPanel(FlowLayout.LEADING);
     planPanel.add(new JLabel(Messages.getString("plan") + StringUtil.COLON));
     GuiUtils.setPreferredWidth(comboRtPlan, 240, 150);
     planPanel.add(comboRtPlan);
     headerPanel.add(planPanel);
 
     // Dose panel
-    JPanel dosePanel = createFlowPanel(FlowLayout.LEFT);
+    JPanel dosePanel = createFlowPanel(FlowLayout.LEADING);
     dosePanel.add(new JLabel(Messages.getString("dose") + StringUtil.COLON));
     dosePanel.add(txtRtPlanDoseValue);
     dosePanel.add(new JLabel("cGy"));
@@ -279,7 +279,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     headerPanel.add(dosePanel);
 
     // DVH panel
-    JPanel dvhPanel = createFlowPanel(FlowLayout.LEFT);
+    JPanel dvhPanel = createFlowPanel(FlowLayout.LEADING);
     JButton btnShowDvh = new JButton(Messages.getString("display.dvh.chart"));
     btnShowDvh.addActionListener(e -> showDvhChart());
     dvhPanel.add(btnShowDvh);
@@ -592,7 +592,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   private void showChartDialog(XYChart chart) {
     JDialog dialog = new JDialog(WinUtil.getParentWindow(this), Messages.getString("dvh.chart"));
-    XChartPanel<XYChart> chartPanel = new XChartPanel<>(chart);
+    // never mirrored: the dose axis runs left to right
+    XChartPanel<XYChart> chartPanel = GuiUtils.fixOrientation(new XChartPanel<>(chart));
     dialog.getContentPane().add(chartPanel, BorderLayout.CENTER);
     dialog.pack();
     GuiUtils.showCenterScreen(dialog);

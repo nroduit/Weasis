@@ -2039,7 +2039,8 @@ public class View3d extends VolumeCanvas
     }
     if (synchButton == null) {
       synchButton = new SynchViewButton(this::showSyncPopup);
-      synchButton.setPosition(GridBagConstraints.SOUTHEAST);
+      synchButton.setPosition(
+          GridBagConstraints.SOUTHEAST); // absolute side: a button drawn in the image corner
       getViewButtons().add(synchButton);
     }
     synchButton.setState(

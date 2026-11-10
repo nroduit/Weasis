@@ -204,7 +204,7 @@ public class DisplayProfileSelector extends JComboBox<DisplayProfileSelector.Mod
 
     private void group(JCheckBox parent, List<JCheckBox> children) {
       panel.add(parent);
-      children.forEach(c -> panel.add(c, "gapleft 20lp")); // NON-NLS
+      children.forEach(c -> panel.add(c, "gapbefore 20lp")); // NON-NLS
       Runnable sync = () -> children.forEach(c -> c.setEnabled(parent.isSelected()));
       parent.addActionListener(_ -> sync.run());
       sync.run();

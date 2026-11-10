@@ -101,7 +101,8 @@ public class SubtractionView extends View2d {
             ResourceUtil.getIcon(ActionIcon.MINUS, 24, 24),
             Messages.getString("SubtractionTool.title"));
     button.setVisible(true);
-    button.setPosition(GridBagConstraints.NORTHEAST);
+    button.setPosition(
+        GridBagConstraints.NORTHEAST); // absolute side: a button drawn in the image corner
     return button;
   }
 

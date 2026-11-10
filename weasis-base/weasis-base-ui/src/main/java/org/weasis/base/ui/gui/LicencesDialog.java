@@ -52,7 +52,9 @@ public class LicencesDialog extends JDialog {
     this.tabsList = list;
     this.jButtonClose = new JButton(Messages.common("close"));
     jButtonClose.addActionListener(e -> close());
-    this.tabbedPane = new JTabbedPane(SwingConstants.LEFT);
+    // absolute side: a tab placement has no leading form, the side follows the orientation
+    int placement = GuiUtils.isRightToLeft() ? SwingConstants.RIGHT : SwingConstants.LEFT;
+    this.tabbedPane = new JTabbedPane(placement);
     tabbedPane.putClientProperty("JTabbedPane.showTabSeparators", true);
     tabbedPane.putClientProperty("JTabbedPane.tabIconPlacement", SwingConstants.TOP);
     initGUI(list);

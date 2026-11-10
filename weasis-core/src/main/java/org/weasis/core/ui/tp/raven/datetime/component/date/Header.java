@@ -48,8 +48,8 @@ public class Header extends JPanel {
 
     JButton cmdBack = createButton();
     JButton cmdNext = createButton();
-    backIcon = ResourceUtil.getIcon(ActionIcon.PREVIOUS);
-    forwardIcon = ResourceUtil.getIcon(ActionIcon.NEXT);
+    backIcon = ResourceUtil.getDirectionIcon(ActionIcon.PREVIOUS);
+    forwardIcon = ResourceUtil.getDirectionIcon(ActionIcon.NEXT);
     cmdBack.setIcon(backIcon);
     cmdNext.setIcon(forwardIcon);
     buttonMonth = createButton();

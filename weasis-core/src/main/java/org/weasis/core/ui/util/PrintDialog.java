@@ -197,7 +197,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
         new JPanel(
             new MigLayout(
                 "insets 0, wrap 4, hidemode 3", // NON-NLS
-                "[right]rel[grow,fill,120lp::]unrel[right]rel[grow,fill,120lp::]")); // NON-NLS
+                "[trailing]rel[grow,fill,120lp::]unrel[trailing]rel[grow,fill,120lp::]")); // NON-NLS
 
     destinationComboBox.setModel(
         new DefaultComboBoxModel<>(destinations.toArray(PrintDestination[]::new)));
@@ -356,8 +356,8 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
             KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
             JComponent.WHEN_IN_FOCUSED_WINDOW);
     panel.add(helpButton, "span 2, split 3, growx 0"); // NON-NLS
-    panel.add(printButton, "gapleft push, growx 0"); // NON-NLS
-    panel.add(cancelButton, "gapleft 15lp, growx 0"); // NON-NLS
+    panel.add(printButton, "gapbefore push, growx 0"); // NON-NLS
+    panel.add(cancelButton, "gapbefore 15lp, growx 0"); // NON-NLS
     setContentPane(panel);
 
     if (destinations.isEmpty() || currentPages() == null) {

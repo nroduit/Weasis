@@ -118,7 +118,8 @@ public class ProxyPrefView extends AbstractItemDialogPage {
   private JPanel buildProxyPanel() {
     JPanel dataPanel = new JPanel();
     dataPanel.setLayout(
-        new MigLayout("insets 5lp 15lp 5lp 0, fillx", "[right]rel[grow,fill][grow 0]")); // NON-NLS
+        new MigLayout(
+            "insets 5lp 15lp 5lp 0, fillx", "[trailing]rel[grow,fill][grow 0]")); // NON-NLS
 
     dataPanel.add(lblAddress, "newline, cell 1 0, growx 0, alignx center"); // NON-NLS
     dataPanel.add(lblPort, "growx 0, alignx center"); // NON-NLS

@@ -86,13 +86,13 @@ public class SaveProtocolDialog extends JDialog {
     top.add(name);
     add(top, BorderLayout.NORTH);
 
-    rulesPanel.setLayout(new BoxLayout(rulesPanel, BoxLayout.Y_AXIS));
+    rulesPanel.setLayout(new BoxLayout(rulesPanel, BoxLayout.PAGE_AXIS));
     Derivation initial =
         ProtocolDeriver.derive("user.draft", "draft", "SINGLE_USER", layout, study); // NON-NLS
     rules.addAll(initial.rules());
     for (CellRule rule : initial.rules()) {
       JPanel cell = new JPanel();
-      cell.setLayout(new BoxLayout(cell, BoxLayout.Y_AXIS));
+      cell.setLayout(new BoxLayout(cell, BoxLayout.PAGE_AXIS));
       cell.setBorder(
           BorderFactory.createTitledBorder(
               Messages.format("SaveProtocolDialog.cell", rule.cell() + 1, rule.label())));

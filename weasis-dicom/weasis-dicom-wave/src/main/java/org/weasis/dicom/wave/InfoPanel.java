@@ -108,7 +108,7 @@ class InfoPanel extends JPanel {
     main.add(new JLabel());
 
     GridBagConstraints gbc = new GridBagConstraints();
-    gbc.insets = new Insets(0, 15, 0, 10);
+    gbc.insets = GuiUtils.isRightToLeft() ? new Insets(0, 10, 0, 15) : new Insets(0, 15, 0, 10);
     gbc.fill = GridBagConstraints.NONE;
     gbc.gridx = 1;
     gbc.gridy = 0;

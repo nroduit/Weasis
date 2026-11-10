@@ -83,14 +83,14 @@ public class HangingProtocolBar extends WtoolBar {
         });
     add(protocols);
 
-    previous.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.PREVIOUS));
+    previous.setIcon(ResourceUtil.getDirectionToolBarIcon(ActionIcon.PREVIOUS));
     previous.setToolTipText(Messages.getString("HangingProtocolBar.previous"));
     previous.addActionListener(e -> act(ActiveHanging::previous));
     add(previous);
 
     add(step);
 
-    next.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.NEXT));
+    next.setIcon(ResourceUtil.getDirectionToolBarIcon(ActionIcon.NEXT));
     next.setToolTipText(Messages.getString("HangingProtocolBar.next"));
     next.addActionListener(e -> act(ActiveHanging::next));
     add(next);

@@ -214,7 +214,7 @@ class ToolCheckList extends JPanel {
     RowRenderer() {
       super(new BorderLayout(GuiUtils.getScaleLength(4), 0));
       box.setOpaque(false);
-      add(box, BorderLayout.WEST);
+      add(box, BorderLayout.LINE_START);
       add(label, BorderLayout.CENTER);
       setBorder(GuiUtils.getEmptyBorder(1, 2, 1, 2));
     }

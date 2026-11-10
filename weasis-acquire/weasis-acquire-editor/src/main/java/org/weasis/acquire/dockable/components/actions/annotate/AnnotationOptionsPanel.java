@@ -33,7 +33,7 @@ import org.weasis.core.util.StringUtil;
 public class AnnotationOptionsPanel extends JPanel {
 
   public AnnotationOptionsPanel() {
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     Border spaceY = GuiUtils.getEmptyBorder(10, 5, 2, 5);
     setBorder(
         BorderFactory.createCompoundBorder(

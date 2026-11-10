@@ -41,7 +41,7 @@ public class ContrastPanel extends AbstractAcquireActionPanel
   private final JCheckBox autoLevelBtn = new JCheckBox(Messages.getString("ContrastPanel.auto"));
 
   public ContrastPanel() {
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     setBorder(GuiUtils.getEmptyBorder(10, 5, 2, 5));
 
     this.autoLevelListener = new AutoLevelListener();

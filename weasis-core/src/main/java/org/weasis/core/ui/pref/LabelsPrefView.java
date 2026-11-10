@@ -80,7 +80,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
             ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, decimalsLabel, decimalsCombo));
 
     JPanel panelShape = new JPanel();
-    panelShape.setLayout(new BoxLayout(panelShape, BoxLayout.Y_AXIS));
+    panelShape.setLayout(new BoxLayout(panelShape, BoxLayout.PAGE_AXIS));
     panelShape.setBorder(GuiUtils.getTitledBorder(Messages.getString("LabelsPrefView.geometric1")));
     JLabel shapeLabel =
         new JLabel(Messages.getString("LabelsPrefView.geometricshape") + StringUtil.COLON);

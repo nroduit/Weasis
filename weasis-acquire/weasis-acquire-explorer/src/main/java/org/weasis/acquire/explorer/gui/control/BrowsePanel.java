@@ -37,7 +37,7 @@ public class BrowsePanel extends JPanel implements RemovableDriveWatcher.Listene
   private final transient RemovableDriveWatcher driveWatcher;
 
   public BrowsePanel(AcquireExplorer acquisitionView) {
-    setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
     setBorder(GuiUtils.getEmptyBorder(5));
 
     acquisitionView.setSystemDrive(new FileSystemDrive(AcquireExplorer.getLastPath()));

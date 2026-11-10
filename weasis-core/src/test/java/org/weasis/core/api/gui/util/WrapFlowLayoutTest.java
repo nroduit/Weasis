@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -74,6 +75,19 @@ class WrapFlowLayoutTest {
         () -> assertEquals(0, lineOf(panel, 5)),
         () -> assertEquals(5, panel.getComponent(0).getX()),
         () -> assertEquals(5 + 30 + GAP, panel.getComponent(1).getX()));
+  }
+
+  @Test
+  void a_right_to_left_container_flows_from_the_right() {
+    JPanel panel = options();
+    panel.applyComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+    panel.setSize(500, 10);
+    panel.setSize(500, panel.getPreferredSize().height);
+    panel.doLayout();
+    assertAll(
+        () -> assertEquals(500 - 5 - 30, panel.getComponent(0).getX()),
+        () -> assertEquals(500 - 5 - 30 - GAP - 24, panel.getComponent(1).getX()),
+        () -> assertEquals(0, lineOf(panel, 5)));
   }
 
   @Test

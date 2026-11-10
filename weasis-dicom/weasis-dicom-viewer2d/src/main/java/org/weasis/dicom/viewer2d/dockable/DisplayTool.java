@@ -152,7 +152,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     JPanel panel = new JPanel();
     FlowLayout flowLayout = (FlowLayout) panel.getLayout();
-    flowLayout.setAlignment(FlowLayout.LEFT);
+    flowLayout.setAlignment(FlowLayout.LEADING);
     add(panel, BorderLayout.NORTH);
     applyAllViews.setSelected(AbstractInfoLayer.applyToAllView.get());
     applyAllViews.addActionListener(

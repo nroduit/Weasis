@@ -93,7 +93,8 @@ public class AnatomicRegionView extends JPanel {
   }
 
   void jbInit() {
-    setLayout(new MigLayout("wrap 2, insets 0", "[right][grow]", "[]10[]10[]10[]20[]")); // NON-NLS
+    setLayout(
+        new MigLayout("wrap 2, insets 0", "[trailing][grow]", "[]10[]10[]10[]20[]")); // NON-NLS
     CategoryBuilder[] sortedCategories =
         AnatomicBuilder.getCategoryMap().keySet().stream()
             .sorted(Comparator.comparing(CategoryBuilder::toString))
@@ -144,13 +145,13 @@ public class AnatomicRegionView extends JPanel {
     ratioGroup.add(radioButtonSeries);
     ratioGroup.add(radioButtonImage);
 
-    add(new JLabel("Category" + StringUtil.COLON), "right"); // NON-NLS
+    add(new JLabel("Category" + StringUtil.COLON), "trailing"); // NON-NLS
     add(comboBox1, "growx"); // NON-NLS
 
-    add(new JLabel(Messages.getString("area") + StringUtil.COLON), "right"); // NON-NLS
+    add(new JLabel(Messages.getString("area") + StringUtil.COLON), "trailing"); // NON-NLS
     add(areaCombo, "growx"); // NON-NLS
 
-    add(new JLabel("Region" + StringUtil.COLON), "right"); // NON-NLS
+    add(new JLabel("Region" + StringUtil.COLON), "trailing"); // NON-NLS
     add(comboBox2, "growx 500"); // NON-NLS
 
     List<Object> list = Stream.of(AnatomicModifier.values()).collect(Collectors.toList());
@@ -158,7 +159,7 @@ public class AnatomicRegionView extends JPanel {
     modifiersDropdown.setToolTipText(Messages.getString("select.modifiers"));
     add(modifiersDropdown, "cell 1 3, span"); // NON-NLS
 
-    add(lblApplyTo, "span, split 3, right, gaptop 20"); // NON-NLS
+    add(lblApplyTo, "span, split 3, trailing, gaptop 20"); // NON-NLS
     add(radioButtonSeries);
     add(radioButtonImage);
   }

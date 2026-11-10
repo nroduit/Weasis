@@ -50,7 +50,8 @@ public class CurvedMprView extends View2d {
             ResourceUtil.getIcon(OtherIcon.VIEW_SETTING).derive(24, 24),
             "Panoramic settings"); // NON-NLS
     settings.setVisible(true);
-    settings.setPosition(GridBagConstraints.NORTHEAST);
+    settings.setPosition(
+        GridBagConstraints.NORTHEAST); // absolute side: a button drawn in the image corner
     getViewButtons().add(settings);
   }
 
@@ -136,7 +137,7 @@ public class CurvedMprView extends View2d {
 
     JButton reset = new JButton("Reset to defaults"); // NON-NLS
     reset.addActionListener(e -> resetActions.forEach(Runnable::run));
-    panel.add(reset, "align right"); // NON-NLS
+    panel.add(reset, "align trailing"); // NON-NLS
 
     JPopupMenu popup = new JPopupMenu();
     popup.add(panel);

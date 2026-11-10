@@ -152,7 +152,9 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   private Point2D.Double calculateMiddleYPosition(int space, Point2D topRight) {
     int height = 0;
     for (ViewButton b : view2DPane.getViewButtons()) {
-      if (b.isVisible() && b.getPosition() == GridBagConstraints.EAST) {
+      if (b.isVisible()
+          && b.getPosition()
+              == GridBagConstraints.EAST) { // absolute side: a button drawn in the image corner
         height += b.getIcon().getIconHeight() + space;
       }
     }
@@ -170,30 +172,30 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     int position = b.getPosition();
 
     switch (position) {
-      case GridBagConstraints.EAST -> {
+      case GridBagConstraints.EAST -> { // absolute side: a button drawn in the image corner
         b.x = midy.x - icon.getIconWidth();
         b.y = midy.y;
         midy.y += icon.getIconHeight() + space;
       }
-      case GridBagConstraints.NORTHEAST -> {
+      case GridBagConstraints.NORTHEAST -> { // absolute side: a button drawn in the image corner
         b.x = topRight.getX() - icon.getIconWidth();
         b.y = topRight.getY();
         topRight.setLocation(topRight.getX() - icon.getIconWidth() - space, topRight.getY());
       }
-      case GridBagConstraints.SOUTHEAST -> {
+      case GridBagConstraints.SOUTHEAST -> { // absolute side: a button drawn in the image corner
         Point2D bottomRight = getPosition(Position.BottomRight);
         b.x = bottomRight.getX() - icon.getIconWidth();
         b.y = bottomRight.getY() - icon.getIconHeight();
         bottomRight.setLocation(
             bottomRight.getX() - icon.getIconWidth() - space, bottomRight.getY());
       }
-      case GridBagConstraints.NORTHWEST -> {
+      case GridBagConstraints.NORTHWEST -> { // absolute side: a button drawn in the image corner
         Point2D topLeft = getPosition(Position.TopLeft);
         b.x = topLeft.getX();
         b.y = topLeft.getY();
         topLeft.setLocation(topLeft.getX() + icon.getIconWidth() + space, topLeft.getY());
       }
-      case GridBagConstraints.SOUTHWEST -> {
+      case GridBagConstraints.SOUTHWEST -> { // absolute side: a button drawn in the image corner
         Point2D bottomLeft = getPosition(Position.BottomLeft);
         b.x = bottomLeft.getX();
         b.y = bottomLeft.getY() - icon.getIconHeight();
@@ -423,7 +425,9 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
       int width = 0;
       for (ViewButton b : view2DPane.getViewButtons()) {
-        if (b.isVisible() && b.getPosition() == GridBagConstraints.EAST) {
+        if (b.isVisible()
+            && b.getPosition()
+                == GridBagConstraints.EAST) { // absolute side: a button drawn in the image corner
           int w = b.getIcon().getIconWidth() + 5;
           if (w > width) {
             width = w;
@@ -537,7 +541,9 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   private int eastButtonsWidth() {
     int width = 0;
     for (ViewButton b : view2DPane.getViewButtons()) {
-      if (b.isVisible() && b.getPosition() == GridBagConstraints.EAST) {
+      if (b.isVisible()
+          && b.getPosition()
+              == GridBagConstraints.EAST) { // absolute side: a button drawn in the image corner
         width = Math.max(width, b.getIcon().getIconWidth() + 5);
       }
     }

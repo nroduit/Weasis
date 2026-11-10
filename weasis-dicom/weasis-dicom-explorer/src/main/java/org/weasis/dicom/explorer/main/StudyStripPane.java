@@ -98,7 +98,7 @@ public class StudyStripPane extends JPanel {
           JLabel label = new JLabel(String.valueOf(year));
           label.setFont(FontItem.SMALL_SEMIBOLD.getFont());
           label.setVerticalAlignment(SwingConstants.BOTTOM);
-          cards.add(label, "aligny bottom, gapright 2"); // NON-NLS
+          cards.add(label, "aligny bottom, gapafter 2"); // NON-NLS
         }
         cards.add(card(study, StudyContents.of(model, study)));
       }
@@ -154,7 +154,7 @@ public class StudyStripPane extends JPanel {
     JToggleButton button = new JToggleButton(text.toString());
     button.setFont(FontItem.SMALL.getFont());
     button.setFocusable(false);
-    button.setHorizontalAlignment(SwingConstants.LEFT);
+    button.setHorizontalAlignment(SwingConstants.LEADING);
     button.setMargin(new java.awt.Insets(2, 4, 2, 4));
     button.putClientProperty(FlatClientProperties.STYLE, "arc: 8"); // NON-NLS
     button.setSelected(selected.contains(study));

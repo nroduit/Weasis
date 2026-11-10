@@ -67,9 +67,9 @@ public class OverviewPanel extends JPanel {
     next.setToolTipText(Messages.getString("OverviewPanel.next"));
     next.setFocusable(false);
     next.addActionListener(e -> view.scrollPages(1));
-    add(previous, BorderLayout.WEST);
+    add(previous, BorderLayout.WEST); // absolute side: the time axis runs left to right
     add(strip, BorderLayout.CENTER);
-    add(next, BorderLayout.EAST);
+    add(next, BorderLayout.EAST); // absolute side: the time axis runs left to right
     viewport.addChangeListener(e -> strip.repaint());
   }
 

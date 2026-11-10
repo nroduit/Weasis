@@ -61,7 +61,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
   protected AcquireMetadataPanel(String title) {
     this.title = title;
     this.titleBorder = GuiUtils.getTitledBorder(getDisplayText());
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     setBorder(titleBorder);
 
     this.table = new JTable();

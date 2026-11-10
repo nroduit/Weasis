@@ -46,7 +46,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
   }
 
   private void jbInit() {
-    setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
+    setLayout(new BoxLayout(this, vertical ? BoxLayout.PAGE_AXIS : BoxLayout.LINE_AXIS));
     Dimension dim = GuiUtils.getDimension(5, 5);
     final DropDownButton button =
         new DropDownButton("Mini", currentAction.getActionW().getDropButtonIcon()) { // NON-NLS
@@ -95,7 +95,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
     if (w != 0 && h != 0) {
       vertical = h >= w;
       if (vertical != slider.getInverted()) {
-        setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
+        setLayout(new BoxLayout(this, vertical ? BoxLayout.PAGE_AXIS : BoxLayout.LINE_AXIS));
         slider.setInverted(vertical);
         slider.setOrientation(vertical ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
         slider.revalidate();

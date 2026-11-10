@@ -232,7 +232,7 @@ public class DicomExplorer extends PluginTool
       add(loadingPanel, "newline,");
       add(remoteNotice, "newline, hidemode 3"); // NON-NLS
     } else {
-      setLayout(new MigLayout("fillx, ins 0", "[right]rel[grow,fill]"));
+      setLayout(new MigLayout("fillx, ins 0", "[trailing]rel[grow,fill]"));
       add(GuiUtils.getVerticalBoxLayoutPanel(getMainPanel(), loadingPanel, remoteNotice));
       add(thumbnailView);
     }
@@ -274,7 +274,7 @@ public class DicomExplorer extends PluginTool
   protected JPanel getMainPanel() {
     if (panelMain == null) {
       MigLayout layout =
-          new MigLayout("fillx, ins 5 0 5 0", "[right]rel[grow,fill]", "[]10lp[]"); // NON-NLS
+          new MigLayout("fillx, ins 5 0 5 0", "[trailing]rel[grow,fill]", "[]10lp[]"); // NON-NLS
       panelMain = new JPanel(layout);
 
       // Small preferred width so the combos grow to fill the panel but never drive its width
@@ -297,7 +297,7 @@ public class DicomExplorer extends PluginTool
 
       koOpen.setToolTipText(koOpen.getText());
       panelMain.add(
-          koOpen, "newline, spanx, alignx left, width 30lp:pref:pref, hidemode 2"); // NON-NLS
+          koOpen, "newline, spanx, alignx leading, width 30lp:pref:pref, hidemode 2"); // NON-NLS
       koOpen.addActionListener(
           e -> {
             final MediaSeriesGroup patient = getSelectedPatient();

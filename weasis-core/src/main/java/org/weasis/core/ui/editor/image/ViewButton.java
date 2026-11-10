@@ -30,7 +30,7 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
     this.popup = Objects.requireNonNull(popup);
     this.icon = Objects.requireNonNull(icon);
     this.name = Objects.requireNonNull(name);
-    this.position = GridBagConstraints.EAST;
+    this.position = GridBagConstraints.EAST; // absolute side: a button drawn in the image corner
     this.setFrame(
         0,
         0,

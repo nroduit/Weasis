@@ -76,4 +76,36 @@ class PseudoLocaleTest {
         () -> assertTrue(pseudo.getString("b").contains("{0}")),
         () -> assertEquals(PseudoLocale.LOCALE, pseudo.getLocale()));
   }
+
+  @Test
+  void theRightToLeftFormOverridesTheTextAndKeepsTheArgumentsOutside() {
+    String out = PseudoLocale.transformRtl("Open {0} now");
+    String html = PseudoLocale.transformRtl("<html><b>Open</b></html>");
+    assertAll(
+        () -> assertEquals("\u200F\u202EOpen \u202C{0}\u202E now\u202C\u200F", out),
+        () -> assertTrue(html.startsWith("<html>\u200F") && html.endsWith("\u200F</html>"), html),
+        () -> assertTrue(html.contains("\u202EOpen\u202C"), html),
+        () -> assertEquals("{0} %", PseudoLocale.transformRtl("{0} %")),
+        () -> assertTrue(PseudoLocale.isPseudo(Locale.forLanguageTag("ar-XB"))),
+        () -> assertTrue(PseudoLocale.isRightToLeft(Locale.forLanguageTag("ar-XB"))),
+        () -> assertFalse(PseudoLocale.isRightToLeft(PseudoLocale.LOCALE)),
+        () -> assertFalse(PseudoLocale.isPseudo(Locale.forLanguageTag("ar"))));
+  }
+
+  @Test
+  void aBundleWrappedForArXbIsRightToLeftAndEnXaUnchanged() {
+    ResourceBundle english =
+        new ListResourceBundle() {
+          @Override
+          protected Object[][] getContents() {
+            return new Object[][] {{"a", "Open"}};
+          }
+        };
+    ResourceBundle rtl = PseudoLocale.wrap(english, PseudoLocale.RTL_LOCALE);
+    ResourceBundle xa = PseudoLocale.wrap(english, PseudoLocale.LOCALE);
+    assertAll(
+        () -> assertEquals("\u200F\u202EOpen\u202C\u200F", rtl.getString("a")),
+        () -> assertEquals(PseudoLocale.RTL_LOCALE, rtl.getLocale()),
+        () -> assertEquals(PseudoLocale.wrap(english).getString("a"), xa.getString("a")));
+  }
 }

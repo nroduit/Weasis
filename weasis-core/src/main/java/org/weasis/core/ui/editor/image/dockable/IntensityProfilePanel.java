@@ -56,6 +56,8 @@ public class IntensityProfilePanel extends JComponent implements ToolPanel {
   private int pointed = NO_SAMPLE;
 
   public IntensityProfilePanel() {
+    // never mirrored: a distance axis runs left to right
+    GuiUtils.fixOrientation(this);
     // The width is the one of the tool: only the height is asked for
     setPreferredSize(GuiUtils.getDimension(60, 120));
     setMinimumSize(GuiUtils.getDimension(0, 80));

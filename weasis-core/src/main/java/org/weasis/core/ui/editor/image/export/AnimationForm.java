@@ -27,7 +27,8 @@ public final class AnimationForm {
 
   private final JPanel panel =
       new JPanel(
-          new MigLayout("insets 0, wrap 2, gapy 4lp", "[left]8lp[left, grow, fill]")); // NON-NLS
+          new MigLayout(
+              "insets 0, wrap 2, gapy 4lp", "[leading]8lp[leading, grow, fill]")); // NON-NLS
 
   JPanel getPanel() {
     return panel;

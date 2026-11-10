@@ -451,6 +451,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
       this.waveLayoutManager = new WaveLayoutManager(this, speed, amplitude);
       this.pane = new JPanel(waveLayoutManager);
+      // absolute side: the leads start at the origin of the time axis
       JPanel channelWrap = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
       channelWrap.add(pane);
       scrollPane.setViewportView(channelWrap);
@@ -471,7 +472,8 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       wrap.add(tools, BorderLayout.NORTH);
       wrap.add(infoPanel, BorderLayout.SOUTH);
 
-      JPanel center = new JPanel(new BorderLayout());
+      // never mirrored: the time axis of the leads and of the overview runs left to right
+      JPanel center = GuiUtils.fixOrientation(new JPanel(new BorderLayout()));
       this.overviewPanel = new OverviewPanel(this, scrollPane.getViewport(), pane);
       overviewPanel.setVisible(seconds > OverviewPanel.MIN_SECONDS);
       center.add(overviewPanel, BorderLayout.NORTH);

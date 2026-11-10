@@ -242,9 +242,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
   private void initComponents() {
     JPanel content =
         new JPanel(new MigLayout("insets 10lp, fill", "[grow]", "[grow][]")); // NON-NLS
-    JSplitPane split =
-        new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildListPanel(), buildEditorPanel());
-    split.setDividerLocation(GuiUtils.getScaleLength(280));
+    JSplitPane split = GuiUtils.getHorizontalSplit(buildListPanel(), buildEditorPanel(), 280);
     content.add(split, "grow, wrap"); // NON-NLS
     content.add(buildBottomPanel(), "growx"); // NON-NLS
     setContentPane(content);

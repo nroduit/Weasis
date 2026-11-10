@@ -81,7 +81,7 @@ public class SegPrefView extends AbstractItemDialogPage {
         new JPanel(
             new MigLayout(
                 "fillx, insets 5lp 10lp 10lp 10lp", // NON-NLS
-                "[right]rel[grow,fill]")); // NON-NLS
+                "[trailing]rel[grow,fill]")); // NON-NLS
     panel.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.seg_hide_title")));
     panel.add(checkBoxHideAll, "spanx 2, alignx leading, gapbottom rel"); // NON-NLS
     panel.add(lblKeywords, GuiUtils.NEWLINE);

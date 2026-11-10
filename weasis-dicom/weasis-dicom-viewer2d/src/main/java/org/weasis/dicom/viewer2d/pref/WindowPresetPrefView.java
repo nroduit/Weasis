@@ -67,8 +67,8 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
   private static final String SHRINKABLE = "wmin 0"; // NON-NLS
   private static final String SECTION = "ins 5lp, fillx, wrap 4"; // NON-NLS
   private static final String SECTION_COLUMNS =
-      "[right][grow 50,fill][right][grow 50,fill]"; // NON-NLS
-  private static final String GAP = "gapleft 10lp"; // NON-NLS
+      "[trailing][grow 50,fill][trailing][grow 50,fill]"; // NON-NLS
+  private static final String GAP = "gapbefore 10lp"; // NON-NLS
 
   private final WindowPresetRegistry registry;
   private final Map<String, WindowPreset> pending = new LinkedHashMap<>();
@@ -244,8 +244,8 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
     panel.add(withPicker(bodyPartField, bodyPartPicker), "span 3, " + SHRINKABLE); // NON-NLS
     panel.add(firstLabel("WindowPresetPrefView.minBits", bitsSpinner));
     panel.add(bitsSpinner, "growx 0, wmin 50lp"); // NON-NLS
-    panel.add(rescaleCheck, "span 2, alignx left, " + GAP); // NON-NLS
-    panel.add(defaultCheck, "skip 1, span 3, alignx left"); // NON-NLS
+    panel.add(rescaleCheck, "span 2, alignx leading, " + GAP); // NON-NLS
+    panel.add(defaultCheck, "skip 1, span 3, alignx leading"); // NON-NLS
     return panel;
   }
 

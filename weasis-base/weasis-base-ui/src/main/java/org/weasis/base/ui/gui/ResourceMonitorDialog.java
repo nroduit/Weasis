@@ -400,7 +400,7 @@ public class ResourceMonitorDialog extends JDialog {
   }
 
   private static void addRow(JPanel panel, String key, Component value) {
-    panel.add(new JLabel(Messages.getString(key) + StringUtil.COLON), "gapleft 10");
+    panel.add(new JLabel(Messages.getString(key) + StringUtil.COLON), "gapbefore 10");
     panel.add(value);
   }
 

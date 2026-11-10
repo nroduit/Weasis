@@ -116,7 +116,7 @@ final class DeviceMaskDialog {
       JTextField nameField,
       Map<Integer, JCheckBox> checks,
       List<JComboBox<TagCategory>> categories) {
-    JPanel panel = new JPanel(new MigLayout("ins 5lp, wrap 2", "[right][grow,fill]")); // NON-NLS
+    JPanel panel = new JPanel(new MigLayout("ins 5lp, wrap 2", "[trailing][grow,fill]")); // NON-NLS
     panel.add(new JLabel(Messages.common("name") + StringUtil.COLON));
     panel.add(nameField);
 

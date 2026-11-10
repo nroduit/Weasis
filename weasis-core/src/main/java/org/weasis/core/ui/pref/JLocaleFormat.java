@@ -101,10 +101,22 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, R
     // Apply any locale that was requested before the map was ready
     Locale toSelect = pendingLocale != null ? pendingLocale : Locale.getDefault(Category.FORMAT);
     pendingLocale = null;
-    JLocale target = localeMap.get(toSelect);
-    if (target != null) {
-      setSelectedItem(target);
-    }
+    setSelectedItem(entryOf(toSelect));
+  }
+
+  /**
+   * The entry of a locale, added first to the list when the JDK does not list it (a pseudo-locale
+   * such as {@code ar-XB}, a locale written by hand in the preferences), so that the current format
+   * is always shown.
+   */
+  private JLocale entryOf(Locale locale) {
+    return localeMap.computeIfAbsent(
+        locale,
+        l -> {
+          JLocale entry = new JLocale(l);
+          ((DefaultComboBoxModel<JLocale>) getModel()).insertElementAt(entry, 0);
+          return entry;
+        });
   }
 
   public void selectLocale() {
@@ -118,10 +130,7 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, R
       return;
     }
 
-    JLocale target = localeMap.get(sLoc);
-    if (target != null) {
-      setSelectedItem(target);
-    }
+    setSelectedItem(entryOf(sLoc));
   }
 
   @Override

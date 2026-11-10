@@ -32,7 +32,7 @@ public class DefaultCheckboxTreeCellRenderer extends JPanel implements CheckboxT
   private TreeCheckBoxIcon checkBoxIcon;
 
   public DefaultCheckboxTreeCellRenderer() {
-    setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    setLayout(new FlowLayout(FlowLayout.LEADING, 0, 0));
     setOpaque(false);
     checkBox.setOpaque(false);
     installCheckBoxIcon();

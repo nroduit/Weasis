@@ -393,7 +393,7 @@ public class MeasureTool extends PluginTool
 
   public final JPanel getIconsPanel() {
     final JPanel transform = new JPanel();
-    transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
+    transform.setLayout(new BoxLayout(transform, BoxLayout.PAGE_AXIS));
     transform.setBorder(GuiUtils.getEmptyBorder(5, 5, 5, 5));
 
     transform.add(buildProfileSelector());

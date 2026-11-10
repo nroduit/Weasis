@@ -29,7 +29,7 @@ public abstract class AbstractTagSearchPanel extends JPanel implements KeyListen
   protected final JToolBar navigateToolbar = new JToolBar();
 
   protected AbstractTagSearchPanel() {
-    setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
     add(new JLabel(Messages.common("search") + StringUtil.COLON_AND_SPACE));
 
     GuiUtils.setPreferredWidth(textFieldSearch, 300, 100);

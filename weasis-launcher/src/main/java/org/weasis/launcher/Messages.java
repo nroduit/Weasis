@@ -38,7 +38,7 @@ public class Messages {
       // Only the English base is in the launcher jar
       b = ResourceBundle.getBundle(BUNDLE_NAME, Locale.ROOT);
       if (PseudoLocale.isPseudo(Locale.getDefault())) {
-        b = PseudoLocale.wrap(b);
+        b = PseudoLocale.wrap(b, Locale.getDefault());
       }
       bundle = b;
     }
@@ -55,12 +55,13 @@ public class Messages {
 
   /**
    * The string of a key with its {@code {0}} arguments filled by {@link MessageFormat} in the
-   * default locale; the pattern itself when it cannot be parsed.
+   * default locale, isolated when the interface is right to left ({@link UiOrientation#format});
+   * the pattern itself when it cannot be parsed.
    */
   public static String format(String key, Object... args) {
     String pattern = getString(key);
     try {
-      return new MessageFormat(pattern, Locale.getDefault()).format(args);
+      return UiOrientation.format(new MessageFormat(pattern, Locale.getDefault()), args);
     } catch (IllegalArgumentException e) {
       return pattern;
     }

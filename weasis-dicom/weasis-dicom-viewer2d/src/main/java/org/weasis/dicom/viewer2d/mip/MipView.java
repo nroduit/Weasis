@@ -138,7 +138,8 @@ public class MipView extends View2d {
             ResourceUtil.getIcon(OtherIcon.VIEW_MIP, 24, 24),
             Messages.getString("MipPopup.title"));
     button.setVisible(true);
-    button.setPosition(GridBagConstraints.NORTHEAST);
+    button.setPosition(
+        GridBagConstraints.NORTHEAST); // absolute side: a button drawn in the image corner
     return button;
   }
 

@@ -75,7 +75,7 @@ public class GraphicPrefView extends AbstractItemDialogPage {
     // Every element starts on the same left edge; the labels are short, the tooltips and the
     // help page give the details
     JPanel shapePane =
-        new JPanel(new MigLayout("ins 5lp, fillx, wrap 1", "[left]", "[]5lp[]")) { // NON-NLS
+        new JPanel(new MigLayout("ins 5lp, fillx, wrap 1", "[leading]", "[]5lp[]")) { // NON-NLS
           /** As wide as the page, like the block above it, and no taller than its content. */
           @Override
           public Dimension getMaximumSize() {

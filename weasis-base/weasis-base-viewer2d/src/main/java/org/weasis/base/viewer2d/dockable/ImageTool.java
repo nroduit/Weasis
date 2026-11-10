@@ -49,7 +49,7 @@ public class ImageTool extends PluginTool {
   }
 
   private void init() {
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     add(getWindowLevelPanel());
     add(getTransformPanel());
     add(getSlicePanel());

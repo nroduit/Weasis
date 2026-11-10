@@ -105,7 +105,7 @@ public class WeasisLoader {
     JPanel panelProgress = new JPanel(new BorderLayout());
     panelProgress.add(loadingLabel, BorderLayout.NORTH);
     panelProgress.add(downloadProgress, BorderLayout.CENTER);
-    panelProgress.add(cancelButton, BorderLayout.EAST);
+    panelProgress.add(cancelButton, BorderLayout.LINE_END);
 
     panel.add(panelProgress, BorderLayout.SOUTH);
     panel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));

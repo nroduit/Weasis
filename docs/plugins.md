@@ -45,6 +45,10 @@ Every extension point is an interface that extends `org.pf4j.ExtensionPoint`; an
 The purpose and the contract of each point are in its Javadoc; the concept pages of [docs/README.md](README.md) describe the models they plug into.
 A preference page is declared through the settings catalog (`weasis-core/docs/Settings.md`), with the settings of the plugin scoped by its plugin id.
 
+The interface mirrors for the languages written right to left, and a plugin's windows and dialogs follow by themselves.
+A component that shows an image or a chart with a time or value axis is marked with `GuiUtils.fixOrientation` so that it stays left to right; its custom painting is the plugin's own.
+Lay out with leading and trailing sides, read direction icons with `ResourceUtil.getDirectionIcon`, and fill sentences with `Messages.format`, which isolates the arguments ([docs/i18n.md](i18n.md#right-to-left-languages)).
+
 ## A command namespace
 
 A feature is designed command-first: a headless service holds the logic, a `CommandExtension` exposes it as Picocli verbs, and the Swing UI calls the same service.

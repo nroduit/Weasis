@@ -70,7 +70,7 @@ public abstract class AbstractListEditor<T> extends JDialog {
     panel.add(
         GuiUtils.getHorizontalBoxLayoutPanel(
             10, GuiUtils.getVerticalBoxLayoutPanel(10, jButtonEdit, jButtonAdd, jButtonDelete)),
-        BorderLayout.EAST);
+        BorderLayout.LINE_END);
     panel.add(scrollPane, BorderLayout.CENTER);
     setContentPane(panel);
   }

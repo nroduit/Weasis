@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.pref;
 
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.text.NumberFormat;
 import java.time.ZoneId;
@@ -16,7 +17,10 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Locale;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JTextPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +30,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.util.StringUtil;
+import org.weasis.launcher.UiOrientation;
 
 public class LanguageSetting extends AbstractItemDialogPage {
   private static final Logger LOGGER = LoggerFactory.getLogger(LanguageSetting.class);
@@ -37,6 +42,10 @@ public class LanguageSetting extends AbstractItemDialogPage {
       new JLabel(Messages.getString("GeneralSetting.language") + StringUtil.COLON);
   private final JLabel labelLocale2 =
       new JLabel(Messages.getString("GeneralSetting.language.data") + StringUtil.COLON);
+  private final JLabel labelOrientation =
+      new JLabel(Messages.getString("GeneralSetting.orientation") + StringUtil.COLON);
+  private final JComboBox<String> comboBoxOrientation =
+      new JComboBox<>(new String[] {UiOrientation.AUTO, UiOrientation.LTR, UiOrientation.RTL});
 
   private final JLocaleFormat comboBoxFormat =
       new JLocaleFormat() {
@@ -82,6 +91,28 @@ public class LanguageSetting extends AbstractItemDialogPage {
             ITEM_SEPARATOR,
             labelLocale2,
             comboBoxFormat));
+    comboBoxOrientation.setRenderer(
+        new DefaultListCellRenderer() {
+          @Override
+          public Component getListCellRendererComponent(
+              JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            String text = Messages.getString("GeneralSetting.orientation." + value); // NON-NLS
+            return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
+          }
+        });
+    comboBoxOrientation.addActionListener(
+        e ->
+            GuiUtils.getUICore()
+                .getSystemPreferences()
+                .setProperty(
+                    UiOrientation.PREFERENCE, (String) comboBoxOrientation.getSelectedItem()));
+    add(
+        GuiUtils.getFlowLayoutPanel(
+            FlowLayout.LEADING,
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR,
+            labelOrientation,
+            comboBoxOrientation));
     textPane.setPreferredSize(GuiUtils.getDimension(300, 150));
     textPane.setContentType("text/html");
     textPane.setEditable(false);
@@ -155,6 +186,12 @@ public class LanguageSetting extends AbstractItemDialogPage {
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     comboBoxLang.selectLocale(preferences.getProperty("locale.lang.code"));
     comboBoxFormat.selectLocale();
+    String orientation = preferences.getProperty(UiOrientation.PREFERENCE, UiOrientation.AUTO);
+    comboBoxOrientation.setSelectedItem(
+        switch (orientation) {
+          case UiOrientation.LTR, UiOrientation.RTL -> orientation;
+          default -> UiOrientation.AUTO;
+        });
     textPane.setText(getText());
   }
 
@@ -172,6 +209,7 @@ public class LanguageSetting extends AbstractItemDialogPage {
     Locale.setDefault(Locale.ENGLISH);
     // Reset format to the base.json value or null (default system value)
     preferences.resetProperty("locale.format.code", null);
+    preferences.resetProperty(UiOrientation.PREFERENCE, UiOrientation.AUTO);
 
     initialize();
   }

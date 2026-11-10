@@ -45,7 +45,7 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
   public ThumbnailRenderer() {
     // Cannot pass a boxLayout directly to super because it has a reference
     super(null, true);
-    this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     JPanel panel = new JPanel();
     panel.setLayout(new OverlayLayout(panel));
     Dimension dim = GuiUtils.getDimension(ICON_DIM.width, ICON_DIM.height);

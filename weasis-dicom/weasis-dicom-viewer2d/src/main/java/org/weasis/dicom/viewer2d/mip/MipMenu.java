@@ -137,7 +137,7 @@ public final class MipMenu {
       JMenu thicknessMenu,
       JMenuItem rebuildItem) {
 
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING, 8, 4));
     panel.setBorder(BorderFactory.createTitledBorder(Messages.getString("MipPopup.projection")));
 
     ButtonGroup group = new ButtonGroup();

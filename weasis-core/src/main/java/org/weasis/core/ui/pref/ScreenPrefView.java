@@ -119,7 +119,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         new JLabel(Messages.getString("ScreenPrefView.def_monitor") + StringUtil.COLON);
     add(
         GuiUtils.getFlowLayoutPanel(
-            FlowLayout.LEFT,
+            FlowLayout.LEADING,
             ITEM_SEPARATOR_SMALL,
             ITEM_SEPARATOR,
             presetsLabel,
@@ -202,7 +202,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
   private static JLabel roleLabel() {
     JLabel label = new JLabel(Messages.getString("ScreenPrefView.role") + StringUtil.COLON);
-    label.setBorder(GuiUtils.getEmptyBorder(0, ITEM_SEPARATOR_LARGE, 0, 0));
+    label.setBorder(GuiUtils.getEmptyBorderLeading(0, ITEM_SEPARATOR_LARGE, 0, 0));
     return label;
   }
 

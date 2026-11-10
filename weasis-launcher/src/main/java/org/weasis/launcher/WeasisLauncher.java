@@ -671,9 +671,15 @@ Starting PF4J Plugins...
     UIManager.getDefaults().setDefaultLocale(locale);
     // For new components
     JComponent.setDefaultLocale(locale);
+    // Right to left for Arabic, Persian, Hebrew, Urdu..., before the first window (the splash)
+    String orientation =
+        getGeneralProperty(
+            UiOrientation.PREFERENCE, UiOrientation.AUTO, serverProp, currentProps, true, false);
+    UiOrientation.install(UiOrientation.resolve(locale, orientation));
 
-    if (Locale.ENGLISH.getLanguage().equals(locale.getLanguage())) {
-      // English, and its pseudo-locale en-XA, need no translation package
+    if (Locale.ENGLISH.getLanguage().equals(locale.getLanguage())
+        || PseudoLocale.isPseudo(locale)) {
+      // English and the pseudo-locales en-XA and ar-XB need no translation package
       modulesi18n.clear();
     } else {
       // The launcher strings and the Swing dialogs, before the first window is displayed

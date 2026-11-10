@@ -91,7 +91,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
 
   private JPanel initPanel() {
     JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
-    panel.setBorder(GuiUtils.getEmptyBorder(10, 5, 20, 15));
+    panel.setBorder(GuiUtils.getEmptyBorderLeading(10, 5, 20, 15));
 
     JLabel question =
         new JLabel(Messages.getString("AcquireImportDialog.grp_msg") + StringUtil.COLON);

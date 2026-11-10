@@ -66,7 +66,7 @@ public final class Translations {
     ClassLoader parent = owner.getClassLoader();
     URL[] packages = translationPackages();
     if (PseudoLocale.isPseudo(locale)) {
-      return PseudoLocale.wrap(ResourceBundle.getBundle(baseName, Locale.ROOT, parent));
+      return PseudoLocale.wrap(ResourceBundle.getBundle(baseName, Locale.ROOT, parent), locale);
     }
     if (packages.length == 0 || Locale.ENGLISH.getLanguage().equals(locale.getLanguage())) {
       return ResourceBundle.getBundle(baseName, locale, parent);
@@ -191,7 +191,8 @@ public final class Translations {
    */
   static void loadLauncher(Path cacheDir, Properties modulesi18n) {
     Locale locale = Locale.getDefault();
-    if (Locale.ENGLISH.getLanguage().equals(locale.getLanguage())) {
+    if (Locale.ENGLISH.getLanguage().equals(locale.getLanguage())
+        || PseudoLocale.isPseudo(locale)) {
       return;
     }
     Path jar = fetch(cacheDir, LAUNCHER_MODULE, modulesi18n, useHttpCache());

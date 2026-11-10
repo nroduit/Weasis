@@ -31,6 +31,7 @@ import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.model.ViewModelChangeListener;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.media.data.ImageElement;
@@ -67,6 +68,8 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
   protected final PropertyChangeListener graphicsChangeHandler;
 
   public GraphicsPane(ViewModel viewModel) {
+    // never mirrored: the image and what is drawn on it never mirror
+    GuiUtils.fixOrientation(this);
     setOpaque(true);
 
     this.layerModelHandler = new LayerModelHandler();

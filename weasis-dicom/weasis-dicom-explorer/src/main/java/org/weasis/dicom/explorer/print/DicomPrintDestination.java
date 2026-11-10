@@ -146,7 +146,7 @@ public final class DicomPrintDestination implements PrintDestination {
         });
 
     JPanel panel =
-        new JPanel(new MigLayout("insets 0, fillx, wrap 2", "[right]rel[left]")); // NON-NLS
+        new JPanel(new MigLayout("insets 0, fillx, wrap 2", "[trailing]rel[leading]")); // NON-NLS
     panel.add(pane, "span 2, growx"); // NON-NLS
     panel.add(new JLabel(Messages.common("calling_node") + StringUtil.COLON));
     panel.add(callingCombo);

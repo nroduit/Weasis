@@ -327,7 +327,7 @@ final class FacetChipBar extends JPanel {
   private JButton chip(String text, String facet, Runnable remove) {
     JButton chip = new JButton(text, new FlatClearIcon());
     style(chip);
-    chip.setHorizontalTextPosition(SwingConstants.LEFT);
+    chip.setHorizontalTextPosition(SwingConstants.LEADING);
     chip.setIconTextGap(GuiUtils.getScaleLength(3));
     chip.setToolTipText(Messages.format("DicomExplorer.chip_remove", facet, text));
     chip.addActionListener(

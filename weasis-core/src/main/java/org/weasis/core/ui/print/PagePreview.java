@@ -56,6 +56,8 @@ public class PagePreview extends JComponent {
   private boolean closed;
 
   public PagePreview() {
+    // never mirrored: the printed page lays out images as displayed
+    GuiUtils.fixOrientation(this);
     debounce.setRepeats(false);
     setOpaque(true);
     setPreferredSize(new Dimension(GuiUtils.getScaleLength(440), GuiUtils.getScaleLength(340)));

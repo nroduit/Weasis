@@ -225,7 +225,7 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
             new MigLayout("ins 5lp 0 5lp 0, fillx", "[][grow 60,fill][][grow 40,fill]")); // NON-NLS
     identity.add(new JLabel(Messages.common("name") + StringUtil.COLON));
     identity.add(nameField, "wmin 60lp"); // NON-NLS
-    identity.add(modalitiesLabel, "gapleft 10lp"); // NON-NLS
+    identity.add(modalitiesLabel, "gapbefore 10lp"); // NON-NLS
     identity.add(modalitiesField, "wmin 60lp"); // NON-NLS
     return identity;
   }
@@ -263,20 +263,20 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
     keepDefaults.addActionListener(_ -> enableEditor());
 
     // Same blocks as the Drawings page, each as wide as the tab, fields aligned on two columns
-    String columns = "[][left,grow]"; // NON-NLS
-    JPanel line = new JPanel(new MigLayout("ins 5lp, fillx", "[][][][left,grow]")); // NON-NLS
+    String columns = "[][leading,grow]"; // NON-NLS
+    JPanel line = new JPanel(new MigLayout("ins 5lp, fillx", "[][][][leading,grow]")); // NON-NLS
     line.setBorder(GuiUtils.getTitledBorder(Messages.getString("MeasureToolBar.line")));
     line.add(new JLabel(Messages.getString("ColorMapEditor.color") + StringUtil.COLON));
     line.add(colorButton);
     line.add(
         new JLabel(Messages.getString("measure.width") + StringUtil.COLON),
-        "gapleft 15lp"); // NON-NLS
+        "gapbefore 15lp"); // NON-NLS
     line.add(widthSpinner);
 
     JPanel shape = new JPanel(new MigLayout("ins 5lp, fillx, wrap 2", columns)); // NON-NLS
     shape.setBorder(GuiUtils.getTitledBorder(Messages.getString("closed.shape")));
     shape.add(fillBox, "span 2"); // NON-NLS
-    shape.add(new JLabel(Messages.getString("fill.opacity") + StringUtil.COLON), "gapleft 20lp");
+    shape.add(new JLabel(Messages.getString("fill.opacity") + StringUtil.COLON), "gapbefore 20lp");
     shape.add(opacitySpinner, "split 2"); // NON-NLS
     shape.add(new JLabel("%"));
     shape.add(uprightBox, "span 2"); // NON-NLS

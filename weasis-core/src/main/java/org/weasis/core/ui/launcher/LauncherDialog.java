@@ -47,10 +47,12 @@ public class LauncherDialog extends JDialog {
       buttonCheckBox.setSelected(launcher.isButton());
     }
 
-    add(new JLabel(Messages.common("name") + StringUtil.COLON), "align right"); // NON-NLS
+    add(new JLabel(Messages.common("name") + StringUtil.COLON), "align trailing"); // NON-NLS
     add(nameField, "growx"); // NON-NLS
 
-    add(new JLabel(Messages.getString("icon.path") + StringUtil.COLON), "align right"); // NON-NLS
+    add(
+        new JLabel(Messages.getString("icon.path") + StringUtil.COLON),
+        "align trailing"); // NON-NLS
     add(iconNameField, "growx"); // NON-NLS
 
     add(enableCheckBox, "span, split 3"); // NON-NLS
@@ -59,11 +61,11 @@ public class LauncherDialog extends JDialog {
     JButton configurationButton = new JButton(Messages.getString("configure"));
     configurationButton.addActionListener(
         _ -> new ConfigurationDialog(LauncherDialog.this, this.launcher, type).setVisible(true));
-    add(configurationButton, "align right"); // NON-NLS
+    add(configurationButton, "align trailing"); // NON-NLS
 
     JButton saveButton = new JButton(Messages.common("save"));
     saveButton.addActionListener(_ -> saveLauncher());
-    add(saveButton, "cell 1 4, split 2, align right, gapright 15, gaptop 15"); // NON-NLS
+    add(saveButton, "cell 1 4, split 2, align trailing, gapafter 15, gaptop 15"); // NON-NLS
     JButton cancelButton = new JButton(Messages.common("cancel"));
     cancelButton.addActionListener(_ -> dispose());
     add(cancelButton);

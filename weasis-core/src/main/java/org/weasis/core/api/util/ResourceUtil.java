@@ -15,6 +15,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
 import org.weasis.core.util.StringUtil;
+import org.weasis.launcher.UiOrientation;
 
 public class ResourceUtil {
 
@@ -262,6 +263,28 @@ public class ResourceUtil {
 
   public static FlatSVGIcon getIcon(ResourceIconPath path, int width, int height) {
     return new FlatSVGIcon(getResourcePath().resolve(path.getPath()).toUri()).derive(width, height);
+  }
+
+  /**
+   * A direction icon, mirrored when the interface is right to left so that it points the reading
+   * direction: back / forward, previous / next page or item, the collapse of a side, a breadcrumb
+   * arrow. Media controls (play, the cine frames), clocks, checkmarks, the image tools and the
+   * icons of an image or of anatomy are never mirrored: they use {@link #getIcon}.
+   */
+  public static FlatSVGIcon getDirectionIcon(ResourceIconPath path) {
+    return readingDirection(getIcon(path));
+  }
+
+  /** {@link #getDirectionIcon} at the toolbar size. */
+  public static FlatSVGIcon getDirectionToolBarIcon(ResourceIconPath path) {
+    return readingDirection(getToolBarIcon(path));
+  }
+
+  /** The icon, or its mirrored form when the interface is right to left. */
+  public static FlatSVGIcon readingDirection(FlatSVGIcon icon) {
+    return UiOrientation.isRightToLeft() && !(icon instanceof MirroredSVGIcon)
+        ? new MirroredSVGIcon(icon)
+        : icon;
   }
 
   public static File getResource(String filename) {

@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.model.ViewModelChangeListener;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.editor.image.Canvas;
 import org.weasis.core.ui.editor.image.DrawingsKeyListeners;
@@ -70,6 +71,8 @@ public class VolumeCanvas extends JPanel implements Canvas {
       ImageViewerEventManager<DicomImageElement> eventManager,
       DicomVolTexture volTexture,
       VolumeViewModel viewModel) {
+    // never mirrored: the image and what is drawn on it never mirror
+    GuiUtils.fixOrientation(this);
     this.volTexture = volTexture;
     this.eventManager = (EventManager) eventManager;
     this.camera = new Camera(this);

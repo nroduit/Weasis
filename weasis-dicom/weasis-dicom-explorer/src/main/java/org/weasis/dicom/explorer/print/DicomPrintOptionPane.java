@@ -96,7 +96,8 @@ public class DicomPrintOptionPane extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("fillx", "[right]rel[left]15lp[right]rel[left]")); // NON-NLS
+    setLayout(
+        new MigLayout("fillx", "[trailing]rel[leading]15lp[trailing]rel[leading]")); // NON-NLS
     setBorder(GuiUtils.getTitledBorder(Messages.getString("DicomPrintDialog.option_title")));
 
     add(label("DicomPrintDialog.med_type"), GuiUtils.NEWLINE);

@@ -47,7 +47,7 @@ public class AcquireTabPanel extends JPanel {
     seriesPanel.add(seriesList, BorderLayout.CENTER);
     seriesPanel.add(new AcquirePublishPanel(), BorderLayout.SOUTH);
 
-    add(seriesPanel, BorderLayout.WEST);
+    add(seriesPanel, BorderLayout.LINE_START);
     add(imageList, BorderLayout.CENTER);
   }
 

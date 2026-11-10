@@ -75,7 +75,7 @@ public final class MeasureTables {
     container.setPreferredSize(new Dimension(nameWidth + valueWidth, height)); // NOSONAR fixed
     // Flush left, as wide as the content at most and as narrow as the container at least
     String cell = "growx, wmin 0, wmax " + (nameWidth + valueWidth); // NON-NLS
-    JPanel grid = new JPanel(new MigLayout("ins 0, gap 0, wrap 1, fillx", "[left]")); // NON-NLS
+    JPanel grid = new JPanel(new MigLayout("ins 0, gap 0, wrap 1, fillx", "[leading]")); // NON-NLS
     grid.add(header, cell);
     grid.add(table, cell);
     container.add(grid, BorderLayout.CENTER);
@@ -167,7 +167,7 @@ public final class MeasureTables {
         JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       boolean number = value instanceof Number && row < items.size();
-      setHorizontalAlignment(number ? SwingConstants.RIGHT : SwingConstants.LEFT);
+      setHorizontalAlignment(number ? SwingConstants.TRAILING : SwingConstants.LEADING);
       if (number) {
         setText(format.format(items.get(row)));
       }

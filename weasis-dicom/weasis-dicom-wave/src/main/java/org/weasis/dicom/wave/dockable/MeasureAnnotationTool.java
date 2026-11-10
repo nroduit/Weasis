@@ -63,7 +63,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MeasureAnnotationTool.class);
 
-  public static final String BUTTON_NAME = "Measurements"; // NON-NLS
+  public static final String BUTTON_NAME = Messages.getString("MeasureAnnotationTool.title");
 
   private final JScrollPane rootPane;
   private final Section intervals;

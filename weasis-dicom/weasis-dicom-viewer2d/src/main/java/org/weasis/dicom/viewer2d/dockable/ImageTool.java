@@ -77,7 +77,7 @@ public class ImageTool extends PluginTool {
   }
 
   private void init() {
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     addSection(
         Messages.getString("ImageTool.wl"),
         getWindowLevelPanel(EventManager.getInstance(), spaceY, true),
@@ -494,12 +494,13 @@ public class ImageTool extends PluginTool {
         .ifPresent(
             a ->
                 bottom.add(
-                    a.createCheckBox(SubtractionAction.PREVIEW.getTitle()), BorderLayout.WEST));
+                    a.createCheckBox(SubtractionAction.PREVIEW.getTitle()),
+                    BorderLayout.LINE_START));
     JButton build = new JButton(Messages.getString("SubtractionTool.subtract"));
     build.setToolTipText(Messages.getString("SubtractionTool.subtract.tip"));
     build.addActionListener(e -> SubtractionController.subtractSelected());
     manager.getAction(SubtractionAction.MASK).ifPresent(a -> a.registerActionState(build));
-    bottom.add(build, BorderLayout.EAST);
+    bottom.add(build, BorderLayout.LINE_END);
     bottom.setMaximumSize(new Dimension(Integer.MAX_VALUE, bottom.getPreferredSize().height));
     panel.add(bottom);
     return panel;

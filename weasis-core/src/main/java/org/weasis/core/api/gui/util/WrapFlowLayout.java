@@ -21,12 +21,13 @@ import java.util.Set;
 import javax.swing.SwingUtilities;
 
 /**
- * Left to right flow that wraps to the width of the container and, unlike {@link
- * java.awt.FlowLayout}, asks for the height its lines need, so what follows is pushed down. A
- * component added with {@link #KEEP_WITH_NEXT} stays on the line of the next one, as a label with
- * its field; such a group is only split when it is wider than the container on its own. A component
- * added with {@link #FILL} takes what is left of its line: it stays beside the previous component
- * while its minimum width fits there, and drops to a line of its own otherwise.
+ * Flow in the reading order (from the right when the container is right to left) that wraps to the
+ * width of the container and, unlike {@link java.awt.FlowLayout}, asks for the height its lines
+ * need, so what follows is pushed down. A component added with {@link #KEEP_WITH_NEXT} stays on the
+ * line of the next one, as a label with its field; such a group is only split when it is wider than
+ * the container on its own. A component added with {@link #FILL} takes what is left of its line: it
+ * stays beside the previous component while its minimum width fits there, and drops to a line of
+ * its own otherwise.
  */
 public class WrapFlowLayout implements LayoutManager2 {
 
@@ -211,9 +212,12 @@ public class WrapFlowLayout implements LayoutManager2 {
   public void layoutContainer(Container parent) {
     synchronized (parent.getTreeLock()) {
       Insets insets = parent.getInsets();
-      List<Placement> placements = place(parent, available(parent));
+      int available = available(parent);
+      List<Placement> placements = place(parent, available);
+      boolean rtl = !parent.getComponentOrientation().isLeftToRight();
       for (Placement p : placements) {
-        p.component().setBounds(insets.left + p.x(), insets.top + p.y(), p.width(), p.height());
+        int x = rtl && available != Integer.MAX_VALUE ? available - p.x() - p.width() : p.x();
+        p.component().setBounds(insets.left + x, insets.top + p.y(), p.width(), p.height());
       }
       int height = heightOf(placements) + insets.top + insets.bottom;
       if (height != announcedHeight) {

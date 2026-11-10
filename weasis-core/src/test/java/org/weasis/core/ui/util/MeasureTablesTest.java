@@ -60,13 +60,13 @@ class MeasureTablesTest {
   }
 
   @Test
-  void values_are_shown_rounded_and_right_aligned() {
+  void values_are_shown_rounded_and_trailing_aligned() {
     JTable table = table();
     char mark = DecimalFormatSymbols.getInstance().getDecimalSeparator();
     assertAll(
         () -> assertEquals("0" + mark + "48", cell(table, 0, 1).getText()),
         () -> assertEquals("1520", cell(table, 1, 1).getText()),
-        () -> assertEquals(SwingConstants.RIGHT, cell(table, 0, 1).getHorizontalAlignment()));
+        () -> assertEquals(SwingConstants.TRAILING, cell(table, 0, 1).getHorizontalAlignment()));
   }
 
   @Test

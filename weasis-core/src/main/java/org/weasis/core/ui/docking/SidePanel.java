@@ -50,6 +50,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.ShellState.ShellSide;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
+import org.weasis.launcher.UiOrientation;
 
 /**
  * One side of the shell around the central workspace: the explorer side (sources) or the tools side
@@ -88,9 +89,9 @@ public class SidePanel extends JPanel {
     EXPLORER,
     TOOLS;
 
-    /** The side for the orientation of the default locale. */
+    /** The side for the orientation of the interface ({@link UiOrientation#get()}). */
     public Side side() {
-      return side(ComponentOrientation.getOrientation(Locale.getDefault()));
+      return side(UiOrientation.get());
     }
 
     public Side side(ComponentOrientation orientation) {
@@ -146,7 +147,7 @@ public class SidePanel extends JPanel {
     this.side = Objects.requireNonNull(side);
     setLayout(new BorderLayout());
 
-    stripe.setLayout(new BoxLayout(stripe, BoxLayout.Y_AXIS));
+    stripe.setLayout(new BoxLayout(stripe, BoxLayout.PAGE_AXIS));
     stripe.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
     slotSplit.setContinuousLayout(true);
@@ -827,7 +828,10 @@ public class SidePanel extends JPanel {
             }
           });
       JPanel header = new JPanel(new BorderLayout());
-      header.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 2));
+      header.setBorder(
+          GuiUtils.isRightToLeft()
+              ? BorderFactory.createEmptyBorder(2, 2, 2, 5)
+              : BorderFactory.createEmptyBorder(2, 5, 2, 2));
       header.add(title, BorderLayout.CENTER);
       JPanel actions = new JPanel();
       actions.setLayout(new BoxLayout(actions, BoxLayout.LINE_AXIS));

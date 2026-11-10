@@ -21,7 +21,7 @@ import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 public class AnnotatePanel extends AbstractAcquireActionPanel {
 
   public AnnotatePanel() {
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     MeasureTool.buildIconPanel(
         this, EventManager.getInstance(), ActionW.MEASURE, ActionW.DRAW_MEASURE, 8);
     MeasureTool.buildIconPanel(

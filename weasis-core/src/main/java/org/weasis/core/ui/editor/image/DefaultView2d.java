@@ -336,14 +336,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       // used (rather than a contextual right-click) because the right mouse button is already
       // bound to a configurable mouse action elsewhere in Weasis.
       synchButton = new SynchViewButton(this::showPerViewSyncPopup);
-      synchButton.setPosition(GridBagConstraints.SOUTHEAST);
+      synchButton.setPosition(
+          GridBagConstraints.SOUTHEAST); // absolute side: a button drawn in the image corner
       if (!getViewButtons().contains(synchButton)) {
         getViewButtons().add(synchButton);
       }
     }
     if (manualSynchButton == null) {
       manualSynchButton = new ManualSynchViewButton(this::onManualSyncButtonClicked);
-      manualSynchButton.setPosition(GridBagConstraints.SOUTHEAST);
+      manualSynchButton.setPosition(
+          GridBagConstraints.SOUTHEAST); // absolute side: a button drawn in the image corner
       if (!getViewButtons().contains(manualSynchButton)) {
         getViewButtons().add(manualSynchButton);
       }

@@ -91,7 +91,7 @@ public class WorklistDialog extends JDialog {
     JPanel footPanel = new JPanel();
     FlowLayout flowLayout = (FlowLayout) footPanel.getLayout();
     flowLayout.setVgap(15);
-    flowLayout.setAlignment(FlowLayout.RIGHT);
+    flowLayout.setAlignment(FlowLayout.TRAILING);
     flowLayout.setHgap(20);
     getContentPane().add(footPanel, BorderLayout.SOUTH);
     selection = new JLabel();

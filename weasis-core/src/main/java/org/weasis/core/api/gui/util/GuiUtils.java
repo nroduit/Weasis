@@ -35,6 +35,8 @@ import java.awt.RenderingHints;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -71,6 +73,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
+import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
@@ -94,6 +97,7 @@ import org.weasis.core.Messages;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.util.StringUtil;
+import org.weasis.launcher.UiOrientation;
 
 public class GuiUtils {
   private static final Logger LOGGER = LoggerFactory.getLogger(GuiUtils.class);
@@ -231,11 +235,86 @@ public class GuiUtils {
     return length * UIScale.getUserScaleFactor();
   }
 
+  /**
+   * Applies an orientation to a container tree, except the subtrees that never mirror (the viewer
+   * panes, see {@link UiOrientation#fix}), which stay left to right. The windows follow the
+   * orientation of the interface by themselves; this is for a tree built outside a window.
+   */
   public static void rightToLeftChanged(Container c, boolean rightToLeft) {
-    c.applyComponentOrientation(
-        rightToLeft ? ComponentOrientation.RIGHT_TO_LEFT : ComponentOrientation.LEFT_TO_RIGHT);
+    UiOrientation.apply(
+        c, rightToLeft ? ComponentOrientation.RIGHT_TO_LEFT : ComponentOrientation.LEFT_TO_RIGHT);
     c.revalidate();
     c.repaint();
+  }
+
+  /**
+   * Marks a component that never mirrors, whatever the orientation of the interface: an image
+   * canvas, the grid of the viewer panes, a chart with a time or value axis. It and its subtree
+   * stay left to right.
+   */
+  public static <T extends JComponent> T fixOrientation(T c) {
+    return UiOrientation.fix(c);
+  }
+
+  /**
+   * A horizontal split whose leading child is on the left, or on the right when the interface is
+   * right to left; the trailing child takes the extra space. A split pane never mirrors by itself
+   * ({@link UiOrientation}).
+   *
+   * @param leadingWidth the initial width of the leading child (unscaled), or a negative value for
+   *     its preferred width
+   */
+  public static JSplitPane getHorizontalSplit(
+      Component leading, Component trailing, int leadingWidth) {
+    boolean rtl = isRightToLeft();
+    JSplitPane split =
+        rtl
+            ? new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, trailing, leading)
+            : new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leading, trailing);
+    split.setResizeWeight(rtl ? 1.0 : 0.0);
+    if (leadingWidth >= 0) {
+      int width = getScaleLength(leadingWidth);
+      if (rtl) {
+        split.addComponentListener(
+            new ComponentAdapter() {
+              @Override
+              public void componentResized(ComponentEvent e) {
+                if (split.getWidth() > 0) {
+                  split.removeComponentListener(this);
+                  split.setDividerLocation(
+                      Math.max(0, split.getWidth() - width - split.getDividerSize()));
+                }
+              }
+            });
+      } else {
+        split.setDividerLocation(width);
+      }
+    }
+    return split;
+  }
+
+  /** True when the interface is right to left (Arabic, Persian, Hebrew, Urdu...). */
+  public static boolean isRightToLeft() {
+    return UiOrientation.isRightToLeft();
+  }
+
+  /**
+   * Insets given in reading order, scaled: the leading and trailing values are swapped when the
+   * interface is right to left. Not for a component that never mirrors (a viewer pane).
+   */
+  public static Insets insets(int top, int leading, int bottom, int trailing) {
+    boolean ltr = !isRightToLeft();
+    return new Insets(
+        getScaleLength(top),
+        getScaleLength(ltr ? leading : trailing),
+        getScaleLength(bottom),
+        getScaleLength(ltr ? trailing : leading));
+  }
+
+  /** An empty border given in reading order, scaled, as {@link #insets(int, int, int, int)}. */
+  public static Border getEmptyBorderLeading(int top, int leading, int bottom, int trailing) {
+    Insets i = insets(top, leading, bottom, trailing);
+    return new EmptyBorder(i.top, i.left, i.bottom, i.right);
   }
 
   public static TitledBorder getTitledBorder(String title) {
@@ -529,7 +608,7 @@ public class GuiUtils {
   }
 
   public static void addCheckAction(final JFormattedTextField textField) {
-    textField.setHorizontalAlignment(SwingConstants.RIGHT);
+    textField.setHorizontalAlignment(SwingConstants.TRAILING);
     addCheckActionToJFormattedTextField(textField);
   }
 
@@ -670,7 +749,7 @@ public class GuiUtils {
     textArea.setWrapStyleWord(true);
     textArea.setColumns(40);
     panel.add(textArea, java.awt.BorderLayout.CENTER);
-    panel.add(createHelpButton(helpTopic), java.awt.BorderLayout.EAST);
+    panel.add(createHelpButton(helpTopic), java.awt.BorderLayout.LINE_END);
     return panel;
   }
 

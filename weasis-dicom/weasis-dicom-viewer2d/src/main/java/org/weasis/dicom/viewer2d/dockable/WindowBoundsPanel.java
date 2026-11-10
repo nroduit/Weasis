@@ -40,7 +40,7 @@ final class WindowBoundsPanel extends JPanel {
   WindowBoundsPanel(SliderChangeListener window, SliderChangeListener level, int gap) {
     this.window = window;
     this.level = level;
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     add(lower);
     add(GuiUtils.boxVerticalStrut(gap));
     add(upper);

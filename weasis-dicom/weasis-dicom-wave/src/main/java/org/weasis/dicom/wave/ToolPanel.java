@@ -10,7 +10,6 @@
 package org.weasis.dicom.wave;
 
 import java.awt.Component;
-import java.awt.FlowLayout;
 import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListCellRenderer;
@@ -20,6 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.DecFormatter;
+import org.weasis.core.api.gui.util.WrapFlowLayout;
 import org.weasis.core.util.StringUtil;
 
 /** The display settings of the waveform view: paper, layout, lead sequence, filters, group. */
@@ -108,9 +108,10 @@ class ToolPanel extends JPanel {
 
   public ToolPanel(WaveView view) {
     this.view = view;
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    JPanel paper = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
-    JPanel processing = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+    // the rows wrap to the width of the view instead of being cut
+    JPanel paper = new JPanel(new WrapFlowLayout(5, 2));
+    JPanel processing = new JPanel(new WrapFlowLayout(5, 2));
     add(paper);
     add(processing);
     initPaper(paper);
@@ -119,7 +120,7 @@ class ToolPanel extends JPanel {
 
   private void initPaper(JPanel panel) {
     JLabel zoomLabel = new JLabel(Messages.common("zoom"));
-    panel.add(zoomLabel);
+    panel.add(zoomLabel, WrapFlowLayout.KEEP_WITH_NEXT);
 
     JComboBox<Speed> speed = new JComboBox<>(Speed.values());
     speed.addActionListener(e -> view.setSpeed(((Speed) speed.getSelectedItem()).getValue()));
@@ -148,7 +149,9 @@ class ToolPanel extends JPanel {
 
   /** The display filters: baseline wander, low-pass and mains notch. */
   private void initProcessing(JPanel panel) {
-    panel.add(new JLabel(Messages.getString("ToolPanel.filter") + StringUtil.COLON));
+    panel.add(
+        new JLabel(Messages.getString("ToolPanel.filter") + StringUtil.COLON),
+        WrapFlowLayout.KEEP_WITH_NEXT);
 
     JCheckBox baseline =
         new JCheckBox(Messages.getString("ToolPanel.baseline"), view.getFilter().baseline());
@@ -158,7 +161,9 @@ class ToolPanel extends JPanel {
         e -> view.setFilter(view.getFilter().withBaseline(baseline.isSelected())));
     panel.add(baseline);
 
-    panel.add(new JLabel(Messages.getString("ToolPanel.lowpass") + StringUtil.COLON));
+    panel.add(
+        new JLabel(Messages.getString("ToolPanel.lowpass") + StringUtil.COLON),
+        WrapFlowLayout.KEEP_WITH_NEXT);
     JComboBox<String> lowPass = new JComboBox<>(labels(LOW_PASS_HZ));
     lowPass.setFocusable(false);
     lowPass.setSelectedIndex(indexOf(LOW_PASS_HZ, view.getFilter().lowPassHz()));
@@ -166,7 +171,9 @@ class ToolPanel extends JPanel {
         e -> view.setFilter(view.getFilter().withLowPass(LOW_PASS_HZ[lowPass.getSelectedIndex()])));
     panel.add(lowPass);
 
-    panel.add(new JLabel(Messages.getString("ToolPanel.notch") + StringUtil.COLON));
+    panel.add(
+        new JLabel(Messages.getString("ToolPanel.notch") + StringUtil.COLON),
+        WrapFlowLayout.KEEP_WITH_NEXT);
     JComboBox<String> notch = new JComboBox<>(labels(NOTCH_HZ));
     notch.setFocusable(false);
     notch.setSelectedIndex(indexOf(NOTCH_HZ, view.getFilter().notchHz()));
@@ -174,7 +181,9 @@ class ToolPanel extends JPanel {
         e -> view.setFilter(view.getFilter().withNotch(NOTCH_HZ[notch.getSelectedIndex()])));
     panel.add(notch);
 
-    panel.add(new JLabel("    " + Messages.getString("ToolPanel.caliper") + StringUtil.COLON));
+    panel.add(
+        new JLabel("    " + Messages.getString("ToolPanel.caliper") + StringUtil.COLON),
+        WrapFlowLayout.KEEP_WITH_NEXT);
     JComboBox<String> kind =
         new JComboBox<>(
             new String[] {
@@ -241,7 +250,7 @@ class ToolPanel extends JPanel {
       return;
     }
     JLabel label = new JLabel(Messages.getString("ToolPanel.group") + StringUtil.COLON);
-    panel.add(label);
+    panel.add(label, WrapFlowLayout.KEEP_WITH_NEXT);
     JComboBox<String> groupCombo = new JComboBox<>(groups.toArray(new String[0]));
     groupCombo.setFocusable(false);
     groupCombo.setSelectedIndex(Math.min(view.getMultiplexGroup(), groups.size() - 1));
@@ -251,7 +260,7 @@ class ToolPanel extends JPanel {
 
   private void addDisplayFormatComponent(JPanel panel) {
     JLabel formatLabel = new JLabel(Messages.getString("ToolPanel.disp_format") + StringUtil.COLON);
-    panel.add(formatLabel);
+    panel.add(formatLabel, WrapFlowLayout.KEEP_WITH_NEXT);
 
     boolean twelveLeads = view.getChannelNumber() >= 12;
     Format[] formats =

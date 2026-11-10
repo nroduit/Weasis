@@ -66,7 +66,9 @@ public class DicomWebNodeDialog extends JDialog {
     JPanel panel = new JPanel();
     panel.setLayout(
         new MigLayout(
-            "insets 10lp 15lp 10lp 15lp", "[right]rel[left][grow,fill]", "[]10[]")); // NON-NLS
+            "insets 10lp 15lp 10lp 15lp",
+            "[trailing]rel[leading][grow,fill]",
+            "[]10[]")); // NON-NLS
 
     JLabel descriptionLabel = new JLabel(Messages.common("description") + StringUtil.COLON);
     descriptionTf = new JTextField();

@@ -252,7 +252,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
       JMenuItem compare =
           new JMenuItem(
               Messages.getString("WaveformToolBar.compare"),
-              ResourceUtil.getIcon(ActionIcon.PREVIOUS));
+              ResourceUtil.getDirectionIcon(ActionIcon.PREVIOUS));
       compare.addActionListener(e -> compareWithPrevious());
       menuRoot.add(compare);
     }

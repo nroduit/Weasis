@@ -192,7 +192,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   }
 
   private JPanel buildIdentity() {
-    JPanel panel = section("MaskingPrefView.section.profile", "[right][grow,fill]");
+    JPanel panel = section("MaskingPrefView.section.profile", "[trailing][grow,fill]");
     panel.add(labelText(Messages.common("name"), nameField));
     panel.add(nameField, SHRINKABLE);
     exportCheck.setToolTipText(Messages.getString("MaskingPrefView.offer.tip"));
@@ -203,7 +203,8 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   // Two category columns: the eight rows fit the dialog without scrolling
   private JPanel buildActions() {
     JPanel panel =
-        section("MaskingPrefView.section.actions", "[right][grow 50,fill][right][grow 50,fill]");
+        section(
+            "MaskingPrefView.section.actions", "[trailing][grow 50,fill][trailing][grow 50,fill]");
     for (TagCategory category : CATEGORIES) {
       JComboBox<AnonymizationAction> combo = new JComboBox<>(actionsFor(category));
       combo.setRenderer(
@@ -220,7 +221,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   }
 
   private JPanel buildDefaults() {
-    JPanel panel = section("MaskingPrefView.section.defaults", "[right][grow,fill]");
+    JPanel panel = section("MaskingPrefView.section.defaults", "[trailing][grow,fill]");
     sessionCombo.setRenderer(
         renderer(v -> v instanceof MaskingProfile p ? displayName(p) : String.valueOf(v)));
     aiCombo.setRenderer(

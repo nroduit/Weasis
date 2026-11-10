@@ -87,14 +87,18 @@ public class HangingWhyTool extends PluginTool implements SeriesViewerListener {
     setDockableWidth(300);
     setLayout(new BorderLayout());
     JPanel content = new JPanel();
-    content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+    content.setLayout(new BoxLayout(content, BoxLayout.PAGE_AXIS));
     content.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     header.setAlignmentX(Component.LEFT_ALIGNMENT);
     match.setAlignmentX(Component.LEFT_ALIGNMENT);
     content.add(header);
     content.add(match);
     content.add(Box.createVerticalStrut(5));
-    content.add(titled(Messages.getString("HangingWhyTool.rules"), new JList<>(reasons)));
+    // the rules are written in the notation of the protocols (field, operator, values),
+    // untranslated
+    // like the commands: they read left to right in every language
+    JList<String> ruleList = GuiUtils.fixOrientation(new JList<>(reasons));
+    content.add(titled(Messages.getString("HangingWhyTool.rules"), ruleList));
     alternativeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     alternativeList.addListSelectionListener(
         e -> use.setEnabled(alternativeList.getSelectedValue() != null));

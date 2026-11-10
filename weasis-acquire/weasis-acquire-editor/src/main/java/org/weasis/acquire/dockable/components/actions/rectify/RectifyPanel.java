@@ -35,7 +35,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
   private final RectifyAction rectifyAction;
 
   public RectifyPanel(RectifyAction rectifyAction) {
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     setBorder(GuiUtils.getEmptyBorder(10, 5, 2, 5));
     this.rectifyAction = Objects.requireNonNull(rectifyAction);
     orientationPanel = new OrientationSliderComponent(this);

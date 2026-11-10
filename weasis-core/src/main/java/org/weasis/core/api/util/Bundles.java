@@ -16,6 +16,7 @@ import java.util.ResourceBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.launcher.PseudoLocale;
+import org.weasis.launcher.UiOrientation;
 
 /**
  * What the {@code Messages} class of every module delegates to: the bundle of the module for the
@@ -24,8 +25,8 @@ import org.weasis.launcher.PseudoLocale;
  *
  * <p>A translation reaches a plugin through its class loader: the translation packages are
  * published on the shared library loader, so {@link ResourceBundle#getBundle} finds {@code
- * messages_<lang>.properties} by parent delegation. The pseudo-locale {@code en-XA} is derived from
- * the English base.
+ * messages_<lang>.properties} by parent delegation. The pseudo-locales {@code en-XA} and {@code
+ * ar-XB} are derived from the English base.
  */
 public final class Bundles {
   private static final Logger LOGGER = LoggerFactory.getLogger(Bundles.class);
@@ -45,7 +46,7 @@ public final class Bundles {
     Locale locale = Locale.getDefault();
     ClassLoader loader = owner.getClassLoader();
     if (PseudoLocale.isPseudo(locale)) {
-      return PseudoLocale.wrap(ResourceBundle.getBundle(baseName, Locale.ROOT, loader));
+      return PseudoLocale.wrap(ResourceBundle.getBundle(baseName, Locale.ROOT, loader), locale);
     }
     return ResourceBundle.getBundle(baseName, locale, loader);
   }
@@ -61,8 +62,10 @@ public final class Bundles {
 
   /**
    * The string of a key with its {@code {0}} arguments filled by {@link MessageFormat} in the
-   * default locale. A pattern that cannot be parsed (an unbalanced brace, a lone apostrophe) is
-   * returned as is and logged once per call, so that a translation error never breaks the view.
+   * default locale; when the interface is right to left, each argument is wrapped in Unicode
+   * isolates so that a value of the other direction keeps its order ({@link UiOrientation#format}).
+   * A pattern that cannot be parsed (an unbalanced brace, a lone apostrophe) is returned as is and
+   * logged once per call, so that a translation error never breaks the view.
    */
   public static String format(ResourceBundle bundle, String key, Object... args) {
     return format(get(bundle, key), args);
@@ -71,7 +74,7 @@ public final class Bundles {
   /** {@link #format(ResourceBundle, String, Object...)} on a pattern already resolved. */
   public static String format(String pattern, Object... args) {
     try {
-      return new MessageFormat(pattern, Locale.getDefault()).format(args);
+      return UiOrientation.format(new MessageFormat(pattern, Locale.getDefault()), args);
     } catch (IllegalArgumentException e) {
       LOGGER.warn("Invalid message pattern \"{}\": {}", pattern, e.getMessage());
       return pattern;

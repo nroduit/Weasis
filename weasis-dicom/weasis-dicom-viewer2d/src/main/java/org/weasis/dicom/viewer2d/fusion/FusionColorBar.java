@@ -194,7 +194,9 @@ public final class FusionColorBar {
   private static int eastButtonWidth(ViewCanvas<DicomImageElement> view) {
     int width = 0;
     for (ViewButton b : view.getViewButtons()) {
-      if (b.isVisible() && b.getPosition() == GridBagConstraints.EAST) {
+      if (b.isVisible()
+          && b.getPosition()
+              == GridBagConstraints.EAST) { // absolute side: the color bar is drawn in the image
         width = Math.max(width, b.getIcon().getIconWidth() + 5);
       }
     }

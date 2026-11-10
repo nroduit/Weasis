@@ -47,7 +47,7 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
     this.pagePosition = pagePosition;
     setBorder(
         GuiUtils.getEmptyBorder(BLOCK_SEPARATOR, ITEM_SEPARATOR_LARGE, 0, ITEM_SEPARATOR_LARGE));
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
   }
 
   public void deselectPageAction() {}

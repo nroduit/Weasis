@@ -171,7 +171,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
     if (audioData == null) {
       throw new IllegalStateException("Cannot build an AudioInputStream");
     }
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 
     try (AudioInputStream audioStream =
         new AudioInputStream(

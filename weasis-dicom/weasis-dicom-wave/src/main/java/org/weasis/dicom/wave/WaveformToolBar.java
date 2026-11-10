@@ -57,7 +57,8 @@ public class WaveformToolBar extends WtoolBar {
         });
     add(exportButton);
 
-    final JButton compareButton = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.PREVIOUS));
+    final JButton compareButton =
+        new JButton(ResourceUtil.getDirectionToolBarIcon(ActionIcon.PREVIOUS));
     compareButton.setToolTipText(Messages.getString("WaveformToolBar.compare"));
     compareButton.addActionListener(
         e -> {

@@ -62,6 +62,8 @@ public class HistogramPanel extends JPanel {
   private float xAxisHistoRescaleRatio = 1.0f;
 
   public HistogramPanel() {
+    // never mirrored: a value axis runs left to right
+    GuiUtils.fixOrientation(this);
     init();
     InternalMouseListener listener = new InternalMouseListener();
     this.addMouseListener(listener);

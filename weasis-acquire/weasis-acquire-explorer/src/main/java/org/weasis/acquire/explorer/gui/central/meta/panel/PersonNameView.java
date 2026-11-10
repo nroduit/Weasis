@@ -48,7 +48,7 @@ public class PersonNameView extends JPanel {
   public PersonNameView(String value) {
     this.personName = new PersonName(value, true);
     this.defaultColor = dicomValue.getForeground();
-    setLayout(new MigLayout("wrap 2, insets 0", "[right][grow,fill]")); // NON-NLS
+    setLayout(new MigLayout("wrap 2, insets 0", "[trailing][grow,fill]")); // NON-NLS
 
     addComponentField(Component.FamilyName, Messages.getString("person.name.family"));
     addComponentField(Component.GivenName, Messages.getString("person.name.given"));

@@ -241,11 +241,11 @@ class I18nSourcesTest {
   }
 
   /**
-   * The sources are UTF-8 with real characters: the files, the diffs and the developer notes read as
-   * text, and Transifex receives them as such ({@code UNICODEPROPERTIES} resources of {@code
-   * weasis-5}). Since Java 9 a {@code PropertyResourceBundle} reads UTF-8 (JEP 226). An escape stays
-   * allowed for a character that cannot be seen: a control, format or space character other than
-   * the plain space (a non-breaking space, a zero-width joiner).
+   * The sources are UTF-8 with real characters: the files, the diffs and the developer notes read
+   * as text, and Transifex receives them as such ({@code UNICODEPROPERTIES} resources of {@code
+   * weasis-5}). Since Java 9 a {@code PropertyResourceBundle} reads UTF-8 (JEP 226). An escape
+   * stays allowed for a character that cannot be seen: a control, format or space character other
+   * than the plain space (a non-breaking space, a zero-width joiner).
    */
   @Test
   void sources_are_utf8_without_unicode_escapes() throws IOException {
@@ -286,12 +286,12 @@ class I18nSourcesTest {
   private static boolean visible(int c) {
     return switch (Character.getType(c)) {
       case Character.CONTROL,
-              Character.FORMAT,
-              Character.SURROGATE,
-              Character.PRIVATE_USE,
-              Character.UNASSIGNED,
-              Character.LINE_SEPARATOR,
-              Character.PARAGRAPH_SEPARATOR ->
+          Character.FORMAT,
+          Character.SURROGATE,
+          Character.PRIVATE_USE,
+          Character.UNASSIGNED,
+          Character.LINE_SEPARATOR,
+          Character.PARAGRAPH_SEPARATOR ->
           false;
       case Character.SPACE_SEPARATOR -> c == ' ';
       default -> true;

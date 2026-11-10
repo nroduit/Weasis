@@ -178,6 +178,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     this.eventManager = eventManager;
     this.cellManager = new LayoutCellManager<>(VIEWS_1x1.copy());
     grid = new JPanel();
+    // never mirrored: the layout of the panes is a clinical state (priors, mammography pairs)
+    GuiUtils.fixOrientation(grid);
     grid.setFocusCycleRoot(true);
     migLayout = new MigLayout();
     grid.setLayout(migLayout);

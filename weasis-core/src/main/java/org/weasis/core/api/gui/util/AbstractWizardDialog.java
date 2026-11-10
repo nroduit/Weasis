@@ -65,11 +65,11 @@ public abstract class AbstractWizardDialog extends JDialog {
     jPanelMain.setLayout(new BorderLayout());
     jPanelMain.add(jScrollPanePage, BorderLayout.CENTER);
 
-    JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, jScrollPane1, jPanelMain);
+    JSplitPane splitPane = GuiUtils.getHorizontalSplit(jScrollPane1, jPanelMain, -1);
     jPanelRootPanel.setLayout(new BorderLayout());
     jPanelRootPanel.add(splitPane, BorderLayout.CENTER);
 
-    jPanelBottom.setLayout(new BoxLayout(jPanelBottom, BoxLayout.Y_AXIS));
+    jPanelBottom.setLayout(new BoxLayout(jPanelBottom, BoxLayout.PAGE_AXIS));
     jPanelBottom.add(
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.TRAILING, HORIZONTAL_GAP, VERTICAL_GAP, jButtonClose));

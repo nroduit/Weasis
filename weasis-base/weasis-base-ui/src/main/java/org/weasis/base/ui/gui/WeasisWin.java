@@ -58,7 +58,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -186,6 +185,7 @@ import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.util.StringUtil;
 import org.weasis.launcher.Prerelease;
+import org.weasis.launcher.UiOrientation;
 
 public class WeasisWin {
   private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWin.class);
@@ -465,8 +465,9 @@ public class WeasisWin {
     workspace().setDropHandler(SeriesHandler::new);
 
     // The shell is named by role: the explorer side leads, the tools side trails, and the
-    // orientation of the locale decides which one is on the left. The canvas never mirrors.
-    ComponentOrientation orientation = ComponentOrientation.getOrientation(Locale.getDefault());
+    // orientation of the interface (from the locale) decides which one is on the left. The canvas
+    // never mirrors.
+    ComponentOrientation orientation = UiOrientation.get();
     boolean ltr = orientation.isLeftToRight();
     SidePanel explorer = GuiUtils.getUICore().getSidePanel(SidePanel.Role.EXPLORER);
     SidePanel tools = GuiUtils.getUICore().getSidePanel(SidePanel.Role.TOOLS);
@@ -935,9 +936,8 @@ public class WeasisWin {
           String message =
               Messages.format(
                   "WeasisWin.preview_notice",
-                  AppProperties.WEASIS_NAME,
-                  build.baseVersion(),
-                  build.label());
+                  // one argument: the words of a name keep their order in a right-to-left sentence
+                  String.join(" ", AppProperties.WEASIS_NAME, build.baseVersion(), build.label()));
           // modeless: a modal dialog at start would hold the event thread and the command
           // server with it, so an agent driving a preview could not reach it before a click
           JOptionPane pane = new JOptionPane(message, JOptionPane.WARNING_MESSAGE);
@@ -1146,13 +1146,13 @@ public class WeasisWin {
           FlatClientProperties.FULL_WINDOW_CONTENT_BUTTONS_PLACEHOLDER,
           "mac zeroInFullScreen"); // NON-NLS
       JPanel titleBar = new JPanel(new BorderLayout());
-      titleBar.add(buttonsPlaceholder, BorderLayout.WEST);
-      titleBar.add(indicators, BorderLayout.EAST);
+      titleBar.add(buttonsPlaceholder, BorderLayout.WEST); // absolute side: macOS window buttons
+      titleBar.add(indicators, BorderLayout.EAST); // absolute side: opposite the macOS buttons
       northPanel.add(titleBar, BorderLayout.NORTH);
       northPanel.add(toolbarRow, BorderLayout.CENTER);
     } else {
       northPanel.add(toolbarRow, BorderLayout.CENTER);
-      northPanel.add(indicators, BorderLayout.EAST);
+      northPanel.add(indicators, BorderLayout.LINE_END);
     }
     return northPanel;
   }

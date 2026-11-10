@@ -74,7 +74,7 @@ public class CalibrationView extends JPanel {
   }
 
   void jbInit() {
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     setBorder(GuiUtils.getEmptyBorder(10, 15, 10, 15));
 
     GuiUtils.setPreferredWidth(jTextFieldLineWidth, 170);

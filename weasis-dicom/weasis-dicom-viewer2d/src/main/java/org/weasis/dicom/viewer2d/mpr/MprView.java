@@ -956,7 +956,8 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
             ResourceUtil.getIcon(OtherIcon.VIEW_SETTING).derive(24, 24),
             Messages.getString("MPRFactory.title"));
     button.setVisible(true);
-    button.setPosition(GridBagConstraints.NORTHEAST);
+    button.setPosition(
+        GridBagConstraints.NORTHEAST); // absolute side: a button drawn in the image corner
     return button;
   }
 

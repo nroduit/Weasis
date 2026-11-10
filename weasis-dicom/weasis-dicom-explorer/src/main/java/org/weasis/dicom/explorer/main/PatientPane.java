@@ -32,7 +32,7 @@ public class PatientPane extends JPanel
 
   private static final String VERTICAL_LAYOUT_CONSTRAINTS = "fillx, flowy, insets 0";
   private static final String HORIZONTAL_LAYOUT_CONSTRAINTS = "fillx, flowx, insets 0";
-  private static final String COLUMN_CONSTRAINTS = "[grow,left]";
+  private static final String COLUMN_CONSTRAINTS = "[grow,leading]";
   private static final Dimension STUDY_PANE_SIZE = new Dimension(50, 50);
   private final DicomExplorer explorer;
   private MediaSeriesGroup currentPatient;

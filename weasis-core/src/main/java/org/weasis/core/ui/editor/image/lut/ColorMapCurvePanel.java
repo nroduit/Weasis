@@ -63,6 +63,8 @@ public class ColorMapCurvePanel extends JPanel {
   private boolean editable = true;
 
   public ColorMapCurvePanel(Listener listener) {
+    // never mirrored: a value axis runs left to right
+    GuiUtils.fixOrientation(this);
     this.listener = listener;
     setOpaque(true);
     setPreferredSize(new Dimension(GuiUtils.getScaleLength(420), GuiUtils.getScaleLength(200)));

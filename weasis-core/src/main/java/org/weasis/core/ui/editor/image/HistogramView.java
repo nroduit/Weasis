@@ -149,10 +149,10 @@ public class HistogramView extends JComponent
       PlanarImage imageSource = view2DPane.getSourceImage();
       int channels = imageSource.channels();
 
-      histView.setLayout(new BoxLayout(histView, BoxLayout.Y_AXIS));
+      histView.setLayout(new BoxLayout(histView, BoxLayout.PAGE_AXIS));
 
       JPanel headerPanel = new JPanel();
-      headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+      headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.PAGE_AXIS));
       headerPanel.setBorder(
           BorderFactory.createCompoundBorder(
               GuiUtils.getEmptyBorder(10, 7, 7, 7),

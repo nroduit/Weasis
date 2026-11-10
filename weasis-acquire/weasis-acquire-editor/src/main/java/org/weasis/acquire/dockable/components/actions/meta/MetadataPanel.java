@@ -29,7 +29,7 @@ public class MetadataPanel extends AbstractAcquireActionPanel {
       new AcquireImageMetaPanel(Messages.common("image"));
 
   public MetadataPanel() {
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     setBorder(GuiUtils.getEmptyBorder(10, 5, 2, 5));
 
     add(globalInfoPanel);

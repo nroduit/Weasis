@@ -195,7 +195,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     // TODO should be a lazy instantiation
     getViewButtons().add(KOComponentFactory.buildKoSelectionButton());
     this.koStarButton = KOComponentFactory.buildKoStarButton(this);
-    koStarButton.setPosition(GridBagConstraints.NORTHEAST);
+    koStarButton.setPosition(
+        GridBagConstraints.NORTHEAST); // absolute side: a button drawn in the image corner
     getViewButtons().add(koStarButton);
     this.planeButton = buildPlaneButton();
     getViewButtons().add(planeButton);
@@ -211,7 +212,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             ResourceUtil.getIcon(OtherIcon.VIEW_3D, 24, 24),
             Messages.getString("ReformatMenu.title"));
     button.setVisible(false);
-    button.setPosition(GridBagConstraints.NORTHEAST);
+    button.setPosition(
+        GridBagConstraints.NORTHEAST); // absolute side: a button drawn in the image corner
     return button;
   }
 

@@ -23,7 +23,7 @@ public class LoadingPanel extends JPanel {
   private final LoadingTaskPanel globalDownloadTask = new LoadingTaskPanel(true);
 
   public LoadingPanel() {
-    this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     this.setAlignmentX(LEFT_ALIGNMENT);
     this.setAlignmentY(TOP_ALIGNMENT);
     globalDownloadTask.setFont(FontItem.MICRO_SEMIBOLD.getFont());

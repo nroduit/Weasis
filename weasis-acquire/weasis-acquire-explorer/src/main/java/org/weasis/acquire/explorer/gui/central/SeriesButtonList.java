@@ -31,7 +31,7 @@ public class SeriesButtonList extends JScrollPane {
         seriesButtonPane,
         ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    seriesButtonPane.setLayout(new BoxLayout(seriesButtonPane, BoxLayout.Y_AXIS));
+    seriesButtonPane.setLayout(new BoxLayout(seriesButtonPane, BoxLayout.PAGE_AXIS));
   }
 
   public void addButton(SeriesButton btn) {
