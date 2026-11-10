@@ -1,5 +1,5 @@
 # transaction-check.weasis — a batch that leaves no trace: checkpoint, change, roll back, prove it.
-# Run it with: weasis-cli --script transaction-check.weasis --set series=<series-uid>
+# Run it with: weasis-cli script:run --file transaction-check.weasis --set series=<series-uid>
 #
 # The checkpoint is the boundary; the diff after the rollback is the proof that nothing else
 # changed. "@expect ${after.diff.empty} == true" is the assertion a scripted suite ends with.

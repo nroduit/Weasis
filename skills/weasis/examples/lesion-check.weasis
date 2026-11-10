@@ -1,5 +1,5 @@
 # lesion-check.weasis — one call instead of eight: open a series, measure it, check the numbers.
-# Run it with: weasis-cli --script lesion-check.weasis --set series=<series-uid> --set out=/tmp/weasis
+# Run it with: weasis-cli script:run --file lesion-check.weasis --set series=<series-uid> --set out=/tmp/weasis
 #
 # Every step is the command a caller would have sent on its own: same masking, same policies.
 # $name keeps the body of a step, ${name.path} reads inside it, @expect turns the script into a test.
