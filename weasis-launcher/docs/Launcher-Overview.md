@@ -278,6 +278,10 @@ a one-time migration when a legacy `~/.weasis` directory exists:
 The move merges into the destination without overwriting files that already exist there. A
 `.xdg-migrated` marker file is written in `~/.weasis` so the migration runs **at most once**.
 
+A preview build (a version with a suffix such as `-beta.1`) never migrates: the 4.x release the
+user still runs keeps its `~/.weasis`, and the import of a 4.x installation is an explicit action
+of the preferences.
+
 ### Portable Mode and Explicit Overrides
 
 The XDG/native resolution is **bypassed** in two cases, keeping a single self-contained root

@@ -24,7 +24,7 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.29 and protocol
+This instance runs Weasis development with command API 2.30 and protocol
 2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, mpr, print, redact, script, state, subtraction, ui, view2d, view3d, weasis, workspace, wsi.
 
 Check the connection first:
