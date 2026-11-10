@@ -1537,10 +1537,15 @@ public class View2dCommands implements CommandExtension {
 
     @Option(
         names = "--type",
-        required = true,
         paramLabel = "<type>",
-        description = "${COMPLETION-CANDIDATES}.")
+        description = "${COMPLETION-CANDIDATES}; or --tool-key for any tool of the registry.")
     MeasureType type;
+
+    @Option(
+        names = "--tool-key",
+        paramLabel = "<key>",
+        description = "A tool key from 'measure:tools', for the tools --type does not name.")
+    String tool;
 
     @Option(
         names = "--points",
@@ -1556,14 +1561,30 @@ public class View2dCommands implements CommandExtension {
 
     @Override
     protected void run() {
-      int count = points.points().size();
-      if (count < type.minPoints || count > type.maxPoints) {
-        String expected =
-            type.maxPoints == Integer.MAX_VALUE
-                ? "at least " + type.minPoints
-                : String.valueOf(type.minPoints);
-        throw invalid(type.name().toLowerCase(Locale.ROOT) + " needs " + expected + " x,y pairs");
+      if ((type == null) == (tool == null)) {
+        throw invalid("Give --type or --tool-key");
       }
+      int count = points.points().size();
+      org.weasis.core.ui.model.graphic.GraphicToolDescriptor descriptor = null;
+      if (type != null) {
+        if (count < type.minPoints || count > type.maxPoints) {
+          String expected =
+              type.maxPoints == Integer.MAX_VALUE
+                  ? "at least " + type.minPoints
+                  : String.valueOf(type.minPoints);
+          throw invalid(type.name().toLowerCase(Locale.ROOT) + " needs " + expected + " x,y pairs");
+        }
+      } else {
+        descriptor =
+            org.weasis.core.ui.model.graphic.GraphicRegistry.getInstance()
+                .descriptor(tool)
+                .orElseThrow(
+                    () -> CommandFailure.unknownHandle("Unknown tool: " + tool, "measure:tools")); // NON-NLS
+        if (count < descriptor.minPoints()) {
+          throw invalid(tool + " needs at least " + descriptor.minPoints() + " x,y pairs");
+        }
+      }
+      final org.weasis.core.ui.model.graphic.GraphicToolDescriptor chosen = descriptor;
       String body =
           GuiExecutor.invokeAndRethrow(
               () -> {
@@ -1571,7 +1592,9 @@ public class View2dCommands implements CommandExtension {
                 DefaultView2d<DicomImageElement> view = resolved.view();
                 Graphic graphic;
                 try {
-                  graphic = type.build(toImage(view, points, canvasCoordinates));
+                  List<Point2D> pts = toImage(view, points, canvasCoordinates);
+                  graphic =
+                      chosen == null ? type.build(pts) : chosen.prototype().get().buildGraphic(pts);
                 } catch (InvalidShapeException e) {
                   throw new IllegalArgumentException("Invalid shape: " + e.getMessage(), e);
                 }
@@ -1586,7 +1609,9 @@ public class View2dCommands implements CommandExtension {
                 return Json.createObjectBuilder()
                     .add("target", ViewDisplayState.target(resolved.container(), view)) // NON-NLS
                     .add("id", graphic.getUuid()) // NON-NLS
-                    .add("type", type.name().toLowerCase(Locale.ROOT)) // NON-NLS
+                    .add(
+                        "type", // NON-NLS
+                        chosen == null ? type.name().toLowerCase(Locale.ROOT) : chosen.key())
                     .add("layer", layerJson(layer)) // NON-NLS
                     .add(
                         "measurements", // NON-NLS

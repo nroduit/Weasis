@@ -28,12 +28,10 @@ import javax.swing.UIManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -168,60 +166,11 @@ public class CalibrationView extends JPanel {
    * displayed one the calibration of the presentation state applied to the view, if any.
    */
   public void removeCalibration() {
-    ImageElement image = view2d.getImage();
-    if (image == null) {
-      return;
-    }
-    MediaSeries<?> series = view2d.getSeries();
-    if (radioButtonSeries.isSelected() && series != null) {
-      synchronized (series) {
-        for (Object media : series.getMedias(null, null)) {
-          if (media instanceof ImageElement img && media != image) {
-            view2d.restoreCalibration(img);
-          }
-        }
-      }
-    }
-    view2d.restoreCalibration(image);
-    refreshView(image.getPixelSpacingUnit());
+    Calibration.remove(view2d, radioButtonSeries.isSelected());
   }
 
   private void applyCalibration(double ratio, Unit unit) {
-    ImageElement image = view2d.getImage();
-    if (image != null) {
-      if (radioButtonSeries.isSelected()) {
-        MediaSeries<?> seriesList = view2d.getSeries();
-        if (Objects.nonNull(seriesList)) {
-          Iterable<?> list = seriesList.getMedias(null, null);
-          synchronized (seriesList) {
-            for (Object media : list) {
-              if (media instanceof ImageElement img && media != image) {
-                img.setPixelSpacingUnit(unit);
-                img.setPixelSize(ratio);
-                img.setPixelSizeCalibrationDescription("Modified by user");
-                img.setPixelSizeModifiedByUser(true);
-              }
-            }
-          }
-        }
-      }
-      image.setPixelSize(ratio);
-      image.setPixelSpacingUnit(unit);
-      // Set the calibration description to null if the image contains a calibration that needs to
-      // be overridden
-      image.setPixelSizeCalibrationDescription("Modified by user");
-      image.setPixelSizeModifiedByUser(true);
-
-      refreshView(unit);
-    }
-  }
-
-  private void refreshView(Unit unit) {
-    ImageViewerEventManager<?> manager = view2d.getEventManager();
-    if (manager.getSelectedViewPane() == view2d) {
-      manager.getAction(ActionW.SPATIAL_UNIT).ifPresent(c -> c.setSelectedItem(unit));
-    }
-    view2d.getGraphicManager().updateLabels(Boolean.TRUE, view2d);
+    Calibration.apply(view2d, ratio, unit, radioButtonSeries.isSelected());
   }
 
   public void applyNewCalibration() {

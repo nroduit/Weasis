@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.33",
+  "apiVersion": "2.34",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -3315,6 +3315,526 @@
               "description": "Series or image to close, as 'image:load' returns it."
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "measure",
+      "description": "Measurement tools: the tool registry, the profiles, the export of the graphics of a pane and the manual calibration.",
+      "since": "5.0",
+      "verbs": [
+        {
+          "name": "calibrate",
+          "description": "Calibrates the image of a pane from a line of known length: the pixel size follows the line, the series with --series; --remove drops the user's calibration.",
+          "since": "5.0",
+          "usage": "measure:calibrate [-h] [--json] [--remove] [--series] [--graphic=<graphic-id>] [--length=<n>] [--pane=<pane-index>] [--unit=<unit>] [--view=<view-id>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--graphic"
+              ],
+              "label": "<graphic-id>",
+              "type": "graphic-id",
+              "arity": "1",
+              "required": false,
+              "description": "A line graphic of the pane, from view2d:measure or view2d:graphics."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--length"
+              ],
+              "label": "<n>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "description": "The real length of the line, in --unit."
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the grid of the view, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--remove"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Drop the user's calibration instead."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Calibrate every image of the series."
+            },
+            {
+              "names": [
+                "--unit"
+              ],
+              "label": "<unit>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "mm",
+              "description": "mm, cm, inch, micrometer… (default: mm)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "View id from 'workspace:list' (default: the selected view)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "pixelSize",
+                "type": "number",
+                "description": "the size of one pixel after the call"
+              },
+              {
+                "name": "unit",
+                "type": "string",
+                "description": "the unit of pixelSize"
+              },
+              {
+                "name": "series",
+                "type": "boolean",
+                "description": "true when the series was calibrated"
+              },
+              {
+                "name": "removed",
+                "type": "boolean",
+                "description": "true when the user's calibration was dropped"
+              }
+            ]
+          }
+        },
+        {
+          "name": "export",
+          "description": "Writes the graphics of a pane to a file: xml (the presentation model of Weasis), csv (the measured values, one row per value) or a format a plugin adds, sr and pr with the DICOM plugins ('measure:export --format ?' lists them).",
+          "since": "5.0",
+          "usage": "measure:export [-h] [--force] [--json] --format=<format> [--layer=<layer-name>] [--out=<output-path>] [--pane=<pane-index>] [--view=<view-id>]",
+          "needs": [
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--force"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Replace an existing file."
+            },
+            {
+              "names": [
+                "--format"
+              ],
+              "label": "<format>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "xml, csv, or a format of a plugin; '?' lists the formats of this instance."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--layer"
+              ],
+              "label": "<layer-name>",
+              "type": "layer-name",
+              "arity": "1",
+              "required": false,
+              "description": "Only the graphics of this layer (default: the measurement and drawing layers)."
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": false,
+              "description": "The file to write.",
+              "needs": [
+                "file-write"
+              ]
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the grid of the view, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "View id from 'workspace:list' (default: the selected view)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "formats",
+                "type": "array",
+                "description": "with --format ?: the formats of this instance"
+              },
+              {
+                "name": "formats[].format",
+                "type": "string",
+                "description": "the format id"
+              },
+              {
+                "name": "formats[].description",
+                "type": "string",
+                "description": "what it writes"
+              },
+              {
+                "name": "format",
+                "type": "string",
+                "description": "the format written"
+              },
+              {
+                "name": "file",
+                "type": "string",
+                "description": "the file written"
+              },
+              {
+                "name": "graphics",
+                "type": "integer",
+                "description": "graphics written"
+              },
+              {
+                "name": "skipped",
+                "type": "integer",
+                "description": "graphics the format could not take"
+              },
+              {
+                "name": "details",
+                "type": "object",
+                "description": "what the format says about the file, e.g. its SOP Instance UID"
+              }
+            ]
+          }
+        },
+        {
+          "name": "profile",
+          "description": "Chooses the measurement profile in use, or exports and imports profiles as JSON.",
+          "since": "5.0",
+          "usage": "measure:profile [-h] [--force] [--json] [--id=<id>]... (--automatic | --export=<output-path> | --import=<input-path> | --select=<id>)",
+          "needs": [
+            "file-read",
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--automatic"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": true,
+              "description": "Let the modality choose the profile again.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--export"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": true,
+              "description": "Write the user profiles (or --id) as a JSON file.",
+              "needs": [
+                "file-write"
+              ],
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--force"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Replace an existing file."
+            },
+            {
+              "names": [
+                "--id"
+              ],
+              "label": "<id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --export: the profiles to write, by id (default: the user profiles)."
+            },
+            {
+              "names": [
+                "--import"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": true,
+              "description": "Read profiles from a JSON file into the user layer.",
+              "needs": [
+                "file-read"
+              ],
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--select"
+              ],
+              "label": "<id>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Use this profile whatever the modality.",
+              "group": {
+                "exclusive": true,
+                "multiplicity": "1"
+              }
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "selected",
+                "type": "string",
+                "description": "the profile chosen by hand, absent when automatic"
+              },
+              {
+                "name": "automatic",
+                "type": "boolean",
+                "description": "true when the modality chooses the profile"
+              },
+              {
+                "name": "file",
+                "type": "string",
+                "description": "the file written or read"
+              },
+              {
+                "name": "profiles",
+                "type": "array",
+                "description": "the ids written or read"
+              }
+            ]
+          }
+        },
+        {
+          "name": "profiles",
+          "description": "The measurement profiles: built-in, site and user, and the one in use.",
+          "since": "5.0",
+          "usage": "measure:profiles [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "selected",
+                "type": "string",
+                "description": "the profile chosen by hand, absent when automatic"
+              },
+              {
+                "name": "automatic",
+                "type": "boolean",
+                "description": "true when the modality chooses the profile"
+              },
+              {
+                "name": "profiles",
+                "type": "array",
+                "description": "the profiles"
+              },
+              {
+                "name": "profiles[].id",
+                "type": "string",
+                "description": "the profile id"
+              },
+              {
+                "name": "profiles[].name",
+                "type": "string",
+                "description": "the name shown"
+              },
+              {
+                "name": "profiles[].modalities",
+                "type": "array",
+                "description": "the modalities it binds to"
+              },
+              {
+                "name": "profiles[].tools",
+                "type": "array",
+                "description": "the tool keys of its palette"
+              },
+              {
+                "name": "profiles[].origin",
+                "type": "string",
+                "description": "built-in, site or user"
+              },
+              {
+                "name": "profiles[].locked",
+                "type": "boolean",
+                "description": "true when the site locks it"
+              }
+            ]
+          }
+        },
+        {
+          "name": "tools",
+          "description": "The measurement and drawing tools of the registry: key, category, label, the measurements each one computes and the points it takes.",
+          "since": "5.0",
+          "usage": "measure:tools [-h] [--json] [--category=<measure|draw>]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--category"
+              ],
+              "label": "<measure|draw>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Only the tools of this category."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "tools",
+                "type": "array",
+                "description": "the tools, in the order of the palette"
+              },
+              {
+                "name": "tools[].tool",
+                "type": "string",
+                "description": "the tool key"
+              },
+              {
+                "name": "tools[].category",
+                "type": "string",
+                "description": "measure or draw"
+              },
+              {
+                "name": "tools[].label",
+                "type": "string",
+                "description": "the label shown"
+              },
+              {
+                "name": "tools[].points",
+                "type": "integer",
+                "description": "points the tool takes at least"
+              },
+              {
+                "name": "tools[].measurements",
+                "type": "array",
+                "description": "the measurement keys the tool computes"
+              },
+              {
+                "name": "tools[].measurements[].key",
+                "type": "string",
+                "description": "stable name of the measurement"
+              },
+              {
+                "name": "tools[].measurements[].name",
+                "type": "string",
+                "description": "English name"
+              }
+            ]
+          }
         }
       ]
     },
@@ -7401,7 +7921,7 @@
           "name": "measure",
           "description": "Draws a measurement on the AI layer of the view and returns its values, in the spatial unit of the viewer (mm when the image is calibrated).",
           "since": "5.0",
-          "usage": "view2d:measure [-h] [--canvas] [--json] [--pane=<pane-index>] --points=<image-polygon> --type=<type> [--view=<view-id>]",
+          "usage": "view2d:measure [-h] [--canvas] [--json] [--pane=<pane-index>] --points=<image-polygon> [--tool-key=<key>] [--type=<type>] [--view=<view-id>]",
           "produces": [
             "graphic-id"
           ],
@@ -7449,6 +7969,16 @@
             },
             {
               "names": [
+                "--tool-key"
+              ],
+              "label": "<key>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "A tool key from 'measure:tools', for the tools --type does not name."
+            },
+            {
+              "names": [
                 "--type"
               ],
               "label": "<type>",
@@ -7463,8 +7993,8 @@
                 "ANGLE"
               ],
               "arity": "1",
-              "required": true,
-              "description": "LINE, POLYLINE, RECTANGLE, ELLIPSE, CIRCLE, POLYGON, ANGLE."
+              "required": false,
+              "description": "LINE, POLYLINE, RECTANGLE, ELLIPSE, CIRCLE, POLYGON, ANGLE; or --tool-key for any tool of the registry."
             },
             {
               "names": [
@@ -11024,6 +11554,7 @@
         "view2d:measure"
       ],
       "consumedBy": [
+        "measure:calibrate",
         "view2d:stats"
       ]
     },
@@ -11103,6 +11634,7 @@
         "hp:validate",
         "image:compare",
         "image:load",
+        "measure:profile",
         "plugins:add",
         "redact:import",
         "script:check",
@@ -11118,6 +11650,7 @@
       "handle": false,
       "producedBy": [],
       "consumedBy": [
+        "measure:export",
         "view2d:graphics"
       ]
     },
@@ -11152,6 +11685,8 @@
         "config:catalog",
         "config:pack",
         "hp:export",
+        "measure:export",
+        "measure:profile",
         "print:render",
         "print:send",
         "redact:export",
@@ -11171,6 +11706,8 @@
       "consumedBy": [
         "color:status",
         "dicom:open",
+        "measure:calibrate",
+        "measure:export",
         "print:page",
         "redact:add",
         "redact:apply",
@@ -11359,6 +11896,8 @@
         "hp:group",
         "hp:save",
         "hp:sets",
+        "measure:calibrate",
+        "measure:export",
         "print:page",
         "redact:add",
         "redact:apply",
@@ -11506,6 +12045,10 @@
     {
       "term": "event",
       "definition": "a change of state the instance publishes on its bus, named like the commands"
+    },
+    {
+      "term": "format",
+      "definition": "the file format of an export: xml, csv, or what a plugin adds"
     },
     {
       "term": "frame",
@@ -11721,6 +12264,10 @@
     {
       "term": "tool",
       "definition": "a panel of the workspace (explorer, image tool, measurements…), shown in a slot or as a view"
+    },
+    {
+      "term": "tool key",
+      "definition": "the stable id of a measurement or drawing tool, from measure:tools"
     },
     {
       "term": "uid",

@@ -13,6 +13,15 @@ $line = view2d:measure --view ${open.target.view} --type line --points 20,20,120
 @expect ${line.measurements[key=length].value} ~ 50 +-0.01
 @expect ${line.measurements[key=length].provenance.kind} == header
 
+$tools = measure:tools --category measure
+@expect ${tools.tools[tool=weasis.line].category} == measure
+$bidi = view2d:measure --view ${open.target.view} --tool-key weasis.bidirectional --points 44,64,84,64,64,44,64,84
+@expect ${bidi.type} == weasis.bidirectional
+$csv = measure:export --view ${open.target.view} --format csv --out ${out}/measures.csv --force
+@expect ${csv.graphics} == 2
+$sr = measure:export --view ${open.target.view} --format sr --out ${out}/measures.sr --force
+@expect ${sr.graphics} == 2
+
 $inside = view2d:stats --view ${open.target.view} --rect 50,50,28,28
 @expect ${inside.statistics[key=stats.mean].value} ~ 1000 +-0.5
 $outside = view2d:stats --view ${open.target.view} --rect 2,2,20,20

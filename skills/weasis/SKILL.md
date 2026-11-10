@@ -24,8 +24,8 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.33 and protocol
-2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, mpr, plugins, print, redact, script, state, subtraction, ui, view2d, view3d, weasis, workspace, wsi.
+This instance runs Weasis development with command API 2.34 and protocol
+2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, measure, mpr, plugins, print, redact, script, state, subtraction, ui, view2d, view3d, weasis, workspace, wsi.
 
 Check the connection first:
 
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.33 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.34 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -119,6 +119,11 @@ line naming the current spelling. Use the current one everywhere.
      `statistics` (`stats.min`, `stats.max`, `stats.mean`, `stats.median`, `stats.stdev`, …) in the
      unit of the image values (`[hnsf'U]` for CT) and the `geometry` of the region.
    - `view2d:graphics` lists every graphic with its measurements, including the user's own.
+   - `measure:tools` lists every tool of the registry with the measurements it computes;
+     `view2d:measure --tool-key <key> --points …` draws one `--type` does not name (bidirectional,
+     CTR, arrow…). `measure:export --format csv|xml|sr|pr --out <file>` writes the graphics of the
+     pane (`--format ?` lists what this instance writes); `measure:calibrate --graphic <id>
+     --length <n> --unit mm` calibrates an uncalibrated image from a line of known length.
    - `view2d:annotate --at x,y --text "..."` points at a place with an arrow, and
      `view2d:annotate --label-at x,y --text "..."` writes a caption with nothing else drawn;
      `view2d:clear-ai` removes everything you drew.
@@ -274,6 +279,7 @@ prints the definitions, `help types` the value types with the verbs that hand th
 - **download**: transfer the pixel data of a loaded series from its source; a loaded series may be not downloaded under a selective hanging protocol (not fetch)
 - **entry**: one item of a document or a library, with its id
 - **event**: a change of state the instance publishes on its bus, named like the commands
+- **format**: the file format of an export: xml, csv, or what a plugin adds
 - **frame**: one frame of a multiframe DICOM instance
 - **graphic**: any drawn object on a pane (measurement, annotation, region) with a graphic id (not shape)
 - **grid**: the arrangement of panes inside a view
@@ -321,6 +327,7 @@ prints the definitions, `help types` the value types with the verbs that hand th
 - **tid offset**: time interval differencing: the number of frames between a frame and its mask
 - **tile**: one square of a level of a slide
 - **tool**: a panel of the workspace (explorer, image tool, measurements…), shown in a slot or as a view
+- **tool key**: the stable id of a measurement or drawing tool, from measure:tools
 - **uid**: a DICOM unique identifier, the handle of a study or a series
 - **unload**: remove data from the explorer model
 - **view**: one tab of the workspace, an instance of a viewer type showing series; its handle is the view id (not viewer id)

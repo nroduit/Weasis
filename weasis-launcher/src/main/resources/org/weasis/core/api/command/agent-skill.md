@@ -113,6 +113,11 @@ line naming the current spelling. Use the current one everywhere.
      `statistics` (`stats.min`, `stats.max`, `stats.mean`, `stats.median`, `stats.stdev`, …) in the
      unit of the image values (`[hnsf'U]` for CT) and the `geometry` of the region.
    - `view2d:graphics` lists every graphic with its measurements, including the user's own.
+   - `measure:tools` lists every tool of the registry with the measurements it computes;
+     `view2d:measure --tool-key <key> --points …` draws one `--type` does not name (bidirectional,
+     CTR, arrow…). `measure:export --format csv|xml|sr|pr --out <file>` writes the graphics of the
+     pane (`--format ?` lists what this instance writes); `measure:calibrate --graphic <id>
+     --length <n> --unit mm` calibrates an uncalibrated image from a line of known length.
    - `view2d:annotate --at x,y --text "..."` points at a place with an arrow, and
      `view2d:annotate --label-at x,y --text "..."` writes a caption with nothing else drawn;
      `view2d:clear-ai` removes everything you drew.

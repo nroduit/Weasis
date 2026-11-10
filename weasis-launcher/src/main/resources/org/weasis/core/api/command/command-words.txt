@@ -25,3 +25,5 @@ phases plugins graphics studies patients views entries objects steps checkpoints
 explorer collapsed main birth date sex instance time description accession number total truncated ready unit
 profile
 root preferences data setting added replaced item
+category length export import details
+skipped

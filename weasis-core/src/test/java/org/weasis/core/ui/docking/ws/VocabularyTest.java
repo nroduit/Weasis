@@ -40,5 +40,13 @@ class VocabularyTest {
         List.of(),
         CommandVocabulary.allViolations(
             "color", new org.weasis.core.ui.editor.image.ColorCommands())); // NON-NLS
+    assertEquals(
+        List.of(),
+        CommandVocabulary.allViolations(
+            "measure", new org.weasis.core.ui.editor.image.MeasureCommands())); // NON-NLS
+    assertEquals(
+        List.of(),
+        CommandVocabulary.resultViolations(
+            "measure", new org.weasis.core.ui.editor.image.MeasureCommands())); // NON-NLS
   }
 }

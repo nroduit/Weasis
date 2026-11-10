@@ -89,3 +89,22 @@ For DICOM images the same XML travels gzipped in a private tag of the Presentati
 
 Implement the graphic (usually a subclass of `AbstractDragGraphic` or `AbstractDragGraphicArea`) with an `@XmlRootElement` naming its element and `Measurement` constants with keys, publish a `GraphicToolProvider` returning its descriptor, and add its icon.
 Nothing in the core needs to change.
+
+## Commands
+
+The headless side of the tools is the `measure` namespace of the command bridge, next to the
+`view2d:` verbs that draw and read the graphics of a pane:
+
+- `measure:tools [--category measure|draw]` lists the registry: key, category, label, the
+  measurements each tool computes and the points it takes; `view2d:measure --tool-key <key>`
+  draws any of them, `--type` keeps naming the common ones.
+- `measure:profiles` lists the profiles with their origin and lock, and which one is in use;
+  `measure:profile --select <id> | --automatic | --export <file> [--id …] | --import <file>`.
+- `measure:export --format xml|csv|sr|pr --out <file> [--layer <name>]` writes the graphics of
+  a pane: `xml` is the presentation model of Weasis, `csv` one row per measured value, and the
+  DICOM plugin adds `sr` (a TID 1500 Measurement Report, one planar ROI per graphic through
+  `MeasurementReport`) and `pr` (a GSPS of the image). A plugin adds a format by implementing the
+  `GraphicsExporter` extension point; `--format ?` lists what the instance writes.
+- `measure:calibrate --graphic <id> --length <n> --unit mm [--series]` calibrates the image from
+  a line of known length, `--remove` drops the user's calibration; the calibration dialog calls
+  the same `Calibration` service.

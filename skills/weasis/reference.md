@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.33, protocol 2, application development.
+Command API 2.34, protocol 2, application development.
 
 ## color
 
@@ -840,6 +840,133 @@ Usage: `image:unload [-h] [--all] [--json] [--group=<group>]... [--series=<serie
 | --group | string | [] | Group to close, as 'image:load' returns it. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --series | string | [] | Series or image to close, as 'image:load' returns it. |
+
+
+## measure
+
+Measurement tools: the tool registry, the profiles, the export of the graphics of a pane and the manual calibration.
+
+### measure:calibrate (since 5.0)
+
+Calibrates the image of a pane from a line of known length: the pixel size follows the line, the series with --series; --remove drops the user's calibration.
+
+Usage: `measure:calibrate [-h] [--json] [--remove] [--series] [--graphic=<graphic-id>] [--length=<n>] [--pane=<pane-index>] [--unit=<unit>] [--view=<view-id>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --graphic | graphic-id |  | A line graphic of the pane, from view2d:measure or view2d:graphics. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --length | number |  | The real length of the line, in --unit. |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --remove | boolean |  | Drop the user's calibration instead. |
+| --series | boolean |  | Calibrate every image of the series. |
+| --unit | string | mm | mm, cm, inch, micrometer… (default: mm). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
+
+| Result | Type | Description |
+|---|---|---|
+| pixelSize | number | the size of one pixel after the call |
+| unit | string | the unit of pixelSize |
+| series | boolean | true when the series was calibrated |
+| removed | boolean | true when the user's calibration was dropped |
+
+### measure:export (since 5.0)
+
+Writes the graphics of a pane to a file: xml (the presentation model of Weasis), csv (the measured values, one row per value) or a format a plugin adds, sr and pr with the DICOM plugins ('measure:export --format ?' lists them).
+
+Usage: `measure:export [-h] [--force] [--json] --format=<format> [--layer=<layer-name>] [--out=<output-path>] [--pane=<pane-index>] [--view=<view-id>]`
+
+Needs: file write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --force | boolean |  | Replace an existing file. |
+| --format | string |  | xml, csv, or a format of a plugin; '?' lists the formats of this instance. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --layer | layer-name |  | Only the graphics of this layer (default: the measurement and drawing layers). |
+| --out | output-path |  | The file to write. |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
+
+| Result | Type | Description |
+|---|---|---|
+| formats | array | with --format ?: the formats of this instance |
+| formats[].format | string | the format id |
+| formats[].description | string | what it writes |
+| format | string | the format written |
+| file | string | the file written |
+| graphics | integer | graphics written |
+| skipped | integer | graphics the format could not take |
+| details | object | what the format says about the file, e.g. its SOP Instance UID |
+
+### measure:profile (since 5.0)
+
+Chooses the measurement profile in use, or exports and imports profiles as JSON.
+
+Usage: `measure:profile [-h] [--force] [--json] [--id=<id>]... (--automatic | --export=<output-path> | --import=<input-path> | --select=<id>)`
+
+Needs: file read, file write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --automatic | boolean |  | Let the modality choose the profile again. |
+| --export | output-path |  | Write the user profiles (or --id) as a JSON file. |
+| --force | boolean |  | Replace an existing file. |
+| --id | string |  | With --export: the profiles to write, by id (default: the user profiles). |
+| --import | input-path |  | Read profiles from a JSON file into the user layer. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --select | string |  | Use this profile whatever the modality. |
+
+| Result | Type | Description |
+|---|---|---|
+| selected | string | the profile chosen by hand, absent when automatic |
+| automatic | boolean | true when the modality chooses the profile |
+| file | string | the file written or read |
+| profiles | array | the ids written or read |
+
+### measure:profiles (since 5.0)
+
+The measurement profiles: built-in, site and user, and the one in use.
+
+Usage: `measure:profiles [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+| Result | Type | Description |
+|---|---|---|
+| selected | string | the profile chosen by hand, absent when automatic |
+| automatic | boolean | true when the modality chooses the profile |
+| profiles | array | the profiles |
+| profiles[].id | string | the profile id |
+| profiles[].name | string | the name shown |
+| profiles[].modalities | array | the modalities it binds to |
+| profiles[].tools | array | the tool keys of its palette |
+| profiles[].origin | string | built-in, site or user |
+| profiles[].locked | boolean | true when the site locks it |
+
+### measure:tools (since 5.0)
+
+The measurement and drawing tools of the registry: key, category, label, the measurements each one computes and the points it takes.
+
+Usage: `measure:tools [-h] [--json] [--category=<measure|draw>]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --category | string |  | Only the tools of this category. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+| Result | Type | Description |
+|---|---|---|
+| tools | array | the tools, in the order of the palette |
+| tools[].tool | string | the tool key |
+| tools[].category | string | measure or draw |
+| tools[].label | string | the label shown |
+| tools[].points | integer | points the tool takes at least |
+| tools[].measurements | array | the measurement keys the tool computes |
+| tools[].measurements[].key | string | stable name of the measurement |
+| tools[].measurements[].name | string | English name |
 
 
 ## mpr
@@ -1924,7 +2051,7 @@ Needs: file read
 
 Draws a measurement on the AI layer of the view and returns its values, in the spatial unit of the viewer (mm when the image is calibrated).
 
-Usage: `view2d:measure [-h] [--canvas] [--json] [--pane=<pane-index>] --points=<image-polygon> --type=<type> [--view=<view-id>]`
+Usage: `view2d:measure [-h] [--canvas] [--json] [--pane=<pane-index>] --points=<image-polygon> [--tool-key=<key>] [--type=<type>] [--view=<view-id>]`
 
 Produces: `graphic-id`
 
@@ -1934,7 +2061,8 @@ Produces: `graphic-id`
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
 | --points | image-polygon |  | Vertices as x,y pairs; rectangle and ellipse take two opposite corners. |
-| --type | enum |  | LINE, POLYLINE, RECTANGLE, ELLIPSE, CIRCLE, POLYGON, ANGLE. |
+| --tool-key | string |  | A tool key from 'measure:tools', for the tools --type does not name. |
+| --type | enum |  | LINE, POLYLINE, RECTANGLE, ELLIPSE, CIRCLE, POLYGON, ANGLE; or --tool-key for any tool of the registry. |
 | --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 | Result | Type | Description |
@@ -2669,18 +2797,18 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | canvas-rect | a rectangle in the canvas pixels of a pane: x,y,width,height |  | view2d:capture |
 | degrees | an angle in degrees, clockwise, reduced to 0-359 |  | view2d:rotate |
 | entry-id | the id of a device entry, from redact:library or redact:match (handle) |  | redact:apply, redact:delete, redact:save |
-| graphic-id | the id of one graphic of an image, from the verbs that draw and from view2d:graphics (handle) | view2d:graphics, view2d:measure | view2d:stats |
+| graphic-id | the id of one graphic of an image, from the verbs that draw and from view2d:graphics (handle) | view2d:graphics, view2d:measure | measure:calibrate, view2d:stats |
 | grid-id | the id of one grid of panes a view can take, from the state the view2d verbs return (handle) | view2d:grid | view2d:grid, view2d:hang |
 | image-index | the position of an image in the series a pane shows, counted from 1 |  | dicom:tag, view2d:scroll |
 | image-point | a point in image pixels, origin at the top-left corner of the image |  | view2d:annotate, wsi:goto |
 | image-polygon | an outline in image pixels, two points at least |  | redact:add, view2d:measure, view2d:stats |
 | image-rect | a rectangle in image pixels: x,y,width,height |  | redact:add, view2d:stats |
-| input-path | a local file the verb reads; the policy decides what a remote caller may read |  | color:set, config:import-legacy, config:unpack, dicom:load, hp:apply, hp:features, hp:import, hp:match, hp:validate, image:compare, image:load, plugins:add, redact:import, script:check, script:run, view2d:hang, workspace:load |
-| layer-name | the name of a layer of graphics in a view |  | view2d:graphics |
+| input-path | a local file the verb reads; the policy decides what a remote caller may read |  | color:set, config:import-legacy, config:unpack, dicom:load, hp:apply, hp:features, hp:import, hp:match, hp:validate, image:compare, image:load, measure:profile, plugins:add, redact:import, script:check, script:run, view2d:hang, workspace:load |
+| layer-name | the name of a layer of graphics in a view |  | measure:export, view2d:graphics |
 | magnification | how much an image is magnified in a pane: 1 is one image pixel per canvas pixel |  | view2d:zoom, wsi:goto |
 | masking-profile-id | the id of a masking profile of the configuration |  | redact:export |
-| output-path | a local file the verb writes; the policy decides where a remote caller may write |  | config:catalog, config:pack, hp:export, print:render, print:send, redact:export, script:run, state:export, view2d:capture, workspace:save, wsi:export |
-| pane-index | the position of a pane in the grid of a view, counted from 1 |  | color:status, dicom:open, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:flip, view2d:fusion, view2d:graphics, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, wsi:annotations, wsi:export, wsi:goto, wsi:info |
+| output-path | a local file the verb writes; the policy decides where a remote caller may write |  | config:catalog, config:pack, hp:export, measure:export, measure:profile, print:render, print:send, redact:export, script:run, state:export, view2d:capture, workspace:save, wsi:export |
+| pane-index | the position of a pane in the grid of a view, counted from 1 |  | color:status, dicom:open, measure:calibrate, measure:export, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:flip, view2d:fusion, view2d:graphics, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, wsi:annotations, wsi:export, wsi:goto, wsi:info |
 | patient-handle | the masked patient id of a loaded patient, from dicom:list, stable for the session (handle) | dicom:list | dicom:unload |
 | preset-id | the id of a window level preset, from view2d:preset (handle) | view2d:preset | view2d:preset |
 | remote-url | an absolute URL; the policy decides whether a remote caller may use it |  | dicom:load, dicom:load-dicomweb, image:load |
@@ -2690,7 +2818,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | split-ratio | the share of the space given to the first side of a split, strictly between 0 and 1 |  | workspace:panel, workspace:split |
 | study-uid | the Study Instance UID of a loaded study, from dicom:list (handle) | dicom:list | dicom:interest, dicom:objects, dicom:unload, explorer:filter, hp:apply, hp:compare, hp:features, hp:match, hp:open, state:export, state:restore, subtraction:list |
 | tool-id | the id of a tool of the shell, from workspace:panel (handle) | workspace:panel | workspace:panel |
-| view-id | the id of a view, from workspace:list (handle) | dicom:open, workspace:list | color:status, dicom:info, dicom:open, dicom:tag, hp:correct, hp:explain, hp:group, hp:save, hp:sets, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:flip, view2d:fusion, view2d:graphics, view2d:grid, view2d:hang, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:sync, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, workspace:close, workspace:detach, workspace:fullscreen, workspace:maximize, workspace:move, workspace:select, workspace:split, workspace:stack, workspace:unmaximize, wsi:annotations, wsi:export, wsi:goto, wsi:info |
+| view-id | the id of a view, from workspace:list (handle) | dicom:open, workspace:list | color:status, dicom:info, dicom:open, dicom:tag, hp:correct, hp:explain, hp:group, hp:save, hp:sets, measure:calibrate, measure:export, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:flip, view2d:fusion, view2d:graphics, view2d:grid, view2d:hang, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:sync, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, workspace:close, workspace:detach, workspace:fullscreen, workspace:maximize, workspace:move, workspace:select, workspace:split, workspace:stack, workspace:unmaximize, wsi:annotations, wsi:export, wsi:goto, wsi:info |
 | window-center | the window center applied to the pixel values, in their own unit |  | view2d:window-level |
 | window-width | the window width applied to the pixel values, in their own unit |  | view2d:window-level |
 
@@ -2716,6 +2844,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | download | transfer the pixel data of a loaded series from its source; a loaded series may be not downloaded under a selective hanging protocol | fetch |
 | entry | one item of a document or a library, with its id |  |
 | event | a change of state the instance publishes on its bus, named like the commands |  |
+| format | the file format of an export: xml, csv, or what a plugin adds |  |
 | frame | one frame of a multiframe DICOM instance |  |
 | graphic | any drawn object on a pane (measurement, annotation, region) with a graphic id | shape |
 | grid | the arrangement of panes inside a view |  |
@@ -2763,6 +2892,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | tid offset | time interval differencing: the number of frames between a frame and its mask |  |
 | tile | one square of a level of a slide |  |
 | tool | a panel of the workspace (explorer, image tool, measurements…), shown in a slot or as a view |  |
+| tool key | the stable id of a measurement or drawing tool, from measure:tools |  |
 | uid | a DICOM unique identifier, the handle of a study or a series |  |
 | unload | remove data from the explorer model |  |
 | view | one tab of the workspace, an instance of a viewer type showing series; its handle is the view id | viewer id |
