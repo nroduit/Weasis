@@ -20,15 +20,17 @@ import java.util.TreeSet;
 import picocli.CommandLine.Model.CommandSpec;
 
 /**
- * The semantic types the registered namespaces use, with what each one is ({@link Definition}),
- * the verbs that consume it as an option or a parameter and the verbs that produce it ({@link
+ * The semantic types the registered namespaces use, with what each one is ({@link Definition}), the
+ * verbs that consume it as an option or a parameter and the verbs that produce it ({@link
  * Produces}). It is the handle graph of the command surface: {@code help types} prints it, the
  * descriptor carries it, and the vocabulary check that every consumed handle has a producer reads
  * it.
  */
 public final class TypeCatalog {
 
-  /** One type: vocabulary name, definition, whether it is a handle, who produces and consumes it. */
+  /**
+   * One type: vocabulary name, definition, whether it is a handle, who produces and consumes it.
+   */
   public record TypeInfo(
       String name,
       String definition,

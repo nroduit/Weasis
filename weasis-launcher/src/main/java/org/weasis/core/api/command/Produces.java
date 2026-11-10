@@ -17,9 +17,9 @@ import java.lang.annotation.Target;
 /**
  * The handle types a verb hands out in its result: {@code workspace:list} produces {@code ViewId},
  * {@code dicom:list} produces {@code SeriesUid}. With the types the options consume, the descriptor
- * holds the whole handle graph: the help of a type names its producers, an unknown handle names
- * the verb to call first, and the vocabulary tests check that every consumed handle has a producer
- * and that every produced type appears in the verb's result.
+ * holds the whole handle graph: the help of a type names its producers, an unknown handle names the
+ * verb to call first, and the vocabulary tests check that every consumed handle has a producer and
+ * that every produced type appears in the verb's result.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

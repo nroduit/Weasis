@@ -131,7 +131,9 @@ class CommandVocabularyTest {
         () -> assertTrue(markdown.contains("| items | array | the items |"), markdown));
   }
 
-  /** A namespace that misuses the words: an unknown noun, a banned synonym, a produce without field. */
+  /**
+   * A namespace that misuses the words: an unknown noun, a banned synonym, a produce without field.
+   */
   @Command(
       name = "words",
       subcommands = {Words.Peek.class, Words.List.class})

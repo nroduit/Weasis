@@ -102,8 +102,8 @@ public final class Glossary {
   }
 
   /**
-   * Adds the terms of a namespace; a term already there with another definition is refused with
-   * the name of the owner, so a plugin cannot redefine a word of the platform.
+   * Adds the terms of a namespace; a term already there with another definition is refused with the
+   * name of the owner, so a plugin cannot redefine a word of the platform.
    */
   public Glossary add(Collection<Term> contributed, String owner) {
     for (Term term : contributed) {
@@ -188,9 +188,7 @@ public final class Glossary {
   /** One line per term, for {@code help glossary}. */
   public String text() {
     List<CommandHelp.Entry> entries =
-        terms.values().stream()
-            .map(t -> new CommandHelp.Entry(t.term(), summary(t)))
-            .toList();
+        terms.values().stream().map(t -> new CommandHelp.Entry(t.term(), summary(t))).toList();
     return CommandHelp.table("Glossary of the command surface", entries, false);
   }
 

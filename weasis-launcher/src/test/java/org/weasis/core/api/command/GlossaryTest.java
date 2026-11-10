@@ -28,7 +28,8 @@ class GlossaryTest {
     assertAll(
         () -> assertTrue(glossary.terms().size() > 40, "terms: " + glossary.terms().size()),
         () -> assertTrue(view.definition().contains("viewer type"), view.definition()),
-        () -> assertEquals(List.of("tab", "group"), glossary.find("tab group").orElseThrow().words()),
+        () ->
+            assertEquals(List.of("tab", "group"), glossary.find("tab group").orElseThrow().words()),
         () -> assertTrue(glossary.allows("view")),
         () -> assertTrue(glossary.allows("group")),
         () -> assertTrue(glossary.allows("by"), "allowed word"),
@@ -42,13 +43,15 @@ class GlossaryTest {
   @Test
   void aTermRedefinedIsRefusedAndARepeatIsNot() {
     Glossary glossary = Glossary.core();
-    glossary.add(List.of(Term.of("view", glossary.find("view").orElseThrow().definition())), "same");
+    glossary.add(
+        List.of(Term.of("view", glossary.find("view").orElseThrow().definition())), "same");
     IllegalArgumentException refused =
         assertThrows(
             IllegalArgumentException.class,
             () -> glossary.add(List.of(Term.of("view", "something else")), "other"));
     assertTrue(refused.getMessage().startsWith("other defines 'view'"), refused.getMessage());
-    Glossary extended = glossary.add(List.of(Term.of("slide scanner", "a device", "scanner")), "wsi");
+    Glossary extended =
+        glossary.add(List.of(Term.of("slide scanner", "a device", "scanner")), "wsi");
     assertAll(
         () -> assertTrue(extended.allows("scanner") || extended.allows("slide")),
         () -> assertEquals("slide scanner", extended.avoided().get("scanner")));

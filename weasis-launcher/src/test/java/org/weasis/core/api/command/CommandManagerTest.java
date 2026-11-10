@@ -12,10 +12,10 @@ package org.weasis.core.api.command;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -464,7 +464,10 @@ class CommandManagerTest {
   @Test
   void thePolicyIsUpdatedWithItsSourceUnlessLocked() {
     CommandManager manager = manager(new MathExtension());
-    CommandPolicy opened = manager.basePolicy().withNetwork(new CommandPolicy.NetworkRules(true, Set.of(), false, Set.of()));
+    CommandPolicy opened =
+        manager
+            .basePolicy()
+            .withNetwork(new CommandPolicy.NetworkRules(true, Set.of(), false, Set.of()));
     assertAll(
         () -> assertSame(manager, CommandManager.current()),
         () -> assertTrue(manager.updatePolicy(opened, "test")),
@@ -475,7 +478,9 @@ class CommandManagerTest {
         new CommandManager(
             mockPluginManager(),
             CommandAudit.disabled(),
-            CommandPolicy.defaults().withShutdown(false).withNetwork(CommandPolicy.NetworkRules.closed()));
+            CommandPolicy.defaults()
+                .withShutdown(false)
+                .withNetwork(CommandPolicy.NetworkRules.closed()));
     assertTrue(locked.updatePolicy(opened, "test"), "not locked: accepted");
   }
 

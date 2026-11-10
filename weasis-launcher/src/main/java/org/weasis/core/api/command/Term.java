@@ -12,8 +12,8 @@ package org.weasis.core.api.command;
 import java.util.List;
 
 /**
- * One word of the command vocabulary: the term every option name, JSON key and description uses
- * for a concept, its definition, and the synonyms that must not appear in command text. A term is a
+ * One word of the command vocabulary: the term every option name, JSON key and description uses for
+ * a concept, its definition, and the synonyms that must not appear in command text. A term is a
  * lower-case English noun phrase; {@code types} names the semantic types that carry it.
  */
 public record Term(String term, String definition, List<String> avoid, List<String> types) {

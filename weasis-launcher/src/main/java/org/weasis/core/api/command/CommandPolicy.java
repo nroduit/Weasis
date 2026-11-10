@@ -9,26 +9,26 @@
  */
 package org.weasis.core.api.command;
 
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +103,9 @@ public record CommandPolicy(
 
   public static final String PROPERTY_PREFIX = "weasis.commands.policy."; // NON-NLS
 
-  /** The policy file a site puts next to {@code base.json}; the keys are the ones of the properties. */
+  /**
+   * The policy file a site puts next to {@code base.json}; the keys are the ones of the properties.
+   */
   public static final String FILE_NAME = "commands-policy.json"; // NON-NLS
 
   /** A policy with where it came from, for {@code weasis:info} and the log. */
@@ -180,7 +182,8 @@ public record CommandPolicy(
   @SuppressWarnings("unchecked")
   static Map<String, String> readFile(URI uri) {
     try {
-      if ("file".equalsIgnoreCase(uri.getScheme()) && !Files.isRegularFile(Path.of(uri))) { // NON-NLS
+      if ("file".equalsIgnoreCase(uri.getScheme())
+          && !Files.isRegularFile(Path.of(uri))) { // NON-NLS
         return null;
       }
       try (Reader reader =
@@ -231,7 +234,8 @@ public record CommandPolicy(
       String name = m.group(1);
       String replacement =
           "session.tmp".equals(name) // NON-NLS
-              ? System.getProperty("weasis.tmp.dir", System.getProperty("java.io.tmpdir", "")) // NON-NLS
+              ? System.getProperty(
+                  "weasis.tmp.dir", System.getProperty("java.io.tmpdir", "")) // NON-NLS
               : System.getProperty(name, m.group());
       m.appendReplacement(sb, Matcher.quoteReplacement(replacement));
     }
@@ -262,7 +266,11 @@ public record CommandPolicy(
     out.name("writeHosts").beginArray(); // NON-NLS
     network.writeHosts().stream().sorted().forEach(out::value);
     out.endArray().endObject();
-    out.name("confirmations").beginObject().name("assumeYes").value(assumeYesAllowed).endObject(); // NON-NLS
+    out.name("confirmations")
+        .beginObject()
+        .name("assumeYes")
+        .value(assumeYesAllowed)
+        .endObject(); // NON-NLS
     out.name("shutdown").value(shutdownAllowed); // NON-NLS
     out.name("pixelsAttest").value(pixelAttestAllowed); // NON-NLS
     out.name("events").beginObject().name("enabled").value(events.enabled()); // NON-NLS

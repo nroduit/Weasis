@@ -30,19 +30,22 @@ import picocli.CommandLine.Model.PositionalParamSpec;
  *
  * <p>With a {@link Glossary}: every word of an option name and of a result key is a term or an
  * allowed word ({@link #termViolations}), no description uses a synonym the glossary bans ({@link
- * #synonymViolations}); and the handle graph: a type a verb produces appears in its result, a handle
- * some verb consumes has a producer ({@link #producesViolations}). The check that compares the
- * shipped snapshots with a fresh generation runs in the smoke suite, against a running instance.
+ * #synonymViolations}); and the handle graph: a type a verb produces appears in its result, a
+ * handle some verb consumes has a producer ({@link #producesViolations}). The check that compares
+ * the shipped snapshots with a fresh generation runs in the smoke suite, against a running
+ * instance.
  */
 public final class CommandVocabulary {
 
   private static final Pattern LONG_OPTION = Pattern.compile("--[a-z0-9]+(-[a-z0-9]+)*");
+
   /**
    * A result key, or the path of a nested key: {@code patients[].studies[].studyInstanceUID}; the
    * {@code []} says the key holds an array of objects, and the path goes on inside one of them.
    */
   private static final Pattern RESULT_KEY =
       Pattern.compile("[a-z][a-zA-Z0-9]*(\\[])?(\\.[a-z][a-zA-Z0-9]*(\\[])?)*");
+
   /** A result type: a word of the vocabulary, with {@code []} for an array of that type. */
   private static final Pattern RESULT_TYPE = Pattern.compile("[a-z][a-z0-9-]*(\\[])?");
 
@@ -61,8 +64,7 @@ public final class CommandVocabulary {
    * #resultViolations}) are a separate assertion, since a namespace adopts them verb by verb.
    */
   public static List<String> allViolations(String namespace, CommandExtension extension) {
-    return allViolations(
-        namespace, extension.getCommandModel(), Glossary.core().with(extension));
+    return allViolations(namespace, extension.getCommandModel(), Glossary.core().with(extension));
   }
 
   /** The same checks on a bare model, with the glossary given. */
@@ -100,7 +102,8 @@ public final class CommandVocabulary {
       ResultSchema result = CommandModel.resultOf(spec);
       if (result != null) {
         for (var field : result.fields()) {
-          for (String word : CAMEL_BOUNDARY.split(field.name().replace("[]", "").replace('.', ' '))) {
+          for (String word :
+              CAMEL_BOUNDARY.split(field.name().replace("[]", "").replace('.', ' '))) {
             if (word.isBlank()) {
               continue;
             }
@@ -124,26 +127,39 @@ public final class CommandVocabulary {
     }
     Map<String, Pattern> patterns = new HashMap<>();
     for (String synonym : avoided.keySet()) {
-      patterns.put(
-          synonym,
-          Pattern.compile("(?i)\\b" + Pattern.quote(synonym) + "(s|es)?\\b"));
+      patterns.put(synonym, Pattern.compile("(?i)\\b" + Pattern.quote(synonym) + "(s|es)?\\b"));
     }
     CommandSpec root = CommandModel.newCommandLine(model).getCommandSpec();
     for (CommandSpec spec : verbs(root)) {
       String verb = namespace + ":" + spec.name();
-      checkText(verb, "", String.join(" ", spec.usageMessage().description()), patterns, avoided,
+      checkText(
+          verb,
+          "",
+          String.join(" ", spec.usageMessage().description()),
+          patterns,
+          avoided,
           violations);
       for (OptionSpec option : spec.options()) {
         if (option.usageHelp() || option.versionHelp() || option.hidden()) {
           continue;
         }
-        checkText(verb, option.longestName(), String.join(" ", option.description()), patterns,
-            avoided, violations);
+        checkText(
+            verb,
+            option.longestName(),
+            String.join(" ", option.description()),
+            patterns,
+            avoided,
+            violations);
       }
       for (PositionalParamSpec parameter : spec.positionalParameters()) {
         if (!parameter.hidden()) {
-          checkText(verb, parameter.paramLabel(), String.join(" ", parameter.description()),
-              patterns, avoided, violations);
+          checkText(
+              verb,
+              parameter.paramLabel(),
+              String.join(" ", parameter.description()),
+              patterns,
+              avoided,
+              violations);
         }
       }
     }

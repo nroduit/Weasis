@@ -40,7 +40,8 @@ public final class CaptureGuard {
   }
 
   /** The panes a scope shows, for the rule above. */
-  public static List<ViewCanvas<?>> panesOf(CaptureScope scope, ViewCanvas<?> view, ImageViewerPlugin<?> container) {
+  public static List<ViewCanvas<?>> panesOf(
+      CaptureScope scope, ViewCanvas<?> view, ImageViewerPlugin<?> container) {
     List<ViewCanvas<?>> panes = new ArrayList<>();
     switch (scope) {
       case VIEW -> {
@@ -64,7 +65,9 @@ public final class CaptureGuard {
     return panes;
   }
 
-  /** Refuses a remote capture when any of the panes shows an unreviewed image with burned-in text. */
+  /**
+   * Refuses a remote capture when any of the panes shows an unreviewed image with burned-in text.
+   */
   public static void requireCapturable(Collection<? extends ViewCanvas<?>> panes) {
     if (!CommandContext.current().isRemote()) {
       return;

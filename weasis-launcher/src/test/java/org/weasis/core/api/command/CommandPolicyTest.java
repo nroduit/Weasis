@@ -101,7 +101,10 @@ class CommandPolicyTest {
       CommandPolicy.Loaded loaded = CommandPolicy.fromConfiguration(List.of(base.toUri()));
       CommandPolicy policy = loaded.policy();
       assertAll(
-          () -> assertTrue(loaded.source().endsWith(CommandPolicy.FILE_NAME + " and properties"), loaded.source()),
+          () ->
+              assertTrue(
+                  loaded.source().endsWith(CommandPolicy.FILE_NAME + " and properties"),
+                  loaded.source()),
           () -> assertEquals(Set.of("view2d", "dicom"), policy.remote().namespaces()),
           () -> assertTrue(policy.network().read()),
           () -> assertEquals(Set.of("pacs.example.org"), policy.network().readHosts()),
@@ -109,9 +112,14 @@ class CommandPolicyTest {
           () -> assertTrue(policy.files().writeRoots().contains(conf.toAbsolutePath().normalize())),
           () ->
               assertTrue(
-                  policy.files().writeRoots().contains(Path.of(System.getProperty("user.home")).toAbsolutePath().normalize())),
+                  policy
+                      .files()
+                      .writeRoots()
+                      .contains(
+                          Path.of(System.getProperty("user.home")).toAbsolutePath().normalize())),
           () -> assertTrue(policy.locked()));
-      CommandPolicy.Loaded none = CommandPolicy.fromConfiguration(List.of(conf.resolve("other/base.json").toUri()));
+      CommandPolicy.Loaded none =
+          CommandPolicy.fromConfiguration(List.of(conf.resolve("other/base.json").toUri()));
       assertAll(
           () -> assertEquals("properties", none.source()),
           () -> assertFalse(none.policy().network().read()));
