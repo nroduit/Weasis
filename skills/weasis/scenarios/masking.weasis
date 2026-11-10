@@ -1,0 +1,45 @@
+# masking.weasis — identity masking and redaction: masked attributes, a region hidden before a capture, the device library.
+# Run it with: weasis-cli script:run --file masking.weasis --set data=<folder of one ultrasound study> --set out=<folder> --report <file.xml>
+# A capture of an ultrasound with no region hidden is refused to a script (try it by hand:
+# view2d:capture on the open view); this script hides a band first, so its capture succeeds.
+
+$cp = state:checkpoint --label "scenario masking"
+@expect ${cp.taken} == true
+$load = dicom:load --path "${data}" --wait
+@expect ${load.loaded} == true
+$list = dicom:list
+$open = dicom:open --series ${list.patients[0].studies[0].series[modality=US].id} --wait
+@expect ${open.target.viewerType} == 2d
+
+# the identity policy: names come back as pseudonyms, the same one in every answer
+$name = dicom:tag --series ${open.target.series} --tag PatientName
+@expect ${name.value} == ${list.patients[0].patientName}
+@expect ${name.masked} == true
+
+# S1: which device entries fit this image, then a band hidden by hand over the banner
+$match = redact:match --view ${open.target.view}
+@expect ${match.target.series} == ${open.target.series}
+$add = redact:add --view ${open.target.view} --rect 0,0,400,40
+@expect ${add.regionCount} == 1
+$regions = redact:list --view ${open.target.view}
+@expect ${regions.regionCount} == 1
+
+# the capture carries the hidden region and the masked annotations
+$shot = view2d:capture --view ${open.target.view} --out ${out}/masking-${cp.seq}.png
+@expect ${shot.format} == png
+
+# S1.2: the regions saved as an entry of the device library, then removed from it
+$entry = redact:save --view ${open.target.view} --name scenario-${cp.seq}
+@expect ${entry.name} == scenario-${cp.seq}
+@expect ${entry.regionCount} == 1
+$library = redact:library
+@expect ${library.locked} == false
+$drop = redact:delete --entry ${entry.id}
+@expect ${drop.deleted} == true
+
+$clear = redact:clear --view ${open.target.view}
+@expect ${clear.regionCount} == 0
+$back = state:rollback --to ${cp.checkpoint} --close-new
+@expect ${back.restored} == true
+$after = state:diff --from ${cp.checkpoint}
+@expect ${after.diff.empty} == true

@@ -1,0 +1,52 @@
+# 3d-zoom.weasis — one volume for the reformats, the MPR and the 3D view; the zoom; the color management.
+# Run it with: weasis-cli script:run --file 3d-zoom.weasis --set data=<folder of one CT study> --set out=<folder> --report <file.xml>
+# The 3D steps need a graphics adapter the renderer accepts (view3d:info says so).
+
+$cp = state:checkpoint --label "scenario 3d-zoom"
+@expect ${cp.taken} == true
+$load = dicom:load --path "${data}" --wait
+@expect ${load.loaded} == true
+$list = dicom:list
+$open = dicom:open --series ${list.patients[0].studies[0].series[modality=CT].id} --wait
+@expect ${open.target.viewerType} == 2d
+
+# S3: the zoom, set, best fit and reset
+$zoom = view2d:zoom --view ${open.target.view} --set 2
+@expect ${zoom.zoom} ~ 2 +-0.01
+$fit = view2d:zoom --view ${open.target.view} --fit best-fit
+$reset = view2d:reset --view ${open.target.view} --tool zoom
+
+# S2: a coronal reformat built as a series of the study, from the volume the service keeps
+$coronal = mpr:reformat --series ${open.target.series} --plane CORONAL --no-open
+@expect ${coronal.derivation} == MPR
+@expect ${coronal.plane} == CORONAL
+@expect ${coronal.slices} >= 1
+$volumes = mpr:volumes
+@expect ${volumes.volumes[0].series} == ${open.target.series}
+@expect ${volumes.volumes[0].state} == ready
+
+# S2.3: the MPR, then the 3D view, on the same volume
+$mpr = dicom:open --series ${open.target.series} --viewer-type mpr --wait
+@expect ${mpr.target.viewerType} == mpr
+@expect ${mpr.ready} == true
+$gl = view3d:info
+@expect ${gl.available} == true
+$vr = dicom:open --series ${open.target.series} --viewer-type 3d --wait
+@expect ${vr.target.viewerType} == 3d
+@expect ${vr.ready} == true
+$shot = view3d:capture --view ${vr.target.view} --out ${out}/3d-${cp.seq}.png
+@expect ${shot.format} == png
+@expect ${shot.width} > 0
+$after3d = mpr:volumes
+@expect ${after3d.volumes[0].series} == ${open.target.series}
+
+# S4: the color management of the display
+$color = color:status --view ${open.target.view}
+@expect ${color.display.class} == mntr
+
+$drop = mpr:delete --series ${coronal.series}
+@expect ${drop.deleted} == true
+$back = state:rollback --to ${cp.checkpoint} --close-new
+@expect ${back.restored} == true
+$after = state:diff --from ${cp.checkpoint}
+@expect ${after.diff.empty} == true

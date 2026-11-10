@@ -353,13 +353,13 @@ Produces: `view-id`
 
 ### dicom:tag (since 5.0)
 
-Value of a DICOM attribute of an image of the series, by keyword or (gggg,eeee). Identity attributes follow the identity policy; private tags are not exposed.
+Value of a DICOM attribute of an image of the series, by keyword or (gggg,eeee); of its objects (a waveform, a report) when the series holds no image. Identity attributes follow the identity policy; private tags are not exposed.
 
 Usage: `dicom:tag [-h] [--json] [--image=<image-index>] [--tag=<dicom-keyword>] (--series=<series-uid> | --view=<view-id>)`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --image | image-index | 1 | Image index in the series, from 1 (default: 1). |
+| --image | image-index | 1 | Image index in the series, from 1 (default: 1); the object index when the series holds no image. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list'. |
 | --tag | string |  | DICOM keyword (e.g. SliceLocation) or hexadecimal tag (gggg,eeee). (since 5.0) |
@@ -1241,11 +1241,11 @@ Needs: file write
 
 ### print:send
 
-Prints a job on a destination and releases it. Sending patient images to a device is closed to callers unless the network.write policy of this instance allows it, as for dicom:send.
+Prints a job on a destination and releases it. Sending patient images to a device is closed to callers unless the network.write policy of this instance allows it, as for dicom:send; the PDF file destination (file:pdf) needs only the file write of --out.
 
 Usage: `print:send [-h] [--json] [--copies=<n>] [--dpi=<dpi>] --job=<job-id> [--out=<output-path>] --to=<destination>`
 
-Needs: file write, send dicom
+Needs: file write
 
 | Option | Type | Default | Description |
 |---|---|---|---|

@@ -56,6 +56,7 @@ import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.ViewDescriptor;
+import org.weasis.core.ui.editor.Relevance;
 import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.ViewerRestorer;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -549,10 +550,6 @@ public final class CheckpointService implements StateBoundary {
                     plugin.handleFocusAfterClosing();
                   }
                 }
-                Shell shell = Shell.current();
-                if (shell != null && checkpoint.workspace().shell() != null) {
-                  ShellState.apply(checkpoint.workspace().shell(), shell);
-                }
                 // (d) the graphics of every image the checkpoint knows
                 notRestored.addAll(applyGraphics(checkpoint, dicomModel, mgr));
                 // (e) the selection, through the path the toolbars and menus follow
@@ -562,6 +559,13 @@ public final class CheckpointService implements StateBoundary {
                 if (dicomModel != null && checkpoint.protocol() != null) {
                   StateCommands.reattach(
                       checkpoint.toSession(null, false, List.of()), dicomModel, mgr);
+                }
+                // the shell last: the tools a side offers are those of the selected viewer in
+                // its context, which the relevance applies after a delay unless settled here
+                Relevance.settle();
+                Shell shell = Shell.current();
+                if (shell != null && checkpoint.workspace().shell() != null) {
+                  ShellState.apply(checkpoint.workspace().shell(), shell);
                 }
                 if (closeNew && dicomModel != null) {
                   for (String uid : loadedNow) {

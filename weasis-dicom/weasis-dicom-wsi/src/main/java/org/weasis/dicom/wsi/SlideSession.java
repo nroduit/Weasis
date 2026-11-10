@@ -52,6 +52,7 @@ public final class SlideSession implements AutoCloseable {
 
   private final Runnable repaint;
   private final Consumer<Slide> opened;
+  private Consumer<String> failed = _ -> {};
   private final Timer refreshTimer = new Timer(REFRESH_DELAY_MS, _ -> reload());
 
   private MediaSeries<? extends MediaElement> series;
@@ -68,6 +69,11 @@ public final class SlideSession implements AutoCloseable {
     this.repaint = Objects.requireNonNull(repaint);
     this.opened = Objects.requireNonNull(opened);
     refreshTimer.setRepeats(false);
+  }
+
+  /** Receives the message of a slide that could not be read, on the event dispatch thread. */
+  public void onFailure(Consumer<String> failed) {
+    this.failed = Objects.requireNonNull(failed);
   }
 
   public MediaSeries<? extends MediaElement> series() {
@@ -155,9 +161,11 @@ public final class SlideSession implements AutoCloseable {
     if (failure != null) {
       LOGGER.error("Cannot open the slide", failure);
       error = Messages.format("WsiView.error", failure.getMessage());
+      failed.accept(error);
     } else if (newStore.slides().isEmpty()) {
       newStore.close();
       error = Messages.getString("WsiView.no_slide");
+      failed.accept(error);
     } else {
       closeSlide();
       store = newStore;

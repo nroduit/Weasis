@@ -1251,6 +1251,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     undoSettle.restart();
   }
 
+  /**
+   * Records now what the settle timer would have recorded a moment later: a command that undoes
+   * right after a command that drew must find the drawing in the history.
+   */
+  public void settleGraphicUndo() {
+    if (undoSettle.isRunning()) {
+      undoSettle.stop();
+      graphicUndo.commit();
+    }
+  }
+
   private void trackGraphicUndo(GraphicModel previous, E img, GraphicModel model) {
     if (previous != null && previous != model) {
       previous.removeGraphicChangeHandler(undoGraphicListener);

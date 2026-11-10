@@ -1,0 +1,35 @@
+# settings-sites.weasis — where the settings live, a settings package exported and read back, the layers.
+# Run it with: weasis-cli script:run --file settings-sites.weasis --set out=<folder> --report <file.xml>
+# Needs no study. The package is written under the folder you give and never imported for real.
+
+$cp = state:checkpoint --label "scenario settings-sites"
+@expect ${cp.taken} == true
+
+# S1: the config folder, its documents and the user and machine layers of this installation
+$list = config:list
+@expect ${list.layers[0].scope} matches user|machine
+$setting = config:setting weasis.state.notice.remote
+@expect ${setting.key} == weasis.state.notice.remote
+@expect ${setting.scope} == user
+
+# S2: the user package, then the plan of its import on the same workstation: nothing to change
+$pack = config:pack --out ${out}/settings-${cp.seq}.zip
+@expect ${pack.out} == ${out}/settings-${cp.seq}.zip
+@expect ${pack.entries} >= 1
+$plan = config:unpack --file ${pack.out} --dry-run
+@expect ${plan.dryRun} == true
+@expect ${plan.mode} == merge
+@expect ${plan.changes[0].unchanged} >= 0
+
+# S3: what the layers hold: the built-in protocols, profiles and the loaded plugins
+$protocols = hp:list
+@expect ${protocols.protocols[0].layer} == built-in
+$profiles = measure:profiles
+@expect ${profiles.profiles[0].origin} == built_in
+$plugins = plugins:list
+@expect ${plugins.plugins[0].tier} == core
+$integrity = weasis:info --integrity
+@expect ${integrity.integrity.level} matches signed|digest|none
+
+$after = state:diff --from ${cp.checkpoint}
+@expect ${after.diff.empty} == true

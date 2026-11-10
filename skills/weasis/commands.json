@@ -1396,7 +1396,7 @@
         },
         {
           "name": "tag",
-          "description": "Value of a DICOM attribute of an image of the series, by keyword or (gggg,eeee). Identity attributes follow the identity policy; private tags are not exposed.",
+          "description": "Value of a DICOM attribute of an image of the series, by keyword or (gggg,eeee); of its objects (a waveform, a report) when the series holds no image. Identity attributes follow the identity policy; private tags are not exposed.",
           "since": "5.0",
           "usage": "dicom:tag [-h] [--json] [--image=<image-index>] [--tag=<dicom-keyword>] (--series=<series-uid> | --view=<view-id>)",
           "parameters": [],
@@ -1410,7 +1410,7 @@
               "arity": "1",
               "required": false,
               "default": "1",
-              "description": "Image index in the series, from 1 (default: 1)."
+              "description": "Image index in the series, from 1 (default: 1); the object index when the series holds no image."
             },
             {
               "names": [
@@ -4707,11 +4707,10 @@
         },
         {
           "name": "send",
-          "description": "Prints a job on a destination and releases it. Sending patient images to a device is closed to callers unless the network.write policy of this instance allows it, as for dicom:send.",
+          "description": "Prints a job on a destination and releases it. Sending patient images to a device is closed to callers unless the network.write policy of this instance allows it, as for dicom:send; the PDF file destination (file:pdf) needs only the file write of --out.",
           "usage": "print:send [-h] [--json] [--copies=<n>] [--dpi=<dpi>] --job=<job-id> [--out=<output-path>] --to=<destination>",
           "needs": [
-            "file-write",
-            "send-dicom"
+            "file-write"
           ],
           "parameters": [],
           "options": [

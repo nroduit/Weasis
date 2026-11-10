@@ -116,7 +116,7 @@ public final class ScriptRunner {
         continue;
       }
       String command = argv.getFirst();
-      if (command.startsWith("script:")) { // NON-NLS
+      if (nestedScript(command)) {
         problems.add("line " + step.line() + ": a script does not run a script");
       } else if (!manager.knows(command)) {
         problems.add("line " + step.line() + ": unknown command '" + command + "'");
@@ -250,7 +250,7 @@ public final class ScriptRunner {
       return new StepResult(
           number, step.line(), text, CommandResult.USAGE, elapsed(start), "", "Empty command");
     }
-    if (argv.getFirst().startsWith("script:")) { // NON-NLS
+    if (nestedScript(argv.getFirst())) {
       return new StepResult(
           number,
           step.line(),
@@ -409,6 +409,11 @@ public final class ScriptRunner {
 
   private static List<String> tokens(String text) {
     return Arrays.asList(CommandManager.parseCommandString(text));
+  }
+
+  /** A script never runs or checks a script; 'script:pause' paces one and is a plain step. */
+  private static boolean nestedScript(String command) {
+    return command.startsWith("script:") && !command.equals("script:pause"); // NON-NLS
   }
 
   private static boolean expired(long start, Options options) {

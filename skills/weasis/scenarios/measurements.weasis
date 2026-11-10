@@ -1,0 +1,56 @@
+# measurements.weasis — the tools of the palette, a lesion measured, statistics, undo and redo, the exports.
+# Run it with: weasis-cli script:run --file measurements.weasis --set data=<folder of one CT study> --set out=<folder> --report <file.xml>
+# The values are in the unit the image is calibrated in (mm for a CT); the script checks the units,
+# the provenance of the calibration and the counts, not your clinical values.
+
+$cp = state:checkpoint --label "scenario measurements"
+@expect ${cp.taken} == true
+$load = dicom:load --path "${data}" --wait
+@expect ${load.loaded} == true
+$list = dicom:list
+$open = dicom:open --series ${list.patients[0].studies[0].series[modality=CT].id} --wait
+@expect ${open.target.viewerType} == 2d
+
+# S1: the profile follows the modality; the registry lists the tools of the palette
+$profiles = measure:profiles
+@expect ${profiles.automatic} == true
+$tools = measure:tools --category measure
+@expect ${tools.tools[tool=weasis.line].category} == measure
+@expect ${tools.tools[tool=weasis.bidirectional].points} >= 2
+
+# a line and a bidirectional measurement, calibrated by the header of the image
+$line = view2d:measure --view ${open.target.view} --type line --points 100,100,200,100
+@expect ${line.measurements[key=length].unit} == mm
+@expect ${line.measurements[key=length].value} > 0
+@expect ${line.measurements[key=length].provenance.kind} == header
+$bidi = view2d:measure --view ${open.target.view} --tool-key weasis.bidirectional --points 150,150,250,150,200,100,200,200
+@expect ${bidi.type} == weasis.bidirectional
+
+# pixel statistics of a region, in the unit of the image values
+$stats = view2d:stats --view ${open.target.view} --rect 120,120,40,40
+@expect ${stats.statistics[key=stats.mean].key} == stats.mean
+@expect ${stats.statistics[key=stats.min].value} <= ${stats.statistics[key=stats.max].value}
+
+# S1.6: undo the last drawing, redo it
+$undo = view2d:undo --view ${open.target.view}
+@expect ${undo.undone} == true
+@expect ${undo.canRedo} == true
+$redo = view2d:redo --view ${open.target.view}
+@expect ${redo.redone} == true
+$graphics = view2d:graphics --view ${open.target.view} --layer AI --no-measurements
+@expect ${graphics.graphics[1].type} == bidirectional
+
+# the exports: the values as CSV, the graphics as a DICOM SR measurement report and as the XML of Weasis
+$csv = measure:export --view ${open.target.view} --format csv --out ${out}/measurements-${cp.seq}.csv
+@expect ${csv.graphics} == 2
+$sr = measure:export --view ${open.target.view} --format sr --out ${out}/measurements-${cp.seq}.sr.dcm
+@expect ${sr.graphics} == 2
+$xml = measure:export --view ${open.target.view} --format xml --out ${out}/measurements-${cp.seq}.xml
+@expect ${xml.graphics} == 2
+
+$clean = view2d:clear-ai --view ${open.target.view}
+@expect ${clean.removed} == 2
+$back = state:rollback --to ${cp.checkpoint} --close-new
+@expect ${back.restored} == true
+$after = state:diff --from ${cp.checkpoint}
+@expect ${after.diff.empty} == true

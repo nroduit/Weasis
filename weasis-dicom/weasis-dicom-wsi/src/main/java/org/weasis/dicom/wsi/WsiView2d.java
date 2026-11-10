@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import javax.swing.ImageIcon;
@@ -50,6 +51,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.setting.Settings;
+import org.weasis.core.ui.editor.OpenTracker;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -110,6 +112,10 @@ public class WsiView2d extends View2d {
   private static final Color BOX_BACKGROUND = new Color(0, 0, 0, 160);
 
   private final SlideSession session = new SlideSession(this::repaint, this::slideOpened);
+
+  /** Settles once the slide of the series is read, so 'dicom:open --wait' answers a slide. */
+  private final OpenTracker build = new OpenTracker();
+
   private final OverviewMouse overviewMouse = new OverviewMouse();
   private final MouseWheelListener wheelZoom = this::wheelZoom;
   private final PanTracker panTracker = new PanTracker();
@@ -267,8 +273,21 @@ public class WsiView2d extends View2d {
   @Override
   public void setSeries(MediaSeries<DicomImageElement> newSeries, DicomImageElement selectedMedia) {
     super.setSeries(newSeries, selectedMedia);
+    if (newSeries != session.series()) {
+      if (newSeries == null) {
+        build.fail(new CancellationException("The slide view shows no series"));
+      } else {
+        build.begin();
+        session.onFailure(message -> build.fail(new IllegalStateException(message)));
+      }
+    }
     session.open(newSeries);
     showCarrierImage(newSeries);
+  }
+
+  /** Completes once the slide is read and shown; fails when it could not be read. */
+  public CompletableFuture<Void> whenReady() {
+    return build.whenReady();
   }
 
   // The graphics of the 2D view belong to its image, the thumbnail of the slide. A slide without
@@ -306,6 +325,7 @@ public class WsiView2d extends View2d {
   }
 
   private void slideOpened(Slide slide) {
+    build.complete();
     boolean resized = slide.width() != slideWidth;
     slideWidth = slide.width();
     // A slide read again may have fewer planes or paths than the ones shown

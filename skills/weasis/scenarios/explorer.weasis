@@ -1,0 +1,49 @@
+# explorer.weasis — the explorer as a reader uses it: modes, facets, filters, reveal, objects and images of interest.
+# Run it with: weasis-cli script:run --file explorer.weasis --set data=<folder of studies> --set out=<folder> --report <file.xml>
+# A folder with several series (and key objects, presentation states or segmentations, if you have them).
+
+$cp = state:checkpoint --label "scenario explorer"
+@expect ${cp.taken} == true
+$load = dicom:load --path "${data}" --wait
+@expect ${load.loaded} == true
+$list = dicom:list
+@expect ${list.patients[0].studies[0].series[0].imageCount} >= 0
+
+# S1: the mode follows the content; a mode you pick stays until you choose automatic
+$state = explorer:state
+@expect ${state.explorer} == dicom
+$listMode = explorer:mode list
+@expect ${listMode.mode} == list
+@expect ${listMode.modeSource} == user
+$thumbs = explorer:mode thumbnails
+@expect ${thumbs.mode} == thumbnails
+$auto = explorer:mode auto
+@expect ${auto.modeSource} == auto
+
+# S3: the facets of the selected patient and a filter on the modality of the first series
+$facets = explorer:facets
+@expect ${facets.total} >= 1
+$filter = explorer:filter --modality ${list.patients[0].studies[0].series[0].modality}
+@expect ${filter.active} == true
+@expect ${filter.matching} >= 1
+$text = explorer:filter --text ${list.patients[0].studies[0].series[0].modality}
+@expect ${text.active} == true
+$clear = explorer:filter --clear
+@expect ${clear.active} == false
+@expect ${clear.matching} == ${clear.total}
+
+# S2: point at a series as a reader would, select it
+$reveal = explorer:reveal --series ${list.patients[0].studies[0].series[0].id}
+@expect ${reveal.visible} == true
+$select = explorer:select --series ${list.patients[0].studies[0].series[0].id}
+
+# S5: the objects of the study and the images of interest
+$objects = dicom:objects --study ${list.patients[0].studies[0].studyInstanceUID}
+@expect ${objects.studies[0].studyInstanceUID} == ${list.patients[0].studies[0].studyInstanceUID}
+@expect ${objects.studies[0].seriesCount} >= 1
+$interest = dicom:interest --study ${list.patients[0].studies[0].studyInstanceUID}
+
+$back = state:rollback --to ${cp.checkpoint} --close-new
+@expect ${back.restored} == true
+$after = state:diff --from ${cp.checkpoint}
+@expect ${after.diff.empty} == true

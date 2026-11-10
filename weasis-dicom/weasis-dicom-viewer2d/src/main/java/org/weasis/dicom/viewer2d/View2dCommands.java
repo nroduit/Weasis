@@ -2397,6 +2397,7 @@ public class View2dCommands implements CommandExtension {
                           CommandError.NOT_APPLICABLE,
                           "The undo of the drawings is off (weasis.draw.undo.limit is 0)"));
                 }
+                view.settleGraphicUndo();
                 boolean done = act(history);
                 return Json.createObjectBuilder()
                     .add("target", ViewDisplayState.target(resolved.container(), view)) // NON-NLS

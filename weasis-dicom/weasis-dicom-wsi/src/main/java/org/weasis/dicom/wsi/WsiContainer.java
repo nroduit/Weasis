@@ -11,6 +11,7 @@ package org.weasis.dicom.wsi;
 
 import java.beans.PropertyChangeEvent;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import javax.swing.JComponent;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.layout.MigLayoutModel;
@@ -39,6 +40,17 @@ public class WsiContainer extends View2dContainer {
           WsiView2d.class.getName());
 
   private static final SeriesViewerUI WSI_UI = new SeriesViewerUI(WsiContainer.class);
+
+  /** The slide view settles the open once its slide is read, which is what --wait waits for. */
+  @Override
+  public CompletableFuture<Void> whenReady() {
+    for (ViewCanvas<DicomImageElement> view : getImagePanels()) {
+      if (view instanceof WsiView2d slideView) {
+        return slideView.whenReady();
+      }
+    }
+    return super.whenReady();
+  }
 
   public WsiContainer() {
     this(DEFAULT_VIEW, null);

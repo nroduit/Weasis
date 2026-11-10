@@ -1,0 +1,28 @@
+# ecg.weasis — an ECG opens in the waveform viewer; what the file says about itself.
+# Run it with: weasis-cli script:run --file ecg.weasis --set data=<folder of ECG files> --set out=<folder> --report <file.xml>
+# The waveform viewer has no verbs of its own in this beta: the layouts, calipers and filters are
+# checked by hand with the scenario sheet; this script checks the opening and the identity of the file.
+
+$cp = state:checkpoint --label "scenario ecg"
+@expect ${cp.taken} == true
+$load = dicom:load --path "${data}" --wait
+@expect ${load.loaded} == true
+$list = dicom:list
+@expect ${list.patients[0].studies[0].series[modality=ECG].modality} == ECG
+
+$open = dicom:open --series ${list.patients[0].studies[0].series[modality=ECG].id} --wait
+@expect ${open.target.viewerType} == waveform
+@expect ${open.ready} == true
+$ws = workspace:list
+@expect ${ws.selected} == ${open.target.view}
+
+# the storage class of a waveform, and the transfer syntax (T.261 or native) it is stored with
+$sop = dicom:tag --series ${open.target.series} --tag SOPClassUID
+@expect ${sop.value} matches 1\.2\.840\.10008\.5\.1\.4\.1\.1\.9\..*
+$ts = dicom:tag --series ${open.target.series} --tag TransferSyntaxUID
+@expect ${ts.value} matches 1\.2\.840\.10008\.1\.2.*
+
+$back = state:rollback --to ${cp.checkpoint} --close-new
+@expect ${back.restored} == true
+$after = state:diff --from ${cp.checkpoint}
+@expect ${after.diff.empty} == true

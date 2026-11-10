@@ -1,0 +1,44 @@
+# printing.weasis — the page model: destinations, a layout page, its preview, a series on several pages, a PDF.
+# Run it with: weasis-cli script:run --file printing.weasis --set data=<folder of one study> --set out=<folder> --report <file.xml>
+# Nothing goes to a printer: the pages are rendered to files under the folder you give.
+
+$cp = state:checkpoint --label "scenario printing"
+@expect ${cp.taken} == true
+$load = dicom:load --path "${data}" --wait
+@expect ${load.loaded} == true
+$list = dicom:list
+$open = dicom:open --series ${list.patients[0].studies[0].series[0].id} --wait
+@expect ${open.target.viewerType} == 2d
+$grid = view2d:grid --view ${open.target.view} --panes 6
+@expect ${grid.cells[5].cell} == 6
+
+# S1: the destinations, the PDF file among them
+$dest = print:destinations
+@expect ${dest.destinations[id=file:pdf].kind} == file
+
+# S1: the page of the layout as shown and its preview, as the printer would receive it
+$job = print:page --view ${open.target.view}
+@expect ${job.pages} == 1
+@expect ${job.cells} == 6
+@expect ${job.figures.cellWidthMm} > 0
+$preview = print:render --job ${job.job} --out ${out}/printing-${cp.seq}-layout.png
+@expect ${preview.pages} == 1
+@expect ${preview.width} > 0
+
+# S3: the frames of the series on pages of 4 x 3 cells with the header line
+$pages = print:page --view ${open.target.view} --series --grid 4x3 --header on
+@expect ${pages.content} == series
+@expect ${pages.grid} == 4x3
+@expect ${pages.options.header} == true
+@expect ${pages.pages} >= 1
+$first = print:render --job ${pages.job} --out ${out}/printing-${cp.seq}-series.png --page 1
+@expect ${first.pages} == ${pages.pages}
+
+# S4: a PDF without a virtual printer
+$pdf = print:send --job ${pages.job} --to file:pdf --out ${out}/printing-${cp.seq}.pdf
+@expect ${pdf.sent} == true
+
+$back = state:rollback --to ${cp.checkpoint} --close-new
+@expect ${back.restored} == true
+$after = state:diff --from ${cp.checkpoint}
+@expect ${after.diff.empty} == true

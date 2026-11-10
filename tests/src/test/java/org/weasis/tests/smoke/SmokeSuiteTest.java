@@ -91,6 +91,34 @@ class SmokeSuiteTest {
   }
 
   /**
+   * Every scenario script shipped with the skill ({@code skills/weasis/scenarios}) parses against
+   * this instance: a verb or an option it uses that the instance does not know is a stale script,
+   * caught before a tester runs it.
+   */
+  @TestFactory
+  Stream<DynamicTest> scenariosParse() throws IOException {
+    assumeTrue(instance != null, "no instance");
+    Path folder = root.resolveSibling("skills").resolve("weasis").resolve("scenarios"); // NON-NLS
+    List<Path> scripts;
+    try (Stream<Path> files = Files.list(folder)) {
+      scripts = files.filter(f -> f.toString().endsWith(".weasis")).sorted().toList(); // NON-NLS
+    }
+    return scripts.stream()
+        .map(
+            script ->
+                DynamicTest.dynamicTest(
+                    "scenario " + name(script),
+                    () -> {
+                      SmokeInstance.Answer answer =
+                          instance.command("script:check", "--file", script.toString(), "--json");
+                      assertEquals(
+                          0,
+                          answer.status(),
+                          name(script) + " does not parse: " + answer.err() + answer.out());
+                    }));
+  }
+
+  /**
    * The shipped skill snapshots match what this instance generates: {@code commands.json} is {@code
    * help --json} and {@code reference.md} is {@code help --markdown}, the application version
    * aside. A stale snapshot is regenerated from a running instance, never edited by hand.

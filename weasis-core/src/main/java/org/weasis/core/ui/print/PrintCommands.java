@@ -27,13 +27,14 @@ import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.Capability;
 import org.weasis.core.api.command.CommandContext;
+import org.weasis.core.api.command.CommandError;
 import org.weasis.core.api.command.CommandExtension;
-import org.weasis.core.api.command.Term;
 import org.weasis.core.api.command.CommandFailure;
-import org.weasis.core.api.command.Needs;
+import org.weasis.core.api.command.CommandPolicy;
 import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.PaneIndex;
 import org.weasis.core.api.command.Since;
+import org.weasis.core.api.command.Term;
 import org.weasis.core.api.command.ViewId;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -717,8 +718,8 @@ public class PrintCommands implements CommandExtension {
       description =
           "Prints a job on a destination and releases it. Sending patient images to a device is"
               + " closed to callers unless the network.write policy of this instance allows it,"
-              + " as for dicom:send.")
-  @Needs(Capability.SEND_DICOM)
+              + " as for dicom:send; the PDF file destination (file:pdf) needs only the file"
+              + " write of --out.")
   static class Send extends AbstractVerb {
     @ParentCommand PrintCommands owner;
 
@@ -768,8 +769,20 @@ public class PrintCommands implements CommandExtension {
         if (dpi != null) {
           pdf.setResolution(dpi);
         }
-      } else if (out != null || dpi != null) {
-        throw invalid("--out and --dpi apply to the PDF file destination only");
+      } else {
+        if (out != null || dpi != null) {
+          throw invalid("--out and --dpi apply to the PDF file destination only");
+        }
+        // a printer or a film printer receives patient images: the policy of dicom:send applies,
+        // which the static needs of the verb cannot say since a file destination does not
+        CommandContext context = CommandContext.current();
+        context
+            .policy()
+            .check(context.origin(), CommandPolicy.Request.of(Capability.SEND_DICOM))
+            .ifPresent(
+                refusal -> {
+                  throw new CommandFailure(CommandError.refused(refusal));
+                });
       }
       JsonObjectBuilder json = describe(job, destination);
       pdf(destination).ifPresent(f -> json.add("file", f.toString())); // NON-NLS

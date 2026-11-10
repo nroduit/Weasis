@@ -9,6 +9,8 @@ CLI, ...) how to drive a running Weasis through `weasis-cli`.
   namespaces, and without the sections of a namespace it does not load. Only the front matter of
   the file is specific to the host format.
 - `examples/`: a sample script for `script:run`, in the format the instructions describe.
+- `scenarios/`: one replayable script per feature of the 5.0 preview, for the testers of a beta
+  (see its `README.md`); also examples of `script:run` with `@expect` on real studies.
 - `pointers/`: one line for a host that reads its own instruction file (`AGENTS.md`, `GEMINI.md`,
   `CLAUDE.md`) instead of a skill folder — "run `weasis-cli help --agent`".
 - `reference.md`: every command namespace and verb with its options, a snapshot of

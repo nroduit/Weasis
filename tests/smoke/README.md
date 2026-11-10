@@ -34,3 +34,7 @@ captures go to `tests/target/smoke-out`, the application log to
 - Leave the display as you found it: a scenario that opens viewers ends with a rollback or a
   `dicom:unload`, so the scripts stay independent and their order does not matter.
 - A bug found by a tester or an agent becomes a scenario here, with the issue number in a comment.
+
+The scripts the testers of a preview replay on their own studies live in `skills/weasis/scenarios`
+(one per feature, shipped with the installer); `SmokeSuiteTest` parses every one of them against the
+instance, so a verb or an option they use cannot go stale unnoticed.

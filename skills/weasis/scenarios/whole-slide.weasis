@@ -1,0 +1,41 @@
+# whole-slide.weasis — a slide from files: one series, the pyramid, a magnification, a measurement in micrometers, the SR export.
+# Run it with: weasis-cli script:run --file whole-slide.weasis --set data=<folder of one DICOM slide> --set out=<folder> --report <file.xml>
+
+$cp = state:checkpoint --label "scenario whole-slide"
+@expect ${cp.taken} == true
+$load = dicom:load --path "${data}" --wait
+@expect ${load.loaded} == true
+$list = dicom:list
+$open = dicom:open --series ${list.patients[0].studies[0].series[modality=SM].id} --wait
+@expect ${open.target.viewerType} == wsi
+@expect ${open.target.imageCount} == 1
+
+# S1: the slide as the viewer reads it: base level, pyramid, spacing
+$info = wsi:info --view ${open.target.view}
+@expect ${info.slide.levels[0].downsample} == 1
+@expect ${info.slide.width} > 0
+@expect ${info.slide.pixelSpacingUnit} == um
+
+# S3: a magnification preset, every tile of the view loaded
+$goto = wsi:goto --view ${open.target.view} --objective 10 --complete
+@expect ${goto.display.magnification} ~ 10 +-0.01
+@expect ${goto.display.tiles.partial} == false
+$base = wsi:goto --view ${open.target.view} --zoom 1
+@expect ${base.display.zoom} ~ 1 +-0.001
+
+# S4: a line on the base level of the slide, measured with the Pathology profile
+$line = view2d:measure --view ${open.target.view} --type line --points 1000,1000,2000,1000
+@expect ${line.measurements[key=length].value} > 0
+@expect ${line.measurements[key=length].provenance.kind} == header
+$shot = view2d:capture --view ${open.target.view} --out ${out}/slide-${cp.seq}.png
+@expect ${shot.format} == png
+
+# S5.3: the measurements as a DICOM SR measurement report
+$sr = wsi:export --view ${open.target.view} --out ${out}/slide-${cp.seq}.sr.dcm
+@expect ${sr.regions} >= 1
+
+$clean = view2d:clear-ai --view ${open.target.view}
+$back = state:rollback --to ${cp.checkpoint} --close-new
+@expect ${back.restored} == true
+$after = state:diff --from ${cp.checkpoint}
+@expect ${after.diff.empty} == true

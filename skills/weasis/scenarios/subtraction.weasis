@@ -1,0 +1,40 @@
+# subtraction.weasis — post-contrast minus pre-contrast: the phases, the live preview, the derived series and its sources.
+# Load the study first (drop the folder on the explorer, or dicom:load), read the two series with
+# dicom:list, then:
+#   weasis-cli script:run --file subtraction.weasis --set series=<post-contrast uid> --set mask=<pre-contrast uid> --set out=<folder> --report <file.xml>
+# The two series must share the grid of the study (same slices), as the pairs of your archive do.
+
+$cp = state:checkpoint --label "scenario subtraction"
+@expect ${cp.taken} == true
+
+# S2: the phases of a series as the mask list counts them
+$phases = subtraction:phases --series ${series}
+@expect ${phases.series} == ${series}
+@expect ${phases.phases[0].count} >= 1
+
+# S1: the preview, live in the pane, then off again
+$open = dicom:open --series ${series} --wait
+@expect ${open.target.series} == ${series}
+$preview = subtraction:preview --view ${open.target.view} --mask ${mask}
+@expect ${preview.subtraction.mask} == ${mask}
+$off = subtraction:preview --view ${open.target.view} --off
+
+# S1.4: the series built, with its sources, as a series of the study
+$sub = subtraction:create --series ${series} --mask ${mask} --no-open
+@expect ${sub.derivation} == SUB
+@expect ${sub.sources[role=mask].series} == ${mask}
+@expect ${sub.sources[role=series].series} == ${series}
+@expect ${sub.slices} >= 1
+$info = subtraction:info --series ${sub.series}
+@expect ${info.description} == ${sub.description}
+$built = subtraction:list
+@expect ${built.series[0].derivation} == SUB
+$infoSeries = dicom:info --series ${sub.series}
+@expect ${infoSeries.imageCount} == ${sub.slices}
+
+$delete = subtraction:delete --series ${sub.series}
+@expect ${delete.deleted} == true
+$back = state:rollback --to ${cp.checkpoint} --close-new
+@expect ${back.restored} == true
+$after = state:diff --from ${cp.checkpoint}
+@expect ${after.diff.empty} == true

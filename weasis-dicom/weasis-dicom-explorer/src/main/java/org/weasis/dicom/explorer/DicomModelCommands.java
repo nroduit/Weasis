@@ -88,6 +88,7 @@ import org.weasis.core.ui.editor.image.ViewDisplayState;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.ObjectDescriptor;
 import org.weasis.dicom.codec.ObjectKind;
 import org.weasis.dicom.codec.TagD;
@@ -1692,8 +1693,9 @@ final class DicomModelCommands {
   @Command(
       name = "tag",
       description =
-          "Value of a DICOM attribute of an image of the series, by keyword or (gggg,eeee). "
-              + "Identity attributes follow the identity policy; private tags are not exposed.")
+          "Value of a DICOM attribute of an image of the series, by keyword or (gggg,eeee); of"
+              + " its objects (a waveform, a report) when the series holds no image. Identity"
+              + " attributes follow the identity policy; private tags are not exposed.")
   @Since("5.0")
   static class TagValue extends Verb {
     @ArgGroup(exclusive = true, multiplicity = "1")
@@ -1710,7 +1712,9 @@ final class DicomModelCommands {
         names = "--image",
         paramLabel = "<image-index>",
         defaultValue = "1",
-        description = "Image index in the series, from 1 (default: ${DEFAULT-VALUE}).")
+        description =
+            "Image index in the series, from 1 (default: ${DEFAULT-VALUE}); the object index when"
+                + " the series holds no image.")
     ImageIndex image;
 
     @Override
@@ -1739,6 +1743,17 @@ final class DicomModelCommands {
     private String tagJson(
         MediaSeries<? extends MediaElement> series, int tagId, TagW tag, String resolvedKeyword) {
       MediaElement media = series.getMedia(image.toOffset(), null, null);
+      if (media == null && series.size(null) == 0) {
+        // a waveform or a report series has no image: its objects answer for it
+        List<DicomSpecialElement> objects =
+            DicomModel.getSpecialElements(series, DicomSpecialElement.class);
+        if (image.toOffset() < objects.size()) {
+          media = objects.get(image.toOffset());
+        } else if (!objects.isEmpty()) {
+          throw new IllegalArgumentException(
+              "Object index out of range: " + image + " (" + objects.size() + " objects)");
+        }
+      }
       if (media == null) {
         throw new IllegalArgumentException(
             "Image index out of range: " + image + " (" + series.size(null) + " images)");

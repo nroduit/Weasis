@@ -183,6 +183,17 @@ public final class Relevance {
   }
 
   /**
+   * Applies the pending context now instead of after the delay: a restore that lays its own shell
+   * state over the workspace calls it first, so that a late application does not undo its work.
+   */
+  public static void settle() {
+    if (DEBOUNCE.isRunning()) {
+      DEBOUNCE.stop();
+      apply(pending);
+    }
+  }
+
+  /**
    * Applies a context to the shell: the tools of its viewer that are visible and relevant are
    * shown, the UI profile it asks for is laid over the workspace ({@link UiProfiles#apply}), then
    * the toolbar row is rebuilt from the relevant bars the profile lists. The items revealed from

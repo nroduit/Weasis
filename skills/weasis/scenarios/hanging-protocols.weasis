@@ -1,0 +1,65 @@
+# hanging-protocols.weasis — a study opens ready to read, and the display explains itself.
+# Run it with an empty explorer (close every study first):
+#   weasis-cli script:run --file hanging-protocols.weasis --set data=<folder of one CT study> --set out=<folder> --report <file.xml>
+# The CT should hold several reconstructions (axial soft and bone kernels, or coronal and sagittal
+# series) so that the cells have alternatives; a mammography with its prior works too.
+# The script ends with a rollback: the display and the explorer are as they were before it ran.
+
+$cp = state:checkpoint --label "scenario hanging-protocols"
+@expect ${cp.taken} == true
+
+# S1: the study opens without a click, hung by the best protocol
+$load = dicom:load --path "${data}" --wait
+@expect ${load.loaded} == true
+@wait dicom:study.opened --timeout 60
+$ws = workspace:list
+@expect ${ws.selected} == ${event.view}
+$sets = hp:sets --view ${ws.selected}
+@expect ${sets.step} == 1
+@expect ${sets.steps} >= 1
+@expect ${sets.displaySets[0].viewId} == ${ws.selected}
+
+# S2: why this series — the rules, the score and the alternatives of the first cell
+$why = hp:explain --view ${ws.selected} --cell 1
+@expect ${why.protocol} == ${sets.protocol}
+@expect ${why.cells[0].cell} == 1
+@expect ${why.cells[0].score} > 0
+@expect ${why.cells[0].series} == ${sets.displaySets[0].series}
+
+# the plan the engine computed for the study agrees with what hangs
+$match = hp:match --study ${why.cells[0].study}
+@expect ${match.plan.protocol} == ${sets.protocol}
+@expect ${match.candidates[0].protocol} == ${sets.protocol}
+
+# S2: correct the cell with its first alternative; the correction is recorded with the rule it proposes
+$correct = hp:correct --view ${ws.selected} --cell 1 --series ${why.cells[0].alternatives[0].series}
+@expect ${correct.cell} == 1
+@expect ${correct.chosen} == ${why.cells[0].alternatives[0].series}
+$log = hp:corrections --protocol ${sets.protocol}
+@expect ${log.corrections[0].protocol} == ${sets.protocol}
+
+# S3: the reading steps, forward and back on the same viewer
+$next = hp:group --view ${ws.selected} --next
+@expect ${next.protocol} == ${sets.protocol}
+$back = hp:group --view ${ws.selected} --previous
+@expect ${back.step} == 1
+
+# S6: save the display as a protocol, without storing it: the rules found and the studies it applies to
+$save = hp:save --view ${ws.selected} --dry-run --name "scenario ${cp.seq}"
+@expect ${save.cells[0].cell} == 1
+@expect ${save.dryRun.protocols[0].applies} >= 1
+
+# S5: keep the display as a session, restore it, delete it
+$keep = state:keep --label "scenario ${cp.seq}"
+@expect ${keep.kept} == true
+@expect ${keep.protocol} == ${sets.protocol}
+$restore = state:restore --session ${keep.session}
+@expect ${restore.restored} == true
+$delete = state:delete --session ${keep.session}
+@expect ${delete.deleted} == true
+
+# back to the display before the script, the study unloaded
+$back2 = state:rollback --to ${cp.checkpoint} --close-new
+@expect ${back2.restored} == true
+$after = state:diff --from ${cp.checkpoint}
+@expect ${after.diff.empty} == true
