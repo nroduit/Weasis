@@ -208,11 +208,11 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
 
   private JPanel buildIdentity() {
     JPanel panel = section("WindowPresetPrefView.section.preset");
-    panel.add(firstLabel("WindowPresetPrefView.name", nameField));
+    panel.add(firstLabelText(Messages.common("name"), nameField));
     panel.add(nameField, SHRINKABLE);
     panel.add(label("WindowPresetPrefView.key", keyCombo), GAP);
     panel.add(keyCombo);
-    panel.add(firstLabel("WindowPresetPrefView.modality", modalitiesField));
+    panel.add(firstLabelText(Messages.common("modalities"), modalitiesField));
     panel.add(withPicker(modalitiesField, modalitiesPicker), "span 3, " + SHRINKABLE); // NON-NLS
     return panel;
   }
@@ -317,7 +317,11 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
   }
 
   private JLabel firstLabel(String key, JComponent field) {
-    JLabel label = label(key, field);
+    return firstLabelText(Messages.getString(key), field);
+  }
+
+  private JLabel firstLabelText(String text, JComponent field) {
+    JLabel label = labelText(text, field);
     firstColumnLabels.add(label);
     return label;
   }
@@ -333,7 +337,11 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
   }
 
   private JLabel label(String key, JComponent field) {
-    JLabel label = new JLabel(Messages.getString(key) + StringUtil.COLON);
+    return labelText(Messages.getString(key), field);
+  }
+
+  private JLabel labelText(String text, JComponent field) {
+    JLabel label = new JLabel(text + StringUtil.COLON);
     label.setLabelFor(field);
     fieldLabels.add(label);
     return label;

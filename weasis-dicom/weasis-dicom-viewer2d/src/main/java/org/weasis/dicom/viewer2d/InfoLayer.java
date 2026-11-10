@@ -386,7 +386,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
   private float paintZoom(Graphics2D g2, float drawY, int fontHeight) {
     String zoomText =
-        Messages.getString("InfoLayer.zoom")
+        Messages.common("zoom")
             + StringUtil.COLON_AND_SPACE
             + DecFormatter.percentTwoDecimal(view2DPane.getViewModel().getViewScale());
     FontTools.paintFontOutline(g2, zoomText, border, drawY);

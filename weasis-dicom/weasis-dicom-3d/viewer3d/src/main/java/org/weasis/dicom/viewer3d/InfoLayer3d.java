@@ -217,7 +217,7 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
   private float paintZoom(Graphics2D g2d, float drawY, int fontHeight) {
     FontTools.paintFontOutline(
         g2d,
-        org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.zoom")
+        org.weasis.dicom.viewer2d.Messages.common("zoom")
             + StringUtil.COLON_AND_SPACE
             + DecFormatter.percentTwoDecimal(getView2DPane().getZoom()),
         border,

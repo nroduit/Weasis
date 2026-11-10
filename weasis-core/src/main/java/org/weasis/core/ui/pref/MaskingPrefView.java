@@ -193,7 +193,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
 
   private JPanel buildIdentity() {
     JPanel panel = section("MaskingPrefView.section.profile", "[right][grow,fill]");
-    panel.add(label("MaskingPrefView.name", nameField));
+    panel.add(labelText(Messages.common("name"), nameField));
     panel.add(nameField, SHRINKABLE);
     exportCheck.setToolTipText(Messages.getString("MaskingPrefView.offer.tip"));
     panel.add(exportCheck, "skip 1"); // NON-NLS
@@ -512,7 +512,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
         .addListSelectionListener(e -> removeTagButton.setEnabled(selectedUserRow() != null));
 
     JPanel filter = new JPanel(new MigLayout("ins 0, fillx", "[][grow,fill]")); // NON-NLS
-    filter.add(label("MaskingPrefView.filter", filterField));
+    filter.add(labelText(Messages.common("filter"), filterField));
     filter.add(filterField, SHRINKABLE);
     filterField.getDocument().addDocumentListener(onEdit(this::fillTags));
     panel.add(filter, SHRINKABLE);
@@ -530,7 +530,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
     addButton.addActionListener(e -> addTag());
     removeTagButton.addActionListener(e -> removeTag());
     removeTagButton.setEnabled(false);
-    panel.add(label("MaskingPrefView.tag", tagField));
+    panel.add(labelText(Messages.common("tag"), tagField));
     panel.add(tagField, SHRINKABLE);
     panel.add(tagCategoryCombo);
     panel.add(addButton);
@@ -733,7 +733,11 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   }
 
   private JLabel label(String key, JComponent field) {
-    JLabel label = new JLabel(Messages.getString(key) + StringUtil.COLON);
+    return labelText(Messages.getString(key), field);
+  }
+
+  private static JLabel labelText(String text, JComponent field) {
+    JLabel label = new JLabel(text + StringUtil.COLON);
     label.setLabelFor(field);
     return label;
   }

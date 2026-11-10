@@ -29,7 +29,7 @@ import org.weasis.opencv.op.ImageTransformer;
  */
 public final class RotationOp extends AbstractOp {
 
-  public static final String OP_NAME = Messages.getString("RotationOperation.title");
+  public static final String OP_NAME = Messages.common("rotation");
   public static final String P_ROTATE = "rotate";
 
   private static final int FULL_CIRCLE_DEGREES = 360;

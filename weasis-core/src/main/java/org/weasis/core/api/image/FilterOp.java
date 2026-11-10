@@ -22,7 +22,7 @@ import org.weasis.opencv.data.PlanarImage;
  */
 public final class FilterOp extends AbstractOp {
 
-  public static final String OP_NAME = Messages.getString("FilterOperation.title");
+  public static final String OP_NAME = Messages.common("filter");
 
   /** Parameter key for filter kernel (KernelData, required). */
   public static final String P_KERNEL_DATA = "kernel"; // NON-NLS

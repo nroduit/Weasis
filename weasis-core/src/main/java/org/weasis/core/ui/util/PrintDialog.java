@@ -233,7 +233,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
         });
     settings.add(label("PrintDialog.paper"));
     settings.add(paperComboBox);
-    settings.add(label("PrintDialog.orientation"));
+    settings.add(new JLabel(Messages.common("orientation") + StringUtil.COLON));
     settings.add(orientationComboBox);
 
     settings.add(label("PrintDialog.copies"));

@@ -1460,14 +1460,14 @@ public final class ShortcutManager {
           .append("</th><th>")
           .append(escapeHtml(Messages.getString("ShortcutManager.html.col.shortcut")))
           .append("</th><th>")
-          .append(escapeHtml(Messages.getString("ShortcutManager.html.col.default")))
+          .append(escapeHtml(Messages.common("default")))
           .append("</th></tr>\n");
 
       for (ShortcutEntry entry : group.getValue()) {
         String rowClass = entry.isModified() ? " class=\"modified\"" : "";
         String shortcutText = entry.getShortcutText();
         String defaultText = entry.getDefaultShortcutText();
-        String noneText = Messages.getString("ShortcutManager.html.none");
+        String noneText = Messages.common("none");
         String shortcutHtml =
             shortcutText.isEmpty()
                 ? "<em style=\"color:var(--subtext)\">" + escapeHtml(noneText) + "</em>"

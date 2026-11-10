@@ -12,7 +12,7 @@ package org.weasis.core.ui.model.layer;
 import org.weasis.core.Messages;
 
 public enum LayerItem {
-  ANNOTATIONS("annotations", Messages.getString("AnnotationsLayer.anno"), true), // NON-NLS
+  ANNOTATIONS("annotations", Messages.common("annotations"), true), // NON-NLS
 
   MIN_ANNOTATIONS(
       "minAnnotations", Messages.getString("LayerAnnotation.min_anot"), false), // NON-NLS
@@ -23,13 +23,13 @@ public enum LayerItem {
 
   FUSION_LUT("fusionLut", Messages.getString("AnnotationsLayer.fusion_lut"), true), // NON-NLS
 
-  IMAGE_ORIENTATION("orientation", Messages.getString("AnnotationsLayer.or"), true), // NON-NLS
+  IMAGE_ORIENTATION("orientation", Messages.common("orientation"), true), // NON-NLS
 
-  WINDOW_LEVEL("wl", Messages.getString("AnnotationsLayer.wl"), true), // NON-NLS
+  WINDOW_LEVEL("wl", Messages.common("window_level"), true), // NON-NLS
 
-  ZOOM("zoom", Messages.getString("AnnotationsLayer.zoom"), true), // NON-NLS
+  ZOOM("zoom", Messages.common("zoom"), true), // NON-NLS
 
-  ROTATION("rotation", Messages.getString("AnnotationsLayer.rot"), false), // NON-NLS
+  ROTATION("rotation", Messages.common("rotation"), false), // NON-NLS
 
   FRAME("frame", Messages.getString("AnnotationsLayer.fr"), true), // NON-NLS
 

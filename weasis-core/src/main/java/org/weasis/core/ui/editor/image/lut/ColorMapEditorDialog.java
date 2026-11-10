@@ -385,12 +385,12 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
         new JPanel(new MigLayout("insets 0, wrap 4", "[][grow][][grow]", "[]4lp[]")); // NON-NLS
     panel.setBorder(GuiUtils.getTitledBorder(Messages.getString("ColorMapEditor.quick")));
 
-    panel.add(label("ColorMapEditor.name"));
+    panel.add(new JLabel(Messages.common("name") + StringUtil.COLON));
     panel.add(nameField, "growx"); // NON-NLS
-    panel.add(label("ColorMapEditor.type"));
+    panel.add(new JLabel(Messages.common("type") + StringUtil.COLON));
     panel.add(typeCombo, "growx"); // NON-NLS
 
-    panel.add(label("ColorMapEditor.modalities"));
+    panel.add(new JLabel(Messages.common("modalities") + StringUtil.COLON));
     panel.add(modalityField, "growx"); // NON-NLS
     panel.add(defaultCheck);
     panel.add(favoriteCheck);
@@ -398,7 +398,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
     panel.add(label("ColorMapEditor.domain"));
     JPanel domain = new JPanel(new MigLayout("insets 0", "[][][][]", "[]")); // NON-NLS
     domain.add(kindCombo);
-    domain.add(new JLabel(Messages.getString("ColorMapEditor.unit")));
+    domain.add(new JLabel(Messages.common("unit")));
     domain.add(unitField);
     domain.add(referenceField);
     panel.add(domain, "span 3, growx"); // NON-NLS
@@ -413,7 +413,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
 
     panel.add(label("ColorMapEditor.space"));
     panel.add(spaceCombo, "growx"); // NON-NLS
-    panel.add(label("ColorMapEditor.interpolation"));
+    panel.add(new JLabel(Messages.common("interpolation") + StringUtil.COLON));
     panel.add(interpolationCombo, "growx"); // NON-NLS
 
     panel.add(label("ColorMapEditor.palette"));

@@ -121,7 +121,7 @@ public class TagW {
   public static final TagW SeriesSelected =
       new TagW("SeriesSelected", Messages.getString("TagElement.select"), TagType.BOOLEAN);
   public static final TagW SeriesOpen =
-      new TagW("SeriesOpen", Messages.getString("TagElement.open"), TagType.BOOLEAN);
+      new TagW("SeriesOpen", Messages.common("open"), TagType.BOOLEAN);
   public static final TagW SeriesFocused = new TagW("SeriesFocused", TagType.BOOLEAN);
   public static final TagW ImageWidth =
       new TagW("ImageWidth", Messages.getString("TagElement.img_w"), TagType.INTEGER);

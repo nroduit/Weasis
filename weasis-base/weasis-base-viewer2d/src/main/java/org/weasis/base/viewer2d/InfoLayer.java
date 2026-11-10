@@ -172,7 +172,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
     if (getDisplayPreferences(LayerItem.ZOOM)) {
       FontTools.paintFontOutline(
           g2,
-          Messages.getString("InfoLayer.zoom")
+          Messages.common("zoom")
               + StringUtil.COLON_AND_SPACE
               + DecFormatter.percentTwoDecimal(view2DPane.getViewModel().getViewScale()),
           border,

@@ -88,7 +88,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     setLayout(new MigLayout("ins 0 3 8 3, gap 0 6, wrap 1, fillx", "[grow, fill]")); // NON-NLS
     intervals = new Section(Messages.getString("MeasureAnnotationTool.intervals"), true);
     calipers = new Section(Messages.getString("markers"), false);
-    annotations = new Section(Messages.getString("annotations"), false);
+    annotations = new Section(Messages.common("annotations"), false);
     add(intervals, "growx"); // NON-NLS
     add(calipers, "growx"); // NON-NLS
     add(annotations, "growx"); // NON-NLS

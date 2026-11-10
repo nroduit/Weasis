@@ -19,7 +19,7 @@ import org.weasis.opencv.op.ImageTransformer;
 /** Operation for scaling images with configurable zoom factors and interpolation methods. */
 public class ZoomOp extends AbstractOp {
 
-  public static final String OP_NAME = Messages.getString("ZoomOperation.title");
+  public static final String OP_NAME = Messages.common("zoom");
 
   public static final String P_RATIO_X = "ratio.x";
   public static final String P_RATIO_Y = "ratio.y";

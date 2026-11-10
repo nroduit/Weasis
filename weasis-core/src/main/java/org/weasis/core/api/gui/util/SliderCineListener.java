@@ -119,7 +119,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
   @Override
   public void updateSliderProperties(JSliderW slider) {
     double rate = getCurrentCineRate();
-    StringBuilder buffer = new StringBuilder(Messages.getString("SliderCineListener.img"));
+    StringBuilder buffer = new StringBuilder(Messages.common("image"));
     buffer.append(StringUtil.COLON_AND_SPACE);
     buffer.append(getValueToDisplay());
 

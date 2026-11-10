@@ -16,7 +16,7 @@ public enum ResetTools {
 
   WL(Messages.common("window_level")),
 
-  ZOOM(Messages.getString("ResetTools.zoom")),
+  ZOOM(Messages.common("zoom")),
 
   ROTATION(Messages.common("rotation")),
 

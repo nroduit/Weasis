@@ -62,7 +62,7 @@ public class ViewerFactory implements SeriesViewerFactory {
 
   private static final DefaultAction preferencesAction =
       new DefaultAction(
-          Messages.getString("OpenImageAction.img"),
+          Messages.common("image"),
           ResourceUtil.getIcon(ActionIcon.IMPORT_IMAGE),
           ViewerFactory::getOpenImageAction);
 

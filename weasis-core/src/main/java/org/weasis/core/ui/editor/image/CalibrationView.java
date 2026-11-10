@@ -109,7 +109,7 @@ public class CalibrationView extends JPanel {
   public static void showDialog(LineGraphic line, ViewCanvas<?> view) {
     CalibrationView content = new CalibrationView(line, view, view.isSeriesCalibrationDefault());
     ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view.getJComponent());
-    String apply = Messages.getString("CalibrationView.apply_calibration");
+    String apply = Messages.common("apply");
     String remove = Messages.getString("CalibrationView.remove");
     Object[] options = {apply, remove, UIManager.getString("OptionPane.cancelButtonText")};
     int choice =
