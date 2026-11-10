@@ -520,6 +520,13 @@
       "category": "DICOM"
     },
     {
+      "code": "weasis.dicom.explorer.rejected",
+      "value": "count",
+      "description": "What the DICOM explorer shows of the instances rejected by a rejection note (IOCM), which are never displayed. Possible values: hidden (no trace), count (the series row and the study content panel give the number of rejected images), list (the count, and the rejection notes listed as objects of the study)",
+      "type": "F",
+      "category": "DICOM"
+    },
+    {
       "code": "weasis.dicom.seg.hide.all",
       "value": "false",
       "description": "If true, no segmentation is displayed when loaded; the user must enable them in the Segmentation tool or with the segmentation button in the view",

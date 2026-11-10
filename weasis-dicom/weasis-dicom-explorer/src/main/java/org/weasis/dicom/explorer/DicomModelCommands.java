@@ -933,17 +933,11 @@ final class DicomModelCommands {
   /** The series whose subseries id or Series Instance UID is {@code uid}. */
   /** The object of that SOP Instance UID among the loaded studies. */
   static ObjectItem findObject(DicomModel model, String sopInstanceUID) {
-    for (MediaSeriesGroup patient : StudyContents.patientsOf(model)) {
-      for (MediaSeriesGroup study : StudyContents.studiesOf(model, patient)) {
-        for (ObjectItem item : StudyContents.of(model, study).objects()) {
-          if (sopInstanceUID.equals(item.descriptor().sopInstanceUID())) {
-            return item;
-          }
-        }
-      }
-    }
-    throw CommandFailure.unknownHandle(
-        "Unknown object: " + sopInstanceUID, "dicom:objects"); // NON-NLS
+    return StudyContents.findObject(model, sopInstanceUID)
+        .orElseThrow(
+            () ->
+                CommandFailure.unknownHandle(
+                    "Unknown object: " + sopInstanceUID, "dicom:objects")); // NON-NLS
   }
 
   /** The study of that Study Instance UID among the loaded patients. */

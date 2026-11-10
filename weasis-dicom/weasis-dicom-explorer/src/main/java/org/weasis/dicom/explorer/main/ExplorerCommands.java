@@ -406,18 +406,29 @@ public class ExplorerCommands implements CommandExtension {
       name = "select",
       description =
           "Selects series in the DICOM explorer (and the patient they belong to), as a click "
-              + "would; the next 'dicom:open' without --series opens them. Returns the state.")
+              + "would; the next 'dicom:open' without --series opens them. With --object, focuses "
+              + "a key object, presentation state, segmentation or RT object instead: the series "
+              + "it references are framed and the study content panel shows it. Returns the state.")
   @Since("5.0")
   static class Select extends Verb {
     @Option(
         names = "--series",
         paramLabel = "<series-uid>",
-        required = true,
         description = "Series Instance UID (or series id) from 'dicom:list'; repeatable.")
     List<SeriesUid> series = new ArrayList<>();
 
+    @Option(
+        names = "--object",
+        paramLabel = "<sop-uid>",
+        description = "SOP Instance UID of an object from 'dicom:objects', to focus instead.")
+    @Since("5.0")
+    String object;
+
     @Override
     protected void run() {
+      if (series.isEmpty() == (object == null)) {
+        throw invalid("give --series or --object"); // NON-NLS
+      }
       print(
           GuiExecutor.invokeAndRethrow(
               () ->
@@ -425,6 +436,25 @@ public class ExplorerCommands implements CommandExtension {
                       () -> {
                         DicomExplorer explorer = parent.explorer();
                         DicomModel model = explorer.getDataExplorerModel();
+                        if (object != null) {
+                          ObjectItem item =
+                              StudyContents.findObject(model, object)
+                                  .orElseThrow(
+                                      () ->
+                                          CommandFailure.unknownHandle(
+                                              "Unknown object: " + object, // NON-NLS
+                                              "dicom:objects")); // NON-NLS
+                          MediaSeriesGroup patient =
+                              item.study() == null
+                                  ? null
+                                  : model.getParent(item.study(), DicomModel.patient);
+                          if (patient != null) {
+                            explorer.selectPatient(patient);
+                          }
+                          explorer.getSelectionList().clear();
+                          explorer.focusItem(item);
+                          return stateJson(explorer).build().toString();
+                        }
                         List<DicomSeries> selected = new ArrayList<>();
                         for (SeriesUid uid : series) {
                           MediaSeries<? extends MediaElement> s =

@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer.main;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -28,6 +29,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
@@ -274,7 +276,9 @@ public class SeriesListPane extends JPanel implements Scrollable {
         }
         visible.forEach(s -> list.add(new SeriesRow(s)));
         if (explorer.isObjectsShown()) {
-          contents.objects().forEach(o -> list.add(new ObjectRow(o)));
+          contents
+              .visibleObjects(explorer.isRejectionListed())
+              .forEach(o -> list.add(new ObjectRow(o)));
         }
       }
     }
@@ -630,7 +634,7 @@ public class SeriesListPane extends JPanel implements Scrollable {
     }
   }
 
-  private static String seriesValue(SeriesItem item, int column) {
+  private String seriesValue(SeriesItem item, int column) {
     return switch (column) {
       case 0 -> StringUtil.getEmptyStringIfNull(item.modality());
       case 1 ->
@@ -661,7 +665,7 @@ public class SeriesListPane extends JPanel implements Scrollable {
     };
   }
 
-  private static String flags(SeriesItem item) {
+  private String flags(SeriesItem item) {
     List<String> flags = new ArrayList<>();
     int interest = Interest.of(item.series()).count();
     if (interest > 0) {
@@ -670,6 +674,12 @@ public class SeriesListPane extends JPanel implements Scrollable {
     if (item.downloadState() != DownloadState.COMPLETE) {
       flags.add(item.downloadState().getId());
     }
+    if (explorer.rejectedVisibility() != RejectedVisibility.HIDDEN) {
+      int rejected = item.rejectedImageCount();
+      if (rejected > 0) {
+        flags.add(Messages.format("DicomExplorer.rejected_count", rejected));
+      }
+    }
     String seriesUID = item.seriesUID();
     for (ObjectKind kind : StudyContents.kindsReferencing(seriesUID)) {
       flags.add(kind.getId().toUpperCase());
@@ -677,7 +687,7 @@ public class SeriesListPane extends JPanel implements Scrollable {
     return String.join(" ", flags);
   }
 
-  private static String studyText(MediaSeriesGroup study, StudyContents contents) {
+  private String studyText(MediaSeriesGroup study, StudyContents contents) {
     String date = formatted(study, Tag.StudyDate);
     String description = formatted(study, Tag.StudyDescription);
     StringBuilder buf = new StringBuilder();
@@ -698,11 +708,12 @@ public class SeriesListPane extends JPanel implements Scrollable {
       }
       buf.append(id.isEmpty() ? Messages.common("study") : id);
     }
-    if (contents.hasObjects()) {
+    Map<ObjectKind, Integer> counts = contents.visibleCountByKind(explorer.isRejectionListed());
+    if (!counts.isEmpty()) {
       buf.append("  (")
           .append(
-              contents.countByKind().entrySet().stream()
-                  .map(e -> e.getValue() + " " + e.getKey().getId().toUpperCase())
+              counts.entrySet().stream()
+                  .map(e -> e.getValue() + " " + FacetChipBar.kindLabel(e.getKey()))
                   .collect(Collectors.joining(", ")))
           .append(')');
     }
@@ -727,13 +738,40 @@ public class SeriesListPane extends JPanel implements Scrollable {
     return date == null ? "" : TIME.format(date);
   }
 
+  private boolean isRelated(Row row) {
+    return switch (row) {
+      case SeriesRow s -> explorer.isRelatedSeries(s.item().seriesUID());
+      case ObjectRow o -> explorer.isRelatedObject(o.item().descriptor().sopInstanceUID());
+      case StudyRow _ -> false;
+      case null -> false;
+    };
+  }
+
+  /** The accent blended into the background of the table: a tint, not a selection. */
+  private static Color relatedBackground(JTable table) {
+    Color accent = SeriesPane.relatedColor();
+    Color back = table.getBackground();
+    return new Color(
+        (accent.getRed() + 3 * back.getRed()) / 4,
+        (accent.getGreen() + 3 * back.getGreen()) / 4,
+        (accent.getBlue() + 3 * back.getBlue()) / 4);
+  }
+
   private final class RowRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(
         JTable t, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Row r = row < rows.size() ? rows.get(row) : null;
       boolean group = r instanceof StudyRow;
+      // The renderer keeps the last unselected background it was given: forget the tint of the
+      // previous cell before the default colors are applied
+      setBackground(null);
       super.getTableCellRendererComponent(t, value, isSelected && !group, false, row, column);
+      if (!isSelected && isRelated(r)) {
+        // Reverse highlighting: the series the focused object references, the objects referencing
+        // the selected series
+        setBackground(relatedBackground(t));
+      }
       setFont(group ? FontItem.SMALL_SEMIBOLD.getFont() : FontItem.SMALL.getFont());
       setHorizontalAlignment(column == 1 || column == 3 ? RIGHT : LEFT);
       setIcon(null);

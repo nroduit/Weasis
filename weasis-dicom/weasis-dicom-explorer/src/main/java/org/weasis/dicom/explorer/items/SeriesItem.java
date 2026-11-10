@@ -10,14 +10,18 @@
 package org.weasis.dicom.explorer.items;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesImporter;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.RejectedKOSpecialElement;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.explorer.DicomModel;
 
 /**
  * An image series of a study as the explorer lists it.
@@ -70,6 +74,23 @@ public record SeriesItem(
   public int expectedImageCount() {
     Integer n = TagD.getTagValue(series, Tag.NumberOfSeriesRelatedInstances, Integer.class);
     return n == null ? 0 : n;
+  }
+
+  /**
+   * Instances of this series that a rejection note (IOCM) rejects: taken out of the series, never
+   * displayed, counted here so that the row can say so; 0 when none or when the series has no image
+   * yet.
+   */
+  public int rejectedImageCount() {
+    if (DicomModel.getPatientPseudoUID(series) == null) {
+      return 0;
+    }
+    String uid = seriesUID();
+    Set<String> rejected = new HashSet<>();
+    for (RejectedKOSpecialElement note : DicomModel.getRejectionKoSpecialElements(series)) {
+      rejected.addAll(note.getReferencedSOPInstanceUIDSet(uid));
+    }
+    return rejected.size();
   }
 
   /** True when the loader split the acquisition and this is one of its sub-series. */

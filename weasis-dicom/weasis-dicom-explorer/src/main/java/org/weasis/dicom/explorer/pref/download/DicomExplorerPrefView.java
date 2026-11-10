@@ -40,6 +40,9 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
   /** Whether the compact list shows the non-image objects as rows. */
   public static final String EXPLORER_OBJECTS = "weasis.dicom.explorer.objects"; // NON-NLS
 
+  // What the explorer shows of rejected instances: hidden, count (default) or list (site setting)
+  public static final String REJECTED_VISIBILITY = "weasis.dicom.explorer.rejected"; // NON-NLS
+
   /** Series count above which the list is chosen when the thumbnail column cannot be measured. */
   public static final String LIST_SERIES_THRESHOLD = "weasis.dicom.explorer.list.series"; // NON-NLS
 

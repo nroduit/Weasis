@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.37, protocol 2, application development.
+Command API 2.38, protocol 2, application development.
 
 ## color
 
@@ -519,13 +519,14 @@ Usage: `explorer:reveal [-h] [--json] --series=<series-uid>`
 
 ### explorer:select (since 5.0)
 
-Selects series in the DICOM explorer (and the patient they belong to), as a click would; the next 'dicom:open' without --series opens them. Returns the state.
+Selects series in the DICOM explorer (and the patient they belong to), as a click would; the next 'dicom:open' without --series opens them. With --object, focuses a key object, presentation state, segmentation or RT object instead: the series it references are framed and the study content panel shows it. Returns the state.
 
-Usage: `explorer:select [-h] [--json] --series=<series-uid> [--series=<series-uid>]...`
+Usage: `explorer:select [-h] [--json] [--object=<sop-uid>] [--series=<series-uid>]...`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
+| --object | string |  | SOP Instance UID of an object from 'dicom:objects', to focus instead. (since 5.0) |
 | --series | series-uid | [] | Series Instance UID (or series id) from 'dicom:list'; repeatable. |
 
 ### explorer:state (since 5.0)

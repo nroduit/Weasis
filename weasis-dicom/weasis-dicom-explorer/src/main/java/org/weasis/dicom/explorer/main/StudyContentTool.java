@@ -278,6 +278,12 @@ public class StudyContentTool extends PluginTool {
     attribute(Messages.getString("StudyContentTool.images"), images);
     attribute(Messages.common("date"), dateTime(dicom, Tag.SeriesDate, series.date()));
     attribute(Messages.getString("DicomExplorer.facet_state"), stateLabel(series.downloadState()));
+    if (explorer.rejectedVisibility() != RejectedVisibility.HIDDEN) {
+      int rejected = series.rejectedImageCount();
+      attribute(
+          Messages.getString("DicomExplorer.facet_rejected"),
+          rejected > 0 ? String.valueOf(rejected) : null);
+    }
     Interest interest = Interest.of(dicom);
     if (!interest.isEmpty()) {
       StringBuilder text = new StringBuilder(String.valueOf(interest.count()));
@@ -295,7 +301,11 @@ public class StudyContentTool extends PluginTool {
     }
 
     referencesTitle.setText(Messages.getString("StudyContentTool.referencing"));
-    List<ObjectItem> referencing = contents.objectsReferencing(series.seriesUID());
+    boolean listed = explorer.isRejectionListed();
+    List<ObjectItem> referencing =
+        contents.objectsReferencing(series.seriesUID()).stream()
+            .filter(o -> listed || o.kind() != ObjectKind.REJECTION_NOTE)
+            .toList();
     if (referencing.isEmpty()) {
       references.add(new JLabel(Messages.common("none")));
     }

@@ -54,6 +54,7 @@ class ExplorerCommandsTest {
           "explorer:filter --interest any",
           "explorer:filter --interest ko,graphics",
           "explorer:select --series 1.2.3 --series 1.2.4",
+          "explorer:select --object 1.2.3.4",
           "explorer:reveal --series 1.2.3",
           "explorer:mode",
           "explorer:mode list",

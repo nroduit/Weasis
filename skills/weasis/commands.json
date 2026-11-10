@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.37",
+  "apiVersion": "2.38",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -2189,9 +2189,9 @@
         },
         {
           "name": "select",
-          "description": "Selects series in the DICOM explorer (and the patient they belong to), as a click would; the next 'dicom:open' without --series opens them. Returns the state.",
+          "description": "Selects series in the DICOM explorer (and the patient they belong to), as a click would; the next 'dicom:open' without --series opens them. With --object, focuses a key object, presentation state, segmentation or RT object instead: the series it references are framed and the study content panel shows it. Returns the state.",
           "since": "5.0",
-          "usage": "explorer:select [-h] [--json] --series=<series-uid> [--series=<series-uid>]...",
+          "usage": "explorer:select [-h] [--json] [--object=<sop-uid>] [--series=<series-uid>]...",
           "parameters": [],
           "options": [
             {
@@ -2206,12 +2206,23 @@
             },
             {
               "names": [
+                "--object"
+              ],
+              "label": "<sop-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "SOP Instance UID of an object from 'dicom:objects', to focus instead.",
+              "since": "5.0"
+            },
+            {
+              "names": [
                 "--series"
               ],
               "label": "<series-uid>",
               "type": "series-uid",
               "arity": "1",
-              "required": true,
+              "required": false,
               "default": "[]",
               "description": "Series Instance UID (or series id) from 'dicom:list'; repeatable."
             }

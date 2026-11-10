@@ -16,8 +16,10 @@ import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -27,6 +29,7 @@ import org.weasis.core.api.gui.util.WrapLayout;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.util.FontItem;
+import org.weasis.dicom.codec.ObjectKind;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.items.DownloadSummary;
@@ -52,13 +55,17 @@ public class StudyPane extends JPanel {
   private final TitledBorder titleBorder;
   private final ComponentResizeHandler resizeHandler;
   private String hint;
-  // Shown while series of the study are not downloaded: "n of N series downloaded", Download all
+  // Header under the title: one chip per kind of object with its count, then, while series of the
+  // study are not downloaded, "n of N series downloaded" and Download all
   private final JPanel downloadHeader =
-      new JPanel(new MigLayout("insets 0 3 0 3, fillx", "[grow][]"));
+      new JPanel(new MigLayout("insets 0 3 0 3, fillx, gapx 4", "[][grow][]"));
+  private final JPanel chips = new JPanel(new MigLayout("insets 0, gapx 3"));
   private final JLabel downloadLabel = new JLabel();
   private final JButton downloadAll =
       new JButton(Messages.getString("StudyContentTool.download_all"));
   private Runnable downloadAction;
+  private Consumer<ObjectKind> objectKindAction;
+  private Map<ObjectKind, Integer> shownCounts = Map.of();
 
   /**
    * Creates a new StudyPane for the specified DICOM study.
@@ -97,6 +104,9 @@ public class StudyPane extends JPanel {
             action.run();
           }
         });
+    chips.setOpaque(false);
+    downloadLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+    downloadHeader.add(chips);
     downloadHeader.add(downloadLabel, "growx");
     downloadHeader.add(downloadAll);
     downloadHeader.setVisible(false);
@@ -105,32 +115,72 @@ public class StudyPane extends JPanel {
     addComponentListener(resizeHandler);
   }
 
+  /** What a click on an object chip does: filter the series referenced by that kind of object. */
+  public void setObjectKindAction(Consumer<ObjectKind> action) {
+    this.objectKindAction = action;
+  }
+
   /**
-   * Shows how many series of the study are downloaded and offers to download the rest; the line
-   * disappears once every series is here. Called when a transfer starts, stops or completes.
+   * Refreshes the header: one chip per kind of object the study holds with its count, and, while
+   * series are not all downloaded, how many are and a button for the rest. Hidden when the study
+   * has neither. Called when the model changes or a transfer starts, stops or completes.
+   *
+   * @param rejectionsListed whether the rejection notes count as objects (site setting)
    */
-  public void refreshDownload(DicomModel model) {
+  public void refreshHeader(DicomModel model, boolean rejectionsListed) {
     StudyContents contents = StudyContents.of(model, dicomStudy);
+    Map<ObjectKind, Integer> counts = contents.visibleCountByKind(rejectionsListed);
+    if (!counts.equals(shownCounts)) {
+      shownCounts = counts;
+      chips.removeAll();
+      counts.forEach((kind, count) -> chips.add(chip(kind, count)));
+    }
     DownloadSummary summary = DownloadSummary.of(contents);
     boolean partial = !summary.isComplete();
+    downloadLabel.setVisible(partial);
+    downloadAll.setVisible(partial && summary.hasPending());
     if (partial) {
       downloadLabel.setText(
           Messages.format("StudyContentTool.downloaded", summary.complete(), summary.total()));
-      downloadAll.setVisible(summary.hasPending());
       downloadAction = () -> ItemActions.downloadAll(StudyContents.of(model, dicomStudy));
     } else {
       downloadAction = null;
     }
-    if (downloadHeader.isVisible() != partial) {
-      downloadHeader.setVisible(partial);
-      revalidate();
+    boolean shown = partial || !counts.isEmpty();
+    if (downloadHeader.isVisible() != shown) {
+      downloadHeader.setVisible(shown);
     }
+    downloadHeader.revalidate();
     downloadHeader.repaint();
+  }
+
+  private JButton chip(ObjectKind kind, int count) {
+    String label = FacetChipBar.kindLabel(kind);
+    JButton chip = new JButton(count + " " + label);
+    chip.setFont(FontItem.MINI.getFont());
+    chip.setFocusable(false);
+    chip.putClientProperty(
+        FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_ROUND_RECT);
+    chip.putClientProperty(FlatClientProperties.STYLE, "margin: 0,5,0,5"); // NON-NLS
+    chip.setToolTipText(Messages.format("DicomExplorer.chip_kind", label));
+    chip.addActionListener(
+        _ -> {
+          Consumer<ObjectKind> action = objectKindAction;
+          if (action != null) {
+            action.accept(kind);
+          }
+        });
+    return chip;
+  }
+
+  /** The kinds of objects the header shows, for tests and the agent. */
+  public Map<ObjectKind, Integer> getObjectCounts() {
+    return shownCounts;
   }
 
   /** The download line of the study header, for tests and the agent: null while hidden. */
   public String getDownloadText() {
-    return downloadHeader.isVisible() ? downloadLabel.getText() : null;
+    return downloadLabel.isVisible() ? downloadLabel.getText() : null;
   }
 
   /**

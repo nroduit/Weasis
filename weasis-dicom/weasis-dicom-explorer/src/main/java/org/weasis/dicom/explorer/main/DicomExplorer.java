@@ -23,7 +23,10 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -59,6 +62,7 @@ import org.weasis.core.ui.util.SearchableComboBox;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.*;
+import org.weasis.dicom.codec.ObjectKind;
 import org.weasis.dicom.explorer.*;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.Messages;
@@ -72,6 +76,8 @@ import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.imp.RetrieveTool;
 import org.weasis.dicom.explorer.items.ExplorerItem;
 import org.weasis.dicom.explorer.items.FacetCounts;
+import org.weasis.dicom.explorer.items.ObjectItem;
+import org.weasis.dicom.explorer.items.StudyContents;
 import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 
 public class DicomExplorer extends PluginTool
@@ -134,6 +140,10 @@ public class DicomExplorer extends PluginTool
   // settles
   private final javax.swing.Timer downloadRefresh =
       new javax.swing.Timer(200, _ -> refreshDownloadHeaders());
+  // Reverse highlighting: the series the focused object references, the objects referencing the
+  // selected series (Series Instance UIDs and SOP Instance UIDs)
+  private volatile Set<String> relatedSeries = Set.of();
+  private volatile Set<String> relatedObjects = Set.of();
   private JPanel panelMain;
 
   private final ArrayListComboBoxModel<Object> modelPatient;
@@ -184,6 +194,7 @@ public class DicomExplorer extends PluginTool
     this.loadingPanel = new LoadingPanel();
     this.remoteNotice = new RemoteChangeNotice();
     this.selectionList = new SeriesSelectionModel(this);
+    this.selectionList.addSelectionChangeListener(_ -> relateToSelection());
 
     // Initialize combo box models
     this.modelPatient = new ArrayListComboBoxModel<>(DicomSorter.PATIENT_COMPARATOR);
@@ -548,14 +559,93 @@ public class DicomExplorer extends PluginTool
     downloadRefresh.restart();
   }
 
-  /** Updates the download line of every study pane of the selected patient. */
+  /** Updates the header (object chips, download line) of every study pane of the patient. */
   private void refreshDownloadHeaders() {
     MediaSeriesGroup patient = getSelectedPatient();
     if (patient == null) {
       return;
     }
+    boolean listed = isRejectionListed();
     for (StudyPane studyPane : paneManager.getStudyList(patient)) {
-      studyPane.refreshDownload(model);
+      studyPane.refreshHeader(model, listed);
+    }
+  }
+
+  /** What the explorer shows of the rejected instances (site setting, {@code count} by default). */
+  public RejectedVisibility rejectedVisibility() {
+    return RejectedVisibility.fromId(
+        GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getProperty(
+                DicomExplorerPrefView.REJECTED_VISIBILITY, RejectedVisibility.COUNT.getId()));
+  }
+
+  /** Whether the rejection notes are listed as objects of their study. */
+  public boolean isRejectionListed() {
+    return rejectedVisibility() == RejectedVisibility.LIST;
+  }
+
+  /** Keeps only the series referenced by this kind of object (a click on a study header chip). */
+  public void filterObjectKind(ObjectKind kind) {
+    if (kind != null) {
+      getSeriesFilter().setObjectKinds(List.of(kind));
+      refreshFilter();
+    }
+  }
+
+  // ========== Reverse highlighting ==========
+
+  /**
+   * The series the focused object references: framed in the thumbnails, tinted in the list. Set by
+   * {@link #focusItem} for an object, cleared by the next series selection.
+   */
+  public boolean isRelatedSeries(String seriesInstanceUID) {
+    return seriesInstanceUID != null && relatedSeries.contains(seriesInstanceUID);
+  }
+
+  /** The objects referencing a selected series: tinted in the list. */
+  public boolean isRelatedObject(String sopInstanceUID) {
+    return sopInstanceUID != null && relatedObjects.contains(sopInstanceUID);
+  }
+
+  private void relateToSelection() {
+    Set<String> objects = new HashSet<>();
+    Map<MediaSeriesGroup, StudyContents> contents = new HashMap<>();
+    for (DicomSeries series : new ArrayList<>(selectionList)) {
+      String uid = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+      MediaSeriesGroup study = model.getParent(series, DicomModel.study);
+      if (uid == null || study == null) {
+        continue;
+      }
+      StudyContents studyContents =
+          contents.computeIfAbsent(study, s -> StudyContents.of(model, s));
+      for (ObjectItem object : studyContents.objectsReferencing(uid)) {
+        String sop = object.descriptor().sopInstanceUID();
+        if (sop != null) {
+          objects.add(sop);
+        }
+      }
+    }
+    relatedSeries = Set.of();
+    relatedObjects = objects;
+    applyRelated();
+  }
+
+  private void applyRelated() {
+    if (paneManager != null) {
+      MediaSeriesGroup patient = getSelectedPatient();
+      if (patient != null) {
+        for (StudyPane studyPane : paneManager.getStudyList(patient)) {
+          for (SeriesPane seriesPane : studyPane.getSeriesPaneList()) {
+            String uid =
+                TagD.getTagValue(seriesPane.getDicomSeries(), Tag.SeriesInstanceUID, String.class);
+            seriesPane.setRelated(isRelatedSeries(uid));
+          }
+        }
+      }
+    }
+    if (listPane != null) {
+      listPane.repaint();
     }
   }
 
@@ -1842,6 +1932,11 @@ public class DicomExplorer extends PluginTool
   /** Tells the detail tools which item the user focused, an object of the list in particular. */
   public void focusItem(ExplorerItem item) {
     if (item != null) {
+      if (item instanceof ObjectItem object) {
+        relatedSeries = Set.copyOf(object.descriptor().referencedSeriesUIDs());
+        relatedObjects = Set.of();
+        applyRelated();
+      }
       itemFocusListeners.forEach(listener -> listener.accept(item));
     }
   }

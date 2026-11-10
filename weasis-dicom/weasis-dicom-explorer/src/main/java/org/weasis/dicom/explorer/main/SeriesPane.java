@@ -47,11 +47,15 @@ public class SeriesPane extends JPanel {
   private static final String LAYOUT_CONSTRAINTS = "wrap 1, insets 0, gapy " + LABEL_GAP + "lp";
   private static final String COLUMN_CONSTRAINTS = "[center]";
 
+  // Frame drawn around the pane while the focused object references this series
+  private static final int RELATED_STROKE = 2;
+
   private final DicomSeries dicomSeries;
   private final JLabel label;
   private final DicomModel model;
   private SeriesThumbnail thumbnail;
   private int currentThumbnailSize;
+  private boolean related;
 
   public SeriesPane(DicomSeries dicomSeries, DicomModel model) {
     this.dicomSeries = Objects.requireNonNull(dicomSeries);
@@ -66,6 +70,34 @@ public class SeriesPane extends JPanel {
     setLayout(new MigLayout(LAYOUT_CONSTRAINTS, COLUMN_CONSTRAINTS));
     setBackground(FlatUIUtils.getUIColor(SeriesSelectionModel.BACKGROUND, Color.LIGHT_GRAY));
     setFocusable(false);
+    setBorder(GuiUtils.getEmptyBorder(RELATED_STROKE));
+  }
+
+  /**
+   * Marks the series as referenced by the object the explorer focuses (reverse highlighting): an
+   * accent frame around the pane, the same thickness as the empty border it replaces so that the
+   * layout does not move.
+   */
+  public void setRelated(boolean related) {
+    if (this.related != related) {
+      this.related = related;
+      setBorder(
+          related
+              ? BorderFactory.createLineBorder(
+                  relatedColor(), GuiUtils.getScaleLength(RELATED_STROKE))
+              : GuiUtils.getEmptyBorder(RELATED_STROKE));
+      repaint();
+    }
+  }
+
+  public boolean isRelated() {
+    return related;
+  }
+
+  /** The accent of the look and feel, else the blue of the action icons. */
+  static Color relatedColor() {
+    Color accent = UIManager.getColor("Component.accentColor"); // NON-NLS
+    return accent == null ? GuiUtils.IconColor.ACTIONS_BLUE.getColor() : accent;
   }
 
   private void initializeComponents() {

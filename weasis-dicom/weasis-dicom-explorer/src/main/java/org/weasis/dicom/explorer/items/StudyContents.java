@@ -17,6 +17,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -85,6 +86,26 @@ public final class StudyContents {
     }
     objects.sort(StudyContents::byDateThenLabel);
     return new StudyContents(study, studyUID, series, objects);
+  }
+
+  /**
+   * The object of that SOP Instance UID among the loaded studies, empty when none: what {@code
+   * dicom:open --object} and {@code explorer:select --object} resolve.
+   */
+  public static Optional<ObjectItem> findObject(DicomModel model, String sopInstanceUID) {
+    if (!StringUtil.hasText(sopInstanceUID)) {
+      return Optional.empty();
+    }
+    for (MediaSeriesGroup patient : patientsOf(model)) {
+      for (MediaSeriesGroup study : studiesOf(model, patient)) {
+        for (ObjectItem item : of(model, study).objects()) {
+          if (sopInstanceUID.equals(item.descriptor().sopInstanceUID())) {
+            return Optional.of(item);
+          }
+        }
+      }
+    }
+    return Optional.empty();
   }
 
   /** The studies of a patient in the order the explorer shows them. */
@@ -172,6 +193,25 @@ public final class StudyContents {
   }
 
   /** How many objects of each kind the study holds; kinds without objects are absent. */
+  /**
+   * The objects as the explorer shows them: every object, or every object but the rejection notes
+   * when the site does not list them ({@code weasis.dicom.explorer.rejected}).
+   */
+  public List<ObjectItem> visibleObjects(boolean rejectionsListed) {
+    return rejectionsListed
+        ? objects
+        : objects.stream().filter(o -> o.kind() != ObjectKind.REJECTION_NOTE).toList();
+  }
+
+  /** {@link #countByKind()} over {@link #visibleObjects(boolean)}. */
+  public Map<ObjectKind, Integer> visibleCountByKind(boolean rejectionsListed) {
+    Map<ObjectKind, Integer> counts = new EnumMap<>(ObjectKind.class);
+    for (ObjectItem item : visibleObjects(rejectionsListed)) {
+      counts.merge(item.kind(), 1, Integer::sum);
+    }
+    return counts;
+  }
+
   public Map<ObjectKind, Integer> countByKind() {
     Map<ObjectKind, Integer> counts = new EnumMap<>(ObjectKind.class);
     for (ObjectItem item : objects) {

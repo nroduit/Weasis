@@ -14,6 +14,7 @@ selected | the view, pane or series that receives a command when no handle is gi
 patient | the DICOM patient as loaded in the explorer model | exam
 study | the DICOM study as loaded in the explorer model
 series | the DICOM series as loaded in the explorer model
+object | a non-image DICOM object of a study (key object selection, presentation state, segmentation, RT object), listed by dicom:objects and named by its SOP Instance UID
 image | one displayable item of a series: an instance, or one frame of a multiframe instance
 frame | one frame of a multiframe DICOM instance
 load | bring data into the explorer model, from files, a URL or an archive
