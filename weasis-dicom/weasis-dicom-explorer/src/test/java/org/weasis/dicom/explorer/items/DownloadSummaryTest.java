@@ -16,9 +16,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import javax.swing.JProgressBar;
+import org.dcm4che3.data.Tag;
 import org.junit.jupiter.api.Test;
 import org.weasis.core.api.media.data.SeriesImporter;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.TagD;
 
 class DownloadSummaryTest {
 
@@ -95,5 +97,31 @@ class DownloadSummaryTest {
         () -> assertFalse(running.resumed),
         () -> assertTrue(ItemActions.stop(runningItem)),
         () -> assertFalse(ItemActions.stop(pendingItem), "nothing was running"));
+  }
+
+  @Test
+  void openingAPendingSeriesStartsItsTransferOnly() {
+    FakeImporter pending = new FakeImporter(true);
+    FakeImporter running = new FakeImporter(false);
+    SeriesItem pendingItem = series("2", pending);
+    assertAll(
+        () -> assertTrue(SeriesImporter.startPending(pendingItem.series())),
+        () -> assertTrue(pending.resumed),
+        () -> assertFalse(SeriesImporter.startPending(series("3", running).series())),
+        () -> assertFalse(running.resumed),
+        () -> assertFalse(SeriesImporter.startPending(series("1", null).series()), "local"),
+        () -> assertFalse(SeriesImporter.startPending(null)));
+  }
+
+  @Test
+  void theExpectedImageCountComesFromTheTransferAnnouncement() {
+    SeriesItem unknown = series("1", new FakeImporter(true));
+    DicomSeries announced = new DicomSeries("2");
+    announced.setSeriesLoader(new FakeImporter(true));
+    announced.setTag(TagD.get(Tag.NumberOfSeriesRelatedInstances), 120);
+    assertAll(
+        () -> assertEquals(0, unknown.expectedImageCount()),
+        () -> assertEquals(120, SeriesItem.of(announced, null).expectedImageCount()),
+        () -> assertEquals(0, SeriesItem.of(announced, null).imageCount()));
   }
 }

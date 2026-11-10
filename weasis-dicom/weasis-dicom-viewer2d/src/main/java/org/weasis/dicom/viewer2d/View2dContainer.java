@@ -515,8 +515,13 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
 
           if (SeriesEvent.Action.ADD_IMAGE.equals(action2)) {
             if (source instanceof DicomSeries series) {
-              for (ViewCanvas<DicomImageElement> v : cellManager) {
+              for (ViewCanvas<DicomImageElement> v : getAllCanvasesIncludingPanes()) {
                 if (v.getSeries() == series) {
+                  if (v.getImage() == null && series.size(null) > 0) {
+                    // The view opened on the series before its download brought an image: a
+                    // series downloaded on demand shows its first image as it lands
+                    v.setSeries(series, null);
+                  }
                   ViewState.repositionPending(v, false); // a restore waiting for its slice
                 }
               }
@@ -550,7 +555,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             }
           } else if (SeriesEvent.Action.UPDATE_IMAGE.equals(action2)) {
             if (source instanceof DicomImageElement dcm) {
-              for (ViewCanvas<DicomImageElement> v : cellManager) {
+              for (ViewCanvas<DicomImageElement> v : getAllCanvasesIncludingPanes()) {
                 if (dcm == v.getImage()) {
                   // Force to repaint the same image
                   if (v.getImageLayer().getDisplayImage() == null) {
@@ -567,7 +572,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             }
           } else if (SeriesEvent.Action.PRELOADING.equals(action2)
               && source instanceof DicomSeries dcm) {
-            for (ViewCanvas<DicomImageElement> v : cellManager) {
+            for (ViewCanvas<DicomImageElement> v : getAllCanvasesIncludingPanes()) {
               if (dcm == v.getSeries()) {
                 v.getJComponent().repaint(v.getInfoLayer().getPreloadingProgressBound());
               }
@@ -585,7 +590,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           }
         }
       } else if (ObservableEvent.BasicAction.LOADING_STOP.equals(action)) {
-        for (ViewCanvas<DicomImageElement> v : cellManager) {
+        for (ViewCanvas<DicomImageElement> v : getAllCanvasesIncludingPanes()) {
           ViewState.repositionPending(v, true);
         }
       } else if (ObservableEvent.BasicAction.ADD.equals(action)
@@ -605,7 +610,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         }
       } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
         if (newVal instanceof Series series) {
-          for (ViewCanvas<DicomImageElement> v : cellManager) {
+          for (ViewCanvas<DicomImageElement> v : getAllCanvasesIncludingPanes()) {
             MediaSeries<DicomImageElement> s = v.getSeries();
             if (series.equals(s)) {
               /*
@@ -637,7 +642,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         }
 
         if (specialElement instanceof PRSpecialElement prSpecialElement) {
-          for (ViewCanvas<DicomImageElement> view : cellManager) {
+          for (ViewCanvas<DicomImageElement> view : getAllCanvasesIncludingPanes()) {
             if (view instanceof View2d view2d
                 && PresentationStateReader.isImageApplicable(prSpecialElement, view.getImage())) {
               view2d.updatePR();
@@ -645,7 +650,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           }
         } else if (specialElement instanceof SpecialElementRegion region) {
           ViewCanvas<DicomImageElement> pane = getSelectedViewCanvas();
-          for (ViewCanvas<DicomImageElement> view : cellManager) {
+          for (ViewCanvas<DicomImageElement> view : getAllCanvasesIncludingPanes()) {
             if (view instanceof View2d view2d) {
               // Also refresh views with a pending build: when it ends without producing a volume
               // the region may no longer match the image, and the loading message would stay.
@@ -964,7 +969,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
 
   /** Rebuilds the SR overlays of every view of this container. */
   private void refreshOverlays() {
-    for (ViewCanvas<DicomImageElement> view : cellManager) {
+    for (ViewCanvas<DicomImageElement> view : getAllCanvasesIncludingPanes()) {
       if (view instanceof View2d view2d) {
         view2d.updateOverlays();
       }

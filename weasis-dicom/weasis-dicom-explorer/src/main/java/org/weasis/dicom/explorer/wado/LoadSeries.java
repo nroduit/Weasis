@@ -212,6 +212,15 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 (SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList))
             .orElseGet(SeriesInstanceList::new);
     this.writeInCache = writeInCache;
+    // The explorer shows what the transfer brings before the first instance lands: a DICOMweb query
+    // sets the series-level count, a manifest carries the instance list and no such count
+    if (!seriesInstanceList.isEmpty()
+        && TagD.getTagValue(dicomSeries, Tag.NumberOfSeriesRelatedInstances, Integer.class)
+            == null) {
+      dicomSeries.setTag(
+          TagD.get(Tag.NumberOfSeriesRelatedInstances),
+          seriesInstanceList.uniqueSopInstanceCount());
+    }
     this.progressBar = externalProgress ? progressBar : getBar();
     if (!externalProgress && !writeInCache) {
       this.progressBar.setVisible(false);
@@ -311,6 +320,14 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     if (isStopped()) {
       this.getPriority().setPriority(DownloadPriority.COUNTER.getAndDecrement());
       cancelAndReplace(this, true);
+    }
+  }
+
+  @Override
+  public void resumeForDisplay() {
+    if (isStopped()) {
+      this.getPriority().setPriority(DownloadPriority.COUNTER.getAndDecrement());
+      cancelAndReplace(this, true, false);
     }
   }
 
@@ -606,10 +623,23 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   }
 
   public LoadSeries cancelAndReplace(LoadSeries s, boolean restartAllDownload) {
+    return cancelAndReplace(s, restartAllDownload, true);
+  }
+
+  /**
+   * Replaces a transfer by a fresh one for the same series.
+   *
+   * @param keepOpening whether the new transfer keeps the opening rule of its load; false for a
+   *     series a view already shows, so that its images open or hang nothing
+   */
+  public LoadSeries cancelAndReplace(
+      LoadSeries s, boolean restartAllDownload, boolean keepOpening) {
     LoadSeries taskResume = s.createResumeTask();
     s.cancel();
     taskResume.setPriority(s.getPriority());
-    taskResume.setPOpeningStrategy(s.getOpeningStrategy());
+    if (keepOpening) {
+      taskResume.setPOpeningStrategy(s.getOpeningStrategy());
+    }
     Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
     if (thumbnail != null) {
       ThumbnailManager.removeThumbnailMouseAndKeyAdapter(thumbnail);

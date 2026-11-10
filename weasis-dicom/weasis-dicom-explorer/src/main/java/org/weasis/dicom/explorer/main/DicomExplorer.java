@@ -130,6 +130,10 @@ public class DicomExplorer extends PluginTool
   private StudyStripPane stripPane;
   private final JButton displayModeButton = new JButton();
   private final javax.swing.Timer listRefresh = new javax.swing.Timer(150, _ -> refreshList());
+  // The "n of N series downloaded" headers of the study panes, once a burst of transfer events
+  // settles
+  private final javax.swing.Timer downloadRefresh =
+      new javax.swing.Timer(200, _ -> refreshDownloadHeaders());
   private JPanel panelMain;
 
   private final ArrayListComboBoxModel<Object> modelPatient;
@@ -541,6 +545,18 @@ public class DicomExplorer extends PluginTool
       listRefresh.restart();
     }
     modeCheck.restart();
+    downloadRefresh.restart();
+  }
+
+  /** Updates the download line of every study pane of the selected patient. */
+  private void refreshDownloadHeaders() {
+    MediaSeriesGroup patient = getSelectedPatient();
+    if (patient == null) {
+      return;
+    }
+    for (StudyPane studyPane : paneManager.getStudyList(patient)) {
+      studyPane.refreshDownload(model);
+    }
   }
 
   private static ExplorerMode readModePreference() {
@@ -555,6 +571,7 @@ public class DicomExplorer extends PluginTool
   private void setupModeButton() {
     listRefresh.setRepeats(false);
     modeCheck.setRepeats(false);
+    downloadRefresh.setRepeats(false);
     displayModeButton.setIcon(ResourceUtil.getIcon(ResourceUtil.ActionIcon.LAYOUT));
     displayModeButton.setFocusable(false);
     displayModeButton.putClientProperty(
@@ -1255,6 +1272,7 @@ public class DicomExplorer extends PluginTool
     loadFilterForPatient(patient);
     applyAutomaticMode();
     applyFilterLayout();
+    downloadRefresh.restart();
     koOpen.setVisible(
         HiddenSeriesManager.hasHiddenSpecialElements(KOSpecialElement.class, patient));
     // Send message for selecting related plug-ins window
@@ -1747,6 +1765,8 @@ public class DicomExplorer extends PluginTool
     if (event.getNewValue() instanceof String message) {
       loadingPanel.setGlobalMessage(message);
     }
+    // A stopped transfer announces itself here: the download lines follow
+    scheduleListRefresh();
   }
 
   private void showLoadingPanel(ObservableEvent event) {
@@ -1758,6 +1778,7 @@ public class DicomExplorer extends PluginTool
             repaint();
           });
     }
+    scheduleListRefresh();
   }
 
   private void hideLoadingPanel(ObservableEvent event) {
@@ -1779,6 +1800,7 @@ public class DicomExplorer extends PluginTool
         StudyHints.refresh(studyPane, getDataExplorerModel());
       }
     }
+    scheduleListRefresh();
   }
 
   // ========== Utility Methods ==========
@@ -1972,6 +1994,7 @@ public class DicomExplorer extends PluginTool
     IdentityMask.removeChangeListener(maskListener);
     listRefresh.stop();
     modeCheck.stop();
+    downloadRefresh.stop();
     if (listPane != null) {
       listPane.dispose();
     }

@@ -268,9 +268,14 @@ public class StudyContentTool extends PluginTool {
                 ? series.seriesNumber() + "." + series.splitNumber()
                 : String.valueOf(series.seriesNumber()));
     attribute(Messages.common("description"), formatted(dicom, Tag.SeriesDescription));
-    attribute(
-        Messages.getString("StudyContentTool.images"),
-        series.imageCount() > 0 ? String.valueOf(series.imageCount()) : null);
+    String images = series.imageCount() > 0 ? String.valueOf(series.imageCount()) : null;
+    if (series.downloadState() != DownloadState.COMPLETE
+        && series.expectedImageCount() > series.imageCount()) {
+      images =
+          Messages.format(
+              "StudyContentTool.images_of", series.imageCount(), series.expectedImageCount());
+    }
+    attribute(Messages.getString("StudyContentTool.images"), images);
     attribute(Messages.common("date"), dateTime(dicom, Tag.SeriesDate, series.date()));
     attribute(Messages.getString("DicomExplorer.facet_state"), stateLabel(series.downloadState()));
     Interest interest = Interest.of(dicom);

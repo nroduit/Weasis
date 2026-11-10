@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer.main;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Insets;
@@ -25,6 +26,12 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WrapLayout;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesThumbnail;
+import org.weasis.core.api.util.FontItem;
+import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.items.DownloadSummary;
+import org.weasis.dicom.explorer.items.ItemActions;
+import org.weasis.dicom.explorer.items.StudyContents;
 
 /**
  * A panel component that displays a DICOM study and manages its associated series panes. This
@@ -45,6 +52,13 @@ public class StudyPane extends JPanel {
   private final TitledBorder titleBorder;
   private final ComponentResizeHandler resizeHandler;
   private String hint;
+  // Shown while series of the study are not downloaded: "n of N series downloaded", Download all
+  private final JPanel downloadHeader =
+      new JPanel(new MigLayout("insets 0 3 0 3, fillx", "[grow][]"));
+  private final JLabel downloadLabel = new JLabel();
+  private final JButton downloadAll =
+      new JButton(Messages.getString("StudyContentTool.download_all"));
+  private Runnable downloadAction;
 
   /**
    * Creates a new StudyPane for the specified DICOM study.
@@ -71,8 +85,52 @@ public class StudyPane extends JPanel {
         BorderFactory.createCompoundBorder(
             GuiUtils.getEmptyBorder(0, BORDER_INSET, 0, BORDER_INSET), titleBorder));
     setFocusable(false);
+    downloadLabel.setFont(FontItem.MINI.getFont());
+    downloadAll.setFont(FontItem.MINI.getFont());
+    downloadAll.putClientProperty(
+        FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+    downloadAll.setFocusable(false);
+    downloadAll.addActionListener(
+        _ -> {
+          Runnable action = downloadAction;
+          if (action != null) {
+            action.run();
+          }
+        });
+    downloadHeader.add(downloadLabel, "growx");
+    downloadHeader.add(downloadAll);
+    downloadHeader.setVisible(false);
+    add(downloadHeader, "hidemode 3, growx");
     add(subPanel, SUB_PANEL_CONSTRAINTS);
     addComponentListener(resizeHandler);
+  }
+
+  /**
+   * Shows how many series of the study are downloaded and offers to download the rest; the line
+   * disappears once every series is here. Called when a transfer starts, stops or completes.
+   */
+  public void refreshDownload(DicomModel model) {
+    StudyContents contents = StudyContents.of(model, dicomStudy);
+    DownloadSummary summary = DownloadSummary.of(contents);
+    boolean partial = !summary.isComplete();
+    if (partial) {
+      downloadLabel.setText(
+          Messages.format("StudyContentTool.downloaded", summary.complete(), summary.total()));
+      downloadAll.setVisible(summary.hasPending());
+      downloadAction = () -> ItemActions.downloadAll(StudyContents.of(model, dicomStudy));
+    } else {
+      downloadAction = null;
+    }
+    if (downloadHeader.isVisible() != partial) {
+      downloadHeader.setVisible(partial);
+      revalidate();
+    }
+    downloadHeader.repaint();
+  }
+
+  /** The download line of the study header, for tests and the agent: null while hidden. */
+  public String getDownloadText() {
+    return downloadHeader.isVisible() ? downloadLabel.getText() : null;
   }
 
   /**

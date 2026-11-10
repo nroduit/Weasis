@@ -67,6 +67,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.items.DownloadState;
+import org.weasis.dicom.explorer.items.DownloadSummary;
 import org.weasis.dicom.explorer.items.Interest;
 import org.weasis.dicom.explorer.items.ObjectItem;
 import org.weasis.dicom.explorer.items.SeriesItem;
@@ -704,6 +705,12 @@ public class SeriesListPane extends JPanel implements Scrollable {
                   .map(e -> e.getValue() + " " + e.getKey().getId().toUpperCase())
                   .collect(Collectors.joining(", ")))
           .append(')');
+    }
+    DownloadSummary summary = DownloadSummary.of(contents);
+    if (!summary.isComplete()) {
+      buf.append("  \u2022  ")
+          .append(
+              Messages.format("StudyContentTool.downloaded", summary.complete(), summary.total()));
     }
     return buf.toString();
   }

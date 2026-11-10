@@ -470,13 +470,21 @@ public class SeriesThumbnail extends Thumbnail
       }
 
       int number = series.size(null);
-      if (number > 0) {
+      String count = number > 0 ? String.valueOf(number) : null;
+      Color countColor = IconColor.ACTIONS_BLUE.getColor();
+      if (series.getSeriesLoader() != null) {
+        // A transfer is attached: what is here over what it brings, grey while nothing is here
+        int expected = expectedInstances();
+        if (expected > number) {
+          count = number + "/" + expected;
+          if (number == 0) {
+            countColor = IconColor.ACTIONS_GREY.getColor();
+          }
+        }
+      }
+      if (count != null) {
         FontTools.paintColorFontOutline(
-            g2d,
-            String.valueOf(number),
-            x + (float) inset,
-            y + height - (float) (inset + descent),
-            IconColor.ACTIONS_BLUE.getColor());
+            g2d, count, x + (float) inset, y + height - (float) (inset + descent), countColor);
       }
 
       // To avoid concurrency issue
@@ -500,6 +508,12 @@ public class SeriesThumbnail extends Thumbnail
       }
       GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
     }
+  }
+
+  /** Instances the attached transfer announces (series-level count or manifest), 0 if unknown. */
+  private int expectedInstances() {
+    TagW tag = TagW.get("NumberOfSeriesRelatedInstances"); // NON-NLS
+    return tag != null && series.getTagValue(tag) instanceof Integer n ? n : 0;
   }
 
   private void drawProgression(

@@ -22,4 +22,30 @@ public interface SeriesImporter {
   void resume();
 
   void setPriority();
+
+  /**
+   * Resumes a stopped transfer for a view that already shows the series: the images land in that
+   * view and nothing else opens or hangs a viewer for them, unlike {@link #resume()}, which keeps
+   * the opening rule of the load the series came from.
+   */
+  default void resumeForDisplay() {
+    resume();
+  }
+
+  /**
+   * Starts the transfer of a series whose download is attached but not running, as opening the
+   * series demands: the resumed transfer goes to the front of the queue. A series with no transfer
+   * (local files, finished download) or one already downloading is left alone.
+   *
+   * @return true when a download was started
+   */
+  static boolean startPending(MediaSeries<?> series) {
+    if (series != null
+        && series.getSeriesLoader() instanceof SeriesImporter loader
+        && loader.isStopped()) {
+      loader.resumeForDisplay();
+      return true;
+    }
+    return false;
+  }
 }

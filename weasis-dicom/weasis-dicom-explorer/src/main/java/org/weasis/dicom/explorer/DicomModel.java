@@ -282,7 +282,9 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
       studyMap.put(st, getChildren(st));
     }
     firePropertyChange(new ObservableEvent(BasicAction.REMOVE, DicomModel.this, null, pt));
-    openingStrategy.removePatient(pt);
+    if (openingStrategy != null) {
+      openingStrategy.removePatient(pt);
+    }
 
     for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
       MediaSeriesGroup st = stEntry.getKey();

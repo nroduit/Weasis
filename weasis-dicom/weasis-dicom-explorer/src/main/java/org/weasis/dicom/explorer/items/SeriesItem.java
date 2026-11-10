@@ -63,6 +63,15 @@ public record SeriesItem(
     return loader.isStopped() ? DownloadState.PENDING : DownloadState.DOWNLOADING;
   }
 
+  /**
+   * Instances the attached transfer announces (the series-level count of a query, or the manifest
+   * list), 0 when unknown; what the thumbnail and the panel show behind the images present.
+   */
+  public int expectedImageCount() {
+    Integer n = TagD.getTagValue(series, Tag.NumberOfSeriesRelatedInstances, Integer.class);
+    return n == null ? 0 : n;
+  }
+
   /** True when the loader split the acquisition and this is one of its sub-series. */
   public boolean isSplit() {
     return splitNumber != null;

@@ -85,6 +85,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesComparator;
+import org.weasis.core.api.media.data.SeriesImporter;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.UICore;
@@ -1015,6 +1016,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         setImage(null);
         resetSynchState();
       } else {
+        // A series shown before its pixel data is here is downloaded on demand
+        SeriesImporter.startPending(newSeries);
         E media = selectedMedia;
         if (selectedMedia == null) {
           media =
