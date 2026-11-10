@@ -134,3 +134,18 @@ The GitHub release of a tag with a suffix is a pre-release whose body is `docs/r
 | `weasis-distributions/script/build.properties` | versions, `jdk.modules` and `bootstrap.protocol`, filtered from the pom |
 | `weasis-distributions/docker/Dockerfile` | `weasis/builder` image for the Linux packages |
 | `weasis-distributions/script/resources/<platform>/` | icons, installer resources, Dicomizer and weasis-cli launcher properties |
+
+## Integrity list and signature
+
+The distribution build writes into `conf/base.json` an `integrity` object: the SHA-256 and size of
+every jar of the bundle and of the launcher set (`IntegrityTool digest`, the `config-integrity`
+step of `weasis-distributions/pom.xml`, after the jars are signed and before `compressXZ` packs
+them). The launcher checks every download and every cached jar against it, and a jar the list
+does not name passes. Given a release key (`-Dweasis.release.key=<file>`, the `sign-config`
+profile; the installer workflow takes it from the `WEASIS_RELEASE_KEY` secret), the build also
+writes `conf/base.json.sig`, an Ed25519 signature `<key id>:<base64>` the launcher verifies with
+the public keys shipped in `release-keys.json`; `weasis:info --integrity` then answers `signed`,
+`digest` without a signature. A site that serves its own `base.json` signs it the same way with
+its own key, dropped as `<launcher folder>/integrity-keys/<id>.pub`. The configuration files are
+filtered by the build into `target/tmp/config` before the digest, so the signature covers the
+bytes the package ships.

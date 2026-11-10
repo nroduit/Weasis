@@ -39,13 +39,13 @@
       <outputDirectory>bin-dist/weasis/skills</outputDirectory>
     </fileSet>
     <fileSet>
-      <!-- copy application config -->
-      <directory>etc/config</directory>
+      <!-- the application config, filtered and digested (and signed) by the build -->
+      <directory>target/tmp/config</directory>
       <outputDirectory>bin-dist/weasis/conf</outputDirectory>
       <includes>
         <include>*.json</include>
+        <include>*.sig</include>
       </includes>
-      <filtered>true</filtered>
     </fileSet>
     <fileSet>
       <!-- copy the build scripts -->

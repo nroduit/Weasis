@@ -464,12 +464,62 @@
       </plugin>
 
       <plugin>
+        <!-- The configuration files, filtered here rather than by the assembly, so the integrity
+             list and the signature below cover the bytes the package ships. -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-config</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${tmp.dir}/config</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>etc/config</directory>
+                  <includes>
+                    <include>*.json</include>
+                  </includes>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
         <!-- The sha256sum manifest of the launcher set, read by the bootstrap (weasis.launcher.sha256).
              Written after the jars are signed (process-resources) so the digests are those served. -->
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.5.0</version>
         <executions>
+          <execution>
+            <!-- The integrity list of base.json (S3 of the security spec): the SHA-256 and size of
+                 every jar of the bundle and of the launcher set, after the jars are signed and
+                 before compressXZ packs them (compile, main plugins run before the profile ones).
+                 The launcher checks every download and every cached jar against it. -->
+            <id>config-integrity</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>java</goal>
+            </goals>
+            <configuration>
+              <mainClass>org.weasis.launcher.integrity.IntegrityTool</mainClass>
+              <includePluginDependencies>true</includePluginDependencies>
+              <includeProjectDependencies>false</includeProjectDependencies>
+              <arguments>
+                <argument>digest</argument>
+                <argument>${tmp.dir}/config/base.json</argument>
+                <argument>${tmp.bundle.dir}</argument>
+                <argument>${tmp.launcher.dir}</argument>
+              </arguments>
+            </configuration>
+          </execution>
           <execution>
             <id>launcher-manifest</id>
             <phase>prepare-package</phase>
@@ -491,6 +541,11 @@
           <dependency>
             <groupId>org.weasis.launcher</groupId>
             <artifactId>weasis-bootstrap</artifactId>
+            <version>${app.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.weasis.launcher</groupId>
+            <artifactId>weasis-launcher</artifactId>
             <version>${app.version}</version>
           </dependency>
         </dependencies>
@@ -531,6 +586,52 @@
   </dependencies>
 
   <profiles>
+    <profile>
+      <!-- Signs base.json with the release key (S3): mvn ... -Dweasis.release.key=/path/release.key
+           writes base.json.sig next to it, which the launcher verifies with the public keys of
+           release-keys.json; without the key the package reaches the digest level only. -->
+      <id>sign-config</id>
+      <activation>
+        <property>
+          <name>weasis.release.key</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.5.0</version>
+            <executions>
+              <execution>
+                <id>config-sign</id>
+                <phase>compile</phase>
+                <goals>
+                  <goal>java</goal>
+                </goals>
+                <configuration>
+                  <mainClass>org.weasis.launcher.integrity.IntegrityTool</mainClass>
+                  <includePluginDependencies>true</includePluginDependencies>
+                  <includeProjectDependencies>false</includeProjectDependencies>
+                  <arguments>
+                    <argument>sign</argument>
+                    <argument>${tmp.dir}/config/base.json</argument>
+                    <argument>${weasis.release.key}</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+            <dependencies>
+              <dependency>
+                <groupId>org.weasis.launcher</groupId>
+                <artifactId>weasis-launcher</artifactId>
+                <version>${app.version}</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <profile>
       <id>compressXZ</id>
       <properties>

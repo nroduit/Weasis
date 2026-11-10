@@ -75,11 +75,29 @@ jobs:
           java-version: ${{ env.JDK_VERSION }}
           cache: 'maven'
 
+      - name: Release key for the configuration signature
+        # The private Ed25519 key of release-keys.json (base64, one line) as the repository secret
+        # WEASIS_RELEASE_KEY: the build signs base.json with it, so the launcher reaches the
+        # 'signed' integrity level. Without the secret the package reaches 'digest' only.
+        shell: bash
+        env:
+          WEASIS_RELEASE_KEY: ${{ secrets.WEASIS_RELEASE_KEY }}
+        run: |
+          if [ -n "$WEASIS_RELEASE_KEY" ]; then
+            printf '%s\n' "$WEASIS_RELEASE_KEY" > "$RUNNER_TEMP/release.key"
+            echo "WEASIS_SIGN_OPT=-Dweasis.release.key=$RUNNER_TEMP/release.key" >> $GITHUB_ENV
+            echo "Configuration signed with the release key" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "WEASIS_SIGN_OPT=" >> $GITHUB_ENV
+            echo "No WEASIS_RELEASE_KEY secret: the configuration carries its digest list unsigned" >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: Build with Maven
         shell: bash
         run: |
           mvn -B clean install
-          mvn -B -P compressXZ -f weasis-distributions clean package
+          mvn -B -P compressXZ $WEASIS_SIGN_OPT -f weasis-distributions clean package
+          rm -f "$RUNNER_TEMP/release.key"
           file="weasis-distributions/target/native-dist/weasis-native.zip"
           sha256sum "$file" >> "$file.sha256"
 
