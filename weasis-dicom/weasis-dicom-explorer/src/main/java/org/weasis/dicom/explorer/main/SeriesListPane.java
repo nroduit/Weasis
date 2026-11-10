@@ -11,13 +11,19 @@ package org.weasis.dicom.explorer.main;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceMotionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -25,7 +31,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -38,6 +46,8 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import net.miginfocom.swing.MigLayout;
 import org.dcm4che3.data.Tag;
+import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.GhostGlassPane;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -46,6 +56,7 @@ import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.AbstractKOSpecialElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -53,6 +64,7 @@ import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.ObjectKind;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.items.DownloadState;
 import org.weasis.dicom.explorer.items.Interest;
@@ -65,7 +77,8 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
  * The compact list mode of the DICOM explorer: one row per series and per non-image object of the
  * selected patient, the studies as group rows, read from {@link StudyContents} with the series
  * filter applied. Selection is shared with the thumbnails through the {@link SeriesSelectionModel};
- * a double click or Enter opens, a right click shows the series context menu.
+ * a double click or Enter opens, a right click shows the series context menu, and a series row is
+ * dragged onto a view like a thumbnail.
  */
 public class SeriesListPane extends JPanel implements Scrollable {
 
@@ -92,6 +105,7 @@ public class SeriesListPane extends JPanel implements Scrollable {
   private ListDensity density = ListDensity.MEDIUM;
   private List<Row> rows = List.of();
   private boolean syncing;
+  private int pressedRow = -1;
 
   public SeriesListPane(DicomExplorer explorer) {
     super(new MigLayout("fill, ins 0, gap 0", "[grow,fill]", "[]0[grow,fill]")); // NON-NLS
@@ -116,6 +130,9 @@ public class SeriesListPane extends JPanel implements Scrollable {
     table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
     table.setDefaultRenderer(Object.class, new RowRenderer());
     table.setBorder(BorderFactory.createEmptyBorder());
+    // A series row is dragged like a thumbnail; files dropped on the list are imported
+    table.setDragEnabled(true);
+    table.setTransferHandler(new RowTransferHandler());
     TableColumnModel columns = table.getColumnModel();
     columns.getColumn(0).setPreferredWidth(GuiUtils.getScaleLength(44));
     columns.getColumn(0).setMaxWidth(GuiUtils.getScaleLength(70));
@@ -152,6 +169,7 @@ public class SeriesListPane extends JPanel implements Scrollable {
           @Override
           public void mousePressed(MouseEvent e) {
             int viewRow = table.rowAtPoint(e.getPoint());
+            pressedRow = viewRow;
             if (viewRow < 0) {
               return;
             }
@@ -466,6 +484,92 @@ public class SeriesListPane extends JPanel implements Scrollable {
         ThumbnailMouseAndKeyAdapter.openSeriesInDefaultPlugin(series, model);
         return;
       }
+    }
+  }
+
+  /** The series of the row where a drag started, null for a study or an object row. */
+  private DicomSeries draggedSeries() {
+    return pressedRow >= 0
+            && pressedRow < rows.size()
+            && rows.get(pressedRow) instanceof SeriesRow s
+        ? s.item().series()
+        : null;
+  }
+
+  /**
+   * Exports the series of the pressed row with the flavor the views accept, showing its thumbnail
+   * under the pointer in the glass pane as the thumbnails do; imports dropped DICOM files.
+   */
+  private final class RowTransferHandler extends SequenceHandler {
+    private final DragSourceMotionListener motion = e -> moveGhost(e.getLocation());
+    private Point ghostOffset;
+
+    RowTransferHandler() {
+      super(false, true);
+    }
+
+    @Override
+    public int getSourceActions(JComponent c) {
+      return COPY;
+    }
+
+    @Override
+    public Transferable createTransferable(JComponent c) {
+      return draggedSeries();
+    }
+
+    @Override
+    public void exportAsDrag(JComponent comp, InputEvent e, int action) {
+      DicomSeries series = draggedSeries();
+      Icon icon = series == null ? null : ghostIcon(series);
+      if (icon != null && e instanceof MouseEvent me) {
+        GhostGlassPane glassPane = AppProperties.glassPane;
+        glassPane.setIcon(icon);
+        ghostOffset = new Point(icon.getIconWidth() / 2, icon.getIconHeight() / 2);
+        Point p = me.getPoint();
+        SwingUtilities.convertPointToScreen(p, comp);
+        moveGhost(p);
+        glassPane.setVisible(true);
+        DragSource.getDefaultDragSource().addDragSourceMotionListener(motion);
+      }
+      super.exportAsDrag(comp, e, action);
+    }
+
+    @Override
+    protected void exportDone(JComponent source, Transferable data, int action) {
+      DragSource.getDefaultDragSource().removeDragSourceMotionListener(motion);
+      if (ghostOffset != null) {
+        ghostOffset = null;
+        GhostGlassPane glassPane = AppProperties.glassPane;
+        glassPane.setImagePosition(null);
+        glassPane.setIcon(null);
+        glassPane.setVisible(false);
+      }
+      pressedRow = -1;
+    }
+
+    private void moveGhost(Point screen) {
+      if (ghostOffset != null) {
+        GhostGlassPane glassPane = AppProperties.glassPane;
+        Point p = new Point(screen);
+        SwingUtilities.convertPointFromScreen(p, glassPane);
+        p.translate(-ghostOffset.x, -ghostOffset.y);
+        glassPane.setImagePosition(p);
+      }
+    }
+
+    /** The series thumbnail when it is built, else the micro-thumbnail of the row. */
+    private Icon ghostIcon(DicomSeries series) {
+      if (series.getTagValue(TagW.Thumbnail) instanceof SeriesThumbnail thumbnail
+          && thumbnail.getIcon() != null) {
+        return thumbnail.getIcon();
+      }
+      return microThumbnail(series);
+    }
+
+    @Override
+    protected boolean dropFiles(List<Path> files) {
+      return DicomSeriesHandler.dropDicomFiles(files);
     }
   }
 
