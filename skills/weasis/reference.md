@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.35, protocol 2, application development.
+Command API 2.36, protocol 2, application development.
 
 ## color
 
@@ -198,7 +198,7 @@ Usage: `dicom:echo [-h] [--json] [--aet=<aet>] --node=<node> [--timeout=<seconds
 
 ### dicom:info (since 5.0)
 
-Technical description of a series: modality, body part, image count, geometry and pixel spacing. Identifiers follow the identity policy.
+Technical description of a series: modality, anatomy (the coded region, its groups and the Body Part Examined it stands for), image count, geometry and pixel spacing. Identifiers follow the identity policy.
 
 Usage: `dicom:info [-h] [--json] (--series=<series-uid> | --view=<view-id>)`
 
@@ -225,13 +225,14 @@ Usage: `dicom:interest [-h] [--images] [--json] [--series=<series-uid>] [--study
 
 Patients, studies and series loaded in the explorer, as JSON. Identifiers follow the identity policy; UIDs are the handles for the other verbs.
 
-Usage: `dicom:list [-h] [--json] [--after=<n>] [--limit=<n>]`
+Usage: `dicom:list [-h] [--json] [--after=<n>] [--anatomy=<anatomy>] [--limit=<n>]`
 
 Produces: `patient-handle`, `study-uid`, `series-uid`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --after | integer |  | Skip the first n entries, as the previous answer's 'next' says. (since 5.0) |
+| --anatomy | string |  | Keep the series of this anatomy: a region group (CHEST, HEAD, SPINE...), a coded value (SCT:816094009) or a Body Part Examined term (THORAX); a study or a patient without such a series is left out. (since 5.0) |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --limit | integer |  | At most this many entries (default: all of them). (since 5.0) |
 
@@ -1926,6 +1927,46 @@ Usage: `view2d:clear-ai [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
 | --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
 | --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
+### view2d:export-cine (since 5.0)
+
+Writes the images of the series a pane shows as an animation, frame by frame as the pane displays them (window/level, annotations, identity masking): --out names the file and its format (.apng or .png, .gif, or .dcm for a DICOM Secondary Capture that can be imported next to the study); the verb returns once the file is written.
+
+Usage: `view2d:export-cine [-h] [--force] [--json] [--first=<image-index>] [--last=<image-index>] --out=<output-path> [--pane=<pane-index>] [--rate=<fps>] [--scale=<factor>] [--scope=<view|layout|window>] [--step=<images>] [--view=<view-id>]`
+
+Needs: file write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --first | image-index |  | First image of the loop, from 1 (default: the first of the series). |
+| --force | boolean |  | Replace the file when it exists and was not written by this session. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --last | image-index |  | Last image of the loop (default: the last of the series). |
+| --out | output-path |  | File to write; the extension selects APNG (.apng, .png), GIF or DICOM (.dcm). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --rate | number |  | Frames per second of the animation (default: the cine speed of the pane). |
+| --scale | number | 1.0 | Size of the frames against the display, 0.1 to 1 (default: 1). |
+| --scope | enum | view | What each frame shows: the pane (default), the whole layout, or the window. |
+| --step | integer | 1 | Images skipped between two frames (default: 1, every image). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
+
+| Result | Type | Description |
+|---|---|---|
+| target | object | the view and pane exported |
+| target.view | view-id | the view |
+| target.pane | pane-index | the pane in its grid |
+| target.series | series-uid | the series shown |
+| file | string | the file written |
+| format | string | apng, gif or dcm |
+| frames | integer | frames written |
+| durationMs | integer | length of the animation |
+| frameDurationMs | integer | milliseconds per frame |
+| width | integer | width of a frame |
+| height | integer | height of a frame |
+| scope | string | view, layout or window |
+| first | integer | first image of the loop |
+| last | integer | last image of the loop |
+| step | integer | images between two frames |
+
 ### view2d:flip (since 5.0)
 
 Mirrors the image of a pane and returns its display state; with no argument the state is returned unchanged. A vertical flip is the horizontal one turned by 180°, the form DICOM presentation states use.
@@ -2337,6 +2378,48 @@ Needs: file write
 | scale | number | the downscale applied, 1 for none |
 | scope | string | view, layout or window |
 
+### view3d:export-rotation (since 5.0)
+
+Writes a turn of the volume of a 3D pane as an animation: the view rotates about an axis over --frames frames and each frame is grabbed as displayed (presets, annotations, identity masking); --out names the file and its format (.apng or .png, .gif, or .dcm for a DICOM Secondary Capture that can be imported next to the study); the verb returns once the file is written.
+
+Usage: `view3d:export-rotation [-h] [--force] [--json] [--ping-pong] [--axis=<x|y|z>] [--frames=<n>] --out=<output-path> [--pane=<pane-index>] [--rate=<fps>] [--samples=<n>] [--scale=<factor>] [--scope=<view|layout|window>] [--sweep=<degrees>] [--view=<view-id>]`
+
+Needs: file write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --axis | enum |  | Axis of the rotation (default: the one the camera turns about). |
+| --force | boolean |  | Replace the file when it exists and was not written by this session. |
+| --frames | integer | 72 | Frames of the turn, 4 to 360 (default: 72). |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --out | output-path |  | File to write; the extension selects APNG (.apng, .png), GIF or DICOM (.dcm). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --ping-pong | boolean |  | Come back the same way, so a partial sweep loops without a jump. |
+| --rate | number | 24.0 | Frames per second (default: 24). |
+| --samples | integer | 512 | Path-traced samples each frame waits for, 1 to 512 (default: all). |
+| --scale | number | 1.0 | Size of the frames against the display, 0.1 to 1 (default: 1). |
+| --scope | enum | view | What each frame shows: the pane (default), the whole layout, or the window. |
+| --sweep | number | 360.0 | Angle covered, 10 to 360 (default: 360, a full turn). |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
+
+| Result | Type | Description |
+|---|---|---|
+| target | object | the view and pane exported |
+| target.view | view-id | the view |
+| target.pane | pane-index | the pane in its grid |
+| target.series | series-uid | the series rendered |
+| file | string | the file written |
+| format | string | apng, gif or dcm |
+| frames | integer | frames written |
+| durationMs | integer | length of the animation |
+| frameDurationMs | integer | milliseconds per frame |
+| width | integer | width of a frame |
+| height | integer | height of a frame |
+| scope | string | view, layout or window |
+| axis | string | x, y or z |
+| sweep | number | degrees covered |
+| pingPong | boolean | whether the turn comes back |
+
 ### view3d:info (since 5.0)
 
 Reports whether volume rendering is available here, the binding and the context it runs on, the graphics adapter and the limits that decide the rendering path.
@@ -2406,6 +2489,41 @@ Needs: shutdown
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
+
+### weasis:record (since 5.0)
+
+Records the display as an animation, as the Record action does: 'start' samples the layout of the selected viewer (or the window with --scope window) into the file of --out at --rate frames per second until 'stop' or --max-seconds, and answers a recording handle; 'stop' closes the file and answers the frames written and the duration. Frames are masked as a capture from the same caller would be.
+
+Usage: `weasis:record [-h] [--force] [--json] [--pointer] [--max-seconds=<s>] [--out=<output-path>] [--rate=<fps>] [--scale=<factor>] [--scope=<layout|window>] <start|stop>`
+
+Needs: file write
+
+| Parameter | Type | Description |
+|---|---|---|
+| <start\|stop> | enum | start, stop. |
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --force | boolean |  | Replace the file when it exists and was not written by this session. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --max-seconds | integer | 60 | The recording stops by itself after this long, 1 to 600 (default: 60). |
+| --out | output-path |  | File to write (start); the extension selects APNG (.apng, .png) or GIF. |
+| --pointer | boolean |  | Draw the mouse pointer on the frames. |
+| --rate | number | 12.0 | Samples per second (default: 12). |
+| --scale | number | 0.5 | Size of the frames against the display, 0.1 to 1 (default: 0.5). |
+| --scope | string | layout | What is recorded: the layout of the selected viewer (default) or the window. |
+
+| Result | Type | Description |
+|---|---|---|
+| recording | string | the handle of the recording: the file it writes |
+| file | string | the file written |
+| format | string | apng or gif |
+| scope | string | layout or window |
+| frames | integer | frames written (stop) |
+| durationMs | integer | length of the recording (stop) |
+| width | integer | width of a frame |
+| height | integer | height of a frame |
+| recording | boolean | whether a recording is under way |
 
 ### weasis:show (since 5.0)
 
@@ -2832,7 +2950,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | entry-id | the id of a device entry, from redact:library or redact:match (handle) |  | redact:apply, redact:delete, redact:save |
 | graphic-id | the id of one graphic of an image, from the verbs that draw and from view2d:graphics (handle) | view2d:graphics, view2d:measure | measure:calibrate, view2d:stats |
 | grid-id | the id of one grid of panes a view can take, from the state the view2d verbs return (handle) | view2d:grid | view2d:grid, view2d:hang |
-| image-index | the position of an image in the series a pane shows, counted from 1 |  | dicom:tag, view2d:scroll |
+| image-index | the position of an image in the series a pane shows, counted from 1 |  | dicom:tag, view2d:export-cine, view2d:scroll |
 | image-point | a point in image pixels, origin at the top-left corner of the image |  | view2d:annotate, wsi:goto |
 | image-polygon | an outline in image pixels, two points at least |  | redact:add, view2d:measure, view2d:stats |
 | image-rect | a rectangle in image pixels: x,y,width,height |  | redact:add, view2d:stats |
@@ -2840,8 +2958,8 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | layer-name | the name of a layer of graphics in a view |  | measure:export, view2d:graphics |
 | magnification | how much an image is magnified in a pane: 1 is one image pixel per canvas pixel |  | view2d:zoom, wsi:goto |
 | masking-profile-id | the id of a masking profile of the configuration |  | redact:export |
-| output-path | a local file the verb writes; the policy decides where a remote caller may write |  | config:catalog, config:pack, hp:export, measure:export, measure:profile, print:render, print:send, redact:export, script:run, state:export, view2d:capture, view3d:capture, workspace:save, wsi:export |
-| pane-index | the position of a pane in the grid of a view, counted from 1 |  | color:status, dicom:open, measure:calibrate, measure:export, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:flip, view2d:fusion, view2d:graphics, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, view3d:capture, wsi:annotations, wsi:export, wsi:goto, wsi:info |
+| output-path | a local file the verb writes; the policy decides where a remote caller may write |  | config:catalog, config:pack, hp:export, measure:export, measure:profile, print:render, print:send, redact:export, script:run, state:export, view2d:capture, view2d:export-cine, view3d:capture, view3d:export-rotation, weasis:record, workspace:save, wsi:export |
+| pane-index | the position of a pane in the grid of a view, counted from 1 |  | color:status, dicom:open, measure:calibrate, measure:export, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:export-cine, view2d:flip, view2d:fusion, view2d:graphics, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, view3d:capture, view3d:export-rotation, wsi:annotations, wsi:export, wsi:goto, wsi:info |
 | patient-handle | the masked patient id of a loaded patient, from dicom:list, stable for the session (handle) | dicom:list | dicom:unload |
 | preset-id | the id of a window level preset, from view2d:preset (handle) | view2d:preset | view2d:preset |
 | remote-url | an absolute URL; the policy decides whether a remote caller may use it |  | dicom:load, dicom:load-dicomweb, image:load |
@@ -2851,7 +2969,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | split-ratio | the share of the space given to the first side of a split, strictly between 0 and 1 |  | workspace:panel, workspace:split |
 | study-uid | the Study Instance UID of a loaded study, from dicom:list (handle) | dicom:list | dicom:interest, dicom:objects, dicom:unload, explorer:filter, hp:apply, hp:compare, hp:features, hp:match, hp:open, state:export, state:restore, subtraction:list |
 | tool-id | the id of a tool of the shell, from workspace:panel (handle) | workspace:panel | workspace:panel |
-| view-id | the id of a view, from workspace:list (handle) | dicom:open, workspace:list | color:status, dicom:info, dicom:open, dicom:tag, hp:correct, hp:explain, hp:group, hp:save, hp:sets, measure:calibrate, measure:export, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:flip, view2d:fusion, view2d:graphics, view2d:grid, view2d:hang, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:sync, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, view3d:capture, workspace:close, workspace:detach, workspace:fullscreen, workspace:maximize, workspace:move, workspace:select, workspace:split, workspace:stack, workspace:unmaximize, wsi:annotations, wsi:export, wsi:goto, wsi:info |
+| view-id | the id of a view, from workspace:list (handle) | dicom:open, workspace:list | color:status, dicom:info, dicom:open, dicom:tag, hp:correct, hp:explain, hp:group, hp:save, hp:sets, measure:calibrate, measure:export, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:export-cine, view2d:flip, view2d:fusion, view2d:graphics, view2d:grid, view2d:hang, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:sync, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, view3d:capture, view3d:export-rotation, workspace:close, workspace:detach, workspace:fullscreen, workspace:maximize, workspace:move, workspace:select, workspace:split, workspace:stack, workspace:unmaximize, wsi:annotations, wsi:export, wsi:goto, wsi:info |
 | window-center | the window center applied to the pixel values, in their own unit |  | view2d:window-level |
 | window-width | the window width applied to the pixel values, in their own unit |  | view2d:window-level |
 
@@ -2860,6 +2978,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | Term | Definition | Do not use |
 |---|---|---|
 | anatomic region | the coded region of the anatomy a series shows, with Body Part Examined as alias |  |
+| anatomy | the anatomic region of a series as one notation: a region group (CHEST), a coded value (SCT:816094009) or a Body Part Examined term (THORAX); answered as the coded region with its groups |  |
 | anchor | the view a new split or stack is placed against |  |
 | annotation | a text graphic |  |
 | candidate | a protocol that matches a study, with its match quality |  |
@@ -2908,6 +3027,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | protocol | a hanging protocol: the rules that hang a study, with its display sets and steps |  |
 | provenance | where a derived value comes from: the providers, objects and calibration behind it |  |
 | reason | why something was done or refused, as the why panel and the refusals say it |  |
+| recording | the display sampled into an animation file between 'weasis:record start' and 'stop'; its handle is the file it writes |  |
 | redaction | pixels hidden over an image; masking is reserved for identity values in text |  |
 | region | a geometric area given by the caller (rect, ellipse, polygon) in a stated space | roi, zone |
 | scope | what an action covers: for a redaction the image, the series or the study; for a capture the view, the layout or the window |  |

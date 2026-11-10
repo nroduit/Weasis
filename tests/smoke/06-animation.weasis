@@ -1,0 +1,46 @@
+# 06 — the animation verbs: a cine loop of the CT exported frame by frame, a recording of the
+# layout, and what they refuse. The 3D rotation needs a renderer the test host may not have, so
+# it is left to the scenario scripts.
+
+$open = dicom:open --series ${ct} --wait
+@expect ${open.target.viewerType} == 2d
+
+$cine = view2d:export-cine --view ${open.target.view} --out ${out}/cine.apng --first 1 --last 6 --rate 10 --force
+@expect ${cine.format} == apng
+@expect ${cine.frames} == 6
+@expect ${cine.frameDurationMs} == 100
+@expect ${cine.durationMs} == 600
+@expect ${cine.first} == 1
+@expect ${cine.last} == 6
+@expect ${cine.target.view} == ${open.target.view}
+
+$gif = view2d:export-cine --view ${open.target.view} --out ${out}/cine.gif --first 2 --last 10 --step 4 --scale 0.5 --force
+@expect ${gif.format} == gif
+@expect ${gif.frames} == 3
+@expect ${gif.width} < ${cine.width}
+
+$sc = view2d:export-cine --view ${open.target.view} --out ${out}/cine.dcm --first 1 --last 2 --force
+@expect ${sc.format} == dcm
+@expect ${sc.frames} == 2
+
+$txt = @fails view2d:export-cine --view ${open.target.view} --out ${out}/cine.txt
+@expect ${txt.message} matches apng
+$range = @fails view2d:export-cine --view ${open.target.view} --out ${out}/bad.apng --first 40
+@expect ${range.message} matches between 1 and 24
+
+$rec = weasis:record start --out ${out}/record.apng --rate 10 --scale 0.25 --force
+@expect ${rec.format} == apng
+@expect ${rec.scope} == layout
+$twice = @fails weasis:record start --out ${out}/record2.apng
+@expect ${twice.message} matches already under way
+view2d:scroll --view ${open.target.view} --image 12
+script:pause --seconds 0.5
+view2d:scroll --view ${open.target.view} --image 20
+script:pause --seconds 0.5
+$stop = weasis:record stop
+@expect ${stop.frames} >= 1
+@expect ${stop.durationMs} > 0
+$nothing = @fails weasis:record stop
+@expect ${nothing.message} matches No recording
+
+workspace:close --view ${open.target.view}

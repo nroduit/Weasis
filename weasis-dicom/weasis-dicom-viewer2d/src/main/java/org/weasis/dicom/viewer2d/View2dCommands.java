@@ -107,6 +107,10 @@ import org.weasis.core.ui.editor.image.ViewTransferHandler;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ViewportPane;
 import org.weasis.core.ui.editor.image.export.CaptureScope;
+import org.weasis.core.ui.editor.image.export.CineFrameSource;
+import org.weasis.core.ui.editor.image.export.FrameGrabber;
+import org.weasis.core.ui.editor.image.export.FrameSink;
+import org.weasis.core.ui.editor.image.export.FrameSinkFactory;
 import org.weasis.core.ui.editor.image.export.ViewCapture;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
@@ -175,6 +179,7 @@ import picocli.CommandLine.TypeConversionException;
       View2dCommands.Rotate.class,
       View2dCommands.Flip.class,
       View2dCommands.Capture.class,
+      View2dCommands.ExportCine.class,
       View2dCommands.Stats.class,
       View2dCommands.Measure.class,
       View2dCommands.Annotate.class,
@@ -2449,6 +2454,185 @@ public class View2dCommands implements CommandExtension {
     @Override
     String key() {
       return "undone"; // NON-NLS
+    }
+  }
+
+  @Command(
+      name = "export-cine",
+      description =
+          "Writes the images of the series a pane shows as an animation, frame by frame as the pane"
+              + " displays them (window/level, annotations, identity masking): --out names the file"
+              + " and its format (.apng or .png, .gif, or .dcm for a DICOM Secondary Capture that"
+              + " can be imported next to the study); the verb returns once the file is written.")
+  @Since("5.0")
+  static class ExportCine extends AbstractVerb implements Returns {
+    @Mixin ViewOptions target;
+
+    @Option(
+        names = "--out",
+        required = true,
+        paramLabel = "<output-path>",
+        description =
+            "File to write; the extension selects APNG (.apng, .png), GIF or DICOM (.dcm).")
+    OutputPath out;
+
+    @Option(
+        names = "--force",
+        description = "Replace the file when it exists and was not written by this session.")
+    boolean force;
+
+    @Option(
+        names = "--first",
+        paramLabel = "<image-index>",
+        description = "First image of the loop, from 1 (default: the first of the series).")
+    ImageIndex first;
+
+    @Option(
+        names = "--last",
+        paramLabel = "<image-index>",
+        description = "Last image of the loop (default: the last of the series).")
+    ImageIndex last;
+
+    @Option(
+        names = "--step",
+        paramLabel = "<images>",
+        description = "Images skipped between two frames (default: 1, every image).")
+    int step = 1;
+
+    @Option(
+        names = "--rate",
+        paramLabel = "<fps>",
+        description = "Frames per second of the animation (default: the cine speed of the pane).")
+    Double rate;
+
+    @Option(
+        names = "--scope",
+        paramLabel = "<view|layout|window>",
+        description = "What each frame shows: the pane (default), the whole layout, or the window.")
+    ViewCapture.Scope scope = ViewCapture.Scope.VIEW;
+
+    @Option(
+        names = "--scale",
+        paramLabel = "<factor>",
+        description = "Size of the frames against the display, 0.1 to 1 (default: 1).")
+    double scale = 1.0;
+
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("target", "object", "the view and pane exported") // NON-NLS
+          .field("target.view", ViewId.class, "the view") // NON-NLS
+          .field("target.pane", PaneIndex.class, "the pane in its grid") // NON-NLS
+          .field("target.series", "series-uid", "the series shown") // NON-NLS
+          .field("file", String.class, "the file written") // NON-NLS
+          .field("format", String.class, "apng, gif or dcm") // NON-NLS
+          .field("frames", int.class, "frames written") // NON-NLS
+          .field("durationMs", long.class, "length of the animation") // NON-NLS
+          .field("frameDurationMs", int.class, "milliseconds per frame") // NON-NLS
+          .field("width", int.class, "width of a frame") // NON-NLS
+          .field("height", int.class, "height of a frame") // NON-NLS
+          .field("scope", String.class, "view, layout or window") // NON-NLS
+          .field("first", int.class, "first image of the loop") // NON-NLS
+          .field("last", int.class, "last image of the loop") // NON-NLS
+          .field("step", int.class, "images between two frames") // NON-NLS
+          .build();
+    }
+
+    @Override
+    protected void run() throws IOException {
+      if (step < 1) {
+        throw invalid("--step is at least 1");
+      }
+      if (scale <= 0 || scale > 1) {
+        throw invalid("--scale is between 0.1 and 1");
+      }
+      Path file = out.value();
+      AnimationVerbs.requireWritable(file, force);
+      record Prepared(
+          Target target,
+          FrameGrabber grabber,
+          CineFrameSource source,
+          FrameSink sink,
+          int firstImage,
+          int lastImage,
+          int durationMs) {}
+      CaptureScope captureScope = scope.toCaptureScope();
+      Prepared prepared =
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                Target resolved = target.withImage();
+                focus(resolved);
+                CaptureGuard.requireCapturable(
+                    CaptureGuard.panesOf(captureScope, resolved.view(), resolved.container()));
+                SliderCineListener cine = action(ActionW.SCROLL_SERIES);
+                if (!cine.isActionEnabled() || cine.getSliderMax() <= cine.getSliderMin()) {
+                  throw new IllegalStateException("The pane shows one image: nothing to animate");
+                }
+                int min = cine.getSliderMin();
+                int max = cine.getSliderMax();
+                int from = first == null ? min : first.value();
+                int to = last == null ? max : last.value();
+                if (from < min || from > max || to < min || to > max || to < from) {
+                  throw new IllegalArgumentException(
+                      "--first and --last are between "
+                          + min
+                          + " and "
+                          + max
+                          + ", first before last");
+                }
+                double fps = rate == null ? Math.max(1, cine.getSpeed()) : rate;
+                int durationMs = AnimationVerbs.frameDurationMs(fps);
+                FrameSinkFactory factory =
+                    AnimationVerbs.sinkFor(
+                        file, resolved.view().getSeries(), "export-cine"); // NON-NLS
+                FrameGrabber grabber =
+                    new FrameGrabber(
+                        captureScope,
+                        resolved.view(),
+                        resolved.container(),
+                        AnimationVerbs.maskingForCommand(),
+                        scale);
+                grabber.prepare();
+                FrameSink sink;
+                try {
+                  sink = factory.create(file, AnimationVerbs.maskingForCommand());
+                } catch (IOException e) {
+                  grabber.release();
+                  throw new IllegalStateException(
+                      "Cannot create " + file + ": " + e.getMessage(), e);
+                }
+                return new Prepared(
+                    resolved,
+                    grabber,
+                    new CineFrameSource(grabber, cine, from, to, step, durationMs),
+                    sink,
+                    from,
+                    to,
+                    durationMs);
+              });
+      int frames = AnimationVerbs.export(prepared.source(), prepared.sink(), prepared.grabber());
+      CommandContext.current().addFile(file);
+      JsonObject targetJson =
+          GuiExecutor.invokeAndRethrow(
+              () ->
+                  ViewDisplayState.target(prepared.target().container(), prepared.target().view())
+                      .build());
+      print(
+          AnimationVerbs.describe(
+                  file,
+                  AnimationVerbs.extensionOf(file).equals("png")
+                      ? "apng"
+                      : AnimationVerbs.extensionOf(file), // NON-NLS
+                  frames,
+                  prepared.durationMs(),
+                  prepared.grabber(),
+                  scope.toString())
+              .add("target", targetJson) // NON-NLS
+              .add("first", prepared.firstImage()) // NON-NLS
+              .add("last", prepared.lastImage()) // NON-NLS
+              .add("step", step) // NON-NLS
+              .build()
+              .toString());
     }
   }
 

@@ -176,6 +176,19 @@ line naming the current spelling. Use the current one everywhere.
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
    and still have no usable 3D. `view3d:capture --out <file>` renders a 3D view as displayed, with
    the same `--scope` and `--max-pixels` as the 2D capture.
+11. **Animations are verbs too.** `view2d:export-cine --out <file> [--first n --last m --step k
+   --rate fps --scope --scale]` writes the images of a pane as the pane shows them, frame by frame;
+   `view3d:export-rotation --out <file> [--frames n --axis x|y|z --sweep deg --ping-pong --rate]`
+   writes a turn of the volume; `weasis:record start --out <file> [--scope layout|window --rate
+   --max-seconds]` samples the display until `weasis:record stop`, which answers the frames written.
+   The extension of `--out` picks the format (`.apng` or `.png`, `.gif`, `.dcm` for a DICOM
+   Secondary Capture file of the cine or the rotation); every frame is masked as a capture from
+   the same caller would be, and a pane whose pixels need a review is refused the same way.
+12. **Anatomy is one notation.** `dicom:info` answers an `anatomy` object (the coded region, its
+   `groups` such as `CHEST` or `HEAD`, the Body Part Examined it stands for, the laterality) and
+   `dicom:list --anatomy <notation>` keeps the series of a region group (`CHEST`), a coded value
+   (`SCT:816094009`) or a Body Part Examined term (`THORAX`); the hanging-protocol features and the
+   window presets use the same words.
 
 ## Several commands in one call
 

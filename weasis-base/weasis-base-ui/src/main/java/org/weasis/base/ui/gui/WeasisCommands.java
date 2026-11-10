@@ -12,35 +12,53 @@ package org.weasis.base.ui.gui;
 import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonReader;
 import java.awt.Frame;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.Capability;
+import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandManager;
+import org.weasis.core.api.command.CommandPolicy;
 import org.weasis.core.api.command.Needs;
+import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.Renamed;
 import org.weasis.core.api.command.ResultSchema;
 import org.weasis.core.api.command.Returns;
 import org.weasis.core.api.command.Since;
+import org.weasis.core.api.command.Term;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.IdentityMask;
+import org.weasis.core.api.media.data.MaskingProfile;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.export.AnimatedImageSink;
+import org.weasis.core.ui.editor.image.export.AnimationFormat;
+import org.weasis.core.ui.editor.image.export.AnimationRecorder;
+import org.weasis.core.ui.editor.image.export.CaptureScope;
+import org.weasis.core.ui.editor.image.export.FrameGrabber;
+import org.weasis.core.ui.editor.image.export.FrameSink;
+import org.weasis.core.ui.editor.image.export.RecordingState;
 import org.weasis.launcher.CommandProtocol;
 import org.weasis.launcher.Prerelease;
 import org.weasis.launcher.integrity.Integrity;
 import org.weasis.plugin.manager.LoadedPlugins;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
-import jakarta.json.JsonReader;
-import java.io.StringReader;
-import org.weasis.core.api.command.CommandContext;
-import org.weasis.core.api.command.CommandPolicy;
+import picocli.CommandLine.Parameters;
 
 /** Command namespace {@code weasis}: information about the application and its main window. */
 @Extension
@@ -52,13 +70,23 @@ import org.weasis.core.api.command.CommandPolicy;
       WeasisCommands.Show.class,
       WeasisCommands.Minimize.class,
       WeasisCommands.Quit.class,
-      WeasisCommands.Feedback.class
+      WeasisCommands.Feedback.class,
+      WeasisCommands.Record.class
     })
 public class WeasisCommands implements CommandExtension {
 
   @Override
   public String getNamespace() {
     return "weasis"; // NON-NLS
+  }
+
+  @Override
+  public List<Term> getTerms() {
+    return List.of(
+        Term.of(
+            "recording",
+            "the display sampled into an animation file between 'weasis:record start' and 'stop';"
+                + " its handle is the file it writes")); // NON-NLS
   }
 
   @Override
@@ -177,7 +205,9 @@ public class WeasisCommands implements CommandExtension {
         CommandManager manager = CommandManager.current();
         print(
             "  policy: remote " // NON-NLS
-                + (policy.remote().enabled() ? String.join(",", policy.remote().namespaces()) : "closed") // NON-NLS
+                + (policy.remote().enabled()
+                    ? String.join(",", policy.remote().namespaces())
+                    : "closed") // NON-NLS
                 + ", network read "
                 + (policy.network().read() ? "allow" : "refuse") // NON-NLS
                 + ", write "
@@ -391,6 +421,234 @@ public class WeasisCommands implements CommandExtension {
           .field("platform", String.class, "Operating system, architecture and monitors")
           .field("opened", Boolean.class, "Whether the form was opened in the browser")
           .build();
+    }
+  }
+
+  /** The recording a command started, one at a time, until it is stopped. */
+  record Recording(
+      AnimationRecorder recorder, Path file, String format, String scope, long started) {}
+
+  private static final java.util.concurrent.atomic.AtomicReference<Recording> RECORDING =
+      new java.util.concurrent.atomic.AtomicReference<>();
+
+  @Command(
+      name = "record",
+      description =
+          "Records the display as an animation, as the Record action does: 'start' samples the"
+              + " layout of the selected viewer (or the window with --scope window) into the file"
+              + " of --out at --rate frames per second until 'stop' or --max-seconds, and answers"
+              + " a recording handle; 'stop' closes the file and answers the frames written and the"
+              + " duration. Frames are masked as a capture from the same caller would be.")
+  @Since("5.0")
+  static class Record extends AbstractVerb implements Returns {
+    enum Step {
+      START,
+      STOP
+    }
+
+    @Parameters(index = "0", paramLabel = "<start|stop>", description = "start, stop.")
+    Step step;
+
+    @Option(
+        names = "--out",
+        paramLabel = "<output-path>",
+        description = "File to write (start); the extension selects APNG (.apng, .png) or GIF.")
+    OutputPath out;
+
+    @Option(
+        names = "--force",
+        description = "Replace the file when it exists and was not written by this session.")
+    boolean force;
+
+    @Option(
+        names = "--scope",
+        paramLabel = "<layout|window>",
+        description =
+            "What is recorded: the layout of the selected viewer (default) or the window.")
+    String scope = "layout"; // NON-NLS
+
+    @Option(
+        names = "--rate",
+        paramLabel = "<fps>",
+        description = "Samples per second (default: 12).")
+    double rate = 12;
+
+    @Option(
+        names = "--max-seconds",
+        paramLabel = "<s>",
+        description = "The recording stops by itself after this long, 1 to 600 (default: 60).")
+    int maxSeconds = 60;
+
+    @Option(
+        names = "--scale",
+        paramLabel = "<factor>",
+        description = "Size of the frames against the display, 0.1 to 1 (default: 0.5).")
+    double scale = 0.5;
+
+    @Option(names = "--pointer", description = "Draw the mouse pointer on the frames.")
+    boolean pointer;
+
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field(
+              "recording",
+              String.class,
+              "the handle of the recording: the file it writes") // NON-NLS
+          .field("file", String.class, "the file written") // NON-NLS
+          .field("format", String.class, "apng or gif") // NON-NLS
+          .field("scope", String.class, "layout or window") // NON-NLS
+          .field("frames", int.class, "frames written (stop)") // NON-NLS
+          .field("durationMs", long.class, "length of the recording (stop)") // NON-NLS
+          .field("width", int.class, "width of a frame") // NON-NLS
+          .field("height", int.class, "height of a frame") // NON-NLS
+          .field("recording", "boolean", "whether a recording is under way") // NON-NLS
+          .build();
+    }
+
+    @Override
+    protected void run() throws IOException {
+      if (step == Step.STOP) {
+        stop();
+        return;
+      }
+      if (out == null) {
+        throw invalid("--out is required to start a recording");
+      }
+      if (!(rate > 0) || rate > 60) {
+        throw invalid("--rate is between 0 and 60 samples per second");
+      }
+      if (maxSeconds < 1 || maxSeconds > 600) {
+        throw invalid("--max-seconds is between 1 and 600");
+      }
+      if (scale <= 0 || scale > 1) {
+        throw invalid("--scale is between 0.1 and 1");
+      }
+      CaptureScope captureScope =
+          switch (scope.toLowerCase(java.util.Locale.ROOT)) {
+            case "layout" -> CaptureScope.CONTAINER; // NON-NLS
+            case "window" -> CaptureScope.APPLICATION_WINDOW; // NON-NLS
+            default -> throw invalid("--scope is layout or window, not '" + scope + "'");
+          };
+      Path file = out.value();
+      String extension = extensionOf(file);
+      AnimationFormat format =
+          switch (extension) {
+            case "apng", "png" -> AnimationFormat.APNG; // NON-NLS
+            case "gif" -> AnimationFormat.GIF; // NON-NLS
+            default -> throw invalid("--out must end with .apng, .png or .gif");
+          };
+      if (Files.exists(file) && !force && !CommandContext.wasWritten(file)) {
+        throw invalid("The file exists: " + file + " (--force replaces it)");
+      }
+      if (RECORDING.get() != null || RecordingState.isRecording()) {
+        throw new IllegalStateException("A recording is already under way: stop it first");
+      }
+      if (file.getParent() != null) {
+        Files.createDirectories(file.getParent());
+      }
+      MaskingProfile profile =
+          CommandContext.current().isRemote()
+              ? MaskingProfile.aiRequest()
+              : IdentityMask.isSessionMasking() ? IdentityMask.sessionProfile() : null;
+      int intervalMs = Math.max(1, (int) Math.round(1000.0 / rate));
+      Recording recording =
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                ImageViewerPlugin<?> container =
+                    GuiUtils.getUICore().getSelectedPlugin().orElse(null)
+                            instanceof ImageViewerPlugin<?> c
+                        ? c
+                        : null;
+                if (container == null && captureScope == CaptureScope.CONTAINER) {
+                  throw new IllegalStateException("No image viewer is selected: nothing to record");
+                }
+                ViewCanvas<?> view = container == null ? null : container.getSelectedViewCanvas();
+                FrameGrabber grabber =
+                    new FrameGrabber(captureScope, view, container, profile, scale);
+                grabber.setPointerVisible(pointer);
+                grabber.setFollowSelection(true);
+                grabber.prepare();
+                FrameSink sink;
+                try {
+                  sink = AnimatedImageSink.factory(format).create(file, profile);
+                } catch (IOException e) {
+                  grabber.release();
+                  throw new IllegalStateException(
+                      "Cannot create " + file + ": " + e.getMessage(), e);
+                }
+                AnimationRecorder recorder =
+                    new AnimationRecorder(
+                        grabber,
+                        sink,
+                        intervalMs,
+                        maxSeconds * 1000L,
+                        (int) Math.ceil(maxSeconds * rate));
+                if (!recorder.start()) {
+                  sink.abort();
+                  throw new IllegalStateException(
+                      "A recording is already under way: stop it first");
+                }
+                Recording started =
+                    new Recording(
+                        recorder,
+                        file,
+                        format.getExtension(),
+                        captureScope == CaptureScope.CONTAINER ? "layout" : "window", // NON-NLS
+                        System.currentTimeMillis());
+                RECORDING.set(started);
+                return started;
+              });
+      CommandContext.current().addFile(file);
+      print(
+          Json.createObjectBuilder()
+              .add("recording", recording.file().toAbsolutePath().toString()) // NON-NLS
+              .add("file", recording.file().toAbsolutePath().toString()) // NON-NLS
+              .add("format", recording.format()) // NON-NLS
+              .add("scope", recording.scope()) // NON-NLS
+              .add("maxSeconds", maxSeconds) // NON-NLS
+              .build()
+              .toString());
+    }
+
+    private void stop() {
+      Recording recording = RECORDING.getAndSet(null);
+      if (recording == null) {
+        throw new IllegalStateException("No recording started by a command is under way");
+      }
+      GuiExecutor.invokeAndRethrow(
+          () -> {
+            recording.recorder().stop();
+            return null;
+          });
+      int frames;
+      try {
+        frames = recording.recorder().completion().get(2, java.util.concurrent.TimeUnit.MINUTES);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IllegalStateException("Interrupted while the recording was closing", e);
+      } catch (java.util.concurrent.ExecutionException e) {
+        Throwable cause = e.getCause() == null ? e : e.getCause();
+        throw new IllegalStateException("The recording failed: " + cause.getMessage(), cause);
+      } catch (java.util.concurrent.TimeoutException e) {
+        throw new IllegalStateException("The recording did not close in two minutes", e);
+      }
+      print(
+          Json.createObjectBuilder()
+              .add("recording", recording.file().toAbsolutePath().toString()) // NON-NLS
+              .add("file", recording.file().toAbsolutePath().toString()) // NON-NLS
+              .add("format", recording.format()) // NON-NLS
+              .add("scope", recording.scope()) // NON-NLS
+              .add("frames", frames) // NON-NLS
+              .add("durationMs", System.currentTimeMillis() - recording.started()) // NON-NLS
+              .build()
+              .toString());
+    }
+
+    private static String extensionOf(Path file) {
+      String name = file.getFileName().toString().toLowerCase(java.util.Locale.ROOT);
+      int dot = name.lastIndexOf('.');
+      return dot < 0 ? "" : name.substring(dot + 1);
     }
   }
 

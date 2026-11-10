@@ -127,6 +127,12 @@ public class MeasureTool extends PluginTool
           "weasis.measure.panel.profile"); // NON-NLS
   private String currentToolKey;
   private JComponent currentToolPanel;
+
+  /**
+   * The side tool hosting the panel of a {@link GraphicToolDescriptor.PanelPlacement#SIDE} tool.
+   */
+  private SideToolPanel sideToolPanel;
+
   private final JComboBox<Object> profileCombo = new JComboBox<>();
   private final JCheckBox checkboxBasicImageStatistics =
       new JCheckBox(Messages.getString("MeasureTool.pix_stats"));
@@ -343,6 +349,7 @@ public class MeasureTool extends PluginTool
         toolPanelHost.revalidate();
         toolPanelHost.repaint();
       }
+      closeSideToolPanel();
       return;
     }
     GraphicToolContext context =
@@ -355,12 +362,43 @@ public class MeasureTool extends PluginTool
     currentToolPanel = descriptor.panel().apply(context);
     String title = registry.prototype(key).map(Graphic::getUIName).orElse(key);
     toolPanelHost.removeAll();
+    if (descriptor.hasSidePanel()) {
+      // a chart or a table of its own: a tool on the tools side, not a section squeezing the table
+      toolPanelHost.revalidate();
+      toolPanelHost.repaint();
+      closeSideToolPanel();
+      sideToolPanel = new SideToolPanel(key, title, currentToolPanel);
+      sideToolPanel.showDockable();
+      return;
+    }
+    closeSideToolPanel();
     toolPanelHost.add(
         new CollapsiblePanel(
             title, currentToolPanel, true, "weasis.measure.panel." + key), // NON-NLS
         BorderLayout.CENTER);
     toolPanelHost.revalidate();
     toolPanelHost.repaint();
+  }
+
+  /** Removes the side tool of the previous SIDE tool, when one is shown. */
+  private void closeSideToolPanel() {
+    if (sideToolPanel != null) {
+      sideToolPanel.closeDockable();
+      sideToolPanel = null;
+    }
+  }
+
+  /**
+   * The tool of the tools side that hosts the panel of a {@link
+   * GraphicToolDescriptor.PanelPlacement#SIDE} tool while that tool is in use; its id is {@code
+   * measure.<tool key>}, so a layout or a UI profile can address it like any tool.
+   */
+  private static final class SideToolPanel extends PluginTool {
+    SideToolPanel(String toolKey, String title, JComponent panel) {
+      super("measure." + toolKey, title, Insertable.Type.TOOL, 31); // NON-NLS
+      setLayout(new BorderLayout());
+      add(panel, BorderLayout.CENTER);
+    }
   }
 
   private void updateToolPanel(Graphic graphic) {

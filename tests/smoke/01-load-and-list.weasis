@@ -11,3 +11,18 @@ $list = dicom:list
 $info = dicom:info --series ${ct}
 @expect ${info.modality} == CT
 @expect ${info.imageCount} == 24
+# the anatomy of a series: the Body Part Examined term of SmokeData resolved to its Table L-1 region
+@expect ${info.anatomy.bodyPartExamined} == CHEST
+@expect ${info.anatomy.groups[0]} == CHEST
+@expect ${info.anatomy.scheme} == SCT
+$mrinfo = dicom:info --series ${mr}
+@expect ${mrinfo.anatomy.groups[0]} == HEAD
+# the series filter on anatomy: a group, a code, a term; an unknown notation is refused
+$chest = dicom:list --anatomy CHEST
+@expect ${chest.patients[0].studies[0].series[0].id} == ${ct}
+$head = dicom:list --anatomy SCT:12738006
+@expect ${head.patients[0].studies[0].series[0].id} == ${mr}
+$none = dicom:list --anatomy PELVIS
+@expect ${none.patients} == []
+$bad = @fails dicom:list --anatomy nope
+@expect ${bad.message} matches region group

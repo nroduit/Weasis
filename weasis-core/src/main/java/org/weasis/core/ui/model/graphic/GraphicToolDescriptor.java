@@ -32,6 +32,9 @@ import javax.swing.JComponent;
  * @param shortcutModifier modifier mask of the default key
  * @param minPoints vertices the graphic cannot go below when one is removed; two for an open path,
  *     three for a closed one, more for a tool that needs it
+ * @param placement where the panel goes: a section of the Draw &amp; Measure tool (INLINE), or a
+ *     tool of its own on the tools side of the workspace (SIDE), for a chart or a table that must
+ *     not squeeze the measurement table
  */
 public record GraphicToolDescriptor(
     String key,
@@ -42,9 +45,45 @@ public record GraphicToolDescriptor(
     Function<GraphicToolContext, JComponent> panel,
     int shortcutKeyCode,
     int shortcutModifier,
-    int minPoints) {
+    int minPoints,
+    PanelPlacement placement) {
 
   public static final String HIDE_PROPERTY_PREFIX = "weasis.tool."; // NON-NLS
+
+  /** Where the host shows the panel of a tool. */
+  public enum PanelPlacement {
+    /** A collapsible section of the Draw &amp; Measure tool, between the palette and the table. */
+    INLINE,
+    /**
+     * A tool of its own on the tools side, shown while the tool is active or one of its graphics is
+     * selected.
+     */
+    SIDE
+  }
+
+  /** The nine-value form: a panel, when given, sits inline. */
+  public GraphicToolDescriptor(
+      String key,
+      ToolCategory category,
+      Supplier<Graphic> prototype,
+      Class<? extends Graphic> xmlType,
+      String hideProperty,
+      Function<GraphicToolContext, JComponent> panel,
+      int shortcutKeyCode,
+      int shortcutModifier,
+      int minPoints) {
+    this(
+        key,
+        category,
+        prototype,
+        xmlType,
+        hideProperty,
+        panel,
+        shortcutKeyCode,
+        shortcutModifier,
+        minPoints,
+        PanelPlacement.INLINE);
+  }
 
   /** Vertices below which a variable-point graphic is no longer a shape. */
   public static final int DEFAULT_MIN_POINTS = 2;
@@ -63,6 +102,9 @@ public record GraphicToolDescriptor(
     }
     if (minPoints < DEFAULT_MIN_POINTS) {
       minPoints = DEFAULT_MIN_POINTS;
+    }
+    if (placement == null) {
+      placement = PanelPlacement.INLINE;
     }
   }
 
@@ -83,7 +125,8 @@ public record GraphicToolDescriptor(
         panel,
         shortcutKeyCode,
         shortcutModifier,
-        minPoints);
+        minPoints,
+        placement);
   }
 
   public GraphicToolDescriptor withPanel(Function<GraphicToolContext, JComponent> panelFactory) {
@@ -96,12 +139,43 @@ public record GraphicToolDescriptor(
         panelFactory,
         shortcutKeyCode,
         shortcutModifier,
-        minPoints);
+        minPoints,
+        placement);
+  }
+
+  /** A panel hosted as a tool of its own on the tools side, see {@link PanelPlacement#SIDE}. */
+  public GraphicToolDescriptor withSidePanel(
+      Function<GraphicToolContext, JComponent> panelFactory) {
+    return new GraphicToolDescriptor(
+        key,
+        category,
+        prototype,
+        xmlType,
+        hideProperty,
+        panelFactory,
+        shortcutKeyCode,
+        shortcutModifier,
+        minPoints,
+        PanelPlacement.SIDE);
+  }
+
+  /** True when the panel is a tool of its own on the tools side. */
+  public boolean hasSidePanel() {
+    return panel != null && placement == PanelPlacement.SIDE;
   }
 
   public GraphicToolDescriptor withShortcut(int keyCode, int modifier) {
     return new GraphicToolDescriptor(
-        key, category, prototype, xmlType, hideProperty, panel, keyCode, modifier, minPoints);
+        key,
+        category,
+        prototype,
+        xmlType,
+        hideProperty,
+        panel,
+        keyCode,
+        modifier,
+        minPoints,
+        placement);
   }
 
   public GraphicToolDescriptor withMinPoints(int min) {
@@ -114,7 +188,8 @@ public record GraphicToolDescriptor(
         panel,
         shortcutKeyCode,
         shortcutModifier,
-        min);
+        min,
+        placement);
   }
 
   public boolean hasPanel() {

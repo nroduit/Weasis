@@ -14,6 +14,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,6 +52,10 @@ public class AnimationRecorder {
 
   private final Window parent;
   private final String title;
+
+  /** A recording started by a command: no dialog, the caller waits on {@link #completion()}. */
+  private final boolean quiet;
+
   private final FrameGrabber grabber;
   private final FrameSink sink;
   private final int maxFrames;
@@ -67,6 +72,9 @@ public class AnimationRecorder {
   private long startTime;
   private boolean stopped;
 
+  /** Frames written once the file is closed; fails when the recording did. */
+  private final CompletableFuture<Integer> completion = new CompletableFuture<>();
+
   public AnimationRecorder(
       Window parent,
       String title,
@@ -75,13 +83,45 @@ public class AnimationRecorder {
       int intervalMs,
       long maxDurationMs,
       int maxFrames) {
+    this(parent, title, grabber, sink, intervalMs, maxDurationMs, maxFrames, false);
+  }
+
+  /** A recorder without a user interface: what {@code weasis:record} drives. */
+  public AnimationRecorder(
+      FrameGrabber grabber, FrameSink sink, int intervalMs, long maxDurationMs, int maxFrames) {
+    this(null, "", grabber, sink, intervalMs, maxDurationMs, maxFrames, true);
+  }
+
+  private AnimationRecorder(
+      Window parent,
+      String title,
+      FrameGrabber grabber,
+      FrameSink sink,
+      int intervalMs,
+      long maxDurationMs,
+      int maxFrames,
+      boolean quiet) {
     this.parent = parent;
     this.title = title;
+    this.quiet = quiet;
     this.grabber = grabber;
     this.sink = sink;
     this.maxDurationMs = Math.max(intervalMs, maxDurationMs);
     this.maxFrames = Math.max(1, maxFrames);
     this.timer = new Timer(Math.max(1, intervalMs), _ -> sample());
+  }
+
+  /**
+   * Frames written, completed when the file is closed after {@link #stop()} or the cap; fails with
+   * the I/O error when the recording did. What a command waits for instead of the dialogs.
+   */
+  public CompletableFuture<Integer> completion() {
+    return completion;
+  }
+
+  /** Milliseconds since the recording started. */
+  public long elapsedMillis() {
+    return startTime == 0 ? 0 : elapsedMs();
   }
 
   /** Starts sampling; {@code false} when another recording is already running. */
@@ -189,6 +229,12 @@ public class AnimationRecorder {
     long elapsedMs = elapsedMs();
     long end = System.nanoTime();
     encoder.execute(() -> finish(end));
+    if (quiet) {
+      // a recording started by a command: no dialog, the caller waits on the completion
+      encoder.execute(this::closeQuietly);
+      encoder.shutdown();
+      return;
+    }
     encoder.shutdown();
     AnimationProgressDialog.run(
         parent,
@@ -211,8 +257,10 @@ public class AnimationRecorder {
         },
         null);
     if (failure != null) {
+      completion.completeExceptionally(failure);
       return;
     }
+    completion.complete(writtenFrames.get());
     LOGGER.info("Recording ended: {} frames over {} s", writtenFrames.get(), elapsedMs / 1000L);
     String saved =
         Messages.format("animation.recording.saved", writtenFrames.get(), elapsedMs / 1000L);
@@ -221,6 +269,27 @@ public class AnimationRecorder {
             ? saved
             : Messages.format("animation.recording.stopped", reason) + "\n" + saved;
     JOptionPane.showMessageDialog(parent, message, title, JOptionPane.INFORMATION_MESSAGE);
+  }
+
+  /** Closes or aborts the sink on the encoder thread and settles the completion. */
+  private void closeQuietly() {
+    try {
+      if (failure != null) {
+        sink.abort();
+        completion.completeExceptionally(failure);
+        return;
+      }
+      if (writtenFrames.get() == 0) {
+        sink.abort();
+      } else {
+        sink.close();
+      }
+      LOGGER.info("Recording ended: {} frames over {} s", writtenFrames.get(), elapsedMs() / 1000L);
+      completion.complete(writtenFrames.get());
+    } catch (IOException e) {
+      sink.abort();
+      completion.completeExceptionally(e);
+    }
   }
 
   private void finish(long endNanos) {

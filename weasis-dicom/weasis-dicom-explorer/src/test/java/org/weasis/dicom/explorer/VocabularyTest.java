@@ -21,10 +21,12 @@ class VocabularyTest {
 
   @Test
   void theDicomNamespaceFollowsTheVocabulary() {
+    DicomModel model = new DicomModel();
+    // the namespace's own terms (anatomy) sit next to the core glossary, as for every extension
     assertEquals(
         List.of(),
         CommandVocabulary.allViolations(
-            "dicom", new DicomModelCommands(new DicomModel()), Glossary.core()));
+            "dicom", new DicomModelCommands(model), Glossary.core().with(model)));
   }
 
   @Test

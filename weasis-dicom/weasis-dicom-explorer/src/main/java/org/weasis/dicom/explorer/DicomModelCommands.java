@@ -86,6 +86,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewDisplayState;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
@@ -103,6 +104,11 @@ import org.weasis.dicom.explorer.pref.node.DicomEcho;
 import org.weasis.dicom.explorer.rs.RsQueryParams;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadSeries;
+import org.weasis.dicom.ref.AnatomicBuilder;
+import org.weasis.dicom.ref.AnatomicRegion;
+import org.weasis.dicom.ref.AnatomyJson;
+import org.weasis.dicom.ref.AnatomySelector;
+import org.weasis.dicom.ref.BodyPart;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ITypeConverter;
@@ -782,6 +788,86 @@ final class DicomModelCommands {
    * Masked value of a tag as a caller reads it: dates and times in ISO 8601, the other attributes
    * as the DICOM value itself, so nothing depends on the language of the interface.
    */
+  /**
+   * The anatomic region of a series: the one its first image resolved when it was read (Anatomic
+   * Region Sequence, else Body Part Examined), or the one read from its header now.
+   */
+  static AnatomicRegion regionOf(MediaSeriesGroup series) {
+    if (!(series instanceof MediaSeries<?> ms)
+        || !(ms.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null)
+            instanceof MediaElement first)) {
+      return null;
+    }
+    AnatomicRegion region =
+        first.getTagValue(TagW.AnatomicRegion) instanceof AnatomicRegion r ? r : null;
+    if (region == null) {
+      Attributes dcm =
+          first.getMediaReader() instanceof DcmMediaReader reader ? reader.getDicomObject() : null;
+      region = dcm == null ? null : AnatomicRegion.read(dcm);
+    }
+    return normalized(region, text(series, Tag.BodyPartExamined));
+  }
+
+  /**
+   * The region as a Table L-1 body part when its code names one: a retired SNOMED-RT identifier
+   * (SRT, SNM3) or a SNOMED CT code of the table, else the Body Part Examined term; a raw code of
+   * another scheme stays as read. Only a body part carries the groups the filters match on.
+   */
+  static AnatomicRegion normalized(AnatomicRegion region, String bodyPartExamined) {
+    if (region != null && region.getRegion() instanceof BodyPart) {
+      return region;
+    }
+    BodyPart part = null;
+    if (region != null && region.getRegion() != null) {
+      String code = region.getRegion().getCodeValue();
+      part = AnatomicBuilder.getBodyPartFromRetiredSrtCode(code);
+      if (part == null) {
+        part = AnatomicBuilder.getBodyPartFromCode(code);
+      }
+    }
+    if (part == null && bodyPartExamined != null && !bodyPartExamined.isBlank()) {
+      part = AnatomicBuilder.getBodyPartFromLegacyCode(bodyPartExamined.trim());
+    }
+    if (part == null) {
+      return region;
+    }
+    return region == null
+        ? new AnatomicRegion(part)
+        : new AnatomicRegion(region.getCategory(), part, region.getModifiers());
+  }
+
+  /**
+   * The anatomy of a series in the notation of the CLI: scheme, code, meaning, groups, laterality.
+   */
+  static JsonObject anatomyJson(MediaSeriesGroup series) {
+    AnatomicRegion region = regionOf(series);
+    if (region == null || region.getRegion() == null) {
+      return null;
+    }
+    String laterality =
+        ((MediaSeries<?>) series).getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null)
+                instanceof MediaElement first
+            ? text(first, Tag.ImageLaterality)
+            : null;
+    if (laterality == null || laterality.isBlank()) {
+      laterality = text(series, Tag.Laterality);
+    }
+    return AnatomyJson.toJson(
+        region, laterality == null || laterality.isBlank() ? null : laterality);
+  }
+
+  /** The selector of an anatomy notation, or the usage error that names the three forms. */
+  static AnatomySelector anatomySelector(String notation) {
+    return AnatomySelector.parse(notation)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "Unknown anatomy '"
+                        + notation
+                        + "': a region group (CHEST), a coded value (SCT:816094009) or a Body Part"
+                        + " Examined term (THORAX)"));
+  }
+
   static String text(TagReadable taggable, int tagId) {
     TagW tag = TagD.get(tagId);
     return machineValue(tag, IdentityMask.maskValue(tag, taggable.getTagValue(tag)));
@@ -961,14 +1047,25 @@ final class DicomModelCommands {
 
     @Mixin ListOptions bounds;
 
+    @Option(
+        names = "--anatomy",
+        paramLabel = "<anatomy>",
+        description =
+            "Keep the series of this anatomy: a region group (CHEST, HEAD, SPINE...), a coded value"
+                + " (SCT:816094009) or a Body Part Examined term (THORAX); a study or a patient"
+                + " without such a series is left out.")
+    @Since("5.0")
+    String anatomy;
+
     @Override
     protected void run() {
+      AnatomySelector selector = anatomy == null ? null : anatomySelector(anatomy);
       print(
           GuiExecutor.invokeAndRethrow(
-              () -> IdentityMask.callForCommand(() -> listJson(parent.model, bounds))));
+              () -> IdentityMask.callForCommand(() -> listJson(parent.model, bounds, selector))));
     }
 
-    private static String listJson(DicomModel model, ListOptions bounds) {
+    private static String listJson(DicomModel model, ListOptions bounds, AnatomySelector anatomy) {
       List<JsonObject> patients = new ArrayList<>();
       for (MediaSeriesGroup pt : model.getChildren(MediaSeriesGroupNode.rootNode)) {
         JsonObjectBuilder patient = Json.createObjectBuilder();
@@ -977,6 +1074,7 @@ final class DicomModelCommands {
         put(patient, "patientBirthDate", text(pt, Tag.PatientBirthDate)); // NON-NLS
         put(patient, "patientSex", text(pt, Tag.PatientSex)); // NON-NLS
         JsonArrayBuilder studies = Json.createArrayBuilder();
+        int studyCount = 0;
         for (MediaSeriesGroup st : model.getChildren(pt)) {
           JsonObjectBuilder study = Json.createObjectBuilder();
           put(
@@ -989,7 +1087,15 @@ final class DicomModelCommands {
           put(study, "accessionNumber", text(st, Tag.AccessionNumber)); // NON-NLS
           put(study, "studyID", text(st, Tag.StudyID)); // NON-NLS
           JsonArrayBuilder series = Json.createArrayBuilder();
+          int kept = 0;
           for (MediaSeriesGroup se : model.getChildren(st)) {
+            if (anatomy != null) {
+              AnatomicRegion region = regionOf(se);
+              if (region == null || !anatomy.matches(region)) {
+                continue;
+              }
+            }
+            kept++;
             JsonObjectBuilder s = Json.createObjectBuilder();
             put(s, "id", String.valueOf(se.getTagValue(TagW.SubseriesInstanceUID))); // NON-NLS
             put(s, "seriesInstanceUID", seriesUid(se)); // NON-NLS
@@ -1010,8 +1116,15 @@ final class DicomModelCommands {
             }
             series.add(s);
           }
+          if (anatomy != null && kept == 0) {
+            continue;
+          }
           study.add("series", series); // NON-NLS
           studies.add(study);
+          studyCount++;
+        }
+        if (anatomy != null && studyCount == 0) {
+          continue;
         }
         patient.add("studies", studies); // NON-NLS
         patients.add(patient.build());
@@ -1432,8 +1545,9 @@ final class DicomModelCommands {
   @Command(
       name = "info",
       description =
-          "Technical description of a series: modality, body part, image count, geometry and "
-              + "pixel spacing. Identifiers follow the identity policy.")
+          "Technical description of a series: modality, anatomy (the coded region, its groups and"
+              + " the Body Part Examined it stands for), image count, geometry and pixel spacing."
+              + " Identifiers follow the identity policy.")
   @Since("5.0")
   static class Info extends Verb {
     @ArgGroup(exclusive = true, multiplicity = "1")
@@ -1461,6 +1575,10 @@ final class DicomModelCommands {
       put(json, "modality", text(series, Tag.Modality)); // NON-NLS
       put(json, "seriesDescription", text(series, Tag.SeriesDescription)); // NON-NLS
       put(json, "bodyPartExamined", text(series, Tag.BodyPartExamined)); // NON-NLS
+      JsonObject anatomy = anatomyJson(series);
+      if (anatomy != null) {
+        json.add("anatomy", anatomy); // NON-NLS
+      }
       put(json, "laterality", text(series, Tag.Laterality)); // NON-NLS
       put(json, "seriesDate", text(series, Tag.SeriesDate)); // NON-NLS
       json.add("imageCount", series.size(null)); // NON-NLS

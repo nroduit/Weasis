@@ -27,3 +27,4 @@ profile
 root preferences data setting added replaced item
 category length export import details
 skipped
+rate pointer duration ms sweep samples ping pong cine

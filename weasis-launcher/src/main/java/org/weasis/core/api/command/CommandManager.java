@@ -77,7 +77,7 @@ public class CommandManager {
    * additive changes (a verb, an option, a JSON key), the major with breaking ones. A verb or an
    * option is never removed within a major; a renamed one keeps its old name as a deprecated alias.
    */
-  public static final String API_VERSION = "2.35"; // NON-NLS
+  public static final String API_VERSION = "2.36"; // NON-NLS
 
   /** Namespace of the event verbs and of the audit lines of the event stream. */
   public static final String EVENTS = "events"; // NON-NLS
@@ -118,11 +118,14 @@ public class CommandManager {
 
   /** The semantic types of the registered namespaces with their producers; built after loading. */
   private volatile TypeCatalog types = TypeCatalog.of(Map.of());
+
   private final java.util.concurrent.atomic.AtomicInteger remoteStreams =
       new java.util.concurrent.atomic.AtomicInteger();
 
   public CommandManager(PluginManager pluginManager) {
-    this(pluginManager, new CommandPolicy.Loaded(CommandPolicy.fromSystemProperties(), "properties")); // NON-NLS
+    this(
+        pluginManager,
+        new CommandPolicy.Loaded(CommandPolicy.fromSystemProperties(), "properties")); // NON-NLS
   }
 
   /** The manager of an instance, with the policy its configuration describes. */
@@ -201,8 +204,8 @@ public class CommandManager {
   }
 
   /**
-   * Replaces the policy in force, for the preference page: refused when the configuration locks
-   * it. Every change is logged with its source, since it decides what an agent may do.
+   * Replaces the policy in force, for the preference page: refused when the configuration locks it.
+   * Every change is logged with its source, since it decides what an agent may do.
    */
   public boolean updatePolicy(CommandPolicy updated, String source) {
     if (basePolicy.locked()) {
@@ -660,7 +663,8 @@ public class CommandManager {
         new CommandHelp.Entry(GLOSSARY, "The terms of the command surface, one line each."));
     entries.add(
         new CommandHelp.Entry(
-            TYPES, "The value types of the options and results, with the verbs that produce them."));
+            TYPES,
+            "The value types of the options and results, with the verbs that produce them."));
     return entries;
   }
 
@@ -674,8 +678,7 @@ public class CommandManager {
     if (!term.isEmpty()) {
       Optional<Term> found = glossary.find(term);
       if (found.isEmpty()) {
-        return CommandResult.usage(
-            "Unknown term '" + term + "'. 'help glossary' lists the terms.");
+        return CommandResult.usage("Unknown term '" + term + "'. 'help glossary' lists the terms.");
       }
       if (format == HelpFormat.JSON) {
         JsonWriter out = new JsonWriter();

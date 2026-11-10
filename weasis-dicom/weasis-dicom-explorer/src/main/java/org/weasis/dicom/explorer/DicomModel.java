@@ -40,6 +40,7 @@ import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.CommandExtension;
+import org.weasis.core.api.command.Term;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -177,6 +178,16 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
   @Override
   public String getNamespace() {
     return "dicom";
+  }
+
+  @Override
+  public List<Term> getTerms() {
+    return List.of(
+        Term.of(
+            "anatomy",
+            "the anatomic region of a series as one notation: a region group (CHEST), a coded value"
+                + " (SCT:816094009) or a Body Part Examined term (THORAX); answered as the coded"
+                + " region with its groups")); // NON-NLS
   }
 
   @Override

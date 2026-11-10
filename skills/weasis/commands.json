@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.35",
+  "apiVersion": "2.36",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -614,7 +614,7 @@
         },
         {
           "name": "info",
-          "description": "Technical description of a series: modality, body part, image count, geometry and pixel spacing. Identifiers follow the identity policy.",
+          "description": "Technical description of a series: modality, anatomy (the coded region, its groups and the Body Part Examined it stands for), image count, geometry and pixel spacing. Identifiers follow the identity policy.",
           "since": "5.0",
           "usage": "dicom:info [-h] [--json] (--series=<series-uid> | --view=<view-id>)",
           "parameters": [],
@@ -712,7 +712,7 @@
           "name": "list",
           "description": "Patients, studies and series loaded in the explorer, as JSON. Identifiers follow the identity policy; UIDs are the handles for the other verbs.",
           "since": "5.0",
-          "usage": "dicom:list [-h] [--json] [--after=<n>] [--limit=<n>]",
+          "usage": "dicom:list [-h] [--json] [--after=<n>] [--anatomy=<anatomy>] [--limit=<n>]",
           "produces": [
             "patient-handle",
             "study-uid",
@@ -729,6 +729,17 @@
               "arity": "1",
               "required": false,
               "description": "Skip the first n entries, as the previous answer's 'next' says.",
+              "since": "5.0"
+            },
+            {
+              "names": [
+                "--anatomy"
+              ],
+              "label": "<anatomy>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Keep the series of this anatomy: a region group (CHEST, HEAD, SPINE...), a coded value (SCT:816094009) or a Body Part Examined term (THORAX); a study or a patient without such a series is left out.",
               "since": "5.0"
             },
             {
@@ -7373,6 +7384,218 @@
           ]
         },
         {
+          "name": "export-cine",
+          "description": "Writes the images of the series a pane shows as an animation, frame by frame as the pane displays them (window/level, annotations, identity masking): --out names the file and its format (.apng or .png, .gif, or .dcm for a DICOM Secondary Capture that can be imported next to the study); the verb returns once the file is written.",
+          "since": "5.0",
+          "usage": "view2d:export-cine [-h] [--force] [--json] [--first=<image-index>] [--last=<image-index>] --out=<output-path> [--pane=<pane-index>] [--rate=<fps>] [--scale=<factor>] [--scope=<view|layout|window>] [--step=<images>] [--view=<view-id>]",
+          "needs": [
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--first"
+              ],
+              "label": "<image-index>",
+              "type": "image-index",
+              "arity": "1",
+              "required": false,
+              "description": "First image of the loop, from 1 (default: the first of the series)."
+            },
+            {
+              "names": [
+                "--force"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Replace the file when it exists and was not written by this session."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--last"
+              ],
+              "label": "<image-index>",
+              "type": "image-index",
+              "arity": "1",
+              "required": false,
+              "description": "Last image of the loop (default: the last of the series)."
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": true,
+              "description": "File to write; the extension selects APNG (.apng, .png), GIF or DICOM (.dcm).",
+              "needs": [
+                "file-write"
+              ]
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the grid of the view, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--rate"
+              ],
+              "label": "<fps>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "description": "Frames per second of the animation (default: the cine speed of the pane)."
+            },
+            {
+              "names": [
+                "--scale"
+              ],
+              "label": "<factor>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "default": "1.0",
+              "description": "Size of the frames against the display, 0.1 to 1 (default: 1)."
+            },
+            {
+              "names": [
+                "--scope"
+              ],
+              "label": "<view|layout|window>",
+              "type": "enum",
+              "values": [
+                "view",
+                "layout",
+                "window"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "view",
+              "description": "What each frame shows: the pane (default), the whole layout, or the window."
+            },
+            {
+              "names": [
+                "--step"
+              ],
+              "label": "<images>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "1",
+              "description": "Images skipped between two frames (default: 1, every image)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "View id from 'workspace:list' (default: the selected view)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "target",
+                "type": "object",
+                "description": "the view and pane exported"
+              },
+              {
+                "name": "target.view",
+                "type": "view-id",
+                "description": "the view"
+              },
+              {
+                "name": "target.pane",
+                "type": "pane-index",
+                "description": "the pane in its grid"
+              },
+              {
+                "name": "target.series",
+                "type": "series-uid",
+                "description": "the series shown"
+              },
+              {
+                "name": "file",
+                "type": "string",
+                "description": "the file written"
+              },
+              {
+                "name": "format",
+                "type": "string",
+                "description": "apng, gif or dcm"
+              },
+              {
+                "name": "frames",
+                "type": "integer",
+                "description": "frames written"
+              },
+              {
+                "name": "durationMs",
+                "type": "integer",
+                "description": "length of the animation"
+              },
+              {
+                "name": "frameDurationMs",
+                "type": "integer",
+                "description": "milliseconds per frame"
+              },
+              {
+                "name": "width",
+                "type": "integer",
+                "description": "width of a frame"
+              },
+              {
+                "name": "height",
+                "type": "integer",
+                "description": "height of a frame"
+              },
+              {
+                "name": "scope",
+                "type": "string",
+                "description": "view, layout or window"
+              },
+              {
+                "name": "first",
+                "type": "integer",
+                "description": "first image of the loop"
+              },
+              {
+                "name": "last",
+                "type": "integer",
+                "description": "last image of the loop"
+              },
+              {
+                "name": "step",
+                "type": "integer",
+                "description": "images between two frames"
+              }
+            ]
+          }
+        },
+        {
           "name": "flip",
           "description": "Mirrors the image of a pane and returns its display state; with no argument the state is returned unchanged. A vertical flip is the horizontal one turned by 180°, the form DICOM presentation states use.",
           "since": "5.0",
@@ -9298,6 +9521,246 @@
           }
         },
         {
+          "name": "export-rotation",
+          "description": "Writes a turn of the volume of a 3D pane as an animation: the view rotates about an axis over --frames frames and each frame is grabbed as displayed (presets, annotations, identity masking); --out names the file and its format (.apng or .png, .gif, or .dcm for a DICOM Secondary Capture that can be imported next to the study); the verb returns once the file is written.",
+          "since": "5.0",
+          "usage": "view3d:export-rotation [-h] [--force] [--json] [--ping-pong] [--axis=<x|y|z>] [--frames=<n>] --out=<output-path> [--pane=<pane-index>] [--rate=<fps>] [--samples=<n>] [--scale=<factor>] [--scope=<view|layout|window>] [--sweep=<degrees>] [--view=<view-id>]",
+          "needs": [
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--axis"
+              ],
+              "label": "<x|y|z>",
+              "type": "enum",
+              "values": [
+                "X",
+                "Y",
+                "Z"
+              ],
+              "arity": "1",
+              "required": false,
+              "description": "Axis of the rotation (default: the one the camera turns about)."
+            },
+            {
+              "names": [
+                "--force"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Replace the file when it exists and was not written by this session."
+            },
+            {
+              "names": [
+                "--frames"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "72",
+              "description": "Frames of the turn, 4 to 360 (default: 72)."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": true,
+              "description": "File to write; the extension selects APNG (.apng, .png), GIF or DICOM (.dcm).",
+              "needs": [
+                "file-write"
+              ]
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the grid of the view, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--ping-pong"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Come back the same way, so a partial sweep loops without a jump."
+            },
+            {
+              "names": [
+                "--rate"
+              ],
+              "label": "<fps>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "default": "24.0",
+              "description": "Frames per second (default: 24)."
+            },
+            {
+              "names": [
+                "--samples"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "512",
+              "description": "Path-traced samples each frame waits for, 1 to 512 (default: all)."
+            },
+            {
+              "names": [
+                "--scale"
+              ],
+              "label": "<factor>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "default": "1.0",
+              "description": "Size of the frames against the display, 0.1 to 1 (default: 1)."
+            },
+            {
+              "names": [
+                "--scope"
+              ],
+              "label": "<view|layout|window>",
+              "type": "enum",
+              "values": [
+                "view",
+                "layout",
+                "window"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "view",
+              "description": "What each frame shows: the pane (default), the whole layout, or the window."
+            },
+            {
+              "names": [
+                "--sweep"
+              ],
+              "label": "<degrees>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "default": "360.0",
+              "description": "Angle covered, 10 to 360 (default: 360, a full turn)."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "View id from 'workspace:list' (default: the selected view)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "target",
+                "type": "object",
+                "description": "the view and pane exported"
+              },
+              {
+                "name": "target.view",
+                "type": "view-id",
+                "description": "the view"
+              },
+              {
+                "name": "target.pane",
+                "type": "pane-index",
+                "description": "the pane in its grid"
+              },
+              {
+                "name": "target.series",
+                "type": "series-uid",
+                "description": "the series rendered"
+              },
+              {
+                "name": "file",
+                "type": "string",
+                "description": "the file written"
+              },
+              {
+                "name": "format",
+                "type": "string",
+                "description": "apng, gif or dcm"
+              },
+              {
+                "name": "frames",
+                "type": "integer",
+                "description": "frames written"
+              },
+              {
+                "name": "durationMs",
+                "type": "integer",
+                "description": "length of the animation"
+              },
+              {
+                "name": "frameDurationMs",
+                "type": "integer",
+                "description": "milliseconds per frame"
+              },
+              {
+                "name": "width",
+                "type": "integer",
+                "description": "width of a frame"
+              },
+              {
+                "name": "height",
+                "type": "integer",
+                "description": "height of a frame"
+              },
+              {
+                "name": "scope",
+                "type": "string",
+                "description": "view, layout or window"
+              },
+              {
+                "name": "axis",
+                "type": "string",
+                "description": "x, y or z"
+              },
+              {
+                "name": "sweep",
+                "type": "number",
+                "description": "degrees covered"
+              },
+              {
+                "name": "pingPong",
+                "type": "boolean",
+                "description": "whether the turn comes back"
+              }
+            ]
+          }
+        },
+        {
           "name": "info",
           "description": "Reports whether volume rendering is available here, the binding and the context it runs on, the graphics adapter and the limits that decide the rendering path.",
           "since": "5.0",
@@ -9475,6 +9938,165 @@
               "description": "Structured JSON output (default for remote calls)."
             }
           ]
+        },
+        {
+          "name": "record",
+          "description": "Records the display as an animation, as the Record action does: 'start' samples the layout of the selected viewer (or the window with --scope window) into the file of --out at --rate frames per second until 'stop' or --max-seconds, and answers a recording handle; 'stop' closes the file and answers the frames written and the duration. Frames are masked as a capture from the same caller would be.",
+          "since": "5.0",
+          "usage": "weasis:record [-h] [--force] [--json] [--pointer] [--max-seconds=<s>] [--out=<output-path>] [--rate=<fps>] [--scale=<factor>] [--scope=<layout|window>] <start|stop>",
+          "needs": [
+            "file-write"
+          ],
+          "parameters": [
+            {
+              "label": "<start|stop>",
+              "type": "enum",
+              "arity": "1",
+              "description": "start, stop.",
+              "values": [
+                "START",
+                "STOP"
+              ]
+            }
+          ],
+          "options": [
+            {
+              "names": [
+                "--force"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Replace the file when it exists and was not written by this session."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--max-seconds"
+              ],
+              "label": "<s>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "60",
+              "description": "The recording stops by itself after this long, 1 to 600 (default: 60)."
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": false,
+              "description": "File to write (start); the extension selects APNG (.apng, .png) or GIF.",
+              "needs": [
+                "file-write"
+              ]
+            },
+            {
+              "names": [
+                "--pointer"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Draw the mouse pointer on the frames."
+            },
+            {
+              "names": [
+                "--rate"
+              ],
+              "label": "<fps>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "default": "12.0",
+              "description": "Samples per second (default: 12)."
+            },
+            {
+              "names": [
+                "--scale"
+              ],
+              "label": "<factor>",
+              "type": "number",
+              "arity": "1",
+              "required": false,
+              "default": "0.5",
+              "description": "Size of the frames against the display, 0.1 to 1 (default: 0.5)."
+            },
+            {
+              "names": [
+                "--scope"
+              ],
+              "label": "<layout|window>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "layout",
+              "description": "What is recorded: the layout of the selected viewer (default) or the window."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "recording",
+                "type": "string",
+                "description": "the handle of the recording: the file it writes"
+              },
+              {
+                "name": "file",
+                "type": "string",
+                "description": "the file written"
+              },
+              {
+                "name": "format",
+                "type": "string",
+                "description": "apng or gif"
+              },
+              {
+                "name": "scope",
+                "type": "string",
+                "description": "layout or window"
+              },
+              {
+                "name": "frames",
+                "type": "integer",
+                "description": "frames written (stop)"
+              },
+              {
+                "name": "durationMs",
+                "type": "integer",
+                "description": "length of the recording (stop)"
+              },
+              {
+                "name": "width",
+                "type": "integer",
+                "description": "width of a frame"
+              },
+              {
+                "name": "height",
+                "type": "integer",
+                "description": "height of a frame"
+              },
+              {
+                "name": "recording",
+                "type": "boolean",
+                "description": "whether a recording is under way"
+              }
+            ]
+          }
         },
         {
           "name": "show",
@@ -11745,6 +12367,7 @@
       "producedBy": [],
       "consumedBy": [
         "dicom:tag",
+        "view2d:export-cine",
         "view2d:scroll"
       ]
     },
@@ -11859,7 +12482,10 @@
         "script:run",
         "state:export",
         "view2d:capture",
+        "view2d:export-cine",
         "view3d:capture",
+        "view3d:export-rotation",
+        "weasis:record",
         "workspace:save",
         "wsi:export"
       ]
@@ -11889,6 +12515,7 @@
         "view2d:annotate",
         "view2d:capture",
         "view2d:clear-ai",
+        "view2d:export-cine",
         "view2d:flip",
         "view2d:fusion",
         "view2d:graphics",
@@ -11906,6 +12533,7 @@
         "view2d:window-level",
         "view2d:zoom",
         "view3d:capture",
+        "view3d:export-rotation",
         "wsi:annotations",
         "wsi:export",
         "wsi:goto",
@@ -12080,6 +12708,7 @@
         "view2d:annotate",
         "view2d:capture",
         "view2d:clear-ai",
+        "view2d:export-cine",
         "view2d:flip",
         "view2d:fusion",
         "view2d:graphics",
@@ -12100,6 +12729,7 @@
         "view2d:window-level",
         "view2d:zoom",
         "view3d:capture",
+        "view3d:export-rotation",
         "workspace:close",
         "workspace:detach",
         "workspace:fullscreen",
@@ -12140,6 +12770,10 @@
     {
       "term": "anatomic region",
       "definition": "the coded region of the anatomy a series shows, with Body Part Examined as alias"
+    },
+    {
+      "term": "anatomy",
+      "definition": "the anatomic region of a series as one notation: a region group (CHEST), a coded value (SCT:816094009) or a Body Part Examined term (THORAX); answered as the coded region with its groups"
     },
     {
       "term": "anchor",
@@ -12350,6 +12984,10 @@
     {
       "term": "reason",
       "definition": "why something was done or refused, as the why panel and the refusals say it"
+    },
+    {
+      "term": "recording",
+      "definition": "the display sampled into an animation file between 'weasis:record start' and 'stop'; its handle is the file it writes"
     },
     {
       "term": "redaction",
