@@ -541,7 +541,7 @@
           <plugin>
             <groupId>org.weasis.maven</groupId>
             <artifactId>build-xz-plugin</artifactId>
-            <version>1.1.0</version>
+            <version>2.0.0</version>
             <executions>
               <execution>
                 <id>xz</id>
@@ -557,13 +557,6 @@
                 </configuration>
               </execution>
             </executions>
-            <dependencies>
-              <dependency>
-                <groupId>org.codehaus.plexus</groupId>
-                <artifactId>plexus-utils</artifactId>
-                <version>4.0.3</version>
-              </dependency>
-            </dependencies>
           </plugin>
         </plugins>
       </build>
