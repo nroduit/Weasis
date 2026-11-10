@@ -24,7 +24,7 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.34 and protocol
+This instance runs Weasis development with command API 2.35 and protocol
 2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, measure, mpr, plugins, print, redact, script, state, subtraction, ui, view2d, view3d, weasis, workspace, wsi.
 
 Check the connection first:
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.34 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.35 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -104,7 +104,8 @@ line naming the current spelling. Use the current one everywhere.
    `--wait first-series` to answer once one series is ready, or `--wait all` for everything.
 3. **Look**: `weasis-cli view2d:capture --out /tmp/weasis/view.png`, then read the PNG. The result
    also gives `scale`, `crop`, the canvas size and `imageCorners` (see Coordinates). Use
-   `--crop x,y,width,height` to zoom into a region of the canvas.
+   `--crop x,y,width,height` to zoom into a region of the canvas; `--scope layout` captures the
+   whole layout of the view and `--scope window` the application window as displayed.
 4. **Navigate**: `view2d:scroll --image <n>` (or `--by 1`), `view2d:window-level --window 400
    --level 40` (or `--window-by` / `--level-by` in slider steps), `view2d:preset` (lists the
    presets with their ids) then `--preset <id>`,
@@ -173,7 +174,8 @@ line naming the current spelling. Use the current one everywhere.
    the study, by `dicom:load`, is drawn over the slide.
 10. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
-   and still have no usable 3D.
+   and still have no usable 3D. `view3d:capture --out <file>` renders a 3D view as displayed, with
+   the same `--scope` and `--max-pixels` as the 2D capture.
 
 ## Several commands in one call
 
@@ -266,7 +268,7 @@ prints the definitions, `help types` the value types with the verbs that hand th
 - **annotation**: a text graphic
 - **candidate**: a protocol that matches a study, with its match quality
 - **canvas**: the pixel space of a pane after zoom, pan, rotation and flip
-- **capture**: the pixels of a pane, a view or a window written to an image file
+- **capture**: the pixels of a pane, a layout or a window written to an image file
 - **cell**: one image place of a printed page or of a protocol layout
 - **checkpoint**: a saved display state a transaction can roll back to
 - **checkpoint id**: the handle of a checkpoint, from state:checkpoints
@@ -279,7 +281,7 @@ prints the definitions, `help types` the value types with the verbs that hand th
 - **download**: transfer the pixel data of a loaded series from its source; a loaded series may be not downloaded under a selective hanging protocol (not fetch)
 - **entry**: one item of a document or a library, with its id
 - **event**: a change of state the instance publishes on its bus, named like the commands
-- **format**: the file format of an export: xml, csv, or what a plugin adds
+- **format**: the file format of an export or a capture: png, jpg, xml, csv, or what a plugin adds
 - **frame**: one frame of a multiframe DICOM instance
 - **graphic**: any drawn object on a pane (measurement, annotation, region) with a graphic id (not shape)
 - **grid**: the arrangement of panes inside a view
@@ -312,7 +314,7 @@ prints the definitions, `help types` the value types with the verbs that hand th
 - **reason**: why something was done or refused, as the why panel and the refusals say it
 - **redaction**: pixels hidden over an image; masking is reserved for identity values in text
 - **region**: a geometric area given by the caller (rect, ellipse, polygon) in a stated space (not roi, zone)
-- **scope**: what a redaction applies to: the image, the series or the study
+- **scope**: what an action covers: for a redaction the image, the series or the study; for a capture the view, the layout or the window
 - **screen**: a physical display of the workstation, with a role in the window model
 - **script**: a file of commands run in one call, with variables and expectations
 - **selected**: the view, pane or series that receives a command when no handle is given (not current view, active view, current pane, active pane, focused view)

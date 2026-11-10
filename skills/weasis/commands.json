@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.34",
+  "apiVersion": "2.35",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -7203,7 +7203,7 @@
           "name": "capture",
           "description": "Renders a view as displayed (window/level, annotations, identity masking) into a PNG or JPEG file and returns how image pixels map to the capture; --frame image renders the image alone at its own size, for exact comparisons.",
           "since": "5.0",
-          "usage": "view2d:capture [-h] [--force] [--json] [--annotations=<on|off>] [--crop=<canvas-rect>] [--frame=<frame>] [--max-pixels=<n>] --out=<output-path> [--pane=<pane-index>] [--view=<view-id>]",
+          "usage": "view2d:capture [-h] [--force] [--json] [--annotations=<on|off>] [--crop=<canvas-rect>] [--frame=<frame>] [--max-pixels=<n>] --out=<output-path> [--pane=<pane-index>] [--scope=<view|layout|window>] [--view=<view-id>]",
           "needs": [
             "file-write"
           ],
@@ -7304,6 +7304,23 @@
               "arity": "1",
               "required": false,
               "description": "Pane index in the grid of the view, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--scope"
+              ],
+              "label": "<view|layout|window>",
+              "type": "enum",
+              "values": [
+                "view",
+                "layout",
+                "window"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "view",
+              "description": "What the file shows: the pane (default), the whole layout of the view, or the application window as displayed; --crop, --frame and --annotations apply to the pane only.",
+              "since": "5.0"
             },
             {
               "names": [
@@ -9131,6 +9148,156 @@
       "description": "Volume rendering: the capabilities of the renderer on this machine.",
       "since": "5.0",
       "verbs": [
+        {
+          "name": "capture",
+          "description": "Renders a 3D view as displayed into a PNG or JPEG file: the volume with its annotations, or the whole layout or the application window with --scope.",
+          "since": "5.0",
+          "usage": "view3d:capture [-h] [--force] [--json] [--max-pixels=<n>] --out=<output-path> [--pane=<pane-index>] [--scope=<view|layout|window>] [--view=<view-id>]",
+          "needs": [
+            "file-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--force"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Replace the file when it exists and was not written by this session."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--max-pixels"
+              ],
+              "label": "<n>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "description": "Downscale so the file has at most this many pixels (default: 2000000)."
+            },
+            {
+              "names": [
+                "--out"
+              ],
+              "label": "<output-path>",
+              "type": "output-path",
+              "arity": "1",
+              "required": true,
+              "description": "File to write; the extension selects PNG or JPEG (.jpg).",
+              "needs": [
+                "file-write"
+              ]
+            },
+            {
+              "names": [
+                "--pane"
+              ],
+              "label": "<pane-index>",
+              "type": "pane-index",
+              "arity": "1",
+              "required": false,
+              "description": "Pane index in the grid of the view, from 1 (default: the selected pane)."
+            },
+            {
+              "names": [
+                "--scope"
+              ],
+              "label": "<view|layout|window>",
+              "type": "enum",
+              "values": [
+                "view",
+                "layout",
+                "window"
+              ],
+              "arity": "1",
+              "required": false,
+              "default": "view",
+              "description": "The pane (default), the whole layout of the view, or the application window as displayed."
+            },
+            {
+              "names": [
+                "--view"
+              ],
+              "label": "<view-id>",
+              "type": "view-id",
+              "arity": "1",
+              "required": false,
+              "description": "View id from 'workspace:list' (default: the selected view)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "target",
+                "type": "object",
+                "description": "the view and pane captured"
+              },
+              {
+                "name": "target.view",
+                "type": "view-id",
+                "description": "the view"
+              },
+              {
+                "name": "target.pane",
+                "type": "pane-index",
+                "description": "the pane in its grid"
+              },
+              {
+                "name": "target.viewerType",
+                "type": "string",
+                "description": "3d"
+              },
+              {
+                "name": "target.series",
+                "type": "series-uid",
+                "description": "the series rendered"
+              },
+              {
+                "name": "file",
+                "type": "string",
+                "description": "the file written"
+              },
+              {
+                "name": "format",
+                "type": "string",
+                "description": "png or jpg"
+              },
+              {
+                "name": "width",
+                "type": "integer",
+                "description": "width of the file in pixels"
+              },
+              {
+                "name": "height",
+                "type": "integer",
+                "description": "height of the file in pixels"
+              },
+              {
+                "name": "scale",
+                "type": "number",
+                "description": "the downscale applied, 1 for none"
+              },
+              {
+                "name": "scope",
+                "type": "string",
+                "description": "view, layout or window"
+              }
+            ]
+          }
+        },
         {
           "name": "info",
           "description": "Reports whether volume rendering is available here, the binding and the context it runs on, the graphics adapter and the limits that decide the rendering path.",
@@ -11693,6 +11860,7 @@
         "script:run",
         "state:export",
         "view2d:capture",
+        "view3d:capture",
         "workspace:save",
         "wsi:export"
       ]
@@ -11738,6 +11906,7 @@
         "view2d:viewport",
         "view2d:window-level",
         "view2d:zoom",
+        "view3d:capture",
         "wsi:annotations",
         "wsi:export",
         "wsi:goto",
@@ -11931,6 +12100,7 @@
         "view2d:viewport",
         "view2d:window-level",
         "view2d:zoom",
+        "view3d:capture",
         "workspace:close",
         "workspace:detach",
         "workspace:fullscreen",
@@ -11990,7 +12160,7 @@
     },
     {
       "term": "capture",
-      "definition": "the pixels of a pane, a view or a window written to an image file"
+      "definition": "the pixels of a pane, a layout or a window written to an image file"
     },
     {
       "term": "cell",
@@ -12048,7 +12218,7 @@
     },
     {
       "term": "format",
-      "definition": "the file format of an export: xml, csv, or what a plugin adds"
+      "definition": "the file format of an export or a capture: png, jpg, xml, csv, or what a plugin adds"
     },
     {
       "term": "frame",
@@ -12196,7 +12366,7 @@
     },
     {
       "term": "scope",
-      "definition": "what a redaction applies to: the image, the series or the study"
+      "definition": "what an action covers: for a redaction the image, the series or the study; for a capture the view, the layout or the window"
     },
     {
       "term": "screen",

@@ -61,51 +61,6 @@ public class ColorCommands implements CommandExtension {
     return this;
   }
 
-  static class PaneOptions {
-    @Option(
-        names = "--view",
-        paramLabel = "<view-id>",
-        description = "View id from 'workspace:list' (default: the selected view).")
-    ViewId viewId;
-
-    @Option(
-        names = "--pane",
-        paramLabel = "<pane-index>",
-        description = "Pane index in the grid of the view, from 1 (default: the selected pane).")
-    PaneIndex pane;
-
-    /** The pane, or empty when nothing is selected and no viewer was named. */
-    Optional<ViewCanvas<?>> resolve() {
-      ImageViewerPlugin<?> viewer;
-      if (viewId == null) {
-        Optional<ViewerPlugin<?>> selected = GuiUtils.getUICore().getSelectedPlugin();
-        if (selected.isEmpty() || !(selected.get() instanceof ImageViewerPlugin<?> v)) {
-          return Optional.empty();
-        }
-        viewer = v;
-      } else {
-        WorkspaceManager manager = GuiUtils.getUICore().getWorkspaceManager();
-        viewer =
-            Optional.ofNullable(manager)
-                .flatMap(m -> m.findView(viewId.value()))
-                .filter(ImageViewerPlugin.class::isInstance)
-                .map(ImageViewerPlugin.class::cast)
-                .orElseThrow(
-                    () ->
-                        CommandFailure.unknownHandle(
-                            "Unknown image viewer id: " + viewId, "workspace:list")); // NON-NLS
-      }
-      if (pane == null) {
-        return Optional.ofNullable(viewer.getSelectedViewCanvas());
-      }
-      List<? extends ViewCanvas<?>> panels = viewer.getImagePanels();
-      if (pane.value() > panels.size()) {
-        throw new IllegalArgumentException(
-            "Pane index out of range: " + pane + " (" + panels.size() + " panes)");
-      }
-      return Optional.of(panels.get(pane.toOffset()));
-    }
-  }
 
   @Command(
       name = "status",

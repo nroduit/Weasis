@@ -38,7 +38,9 @@ anatomic region | the coded region of the anatomy a series shows, with Body Part
 handle | an id a verb returns and another verb accepts; never invented by the caller
 uid | a DICOM unique identifier, the handle of a study or a series
 target | the view and pane a command resolved, echoed in every result bound to a view
-capture | the pixels of a pane, a view or a window written to an image file
+format | the file format of an export or a capture: png, jpg, xml, csv, or what a plugin adds
+capture | the pixels of a pane, a layout or a window written to an image file
+scope | what an action covers: for a redaction the image, the series or the study; for a capture the view, the layout or the window
 canvas | the pixel space of a pane after zoom, pan, rotation and flip
 screen | a physical display of the workstation, with a role in the window model
 slot | one of the two places of a side of the shell that holds a tool

@@ -17,10 +17,8 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
-import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -38,7 +36,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.imageio.ImageIO;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.pf4j.Extension;
@@ -82,8 +79,6 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.color.IccImageFiles;
-import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.ImageElement;
@@ -142,7 +137,6 @@ import org.weasis.dicom.explorer.SeriesUid;
 import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
 import org.weasis.dicom.viewer2d.fusion.FusionState;
-import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.op.ImageConversion;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
@@ -151,6 +145,9 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.TypeConversionException;
+import org.weasis.core.ui.editor.image.export.CaptureScope;
+import org.weasis.core.ui.editor.image.export.ViewCapture;
+import org.weasis.core.api.media.data.MaskingProfile;
 
 /** Command namespace {@code view2d}: display of a 2D DICOM view. */
 @Extension
@@ -1130,6 +1127,16 @@ public class View2dCommands implements CommandExtension {
     @Since("5.0")
     Toggle annotations;
 
+    @Option(
+        names = "--scope",
+        paramLabel = "<view|layout|window>",
+        description =
+            "What the file shows: the pane (default), the whole layout of the view, or the"
+                + " application window as displayed; --crop, --frame and --annotations apply to"
+                + " the pane only.")
+    @Since("5.0")
+    ViewCapture.Scope scope = ViewCapture.Scope.VIEW;
+
     /** What the EDT rendered, plus the geometry needed to map pixels. */
     record Rendered(
         BufferedImage image,
@@ -1150,6 +1157,10 @@ public class View2dCommands implements CommandExtension {
               ? maxPixels
               : frame == CaptureFrame.IMAGE ? Integer.MAX_VALUE : DEFAULT_MAX_PIXELS;
       String format = format(out.value());
+      if (scope != ViewCapture.Scope.VIEW) {
+        captureScope(limit, format);
+        return;
+      }
       Target resolved = GuiExecutor.invokeAndRethrow(target::withImage);
       // A whole slide is painted from tiles that load in the background
       resolved.view().awaitDisplayed(CAPTURE_WAIT_MS);
@@ -1169,13 +1180,13 @@ public class View2dCommands implements CommandExtension {
           cropped == null
               ? source
               : source.getSubimage(cropped.x, cropped.y, cropped.width, cropped.height);
-      double scale = scaleFor(image, limit);
-      BufferedImage result = grayWhenNeutral(scaled(image, scale));
+      double scale = ViewCapture.scaleFor(image.getWidth(), image.getHeight(), limit);
+      BufferedImage result = grayWhenNeutral(ViewCapture.scale(image, scale));
       Path file = out.value();
       if (file.getParent() != null) {
         Files.createDirectories(file.getParent());
       }
-      writeCapture(result, format, file);
+      ViewCapture.write(result, format, file);
       CommandContext.current().addFile(file);
 
       int dx = cropped == null ? 0 : cropped.x;
@@ -1221,24 +1232,56 @@ public class View2dCommands implements CommandExtension {
       print(json.build().toString());
     }
 
-    /** A canvas capture holds the values sent to the display: it carries the display profile. */
-    private static void writeCapture(BufferedImage image, String format, Path file)
-        throws IOException {
-      IccProfile profile = IccImageFiles.displayedProfile().orElse(null);
-      if (profile != null
-          && image.getRaster().getNumBands() == 3
-          && IccImageFiles.canEmbed(file, profile)) {
-        ImageCV mat = ImageConversion.toMat(image);
-        try {
-          if (!IccImageFiles.write(mat, file, null, profile)) {
-            throw new IOException("Cannot write " + file);
-          }
-        } finally {
-          mat.release();
-        }
-      } else if (!ImageIO.write(image, format, file.toFile())) {
-        throw new IOException("No image writer for " + format);
+    /** A layout or a window, painted as displayed, under the mask of the caller. */
+    private void captureScope(int limit, String format) throws IOException {
+      CaptureScope captureScope = scope.toCaptureScope();
+      BufferedImage source =
+          GuiExecutor.invokeAndRethrow(
+              () -> {
+                Target resolved = target.resolve();
+                CaptureGuard.requireCapturable(
+                    CaptureGuard.panesOf(captureScope, resolved.view(), resolved.container()));
+                boolean remoteWindow =
+                    captureScope == CaptureScope.APPLICATION_WINDOW
+                        && CommandContext.current().isRemote();
+                boolean wasMasking = IdentityMask.isSessionMasking();
+                MaskingProfile wasProfile = IdentityMask.sessionProfile();
+                if (remoteWindow) {
+                  // tab titles and explorer labels are cached: only the session mask reaches them
+                  IdentityMask.setSessionMasking(true, MaskingProfile.aiRequest());
+                }
+                try {
+                  return IdentityMask.callForCommand(
+                      () ->
+                          ViewCapture.render(
+                              captureScope, resolved.view(), resolved.container(), v -> null));
+                } finally {
+                  if (remoteWindow) {
+                    IdentityMask.setSessionMasking(wasMasking, wasProfile);
+                  }
+                }
+              });
+      if (source == null) {
+        throw new IllegalStateException("Nothing to capture: the " + scope + " has no size");
       }
+      double scale = ViewCapture.scaleFor(source.getWidth(), source.getHeight(), limit);
+      BufferedImage result = ViewCapture.scale(source, scale);
+      Path file = out.value();
+      if (file.getParent() != null) {
+        Files.createDirectories(file.getParent());
+      }
+      ViewCapture.write(result, format, file);
+      CommandContext.current().addFile(file);
+      print(
+          Json.createObjectBuilder()
+              .add("file", out.toAbsolutePath().toString()) // NON-NLS
+              .add("format", format) // NON-NLS
+              .add("width", result.getWidth()) // NON-NLS
+              .add("height", result.getHeight()) // NON-NLS
+              .add("scale", scale) // NON-NLS
+              .add("scope", scope.toString()) // NON-NLS
+              .build()
+              .toString());
     }
 
     private String format(Path file) {
@@ -1337,28 +1380,6 @@ public class View2dCommands implements CommandExtension {
       return gray;
     }
 
-    private static double scaleFor(BufferedImage image, int maxPixels) {
-      long pixels = (long) image.getWidth() * image.getHeight();
-      return pixels <= maxPixels ? 1.0 : Math.sqrt((double) maxPixels / pixels);
-    }
-
-    private static BufferedImage scaled(BufferedImage source, double scale) {
-      if (scale >= 1.0) {
-        return source;
-      }
-      int w = Math.max(1, (int) Math.round(source.getWidth() * scale));
-      int h = Math.max(1, (int) Math.round(source.getHeight() * scale));
-      BufferedImage dst = new BufferedImage(w, h, BufferedImage.TYPE_3BYTE_BGR);
-      Graphics2D g = dst.createGraphics();
-      try {
-        g.setRenderingHint(
-            RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.drawImage(source, 0, 0, w, h, null);
-      } finally {
-        g.dispose();
-      }
-      return dst;
-    }
   }
 
   /** Exclusive region of interest of the stats verb. */

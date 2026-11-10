@@ -94,8 +94,7 @@ public class MeasureCommands implements CommandExtension {
   @Override
   public List<Term> getTerms() {
     return List.of(
-        Term.of("tool key", "the stable id of a measurement or drawing tool, from measure:tools"),
-        Term.of("format", "the file format of an export: xml, csv, or what a plugin adds"));
+        Term.of("tool key", "the stable id of a measurement or drawing tool, from measure:tools"));
   }
 
   @Override
@@ -341,7 +340,7 @@ public class MeasureCommands implements CommandExtension {
               + " DICOM plugins ('measure:export --format ?' lists them).")
   @Since("5.0")
   static class Export extends AbstractVerb implements Returns {
-    @Mixin ColorCommands.PaneOptions target;
+    @Mixin PaneOptions target;
 
     @Option(
         names = "--format",
@@ -554,7 +553,7 @@ public class MeasureCommands implements CommandExtension {
               + " line, the series with --series; --remove drops the user's calibration.")
   @Since("5.0")
   static class Calibrate extends AbstractVerb implements Returns {
-    @Mixin ColorCommands.PaneOptions target;
+    @Mixin PaneOptions target;
 
     @Option(
         names = "--graphic",

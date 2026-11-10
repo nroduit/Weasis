@@ -98,7 +98,8 @@ line naming the current spelling. Use the current one everywhere.
    `--wait first-series` to answer once one series is ready, or `--wait all` for everything.
 3. **Look**: `weasis-cli view2d:capture --out /tmp/weasis/view.png`, then read the PNG. The result
    also gives `scale`, `crop`, the canvas size and `imageCorners` (see Coordinates). Use
-   `--crop x,y,width,height` to zoom into a region of the canvas.
+   `--crop x,y,width,height` to zoom into a region of the canvas; `--scope layout` captures the
+   whole layout of the view and `--scope window` the application window as displayed.
 4. **Navigate**: `view2d:scroll --image <n>` (or `--by 1`), `view2d:window-level --window 400
    --level 40` (or `--window-by` / `--level-by` in slider steps), `view2d:preset` (lists the
    presets with their ids) then `--preset <id>`,
@@ -172,7 +173,8 @@ line naming the current spelling. Use the current one everywhere.
 <!--if:view3d-->
 10. **Before proposing volume rendering**, `view3d:info` says whether this machine can do it at
    all, on which graphics adapter and with which limits. A machine can run Weasis perfectly well
-   and still have no usable 3D.
+   and still have no usable 3D. `view3d:capture --out <file>` renders a 3D view as displayed, with
+   the same `--scope` and `--max-pixels` as the 2D capture.
 <!--endif-->
 
 ## Several commands in one call

@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.34, protocol 2, application development.
+Command API 2.35, protocol 2, application development.
 
 ## color
 
@@ -1897,7 +1897,7 @@ Usage: `view2d:annotate [-h] [--canvas] [--json] [--at=<image-point>] [--label-a
 
 Renders a view as displayed (window/level, annotations, identity masking) into a PNG or JPEG file and returns how image pixels map to the capture; --frame image renders the image alone at its own size, for exact comparisons.
 
-Usage: `view2d:capture [-h] [--force] [--json] [--annotations=<on|off>] [--crop=<canvas-rect>] [--frame=<frame>] [--max-pixels=<n>] --out=<output-path> [--pane=<pane-index>] [--view=<view-id>]`
+Usage: `view2d:capture [-h] [--force] [--json] [--annotations=<on|off>] [--crop=<canvas-rect>] [--frame=<frame>] [--max-pixels=<n>] --out=<output-path> [--pane=<pane-index>] [--scope=<view|layout|window>] [--view=<view-id>]`
 
 Needs: file write
 
@@ -1911,6 +1911,7 @@ Needs: file write
 | --max-pixels | integer |  | Downscale so the file has at most this many pixels (default: 2000000 for the canvas, none for the image frame). |
 | --out | output-path |  | File to write; the extension selects PNG or JPEG (.jpg). |
 | --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --scope | enum | view | What the file shows: the pane (default), the whole layout of the view, or the application window as displayed; --crop, --frame and --annotations apply to the pane only. (since 5.0) |
 | --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:clear-ai (since 5.0)
@@ -2303,6 +2304,38 @@ Usage: `view2d:zoom [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--by
 ## view3d
 
 Volume rendering: the capabilities of the renderer on this machine.
+
+### view3d:capture (since 5.0)
+
+Renders a 3D view as displayed into a PNG or JPEG file: the volume with its annotations, or the whole layout or the application window with --scope.
+
+Usage: `view3d:capture [-h] [--force] [--json] [--max-pixels=<n>] --out=<output-path> [--pane=<pane-index>] [--scope=<view|layout|window>] [--view=<view-id>]`
+
+Needs: file write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --force | boolean |  | Replace the file when it exists and was not written by this session. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --max-pixels | integer |  | Downscale so the file has at most this many pixels (default: 2000000). |
+| --out | output-path |  | File to write; the extension selects PNG or JPEG (.jpg). |
+| --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
+| --scope | enum | view | The pane (default), the whole layout of the view, or the application window as displayed. |
+| --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
+
+| Result | Type | Description |
+|---|---|---|
+| target | object | the view and pane captured |
+| target.view | view-id | the view |
+| target.pane | pane-index | the pane in its grid |
+| target.viewerType | string | 3d |
+| target.series | series-uid | the series rendered |
+| file | string | the file written |
+| format | string | png or jpg |
+| width | integer | width of the file in pixels |
+| height | integer | height of the file in pixels |
+| scale | number | the downscale applied, 1 for none |
+| scope | string | view, layout or window |
 
 ### view3d:info (since 5.0)
 
@@ -2807,8 +2840,8 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | layer-name | the name of a layer of graphics in a view |  | measure:export, view2d:graphics |
 | magnification | how much an image is magnified in a pane: 1 is one image pixel per canvas pixel |  | view2d:zoom, wsi:goto |
 | masking-profile-id | the id of a masking profile of the configuration |  | redact:export |
-| output-path | a local file the verb writes; the policy decides where a remote caller may write |  | config:catalog, config:pack, hp:export, measure:export, measure:profile, print:render, print:send, redact:export, script:run, state:export, view2d:capture, workspace:save, wsi:export |
-| pane-index | the position of a pane in the grid of a view, counted from 1 |  | color:status, dicom:open, measure:calibrate, measure:export, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:flip, view2d:fusion, view2d:graphics, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, wsi:annotations, wsi:export, wsi:goto, wsi:info |
+| output-path | a local file the verb writes; the policy decides where a remote caller may write |  | config:catalog, config:pack, hp:export, measure:export, measure:profile, print:render, print:send, redact:export, script:run, state:export, view2d:capture, view3d:capture, workspace:save, wsi:export |
+| pane-index | the position of a pane in the grid of a view, counted from 1 |  | color:status, dicom:open, measure:calibrate, measure:export, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:flip, view2d:fusion, view2d:graphics, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, view3d:capture, wsi:annotations, wsi:export, wsi:goto, wsi:info |
 | patient-handle | the masked patient id of a loaded patient, from dicom:list, stable for the session (handle) | dicom:list | dicom:unload |
 | preset-id | the id of a window level preset, from view2d:preset (handle) | view2d:preset | view2d:preset |
 | remote-url | an absolute URL; the policy decides whether a remote caller may use it |  | dicom:load, dicom:load-dicomweb, image:load |
@@ -2818,7 +2851,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | split-ratio | the share of the space given to the first side of a split, strictly between 0 and 1 |  | workspace:panel, workspace:split |
 | study-uid | the Study Instance UID of a loaded study, from dicom:list (handle) | dicom:list | dicom:interest, dicom:objects, dicom:unload, explorer:filter, hp:apply, hp:compare, hp:features, hp:match, hp:open, state:export, state:restore, subtraction:list |
 | tool-id | the id of a tool of the shell, from workspace:panel (handle) | workspace:panel | workspace:panel |
-| view-id | the id of a view, from workspace:list (handle) | dicom:open, workspace:list | color:status, dicom:info, dicom:open, dicom:tag, hp:correct, hp:explain, hp:group, hp:save, hp:sets, measure:calibrate, measure:export, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:flip, view2d:fusion, view2d:graphics, view2d:grid, view2d:hang, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:sync, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, workspace:close, workspace:detach, workspace:fullscreen, workspace:maximize, workspace:move, workspace:select, workspace:split, workspace:stack, workspace:unmaximize, wsi:annotations, wsi:export, wsi:goto, wsi:info |
+| view-id | the id of a view, from workspace:list (handle) | dicom:open, workspace:list | color:status, dicom:info, dicom:open, dicom:tag, hp:correct, hp:explain, hp:group, hp:save, hp:sets, measure:calibrate, measure:export, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:flip, view2d:fusion, view2d:graphics, view2d:grid, view2d:hang, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:sync, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, view3d:capture, workspace:close, workspace:detach, workspace:fullscreen, workspace:maximize, workspace:move, workspace:select, workspace:split, workspace:stack, workspace:unmaximize, wsi:annotations, wsi:export, wsi:goto, wsi:info |
 | window-center | the window center applied to the pixel values, in their own unit |  | view2d:window-level |
 | window-width | the window width applied to the pixel values, in their own unit |  | view2d:window-level |
 
@@ -2831,7 +2864,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | annotation | a text graphic |  |
 | candidate | a protocol that matches a study, with its match quality |  |
 | canvas | the pixel space of a pane after zoom, pan, rotation and flip |  |
-| capture | the pixels of a pane, a view or a window written to an image file |  |
+| capture | the pixels of a pane, a layout or a window written to an image file |  |
 | cell | one image place of a printed page or of a protocol layout |  |
 | checkpoint | a saved display state a transaction can roll back to |  |
 | checkpoint id | the handle of a checkpoint, from state:checkpoints |  |
@@ -2844,7 +2877,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | download | transfer the pixel data of a loaded series from its source; a loaded series may be not downloaded under a selective hanging protocol | fetch |
 | entry | one item of a document or a library, with its id |  |
 | event | a change of state the instance publishes on its bus, named like the commands |  |
-| format | the file format of an export: xml, csv, or what a plugin adds |  |
+| format | the file format of an export or a capture: png, jpg, xml, csv, or what a plugin adds |  |
 | frame | one frame of a multiframe DICOM instance |  |
 | graphic | any drawn object on a pane (measurement, annotation, region) with a graphic id | shape |
 | grid | the arrangement of panes inside a view |  |
@@ -2877,7 +2910,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | reason | why something was done or refused, as the why panel and the refusals say it |  |
 | redaction | pixels hidden over an image; masking is reserved for identity values in text |  |
 | region | a geometric area given by the caller (rect, ellipse, polygon) in a stated space | roi, zone |
-| scope | what a redaction applies to: the image, the series or the study |  |
+| scope | what an action covers: for a redaction the image, the series or the study; for a capture the view, the layout or the window |  |
 | screen | a physical display of the workstation, with a role in the window model |  |
 | script | a file of commands run in one call, with variables and expectations |  |
 | selected | the view, pane or series that receives a command when no handle is given | current view, active view, current pane, active pane, focused view |

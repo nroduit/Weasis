@@ -138,7 +138,6 @@ public class RedactionCommands implements CommandExtension {
   @Override
   public List<Term> getTerms() {
     return List.of(
-        Term.of("scope", "what a redaction applies to: the image, the series or the study"),
         Term.of(
             "masking profile",
             "a named set of rules of the configuration that decides which identity values are hidden"));

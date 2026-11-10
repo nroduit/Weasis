@@ -274,7 +274,7 @@ public class FrameGrabber {
       if (area != null) {
         full = full.getSubimage(area.x, area.y, area.width, area.height);
       }
-      return fit(full, target);
+      return ViewCapture.fit(full, target);
     }
     Runnable restore =
         scope == CaptureScope.VIEW && canvas instanceof LiveCaptureView live
@@ -283,11 +283,11 @@ public class FrameGrabber {
     try {
       if (component.getWidth() == target.getWidth()
           && component.getHeight() == target.getHeight()) {
-        paint(component, target);
+        ViewCapture.paint(component, target);
         return target;
       }
-      paint(component, paintBuffer(component));
-      return fit(paintBuffer, target);
+      ViewCapture.paint(component, paintBuffer(component));
+      return ViewCapture.fit(paintBuffer, target);
     } finally {
       restore.run();
     }
@@ -304,63 +304,7 @@ public class FrameGrabber {
     return paintBuffer;
   }
 
-  private static void paint(Component component, BufferedImage image) {
-    Graphics2D g2d = image.createGraphics();
-    try {
-      component.paint(g2d);
-      if (component instanceof Window window && window.isShowing()) {
-        paintOwnedWindows(window, window.getLocationOnScreen(), g2d);
-      }
-    } finally {
-      g2d.dispose();
-    }
-  }
-
-  /**
-   * Paints the dialogs, menus and tooltips the window owns over it, where they are on screen. They
-   * are windows of their own, not children of the frame, so painting the frame leaves them out.
-   * Owned windows come in creation order, which puts a dialog opened from another one on top.
-   */
-  private static void paintOwnedWindows(Window owner, Point origin, Graphics2D g2d) {
-    for (Window owned : owner.getOwnedWindows()) {
-      if (!owned.isShowing() || owned.getWidth() <= 0 || owned.getHeight() <= 0) {
-        continue;
-      }
-      Point location = owned.getLocationOnScreen();
-      Graphics2D g = (Graphics2D) g2d.create();
-      try {
-        g.translate(location.x - origin.x, location.y - origin.y);
-        g.clipRect(0, 0, owned.getWidth(), owned.getHeight());
-        owned.paint(g);
-      } finally {
-        g.dispose();
-      }
-      paintOwnedWindows(owned, origin, g2d);
-    }
-  }
-
   /** Scales into the target, keeping the aspect ratio and padding with black. */
-  private static BufferedImage fit(BufferedImage source, BufferedImage target) {
-    if (source == target) {
-      return target;
-    }
-    Graphics2D g2d = target.createGraphics();
-    try {
-      Placement placement = Placement.of(source, target);
-      g2d.setRenderingHint(
-          RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-      g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-      if (placement.w() != target.getWidth() || placement.h() != target.getHeight()) {
-        g2d.setColor(Color.BLACK);
-        g2d.fillRect(0, 0, target.getWidth(), target.getHeight());
-      }
-      g2d.drawImage(source, placement.x(), placement.y(), placement.w(), placement.h(), null);
-    } finally {
-      g2d.dispose();
-    }
-    return target;
-  }
-
   /** Where the mouse is in the frame, or {@code null} when it is outside the captured area. */
   private Point pointerInFrame(BufferedImage frame) {
     PointerInfo info = MouseInfo.getPointerInfo();
@@ -373,7 +317,7 @@ public class FrameGrabber {
     if (p.x < 0 || p.y < 0 || p.x >= component.getWidth() || p.y >= component.getHeight()) {
       return null;
     }
-    Placement placement = Placement.of(component.getWidth(), component.getHeight(), frame);
+    ViewCapture.Placement placement = ViewCapture.Placement.of(component.getWidth(), component.getHeight(), frame);
     return new Point(
         placement.x() + (int) Math.round(p.x * placement.ratio()),
         placement.y() + (int) Math.round(p.y * placement.ratio()));
@@ -401,19 +345,4 @@ public class FrameGrabber {
   }
 
   /** Where a source of one size lands in a frame of another, aspect ratio kept, centered. */
-  record Placement(int x, int y, int w, int h, double ratio) {
-
-    static Placement of(BufferedImage source, BufferedImage target) {
-      return of(source.getWidth(), source.getHeight(), target);
-    }
-
-    static Placement of(int sourceWidth, int sourceHeight, BufferedImage target) {
-      double ratio =
-          Math.min(
-              target.getWidth() / (double) sourceWidth, target.getHeight() / (double) sourceHeight);
-      int w = Math.max(1, (int) Math.round(sourceWidth * ratio));
-      int h = Math.max(1, (int) Math.round(sourceHeight * ratio));
-      return new Placement((target.getWidth() - w) / 2, (target.getHeight() - h) / 2, w, h, ratio);
-    }
-  }
 }
