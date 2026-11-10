@@ -161,16 +161,11 @@ public class HangingWhyTool extends PluginTool implements SeriesViewerListener {
     String name =
         applied.plan().name() == null ? applied.plan().protocolId() : applied.plan().name();
     header.setText(
-        String.format(
-            Messages.getString("HangingWhyTool.header"),
-            name,
-            position + 1,
-            c.label() == null ? "" : c.label()));
+        Messages.format(
+            "HangingWhyTool.header", name, position + 1, c.label() == null ? "" : c.label()));
     match.setText(
-        String.format(
-            Messages.getString("HangingWhyTool.match"),
-            c.match().name().toLowerCase(Locale.ROOT),
-            c.score()));
+        Messages.format(
+            "HangingWhyTool.match", c.match().name().toLowerCase(Locale.ROOT), c.score()));
     SeriesFeatures features = ActiveHanging.featuresOf(applied, c.series()).orElse(null);
     c.reasons().forEach(r -> reasons.addElement(ReasonProvenance.annotate(r, features)));
     for (Alternative a : c.alternatives()) {

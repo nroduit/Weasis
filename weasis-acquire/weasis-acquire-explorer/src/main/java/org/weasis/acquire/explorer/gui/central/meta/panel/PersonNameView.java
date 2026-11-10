@@ -110,9 +110,7 @@ public class PersonNameView extends JPanel {
     dicomValue.setText(value);
     dicomValue.setForeground(tooLong ? IconColor.ACTIONS_RED.getColor() : defaultColor);
     dicomValue.setToolTipText(
-        tooLong
-            ? String.format(Messages.getString("person.name.too.long"), MAX_GROUP_CHARS)
-            : null);
+        tooLong ? Messages.format("person.name.too.long", MAX_GROUP_CHARS) : null);
   }
 
   /** Rejects the DICOM delimiters and limits the length of a single component. */

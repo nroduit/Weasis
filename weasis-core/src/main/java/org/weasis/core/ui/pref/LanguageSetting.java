@@ -118,7 +118,7 @@ public class LanguageSetting extends AbstractItemDialogPage {
             """
             .formatted(
                 Messages.getString("GeneralSetting.regionalTitle"),
-                Messages.getString("GeneralSetting.date"),
+                Messages.common("date"),
                 Messages.getString("GeneralSetting.short"),
                 DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(now),
                 Messages.getString("GeneralSetting.medium"),
@@ -141,8 +141,7 @@ public class LanguageSetting extends AbstractItemDialogPage {
                 """
               .formatted(
                   IconColor.ACTIONS_BLUE.getHtmlCode(),
-                  Messages.getString("GeneralSetting.translation.msg")
-                      .formatted(translationPercentage),
+                  Messages.format("GeneralSetting.translation.msg", translationPercentage),
                   transifexUrl,
                   transifexUrl);
 

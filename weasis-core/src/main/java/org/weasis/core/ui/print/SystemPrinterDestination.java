@@ -14,7 +14,6 @@ import java.awt.Window;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -116,7 +115,7 @@ public final class SystemPrinterDestination implements PrintDestination {
   @Override
   public String title() {
     return systemDefault
-        ? MessageFormat.format(Messages.getString("PrintDialog.default_printer"), service.getName())
+        ? Messages.format("PrintDialog.default_printer", service.getName())
         : service.getName();
   }
 

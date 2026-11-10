@@ -132,7 +132,7 @@ public abstract class AbstractDicomNode implements LayeredEntries.Entry {
 
   public enum UsageType {
     STORAGE(Messages.getString("AbstractDicomNode.storage")),
-    RETRIEVE(Messages.getString("AbstractDicomNode.retrieve")),
+    RETRIEVE(Messages.common("retrieve")),
     BOTH(Messages.getString("AbstractDicomNode.both"));
 
     final String title;
@@ -760,7 +760,7 @@ public abstract class AbstractDicomNode implements LayeredEntries.Entry {
         JOptionPane.showMessageDialog(
             comboBox,
             Messages.getString("AbstractDicomNode.only_usr_cr_msg"),
-            Messages.getString("DicomPrintDialog.error"),
+            Messages.common("error"),
             JOptionPane.ERROR_MESSAGE);
       }
     }
@@ -774,7 +774,7 @@ public abstract class AbstractDicomNode implements LayeredEntries.Entry {
         int response =
             JOptionPane.showConfirmDialog(
                 comboBox,
-                String.format(Messages.getString("AbstractDicomNode.delete_msg"), node),
+                Messages.format("AbstractDicomNode.delete_msg", node),
                 Type.DICOM.toString(),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
@@ -790,7 +790,7 @@ public abstract class AbstractDicomNode implements LayeredEntries.Entry {
         JOptionPane.showMessageDialog(
             comboBox,
             Messages.getString("AbstractDicomNode.only_usr_cr_msg"),
-            Messages.getString("DicomPrintDialog.error"),
+            Messages.common("error"),
             JOptionPane.ERROR_MESSAGE);
       }
     }

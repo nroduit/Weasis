@@ -84,15 +84,13 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
 
       if (first instanceof ImageElement) {
         popupMenu.add(
-            new JMenuItem(
-                new DefaultAction(
-                    Messages.getString("AcquireCentralThumnailList.edit"), _ -> openSelection())));
+            new JMenuItem(new DefaultAction(Messages.common("edit"), _ -> openSelection())));
       }
 
       popupMenu.add(
           new JMenuItem(
               new DefaultAction(
-                  Messages.getString("AcquireCentralThumnailList.remove"),
+                  Messages.common("remove"),
                   _ -> {
                     clearSelection();
                     AcquireManager.getInstance().removeMedias(medias);
@@ -114,14 +112,14 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
             medias,
             Messages.getString("AcquireCentralThumnailList.rotate")
                 + StringUtil.COLON_AND_SPACE
-                + Messages.getString("AcquireCentralThumnailList.plus90"),
+                + Messages.common("rotate_cw"),
             90);
         operationRotate(
             operationsMenu,
             medias,
             Messages.getString("AcquireCentralThumnailList.rotate")
                 + StringUtil.COLON_AND_SPACE
-                + Messages.getString("AcquireCentralThumnailList.min90"),
+                + Messages.common("rotate_ccw"),
             270);
         popupMenu.add(operationsMenu);
       }

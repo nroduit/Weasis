@@ -443,8 +443,7 @@ public class MeasureTool extends PluginTool
         .getAction(ActionW.SPATIAL_UNIT)
         .ifPresent(
             b -> {
-              final JLabel labelUnit =
-                  new JLabel(Messages.getString("MeasureTool.unit") + StringUtil.COLON);
+              final JLabel labelUnit = new JLabel(Messages.common("unit") + StringUtil.COLON);
               JComboBox<?> unitComboBox = b.createCombo(120);
               unitComboBox.setSelectedItem(Unit.PIXEL);
               options.add(labelUnit, WrapFlowLayout.KEEP_WITH_NEXT);
@@ -579,9 +578,7 @@ public class MeasureTool extends PluginTool
 
     // just clear tableContainer if measList is null
     if (measList != null) {
-      String[] headers = {
-        Messages.getString("MeasureTool.param"), Messages.getString("MeasureTool.val")
-      };
+      String[] headers = {Messages.getString("MeasureTool.param"), Messages.common("value")};
       jtable.setModel(new SimpleTableModel(headers, getLabels(measList)));
       jtable
           .getColumnModel()

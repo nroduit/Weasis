@@ -23,7 +23,7 @@ public class LauncherDialog extends JDialog {
 
   private final JTextField nameField = new JTextField(25);
   private final JTextField iconNameField = new JTextField(25);
-  private final JCheckBox enableCheckBox = new JCheckBox(Messages.getString("enable"), true);
+  private final JCheckBox enableCheckBox = new JCheckBox(Messages.common("enable"), true);
   private final JCheckBox buttonCheckBox = new JCheckBox(Messages.getString("button"));
   private final JComboBox<Launcher> nodesComboBox;
   private final Launcher launcher;
@@ -47,7 +47,7 @@ public class LauncherDialog extends JDialog {
       buttonCheckBox.setSelected(launcher.isButton());
     }
 
-    add(new JLabel(Messages.getString("name") + StringUtil.COLON), "align right"); // NON-NLS
+    add(new JLabel(Messages.common("name") + StringUtil.COLON), "align right"); // NON-NLS
     add(nameField, "growx"); // NON-NLS
 
     add(new JLabel(Messages.getString("icon.path") + StringUtil.COLON), "align right"); // NON-NLS
@@ -61,10 +61,10 @@ public class LauncherDialog extends JDialog {
         _ -> new ConfigurationDialog(LauncherDialog.this, this.launcher, type).setVisible(true));
     add(configurationButton, "align right"); // NON-NLS
 
-    JButton saveButton = new JButton(Messages.getString("save"));
+    JButton saveButton = new JButton(Messages.common("save"));
     saveButton.addActionListener(_ -> saveLauncher());
     add(saveButton, "cell 1 4, split 2, align right, gapright 15, gaptop 15"); // NON-NLS
-    JButton cancelButton = new JButton(Messages.getString("cancel"));
+    JButton cancelButton = new JButton(Messages.common("cancel"));
     cancelButton.addActionListener(_ -> dispose());
     add(cancelButton);
 
@@ -75,7 +75,7 @@ public class LauncherDialog extends JDialog {
   private void saveLauncher() {
     String name = nameField.getText();
     if (!StringUtil.hasText(name)) {
-      String fieldName = Messages.getString("name");
+      String fieldName = Messages.common("name");
       ShowRequiredValue(this, fieldName);
       return;
     }
@@ -105,8 +105,8 @@ public class LauncherDialog extends JDialog {
   static void ShowRequiredValue(Window parent, String fieldName) {
     JOptionPane.showMessageDialog(
         WinUtil.getValidComponent(parent),
-        String.format(Messages.getString("is.required"), fieldName),
-        Messages.getString("error"),
+        Messages.format("is.required", fieldName),
+        Messages.common("error"),
         JOptionPane.ERROR_MESSAGE);
   }
 }

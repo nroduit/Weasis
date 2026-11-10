@@ -50,7 +50,7 @@ public class LicencesDialog extends JDialog {
   public LicencesDialog(final Frame owner, List<AbstractTabLicense> list) {
     super(owner, Messages.getString("LicencesDialog.title"), true);
     this.tabsList = list;
-    this.jButtonClose = new JButton(Messages.getString("WeasisAboutBox.close"));
+    this.jButtonClose = new JButton(Messages.common("close"));
     jButtonClose.addActionListener(e -> close());
     this.tabbedPane = new JTabbedPane(SwingConstants.LEFT);
     tabbedPane.putClientProperty("JTabbedPane.showTabSeparators", true);

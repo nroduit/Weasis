@@ -23,7 +23,7 @@ import org.weasis.dicom.viewer3d.Messages;
  * term samples.
  */
 public enum EnvironmentMap {
-  NONE(Messages.getString("env.none"), null),
+  NONE(Messages.common("none"), null),
   STUDIO(
       Messages.getString("env.studio"),
       new Sky(

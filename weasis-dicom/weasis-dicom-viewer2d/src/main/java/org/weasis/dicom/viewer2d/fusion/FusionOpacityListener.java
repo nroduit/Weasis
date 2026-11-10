@@ -52,7 +52,7 @@ public class FusionOpacityListener extends SliderChangeListener {
     String title =
         modalityLabel
             + StringUtil.SPACE
-            + Messages.getString("FusionTool.opacity")
+            + Messages.common("opacity")
             + StringUtil.COLON_AND_SPACE
             + getSliderValue()
             + "%"; // NON-NLS

@@ -77,7 +77,7 @@ public class IsoImageExport extends LocalExport {
     getPreferences().put("force.dicomdir", Boolean.TRUE.toString());
     checkBoxAddJpeg = new JCheckBox(Messages.getString("add.jpeg.images"));
     checkBoxAddWeasisViewer =
-        new JCheckBox(Messages.getString("add") + StringUtil.SPACE + AppProperties.WEASIS_NAME);
+        new JCheckBox(Messages.common("add") + StringUtil.SPACE + AppProperties.WEASIS_NAME);
     comboBoxImgFormat.setModel(new DefaultComboBoxModel<>(new Format[] {Format.DICOM}));
     checkBoxAddWeasisViewer.setEnabled(SystemInfo.isWindows);
 

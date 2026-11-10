@@ -742,26 +742,25 @@ public class WsiView2d extends View2d {
     List<String> lines = new ArrayList<>();
     slide
         .magnification()
-        .ifPresent(
-            m -> lines.add(Messages.getString("WsiView.magnification").formatted(m * viewScale())));
+        .ifPresent(m -> lines.add(Messages.format("WsiView.magnification", m * viewScale())));
     if (slide.base().focalPlanes() > 1 || slide.base().opticalPaths().size() > 1) {
       lines.add(
-          Messages.getString("WsiView.plane")
-              .formatted(
-                  focalPlane + 1,
-                  slide.base().focalPlanes(),
-                  slide.base().opticalPaths().get(opticalPath)));
+          Messages.format(
+              "WsiView.plane",
+              focalPlane + 1,
+              slide.base().focalPlanes(),
+              slide.base().opticalPaths().get(opticalPath)));
     }
     if (diagnosticsVisible) {
       String diagnostics =
-          Messages.getString("WsiView.diagnostics")
-              .formatted(
-                  plan.level(),
-                  slide.levels().size(),
-                  1.0 / viewScale(),
-                  layer.readyTiles(),
-                  plan.painted().size(),
-                  paintMs);
+          Messages.format(
+              "WsiView.diagnostics",
+              plan.level(),
+              slide.levels().size(),
+              1.0 / viewScale(),
+              layer.readyTiles(),
+              plan.painted().size(),
+              paintMs);
       lines.add(
           plan.truncated()
               ? diagnostics + " · " + Messages.getString("WsiView.truncated")

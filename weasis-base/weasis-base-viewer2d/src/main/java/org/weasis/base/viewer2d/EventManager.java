@@ -530,7 +530,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     JMenu menu = null;
     if (isMenuEnabled(prop)) {
       ButtonGroup group = new ButtonGroup();
-      menu = new JMenu(Messages.getString("ResetTools.reset"));
+      menu = new JMenu(Messages.common("reset"));
       menu.setIcon(ResourceUtil.getIcon(ActionIcon.RESET));
       menu.setEnabled(getSelectedSeries() != null);
 
@@ -574,17 +574,17 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     if (isMenuEnabled(prop)) {
       Optional<SliderChangeListener> rotateAction = getAction(ActionW.ROTATION);
       if (rotateAction.isPresent()) {
-        menu = new JMenu(Messages.getString("View2dContainer.orientation"));
+        menu = new JMenu(Messages.common("orientation"));
         menu.setIcon(ActionW.ROTATION.getIcon());
         GuiUtils.applySelectedIconEffect(menu);
         menu.setEnabled(rotateAction.get().isActionEnabled());
 
         if (rotateAction.get().isActionEnabled()) {
           ShortcutManager sm = ShortcutManager.getInstance();
-          JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset"));
+          JMenuItem menuItem = new JMenuItem(Messages.common("reset"));
           menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
           menu.add(menuItem);
-          menuItem = new JMenuItem(Messages.getString("View2dContainer.-90"));
+          menuItem = new JMenuItem(Messages.common("rotate_ccw"));
           menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_COUNTERCLOCKWISE));
           menuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_VIEWER_ROTATE_LEFT));
           menuItem.addActionListener(
@@ -593,7 +593,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                       .get()
                       .setSliderValue((rotateAction.get().getSliderValue() - 90 + 360) % 360));
           menu.add(menuItem);
-          menuItem = new JMenuItem(Messages.getString("View2dContainer.+90"));
+          menuItem = new JMenuItem(Messages.common("rotate_cw"));
           menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_CLOCKWISE));
           menuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_VIEWER_ROTATE_RIGHT));
           menuItem.addActionListener(
@@ -602,7 +602,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                       .get()
                       .setSliderValue((rotateAction.get().getSliderValue() + 90) % 360));
           menu.add(menuItem);
-          menuItem = new JMenuItem(Messages.getString("View2dContainer.+180"));
+          menuItem = new JMenuItem(Messages.common("rotate_180"));
           menuItem.addActionListener(
               e ->
                   rotateAction
@@ -691,7 +691,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         return filterAction
             .get()
             .createUnregisteredRadioMenu(
-                Messages.getString("ImageTool.filter"), ResourceUtil.getIcon(ActionIcon.FILTER));
+                Messages.common("filter"), ResourceUtil.getIcon(ActionIcon.FILTER));
       }
     }
     return null;

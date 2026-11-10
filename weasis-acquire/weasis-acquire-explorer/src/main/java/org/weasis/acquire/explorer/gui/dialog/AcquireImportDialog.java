@@ -43,8 +43,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
   private final ImportPanel importPanel;
 
   static final Object[] OPTIONS = {
-    Messages.getString("AcquireImportDialog.validate"),
-    Messages.getString("AcquireImportDialog.cancel")
+    Messages.getString("AcquireImportDialog.validate"), Messages.common("cancel")
   };
   static final String REVALIDATE = "ReValidate";
 

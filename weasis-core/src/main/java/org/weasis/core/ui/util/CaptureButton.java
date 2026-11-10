@@ -107,7 +107,7 @@ public class CaptureButton extends JButton {
   private void showMenu() {
     JPopupMenu menu = new JPopupMenu();
     if (RecordingState.isRecording()) {
-      JMenuItem stop = new JMenuItem(Messages.getString("animation.stop"));
+      JMenuItem stop = new JMenuItem(Messages.common("stop"));
       stop.addActionListener(_ -> RecordingState.active().ifPresent(AnimationRecorder::stop));
       menu.add(stop);
     } else {

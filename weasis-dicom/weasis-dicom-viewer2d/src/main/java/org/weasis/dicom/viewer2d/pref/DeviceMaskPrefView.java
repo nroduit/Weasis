@@ -70,7 +70,7 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
   private final JLabel matchLabel = new JLabel();
   private final JLabel lockedLabel = new JLabel();
   private final JButton renameButton = new JButton(Messages.getString("DeviceMaskPrefView.rename"));
-  private final JButton deleteButton = new JButton(Messages.getString("DeviceMaskPrefView.delete"));
+  private final JButton deleteButton = new JButton(Messages.common("delete"));
 
   public DeviceMaskPrefView() {
     this(MaskingModelRegistry.getInstance());
@@ -104,11 +104,9 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
     JPanel panel = new JPanel(new MigLayout("ins 0, fillx", "[][][][]push[]")); // NON-NLS
     renameButton.addActionListener(e -> rename());
     deleteButton.addActionListener(e -> delete());
-    JButton importButton =
-        new JButton(Messages.getString("DeviceMaskPrefView.import") + StringUtil.Suffix.THREE_PTS);
+    JButton importButton = new JButton(Messages.common("import") + StringUtil.Suffix.THREE_PTS);
     importButton.addActionListener(e -> importMasks());
-    JButton exportButton =
-        new JButton(Messages.getString("DeviceMaskPrefView.export") + StringUtil.Suffix.THREE_PTS);
+    JButton exportButton = new JButton(Messages.common("export") + StringUtil.Suffix.THREE_PTS);
     exportButton.addActionListener(e -> exportMasks());
     panel.add(renameButton);
     panel.add(deleteButton);
@@ -122,8 +120,7 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
     boolean locked = registry.isLocked();
     lockedLabel.setVisible(locked);
     if (locked) {
-      lockedLabel.setText(
-          Messages.getString("DeviceMaskPrefView.locked").formatted(registry.siteLocation()));
+      lockedLabel.setText(Messages.format("DeviceMaskPrefView.locked", registry.siteLocation()));
     }
     updateMatch();
     showSelected();
@@ -143,7 +140,7 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
     matchLabel.setVisible(true);
     matchLabel.setText(
         applied
-            .map(c -> Messages.getString("DeviceMaskPrefView.match").formatted(c.mask().name()))
+            .map(c -> Messages.format("DeviceMaskPrefView.match", c.mask().name()))
             .orElseGet(() -> Messages.getString("DeviceMaskPrefView.match.none")));
     matchLabel.setToolTipText(
         candidates.stream()
@@ -172,8 +169,8 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
     // A user mask over a site or built-in id: deleting it resets the mask to that definition
     deleteButton.setText(
         mask != null && registry.masks().below(mask.id()).isPresent()
-            ? Messages.getString("DeviceMaskPrefView.reset")
-            : Messages.getString("DeviceMaskPrefView.delete"));
+            ? Messages.common("reset")
+            : Messages.common("delete"));
   }
 
   private void rename() {
@@ -202,7 +199,7 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
     if (!editable(mask)
         || JOptionPane.showConfirmDialog(
                 this,
-                Messages.getString("DeviceMaskPrefView.delete.q").formatted(mask.name()),
+                Messages.format("DeviceMaskPrefView.delete.q", mask.name()),
                 getTitle(),
                 JOptionPane.YES_NO_OPTION)
             != JOptionPane.YES_OPTION) {
@@ -330,8 +327,7 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
 
   private void showLosses(MaskingProfile profile, List<KarnakMasks.Loss> losses) {
     StringBuilder text =
-        new StringBuilder(
-            Messages.getString("DeviceMaskPrefView.export.done").formatted(profile.name()));
+        new StringBuilder(Messages.format("DeviceMaskPrefView.export.done", profile.name()));
     for (KarnakMasks.Loss loss : losses) {
       text.append(System.lineSeparator())
           .append("- ")
@@ -441,7 +437,7 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
     @Override
     public String getColumnName(int column) {
       return switch (column) {
-        case 0 -> Messages.getString("DeviceMaskPrefView.column.name");
+        case 0 -> Messages.common("name");
         case 1 -> Messages.getString("DeviceMaskPrefView.column.device");
         case 2 -> Messages.getString("DeviceMaskPrefView.column.regions");
         case 3 -> Messages.getString("DeviceMaskPrefView.column.source");

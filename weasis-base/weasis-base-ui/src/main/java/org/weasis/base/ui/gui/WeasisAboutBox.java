@@ -13,7 +13,6 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.event.WindowEvent;
-import java.text.MessageFormat;
 import java.util.Enumeration;
 import java.util.Properties;
 import javax.swing.JButton;
@@ -38,17 +37,11 @@ public class WeasisAboutBox extends JDialog {
   private final JTable sysTable;
 
   public WeasisAboutBox(Frame owner) {
-    super(
-        owner,
-        String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME),
-        true);
+    super(owner, Messages.format("WeasisAboutBox.about", AppProperties.WEASIS_NAME), true);
     sysTable =
         new JTable(
             new SimpleTableModel(
-                new String[] {
-                  Messages.getString("WeasisAboutBox.prop"),
-                  Messages.getString("WeasisAboutBox.val")
-                },
+                new String[] {Messages.getString("WeasisAboutBox.prop"), Messages.common("value")},
                 createSysInfo()));
     sysTable.getColumnModel().setColumnMargin(GuiUtils.getScaleLength(5));
     sysTable.setAutoCreateRowSorter(true);
@@ -64,7 +57,7 @@ public class WeasisAboutBox extends JDialog {
     panelRoot.setLayout(new BorderLayout());
 
     JButton jButtonClose = new JButton();
-    jButtonClose.setText(Messages.getString("WeasisAboutBox.close"));
+    jButtonClose.setText(Messages.common("close"));
     jButtonClose.addActionListener(e -> close());
     JPanel jPanelClose = GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 25, 10, jButtonClose);
 
@@ -163,8 +156,6 @@ public class WeasisAboutBox extends JDialog {
     if (!build.isPreview()) {
       return "";
     }
-    return "<p><b>"
-        + MessageFormat.format(Messages.getString("WeasisAboutBox.preview"), build.label())
-        + "</b></p>";
+    return "<p><b>" + Messages.format("WeasisAboutBox.preview", build.label()) + "</b></p>";
   }
 }

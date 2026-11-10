@@ -117,7 +117,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           View2dContainer.class.getResourceAsStream(
               "/config/layoutModelHisto.properties"), // NON-NLS
           "layout_histo", // NON-NLS
-          Messages.getString("View2dContainer.histogram"));
+          Messages.common("histogram"));
   // Unmodifiable list of the default layout elements
   public static final List<MigLayoutModel> DEFAULT_LAYOUT_LIST =
       List.of(

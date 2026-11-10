@@ -52,8 +52,7 @@ public class CalibrationView extends JPanel {
   private final JFormattedTextField jTextFieldLineWidth = new JFormattedTextField();
 
   private final ButtonGroup ratioGroup = new ButtonGroup();
-  private final JRadioButton radioButtonSeries =
-      new JRadioButton(Messages.getString("CalibrationView.series"));
+  private final JRadioButton radioButtonSeries = new JRadioButton(Messages.common("series"));
   private final JRadioButton radioButtonImage =
       new JRadioButton(Messages.getString("CalibrationView.current"));
 

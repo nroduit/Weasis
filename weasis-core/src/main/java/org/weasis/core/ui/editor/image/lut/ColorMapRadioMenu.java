@@ -11,7 +11,6 @@ package org.weasis.core.ui.editor.image.lut;
 
 import java.awt.Component;
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -94,7 +93,7 @@ public class ColorMapRadioMenu extends GroupRadioMenu<ByteLut> {
     }
     boolean favorite = registry.isFavorite(map);
     String key = favorite ? "ColorMapEditor.removeFavorite" : "ColorMapEditor.addFavorite";
-    JMenuItem item = new JMenuItem(MessageFormat.format(Messages.getString(key), map.name()));
+    JMenuItem item = new JMenuItem(Messages.format(key, map.name()));
     item.addActionListener(
         e -> {
           try {
@@ -149,7 +148,7 @@ public class ColorMapRadioMenu extends GroupRadioMenu<ByteLut> {
     if (entries(parent).length == 0) {
       addRootSection(parent, null, general);
     } else {
-      addSubMenu(parent, Messages.getString("ColorMapEditor.general"), general);
+      addSubMenu(parent, Messages.common("general"), general);
     }
     categories.forEach((name, items) -> addSubMenu(parent, name, items));
     if (!modalities.isEmpty()) {
@@ -173,7 +172,7 @@ public class ColorMapRadioMenu extends GroupRadioMenu<ByteLut> {
     if (!map.modalities().isEmpty()) {
       return String.join(", ", new TreeSet<>(map.modalities()));
     }
-    return map.category() != null ? map.category() : Messages.getString("ColorMapEditor.general");
+    return map.category() != null ? map.category() : Messages.common("general");
   }
 
   /** {@code text} followed by {@code hint} in the dim menu color, as one HTML label. */

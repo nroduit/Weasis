@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.explorer.main;
 
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.SwingWorker;
@@ -73,9 +72,7 @@ public final class StudyHints {
           if (!hint.isEmpty()) {
             hint.append(", ");
           }
-          hint.append(
-              MessageFormat.format(
-                  Messages.getString("StudyHints.session"), SessionActions.label(s)));
+          hint.append(Messages.format("StudyHints.session", SessionActions.label(s)));
         });
     return hint.isEmpty() ? null : hint.toString();
   }

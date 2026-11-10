@@ -9,21 +9,29 @@
  */
 package org.weasis.base.ui;
 
-import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import org.weasis.core.api.util.Bundles;
 
+/** The strings of this module; see {@link Bundles} for how a translation is found. */
 public class Messages {
   private static final String BUNDLE_NAME = "org.weasis.base.ui.messages"; // NON-NLS
 
-  private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
+  private static final ResourceBundle RESOURCE_BUNDLE = Bundles.of(BUNDLE_NAME, Messages.class);
 
   private Messages() {}
 
+  /** The string of a key, or {@code !key!} when the bundle has no such key. */
   public static String getString(String key) {
-    try {
-      return RESOURCE_BUNDLE.getString(key);
-    } catch (MissingResourceException e) {
-      return '!' + key + '!';
-    }
+    return Bundles.get(RESOURCE_BUNDLE, key);
+  }
+
+  /** The string of a key with its {@code {0}} arguments filled by {@code MessageFormat}. */
+  public static String format(String key, Object... args) {
+    return Bundles.format(RESOURCE_BUNDLE, key, args);
+  }
+
+  /** A string of the common section of weasis-core, e.g. {@code common("cancel")}. */
+  public static String common(String key) {
+    return Bundles.common(key);
   }
 }

@@ -48,18 +48,18 @@ public abstract class AbstractListEditor<T> extends JDialog {
 
     selectedModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    JButton jButtonClose = new JButton(Messages.getString("HttpHeadersEditor.close"));
+    JButton jButtonClose = new JButton(Messages.common("close"));
     jButtonClose.addActionListener(_ -> cancel());
 
     itemList.setSelectionModel(selectedModel);
 
-    JButton jButtonDelete = new JButton(Messages.getString("HttpHeadersEditor.delete"));
+    JButton jButtonDelete = new JButton(Messages.common("delete"));
     jButtonDelete.addActionListener(_ -> deleteSelectedItems());
 
-    JButton jButtonEdit = new JButton(Messages.getString("HttpHeadersEditor.edit"));
+    JButton jButtonEdit = new JButton(Messages.common("edit"));
     jButtonEdit.addActionListener(_ -> editItem());
 
-    JButton jButtonAdd = new JButton(Messages.getString("HttpHeadersEditor.add"));
+    JButton jButtonAdd = new JButton(Messages.common("add"));
     jButtonAdd.addActionListener(_ -> addItem());
 
     JScrollPane scrollPane = new JScrollPane(itemList);

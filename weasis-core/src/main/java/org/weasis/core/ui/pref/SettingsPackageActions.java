@@ -13,7 +13,6 @@ import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.text.MessageFormat;
 import java.util.Optional;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
@@ -76,8 +75,8 @@ final class SettingsPackageActions {
       }
       StringBuilder message =
           new StringBuilder(
-              MessageFormat.format(
-                  Messages.getString("PreferenceDialog.import.plan"),
+              Messages.format(
+                  "PreferenceDialog.import.plan",
                   plan.manifest().source().getOrDefault("user", "?"), // NON-NLS
                   plan.manifest().created(),
                   t[0],
@@ -95,7 +94,7 @@ final class SettingsPackageActions {
       Object[] options = {
         Messages.getString("PreferenceDialog.import.merge"),
         Messages.getString("PreferenceDialog.import.replace"),
-        Messages.getString("cancel")
+        Messages.common("cancel")
       };
       int choice =
           JOptionPane.showOptionDialog(
@@ -123,9 +122,7 @@ final class SettingsPackageActions {
       checkpoint.ifPresent(id -> DocumentVersions.importBackup(id, done.backup()));
       SiteDocuments.reloadAll();
       JOptionPane.showMessageDialog(
-          parent,
-          MessageFormat.format(
-              Messages.getString("PreferenceDialog.import.done"), String.valueOf(done.backup())));
+          parent, Messages.format("PreferenceDialog.import.done", String.valueOf(done.backup())));
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot import the settings package {}", file, e);
       error(parent, e);
@@ -154,6 +151,6 @@ final class SettingsPackageActions {
 
   private static void error(Component parent, Exception e) {
     JOptionPane.showMessageDialog(
-        parent, e.getMessage(), Messages.getString("error"), JOptionPane.ERROR_MESSAGE);
+        parent, e.getMessage(), Messages.common("error"), JOptionPane.ERROR_MESSAGE);
   }
 }

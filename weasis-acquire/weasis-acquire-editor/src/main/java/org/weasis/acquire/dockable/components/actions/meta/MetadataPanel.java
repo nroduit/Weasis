@@ -26,7 +26,7 @@ public class MetadataPanel extends AbstractAcquireActionPanel {
       new AcquireGlobalMetaPanel(Messages.getString("MetadataPanel.global"));
   private final AcquireSeriesMetaPanel seriesInfoPanel = new AcquireSeriesMetaPanel(null);
   private final AcquireMetadataPanel imageInfoPanel =
-      new AcquireImageMetaPanel(Messages.getString("MetadataPanel.image"));
+      new AcquireImageMetaPanel(Messages.common("image"));
 
   public MetadataPanel() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));

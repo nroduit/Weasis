@@ -20,7 +20,7 @@ public class AcquireSeriesMetaPanel extends AcquireMetadataPanel {
 
   private static final String NO_SERIES = Messages.getString("AcquireSerieMetaPanel.no_series");
   private static final String SERIES_PREFIX =
-      Messages.getString("AcquireSerieMetaPanel.series") + StringUtil.COLON_AND_SPACE;
+      Messages.common("series") + StringUtil.COLON_AND_SPACE;
 
   protected SeriesGroup seriesGroup;
 

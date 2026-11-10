@@ -25,7 +25,7 @@ import org.weasis.core.api.setting.Settings;
 public class GeneralSetting extends AbstractItemDialogPage {
   private static final Logger LOGGER = LoggerFactory.getLogger(GeneralSetting.class);
 
-  public static final String PAGE_NAME = Messages.getString("GeneralSetting.gen");
+  public static final String PAGE_NAME = Messages.common("general");
 
   private final JCheckBox checkboxConfirmClosing =
       new JCheckBox(Messages.getString("GeneralSetting.closingConfirmation"));

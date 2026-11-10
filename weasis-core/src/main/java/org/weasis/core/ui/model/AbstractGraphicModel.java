@@ -762,8 +762,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     int response = 0;
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     if (warningMessage && preferences.getBooleanProperty(UICore.CONFIRM_DELETE_MEASUREMENT, true)) {
-      JLabel label =
-          new JLabel(String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()));
+      JLabel label = new JLabel(Messages.format("AbstractLayerModel.del_conf", list.size()));
       JCheckBox dontAskAgain = new JCheckBox(Messages.getString("don.t.ask.again"));
       JPanel panel = GuiUtils.getVerticalBoxLayoutPanel(label, dontAskAgain);
       response =

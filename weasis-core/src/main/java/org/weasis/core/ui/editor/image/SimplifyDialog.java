@@ -96,10 +96,7 @@ public final class SimplifyDialog {
     graphic.setPointNumber(simplified.size());
     rebuild(view, graphic);
     kept.setText(
-        String.format(
-            Messages.getString("GraphicEditActions.simplify_points"),
-            simplified.size(),
-            original.size()));
+        Messages.format("GraphicEditActions.simplify_points", simplified.size(), original.size()));
     return true;
   }
 

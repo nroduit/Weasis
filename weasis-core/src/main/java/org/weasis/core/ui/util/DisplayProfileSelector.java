@@ -159,12 +159,11 @@ public class DisplayProfileSelector extends JComboBox<DisplayProfileSelector.Mod
    */
   private static final class Editor {
     private final JPanel panel = new JPanel(new MigLayout("insets 0, wrap 1, gapy 2lp")); // NON-NLS
-    private final JCheckBox image = new JCheckBox(Messages.getString("capture.display.image"));
+    private final JCheckBox image = new JCheckBox(Messages.common("image"));
     private final JCheckBox overlay = dicom(ActionW.IMAGE_OVERLAY.getTitle());
     private final JCheckBox shutter = dicom(ActionW.IMAGE_SHUTTER.getTitle());
     private final JCheckBox padding = dicom(ActionW.IMAGE_PIX_PADDING.getTitle());
-    private final JCheckBox annotations =
-        new JCheckBox(Messages.getString("capture.display.annotations"));
+    private final JCheckBox annotations = new JCheckBox(Messages.common("annotations"));
     private final Map<LayerItem, JCheckBox> items = new LinkedHashMap<>();
     private final JCheckBox drawings = new JCheckBox(ActionW.DRAWINGS.getTitle());
     private final JCheckBox crosslines = new JCheckBox(LayerType.CROSSLINES.toString());

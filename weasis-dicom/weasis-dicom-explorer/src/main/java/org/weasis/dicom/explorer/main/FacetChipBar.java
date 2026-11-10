@@ -13,7 +13,6 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.icons.FlatClearIcon;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -102,16 +101,14 @@ final class FacetChipBar extends JPanel {
       return;
     }
     if (counts != null && counts.length == 2) {
-      countLabel.setText(
-          MessageFormat.format(
-              Messages.getString("DicomExplorer.filter_status"), counts[0], counts[1]));
+      countLabel.setText(Messages.format("DicomExplorer.filter_status", counts[0], counts[1]));
       add(countLabel);
     }
-    String facetText = Messages.getString("DicomExplorer.facet_text");
+    String facetText = Messages.common("text");
     if (!filter.getText().isEmpty()) {
       add(chip("“" + filter.getText() + "”", facetText, () -> filter.setText(null)));
     }
-    String facetStudy = Messages.getString("DicomExplorer.facet_study");
+    String facetStudy = Messages.common("study");
     MediaSeriesGroup study = filter.getStudy();
     if (study != null) {
       add(chip(studyLabel(study), facetStudy, () -> filter.setStudy(null)));
@@ -127,7 +124,7 @@ final class FacetChipBar extends JPanel {
                 filter.setStudies(studies);
               }));
     }
-    String facetModality = Messages.getString("DicomExplorer.facet_modality");
+    String facetModality = Messages.common("modality");
     List<String> modalities = new ArrayList<>(filter.getModalities());
     modalities.sort(null);
     for (String modality : modalities) {
@@ -187,7 +184,7 @@ final class FacetChipBar extends JPanel {
                 filter.setDownloadStates(states);
               }));
     }
-    JButton clear = new JButton(Messages.getString("DicomExplorer.filter_clear"));
+    JButton clear = new JButton(Messages.common("clear"));
     style(clear);
     clear.setToolTipText(Messages.getString("DicomExplorer.filter_clear_tip"));
     clear.addActionListener(
@@ -209,7 +206,7 @@ final class FacetChipBar extends JPanel {
   static JPopupMenu menu(FacetCounts counts, SeriesFilter filter, Runnable apply) {
     JPopupMenu popup = new JPopupMenu();
     if (!counts.modalities().isEmpty()) {
-      popup.add(new TitleMenuItem(Messages.getString("DicomExplorer.facet_modality")));
+      popup.add(new TitleMenuItem(Messages.common("modality")));
       counts
           .modalities()
           .forEach(
@@ -304,7 +301,7 @@ final class FacetChipBar extends JPanel {
     if (popup.getComponentCount() > 0) {
       popup.addSeparator();
     }
-    JMenuItem clear = new JMenuItem(Messages.getString("DicomExplorer.filter_clear"));
+    JMenuItem clear = new JMenuItem(Messages.common("clear"));
     clear.setEnabled(filter.isActive());
     clear.addActionListener(
         _ -> {
@@ -332,8 +329,7 @@ final class FacetChipBar extends JPanel {
     style(chip);
     chip.setHorizontalTextPosition(SwingConstants.LEFT);
     chip.setIconTextGap(GuiUtils.getScaleLength(3));
-    chip.setToolTipText(
-        MessageFormat.format(Messages.getString("DicomExplorer.chip_remove"), facet, text));
+    chip.setToolTipText(Messages.format("DicomExplorer.chip_remove", facet, text));
     chip.addActionListener(
         _ -> {
           remove.run();
@@ -357,7 +353,7 @@ final class FacetChipBar extends JPanel {
       return date;
     }
     String id = formatted(study, Tag.StudyID);
-    return id.isEmpty() ? Messages.getString("DicomExplorer.col_study") : id;
+    return id.isEmpty() ? Messages.common("study") : id;
   }
 
   static String kindLabel(ObjectKind kind) {

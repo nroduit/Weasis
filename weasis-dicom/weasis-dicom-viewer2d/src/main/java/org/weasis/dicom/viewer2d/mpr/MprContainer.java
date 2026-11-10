@@ -44,6 +44,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.util.Bundles;
 import org.weasis.core.api.util.ResourceMonitor;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -145,7 +146,7 @@ public class MprContainer extends DicomViewerPlugin
   public static final MigLayoutModel VIEWS_2x2_mpr =
       new MigLayoutModel(
           "mpr2x2_vr", // NON-NLS
-          String.format(F_VIEWS, "2x2"), // NON-NLS
+          Bundles.format(F_VIEWS, "2x2"), // NON-NLS
           2,
           2,
           MprView.class.getName());

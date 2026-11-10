@@ -33,6 +33,8 @@
             <weasis.smoke.repo>${settings.localRepository}</weasis.smoke.repo>
             <weasis.smoke.root>${project.basedir}</weasis.smoke.root>
             <weasis.smoke.version>${project.version}</weasis.smoke.version>
+            <!-- The repository root, scanned by the i18n source checks -->
+            <weasis.repo.root>${project.basedir}/..</weasis.repo.root>
           </systemPropertyVariables>
         </configuration>
       </plugin>

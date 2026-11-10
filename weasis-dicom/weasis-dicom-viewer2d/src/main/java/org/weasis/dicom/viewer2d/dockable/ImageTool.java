@@ -85,7 +85,7 @@ public class ImageTool extends PluginTool {
         "wl"); // NON-NLS
     addSection(
         Messages.getString("ImageTool.transform"), getTransformPanel(spaceY), true, "transform");
-    addSection(Messages.getString("cine"), getSlicePanel(spaceY), true, "slice"); // NON-NLS
+    addSection(Messages.common("cine"), getSlicePanel(spaceY), true, "slice"); // NON-NLS
     // Advanced image operations are collapsed by default to keep the tool compact.
     addSection(Messages.getString("FusionTool.title"), getFusionPanel(spaceY), false, "fusion");
     addSubtractionSection();
@@ -188,7 +188,7 @@ public class ImageTool extends PluginTool {
     JPanel framePanel = GuiUtils.getVerticalBoxLayoutPanel();
     framePanel.setBorder(
         BorderFactory.createCompoundBorder(
-            hspace, GuiUtils.getTitledBorder(Messages.getString("cine"))));
+            hspace, GuiUtils.getTitledBorder(Messages.common("cine"))));
 
     EventManager.getInstance()
         .getAction(ActionW.SCROLL_SERIES)
@@ -358,8 +358,7 @@ public class ImageTool extends PluginTool {
           .getAction(ActionW.FILTER)
           .ifPresent(
               comboItem -> {
-                JLabel label =
-                    new JLabel(Messages.getString("ImageTool.filter") + StringUtil.COLON);
+                JLabel label = new JLabel(Messages.common("filter") + StringUtil.COLON);
                 JComboBox<?> combo = comboItem.createCombo(160);
                 winLevelPanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, combo));
                 winLevelPanel.add(GuiUtils.boxVerticalStrut(5));
@@ -527,7 +526,7 @@ public class ImageTool extends PluginTool {
         .getAction(FusionAction.SERIES)
         .ifPresent(
             a -> {
-              JLabel label = new JLabel(Messages.getString("FusionTool.series") + StringUtil.COLON);
+              JLabel label = new JLabel(Messages.common("series") + StringUtil.COLON);
               fusionPanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, a.createCombo(160)));
               fusionPanel.add(GuiUtils.boxVerticalStrut(gabY));
             });

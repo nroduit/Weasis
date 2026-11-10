@@ -475,7 +475,7 @@ public class SeriesListPane extends JPanel implements Scrollable {
     private final String[] columns = {
       Messages.getString("DicomExplorer.col_modality"),
       Messages.getString("DicomExplorer.col_number"),
-      Messages.getString("DicomExplorer.col_description"),
+      Messages.common("description"),
       Messages.getString("DicomExplorer.col_images"),
       Messages.getString("DicomExplorer.col_time"),
       Messages.getString("DicomExplorer.col_objects")
@@ -582,7 +582,7 @@ public class SeriesListPane extends JPanel implements Scrollable {
       if (id.isEmpty()) {
         id = formatted(study, Tag.AccessionNumber);
       }
-      buf.append(id.isEmpty() ? Messages.getString("DicomExplorer.col_study") : id);
+      buf.append(id.isEmpty() ? Messages.common("study") : id);
     }
     if (contents.hasObjects()) {
       buf.append("  (")

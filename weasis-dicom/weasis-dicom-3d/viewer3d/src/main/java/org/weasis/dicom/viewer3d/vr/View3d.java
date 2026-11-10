@@ -31,7 +31,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.foreign.Arena;
 import java.lang.foreign.ValueLayout;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -663,9 +662,8 @@ public class View3d extends VolumeCanvas
       return;
     }
     String msg =
-        MessageFormat.format(
-            Messages.getString("path.tracing.progress"),
-            Math.round(100.0 * frameIndex / PATH_TRACING_FRAMES));
+        Messages.format(
+            "path.tracing.progress", Math.round(100.0 * frameIndex / PATH_TRACING_FRAMES));
     g2d.setFont(getLayerFont());
     FontMetrics fm = g2d.getFontMetrics();
     float x = (getWidth() - fm.stringWidth(msg)) / 2f;
@@ -2113,8 +2111,7 @@ public class View3d extends VolumeCanvas
 
   private JMenuItem buildApplyToAllItem(
       SynchData source, ImageViewerPlugin<DicomImageElement> container) {
-    JMenuItem applyToAll =
-        new JMenuItem(org.weasis.core.Messages.getString("ViewerToolBar.synch_apply_to_all"));
+    JMenuItem applyToAll = new JMenuItem(org.weasis.core.Messages.common("apply_to_all_views"));
     applyToAll.addActionListener(e -> applySyncOptionsToOtherViews(source, container));
     return applyToAll;
   }

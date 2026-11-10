@@ -1422,7 +1422,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     String pClose = "weasis.contextmenu.close";
     if (LangUtil.nullToTrue((Boolean) actionsInView.get(pClose))
         && GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(pClose, true)) {
-      JMenuItem close = new JMenuItem(Messages.getString("View2d.close"));
+      JMenuItem close = new JMenuItem(Messages.common("close"));
       close.addActionListener(e -> View2d.this.setSeries(null, null));
       popupMenu.add(close);
     }

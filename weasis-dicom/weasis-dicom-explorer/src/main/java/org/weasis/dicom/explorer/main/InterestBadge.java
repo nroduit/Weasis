@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.explorer.main;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -61,9 +60,7 @@ public final class InterestBadge implements Supplier<Badge> {
     boolean derived = StringUtil.hasText(derivation);
     if (interest == null || interest.isEmpty()) {
       return derived
-          ? new Badge(
-              derivation,
-              MessageFormat.format(Messages.getString("DicomExplorer.derived_tip"), derivation))
+          ? new Badge(derivation, Messages.format("DicomExplorer.derived_tip", derivation))
           : null;
     }
     List<String> parts = new ArrayList<>();
@@ -71,16 +68,14 @@ public final class InterestBadge implements Supplier<Badge> {
       parts.add(FacetChipBar.sourceLabel(source) + " " + interest.count(source));
     }
     String tooltip =
-        MessageFormat.format(Messages.getString("DicomExplorer.interest_tip"), interest.count())
+        Messages.format("DicomExplorer.interest_tip", interest.count())
             + " ("
             + String.join(", ", parts)
             + ")";
     if (derived) {
       return new Badge(
           derivation + " ★" + interest.count(),
-          MessageFormat.format(Messages.getString("DicomExplorer.derived_tip"), derivation)
-              + GuiUtils.HTML_BR
-              + tooltip);
+          Messages.format("DicomExplorer.derived_tip", derivation) + GuiUtils.HTML_BR + tooltip);
     }
     return new Badge("★" + interest.count(), tooltip);
   }

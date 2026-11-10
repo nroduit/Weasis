@@ -59,7 +59,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
           LayerItem.ANNOTATIONS, LayerItem.MIN_ANNOTATIONS, LayerItem.WINDOW_LEVEL, LayerItem.ZOOM);
 
   private final JCheckBox applyAllViews =
-      new JCheckBox(Messages.getString("apply.all.views"), true);
+      new JCheckBox(Messages.common("apply_to_all_views"), true);
   private final CheckboxTree tree;
   private boolean initPathSelection;
   private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);

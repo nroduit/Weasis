@@ -68,15 +68,13 @@ public class DicomWebNodeDialog extends JDialog {
         new MigLayout(
             "insets 10lp 15lp 10lp 15lp", "[right]rel[left][grow,fill]", "[]10[]")); // NON-NLS
 
-    JLabel descriptionLabel =
-        new JLabel(Messages.getString("PrinterDialog.desc") + StringUtil.COLON);
+    JLabel descriptionLabel = new JLabel(Messages.common("description") + StringUtil.COLON);
     descriptionTf = new JTextField();
     descriptionTf.setColumns(20);
     panel.add(descriptionLabel, GuiUtils.NEWLINE);
     panel.add(descriptionTf);
 
-    JLabel lblType =
-        new JLabel(Messages.getString("DicomNodeDialog.lblType.text") + StringUtil.COLON);
+    JLabel lblType = new JLabel(Messages.common("type") + StringUtil.COLON);
     comboBox = new JComboBox<>(new DefaultComboBoxModel<>(DicomWebNode.WebType.values()));
     panel.add(lblType, GuiUtils.NEWLINE);
     panel.add(comboBox);
@@ -101,9 +99,9 @@ public class DicomWebNodeDialog extends JDialog {
     panel.add(headersLabel, GuiUtils.NEWLINE);
     panel.add(btnHttpHeaders);
 
-    JButton okButton = new JButton(Messages.getString("PrinterDialog.ok"));
+    JButton okButton = new JButton(Messages.common("ok"));
     okButton.addActionListener(e -> okButtonActionPerformed());
-    JButton cancelButton = new JButton(Messages.getString("PrinterDialog.cancel"));
+    JButton cancelButton = new JButton(Messages.common("cancel"));
     cancelButton.addActionListener(e -> dispose());
     JButton helpButton = GuiUtils.createHelpButton("dicomweb-config"); // NON-NLS
 
@@ -140,7 +138,7 @@ public class DicomWebNodeDialog extends JDialog {
       JOptionPane.showMessageDialog(
           WinUtil.getValidComponent(this),
           Messages.getString("PrinterDialog.fill_message"),
-          Messages.getString("PrinterDialog.error"),
+          Messages.common("error"),
           JOptionPane.ERROR_MESSAGE);
       return;
     }
@@ -155,7 +153,7 @@ public class DicomWebNodeDialog extends JDialog {
       JOptionPane.showMessageDialog(
           WinUtil.getValidComponent(this),
           Messages.getString("this.url.is.not.valid"),
-          Messages.getString("PrinterDialog.error"),
+          Messages.common("error"),
           JOptionPane.ERROR_MESSAGE);
       return;
     }

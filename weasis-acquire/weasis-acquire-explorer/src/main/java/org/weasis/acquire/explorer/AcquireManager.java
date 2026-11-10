@@ -363,23 +363,18 @@ public class AcquireManager implements CommandExtension {
       Component parent, List<String> nonCompliantVideoNames, List<String> oversizedVideoNames) {
     StringBuilder message = new StringBuilder();
     if (!nonCompliantVideoNames.isEmpty()) {
-      message.append(
-          Messages.getString("video.not.compliant").formatted(toFileList(nonCompliantVideoNames)));
+      message.append(Messages.format("video.not.compliant", toFileList(nonCompliantVideoNames)));
     }
     if (!oversizedVideoNames.isEmpty()) {
       if (!message.isEmpty()) {
         message.append("\n\n");
       }
       message.append(
-          Messages.getString("video.too.large")
-              .formatted(getMaxVideoSizeMB(), toFileList(oversizedVideoNames)));
+          Messages.format("video.too.large", getMaxVideoSizeMB(), toFileList(oversizedVideoNames)));
     }
     if (!message.isEmpty()) {
       JOptionPane.showMessageDialog(
-          parent,
-          message.toString(),
-          Messages.getString("ImportPanel.import"),
-          JOptionPane.WARNING_MESSAGE);
+          parent, message.toString(), Messages.common("import"), JOptionPane.WARNING_MESSAGE);
     }
   }
 

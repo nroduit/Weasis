@@ -118,7 +118,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
   }
 
   private JTextPane getErrorPanel(int nbErrors) {
-    String message = Messages.getString("dicom.file.cannot.be.read").formatted(nbErrors);
+    String message = Messages.format("dicom.file.cannot.be.read", nbErrors);
     String logOutput = Messages.getString("check.log.output");
     String html =
         """
@@ -137,8 +137,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
   }
 
   private JTextPane getUnsupportedPanel(int nbUnsupported) {
-    String message =
-        Messages.getString("dicom.file.unsupported.sop.class").formatted(nbUnsupported);
+    String message = Messages.format("dicom.file.unsupported.sop.class", nbUnsupported);
     String html =
         """
       <P>

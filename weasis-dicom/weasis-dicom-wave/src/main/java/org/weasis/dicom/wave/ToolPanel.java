@@ -118,7 +118,7 @@ class ToolPanel extends JPanel {
   }
 
   private void initPaper(JPanel panel) {
-    JLabel zoomLabel = new JLabel(Messages.getString("ToolPanel.zoom"));
+    JLabel zoomLabel = new JLabel(Messages.common("zoom"));
     panel.add(zoomLabel);
 
     JComboBox<Speed> speed = new JComboBox<>(Speed.values());
@@ -191,7 +191,7 @@ class ToolPanel extends JPanel {
     panel.add(kind);
 
     String[] labels = new String[Caliper.LABELS.length + 1];
-    labels[0] = Messages.getString("ToolPanel.none");
+    labels[0] = Messages.common("none");
     System.arraycopy(Caliper.LABELS, 0, labels, 1, Caliper.LABELS.length);
     JComboBox<String> label = new JComboBox<>(labels);
     label.setFocusable(false);
@@ -217,7 +217,7 @@ class ToolPanel extends JPanel {
     for (int i = 0; i < frequencies.length; i++) {
       labels[i] =
           frequencies[i] <= 0
-              ? Messages.getString("ToolPanel.none")
+              ? Messages.common("none")
               : DecFormatter.allNumber(frequencies[i]) + " Hz"; // NON-NLS
     }
     return labels;

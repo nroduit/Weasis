@@ -118,7 +118,7 @@ public class DicomSeries extends Series<DicomImageElement> {
       addWholeSlideToolTips(toolTips);
     }
     if (getFileSize() > 0.0) {
-      toolTips.append(Messages.getString("DicomSeries.size"));
+      toolTips.append(Messages.common("size"));
       toolTips.append(StringUtil.COLON_AND_SPACE);
       toolTips.append(FileUtil.humanReadableByte(getFileSize(), false));
       toolTips.append(GuiUtils.HTML_BR);
@@ -152,27 +152,21 @@ public class DicomSeries extends Series<DicomImageElement> {
     if (levels > 0) {
       toolTips.append(Messages.getString("DicomSeries.slide"));
       toolTips.append(StringUtil.COLON_AND_SPACE);
-      toolTips.append(
-          Messages.getString("DicomSeries.slide_levels").formatted(levels, width, height));
+      toolTips.append(Messages.format("DicomSeries.slide_levels", levels, width, height));
       toolTips.append(GuiUtils.HTML_BR);
     }
   }
 
   public static StringBuilder getToolTips(Series<?> series) {
     StringBuilder toolTips = new StringBuilder(GuiUtils.HTML_START);
-    series.addToolTipsElement(
-        toolTips, Messages.getString("DicomSeries.pat"), TagD.get(Tag.PatientName));
-    series.addToolTipsElement(
-        toolTips, Messages.getString("DicomSeries.mod"), TagD.get(Tag.Modality));
+    series.addToolTipsElement(toolTips, Messages.common("patient"), TagD.get(Tag.PatientName));
+    series.addToolTipsElement(toolTips, Messages.common("modality"), TagD.get(Tag.Modality));
     series.addToolTipsElement(
         toolTips, Messages.getString("DicomSeries.series_nb"), TagD.get(Tag.SeriesNumber));
-    series.addToolTipsElement(
-        toolTips, Messages.getString("DicomSeries.study"), TagD.get(Tag.StudyDescription));
-    series.addToolTipsElement(
-        toolTips, Messages.getString("DicomSeries.series"), TagD.get(Tag.SeriesDescription));
+    series.addToolTipsElement(toolTips, Messages.common("study"), TagD.get(Tag.StudyDescription));
+    series.addToolTipsElement(toolTips, Messages.common("series"), TagD.get(Tag.SeriesDescription));
 
-    addToolTipsDateTime(
-        toolTips, Messages.getString("DicomSeries.date"), series, Tag.SeriesDate, Tag.SeriesTime);
+    addToolTipsDateTime(toolTips, Messages.common("date"), series, Tag.SeriesDate, Tag.SeriesTime);
     return toolTips;
   }
 

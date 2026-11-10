@@ -124,7 +124,7 @@ public class ResourceMonitorDialog extends JDialog {
     resetButton.addActionListener(e -> resetStatistics());
     JButton copyButton = new JButton(Messages.getString("ResourceMonitor.copyReport"));
     copyButton.addActionListener(e -> copyReport());
-    JButton closeButton = new JButton(Messages.getString("WeasisAboutBox.close"));
+    JButton closeButton = new JButton(Messages.common("close"));
     closeButton.addActionListener(e -> dispose());
     content.add(helpButton, "span 2, split 4, gaptop 15");
     content.add(resetButton, "gapbefore push");

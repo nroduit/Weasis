@@ -119,12 +119,8 @@ public class AnimationRecorder {
   public String status() {
     long elapsed = elapsedMs() / 1000L;
     long max = maxDurationMs / 1000L;
-    return String.format(
-        Messages.getString("animation.recording.status"),
-        elapsed / 60,
-        elapsed % 60,
-        max / 60,
-        max % 60);
+    return Messages.format(
+        "animation.recording.status", elapsed / 60, elapsed % 60, max / 60, max % 60);
   }
 
   private long elapsedMs() {
@@ -219,16 +215,11 @@ public class AnimationRecorder {
     }
     LOGGER.info("Recording ended: {} frames over {} s", writtenFrames.get(), elapsedMs / 1000L);
     String saved =
-        String.format(
-            Messages.getString("animation.recording.saved"),
-            writtenFrames.get(),
-            elapsedMs / 1000L);
+        Messages.format("animation.recording.saved", writtenFrames.get(), elapsedMs / 1000L);
     String message =
         reason == null
             ? saved
-            : String.format(Messages.getString("animation.recording.stopped"), reason)
-                + "\n"
-                + saved;
+            : Messages.format("animation.recording.stopped", reason) + "\n" + saved;
     JOptionPane.showMessageDialog(parent, message, title, JOptionPane.INFORMATION_MESSAGE);
   }
 

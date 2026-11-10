@@ -150,7 +150,7 @@ public class ExportTool extends PluginTool {
     }
     CheckTreeModel tree = new CheckTreeModel(model);
     initTreeCheckingModel(tree);
-    JButton exportButton = new JButton(Messages.getString("DicomExport.exp"));
+    JButton exportButton = new JButton(Messages.common("export"));
     JButton help = GuiUtils.createHelpButton("dicom-export/#exporting"); // NON-NLS
     EmbeddedWizardPanel panel =
         new EmbeddedWizardPanel(

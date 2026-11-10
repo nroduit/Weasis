@@ -142,7 +142,7 @@ public class AnimationExportDialog extends JDialog {
       form.row(
           Messages.getString("capture.display"), displayProfile, displayProfile.getEditButton());
     }
-    form.row(Messages.getString("size"), sizeCombo, new JLabel("%"), frameSizeLabel);
+    form.row(Messages.common("size"), sizeCombo, new JLabel("%"), frameSizeLabel);
     form.row(
         Messages.getString("animation.rate"),
         rateSpinner,
@@ -155,9 +155,9 @@ public class AnimationExportDialog extends JDialog {
         MaskingProfileSelector.createReviewWarning(
             view == null ? null : view.getImage(), view == null ? null : view.getSeries()));
 
-    JButton exportButton = new JButton(Messages.getString("animation.export"));
+    JButton exportButton = new JButton(Messages.common("export"));
     exportButton.addActionListener(_ -> export());
-    JButton closeButton = new JButton(Messages.getString("cancel"));
+    JButton closeButton = new JButton(Messages.common("cancel"));
     closeButton.addActionListener(_ -> dispose());
     getRootPane().setDefaultButton(exportButton);
 
@@ -249,9 +249,7 @@ public class AnimationExportDialog extends JDialog {
     long bytes = frameBytes * frames;
     if (bytes <= AnimatedImageSink.MAX_RESIDENT_BYTES) {
       budgetLabel.setText(
-          String.format(
-              Messages.getString("animation.memory.projection"),
-              FileUtil.humanReadableByte(bytes, false)));
+          Messages.format("animation.memory.projection", FileUtil.humanReadableByte(bytes, false)));
       return;
     }
     int capFrames =
@@ -259,8 +257,8 @@ public class AnimationExportDialog extends JDialog {
             Math.min(
                 AnimatedImageSink.MAX_FRAMES, AnimatedImageSink.MAX_RESIDENT_BYTES / frameBytes);
     budgetLabel.setText(
-        String.format(
-            Messages.getString("animation.memory.cap"),
+        Messages.format(
+            "animation.memory.cap",
             FileUtil.humanReadableByte(AnimatedImageSink.MAX_RESIDENT_BYTES, false),
             capFrames,
             Math.round(capFrames * getFrameDurationMs() / 1000.0)));

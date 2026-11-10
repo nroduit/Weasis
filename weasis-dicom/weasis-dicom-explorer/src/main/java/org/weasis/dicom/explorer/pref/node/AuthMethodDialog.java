@@ -93,9 +93,9 @@ public class AuthMethodDialog extends JDialog {
   }
 
   private void buildFooter(JPanel panel) {
-    JButton okButton = new JButton(Messages.getString("PrinterDialog.ok"));
+    JButton okButton = new JButton(Messages.common("ok"));
     okButton.addActionListener(e -> okButtonActionPerformed());
-    JButton cancelButton = new JButton(Messages.getString("PrinterDialog.cancel"));
+    JButton cancelButton = new JButton(Messages.common("cancel"));
     cancelButton.addActionListener(e -> dispose());
     JButton helpButton = GuiUtils.createHelpButton("dicomweb-config"); // NON-NLS
     panel.add(
@@ -123,7 +123,7 @@ public class AuthMethodDialog extends JDialog {
             JTextField textFieldRealm = new JTextField();
 
             Object[] inputFields = {
-              Messages.getString("name"),
+              Messages.common("name"),
               textFieldName,
               "Base URL", // NON-NLS
               textFieldURL,
@@ -230,7 +230,7 @@ public class AuthMethodDialog extends JDialog {
       JOptionPane.showMessageDialog(
           WinUtil.getValidComponent(this),
           Messages.getString("missing.fields"),
-          Messages.getString("error"),
+          Messages.common("error"),
           JOptionPane.ERROR_MESSAGE);
       return;
     }

@@ -132,8 +132,8 @@ public class WsiToolBar extends WtoolBar implements SeriesViewerListener {
     for (WsiView2d.AnnotationGroup group : groups) {
       JCheckBoxMenuItem item =
           new JCheckBoxMenuItem(
-              Messages.getString("WsiToolBar.annotation_group")
-                  .formatted(group.group().label(), group.group().count()),
+              Messages.format(
+                  "WsiToolBar.annotation_group", group.group().label(), group.group().count()),
               group.shown());
       item.setForeground(group.group().color());
       item.addActionListener(
@@ -149,7 +149,7 @@ public class WsiToolBar extends WtoolBar implements SeriesViewerListener {
   private static List<String> planeLabels(int planes) {
     List<String> labels = new ArrayList<>();
     for (int i = 1; i <= planes; i++) {
-      labels.add(Messages.getString("WsiToolBar.plane").formatted(i, planes));
+      labels.add(Messages.format("WsiToolBar.plane", i, planes));
     }
     return labels;
   }
@@ -174,7 +174,7 @@ public class WsiToolBar extends WtoolBar implements SeriesViewerListener {
       presets.removeAllItems();
       presets.addItem(Messages.getString("WsiToolBar.magnification"));
       for (double m : magnifications) {
-        presets.addItem(Messages.getString("WsiView.magnification").formatted(m));
+        presets.addItem(Messages.format("WsiView.magnification", m));
       }
       presets.setMaximumSize(null);
       presets.setMaximumSize(presets.getPreferredSize());

@@ -25,7 +25,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.text.MessageFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -121,7 +120,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
   private transient ColorMap dragStart;
   private boolean updating;
 
-  private final String filterAll = Messages.getString("ColorMapEditor.all");
+  private final String filterAll = Messages.common("all");
   private final JTextField filterField = new JTextField(12);
   private final JComboBox<String> modalityFilter = new JComboBox<>();
   private final JComboBox<String> sourceFilter = new JComboBox<>();
@@ -158,8 +157,8 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
   private final JPanel previewStrip = new PreviewStrip();
   private final JCheckBox liveCheck =
       new JCheckBox(Messages.getString("ColorMapEditor.livePreview"));
-  private final JButton undoButton = new JButton(Messages.getString("ColorMapEditor.undo"));
-  private final JButton redoButton = new JButton(Messages.getString("ColorMapEditor.redo"));
+  private final JButton undoButton = new JButton(Messages.common("undo"));
+  private final JButton redoButton = new JButton(Messages.common("redo"));
   private final JButton deleteButton = new JButton(Messages.getString("ColorMapEditor.delete"));
   private final JButton pickButton = new JButton(Messages.getString("ColorMapEditor.pick"));
   private final JCheckBox volumeCheck = new JCheckBox(Messages.getString("ColorMapEditor.volume"));
@@ -270,7 +269,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
   private JPanel buildListPanel() {
     JPanel panel = new JPanel(new MigLayout("insets 0, fill", "[grow]", "[][][grow]")); // NON-NLS
     JPanel filters = new JPanel(new MigLayout("insets 0", "[][grow]", "[]")); // NON-NLS
-    filters.add(new JLabel(Messages.getString("ColorMapEditor.filter")));
+    filters.add(new JLabel(Messages.common("filter")));
     filters.add(filterField, "growx, wrap"); // NON-NLS
     sourceFilter.addItem(filterAll);
     sourceFilter.addItem(Messages.getString("ColorMapEditor.builtin"));
@@ -420,7 +419,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
     panel.add(label("ColorMapEditor.palette"));
     paletteCombo.setRenderer(new MapRenderer());
     panel.add(paletteCombo, "growx"); // NON-NLS
-    JButton applyPalette = new JButton(Messages.getString("ColorMapEditor.apply"));
+    JButton applyPalette = new JButton(Messages.common("apply"));
     applyPalette.addActionListener(
         e -> {
           if (paletteCombo.getSelectedItem() instanceof ColorMap palette) {
@@ -432,12 +431,12 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
     panel.add(GuiUtils.getFlowLayoutPanel(applyPalette, reverse), "span 2"); // NON-NLS
 
     panel.add(label("ColorMapEditor.bands"));
-    JButton discretize = new JButton(Messages.getString("ColorMapEditor.apply"));
+    JButton discretize = new JButton(Messages.common("apply"));
     discretize.addActionListener(
         e -> pushEdit(ColorMapEdits.discretized(current, (Integer) bandsSpinner.getValue())));
     panel.add(GuiUtils.getFlowLayoutPanel(bandsSpinner, discretize));
     panel.add(label("ColorMapEditor.transparentBelow"));
-    JButton threshold = new JButton(Messages.getString("ColorMapEditor.apply"));
+    JButton threshold = new JButton(Messages.common("apply"));
     threshold.addActionListener(e -> applyThreshold());
     JPanel thresholdPanel = new JPanel(new MigLayout("insets 0", "[][][][]", "[]")); // NON-NLS
     thresholdPanel.add(belowSpinner);
@@ -513,9 +512,9 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
             });
     panel.add(new JScrollPane(stopTable), "grow"); // NON-NLS
 
-    JButton add = new JButton(Messages.getString("ColorMapEditor.add"));
+    JButton add = new JButton(Messages.common("add"));
     add.addActionListener(e -> addStop());
-    JButton remove = new JButton(Messages.getString("ColorMapEditor.remove"));
+    JButton remove = new JButton(Messages.common("remove"));
     remove.addActionListener(e -> curve.removeSelected());
     pickButton.addActionListener(e -> host.pickValue(this::addStopAtValue));
     panel.add(GuiUtils.getVerticalBoxLayoutPanel(add, remove, pickButton), "top, wrap"); // NON-NLS
@@ -536,18 +535,18 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
     JPanel panel = new JPanel(new MigLayout("insets 0", "[]push[]", "[]")); // NON-NLS
     undoButton.addActionListener(e -> undo());
     redoButton.addActionListener(e -> redo());
-    JButton duplicate = new JButton(Messages.getString("ColorMapEditor.duplicate"));
+    JButton duplicate = new JButton(Messages.common("duplicate"));
     duplicate.addActionListener(e -> duplicate());
-    JButton save = new JButton(Messages.getString("ColorMapEditor.save"));
+    JButton save = new JButton(Messages.common("save"));
     save.addActionListener(e -> save());
     deleteButton.addActionListener(e -> delete());
-    JButton importButton = new JButton(Messages.getString("ColorMapEditor.import"));
+    JButton importButton = new JButton(Messages.common("import"));
     importButton.addActionListener(e -> importTable());
-    JButton exportButton = new JButton(Messages.getString("ColorMapEditor.export"));
+    JButton exportButton = new JButton(Messages.common("export"));
     exportButton.addActionListener(e -> exportJson());
     liveCheck.setSelected(true);
     liveCheck.addActionListener(e -> schedulePreview());
-    JButton close = new JButton(Messages.getString("close"));
+    JButton close = new JButton(Messages.common("close"));
     close.addActionListener(e -> dispose());
     panel.add(
         GuiUtils.getFlowLayoutPanel(
@@ -811,8 +810,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
     }
     return total <= 0
         ? " "
-        : MessageFormat.format(
-            Messages.getString("ColorMapEditor.visible"), Math.round(100.0 * visible / total));
+        : Messages.format("ColorMapEditor.visible", Math.round(100.0 * visible / total));
   }
 
   private void addStop() {
@@ -872,8 +870,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
   }
 
   private void delete() {
-    String message =
-        MessageFormat.format(Messages.getString("ColorMapEditor.deleteConfirm"), current.name());
+    String message = Messages.format("ColorMapEditor.deleteConfirm", current.name());
     if (JOptionPane.showConfirmDialog(this, message, getTitle(), JOptionPane.YES_NO_OPTION)
         != JOptionPane.YES_OPTION) {
       return;

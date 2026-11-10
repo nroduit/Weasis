@@ -107,8 +107,7 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
       CodePicker.modalities(modalitiesField, this::commitEditor);
   private final JButton bodyPartPicker = CodePicker.bodyParts(bodyPartField, this::commitEditor);
   private final JButton preferredPicker = CodePicker.bodyParts(preferredField, this::commitEditor);
-  private final JMenuItem deleteItem =
-      new JMenuItem(Messages.getString("WindowPresetPrefView.delete"));
+  private final JMenuItem deleteItem = new JMenuItem(Messages.common("delete"));
 
   private boolean filling;
 
@@ -179,7 +178,7 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
     JButton newButton = new JButton(Messages.getString("WindowPresetPrefView.new"));
     newButton.setToolTipText(Messages.getString("WindowPresetPrefView.new.tip"));
     newButton.addActionListener(e -> createPreset());
-    JButton duplicateButton = new JButton(Messages.getString("WindowPresetPrefView.duplicate"));
+    JButton duplicateButton = new JButton(Messages.common("duplicate"));
     duplicateButton.setToolTipText(Messages.getString("WindowPresetPrefView.duplicate.tip"));
     duplicateButton.addActionListener(e -> duplicatePreset());
 
@@ -187,14 +186,10 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
     deleteItem.addActionListener(e -> deletePreset());
     popup.add(deleteItem);
     popup.addSeparator();
-    JMenuItem importItem =
-        new JMenuItem(
-            Messages.getString("WindowPresetPrefView.import") + StringUtil.Suffix.THREE_PTS);
+    JMenuItem importItem = new JMenuItem(Messages.common("import") + StringUtil.Suffix.THREE_PTS);
     importItem.addActionListener(e -> importPresets());
     popup.add(importItem);
-    JMenuItem exportItem =
-        new JMenuItem(
-            Messages.getString("WindowPresetPrefView.export") + StringUtil.Suffix.THREE_PTS);
+    JMenuItem exportItem = new JMenuItem(Messages.common("export") + StringUtil.Suffix.THREE_PTS);
     exportItem.addActionListener(e -> exportPresets());
     popup.add(exportItem);
     JButton moreButton = new JButton("\u22EF"); // NON-NLS
@@ -289,11 +284,7 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
                         ? "WindowPresetPrefView.reference.series"
                         : "WindowPresetPrefView.reference.image")));
     keyCombo.setRenderer(
-        textRenderer(
-            v ->
-                StringUtil.hasText((String) v)
-                    ? (String) v
-                    : Messages.getString("WindowPresetPrefView.key.none")));
+        textRenderer(v -> StringUtil.hasText((String) v) ? (String) v : Messages.common("none")));
   }
 
   private static void tip(String key, JComponent field) {
@@ -407,20 +398,17 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
           registry.isLocked(preset.id())
               ? "WindowPresetPrefView.locked"
               : "WindowPresetPrefView.readonly";
-      readOnlyLabel.setText(
-          Messages.getString(key).formatted(registry.origin(preset.id()).displayName()));
+      readOnlyLabel.setText(Messages.format(key, registry.origin(preset.id()).displayName()));
     }
     deleteItem.setEnabled(editable);
     // A user preset over a site or built-in id: deleting it resets the preset to that definition
     deleteItem.setText(
         preset == null
-            ? Messages.getString("WindowPresetPrefView.delete")
+            ? Messages.common("delete")
             : registry
                 .below(preset.id())
-                .map(
-                    o ->
-                        Messages.getString("WindowPresetPrefView.reset").formatted(o.displayName()))
-                .orElse(Messages.getString("WindowPresetPrefView.delete")));
+                .map(o -> Messages.format("WindowPresetPrefView.reset", o.displayName()))
+                .orElse(Messages.common("delete")));
     validateEditor();
   }
 

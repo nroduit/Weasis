@@ -128,13 +128,13 @@ public class ShadingPrefDialog extends JDialog {
         e -> apply(row -> row.param().defaultValue(), ShadingOptions.DEFAULT_ENVIRONMENT));
     contentPane.add(GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 5, 5, restoreButton));
 
-    JButton okButton = new JButton(Messages.getString("ok"));
+    JButton okButton = new JButton(Messages.common("ok"));
     okButton.addActionListener(
         e -> {
           options().persistCinematic(GuiUtils.getUICore().getLocalPersistence());
           dispose();
         });
-    JButton cancelButton = new JButton(Messages.getString("cancel"));
+    JButton cancelButton = new JButton(Messages.common("cancel"));
     cancelButton.addActionListener(
         e -> {
           apply(Row::initialValue, initialEnvironment);

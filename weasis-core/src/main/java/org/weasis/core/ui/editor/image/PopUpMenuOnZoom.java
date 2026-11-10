@@ -62,7 +62,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
           zoomWin.setActionInView(ActionW.DRAWINGS.cmd(), jCheckBoxMenuItemDraw.isSelected());
           zoomWin.repaint();
         });
-    jMenuImage.setText(Messages.getString("PopUpMenuOnZoom.image"));
+    jMenuImage.setText(Messages.common("image"));
     final JMenuItem freesParams = new JMenuItem(Messages.getString("PopUpMenuOnZoom.freeze"));
     freesParams.addActionListener(e -> zoomWin.setFreezeImage(SyncType.PARENT_PARAMETERS));
     jMenuImage.add(freesParams);

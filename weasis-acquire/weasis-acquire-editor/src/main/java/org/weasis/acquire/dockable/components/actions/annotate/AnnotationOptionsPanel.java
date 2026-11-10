@@ -37,8 +37,7 @@ public class AnnotationOptionsPanel extends JPanel {
     Border spaceY = GuiUtils.getEmptyBorder(10, 5, 2, 5);
     setBorder(
         BorderFactory.createCompoundBorder(
-            spaceY,
-            GuiUtils.getTitledBorder(Messages.getString("AnnotationOptionsPanel.options"))));
+            spaceY, GuiUtils.getTitledBorder(Messages.common("options"))));
 
     add(createLineStylePanel());
 
@@ -56,8 +55,7 @@ public class AnnotationOptionsPanel extends JPanel {
         .ifPresent(
             b -> {
               JLabel labelUnit =
-                  new JLabel(
-                      org.weasis.core.Messages.getString("MeasureTool.unit") + StringUtil.COLON);
+                  new JLabel(org.weasis.core.Messages.common("unit") + StringUtil.COLON);
               JComboBox<?> unitComboBox = b.createCombo(120);
               unitComboBox.setSelectedItem(Unit.PIXEL);
               add(GuiUtils.getFlowLayoutPanel(labelUnit, unitComboBox));

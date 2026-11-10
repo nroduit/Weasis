@@ -120,7 +120,7 @@ public class DicomNodeDialog extends JDialog {
       JOptionPane.showMessageDialog(
           WinUtil.getValidComponent(this),
           Messages.getString("PrinterDialog.fill_message"),
-          Messages.getString("PrinterDialog.error"),
+          Messages.common("error"),
           JOptionPane.ERROR_MESSAGE);
       return;
     }
@@ -144,8 +144,8 @@ public class DicomNodeDialog extends JDialog {
           if (result.success()) {
             JOptionPane.showMessageDialog(
                 WinUtil.getValidComponent(self),
-                java.text.MessageFormat.format(
-                    Messages.getString("DicomNodeDialog.test_ok"),
+                Messages.format(
+                    "DicomNodeDialog.test_ok",
                     result.millis(),
                     calling,
                     aeTitle,
@@ -180,8 +180,7 @@ public class DicomNodeDialog extends JDialog {
     panel.setLayout(
         new MigLayout("insets 10lp 15lp 10lp 15lp", "[right]rel[grow,fill]")); // NON-NLS
 
-    JLabel descriptionLabel =
-        new JLabel(Messages.getString("PrinterDialog.desc") + StringUtil.COLON);
+    JLabel descriptionLabel = new JLabel(Messages.common("description") + StringUtil.COLON);
     descriptionTf = new JTextField();
     descriptionTf.setColumns(20);
     panel.add(descriptionLabel, GuiUtils.NEWLINE);
@@ -199,7 +198,7 @@ public class DicomNodeDialog extends JDialog {
     panel.add(hostnameLabel, GuiUtils.NEWLINE);
     panel.add(hostnameTf);
 
-    JLabel portLabel = new JLabel(Messages.getString("PrinterDialog.port") + StringUtil.COLON);
+    JLabel portLabel = new JLabel(Messages.common("port") + StringUtil.COLON);
     ;
     GuiUtils.formatPortTextField(portTf);
     GuiUtils.setPreferredWidth(portTf, 60);
@@ -257,9 +256,9 @@ public class DicomNodeDialog extends JDialog {
 
     JButton testButton = new JButton(Messages.getString("DicomNodeDialog.test"));
     testButton.addActionListener(e -> testConnection());
-    JButton okButton = new JButton(Messages.getString("PrinterDialog.ok"));
+    JButton okButton = new JButton(Messages.common("ok"));
     okButton.addActionListener(e -> okButtonActionPerformed());
-    JButton cancelButton = new JButton(Messages.getString("PrinterDialog.cancel"));
+    JButton cancelButton = new JButton(Messages.common("cancel"));
     cancelButton.addActionListener(e -> dispose());
     JButton helpButton =
         GuiUtils.createHelpButton(
@@ -296,7 +295,7 @@ public class DicomNodeDialog extends JDialog {
       JOptionPane.showMessageDialog(
           WinUtil.getValidComponent(this),
           Messages.getString("PrinterDialog.fill_message"),
-          Messages.getString("PrinterDialog.error"),
+          Messages.common("error"),
           JOptionPane.ERROR_MESSAGE);
       return;
     }
@@ -305,7 +304,7 @@ public class DicomNodeDialog extends JDialog {
       JOptionPane.showMessageDialog(
           WinUtil.getValidComponent(this),
           Messages.getString("DicomNodeDialog.long_aet_msg"),
-          Messages.getString("PrinterDialog.error"),
+          Messages.common("error"),
           JOptionPane.ERROR_MESSAGE);
       return;
     }

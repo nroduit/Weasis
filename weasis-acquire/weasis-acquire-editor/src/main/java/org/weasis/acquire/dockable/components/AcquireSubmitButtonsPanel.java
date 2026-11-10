@@ -28,11 +28,9 @@ public class AcquireSubmitButtonsPanel extends JPanel {
     FlowLayout flowLayout = new FlowLayout(FlowLayout.CENTER, size, size);
     setLayout(flowLayout);
 
-    cancelBtn =
-        new AcquireActionButton(Messages.getString("AcquireSubmitButtonsPanel.cancel"), Cmd.CANCEL);
+    cancelBtn = new AcquireActionButton(Messages.common("cancel"), Cmd.CANCEL);
     cancelBtn.setToolTipText(Messages.getString("AcquireSubmitButtonsPanel.return_prev"));
-    resetBtn =
-        new AcquireActionButton(Messages.getString("AcquireSubmitButtonsPanel.reset"), Cmd.RESET);
+    resetBtn = new AcquireActionButton(Messages.common("reset"), Cmd.RESET);
     resetBtn.setToolTipText(Messages.getString("AcquireSubmitButtonsPanel.reset_def"));
 
     add(cancelBtn);

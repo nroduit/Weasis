@@ -69,9 +69,9 @@ public abstract class PropertiesDialog extends JDialog {
     panel1.setBorder(GuiUtils.getEmptyBorder(10, 15, 0, 15));
     panel1.setLayout(new BorderLayout());
 
-    jButtonOk.setText(Messages.getString("PropertiesDialog.ok"));
+    jButtonOk.setText(Messages.common("ok"));
     jButtonOk.addActionListener(e -> okAction());
-    jButtonCancel.setText(Messages.getString("PropertiesDialog.cancel"));
+    jButtonCancel.setText(Messages.common("cancel"));
     jButtonCancel.addActionListener(e -> quitWithoutSaving());
 
     GuiUtils.setNumberModel(spinnerLineWidth, 1, 1, 8, 1);

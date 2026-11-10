@@ -41,8 +41,8 @@ public class LauncherPrefView extends AbstractItemDialogPage {
     Launcher.loadLaunchers(nodeComboBox, type);
     Launcher.addTooltipToComboList(nodeComboBox);
     GuiUtils.setPreferredWidth(nodeComboBox, 270, 150);
-    JButton editButton = new JButton(Messages.getString("edit"));
-    JButton deleteButton = new JButton(Messages.getString("delete"));
+    JButton editButton = new JButton(Messages.common("edit"));
+    JButton deleteButton = new JButton(Messages.common("delete"));
     JButton addNodeButton = new JButton(Messages.getString("add.new"));
     deleteButton.addActionListener(_ -> Launcher.deleteNodeActionPerformed(nodeComboBox, type));
     editButton.addActionListener(_ -> Launcher.editNodeActionPerformed(nodeComboBox, type));

@@ -38,7 +38,7 @@ public class ImportPanel extends JPanel {
   public static final ExecutorService IMPORT_IMAGES =
       ThreadUtil.newSingleThreadExecutor("ImportImage");
 
-  private final JButton importBtn = new JButton(Messages.getString("ImportPanel.import"));
+  private final JButton importBtn = new JButton(Messages.common("import"));
   private final SpinnerProgress progressBar = new SpinnerProgress();
 
   private final ImageGroupPane centralPane;

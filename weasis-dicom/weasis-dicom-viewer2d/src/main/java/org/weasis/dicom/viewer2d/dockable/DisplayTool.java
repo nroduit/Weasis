@@ -56,7 +56,7 @@ import org.weasis.dicom.viewer2d.Messages;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
-  public static final String IMAGE = Messages.getString("DisplayTool.image");
+  public static final String IMAGE = Messages.common("image");
   public static final String DICOM_IMAGE_OVERLAY = Messages.getString("DisplayTool.dicom_overlay");
   public static final String DICOM_PIXEL_PADDING = Messages.getString("DisplayTool.pixpad");
   public static final String DICOM_SHUTTER = Messages.getString("DisplayTool.shutter");
@@ -71,7 +71,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   public static final String BUTTON_NAME = Messages.getString("DisplayTool.display");
 
   private final JCheckBox applyAllViews =
-      new JCheckBox(Messages.getString("DisplayTool.btn_apply_all"), true);
+      new JCheckBox(Messages.common("apply_to_all_views"), true);
   private final CheckboxTree tree;
   private boolean initPathSelection;
   private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);

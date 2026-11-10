@@ -9,6 +9,7 @@
  */
 package org.weasis.launcher;
 
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -16,7 +17,8 @@ import java.util.ResourceBundle;
 /**
  * The strings of the launcher. The English {@code messages.properties} is in the launcher jar; the
  * other languages come from the {@code weasis-launcher-i18n} translation package, set by {@link
- * Translations#loadLauncher} before the first string is displayed.
+ * Translations#loadLauncher} before the first string is displayed; the pseudo-locale {@code en-XA}
+ * is derived from the English base ({@link PseudoLocale}).
  */
 public class Messages {
   static final String BUNDLE_NAME = "org.weasis.launcher.messages"; // NON-NLS
@@ -35,6 +37,9 @@ public class Messages {
     if (b == null) {
       // Only the English base is in the launcher jar
       b = ResourceBundle.getBundle(BUNDLE_NAME, Locale.ROOT);
+      if (PseudoLocale.isPseudo(Locale.getDefault())) {
+        b = PseudoLocale.wrap(b);
+      }
       bundle = b;
     }
     return b;
@@ -45,6 +50,19 @@ public class Messages {
       return getBundle().getString(key);
     } catch (MissingResourceException e) {
       return '!' + key + '!';
+    }
+  }
+
+  /**
+   * The string of a key with its {@code {0}} arguments filled by {@link MessageFormat} in the
+   * default locale; the pattern itself when it cannot be parsed.
+   */
+  public static String format(String key, Object... args) {
+    String pattern = getString(key);
+    try {
+      return new MessageFormat(pattern, Locale.getDefault()).format(args);
+    } catch (IllegalArgumentException e) {
+      return pattern;
     }
   }
 }

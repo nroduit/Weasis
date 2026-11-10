@@ -22,7 +22,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.nio.file.Path;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 import java.util.Set;
@@ -780,8 +779,7 @@ public class DicomExplorer extends PluginTool
   private void syncFilterToState(MediaSeriesGroup patient) {
     SeriesFilter.Mode mode = seriesFilter.getMode();
     modeButton.setIcon(modeIcon(mode));
-    modeButton.setToolTipText(
-        MessageFormat.format(Messages.getString("DicomExplorer.filter_mode"), mode.getTitle()));
+    modeButton.setToolTipText(Messages.format("DicomExplorer.filter_mode", mode.getTitle()));
     JRadioButtonMenuItem modeItem = modeItems.get(mode);
     if (modeItem != null) {
       modeItem.setSelected(true);

@@ -573,7 +573,7 @@ public class Launcher implements LayeredEntries.Entry {
                       if (val != 0) {
                         JOptionPane.showMessageDialog(
                             GuiUtils.getUICore().getCenterWorkspace(),
-                            String.format(Messages.getString("error.launching.app"), binaryPath),
+                            Messages.format("error.launching.app", binaryPath),
                             Messages.getString("launcher.error"),
                             JOptionPane.ERROR_MESSAGE);
                       }
@@ -603,7 +603,7 @@ public class Launcher implements LayeredEntries.Entry {
   }
 
   private String getToolTips() {
-    return Messages.getString("name")
+    return Messages.common("name")
         + StringUtil.COLON_AND_SPACE
         + name
         + "\n"
@@ -611,7 +611,7 @@ public class Launcher implements LayeredEntries.Entry {
         + StringUtil.COLON_AND_SPACE
         + iconPath
         + "\n"
-        + Messages.getString("enable")
+        + Messages.common("enable")
         + StringUtil.COLON_AND_SPACE
         + enable
         + "\n"
@@ -619,7 +619,7 @@ public class Launcher implements LayeredEntries.Entry {
         + StringUtil.COLON_AND_SPACE
         + button
         + "\n"
-        + Messages.getString("launcher.typ")
+        + Messages.getString("launcher.type")
         + StringUtil.COLON_AND_SPACE
         + configuration.getTypeLabel();
   }
@@ -706,7 +706,7 @@ public class Launcher implements LayeredEntries.Entry {
         JOptionPane.showMessageDialog(
             comboBox,
             Messages.getString("only.user.created.item.modified"),
-            Messages.getString("error"),
+            Messages.common("error"),
             JOptionPane.ERROR_MESSAGE);
       }
     }
@@ -720,7 +720,7 @@ public class Launcher implements LayeredEntries.Entry {
         int response =
             JOptionPane.showConfirmDialog(
                 comboBox,
-                String.format(Messages.getString("really.want.delete"), node),
+                Messages.format("really.want.delete", node),
                 Type.DICOM.toString(),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
@@ -734,7 +734,7 @@ public class Launcher implements LayeredEntries.Entry {
         JOptionPane.showMessageDialog(
             comboBox,
             Messages.getString("only.user.created.item.modified"),
-            Messages.getString("error"),
+            Messages.common("error"),
             JOptionPane.ERROR_MESSAGE);
       }
     }

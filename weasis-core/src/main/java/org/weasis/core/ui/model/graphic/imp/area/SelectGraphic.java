@@ -59,7 +59,7 @@ public class SelectGraphic extends RectangleGraphic {
 
   @Override
   public String getUIName() {
-    return Messages.getString("MeasureToolBar.sel");
+    return Messages.common("selection");
   }
 
   @Override

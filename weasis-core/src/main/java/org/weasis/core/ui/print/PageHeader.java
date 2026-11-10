@@ -14,7 +14,6 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import org.weasis.core.Messages;
@@ -94,8 +93,7 @@ public final class PageHeader {
       double right = (band.getX() + band.getWidth()) * pixelsPerMm;
       double baseline =
           (band.getY() + band.getHeight() - SPACING_MM) * pixelsPerMm - fm.getDescent();
-      String pages =
-          MessageFormat.format(Messages.getString("PrintDialog.page_of"), pageIndex + 1, pageCount);
+      String pages = Messages.format("PrintDialog.page_of", pageIndex + 1, pageCount);
       double pagesX = right - fm.stringWidth(pages);
       g.drawString(pages, (float) pagesX, (float) baseline);
       String text = fit(describe(layout), fm, pagesX - left - fm.stringWidth(SEPARATOR));

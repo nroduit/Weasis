@@ -29,8 +29,7 @@ public final class FusionAction {
           Messages.getString("FusionTool.enable"), FusionOp.P_FUSION_ENABLED, 0, 0, null);
 
   public static final ComboItemListenerValue<Object> SERIES =
-      new ComboItemListenerValue<>(
-          Messages.getString("FusionTool.series"), FusionOp.P_FUSION_SERIES, 0, 0, null);
+      new ComboItemListenerValue<>(Messages.common("series"), FusionOp.P_FUSION_SERIES, 0, 0, null);
 
   public static final ComboItemListenerValue<ByteLut> LUT =
       new ComboItemListenerValue<>(
@@ -38,11 +37,11 @@ public final class FusionAction {
 
   public static final SliderChangeListenerValue BASE_OPACITY =
       new SliderChangeListenerValue(
-          Messages.getString("FusionTool.opacity"), FusionOp.P_OPACITY_BASE, 0, 0, null);
+          Messages.common("opacity"), FusionOp.P_OPACITY_BASE, 0, 0, null);
 
   public static final SliderChangeListenerValue OVERLAY_OPACITY =
       new SliderChangeListenerValue(
-          Messages.getString("FusionTool.opacity"), FusionOp.P_OPACITY_OVERLAY, 0, 0, null);
+          Messages.common("opacity"), FusionOp.P_OPACITY_OVERLAY, 0, 0, null);
 
   public static final SliderChangeListenerValue WINDOW_TOP =
       new SliderChangeListenerValue(

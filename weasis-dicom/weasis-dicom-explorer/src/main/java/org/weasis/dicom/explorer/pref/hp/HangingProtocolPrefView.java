@@ -105,7 +105,7 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
     protocols.add(scroll);
     JButton duplicate = new JButton(Messages.getString("HangingProtocolPrefView.duplicate"));
     duplicate.addActionListener(e -> selected(view).ifPresent(this::duplicate));
-    JButton delete = new JButton(Messages.getString("HangingProtocolPrefView.delete"));
+    JButton delete = new JButton(Messages.common("delete"));
     delete.addActionListener(e -> selected(view).ifPresent(this::delete));
     JButton importButton = new JButton(Messages.getString("HangingProtocolPrefView.import"));
     importButton.addActionListener(e -> importProtocols());
@@ -246,7 +246,7 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
   static final class ProtocolTable extends AbstractTableModel {
     private final String[] columns = {
       Messages.getString("HangingProtocolPrefView.col_id"),
-      Messages.getString("HangingProtocolPrefView.col_name"),
+      Messages.common("name"),
       Messages.getString("HangingProtocolPrefView.col_layer"),
       Messages.getString("HangingProtocolPrefView.col_enabled")
     };

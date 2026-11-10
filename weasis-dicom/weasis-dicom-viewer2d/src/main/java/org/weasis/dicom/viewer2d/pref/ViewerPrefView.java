@@ -127,8 +127,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     add(panel);
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
-    JLabel lblInterpolation =
-        new JLabel(Messages.getString("ViewerPrefView.interp") + StringUtil.COLON);
+    JLabel lblInterpolation = new JLabel(Messages.common("interpolation") + StringUtil.COLON);
     comboBoxInterpolation = new JComboBox<>(ZoomOp.Interpolation.values());
     comboBoxInterpolation.setSelectedIndex(eventManager.getZoomSetting().getInterpolation());
 
@@ -150,7 +149,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
             comboBoxInterpolation));
     panel1.add(
         GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkBoxZoomCursor));
-    panel1.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.zoom")));
+    panel1.setBorder(GuiUtils.getTitledBorder(Messages.common("zoom")));
     add(panel1);
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
@@ -168,7 +167,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
             eventManager.getOptions().getBooleanProperty(PRManager.PR_APPLY, false));
 
     final JPanel otherPanel = GuiUtils.getVerticalBoxLayoutPanel();
-    otherPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.other")));
+    otherPanel.setBorder(GuiUtils.getTitledBorder(Messages.common("other")));
     otherPanel.add(
         GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkBoxWLcolor));
     otherPanel.add(

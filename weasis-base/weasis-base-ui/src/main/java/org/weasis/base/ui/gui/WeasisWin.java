@@ -53,7 +53,6 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.MessageFormat;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -193,9 +192,9 @@ public class WeasisWin {
 
   public static final List<String> functions = List.of("info", "ui"); // NON-NLS
 
-  private final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file"));
+  private final JMenu menuFile = new JMenu(Messages.common("file"));
   private final DynamicMenu menuEdit =
-      new DynamicMenu(Messages.getString("WeasisWin.edit")) {
+      new DynamicMenu(Messages.common("edit")) {
 
         @Override
         public void popupMenuWillBecomeVisible() {
@@ -203,7 +202,7 @@ public class WeasisWin {
         }
       };
   private final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display"));
-  private final JMenu menuTools = new JMenu(Messages.getString("WeasisWin.tools"));
+  private final JMenu menuTools = new JMenu(Messages.common("tools"));
   private final DynamicMenu menuWindow =
       new DynamicMenu(Messages.getString("WeasisWin.window")) {
 
@@ -934,8 +933,8 @@ public class WeasisWin {
     GuiExecutor.execute(
         () -> {
           String message =
-              MessageFormat.format(
-                  Messages.getString("WeasisWin.preview_notice"),
+              Messages.format(
+                  "WeasisWin.preview_notice",
                   AppProperties.WEASIS_NAME,
                   build.baseVersion(),
                   build.label());
@@ -944,9 +943,7 @@ public class WeasisWin {
           JOptionPane pane = new JOptionPane(message, JOptionPane.WARNING_MESSAGE);
           JDialog dialog =
               pane.createDialog(
-                  frame,
-                  MessageFormat.format(
-                      Messages.getString("WeasisWin.preview_notice_title"), build.label()));
+                  frame, Messages.format("WeasisWin.preview_notice_title", build.label()));
           dialog.setModal(false);
           dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
           pane.addPropertyChangeListener(
@@ -1114,8 +1111,7 @@ public class WeasisWin {
     helpMenuItem.add(resourcesMenuItem);
 
     final JMenuItem aboutMenuItem =
-        new JMenuItem(
-            String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME));
+        new JMenuItem(Messages.format("WeasisAboutBox.about", AppProperties.WEASIS_NAME));
     aboutMenuItem.addActionListener(
         e -> {
           ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
@@ -1371,7 +1367,7 @@ public class WeasisWin {
     menuView.add(toolBarMenu);
 
     DynamicMenu toolMenu =
-        new DynamicMenu(Messages.getString("WeasisWin.tools")) {
+        new DynamicMenu(Messages.common("tools")) {
 
           @Override
           public void popupMenuWillBecomeVisible() {
@@ -1514,10 +1510,7 @@ public class WeasisWin {
     String label =
         latest
             .filter(l -> !l.label().isBlank())
-            .map(
-                l ->
-                    MessageFormat.format(
-                        Messages.getString("WeasisWin.restore_display_before"), l.label()))
+            .map(l -> Messages.format("WeasisWin.restore_display_before", l.label()))
             .orElse(Messages.getString("WeasisWin.restore_display"));
     JMenuItem restore = new JMenuItem(label);
     restore.setEnabled(latest.isPresent());
@@ -1538,7 +1531,7 @@ public class WeasisWin {
       LOGGER.warn("Cannot restore the previous display", cause);
       JOptionPane.showMessageDialog(
           frame,
-          MessageFormat.format(Messages.getString("WeasisWin.restore_failed"), cause.getMessage()),
+          Messages.format("WeasisWin.restore_failed", cause.getMessage()),
           Messages.getString("WeasisWin.restore_display"),
           JOptionPane.WARNING_MESSAGE);
     } else if (notRestored != null && !notRestored.isEmpty()) {
@@ -1655,7 +1648,7 @@ public class WeasisWin {
   private void buildMenuFile() {
     menuFile.removeAll();
     DynamicMenu openMenu =
-        new DynamicMenu(Messages.getString("WeasisWin.open")) {
+        new DynamicMenu(Messages.common("open")) {
 
           @Override
           public void popupMenuWillBecomeVisible() {
@@ -1666,7 +1659,7 @@ public class WeasisWin {
     menuFile.add(openMenu);
 
     DynamicMenu importMenu =
-        new DynamicMenu(Messages.getString("WeasisWin.import")) {
+        new DynamicMenu(Messages.common("import")) {
 
           @Override
           public void popupMenuWillBecomeVisible() {
@@ -1677,7 +1670,7 @@ public class WeasisWin {
     menuFile.add(importMenu);
 
     DynamicMenu exportMenu =
-        new DynamicMenu(Messages.getString("WeasisWin.export")) {
+        new DynamicMenu(Messages.common("export")) {
 
           @Override
           public void popupMenuWillBecomeVisible() {
@@ -1702,7 +1695,7 @@ public class WeasisWin {
 
     menuFile.add(new JSeparator());
     DynamicMenu printMenu =
-        new DynamicMenu(Messages.getString("WeasisWin.print")) {
+        new DynamicMenu(Messages.common("print")) {
 
           @Override
           public void popupMenuWillBecomeVisible() {

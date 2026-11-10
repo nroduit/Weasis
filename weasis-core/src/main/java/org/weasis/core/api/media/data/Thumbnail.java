@@ -129,7 +129,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
       String mime = media.getMimeType();
       if (mime != null) {
         if (mime.startsWith("image")) {
-          type = Messages.getString("Thumbnail.img");
+          type = Messages.common("image");
           fileIcon = FileIcon.IMAGE;
         } else if (mime.startsWith("video")) { // NON-NLS
           type = Messages.getString("Thumbnail.video");
@@ -138,7 +138,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
           type = Messages.getString("Thumbnail.dicom_sr");
           fileIcon = FileIcon.TEXT;
         } else if (mime.startsWith("txt")) { // NON-NLS
-          type = Messages.getString("Thumbnail.text");
+          type = Messages.common("text");
           fileIcon = FileIcon.TEXT;
         } else if (mime.endsWith("html")) { // NON-NLS
           type = Messages.getString("Thumbnail.html");

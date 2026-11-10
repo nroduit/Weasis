@@ -233,9 +233,9 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
       """
         .formatted(
             item.getName(),
-            Messages.getString("JIThumbnailList.size"),
+            Messages.common("size"),
             FileUtil.humanReadableByte(item.getLength(), false),
-            Messages.getString("JIThumbnailList.date"),
+            Messages.common("date"),
             TagUtil.formatDateTime(item.getLastModified().toInstant()));
   }
 

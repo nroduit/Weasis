@@ -27,7 +27,7 @@ public class AcquireCentralInfoPanel extends JPanel {
       new AcquireGlobalMetaPanel(Messages.getString("AcquireCentralInfoPanel.global"));
   private final AcquireSeriesMetaPanel seriesInfoPanel = new AcquireSeriesMetaPanel(null);
   private final AcquireMetadataPanel imageInfoPanel =
-      new AcquireImageMetaPanel(Messages.getString("AcquireCentralInfoPanel.image"));
+      new AcquireImageMetaPanel(Messages.common("image"));
 
   public AcquireCentralInfoPanel(SeriesGroup seriesGroup) {
     setLayout(new GridLayout(1, 3));

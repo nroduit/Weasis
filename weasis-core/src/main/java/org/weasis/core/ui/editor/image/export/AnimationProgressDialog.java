@@ -55,7 +55,7 @@ public class AnimationProgressDialog extends JDialog implements PropertyChangeLi
             new JLabel(Messages.getString("animation.encoding") + StringUtil.COLON)));
     panel.add(GuiUtils.getFlowLayoutPanel(progressBar));
     if (onCancel != null) {
-      JButton cancelButton = new JButton(Messages.getString("cancel"));
+      JButton cancelButton = new JButton(Messages.common("cancel"));
       cancelButton.addActionListener(_ -> onCancel.run());
       panel.add(
           GuiUtils.getFlowLayoutPanel(

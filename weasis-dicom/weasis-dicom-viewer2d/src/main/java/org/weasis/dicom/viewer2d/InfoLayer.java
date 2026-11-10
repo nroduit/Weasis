@@ -584,7 +584,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     PriorMarker.Interval interval = prior.interval();
     String text =
         (prior.rank() > 0
-                ? Messages.getString("InfoLayer.hp.prior.rank").formatted(prior.rank()) // NON-NLS
+                ? Messages.format("InfoLayer.hp.prior.rank", prior.rank()) // NON-NLS
                 : Messages.getString("InfoLayer.hp.prior")) // NON-NLS
             + " \u00B7 " // NON-NLS
             + TagUtil.formatDateTime(prior.date())

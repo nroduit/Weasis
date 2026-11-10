@@ -161,7 +161,7 @@ public class AnimatedImageSink implements FrameSink {
   }
 
   private String unsupported() {
-    return String.format(Messages.getString("animation.encode.failed"), format.getTitle());
+    return Messages.format("animation.encode.failed", format.getTitle());
   }
 
   private void release() {

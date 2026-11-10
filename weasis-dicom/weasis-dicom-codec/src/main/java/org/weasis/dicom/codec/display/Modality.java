@@ -14,7 +14,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.Messages;
 
 public enum Modality {
-  DEFAULT(Messages.getString("Modality.default")),
+  DEFAULT(Messages.common("default")),
   ANN("Annotation"), // NON-NLS
   AR("Autorefraction"), // NON-NLS
   ASMT("Content Assessment Results"), // NON-NLS

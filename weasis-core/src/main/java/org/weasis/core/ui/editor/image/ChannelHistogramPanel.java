@@ -37,8 +37,7 @@ public class ChannelHistogramPanel extends JPanel {
   private final JCheckBox jCheckAccumulate;
   private final JCheckBox jCheckLogarithmic;
   private final JCheckBox jCheckShowIntensity;
-  private final JButton jButtonReset =
-      new JButton(Messages.getString("ChannelHistogramPanel.reset"));
+  private final JButton jButtonReset = new JButton(Messages.common("reset"));
   // private final JButton jButtonSave = new
   // JButton(Messages.getString("ChannelHistogramPanel.save"));
   private final JPanel panel = new JPanel();

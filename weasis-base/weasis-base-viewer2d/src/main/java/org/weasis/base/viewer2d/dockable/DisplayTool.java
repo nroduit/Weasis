@@ -53,7 +53,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   public static final String BUTTON_NAME = Messages.getString("DisplayTool.display");
 
   private final JCheckBox applyAllViews =
-      new JCheckBox(Messages.getString("apply.to.all.views"), true);
+      new JCheckBox(Messages.common("apply_to_all_views"), true);
   private final CheckboxTree tree;
   private boolean initPathSelection;
   private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);
@@ -77,9 +77,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   public void iniTree() {
     tree.getCheckingModel().setCheckingMode(CheckingMode.SIMPLE);
 
-    image = new DefaultMutableTreeNode(Messages.getString("DisplayTool.img"), true);
+    image = new DefaultMutableTreeNode(Messages.common("image"), true);
     rootNode.add(image);
-    info = new DefaultMutableTreeNode(Messages.getString("DisplayTool.annotations"), true);
+    info = new DefaultMutableTreeNode(Messages.common("annotations"), true);
     info.add(new DefaultMutableTreeNode(LayerItem.ANNOTATIONS, true));
     info.add(new DefaultMutableTreeNode(LayerItem.SCALE, true));
     info.add(new DefaultMutableTreeNode(LayerItem.LUT, true));

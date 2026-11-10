@@ -80,7 +80,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
       new MigLayoutModel(
           View2dContainer.class.getResourceAsStream("/config/layoutModelHisto.properties"),
           "layout_histo", // NON-NLS
-          Messages.getString("View2dContainer.histogram"));
+          Messages.common("histogram"));
   // Unmodifiable list of the default layout elements
   public static final List<MigLayoutModel> DEFAULT_LAYOUT_LIST =
       List.of(

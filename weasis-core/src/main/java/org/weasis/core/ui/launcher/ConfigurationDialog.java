@@ -89,12 +89,12 @@ public class ConfigurationDialog extends JDialog {
     uriRadioButton.addActionListener(_ -> showCard());
     appRadioButton.addActionListener(_ -> showCard());
 
-    JButton saveButton = new JButton(Messages.getString("save"));
+    JButton saveButton = new JButton(Messages.common("save"));
     saveButton.addActionListener(_ -> saveConfiguration());
     JButton jButtonHelp = GuiUtils.createHelpButton("launcher-external"); // NON-NLS
     add(jButtonHelp, "cell 1 3, split 3, align right, gapright 15, gaptop 15"); // NON-NLS
     add(saveButton, "align right, gaptop 15"); // NON-NLS
-    JButton cancelButton = new JButton(Messages.getString("cancel"));
+    JButton cancelButton = new JButton(Messages.common("cancel"));
     cancelButton.addActionListener(_ -> dispose());
     add(cancelButton);
 

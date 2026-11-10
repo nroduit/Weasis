@@ -48,7 +48,7 @@ public class SeriesFilter {
   public enum Mode {
     TEXT(Messages.getString("DicomExplorer.filter_mode_text")),
     DATE(Messages.getString("DicomExplorer.filter_mode_date")),
-    MODALITY(Messages.getString("DicomExplorer.filter_mode_modality"));
+    MODALITY(Messages.common("modality"));
 
     private final String title;
 

@@ -64,17 +64,17 @@ public class ActionVol {
           Messages.getString("orthographic.projection"), "vol.projection", 0, 0, null);
 
   public static final ComboItemListenerValue<RenderingType> RENDERING_TYPE =
-      new ComboItemListenerValue<>(Messages.getString("type"), "rendering.type", 0, 0, null);
+      new ComboItemListenerValue<>(Messages.common("type"), "rendering.type", 0, 0, null);
 
   public static final SliderChangeListenerValue VOL_OPACITY =
-      new SliderChangeListenerValue(Messages.getString("opacity"), "vol.opacity", 0, 0, null);
+      new SliderChangeListenerValue(Messages.common("opacity"), "vol.opacity", 0, 0, null);
 
   public static final BasicActionStateValue ORIENTATION_CUBE =
       new BasicActionStateValue(
           Messages.getString("orientation.cube"), "crosshair-cube", 0, 0, null); // NON-NLS
 
   public static final ComboItemListenerValue<SegmentationTool.Type> SEG_TYPE =
-      new ComboItemListenerValue<>(Messages.getString("type"), "seg.type", 0, 0, null);
+      new ComboItemListenerValue<>(Messages.common("type"), "seg.type", 0, 0, null);
 
   public static final BasicActionStateValue MPR_CROSSHAIR =
       new BasicActionStateValue("MPR Crosshair", "mpr.crosshair", 0, 0, null); // NON-NLS

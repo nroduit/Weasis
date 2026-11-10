@@ -134,7 +134,7 @@ public final class PdfFileDestination implements PrintDestination {
         });
     JPanel panel =
         new JPanel(new MigLayout("insets 0, fillx", "[right]rel[grow,fill]rel[]")); // NON-NLS
-    panel.add(new JLabel(Messages.getString("PrintDialog.file") + StringUtil.COLON));
+    panel.add(new JLabel(Messages.common("file") + StringUtil.COLON));
     panel.add(fileField);
     panel.add(browse, "wrap"); // NON-NLS
     panel.add(new JLabel(Messages.getString("PrintDialog.resolution_label") + StringUtil.COLON));

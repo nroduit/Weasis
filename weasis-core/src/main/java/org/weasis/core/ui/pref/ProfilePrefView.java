@@ -80,7 +80,7 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
   private final transient GraphicRegistry graphics;
 
   private final JComboBox<MeasurementProfile> profileCombo = new JComboBox<>();
-  private final JMenuItem deleteItem = new JMenuItem(Messages.getString("ProfilePrefView.delete"));
+  private final JMenuItem deleteItem = new JMenuItem(Messages.common("delete"));
   private final JTextField nameField = new JTextField(16);
   private final JTextField modalitiesField = new JTextField(12);
 
@@ -137,7 +137,7 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
     add(buildProfileBar(), SHRINKABLE);
     add(buildIdentity(), SHRINKABLE);
     JTabbedPane tabs = new JTabbedPane();
-    tabs.addTab(Messages.getString("ProfilePrefView.tools"), buildToolsTab());
+    tabs.addTab(Messages.common("tools"), buildToolsTab());
     tabs.addTab(Messages.getString("ProfilePrefView.defaults"), buildDefaultsTab());
     tabs.addTab(Messages.getString("ProfilePrefView.values"), buildValuesTab());
     add(tabs, SHRINKABLE);
@@ -169,7 +169,7 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
     JButton create = new JButton(Messages.getString("ProfilePrefView.new"));
     create.setToolTipText(Messages.getString("ProfilePrefView.new_tip"));
     create.addActionListener(_ -> createFromCurrent());
-    JButton duplicate = new JButton(Messages.getString("ProfilePrefView.duplicate"));
+    JButton duplicate = new JButton(Messages.common("duplicate"));
     duplicate.addActionListener(_ -> duplicate());
     deleteItem.addActionListener(_ -> delete());
     JMenuItem importItem = new JMenuItem(Messages.getString("ProfilePrefView.import"));
@@ -217,14 +217,13 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
 
   private JPanel buildIdentity() {
     String tip = Messages.getString("ProfilePrefView.modalities_tip");
-    JLabel modalitiesLabel =
-        new JLabel(Messages.getString("ProfilePrefView.modalities") + StringUtil.COLON);
+    JLabel modalitiesLabel = new JLabel(Messages.common("modalities") + StringUtil.COLON);
     modalitiesLabel.setToolTipText(tip);
     modalitiesField.setToolTipText(tip);
     JPanel identity =
         new JPanel(
             new MigLayout("ins 5lp 0 5lp 0, fillx", "[][grow 60,fill][][grow 40,fill]")); // NON-NLS
-    identity.add(new JLabel(Messages.getString("ProfilePrefView.name") + StringUtil.COLON));
+    identity.add(new JLabel(Messages.common("name") + StringUtil.COLON));
     identity.add(nameField, "wmin 60lp"); // NON-NLS
     identity.add(modalitiesLabel, "gapleft 10lp"); // NON-NLS
     identity.add(modalitiesField, "wmin 60lp"); // NON-NLS
@@ -257,7 +256,7 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
           }
         });
     uprightBox.setToolTipText(Messages.getString("GraphicPrefView.upright_tip"));
-    decimalsCombo.addItem(Messages.getString("LabelPrefView.decimals_auto"));
+    decimalsCombo.addItem(Messages.common("automatic"));
     for (int i = 0; i <= MeasureFormat.MAX_DECIMALS; i++) {
       decimalsCombo.addItem(i);
     }
@@ -472,11 +471,11 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
     // A user profile over a site or built-in id: deleting it resets the profile to that definition
     deleteItem.setText(
         edited == null
-            ? Messages.getString("ProfilePrefView.delete")
+            ? Messages.common("delete")
             : registry
                 .below(edited.id())
-                .map(o -> Messages.getString("ProfilePrefView.reset").formatted(o.displayName()))
-                .orElse(Messages.getString("ProfilePrefView.delete")));
+                .map(o -> Messages.format("ProfilePrefView.reset", o.displayName()))
+                .orElse(Messages.common("delete")));
 
     allTools.setEnabled(editable);
     measureTools.setEnabled(editable && !allTools.isSelected());
@@ -631,9 +630,7 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
   private void createFromCurrent() {
     String name =
         JOptionPane.showInputDialog(
-            this,
-            Messages.getString("ProfilePrefView.name"),
-            Messages.getString("ProfilePrefView.new_name"));
+            this, Messages.common("name"), Messages.getString("ProfilePrefView.new_name"));
     if (!StringUtil.hasText(name)) {
       return;
     }
@@ -668,7 +665,7 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
     int answer =
         JOptionPane.showConfirmDialog(
             this,
-            Messages.getString("ProfilePrefView.delete_confirm").formatted(profile.name()),
+            Messages.format("ProfilePrefView.delete_confirm", profile.name()),
             getTitle(),
             JOptionPane.YES_NO_OPTION);
     if (answer == JOptionPane.YES_OPTION) {

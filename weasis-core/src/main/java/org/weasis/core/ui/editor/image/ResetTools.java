@@ -12,15 +12,15 @@ package org.weasis.core.ui.editor.image;
 import org.weasis.core.Messages;
 
 public enum ResetTools {
-  ALL(Messages.getString("ResetTools.all")),
+  ALL(Messages.common("all")),
 
-  WL(Messages.getString("ResetTools.wl")),
+  WL(Messages.common("window_level")),
 
   ZOOM(Messages.getString("ResetTools.zoom")),
 
-  ROTATION(Messages.getString("ResetTools.rotation")),
+  ROTATION(Messages.common("rotation")),
 
-  PAN(Messages.getString("ResetTools.pan"));
+  PAN(Messages.common("pan"));
 
   private final String name;
 

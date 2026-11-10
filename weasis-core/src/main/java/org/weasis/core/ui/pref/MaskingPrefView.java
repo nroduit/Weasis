@@ -94,7 +94,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   private final JComboBox<MaskingProfile> aiCombo = new JComboBox<>();
   private final JLabel readOnlyLabel = new JLabel();
   private final JLabel lockedLabel = new JLabel();
-  private final JMenuItem deleteItem = new JMenuItem(Messages.getString("MaskingPrefView.delete"));
+  private final JMenuItem deleteItem = new JMenuItem(Messages.common("delete"));
   private final JButton cloneButton = new JButton(Messages.getString("MaskingPrefView.clone"));
 
   private final TagTableModel tagTableModel = new TagTableModel();
@@ -103,7 +103,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
   private final JTextField tagField = new JTextField(12);
   private final JComboBox<TagCategory> tagCategoryCombo =
       new JComboBox<>(CATEGORIES.toArray(TagCategory[]::new));
-  private final JButton removeTagButton = new JButton(Messages.getString("MaskingPrefView.remove"));
+  private final JButton removeTagButton = new JButton(Messages.common("remove"));
 
   private MaskingModel pending;
 
@@ -173,12 +173,10 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
     deleteItem.addActionListener(e -> deleteProfile());
     popup.add(deleteItem);
     popup.addSeparator();
-    JMenuItem importItem =
-        new JMenuItem(Messages.getString("MaskingPrefView.import") + StringUtil.Suffix.THREE_PTS);
+    JMenuItem importItem = new JMenuItem(Messages.common("import") + StringUtil.Suffix.THREE_PTS);
     importItem.addActionListener(e -> importDocument());
     popup.add(importItem);
-    JMenuItem exportItem =
-        new JMenuItem(Messages.getString("MaskingPrefView.export") + StringUtil.Suffix.THREE_PTS);
+    JMenuItem exportItem = new JMenuItem(Messages.common("export") + StringUtil.Suffix.THREE_PTS);
     exportItem.addActionListener(e -> exportDocument());
     popup.add(exportItem);
     JButton moreButton = new JButton("⋯"); // NON-NLS
@@ -323,19 +321,20 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
       readOnlyLabel.setText(
           registry.profiles().isLocked(profile.id())
               ? Messages.getString("MaskingPrefView.lockedEntry")
-              : Messages.getString("MaskingPrefView.readonly")
-                  .formatted(registry.profiles().origin(profile.id()).displayName()));
+              : Messages.format(
+                  "MaskingPrefView.readonly",
+                  registry.profiles().origin(profile.id()).displayName()));
     }
     deleteItem.setEnabled(editable);
     // A user profile over a site or built-in id: deleting it resets the profile to that definition
     deleteItem.setText(
         profile == null
-            ? Messages.getString("MaskingPrefView.delete")
+            ? Messages.common("delete")
             : registry
                 .profiles()
                 .below(profile.id())
-                .map(o -> Messages.getString("MaskingPrefView.reset").formatted(o.displayName()))
-                .orElse(Messages.getString("MaskingPrefView.delete")));
+                .map(o -> Messages.format("MaskingPrefView.reset", o.displayName()))
+                .orElse(Messages.common("delete")));
   }
 
   private void show(MaskingProfile profile) {
@@ -439,7 +438,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
     }
     if (JOptionPane.showConfirmDialog(
             this,
-            Messages.getString("MaskingPrefView.delete.q").formatted(profile.name()),
+            Messages.format("MaskingPrefView.delete.q", profile.name()),
             getTitle(),
             JOptionPane.YES_NO_OPTION)
         != JOptionPane.YES_OPTION) {
@@ -527,7 +526,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
     tagField.setToolTipText(Messages.getString("MaskingPrefView.tag.tip"));
     tagCategoryCombo.setRenderer(
         renderer(v -> v instanceof TagCategory c ? categoryName(c) : String.valueOf(v)));
-    JButton addButton = new JButton(Messages.getString("MaskingPrefView.add"));
+    JButton addButton = new JButton(Messages.common("add"));
     addButton.addActionListener(e -> addTag());
     removeTagButton.addActionListener(e -> removeTag());
     removeTagButton.setEnabled(false);
@@ -624,7 +623,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
     @Override
     public String getColumnName(int column) {
       return switch (column) {
-        case 0 -> Messages.getString("MaskingPrefView.column.tag");
+        case 0 -> Messages.common("tag");
         case 1 -> Messages.getString("MaskingPrefView.column.category");
         default -> Messages.getString("MaskingPrefView.column.source");
       };
@@ -702,8 +701,7 @@ public class MaskingPrefView extends AbstractItemDialogPage implements Scrollabl
     boolean locked = registry.isLocked();
     lockedLabel.setVisible(locked);
     if (locked) {
-      lockedLabel.setText(
-          Messages.getString("MaskingPrefView.locked").formatted(registry.siteLocation()));
+      lockedLabel.setText(Messages.format("MaskingPrefView.locked", registry.siteLocation()));
       cloneButton.setEnabled(false);
       filterField.setEnabled(true);
       tagField.setEnabled(false);

@@ -20,7 +20,7 @@ public class Rotate270Button extends JButton {
 
   private static final int ANGLE = -90;
   private static final Icon ICON = ResourceUtil.getIcon(ActionIcon.ROTATE_COUNTERCLOCKWISE);
-  private static final String TOOL_TIP = Messages.getString("EditionTool.rotate.270");
+  private static final String TOOL_TIP = Messages.common("rotate_ccw");
 
   public Rotate270Button(RectifyAction rectifyAction) {
     super(ICON);

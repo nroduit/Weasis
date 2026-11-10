@@ -56,7 +56,7 @@ public final class GlibcFloor {
     /** The sentence shown to the user, {@code appName} being the application name. */
     public String message(String appName) {
       String key = found == null ? "GlibcFloor.no_glibc" : "GlibcFloor.unsupported"; // NON-NLS
-      return String.format(Messages.getString(key), appName, floor, found);
+      return Messages.format(key, appName, floor, found);
     }
   }
 

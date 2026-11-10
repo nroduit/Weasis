@@ -117,7 +117,7 @@ final class DeviceMaskDialog {
       Map<Integer, JCheckBox> checks,
       List<JComboBox<TagCategory>> categories) {
     JPanel panel = new JPanel(new MigLayout("ins 5lp, wrap 2", "[right][grow,fill]")); // NON-NLS
-    panel.add(new JLabel(Messages.getString("DeviceMaskDialog.name") + StringUtil.COLON));
+    panel.add(new JLabel(Messages.common("name") + StringUtil.COLON));
     panel.add(nameField);
 
     panel.add(new JLabel(Messages.getString("DeviceMaskDialog.match") + StringUtil.COLON), "top");
@@ -138,9 +138,7 @@ final class DeviceMaskDialog {
     for (int i = 0; i < shapes.size(); i++) {
       JComboBox<TagCategory> combo = categoryCombo();
       categories.add(combo);
-      panel.add(
-          new JLabel(
-              Messages.getString("DeviceMaskDialog.region").formatted(i + 1) + StringUtil.COLON));
+      panel.add(new JLabel(Messages.format("DeviceMaskDialog.region", i + 1) + StringUtil.COLON));
       panel.add(combo);
     }
     JLabel note = new JLabel(Messages.getString("DeviceMaskDialog.note"));

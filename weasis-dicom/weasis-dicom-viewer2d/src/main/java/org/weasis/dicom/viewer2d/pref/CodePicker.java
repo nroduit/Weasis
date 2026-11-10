@@ -80,8 +80,7 @@ final class CodePicker {
     this.codes = codes;
     this.onChange = onChange;
 
-    filter.putClientProperty(
-        FlatClientProperties.PLACEHOLDER_TEXT, Messages.getString("WindowPresetPrefView.filter"));
+    filter.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, Messages.common("filter"));
     filter.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
     filter.getDocument().addDocumentListener(onEdit(this::refilter));
 

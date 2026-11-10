@@ -201,7 +201,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
 
       List<Action> actions = getPrintActions();
       if (actions != null) {
-        JMenu printMenu = new JMenu(Messages.getString("SRContainer.print"));
+        JMenu printMenu = new JMenu(Messages.common("print"));
         for (Action action : actions) {
           JMenuItem item = new JMenuItem(action);
           printMenu.add(item);

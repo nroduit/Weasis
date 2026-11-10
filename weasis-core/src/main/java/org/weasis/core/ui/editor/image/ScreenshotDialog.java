@@ -117,15 +117,14 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
       new JCheckBox(
           Messages.getString("preserve.16.bit")
               + " ("
-              + String.format(Messages.getString("not.supported.with.s"), Format.JPEG.title)
+              + Messages.format("not.supported.with.s", Format.JPEG.title)
               + ")",
           false);
 
   private final MaskingProfileSelector maskingProfile =
       MaskingProfileSelector.withDefault(MaskingProfile.DISPLAY_ID);
   private final DisplayProfileSelector displayProfile;
-  private final JLabel labelSize =
-      new JLabel(Messages.getString("size") + " (%)" + StringUtil.COLON);
+  private final JLabel labelSize = new JLabel(Messages.common("size") + " (%)" + StringUtil.COLON);
   private final JSpinner spinner = new JSpinner();
   private final JLabel labelSizePix = new JLabel();
   private transient Runnable deferredCapture;
@@ -241,7 +240,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
             }
           }
         });
-    JButton saveButton = new JButton(Messages.getString("save"));
+    JButton saveButton = new JButton(Messages.common("save"));
     saveButton.addActionListener(
         e -> {
           boolean mustBeReleased = false;

@@ -10,7 +10,6 @@
 package org.weasis.dicom.viewer3d.vr;
 
 import java.awt.Component;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -105,9 +104,8 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
         tips.add(
             Messages.getString("preset.cost")
                 + StringUtil.COLON_AND_SPACE
-                + MessageFormat.format(
-                    Messages.getString("preset.cost.visible"),
-                    Math.round(100.0 * cost.visibleFraction())));
+                + Messages.format(
+                    "preset.cost.visible", Math.round(100.0 * cost.visibleFraction())));
       }
       if (cinematic) {
         text.append(cost != null ? " " : "  ").append(CINEMATIC_BADGE);
@@ -149,9 +147,7 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
       addRootItems(component, curModality.toString(), map.remove(curModality));
     }
     addRootItems(
-        component,
-        org.weasis.core.Messages.getString("ColorMapEditor.general"),
-        map.remove(Modality.DEFAULT));
+        component, org.weasis.core.Messages.common("general"), map.remove(Modality.DEFAULT));
 
     for (Entry<Modality, List<RadioMenuItem>> entry : map.entrySet()) {
       if (entry.getValue().isEmpty()) {

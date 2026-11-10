@@ -41,7 +41,7 @@ import org.weasis.plugin.SingletonExtension;
 public class EditionToolFactory extends ExtToolFactory<ImageElement> {
   public static final BasicActionStateValue EDITION =
       new BasicActionStateValue(
-          Messages.getString("edit"), "draw.edition", KeyEvent.VK_G, 0, null) { // NON-NLS
+          Messages.common("edit"), "draw.edition", KeyEvent.VK_G, 0, null) { // NON-NLS
         @Override
         public boolean isDrawingAction() {
           return true;

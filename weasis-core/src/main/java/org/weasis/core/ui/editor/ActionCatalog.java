@@ -224,7 +224,7 @@ public final class ActionCatalog {
           new ActionEntry(
               "tool/" + tool.getToolId(), // NON-NLS
               tool.getComponentName(),
-              Messages.getString("ActionCatalog.tools"),
+              Messages.common("tools"),
               "",
               "",
               relevant,

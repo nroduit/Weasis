@@ -417,7 +417,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     popup.insert(new JPopupMenu.Separator(), 1);
 
     popup.addSeparator();
-    JMenuItem applyToAll = new JMenuItem(Messages.getString("ViewerToolBar.synch_apply_to_all"));
+    JMenuItem applyToAll = new JMenuItem(Messages.common("apply_to_all_views"));
     // Decorate with this view's FoR chip so the user knows which group is being propagated.
     applyToAll.setIcon(
         FrameOfReferenceColor.swatch(
@@ -426,7 +426,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     popup.add(applyToAll);
 
     popup.addSeparator();
-    JMenuItem closeItem = new JMenuItem(Messages.getString("AbstractWizardDialog.close"));
+    JMenuItem closeItem = new JMenuItem(Messages.common("close"));
     closeItem.addActionListener(e -> popup.setVisible(false));
     popup.add(closeItem);
 
@@ -613,7 +613,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     menu.addSeparator();
-    JMenuItem applyToAll = new JMenuItem(Messages.getString("ViewerToolBar.synch_apply_to_all"));
+    JMenuItem applyToAll = new JMenuItem(Messages.common("apply_to_all_views"));
     applyToAll.setIcon(
         FrameOfReferenceColor.swatch(
             resolveChipColor(sd.getFrameOfReferenceUID()), GuiUtils.getScaleLength(12)));
@@ -621,7 +621,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     menu.add(applyToAll);
 
     menu.addSeparator();
-    JMenuItem closeItem = new JMenuItem(Messages.getString("AbstractWizardDialog.close"));
+    JMenuItem closeItem = new JMenuItem(Messages.common("close"));
     closeItem.addActionListener(e -> MenuSelectionManager.defaultManager().clearSelectedPath());
     menu.add(closeItem);
     return menu;

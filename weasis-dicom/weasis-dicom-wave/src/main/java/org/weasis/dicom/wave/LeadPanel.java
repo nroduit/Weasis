@@ -781,7 +781,7 @@ public class LeadPanel extends JPanel {
     JPopupMenu menu = new JPopupMenu();
     ButtonGroup group = new ButtonGroup();
     JRadioButtonMenuItem none =
-        new JRadioButtonMenuItem(Messages.getString("ToolPanel.none"), c.getLabel() == null);
+        new JRadioButtonMenuItem(Messages.common("none"), c.getLabel() == null);
     none.addActionListener(e -> relabel(c, null));
     group.add(none);
     menu.add(none);

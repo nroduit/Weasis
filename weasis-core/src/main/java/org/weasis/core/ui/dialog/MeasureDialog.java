@@ -112,7 +112,7 @@ public class MeasureDialog extends PropertiesDialog {
         panel.setBorder(
             new CompoundBorder(
                 GuiUtils.getEmptyBorder(10, 15, 5, 15),
-                GuiUtils.getTitledBorder(Messages.getString("MeasureDialog.text"))));
+                GuiUtils.getTitledBorder(Messages.common("text"))));
         panel.setPreferredSize(GuiUtils.getDimension(400, 140));
         StringBuilder buf = new StringBuilder();
         String[] labels = annotationGraphic.getLabels();

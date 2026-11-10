@@ -36,7 +36,7 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
   private static final Logger LOGGER = LoggerFactory.getLogger(SeriesGroup.class);
 
   public enum Type {
-    IMAGE(Messages.getString("Series.other"), "XC"),
+    IMAGE(Messages.common("other"), "XC"),
     IMAGE_DATE("Date", "XC"), // NON-NLS
     IMAGE_NAME("Name", "XC"), // NON-NLS
     //    AUDIO("Audio", "AU"),

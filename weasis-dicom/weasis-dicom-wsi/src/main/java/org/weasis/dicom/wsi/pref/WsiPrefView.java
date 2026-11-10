@@ -64,7 +64,7 @@ public class WsiPrefView extends AbstractItemDialogPage {
     threads.setToolTipText(Messages.getString("WsiPrefView.threads_tip"));
 
     JPanel zoom = GuiUtils.getVerticalBoxLayoutPanel();
-    zoom.setBorder(GuiUtils.getTitledBorder(Messages.getString("WsiPrefView.zoom")));
+    zoom.setBorder(GuiUtils.getTitledBorder(Messages.common("zoom")));
     zoom.add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, animation));
     zoom.add(
         row(
@@ -79,7 +79,7 @@ public class WsiPrefView extends AbstractItemDialogPage {
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     JPanel pan = GuiUtils.getVerticalBoxLayoutPanel();
-    pan.setBorder(GuiUtils.getTitledBorder(Messages.getString("WsiPrefView.pan")));
+    pan.setBorder(GuiUtils.getTitledBorder(Messages.common("pan")));
     pan.add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, inertia));
     add(pan);
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));

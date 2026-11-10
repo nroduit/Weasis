@@ -45,7 +45,7 @@ import org.weasis.dicom.viewer3d.vr.CinematicQuality;
 import org.weasis.dicom.viewer3d.vr.RenderingLayer;
 
 public class Viewer3dPrefView extends AbstractItemDialogPage {
-  private final JCheckBox enableOpenGL = new JCheckBox(Messages.getString("enable"));
+  private final JCheckBox enableOpenGL = new JCheckBox(Messages.common("enable"));
   private final JButton bckColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
   private final JButton lightColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
   private final JSlider sliderDynamic =
@@ -201,11 +201,11 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
           alert =
               GuiUtils.HTML_COLOR_PATTERN.formatted(
                   IconColor.ACTIONS_RED.getHtmlCode(),
-                  Messages.getString("texture.maximum.size.of")
-                      .formatted(
-                          info.max3dTextureSize(),
-                          info.max3dTextureSize(),
-                          info.max3dTextureSize()));
+                  Messages.format(
+                      "texture.maximum.size.of",
+                      info.max3dTextureSize(),
+                      info.max3dTextureSize(),
+                      info.max3dTextureSize()));
           openglPanel.add(GuiUtils.getFlowLayoutPanel(new JLabel(alert)));
         }
       }

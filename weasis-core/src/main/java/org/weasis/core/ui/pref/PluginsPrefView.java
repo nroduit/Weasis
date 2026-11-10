@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -61,7 +60,7 @@ public class PluginsPrefView extends AbstractItemDialogPage {
   private final JLabel policyLabel = new JLabel();
   private final JLabel noticeLabel = new JLabel();
   private final JButton add = new JButton(Messages.getString("PluginsPrefView.add"));
-  private final JButton remove = new JButton(Messages.getString("PluginsPrefView.remove"));
+  private final JButton remove = new JButton(Messages.common("remove"));
   private final JButton toggle = new JButton(Messages.getString("PluginsPrefView.toggle"));
 
   public PluginsPrefView() {
@@ -117,8 +116,8 @@ public class PluginsPrefView extends AbstractItemDialogPage {
     Optional<PluginGate> gate = gate();
     String policy = manifest.policy() == null ? "?" : manifest.policy().key();
     policyLabel.setText(
-        MessageFormat.format(
-            Messages.getString("PluginsPrefView.policy"),
+        Messages.format(
+            "PluginsPrefView.policy",
             policy,
             manifest.locked()
                 ? Messages.getString("PluginsPrefView.locked")
@@ -141,7 +140,7 @@ public class PluginsPrefView extends AbstractItemDialogPage {
     toggle.setEnabled(editable && user);
     toggle.setText(
         row.map(r -> LoadedPlugin.DISABLED.equals(r.plugin().state())).orElse(false)
-            ? Messages.getString("PluginsPrefView.enable")
+            ? Messages.common("enable")
             : Messages.getString("PluginsPrefView.disable"));
   }
 
@@ -179,8 +178,8 @@ public class PluginsPrefView extends AbstractItemDialogPage {
           signer.isPresent() ? PluginPolicy.Tier.SITE : PluginPolicy.Tier.UNVERIFIED;
       List<String> capabilities = PluginGate.capabilitiesOf(descriptor);
       String summary =
-          MessageFormat.format(
-              Messages.getString("PluginsPrefView.confirm"),
+          Messages.format(
+              "PluginsPrefView.confirm",
               descriptor.getPluginId(),
               descriptor.getVersion(),
               descriptor.getProvider() == null ? "?" : descriptor.getProvider(),
@@ -225,8 +224,7 @@ public class PluginsPrefView extends AbstractItemDialogPage {
         Files.deleteIfExists(target);
         JOptionPane.showMessageDialog(
             this,
-            MessageFormat.format(
-                Messages.getString("PluginsPrefView.refused"), decision.plugin().reason()),
+            Messages.format("PluginsPrefView.refused", decision.plugin().reason()),
             Messages.getString("PluginsPrefView.add"),
             JOptionPane.WARNING_MESSAGE);
         return;

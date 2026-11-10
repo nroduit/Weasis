@@ -18,8 +18,7 @@ import org.weasis.core.util.StringUtil;
 public class AcquireImageMetaPanel extends AcquireMetadataPanel {
 
   private static final String NO_IMAGE = Messages.getString("AcquireImageMetaPanel.no_img");
-  private static final String IMAGE_PREFIX =
-      Messages.getString("AcquireImageMetaPanel.img") + StringUtil.COLON_AND_SPACE;
+  private static final String IMAGE_PREFIX = Messages.common("image") + StringUtil.COLON_AND_SPACE;
 
   public AcquireImageMetaPanel(String title) {
     super(title);

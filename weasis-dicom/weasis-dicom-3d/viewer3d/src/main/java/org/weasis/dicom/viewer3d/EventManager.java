@@ -904,7 +904,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     if (isMenuEnabled(prop)) {
       Optional<SliderChangeListener> rotateAction = getAction(ActionW.ROTATION);
       if (rotateAction.isPresent()) {
-        menu = new JMenu(Messages.getString("View2dContainer.orientation"));
+        menu = new JMenu(Messages.common("orientation"));
         menu.setIcon(ActionW.ROTATION.getIcon());
         GuiUtils.applySelectedIconEffect(menu);
         ViewCanvas<DicomImageElement> view = getSelectedViewPane();

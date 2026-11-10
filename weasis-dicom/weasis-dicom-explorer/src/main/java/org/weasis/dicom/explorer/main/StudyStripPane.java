@@ -137,7 +137,7 @@ public class StudyStripPane extends JPanel {
     }
     String date = masked(study, Tag.StudyDate);
     StringBuilder text = new StringBuilder("<html><b>"); // NON-NLS
-    text.append(date.isEmpty() ? Messages.getString("DicomExplorer.col_study") : date);
+    text.append(date.isEmpty() ? Messages.common("study") : date);
     text.append("</b><br>"); // NON-NLS
     text.append(String.join(" ", modalities));
     if (!visible.isEmpty()) {

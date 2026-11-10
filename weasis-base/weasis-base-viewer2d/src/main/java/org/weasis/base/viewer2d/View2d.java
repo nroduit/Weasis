@@ -207,7 +207,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     if (GuiUtils.getUICore()
         .getSystemPreferences()
         .getBooleanProperty("weasis.contextmenu.close", true)) {
-      JMenuItem close = new JMenuItem(Messages.getString("View2d.close"));
+      JMenuItem close = new JMenuItem(Messages.common("close"));
       close.addActionListener(e -> View2d.this.setSeries(null, null));
       popupMenu.add(close);
     }

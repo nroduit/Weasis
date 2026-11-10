@@ -43,7 +43,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
   private final ButtonGroup buttonGroup = new ButtonGroup();
 
   private final JLabel lblAddress = new JLabel(Messages.getString("ProxyPrefView.host"));
-  private final JLabel lblPort = new JLabel(Messages.getString("ProxyPrefView.port"));
+  private final JLabel lblPort = new JLabel(Messages.common("port"));
 
   private final JTextField proxyHostHttp = new JTextField(20);
   private final JFormattedTextField proxyPortHttp = new JFormattedTextField();

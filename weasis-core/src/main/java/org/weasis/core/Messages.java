@@ -9,10 +9,14 @@
  */
 package org.weasis.core;
 
-import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import org.weasis.core.api.util.Bundles;
 import org.weasis.launcher.Translations;
 
+/**
+ * The strings of weasis-core, including the common section ({@code common.*}) every module reads
+ * through {@code Messages.common}.
+ */
 public class Messages {
   private static final String BUNDLE_NAME = "org.weasis.core.messages"; // NON-NLS
 
@@ -23,11 +27,18 @@ public class Messages {
 
   private Messages() {}
 
+  /** The string of a key, or {@code !key!} when the bundle has no such key. */
   public static String getString(String key) {
-    try {
-      return RESOURCE_BUNDLE.getString(key);
-    } catch (MissingResourceException e) {
-      return '!' + key + '!';
-    }
+    return Bundles.get(RESOURCE_BUNDLE, key);
+  }
+
+  /** The string of a key with its {@code {0}} arguments filled by {@code MessageFormat}. */
+  public static String format(String key, Object... args) {
+    return Bundles.format(RESOURCE_BUNDLE, key, args);
+  }
+
+  /** A string of the common section, e.g. {@code common("cancel")}. */
+  public static String common(String key) {
+    return getString(Bundles.COMMON_PREFIX + key);
   }
 }

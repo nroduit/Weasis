@@ -115,7 +115,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
                   "Select a \"DICOMDIR\" filename.",
                   null,
                   0,
-                  Messages.getString("HttpHeadersEditor.close"));
+                  Messages.common("close"));
             }
           }
           return SystemFileChooser.CANCEL_OPTION;

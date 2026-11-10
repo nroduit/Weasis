@@ -142,8 +142,8 @@ public class RedactionToolBar extends WtoolBar implements SeriesViewerListener {
 
   private static String scopeLabel(Scope scope) {
     return switch (scope) {
-      case IMAGE -> Messages.getString("RedactionToolBar.scope.image");
-      case SERIES -> Messages.getString("RedactionToolBar.scope.series");
+      case IMAGE -> Messages.common("image");
+      case SERIES -> Messages.common("series");
     };
   }
 
@@ -326,7 +326,7 @@ public class RedactionToolBar extends WtoolBar implements SeriesViewerListener {
     if (mask == null) {
       JOptionPane.showMessageDialog(
           this,
-          Messages.getString("RedactionToolBar.library.empty").formatted(entry.name()),
+          Messages.format("RedactionToolBar.library.empty", entry.name()),
           Messages.getString("RedactionToolBar.title"),
           JOptionPane.WARNING_MESSAGE);
       return;
@@ -385,7 +385,7 @@ public class RedactionToolBar extends WtoolBar implements SeriesViewerListener {
               .pixelMask(mask.origin())
               .map(PixelMask::name)
               .orElse(mask.origin());
-      state = Messages.getString("RedactionToolBar.state.device").formatted(name);
+      state = Messages.format("RedactionToolBar.state.device", name);
     } else if (burning) {
       state = Messages.getString("RedactionToolBar.state.drawn");
     }

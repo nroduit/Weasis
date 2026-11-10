@@ -95,8 +95,7 @@ public class SaveProtocolDialog extends JDialog {
       cell.setLayout(new BoxLayout(cell, BoxLayout.Y_AXIS));
       cell.setBorder(
           BorderFactory.createTitledBorder(
-              String.format(
-                  Messages.getString("SaveProtocolDialog.cell"), rule.cell() + 1, rule.label())));
+              Messages.format("SaveProtocolDialog.cell", rule.cell() + 1, rule.label())));
       List<JCheckBox> boxes = new ArrayList<>();
       for (FeatureSelector selector : rule.selectors()) {
         JCheckBox box = new JCheckBox(selector.describe(), true);
@@ -120,9 +119,9 @@ public class SaveProtocolDialog extends JDialog {
     JPanel buttons = new JPanel(new FlowLayout(FlowLayout.TRAILING));
     JButton dryRun = new JButton(Messages.getString("SaveProtocolDialog.dryRun"));
     dryRun.addActionListener(e -> dryRun());
-    JButton save = new JButton(Messages.getString("SaveProtocolDialog.save"));
+    JButton save = new JButton(Messages.common("save"));
     save.addActionListener(e -> save());
-    JButton cancel = new JButton(Messages.getString("SaveProtocolDialog.cancel"));
+    JButton cancel = new JButton(Messages.common("cancel"));
     cancel.addActionListener(e -> dispose());
     buttons.add(dryRun);
     buttons.add(Box.createHorizontalStrut(10));
@@ -147,9 +146,8 @@ public class SaveProtocolDialog extends JDialog {
                 names.add(description == null || description.isBlank() ? uid : description);
               });
     }
-    return String.format(
-        Messages.getString(
-            rule.unique() ? "SaveProtocolDialog.matchesOne" : "SaveProtocolDialog.matchesMany"),
+    return Messages.format(
+        rule.unique() ? "SaveProtocolDialog.matchesOne" : "SaveProtocolDialog.matchesMany",
         String.join(", ", names));
   }
 
@@ -215,9 +213,7 @@ public class SaveProtocolDialog extends JDialog {
         ValidationReport.run(
             List.of(new Candidate(derivation.document(), Origin.USER, true)), inputs);
     long applies = report.studies().stream().filter(l -> l.protocol() != null).count();
-    status.setText(
-        String.format(
-            Messages.getString("SaveProtocolDialog.applies"), applies, report.studies().size()));
+    status.setText(Messages.format("SaveProtocolDialog.applies", applies, report.studies().size()));
   }
 
   private void save() {

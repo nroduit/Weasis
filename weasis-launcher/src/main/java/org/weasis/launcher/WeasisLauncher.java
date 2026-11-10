@@ -131,13 +131,10 @@ public class WeasisLauncher {
     String appName = System.getProperty(ConfigData.P_WEASIS_NAME);
     if (Utils.hasText(minVersion)) {
       askToContinueLocal(
-          mainFrame,
-          String.format(Messages.getString("WeasisLauncher.update_min"), appName, minVersion));
+          mainFrame, Messages.format("WeasisLauncher.update_min", appName, minVersion));
     } else if (Utils.hasText(fallback)) {
       askToContinueLocal(
-          mainFrame,
-          String.format(
-              Messages.getString("WeasisLauncher.bootstrap_fallback"), appName, fallback));
+          mainFrame, Messages.format("WeasisLauncher.bootstrap_fallback", appName, fallback));
     }
 
     Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
@@ -183,9 +180,7 @@ public class WeasisLauncher {
 
       loader.setPluginManager(serverProp, pluginManager, modulesi18n);
       loader.writeLabel(
-          String.format(
-              Messages.getString("WeasisLauncher.starting"),
-              System.getProperty(ConfigData.P_WEASIS_NAME)));
+          Messages.format("WeasisLauncher.starting", System.getProperty(ConfigData.P_WEASIS_NAME)));
 
       if (closing) {
         return;
@@ -432,8 +427,8 @@ Starting PF4J Plugins...
               int response =
                   JOptionPane.showOptionDialog(
                       mainFrame.getWindow(),
-                      String.format(Messages.getString("WeasisLauncher.msg"), appName),
-                      String.format(Messages.getString("WeasisLauncher.first"), appName),
+                      Messages.format("WeasisLauncher.msg", appName),
+                      Messages.format("WeasisLauncher.first", appName),
                       JOptionPane.YES_NO_OPTION,
                       JOptionPane.WARNING_MESSAGE,
                       null,
@@ -480,8 +475,8 @@ Starting PF4J Plugins...
         final String releaseNotesUrl = serverProp.get("weasis.releasenotes"); // NON-NLS
         final StringBuilder message = new StringBuilder("<P>"); // NON-NLS
         message.append(
-            String.format(
-                Messages.getString("WeasisLauncher.change.version"),
+            Messages.format(
+                "WeasisLauncher.change.version",
                 System.getProperty(ConfigData.P_WEASIS_NAME),
                 versionOld,
                 versionNew));
@@ -677,8 +672,8 @@ Starting PF4J Plugins...
     // For new components
     JComponent.setDefaultLocale(locale);
 
-    if (Locale.ENGLISH.equals(locale)) {
-      // if English no need to load the translation packages
+    if (Locale.ENGLISH.getLanguage().equals(locale.getLanguage())) {
+      // English, and its pseudo-locale en-XA, need no translation package
       modulesi18n.clear();
     } else {
       // The launcher strings and the Swing dialogs, before the first window is displayed

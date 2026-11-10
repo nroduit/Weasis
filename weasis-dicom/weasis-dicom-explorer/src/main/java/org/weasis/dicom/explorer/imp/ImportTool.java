@@ -126,7 +126,7 @@ public class ImportTool extends PluginTool {
     if (wizard != null) {
       return;
     }
-    JButton importButton = new JButton(Messages.getString("DicomImport.imp"));
+    JButton importButton = new JButton(Messages.common("import"));
     JButton help = GuiUtils.createHelpButton("dicom-import"); // NON-NLS
     EmbeddedWizardPanel panel =
         new EmbeddedWizardPanel(

@@ -139,7 +139,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
   private final JLabel framesLabel = new JLabel();
   private final JButton previousButton = new JButton("◀");
   private final JButton nextButton = new JButton("▶");
-  private final JButton printButton = new JButton(Messages.getString("PrintDialog.print"));
+  private final JButton printButton = new JButton(Messages.common("print"));
 
   private final JPanel optionsHolder = new JPanel(new BorderLayout());
   private final String destinationPrefix;
@@ -242,7 +242,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     settings.add(backgroundComboBox);
 
     DefaultComboBoxModel<Object> sizes = new DefaultComboBoxModel<>();
-    sizes.addElement(Messages.getString("PrintDialog.auto"));
+    sizes.addElement(Messages.common("automatic"));
     for (TextSize size : TextSize.values()) {
       sizes.addElement(size);
     }
@@ -346,7 +346,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     panel.add(side, "aligny top, growy 0"); // NON-NLS
 
     JButton helpButton = GuiUtils.createHelpButton("print"); // NON-NLS
-    JButton cancelButton = new JButton(Messages.getString("PrintDialog.cancel"));
+    JButton cancelButton = new JButton(Messages.common("cancel"));
     cancelButton.addActionListener(e -> cancel());
     printButton.addActionListener(e -> printAction());
     getRootPane().setDefaultButton(printButton);
@@ -673,12 +673,10 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
             Messages.getString(
                 known.isPresent() ? "PrintDialog.resolution" : "PrintDialog.resolution_assumed"),
             dpi));
-    pageLabel.setText(
-        MessageFormat.format(Messages.getString("PrintDialog.page_of"), pageIndex + 1, count));
+    pageLabel.setText(Messages.format("PrintDialog.page_of", pageIndex + 1, count));
     framesLabel.setText(
         pages instanceof SeriesPages<?> series
-            ? MessageFormat.format(
-                Messages.getString("PrintDialog.pages_frames"), count, series.frameCount())
+            ? Messages.format("PrintDialog.pages_frames", count, series.frameCount())
             : "");
     previousButton.setEnabled(pageIndex > 0);
     nextButton.setEnabled(pageIndex < count - 1);
@@ -705,14 +703,14 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     }
     PageFigures f = figures.get();
     String cell =
-        MessageFormat.format(
-            Messages.getString("PrintDialog.figures_cell"),
+        Messages.format(
+            "PrintDialog.figures_cell",
             Math.round(f.cellWidthMm()),
             Math.round(f.cellHeightMm()),
             f.textSize());
     String image =
-        MessageFormat.format(
-            Messages.getString("PrintDialog.figures_image"),
+        Messages.format(
+            "PrintDialog.figures_image",
             Math.round(f.imagePixelsPerInch()),
             Messages.getString(f.magnified() ? "PrintDialog.magnified" : "PrintDialog.reduced"));
     return "<html>" + cell + "<br>" + image + "</html>"; // NON-NLS

@@ -16,7 +16,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -201,9 +200,8 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
             session -> {
               JMenuItem item =
                   new JMenuItem(
-                      MessageFormat.format(
-                          Messages.getString("DicomExplorer.restore_session"),
-                          SessionActions.label(session)));
+                      Messages.format(
+                          "DicomExplorer.restore_session", SessionActions.label(session)));
               item.addActionListener(_ -> SessionActions.restore(session.id()));
               popupMenu.add(item);
             });
@@ -213,9 +211,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
   private void addInterestMenuItem(JPopupMenu popupMenu) {
     int count = Interest.of(series).count();
     if (count > 0) {
-      JMenuItem item =
-          new JMenuItem(
-              MessageFormat.format(Messages.getString("DicomExplorer.open_interest"), count));
+      JMenuItem item = new JMenuItem(Messages.format("DicomExplorer.open_interest", count));
       item.addActionListener(_ -> InterestOpener.open(series, dicomModel));
       popupMenu.add(item);
     }
@@ -284,7 +280,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
       JMenu menuFactory,
       SeriesViewerFactory viewerFactory,
       List<MediaSeries<? extends MediaElement>> seriesList) {
-    JMenuItem openItem = new JMenuItem(Messages.getString("DicomExplorer.open"));
+    JMenuItem openItem = new JMenuItem(Messages.common("open"));
     openItem.addActionListener(
         e ->
             executeWithOpeningSeries(
@@ -354,7 +350,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
       JMenu menuFactory,
       SeriesViewerFactory viewerFactory,
       List<MediaSeries<? extends MediaElement>> seriesList) {
-    JMenuItem addItem = new JMenuItem(Messages.getString("DicomExplorer.add"));
+    JMenuItem addItem = new JMenuItem(Messages.common("add"));
     addItem.addActionListener(
         e ->
             executeWithOpeningSeries(

@@ -286,10 +286,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       readWaveformAnnotations(attributes, list, text);
       list.addAll(externalAnnotations);
     }
-    String[] headers = {
-      Messages.getString("MeasureAnnotationTool.tag"),
-      Messages.getString("MeasureAnnotationTool.value")
-    };
+    String[] headers = {Messages.common("tag"), Messages.common("value")};
     annotations.setRows(headers, list, new TagRenderer());
     interpretation.setText(text.toString());
     interpretationPanel.setVisible(!text.isEmpty());
@@ -304,10 +301,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
    * @param caliperRows one row per measure of every caliper, the lead in the name
    */
   public void updateCalipers(List<Object[]> intervalRows, List<Object[]> caliperRows) {
-    String[] headers = {
-      Messages.getString("MeasureAnnotationTool.tag"),
-      Messages.getString("MeasureAnnotationTool.value")
-    };
+    String[] headers = {Messages.common("tag"), Messages.common("value")};
     intervals.setRows(headers, intervalRows, null);
     calipers.setRows(headers, caliperRows, null);
     revalidate();

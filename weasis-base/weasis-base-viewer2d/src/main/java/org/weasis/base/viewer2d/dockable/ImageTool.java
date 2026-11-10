@@ -92,7 +92,7 @@ public class ImageTool extends PluginTool {
     JPanel framePanel = GuiUtils.getVerticalBoxLayoutPanel();
     framePanel.setBorder(
         BorderFactory.createCompoundBorder(
-            spaceY, GuiUtils.getTitledBorder(Messages.getString("cine"))));
+            spaceY, GuiUtils.getTitledBorder(Messages.common("cine"))));
 
     EventManager.getInstance()
         .getAction(ActionW.SCROLL_SERIES)
@@ -178,7 +178,7 @@ public class ImageTool extends PluginTool {
         .getAction(ActionW.FILTER)
         .ifPresent(
             comboItem -> {
-              JLabel label = new JLabel(Messages.getString("ImageTool.filter") + StringUtil.COLON);
+              JLabel label = new JLabel(Messages.common("filter") + StringUtil.COLON);
               JComboBox<?> combo = comboItem.createCombo(160);
               winLevelPanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, combo));
               winLevelPanel.add(GuiUtils.boxVerticalStrut(5));

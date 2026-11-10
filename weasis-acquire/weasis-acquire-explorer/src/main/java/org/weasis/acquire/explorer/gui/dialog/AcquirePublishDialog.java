@@ -200,7 +200,7 @@ public class AcquirePublishDialog extends JDialog {
     JPanel panel = GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, lblDestination, comboNode);
     if (comboCallingNode.getItemCount() > 0) {
       AbstractDicomNode.addTooltipToComboList(comboCallingNode);
-      JLabel lblCalling = new JLabel(Messages.getString("calling.node") + StringUtil.COLON);
+      JLabel lblCalling = new JLabel(Messages.common("calling_node") + StringUtil.COLON);
       GuiUtils.setPreferredWidth(comboCallingNode, 160, 120);
 
       panel.add(GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_LARGE));
@@ -212,7 +212,7 @@ public class AcquirePublishDialog extends JDialog {
     publishButton = new JButton(Messages.getString("AcquirePublishDialog.publish"));
     publishButton.addActionListener(_ -> publishAction(null));
 
-    cancelButton = new JButton(Messages.getString("AcquirePublishDialog.cancel"));
+    cancelButton = new JButton(Messages.common("cancel"));
     clearAndHideActionListener = _ -> clearAndHide();
     cancelButton.addActionListener(clearAndHideActionListener);
 

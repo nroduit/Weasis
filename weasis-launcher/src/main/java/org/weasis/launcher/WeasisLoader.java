@@ -92,9 +92,7 @@ public class WeasisLoader {
     cancelButton.addActionListener(evt -> closing());
 
     Icon icon = new FlatSVGIcon(resPath.resolve("svg/logo/WeasisAbout.svg").toUri());
-    String text =
-        String.format(
-            Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name"));
+    String text = Messages.format("WebStartLoader.title", System.getProperty("weasis.name"));
     JLabel imagePane = new JLabel(text, icon, SwingConstants.CENTER);
     imagePane.setFont(UIManager.getFont("h3.font"));
     imagePane.setVerticalTextPosition(SwingConstants.TOP);
@@ -143,8 +141,7 @@ public class WeasisLoader {
     EventQueue.invokeLater(
         () -> {
           downloadProgress.setString(
-              String.format(
-                  Messages.getString("WebStartLoader.end"), val, downloadProgress.getMaximum()));
+              Messages.format("WebStartLoader.end", val, downloadProgress.getMaximum()));
           downloadProgress.setValue(val);
           downloadProgress.repaint();
         });

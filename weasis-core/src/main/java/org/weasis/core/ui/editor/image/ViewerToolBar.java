@@ -497,7 +497,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                     new JMenuItem(Messages.getString("ViewerToolBar.synch_apply_to_tiled"));
                 applyToAll.addActionListener(e -> applySyncOptionsToTiledSiblings());
               } else {
-                applyToAll = new JMenuItem(Messages.getString("ViewerToolBar.synch_apply_to_all"));
+                applyToAll = new JMenuItem(Messages.common("apply_to_all_views"));
                 applyToAll.setIcon(
                     resolveChipSwatch(selectedViewSynch.getFrameOfReferenceUID(), popupContainer));
                 applyToAll.addActionListener(e -> applySyncOptionsToOtherViews(selectedViewSynch));
@@ -506,7 +506,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             }
 
             menu.addSeparator();
-            JMenuItem closeItem = new JMenuItem(Messages.getString("AbstractWizardDialog.close"));
+            JMenuItem closeItem = new JMenuItem(Messages.common("close"));
             closeItem.addActionListener(e -> menu.setVisible(false));
             menu.add(closeItem);
             return menu;

@@ -191,15 +191,13 @@ public class HangingProtocolBar extends WtoolBar {
                   choices.add(
                       new Choice(
                           SESSION + session.id(),
-                          String.format(
-                              Messages.getString("HangingProtocolBar.session"),
-                              SessionActions.label(session)))));
+                          Messages.format(
+                              "HangingProtocolBar.session", SessionActions.label(session)))));
       protocols.setModel(new DefaultComboBoxModel<>(choices.toArray(Choice[]::new)));
       protocols.setSelectedItem(selected);
       protocols.setEnabled(choices.size() > 1);
       int steps = applied.plan().steps().size();
-      step.setText(
-          String.format(Messages.getString("HangingProtocolBar.step"), applied.step() + 1, steps));
+      step.setText(Messages.format("HangingProtocolBar.step", applied.step() + 1, steps));
       previous.setEnabled(steps > 1);
       next.setEnabled(steps > 1);
       again.setEnabled(true);

@@ -16,7 +16,6 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -811,9 +810,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
       int rows = preset[1];
       boolean isCurrent = isTiled && pane.getTiledCols() == cols && pane.getTiledRows() == rows;
 
-      String label =
-          MessageFormat.format(
-              Messages.getString("ImageViewerEventManager.viewport_tiled"), cols, rows);
+      String label = Messages.format("ImageViewerEventManager.viewport_tiled", cols, rows);
       JCheckBoxMenuItem item = new JCheckBoxMenuItem(label, isCurrent);
       item.addActionListener(
           e -> {

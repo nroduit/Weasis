@@ -141,8 +141,10 @@ A viewer feature usually touches a base class in `weasis-core` and its subclasse
   EDT work goes through `GuiExecutor.invokeAndRethrow`; identity-bearing output goes through `IdentityMask.callForCommand`; namespaces that must stay local override `isRemotable()`.
   Adding a verb or option bumps the minor of `CommandManager.API_VERSION`; nothing is removed within a major (deprecate with `@Deprecated`).
   Cover the syntax with a `LegacyCommandsTest`-style parse test, and when a verb matters to an agent workflow, update `skills/weasis/SKILL.md` and regenerate `reference.md` / `commands.json`.
-- **i18n**: every user-facing module has a `Messages.java` and `messages.properties` pair.
-  Every user-visible string goes through it, never as a literal in the code.
+- **i18n**: every user-facing module has a `Messages.java` and `messages.properties` pair; the guide is `docs/i18n.md`.
+  Every user-visible string goes through it, never as a literal in the code: `Messages.getString(key)` for a label, `Messages.format(key, args)` for a sentence with `{0}` arguments (`MessageFormat`, never `%s`; a lone apostrophe in such a string is written `''`), `Messages.common(key)` for the words every module shares (the `common.*` section of weasis-core).
+  A one-word string, a string with arguments and a string with a character limit carry a developer note on the comment line above the key (`# max:28 Button of the print dialog (verb)`); `I18nSourcesTest` of the `tests` module fails the build on a missing note, an unused or missing key, a `printf` placeholder, an invalid pattern or a hard-coded Swing label.
+  The pseudo-locale `en-XA` (`-Dlocale.lang.code=en-XA`) shows every translated string framed and accented.
   Properties files matching `messages*.properties` under `src/main/java/` are picked up as resources by `weasis-parent/pom.xml`.
   The translations come from the external `weasis-i18n-dist` artifact at distribution time (see `weasis-distributions/pom.xml`): never edit a non-English `messages_*.properties` file in this repository.
   At runtime each module gets its `<module>-i18n.jar.xz` package, cached in the `i18n` folder of the plugin cache and published through the shared library class loader (`Translations`, `WeasisPluginManager.loadCommonLibraries`); the launcher, including the Swing dialogs, reads `weasis-launcher-i18n` before its first window, and weasis-core gets its bundle through `Translations.getBundle` because it can be on the application class path.
@@ -213,6 +215,7 @@ Existing docs (`docs/README.md` is the entry point and indexes them by subject):
 | `docs/README.md` | developer entry point: module map, build and run, index of the concept pages |
 | `docs/plugins.md` | writing a plugin: the pf4j model, extension points, a command namespace, loading, packaging and signing, changes from 4.x |
 | `docs/testing-with-commands.md` | scripts with `@expect`, the smoke suite, the tests a namespace carries |
+| `docs/i18n.md` | strings and translations: `Messages.getString`, `format`, `common`, developer notes and `# max:N`, the build checks, the `en-XA` pseudo-locale |
 | `docs/release-notes/` | the tester notes of the pre-releases, one file per tag |
 | `weasis-core/docs/Animation-Export.md` | APNG / GIF / DICOM SC export of 3D rotations, cine loops and recordings |
 | `weasis-core/docs/ColorMap-Design.md` | JSON color maps for 2D, fusion and 3D |

@@ -84,7 +84,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomFieldsView.class);
 
   public static final String[] columns = {
-    Messages.getString("tag.id"), "VR", Messages.getString("tag.name"), Messages.getString("value")
+    Messages.getString("tag.id"), "VR", Messages.getString("tag.name"), Messages.common("value")
   };
 
   private final JScrollPane allPane = new JScrollPane();

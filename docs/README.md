@@ -53,6 +53,7 @@ The native distribution and the installers are built apart, see [Native-Build-Ov
 
 - [Writing a plugin](plugins.md): the plugin model, the extension points, a command namespace, loading a development build, packaging and signing, what changed from 4.x.
 - [Testing with commands](testing-with-commands.md): scripts with `@expect`, the JUnit report, the tests a namespace carries, how a bug becomes a script.
+- [Strings and translations](i18n.md): `Messages.getString`, `format` and `common`, the developer notes and `# max:N` limits, the checks of the build, the `en-XA` pseudo-locale.
 - [Release notes](release-notes/README.md): the tester notes of the pre-releases.
 
 ## Concepts, by subject

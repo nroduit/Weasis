@@ -55,7 +55,7 @@ public final class DefaultThumbnailList<E extends MediaElement> extends Abstract
           JMenuItem menuItem =
               new JMenuItem(
                   new DefaultAction(
-                      Messages.getString("JIThumbnailList.open"),
+                      Messages.common("open"),
                       event -> openSelection(selMedias, true, true, false)));
           popupMenu.add(menuItem);
 

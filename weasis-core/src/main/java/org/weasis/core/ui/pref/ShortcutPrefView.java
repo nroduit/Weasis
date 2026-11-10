@@ -90,7 +90,7 @@ public class ShortcutPrefView extends AbstractItemDialogPage {
             FlowLayout.LEADING,
             5,
             2,
-            new JLabel(Messages.getString("filter") + StringUtil.COLON),
+            new JLabel(Messages.common("filter") + StringUtil.COLON),
             searchField);
     add(searchPanel, BorderLayout.NORTH);
 
@@ -273,7 +273,7 @@ public class ShortcutPrefView extends AbstractItemDialogPage {
         case COL_CATEGORY -> Messages.getString("shortcut.column.category");
         case COL_ACTION -> Messages.getString("shortcut.column.action");
         case COL_SHORTCUT -> Messages.getString("shortcut.column.shortcut");
-        case COL_DEFAULT -> Messages.getString("shortcut.column.default");
+        case COL_DEFAULT -> Messages.common("default");
         default -> "";
       };
     }

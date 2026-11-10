@@ -269,7 +269,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
     clip.start();
 
     timer.start();
-    play.setText(Messages.getString("AuView.stop"));
+    play.setText(Messages.common("stop"));
     playing = true;
   }
 

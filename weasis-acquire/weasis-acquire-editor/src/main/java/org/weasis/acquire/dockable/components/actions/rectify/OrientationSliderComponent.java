@@ -39,7 +39,7 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
 
   public OrientationSliderComponent(RectifyPanel panel) {
     super(
-        Messages.getString("OrientationSliderComponent.orientation"),
+        Messages.common("orientation"),
         RECTIFY_ORIENTATION_MIN,
         RECTIFY_ORIENTATION_MAX,
         RECTIFY_ORIENTATION_DEFAULT);

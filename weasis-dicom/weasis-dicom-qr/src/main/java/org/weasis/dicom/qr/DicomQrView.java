@@ -249,7 +249,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final DropDownButton modButton =
       new DropDownButton(
           "search_mod", // NON-NLS
-          Messages.getString("DicomQrView.modalities"),
+          Messages.common("modalities"),
           GuiUtils.getDownArrowIcon(),
           groupMod) {
         @Override
@@ -307,11 +307,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private QueryProcess process;
   private AuthMethod authMethod;
   private final SpinnerProgress progressBar = new SpinnerProgress();
-  final JLabel lblCalling =
-      new JLabel(Messages.getString("DicomQrView.calling_node") + StringUtil.COLON);
+  final JLabel lblCalling = new JLabel(Messages.common("calling_node") + StringUtil.COLON);
   private final JLabel lblCharset = new JLabel(Messages.getString("charset") + StringUtil.COLON);
-  private final JLabel lblRetrieve =
-      new JLabel(Messages.getString("DicomQrView.retrieve") + StringUtil.COLON);
+  private final JLabel lblRetrieve = new JLabel(Messages.common("retrieve") + StringUtil.COLON);
 
   public DicomQrView() {
     super(Messages.getString("DicomQrView.title"));
@@ -438,7 +436,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     pageSpinner.addChangeListener(queryListener);
     progressBar.setEnabled(false);
 
-    JButton searchBtn = new JButton(Messages.getString("DicomQrView.search"));
+    JButton searchBtn = new JButton(Messages.common("search"));
     searchBtn.setToolTipText(Messages.getString("DicomQrView.tips_dcm_query"));
     searchBtn.addActionListener(e -> dicomQuery());
 
@@ -531,21 +529,20 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     JPanel panel2 =
         GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, comboTags, tfSearch);
 
-    JButton clearBtn = new JButton(Messages.getString("DicomQrView.clear"));
+    JButton clearBtn = new JButton(Messages.common("clear"));
     clearBtn.setToolTipText(Messages.getString("DicomQrView.clear_search"));
     clearBtn.addActionListener(e -> templateComboBox.setSelectedIndex(0));
 
-    JButton addButton = new JButton(Messages.getString("save"));
-    JButton deleteButton = new JButton(Messages.getString("delete"));
+    JButton addButton = new JButton(Messages.common("save"));
+    JButton deleteButton = new JButton(Messages.common("delete"));
     deleteButton.setToolTipText(Messages.getString("delete.the.selected.item"));
     deleteButton.addActionListener(
         evt -> {
           int response =
               JOptionPane.showConfirmDialog(
                   deleteButton,
-                  String.format(
-                      org.weasis.dicom.explorer.Messages.getString("AbstractDicomNode.delete_msg"),
-                      templateComboBox.getSelectedItem()),
+                  org.weasis.dicom.explorer.Messages.format(
+                      "AbstractDicomNode.delete_msg", templateComboBox.getSelectedItem()),
                   null,
                   JOptionPane.YES_NO_OPTION,
                   JOptionPane.WARNING_MESSAGE);
@@ -824,7 +821,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                       int limit = (Integer) limitSpinner.getValue();
                       String message =
                           state.getStatus() == Status.Cancel && limit > 0
-                              ? Messages.getString("query.canceled.limit").formatted(limit)
+                              ? Messages.format("query.canceled.limit", limit)
                               : state.getMessage();
                       LOGGER.error("Dicom C-FIND error: {}", message);
                       JOptionPane.showMessageDialog(

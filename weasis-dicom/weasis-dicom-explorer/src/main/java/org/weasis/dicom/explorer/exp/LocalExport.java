@@ -193,7 +193,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
   public void initGUI() {
     JLabel lblImportAFolder = new JLabel(Messages.getString("LocalExport.exp") + StringUtil.COLON);
-    JButton btnNewButton = new JButton(Messages.getString("LocalExport.options"));
+    JButton btnNewButton = new JButton(Messages.common("options"));
     btnNewButton.addActionListener(e -> showExportingOptions());
 
     List<JComponent> list = new ArrayList<>();

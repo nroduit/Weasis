@@ -12,13 +12,7 @@ package org.weasis.core.ui.model.layer;
 import org.weasis.core.Messages;
 
 public enum LayerType {
-  IMAGE(
-      10,
-      Messages.getString("LayerType.img"),
-      Boolean.TRUE,
-      Boolean.FALSE,
-      Boolean.FALSE,
-      Boolean.FALSE),
+  IMAGE(10, Messages.common("image"), Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE),
 
   CROSSLINES(
       20,
@@ -37,12 +31,7 @@ public enum LayerType {
       Boolean.FALSE),
 
   ANNOTATION(
-      31,
-      Messages.getString("LayerType.annot"),
-      Boolean.TRUE,
-      Boolean.FALSE,
-      Boolean.TRUE,
-      Boolean.TRUE),
+      31, Messages.common("annotations"), Boolean.TRUE, Boolean.FALSE, Boolean.TRUE, Boolean.TRUE),
 
   DRAW(
       40,

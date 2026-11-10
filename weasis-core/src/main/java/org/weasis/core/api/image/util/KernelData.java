@@ -29,8 +29,7 @@ public final class KernelData {
   // === Predefined Kernels ===
 
   public static final KernelData NONE =
-      new KernelData(
-          Messages.getString("KernelData.0"), KernelType.IDENTITY, 1, 1, new float[] {1.0f});
+      new KernelData(Messages.common("none"), KernelType.IDENTITY, 1, 1, new float[] {1.0f});
 
   public static final KernelData MEAN =
       new KernelData(

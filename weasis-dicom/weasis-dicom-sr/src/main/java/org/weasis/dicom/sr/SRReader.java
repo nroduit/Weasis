@@ -182,7 +182,7 @@ public class SRReader {
 
     html.append("<tr align=\"left\" valign=\"top\"><td width=\"33%\" >"); // NON-NLS
     html.append("<font size=\"+1\">"); // NON-NLS
-    html.append(Messages.getString("SRReader.patient"));
+    html.append(Messages.common("patient"));
     html.append("</font>"); // NON-NLS
     html.append("<BR>");
     writeItem(Tag.PatientName, html);
@@ -195,7 +195,7 @@ public class SRReader {
 
     html.append("</td><td width=\"33%\" >"); // NON-NLS
     html.append("<font size=\"+1\">"); // NON-NLS
-    html.append(Messages.getString("SRReader.study"));
+    html.append(Messages.common("study"));
     html.append("</font>"); // NON-NLS
     html.append("<BR>");
     writeStudyDateTime(html);

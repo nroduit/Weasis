@@ -60,7 +60,7 @@ public class HistogramData {
         Messages.getString("HistogramData.hsv"),
         buildLut(ColorLut.HUE),
         buildLut(Messages.getString("HistogramData.saturation"), ColorLut.GRAY),
-        buildLut(Messages.getString("HistogramData.val"), ColorLut.GRAY)),
+        buildLut(Messages.common("value"), ColorLut.GRAY)),
     HLS(
         Messages.getString("HistogramData.hls"),
         buildLut(ColorLut.HUE),

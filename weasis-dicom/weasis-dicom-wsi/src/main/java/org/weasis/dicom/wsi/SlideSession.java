@@ -154,7 +154,7 @@ public final class SlideSession implements AutoCloseable {
     }
     if (failure != null) {
       LOGGER.error("Cannot open the slide", failure);
-      error = Messages.getString("WsiView.error").formatted(failure.getMessage());
+      error = Messages.format("WsiView.error", failure.getMessage());
     } else if (newStore.slides().isEmpty()) {
       newStore.close();
       error = Messages.getString("WsiView.no_slide");

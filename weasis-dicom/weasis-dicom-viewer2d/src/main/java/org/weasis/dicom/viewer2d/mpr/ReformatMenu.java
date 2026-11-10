@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
-import java.text.MessageFormat;
 import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
@@ -62,7 +61,7 @@ public final class ReformatMenu {
     for (Plane plane : Plane.values()) {
       String label = label(plane);
       if (plane == acquired) {
-        label = MessageFormat.format(Messages.getString("ReformatMenu.acquired"), label);
+        label = Messages.format("ReformatMenu.acquired", label);
       }
       JRadioButtonMenuItem item = new JRadioButtonMenuItem(label, plane == current);
       item.addActionListener(e -> ReformatService.switchPlane(container, view, plane));

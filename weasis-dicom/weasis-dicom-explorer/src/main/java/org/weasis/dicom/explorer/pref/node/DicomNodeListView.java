@@ -54,8 +54,8 @@ public class DicomNodeListView extends AbstractItemDialogPage {
     AbstractDicomNode.loadDicomNodes(nodeComboBox, nodeType);
     AbstractDicomNode.addTooltipToComboList(nodeComboBox);
     GuiUtils.setPreferredWidth(nodeComboBox, 270, 150);
-    JButton editButton = new JButton(Messages.getString("DicomNodeListView.edit"));
-    JButton deleteButton = new JButton(Messages.getString("DicomNodeListView.delete"));
+    JButton editButton = new JButton(Messages.common("edit"));
+    JButton deleteButton = new JButton(Messages.common("delete"));
     JButton addNodeButton = new JButton(Messages.getString("DicomNodeListView.add_new"));
     deleteButton.addActionListener(_ -> AbstractDicomNode.deleteNodeActionPerformed(nodeComboBox));
     editButton.addActionListener(_ -> AbstractDicomNode.editNodeActionPerformed(nodeComboBox));

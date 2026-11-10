@@ -211,7 +211,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
    * user chooses, kept in the local settings of this workstation.
    */
   private static JComboBox<Object> roleComboBox(String monitorId) {
-    String automatic = Messages.getString("ScreenPrefView.role_auto");
+    String automatic = Messages.common("automatic");
     JComboBox<Object> combo = new JComboBox<>();
     combo.addItem(automatic);
     for (ScreenRole role : ScreenRole.values()) {
@@ -375,7 +375,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
       inputPanel.add(jTextFieldLineWidth);
       inputPanel.add(jComboBoxUnit);
       inputPanel.add(Box.createHorizontalStrut(15));
-      JButton apply = new JButton(Messages.getString("ScreenPrefView.apply"));
+      JButton apply = new JButton(Messages.common("apply"));
       apply.addActionListener(e -> computeScaleFactor());
       inputPanel.add(apply);
 

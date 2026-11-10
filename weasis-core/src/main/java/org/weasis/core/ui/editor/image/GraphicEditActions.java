@@ -72,7 +72,7 @@ public final class GraphicEditActions {
     }
     Objects.requireNonNull(view);
     JPopupMenu popupMenu = new JPopupMenu();
-    popupMenu.add(new TitleMenuItem(Messages.getString("GraphicEditActions.selection")));
+    popupMenu.add(new TitleMenuItem(Messages.common("selection")));
     popupMenu.addSeparator();
     addUndoItems(popupMenu, view);
 
@@ -125,11 +125,11 @@ public final class GraphicEditActions {
     if (history == null || !history.isEnabled()) {
       return;
     }
-    JMenuItem undo = new JMenuItem(Messages.getString("GraphicEditActions.undo"));
+    JMenuItem undo = new JMenuItem(Messages.common("undo"));
     undo.setEnabled(history.canUndo());
     undo.addActionListener(_ -> undo(view));
     popupMenu.add(undo);
-    JMenuItem redo = new JMenuItem(Messages.getString("GraphicEditActions.redo"));
+    JMenuItem redo = new JMenuItem(Messages.common("redo"));
     redo.setEnabled(history.canRedo());
     redo.addActionListener(_ -> redo(view));
     popupMenu.add(redo);
@@ -371,7 +371,7 @@ public final class GraphicEditActions {
     copy.addActionListener(_ -> DefaultView2d.GRAPHIC_CLIPBOARD.copy(selected));
     popupMenu.add(copy);
 
-    JMenuItem duplicate = new JMenuItem(Messages.getString("GraphicEditActions.duplicate"));
+    JMenuItem duplicate = new JMenuItem(Messages.common("duplicate"));
     duplicate.addActionListener(_ -> DefaultView2d.GRAPHIC_CLIPBOARD.duplicate(selected, view));
     popupMenu.add(duplicate);
 

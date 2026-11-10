@@ -28,10 +28,7 @@ import org.weasis.dicom.codec.TagD;
 public abstract class AcquireMetadataTableModel extends AbstractTableModel {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireMetadataTableModel.class);
 
-  protected String[] headers = {
-    Messages.getString("AcquireMetadataTableModel.tag"),
-    Messages.getString("AcquireMetadataTableModel.val")
-  };
+  protected String[] headers = {Messages.common("tag"), Messages.common("value")};
   protected Optional<Taggable> taggable;
   private final TagW[] tagsToDisplay;
   private final TagW[] tagsEditable;

@@ -73,7 +73,7 @@ public abstract class PanelPopupEditor extends JPanel {
           }
         });
 
-    JButton closeButton = new JButton(Messages.getString("close"));
+    JButton closeButton = new JButton(Messages.common("close"));
     closeButton.setFocusable(false);
     closeButton.addActionListener(
         _ -> {

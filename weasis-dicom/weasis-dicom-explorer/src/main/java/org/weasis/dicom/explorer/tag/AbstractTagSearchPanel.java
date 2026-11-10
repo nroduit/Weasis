@@ -30,7 +30,7 @@ public abstract class AbstractTagSearchPanel extends JPanel implements KeyListen
 
   protected AbstractTagSearchPanel() {
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-    add(new JLabel(Messages.getString("DicomFieldsView.search") + StringUtil.COLON_AND_SPACE));
+    add(new JLabel(Messages.common("search") + StringUtil.COLON_AND_SPACE));
 
     GuiUtils.setPreferredWidth(textFieldSearch, 300, 100);
     textFieldSearch

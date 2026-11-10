@@ -61,7 +61,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
-    JLabel jLabelSize = new JLabel(Messages.getString("LabelPrefView.size") + StringUtil.COLON);
+    JLabel jLabelSize = new JLabel(Messages.common("size") + StringUtil.COLON);
     JPanel panelFont =
         GuiUtils.getFlowLayoutPanel(
             ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, jLabelSize, fontItemJComboBox);
@@ -70,7 +70,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
     JLabel decimalsLabel =
         new JLabel(Messages.getString("LabelPrefView.decimals") + StringUtil.COLON);
-    decimalsCombo.addItem(Messages.getString("LabelPrefView.decimals_auto"));
+    decimalsCombo.addItem(Messages.common("automatic"));
     for (int i = 0; i <= MeasureFormat.MAX_DECIMALS; i++) {
       decimalsCombo.addItem(i);
     }

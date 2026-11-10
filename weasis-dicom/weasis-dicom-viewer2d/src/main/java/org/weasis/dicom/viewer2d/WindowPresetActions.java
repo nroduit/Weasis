@@ -93,15 +93,11 @@ public final class WindowPresetActions {
     JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
     panel.add(
         GuiUtils.getHorizontalBoxLayoutPanel(
-            5,
-            new JLabel(Messages.getString("WindowPresetActions.name") + StringUtil.COLON),
-            nameField));
+            5, new JLabel(Messages.common("name") + StringUtil.COLON), nameField));
     panel.add(GuiUtils.boxVerticalStrut(5));
     panel.add(
         GuiUtils.getHorizontalBoxLayoutPanel(
-            5,
-            new JLabel(Messages.getString("WindowPresetActions.modality") + StringUtil.COLON),
-            modalityField));
+            5, new JLabel(Messages.common("modality") + StringUtil.COLON), modalityField));
     panel.add(GuiUtils.boxVerticalStrut(5));
     panel.add(
         GuiUtils.getHorizontalBoxLayoutPanel(

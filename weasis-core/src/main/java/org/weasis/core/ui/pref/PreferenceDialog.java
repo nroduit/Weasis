@@ -42,7 +42,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
 
   protected final JButton jButtonHelp = new JButton();
   protected final JButton restoreButton = new JButton(Messages.getString("restore.values"));
-  protected final JButton applyButton = new JButton(Messages.getString("LabelPrefView.apply"));
+  protected final JButton applyButton = new JButton(Messages.common("apply"));
   protected final JButton reloadSiteButton =
       new JButton(Messages.getString("PreferenceDialog.reload.site"));
   protected final JButton exportButton =

@@ -236,9 +236,7 @@ public class HistogramView extends JComponent
    */
   public static JPanel buildStatisticsTable(List<MeasureItem> measList, MeasurableLayer layer) {
     JPanel tableContainer = new JPanel(new BorderLayout());
-    String[] headers = {
-      Messages.getString("MeasureTool.param"), Messages.getString("MeasureTool.val")
-    };
+    String[] headers = {Messages.getString("MeasureTool.param"), Messages.common("value")};
     JTable jtable =
         MeasureTool.createMultipleRenderingTable(
             new SimpleTableModel(headers, MeasureTool.getLabels(measList)));
@@ -349,7 +347,7 @@ public class HistogramView extends JComponent
             ChannelHistogramPanel chartPanel;
             StringBuilder name = new StringBuilder(lut[i].name());
             name.append(StringUtil.SPACE);
-            name.append(Messages.getString("HistogramView.histo"));
+            name.append(Messages.common("histogram"));
             if (StringUtil.hasText(layer.getPixelValueUnit())) {
               name.append(" [");
               name.append(layer.getPixelValueUnit());

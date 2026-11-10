@@ -44,6 +44,7 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.util.Bundles;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -65,35 +66,35 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public static final MigLayoutModel VIEWS_1x1 =
       new MigLayoutModel(
           "1x1", // NON-NLS
-          String.format(Messages.getString("ImageViewerPlugin.1"), "1x1"), // NON-NLS
+          Messages.format("ImageViewerPlugin.1", "1x1"), // NON-NLS
           1,
           1,
           VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_2x1 =
       new MigLayoutModel(
           "2x1", // NON-NLS
-          String.format(F_VIEWS, "2x1"), // NON-NLS
+          Bundles.format(F_VIEWS, "2x1"), // NON-NLS
           2,
           1,
           VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_1x2 =
       new MigLayoutModel(
           "1x2", // NON-NLS
-          String.format(F_VIEWS, "1x2"), // NON-NLS
+          Bundles.format(F_VIEWS, "1x2"), // NON-NLS
           1,
           2,
           VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_1x3 =
       new MigLayoutModel(
           "1x3", // NON-NLS
-          String.format(F_VIEWS, "1x3"), // NON-NLS
+          Bundles.format(F_VIEWS, "1x3"), // NON-NLS
           1,
           3,
           VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_1x4 =
       new MigLayoutModel(
           "1x4", // NON-NLS
-          String.format(F_VIEWS, "1x4"), // NON-NLS
+          Bundles.format(F_VIEWS, "1x4"), // NON-NLS
           1,
           4,
           VIEWPORT_CLASS.getName());
@@ -113,21 +114,21 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public static final MigLayoutModel VIEWS_2x2 =
       new MigLayoutModel(
           "2x2", // NON-NLS
-          String.format(F_VIEWS, "2x2"), // NON-NLS
+          Bundles.format(F_VIEWS, "2x2"), // NON-NLS
           2,
           2,
           VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_2x3 =
       new MigLayoutModel(
           "2x3", // NON-NLS
-          String.format(F_VIEWS, "2x3"), // NON-NLS
+          Bundles.format(F_VIEWS, "2x3"), // NON-NLS
           2,
           3,
           VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_2x4 =
       new MigLayoutModel(
           "2x4", // NON-NLS
-          String.format(F_VIEWS, "2x4"), // NON-NLS
+          Bundles.format(F_VIEWS, "2x4"), // NON-NLS
           2,
           4,
           VIEWPORT_CLASS.getName());
@@ -411,7 +412,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     buf.append("x"); // NON-NLS
     buf.append(cols);
     return new MigLayoutModel(
-        buf.toString(), String.format(ImageViewerPlugin.F_VIEWS, buf), rows, cols, type);
+        buf.toString(), Bundles.format(ImageViewerPlugin.F_VIEWS, buf), rows, cols, type);
   }
 
   /**

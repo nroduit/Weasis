@@ -521,8 +521,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private void promptAndComputeMissingDvh(
       List<StructRegion> withDvh, List<StructRegion> withoutDvh) {
     String message =
-        String.format(
-            Messages.getString("dvh.compute.missing.confirm"),
+        Messages.format(
+            "dvh.compute.missing.confirm",
             withoutDvh.size(),
             withoutDvh.stream().map(StructRegion::getLabel).collect(Collectors.joining(", ")));
     int answer =

@@ -60,7 +60,7 @@ public class AnatomicRegionView extends JPanel {
 
   private final ButtonGroup ratioGroup = new ButtonGroup();
   private final JRadioButton radioButtonSeries =
-      new JRadioButton(org.weasis.core.Messages.getString("CalibrationView.series"));
+      new JRadioButton(org.weasis.core.Messages.common("series"));
   private final JRadioButton radioButtonImage =
       new JRadioButton(org.weasis.core.Messages.getString("CalibrationView.current"));
   private final GroupCheckBoxMenu modifierGroup = new GroupCheckBoxMenu();

@@ -20,13 +20,13 @@ import org.weasis.core.ui.util.WtoolBar;
 public class RotationToolBar extends WtoolBar {
 
   public RotationToolBar(final ImageViewerEventManager<?> eventManager, int index) {
-    super(Messages.getString("ResetTools.rotation"), index);
+    super(Messages.common("rotation"), index);
     if (eventManager == null) {
       throw new IllegalArgumentException("EventManager cannot be null");
     }
 
     final JButton jButtonRotate90 = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.ROTATION));
-    jButtonRotate90.setToolTipText(Messages.getString("RotationToolBar.90"));
+    jButtonRotate90.setToolTipText(Messages.common("rotate_cw"));
     jButtonRotate90.addActionListener(
         e -> {
           eventManager

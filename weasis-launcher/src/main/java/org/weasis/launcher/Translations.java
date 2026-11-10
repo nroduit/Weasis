@@ -65,6 +65,9 @@ public final class Translations {
     Locale locale = Locale.getDefault();
     ClassLoader parent = owner.getClassLoader();
     URL[] packages = translationPackages();
+    if (PseudoLocale.isPseudo(locale)) {
+      return PseudoLocale.wrap(ResourceBundle.getBundle(baseName, Locale.ROOT, parent));
+    }
     if (packages.length == 0 || Locale.ENGLISH.getLanguage().equals(locale.getLanguage())) {
       return ResourceBundle.getBundle(baseName, locale, parent);
     }
