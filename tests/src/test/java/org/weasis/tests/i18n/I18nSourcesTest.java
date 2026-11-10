@@ -13,6 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,7 +38,8 @@ import org.junit.jupiter.api.Test;
  * under {@code src/main/java}), run on the repository itself: valid {@code MessageFormat} patterns
  * and no {@code printf} placeholder, every key referenced by the code exists, every key of a bundle
  * is used, a developer note on the strings that are ambiguous out of context (one word, arguments,
- * a character limit), no hard-coded label in the Swing code, and the common words defined once.
+ * a character limit), no hard-coded label in the Swing code, the common words defined once, and
+ * every file in UTF-8 with real characters rather than {@code \\uXXXX} escapes.
  */
 class I18nSourcesTest {
 
@@ -58,6 +62,10 @@ class I18nSourcesTest {
   private static final Pattern HARD_CODED =
       Pattern.compile(
           "(?:\\.(?:setText|setToolTipText|setTitle|setAccessibleName|setAccessibleDescription)|new (?:JLabel|JButton|JCheckBox|JRadioButton|JMenuItem|JMenu|JToggleButton|JCheckBoxMenuItem|JRadioButtonMenuItem|TitledBorder))\\(\\s*\"([A-Za-z][^\"]*[a-z]{2}[^\"]*)\"");
+
+  /** A {@code \\uXXXX} escape, not itself escaped by a preceding backslash. */
+  private static final Pattern UNICODE_ESCAPE =
+      Pattern.compile("(?<!\\\\)(?:\\\\\\\\)*\\\\u([0-9a-fA-F]{4})");
 
   private static Path repo;
   private static List<Module> modules;
@@ -230,6 +238,64 @@ class I18nSourcesTest {
       }
     }
     assertEquals(List.of(), findings);
+  }
+
+  /**
+   * The sources are UTF-8 with real characters: the files, the diffs and the developer notes read as
+   * text, and Transifex receives them as such ({@code UNICODEPROPERTIES} resources of {@code
+   * weasis-5}). Since Java 9 a {@code PropertyResourceBundle} reads UTF-8 (JEP 226). An escape stays
+   * allowed for a character that cannot be seen: a control, format or space character other than
+   * the plain space (a non-breaking space, a zero-width joiner).
+   */
+  @Test
+  void sources_are_utf8_without_unicode_escapes() throws IOException {
+    List<String> findings = new ArrayList<>();
+    for (Module m : modules) {
+      Path file = m.bundle().path();
+      try {
+        StandardCharsets.UTF_8
+            .newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(Files.readAllBytes(file)));
+      } catch (CharacterCodingException e) {
+        findings.add(m.name() + ": not valid UTF-8");
+        continue;
+      }
+      List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
+      for (int i = 0; i < lines.size(); i++) {
+        Matcher u = UNICODE_ESCAPE.matcher(lines.get(i));
+        while (u.find()) {
+          int c = Integer.parseInt(u.group(1), 16);
+          if (visible(c)) {
+            findings.add(
+                m.name()
+                    + ":"
+                    + (i + 1)
+                    + " \\u"
+                    + u.group(1)
+                    + " is printable, write "
+                    + Character.toString(c));
+          }
+        }
+      }
+    }
+    assertEquals(List.of(), findings);
+  }
+
+  private static boolean visible(int c) {
+    return switch (Character.getType(c)) {
+      case Character.CONTROL,
+              Character.FORMAT,
+              Character.SURROGATE,
+              Character.PRIVATE_USE,
+              Character.UNASSIGNED,
+              Character.LINE_SEPARATOR,
+              Character.PARAGRAPH_SEPARATOR ->
+          false;
+      case Character.SPACE_SEPARATOR -> c == ' ';
+      default -> true;
+    };
   }
 
   @Test
