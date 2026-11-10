@@ -93,8 +93,10 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.ObjectDescriptor;
 import org.weasis.dicom.codec.ObjectKind;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.explorer.items.DownloadSummary;
 import org.weasis.dicom.explorer.items.Interest;
 import org.weasis.dicom.explorer.items.InterestSource;
+import org.weasis.dicom.explorer.items.ItemActions;
 import org.weasis.dicom.explorer.items.ObjectItem;
 import org.weasis.dicom.explorer.items.SeriesItem;
 import org.weasis.dicom.explorer.items.StudyContents;
@@ -132,6 +134,7 @@ import picocli.CommandLine.TypeConversionException;
       DicomModelCommands.TagValue.class,
       DicomModelCommands.ListObjects.class,
       DicomModelCommands.ListInterest.class,
+      DicomModelCommands.Download.class,
       DicomModelCommands.EchoNode.class
     })
 final class DicomModelCommands {
@@ -928,6 +931,33 @@ final class DicomModelCommands {
   }
 
   /** The series whose subseries id or Series Instance UID is {@code uid}. */
+  /** The object of that SOP Instance UID among the loaded studies. */
+  static ObjectItem findObject(DicomModel model, String sopInstanceUID) {
+    for (MediaSeriesGroup patient : StudyContents.patientsOf(model)) {
+      for (MediaSeriesGroup study : StudyContents.studiesOf(model, patient)) {
+        for (ObjectItem item : StudyContents.of(model, study).objects()) {
+          if (sopInstanceUID.equals(item.descriptor().sopInstanceUID())) {
+            return item;
+          }
+        }
+      }
+    }
+    throw CommandFailure.unknownHandle(
+        "Unknown object: " + sopInstanceUID, "dicom:objects"); // NON-NLS
+  }
+
+  /** The study of that Study Instance UID among the loaded patients. */
+  static MediaSeriesGroup findStudy(DicomModel model, String studyUID) {
+    for (MediaSeriesGroup patient : StudyContents.patientsOf(model)) {
+      for (MediaSeriesGroup study : StudyContents.studiesOf(model, patient)) {
+        if (studyUID.equals(TagD.getTagValue(study, Tag.StudyInstanceUID, String.class))) {
+          return study;
+        }
+      }
+    }
+    throw CommandFailure.unknownHandle("Unknown study: " + studyUID, "dicom:list"); // NON-NLS
+  }
+
   static MediaSeries<? extends MediaElement> findSeries(DicomModel model, String uid) {
     return model
         .findSeries(uid)
@@ -1186,10 +1216,20 @@ final class DicomModelCommands {
 
     @Option(
         names = "--series",
-        required = true,
         paramLabel = "<series-uid>",
         description = "Series Instance UID (or series id) from 'dicom:list'.")
     SeriesUid seriesUid;
+
+    @Option(
+        names = "--object",
+        paramLabel = "<sop-uid>",
+        description =
+            "SOP Instance UID of a key object selection, a presentation state, a segmentation or "
+                + "an RT object from 'dicom:objects': opens what it refers to (the key images, "
+                + "the referenced series with that presentation state, the referenced series "
+                + "with its tool). One of --series and --object.")
+    @Since("5.0")
+    String objectUid;
 
     @ArgGroup(exclusive = true)
     Destination destination = new Destination();
@@ -1225,6 +1265,12 @@ final class DicomModelCommands {
 
     @Override
     protected void run() {
+      if ((seriesUid == null) == (objectUid == null)) {
+        throw invalid("give --series or --object, not both");
+      }
+      if (objectUid != null && (destination.viewId != null || destination.viewerName != null)) {
+        throw invalid("--object opens in the default viewer: no --view or --viewer-type");
+      }
       if (pane != null && destination.viewId == null) {
         throw invalid("--pane names a pane of --view, so give --view too");
       }
@@ -1296,11 +1342,27 @@ final class DicomModelCommands {
     /** Opens the series on the EDT and returns the id of the view showing it, or null. */
     @SuppressWarnings("unchecked")
     private String open(PromptPolicy policy) {
+      if (objectUid != null) {
+        return openObject();
+      }
       String viewId = openSeries(policy);
       if (interestOnly && findSeries(parent.model, seriesUid.value()) instanceof DicomSeries ds) {
         InterestOpener.applyWhenReady(ds);
       }
       return viewId;
+    }
+
+    /** Opens what the object refers to and names the view of the referenced series shown. */
+    private String openObject() {
+      ObjectItem item = findObject(parent.model, objectUid);
+      Set<String> before = viewIds();
+      DicomSeries shown = ItemActions.open(item, parent.model);
+      if (shown == null) {
+        throw new IllegalStateException(
+            "No referenced series of the object is loaded: " + objectUid); // NON-NLS
+      }
+      seriesUid = SeriesUid.parse(seriesUid(shown));
+      return viewShowing(shown, before);
     }
 
     private String openSeries(PromptPolicy policy) {
@@ -1845,6 +1907,70 @@ final class DicomModelCommands {
         out.add(se);
       }
       return Json.createObjectBuilder().add("series", out).build().toString(); // NON-NLS
+    }
+  }
+
+  @Command(
+      name = "download",
+      description =
+          "Starts the downloads a selective load left pending: the series given, or every series "
+              + "of a study not yet on the local device. Returns how many downloads started, how "
+              + "many were already running and how many series were complete.")
+  @Since("5.0")
+  static class Download extends Verb implements Returns {
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("requested", int.class, "series the request covered") // NON-NLS
+          .field("started", int.class, "downloads this call started") // NON-NLS
+          .field("downloading", int.class, "downloads already running") // NON-NLS
+          .field("complete", int.class, "series already on the local device") // NON-NLS
+          .build();
+    }
+
+    @Option(
+        names = "--study",
+        paramLabel = "<study-uid>",
+        description = "Study Instance UID from 'dicom:list': every pending series of the study.")
+    StudyUid studyUid;
+
+    @Option(
+        names = "--series",
+        paramLabel = "<series-uid>",
+        split = ",",
+        description = "Series Instance UIDs (or series ids) from 'dicom:list', repeatable.")
+    List<SeriesUid> seriesUids;
+
+    @Override
+    protected void run() {
+      boolean bySeries = seriesUids != null && !seriesUids.isEmpty();
+      if ((studyUid == null) == !bySeries) {
+        throw invalid("give --study or --series");
+      }
+      print(GuiExecutor.invokeAndRethrow(this::download));
+    }
+
+    private String download() {
+      List<SeriesItem> items = new ArrayList<>();
+      if (studyUid != null) {
+        items.addAll(
+            StudyContents.of(parent.model, findStudy(parent.model, studyUid.value())).series());
+      } else {
+        for (SeriesUid uid : seriesUids) {
+          if (findSeries(parent.model, uid.value()) instanceof DicomSeries series) {
+            items.add(SeriesItem.of(series, parent.model.getParent(series, DicomModel.study)));
+          }
+        }
+      }
+      DownloadSummary before = DownloadSummary.of(items);
+      int started = ItemActions.download(items);
+      return Json.createObjectBuilder()
+          .add("requested", items.size()) // NON-NLS
+          .add("started", started) // NON-NLS
+          .add("downloading", before.downloading()) // NON-NLS
+          .add("complete", before.complete()) // NON-NLS
+          .build()
+          .toString();
     }
   }
 

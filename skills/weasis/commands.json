@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.36",
+  "apiVersion": "2.37",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -562,6 +562,69 @@
       "name": "dicom",
       "description": "The DICOM explorer: loading, listing, opening and closing studies, and reading attributes.",
       "verbs": [
+        {
+          "name": "download",
+          "description": "Starts the downloads a selective load left pending: the series given, or every series of a study not yet on the local device. Returns how many downloads started, how many were already running and how many series were complete.",
+          "since": "5.0",
+          "usage": "dicom:download [-h] [--json] [--study=<study-uid>] [--series=<series-uid>[,<series-uid>...]]...",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "series-uid",
+              "arity": "1",
+              "required": false,
+              "description": "Series Instance UIDs (or series ids) from 'dicom:list', repeatable."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "study-uid",
+              "arity": "1",
+              "required": false,
+              "description": "Study Instance UID from 'dicom:list': every pending series of the study."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "requested",
+                "type": "integer",
+                "description": "series the request covered"
+              },
+              {
+                "name": "started",
+                "type": "integer",
+                "description": "downloads this call started"
+              },
+              {
+                "name": "downloading",
+                "type": "integer",
+                "description": "downloads already running"
+              },
+              {
+                "name": "complete",
+                "type": "integer",
+                "description": "series already on the local device"
+              }
+            ]
+          }
+        },
         {
           "name": "echo",
           "description": "C-ECHO to a configured DICOM node or printer, with the TLS of its document: the readiness probe of an archive before a query, a retrieve or a send. The answer gives the round trip; a failure names what failed (an untrusted or expired certificate, no protocol in common, a closed port) instead of a generic connection error.",
@@ -1261,7 +1324,7 @@
           "name": "open",
           "description": "Opens a series: in the view given by --view, and in its pane given by --pane, in a new view of the type given by --viewer-type, or in the default viewer of its type. Returns the view id and what the viewer decided while opening (e.g. 'rectified', 'warnings'); the client option -y answers its questions instead of showing them.",
           "since": "5.0",
-          "usage": "dicom:open [-h] [--interest] [--json] [--wait[=<wait-level>]] [--pane=<pane-index>] --series=<series-uid> [--view=<view-id> | --viewer-type=<viewer-type>]",
+          "usage": "dicom:open [-h] [--interest] [--json] [--wait[=<wait-level>]] [--object=<sop-uid>] [--pane=<pane-index>] [--series=<series-uid>] [--view=<view-id> | --viewer-type=<viewer-type>]",
           "produces": [
             "view-id"
           ],
@@ -1290,6 +1353,17 @@
             },
             {
               "names": [
+                "--object"
+              ],
+              "label": "<sop-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "SOP Instance UID of a key object selection, a presentation state, a segmentation or an RT object from 'dicom:objects': opens what it refers to (the key images, the referenced series with that presentation state, the referenced series with its tool). One of --series and --object.",
+              "since": "5.0"
+            },
+            {
+              "names": [
                 "--pane"
               ],
               "label": "<pane-index>",
@@ -1306,7 +1380,7 @@
               "label": "<series-uid>",
               "type": "series-uid",
               "arity": "1",
-              "required": true,
+              "required": false,
               "description": "Series Instance UID (or series id) from 'dicom:list'."
             },
             {
@@ -12608,6 +12682,7 @@
         "dicom:list"
       ],
       "consumedBy": [
+        "dicom:download",
         "dicom:info",
         "dicom:interest",
         "dicom:objects",
@@ -12647,6 +12722,7 @@
         "dicom:list"
       ],
       "consumedBy": [
+        "dicom:download",
         "dicom:interest",
         "dicom:objects",
         "dicom:unload",
@@ -12842,6 +12918,10 @@
       ]
     },
     {
+      "term": "downloading",
+      "definition": "how many downloads were already running when the request came"
+    },
+    {
       "term": "entry",
       "definition": "one item of a document or a library, with its id"
     },
@@ -12928,6 +13008,10 @@
       "definition": "the per-image translation that aligns the mask with the series before subtracting"
     },
     {
+      "term": "object",
+      "definition": "a non-image DICOM object of a study (key object selection, presentation state, segmentation, RT object), listed by dicom:objects and named by its SOP Instance UID"
+    },
+    {
       "term": "open",
       "definition": "show a series in a view"
     },
@@ -13002,6 +13086,10 @@
       ]
     },
     {
+      "term": "requested",
+      "definition": "how many series a download request covered"
+    },
+    {
       "term": "scope",
       "definition": "what an action covers: for a redaction the image, the series or the study; for a capture the view, the layout or the window"
     },
@@ -13039,6 +13127,10 @@
     {
       "term": "slot",
       "definition": "one of the two places of a side of the shell that holds a tool"
+    },
+    {
+      "term": "started",
+      "definition": "how many downloads a request started"
     },
     {
       "term": "step",

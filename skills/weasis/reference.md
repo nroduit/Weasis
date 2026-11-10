@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.36, protocol 2, application development.
+Command API 2.37, protocol 2, application development.
 
 ## color
 
@@ -183,6 +183,25 @@ Needs: file read
 
 The DICOM explorer: loading, listing, opening and closing studies, and reading attributes.
 
+### dicom:download (since 5.0)
+
+Starts the downloads a selective load left pending: the series given, or every series of a study not yet on the local device. Returns how many downloads started, how many were already running and how many series were complete.
+
+Usage: `dicom:download [-h] [--json] [--study=<study-uid>] [--series=<series-uid>[,<series-uid>...]]...`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --series | series-uid |  | Series Instance UIDs (or series ids) from 'dicom:list', repeatable. |
+| --study | study-uid |  | Study Instance UID from 'dicom:list': every pending series of the study. |
+
+| Result | Type | Description |
+|---|---|---|
+| requested | integer | series the request covered |
+| started | integer | downloads this call started |
+| downloading | integer | downloads already running |
+| complete | integer | series already on the local device |
+
 ### dicom:echo (since 5.0)
 
 C-ECHO to a configured DICOM node or printer, with the TLS of its document: the readiness probe of an archive before a query, a retrieve or a send. The answer gives the round trip; a failure names what failed (an untrusted or expired certificate, no protocol in common, a closed port) instead of a generic connection error.
@@ -326,7 +345,7 @@ Usage: `dicom:objects [-h] [--json] [--series=<series-uid>] [--study=<study-uid>
 
 Opens a series: in the view given by --view, and in its pane given by --pane, in a new view of the type given by --viewer-type, or in the default viewer of its type. Returns the view id and what the viewer decided while opening (e.g. 'rectified', 'warnings'); the client option -y answers its questions instead of showing them.
 
-Usage: `dicom:open [-h] [--interest] [--json] [--wait[=<wait-level>]] [--pane=<pane-index>] --series=<series-uid> [--view=<view-id> | --viewer-type=<viewer-type>]`
+Usage: `dicom:open [-h] [--interest] [--json] [--wait[=<wait-level>]] [--object=<sop-uid>] [--pane=<pane-index>] [--series=<series-uid>] [--view=<view-id> | --viewer-type=<viewer-type>]`
 
 Produces: `view-id`
 
@@ -334,6 +353,7 @@ Produces: `view-id`
 |---|---|---|---|
 | --interest | boolean |  | Show the images of interest only (referenced by a KO, an annotated PR or a SEG, or drawn on); the whole series when it has none. (since 5.0) |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
+| --object | string |  | SOP Instance UID of a key object selection, a presentation state, a segmentation or an RT object from 'dicom:objects': opens what it refers to (the key images, the referenced series with that presentation state, the referenced series with its tool). One of --series and --object. (since 5.0) |
 | --pane | pane-index |  | Pane of --view that receives the series, from 1 (default: the selected one). (since 5.0) |
 | --series | series-uid |  | Series Instance UID (or series id) from 'dicom:list'. |
 | --view | view-id |  | View id from 'workspace:list' that receives the series. |
@@ -2965,9 +2985,9 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | remote-url | an absolute URL; the policy decides whether a remote caller may use it |  | dicom:load, dicom:load-dicomweb, image:load |
 | screen-rect | a rectangle in screen pixels: x,y,width,height |  | workspace:detach |
 | screen-role | the role a screen plays in the window model |  | hp:apply, workspace:detach, workspace:move, workspace:screens |
-| series-uid | the Series Instance UID, or the series id, of a loaded series, from dicom:list (handle) | dicom:list | dicom:info, dicom:interest, dicom:objects, dicom:open, dicom:tag, dicom:unload, explorer:reveal, explorer:select, mpr:delete, mpr:prefetch, mpr:reformat, subtraction:create, subtraction:delete, subtraction:info, subtraction:phases, subtraction:preview, view2d:fusion |
+| series-uid | the Series Instance UID, or the series id, of a loaded series, from dicom:list (handle) | dicom:list | dicom:download, dicom:info, dicom:interest, dicom:objects, dicom:open, dicom:tag, dicom:unload, explorer:reveal, explorer:select, mpr:delete, mpr:prefetch, mpr:reformat, subtraction:create, subtraction:delete, subtraction:info, subtraction:phases, subtraction:preview, view2d:fusion |
 | split-ratio | the share of the space given to the first side of a split, strictly between 0 and 1 |  | workspace:panel, workspace:split |
-| study-uid | the Study Instance UID of a loaded study, from dicom:list (handle) | dicom:list | dicom:interest, dicom:objects, dicom:unload, explorer:filter, hp:apply, hp:compare, hp:features, hp:match, hp:open, state:export, state:restore, subtraction:list |
+| study-uid | the Study Instance UID of a loaded study, from dicom:list (handle) | dicom:list | dicom:download, dicom:interest, dicom:objects, dicom:unload, explorer:filter, hp:apply, hp:compare, hp:features, hp:match, hp:open, state:export, state:restore, subtraction:list |
 | tool-id | the id of a tool of the shell, from workspace:panel (handle) | workspace:panel | workspace:panel |
 | view-id | the id of a view, from workspace:list (handle) | dicom:open, workspace:list | color:status, dicom:info, dicom:open, dicom:tag, hp:correct, hp:explain, hp:group, hp:save, hp:sets, measure:calibrate, measure:export, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:export-cine, view2d:flip, view2d:fusion, view2d:graphics, view2d:grid, view2d:hang, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:sync, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, view3d:capture, view3d:export-rotation, workspace:close, workspace:detach, workspace:fullscreen, workspace:maximize, workspace:move, workspace:select, workspace:split, workspace:stack, workspace:unmaximize, wsi:annotations, wsi:export, wsi:goto, wsi:info |
 | window-center | the window center applied to the pixel values, in their own unit |  | view2d:window-level |
@@ -2994,6 +3014,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | device entry | a saved set of redaction regions matched by the attributes of a device | template |
 | document | a JSON file of settings or of a list (nodes, presets, protocols), with its id, schema and layers |  |
 | download | transfer the pixel data of a loaded series from its source; a loaded series may be not downloaded under a selective hanging protocol | fetch |
+| downloading | how many downloads were already running when the request came |  |
 | entry | one item of a document or a library, with its id |  |
 | event | a change of state the instance publishes on its bus, named like the commands |  |
 | format | the file format of an export or a capture: png, jpg, xml, csv, or what a plugin adds |  |
@@ -3014,6 +3035,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | measurement | a named value with a unit computed from a graphic or a region | metric |
 | mip | a maximum intensity projection through a stack of images |  |
 | motion correction | the per-image translation that aligns the mask with the series before subtracting |  |
+| object | a non-image DICOM object of a study (key object selection, presentation state, segmentation, RT object), listed by dicom:objects and named by its SOP Instance UID |  |
 | open | show a series in a view |  |
 | page | one printed page, with its cells |  |
 | pane | one image canvas inside the grid of a view, addressed by its index within the view | canvas index |
@@ -3030,6 +3052,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | recording | the display sampled into an animation file between 'weasis:record start' and 'stop'; its handle is the file it writes |  |
 | redaction | pixels hidden over an image; masking is reserved for identity values in text |  |
 | region | a geometric area given by the caller (rect, ellipse, polygon) in a stated space | roi, zone |
+| requested | how many series a download request covered |  |
 | scope | what an action covers: for a redaction the image, the series or the study; for a capture the view, the layout or the window |  |
 | screen | a physical display of the workstation, with a role in the window model |  |
 | script | a file of commands run in one call, with variables and expectations |  |
@@ -3038,6 +3061,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | session | a reading state kept as an exact restore of a study: views, panes, protocol and sidecar |  |
 | slide | a whole slide image, with its pyramid of levels |  |
 | slot | one of the two places of a side of the shell that holds a tool |  |
+| started | how many downloads a request started |  |
 | step | one reading step of a protocol, or one line of a script |  |
 | study | the DICOM study as loaded in the explorer model |  |
 | tab group | a set of views shown as tabs in one area of a window | container, dock |

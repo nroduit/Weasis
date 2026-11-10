@@ -184,6 +184,16 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
   public List<Term> getTerms() {
     return List.of(
         Term.of(
+            "object",
+            "a non-image DICOM object of a study (key object selection, presentation state,"
+                + " segmentation, RT object), listed by dicom:objects and named by its SOP Instance"
+                + " UID"), // NON-NLS
+        Term.of("requested", "how many series a download request covered"), // NON-NLS
+        Term.of("started", "how many downloads a request started"), // NON-NLS
+        Term.of(
+            "downloading",
+            "how many downloads were already running when the request came"), // NON-NLS
+        Term.of(
             "anatomy",
             "the anatomic region of a series as one notation: a region group (CHEST), a coded value"
                 + " (SCT:816094009) or a Body Part Examined term (THORAX); answered as the coded"

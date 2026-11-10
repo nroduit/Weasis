@@ -26,6 +26,8 @@ import java.util.*;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import javax.swing.*;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.event.PopupMenuEvent;
@@ -68,6 +70,7 @@ import org.weasis.dicom.explorer.exp.SendTool;
 import org.weasis.dicom.explorer.imp.ImportTool;
 import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.imp.RetrieveTool;
+import org.weasis.dicom.explorer.items.ExplorerItem;
 import org.weasis.dicom.explorer.items.FacetCounts;
 import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 
@@ -99,6 +102,12 @@ public class DicomExplorer extends PluginTool
 
   /** The import, retrieve, export and send tools of the bottom slot, in stripe order. */
   private final List<TransferTool> transferTools;
+
+  /** The study content panel of the bottom slot. */
+  private final StudyContentTool contentTool;
+
+  /** Told which item the panes focus: an object row of the list, a series of the thumbnails. */
+  private final List<Consumer<ExplorerItem>> itemFocusListeners = new CopyOnWriteArrayList<>();
 
   private final DicomPaneManager paneManager;
   private final SplitSeriesManager splitSeriesManager;
@@ -203,6 +212,7 @@ public class DicomExplorer extends PluginTool
             new RetrieveTool(this.model),
             new ExportTool(this.model),
             new SendTool(this.model));
+    this.contentTool = new StudyContentTool(this);
   }
 
   @Override
@@ -1794,10 +1804,31 @@ public class DicomExplorer extends PluginTool
     return transferTools.stream().filter(tool -> tool.getToolId().equals(id)).findFirst();
   }
 
-  /** Shows the explorer and, beside it, the transfer tools the site offers. */
+  /** The study content panel of the bottom slot. */
+  public StudyContentTool getContentTool() {
+    return contentTool;
+  }
+
+  public void addItemFocusListener(Consumer<ExplorerItem> listener) {
+    itemFocusListeners.add(listener);
+  }
+
+  public void removeItemFocusListener(Consumer<ExplorerItem> listener) {
+    itemFocusListeners.remove(listener);
+  }
+
+  /** Tells the detail tools which item the user focused, an object of the list in particular. */
+  public void focusItem(ExplorerItem item) {
+    if (item != null) {
+      itemFocusListeners.forEach(listener -> listener.accept(item));
+    }
+  }
+
+  /** Shows the explorer and, beside it, the study content panel and the transfer tools offered. */
   @Override
   public void showDockable() {
     super.showDockable();
+    contentTool.showDockable();
     for (TransferTool tool : transferTools) {
       if (tool.isOffered()) {
         tool.showDockable();
@@ -1807,6 +1838,7 @@ public class DicomExplorer extends PluginTool
 
   @Override
   public void closeDockable() {
+    contentTool.closeDockable();
     transferTools.forEach(TransferTool::closeDockable);
     super.closeDockable();
   }
@@ -1960,6 +1992,7 @@ public class DicomExplorer extends PluginTool
       splitSeriesManager.dispose();
     }
 
+    contentTool.closeDockable();
     transferTools.forEach(TransferTool::closeDockable);
     super.closeDockable();
     LOGGER.info("DicomExplorer disposed");

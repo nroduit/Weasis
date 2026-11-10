@@ -162,6 +162,7 @@ public class SeriesListPane extends JPanel implements Scrollable {
             e -> {
               if (!e.getValueIsAdjusting()) {
                 syncToSelection();
+                focusLeadObject();
               }
             });
     table.addMouseListener(
@@ -429,6 +430,14 @@ public class SeriesListPane extends JPanel implements Scrollable {
       }
     } finally {
       syncing = false;
+    }
+  }
+
+  /** An object row has no series selection: the detail tools get it as the focused item. */
+  private void focusLeadObject() {
+    int lead = table.getSelectionModel().getLeadSelectionIndex();
+    if (lead >= 0 && lead < rows.size() && rows.get(lead) instanceof ObjectRow o) {
+      explorer.focusItem(o.item());
     }
   }
 

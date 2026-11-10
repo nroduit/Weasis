@@ -89,6 +89,30 @@ class DicomModelCommandsTest {
   }
 
   @Test
+  void openTakesASeriesOrAnObjectAndDownloadAStudyOrSeries() {
+    CommandResult neither = run("open");
+    CommandResult both = run("open", "--series", "1.2.3", "--object", "1.2.4");
+    CommandResult nothing = run("download");
+    assertAll(
+        () -> assertEquals(CommandResult.USAGE, neither.status()),
+        () -> assertTrue(neither.error().contains("--object"), neither.error()),
+        () -> assertEquals(CommandResult.USAGE, both.status()),
+        () -> assertEquals(CommandResult.USAGE, nothing.status()),
+        () -> assertTrue(nothing.error().contains("--study"), nothing.error()),
+        () ->
+            assertDoesNotThrow(
+                () ->
+                    CommandModel.parse(
+                        new DicomModelCommands(new DicomModel()),
+                        "dicom:download --series 1.2.3,1.2.4 --json")),
+        () ->
+            assertDoesNotThrow(
+                () ->
+                    CommandModel.parse(
+                        new DicomModelCommands(new DicomModel()), "dicom:open --object 1.2.4")));
+  }
+
+  @Test
   void loadRequiresASource() {
     CommandResult none = run("load");
     CommandResult unknown = run("load", "--wado-rs", "x");

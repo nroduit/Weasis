@@ -48,6 +48,7 @@ import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -73,6 +74,7 @@ import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomColorPalette;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.items.ItemActions;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
@@ -944,6 +946,15 @@ public class PRManager {
     }
 
     private void setupInitialPrState() {
+      Object requested = series.getTagValue(ItemActions.REQUESTED_PR);
+      if (requested != null && series instanceof MediaSeriesGroupNode node) {
+        // the explorer asked for this one when it opened the series: once, then the usual choice
+        node.removeTag(ItemActions.REQUESTED_PR);
+        if (requested instanceof PRSpecialElement pr && prList.contains(pr)) {
+          view.setPresentationState(pr, true);
+          return;
+        }
+      }
       Object currentPr = view.getActionValue(ActionW.PR_STATE.cmd());
 
       if (!view.getEventManager().getOptions().getBooleanProperty(PR_APPLY, false)) {
