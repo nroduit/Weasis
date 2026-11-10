@@ -17,8 +17,9 @@ import java.util.regex.Pattern;
 /**
  * Reads a script: one command per line, {@code #} comments, blank lines ignored, a trailing
  * backslash continuing a line, {@code $name = <command>} keeping the body of a step under a name,
- * {@code @expect} lines and {@code @wait} lines. No loop, no condition: a script is a list of
- * commands, of the values they are expected to return and of the events it waits for.
+ * {@code @expect} lines, {@code @wait} lines and {@code @fails} commands. No loop, no condition: a
+ * script is a list of commands, of the values they are expected to return, of the refusals it
+ * expects and of the events it waits for.
  */
 public final class ScriptParser {
 
@@ -30,6 +31,13 @@ public final class ScriptParser {
    * k=v]}.
    */
   public static final String WAIT = "@wait"; // NON-NLS
+
+  /**
+   * Prefix of a command that must be refused: {@code $bad = @fails view2d:hang --grid 2x2 --cell
+   * 9=…}; the step passes when the command fails, and its error object is what the variable holds
+   * ({@code ${bad.code}}), so a script can pin a refusal the way it pins an answer.
+   */
+  public static final String FAILS = "@fails"; // NON-NLS
 
   private static final Pattern ASSIGNMENT =
       Pattern.compile("^\\$([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*(.+)$");
@@ -78,6 +86,10 @@ public final class ScriptParser {
     if (text.startsWith(WAIT)) {
       return new ScriptStep(
           line, ScriptStep.Kind.WAIT, variable, text.substring(WAIT.length()).strip());
+    }
+    if (text.startsWith(FAILS)) {
+      return new ScriptStep(
+          line, ScriptStep.Kind.FAILS, variable, text.substring(FAILS.length()).strip());
     }
     return new ScriptStep(line, ScriptStep.Kind.COMMAND, variable, text);
   }

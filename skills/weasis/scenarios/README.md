@@ -40,4 +40,5 @@ handle that comes back where it should), never your clinical values: the scenari
 feature is where you judge those.
 
 `weasis-cli script:check --file <script>` parses a script against your instance without running it,
-which tells you at once whether a verb or an option it uses is missing there.
+which tells you at once whether a verb or an option it uses is missing there, and lists the
+parameters it expects from `--set`.

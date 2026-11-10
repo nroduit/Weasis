@@ -43,9 +43,9 @@ import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.ResultSchema;
 import org.weasis.core.api.command.Returns;
-import org.weasis.core.api.command.Term;
 import org.weasis.core.api.command.ScreenRole;
 import org.weasis.core.api.command.Since;
+import org.weasis.core.api.command.Term;
 import org.weasis.core.api.command.ViewId;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -128,8 +128,7 @@ public class HpCommands implements CommandExtension {
 
   @Override
   public List<Term> getTerms() {
-    return List.of(
-        Term.of("current", "the study being read, as opposed to a prior")); // NON-NLS
+    return List.of(Term.of("current", "the study being read, as opposed to a prior")); // NON-NLS
   }
 
   @Override
@@ -1206,6 +1205,9 @@ public class HpCommands implements CommandExtension {
 
     @Override
     protected void run() {
+      if (name.isBlank()) {
+        throw invalid("--name must not be blank");
+      }
       String id = protocolId == null ? ProtocolDeriver.idOf(name) : protocolId;
       JsonObject result =
           GuiExecutor.invokeAndRethrow(
@@ -1562,6 +1564,9 @@ public class HpCommands implements CommandExtension {
                         new IllegalArgumentException(
                             "Unknown feature " + value.substring(0, equals)));
         settings.put(key, value.substring(equals + 1).trim());
+      }
+      if (by != null && !"user".equalsIgnoreCase(by) && !"agent".equalsIgnoreCase(by)) { // NON-NLS
+        throw invalid("--by is user or agent, not '" + by + "'");
       }
       String source =
           "agent".equalsIgnoreCase(by) // NON-NLS

@@ -77,6 +77,8 @@ public class ScriptCommands implements CommandExtension {
       refuseFromALink();
       try {
         return ScriptParser.parse(Files.readString(file.value(), StandardCharsets.UTF_8));
+      } catch (java.nio.charset.CharacterCodingException e) {
+        throw new IllegalArgumentException("Cannot read " + file + ": not UTF-8 text");
       } catch (IOException e) {
         throw new IllegalArgumentException("Cannot read " + file + ": " + e.getMessage());
       }
@@ -94,7 +96,10 @@ public class ScriptCommands implements CommandExtension {
   @Command(
       name = "run",
       description =
-          "Runs every command of the file and answers one JSON object per step, then a summary.")
+          "Runs every command of the file and answers one JSON object per step, then a summary. A"
+              + " line is a command ('$name = cmd' keeps its answer under the name), '@expect <ref> <op>"
+              + " <value>', '@wait <event-glob> --timeout s', or '@fails cmd', a command that must"
+              + " be refused: the step passes on the refusal and keeps the error as its body.")
   @Since("5.0")
   static class Run extends ScriptVerb {
 
@@ -317,15 +322,21 @@ public class ScriptCommands implements CommandExtension {
       name = "check",
       description =
           "Parses every step against the command models without running anything, and answers what "
-              + "would fail.")
+              + "would fail: unknown commands, bad options, unterminated quotes, a reference used "
+              + "before the step that assigns it; the names the script never assigns are its "
+              + "parameters, to give with --set.")
   @Since("5.0")
   static class Check extends ScriptVerb {
 
     @Override
     protected void run() {
-      List<String> problems = runner().check(steps());
+      List<ScriptStep> steps = steps();
+      List<String> problems = runner().check(steps);
       JsonWriter out = new JsonWriter();
-      out.beginObject().name("steps").value(steps().size()); // NON-NLS
+      out.beginObject().name("steps").value(steps.size()); // NON-NLS
+      out.name("parameters").beginArray(); // NON-NLS
+      ScriptRunner.parameters(steps).forEach(out::value);
+      out.endArray();
       out.name("problems").beginArray(); // NON-NLS
       problems.forEach(out::value);
       out.endArray().endObject();

@@ -43,9 +43,6 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.TagUtils;
 import org.weasis.core.api.command.AbstractVerb;
-import org.weasis.core.api.command.Returns;
-import org.weasis.core.api.command.ResultSchema;
-import org.weasis.core.api.command.Produces;
 import org.weasis.core.api.command.Capability;
 import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandError;
@@ -55,8 +52,11 @@ import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.ListOptions;
 import org.weasis.core.api.command.Needs;
 import org.weasis.core.api.command.PaneIndex;
+import org.weasis.core.api.command.Produces;
 import org.weasis.core.api.command.RemoteUrl;
 import org.weasis.core.api.command.Renamed;
+import org.weasis.core.api.command.ResultSchema;
+import org.weasis.core.api.command.Returns;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.command.ViewId;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -201,7 +201,8 @@ final class DicomModelCommands {
 
   /**
    * Describes what a load verb queued and, when asked, waits for it. A series is counted as loaded
-   * when its download ends; sources read locally are counted when their task ends.
+   * when its download ends or, read locally, when the model adds it; a local source is done when
+   * its task ends.
    */
   static String loadReport(DicomModel model, List<DicomModel.QueuedLoad> queued, WaitOptions wait) {
     JsonArrayBuilder sources = Json.createArrayBuilder();
@@ -232,14 +233,21 @@ final class DicomModelCommands {
     List<String> series = new CopyOnWriteArrayList<>();
     PropertyChangeListener listener =
         event -> {
-          if (event instanceof ObservableEvent observable
-              && observable.getActionCommand() == ObservableEvent.BasicAction.LOADING_STOP
+          if (!(event instanceof ObservableEvent observable)) {
+            return;
+          }
+          String uid = null;
+          if (observable.getActionCommand() == ObservableEvent.BasicAction.LOADING_STOP
               && observable.getNewValue() instanceof LoadSeries load
               && !load.isCancelled()) {
-            String uid = seriesUid(load.getDicomSeries());
-            if (uid != null) {
-              series.add(uid);
-            }
+            uid = seriesUid(load.getDicomSeries());
+          } else if (observable.getActionCommand() == ObservableEvent.BasicAction.ADD
+              && observable.getNewValue() instanceof DicomSeries added) {
+            // a series read locally: the model announces it once its thumbnail exists
+            uid = seriesUid(added);
+          }
+          if (uid != null && !series.contains(uid)) {
+            series.add(uid);
           }
         };
     model.addPropertyChangeListener(listener);
@@ -896,26 +904,55 @@ final class DicomModelCommands {
     public ResultSchema result() {
       return ResultSchema.of()
           .field("patients", "array", "the loaded patients") // NON-NLS
-          .field("patients[].patientID", PatientHandle.class, "the patient handle, masked for a remote caller") // NON-NLS
+          .field(
+              "patients[].patientID",
+              PatientHandle.class,
+              "the patient handle, masked for a remote caller") // NON-NLS
           .field("patients[].patientName", String.class, "Patient's Name, masked") // NON-NLS
-          .field("patients[].patientBirthDate", String.class, "Patient's Birth Date, ISO 8601, masked") // NON-NLS
+          .field(
+              "patients[].patientBirthDate",
+              String.class,
+              "Patient's Birth Date, ISO 8601, masked") // NON-NLS
           .field("patients[].patientSex", String.class, "Patient's Sex") // NON-NLS
           .field("patients[].studies", "array", "the studies of the patient") // NON-NLS
-          .field("patients[].studies[].studyInstanceUID", StudyUid.class, "the study handle") // NON-NLS
+          .field(
+              "patients[].studies[].studyInstanceUID",
+              StudyUid.class,
+              "the study handle") // NON-NLS
           .field("patients[].studies[].studyDate", String.class, "Study Date, ISO 8601") // NON-NLS
           .field("patients[].studies[].studyTime", String.class, "Study Time, ISO 8601") // NON-NLS
-          .field("patients[].studies[].studyDescription", String.class, "Study Description") // NON-NLS
-          .field("patients[].studies[].accessionNumber", String.class, "Accession Number, masked") // NON-NLS
+          .field(
+              "patients[].studies[].studyDescription", String.class, "Study Description") // NON-NLS
+          .field(
+              "patients[].studies[].accessionNumber",
+              String.class,
+              "Accession Number, masked") // NON-NLS
           .field("patients[].studies[].studyID", String.class, "Study ID, masked") // NON-NLS
           .field("patients[].studies[].series", "array", "the series of the study") // NON-NLS
-          .field("patients[].studies[].series[].id", SeriesUid.class, "the series handle; the UID, or the UID with a suffix for a split series") // NON-NLS
-          .field("patients[].studies[].series[].seriesInstanceUID", SeriesUid.class, "Series Instance UID") // NON-NLS
-          .field("patients[].studies[].series[].seriesNumber", int.class, "Series Number") // NON-NLS
+          .field(
+              "patients[].studies[].series[].id",
+              SeriesUid.class,
+              "the series handle; the UID, or the UID with a suffix for a split series") // NON-NLS
+          .field(
+              "patients[].studies[].series[].seriesInstanceUID",
+              SeriesUid.class,
+              "Series Instance UID") // NON-NLS
+          .field(
+              "patients[].studies[].series[].seriesNumber", int.class, "Series Number") // NON-NLS
           .field("patients[].studies[].series[].modality", String.class, "Modality") // NON-NLS
-          .field("patients[].studies[].series[].seriesDescription", String.class, "Series Description") // NON-NLS
+          .field(
+              "patients[].studies[].series[].seriesDescription",
+              String.class,
+              "Series Description") // NON-NLS
           .field("patients[].studies[].series[].imageCount", int.class, "images loaded") // NON-NLS
-          .field("patients[].studies[].series[].downloadState", String.class, "complete, partial or none, under a selective download") // NON-NLS
-          .field("patients[].studies[].series[].provenance", "object", "where the series comes from, when it was derived") // NON-NLS
+          .field(
+              "patients[].studies[].series[].downloadState",
+              String.class,
+              "complete, partial or none, under a selective download") // NON-NLS
+          .field(
+              "patients[].studies[].series[].provenance",
+              "object",
+              "where the series comes from, when it was derived") // NON-NLS
           .field("total", int.class, "patients before the window") // NON-NLS
           .field("truncated", boolean.class, "true when the window cut the list") // NON-NLS
           .field("next", int.class, "offset of the next window, when truncated") // NON-NLS
@@ -1024,7 +1061,10 @@ final class DicomModelCommands {
           .field("target.series", SeriesUid.class, "the series the pane shows") // NON-NLS
           .field("target.image", ImageIndex.class, "the image shown, from 1") // NON-NLS
           .field("target.imageCount", int.class, "images of the series") // NON-NLS
-          .field("ready", boolean.class, "true once the view finished building its content, with --wait") // NON-NLS
+          .field(
+              "ready",
+              boolean.class,
+              "true once the view finished building its content, with --wait") // NON-NLS
           .field("warnings", "array", "what the view decided while opening, with -y") // NON-NLS
           .build();
     }

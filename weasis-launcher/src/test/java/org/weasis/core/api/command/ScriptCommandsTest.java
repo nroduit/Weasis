@@ -310,4 +310,71 @@ class ScriptCommandsTest {
             assertTrue(
                 check.body().contains("line 3: Unknown option of @wait: --later"), check.body()));
   }
+
+  @Test
+  void checkFindsQuotesEarlyReferencesAndParameters(@TempDir Path dir) throws IOException {
+    Path script =
+        write(
+            dir,
+            "refs.weasis",
+            """
+            math:add --a "${data} --b 1
+            @expect ${y.sum} == 1
+            $y = math:add --a ${data} --b ${count}
+            @wait math:done --timeout 1
+            @expect ${event.sum} == ${y.sum}
+            """);
+    CommandResult result =
+        manager()
+            .run(List.of("script:check", "--file", script.toString()), CommandOrigin.LAUNCH_ARGS);
+    String body = result.body().replace(" ", "").replace("\n", "");
+    assertAll(
+        () -> assertFalse(result.isOk()),
+        () -> assertTrue(result.body().contains("line 1: unterminated quote"), result.body()),
+        () ->
+            assertTrue(
+                result.body().contains("line 2: '${y}' is used before line 3 assigns it"),
+                result.body()),
+        () ->
+            assertFalse(
+                result.body().contains("'${event}'"), "the wait assigns event: " + result.body()),
+        () ->
+            assertTrue(
+                body.contains("\"parameters\":[\"data\",\"count\"]"),
+                "the names never assigned are the parameters, in order of use: " + body));
+  }
+
+  @Test
+  void anEmptyArgumentIsAUsageErrorNotAStackMessage() {
+    CommandResult result = manager().run(List.of("math:add", ""), CommandOrigin.REMOTE);
+    assertAll(
+        () -> assertEquals(CommandResult.USAGE, result.status(), result.error()),
+        () -> assertTrue(result.error().contains("Unexpected empty argument"), result.error()),
+        () -> assertFalse(result.error().contains("IndexOutOfBounds"), result.error()));
+  }
+
+  @Test
+  void aFailsStepPassesOnARefusalAndFailsOnASuccess(@TempDir Path dir) throws IOException {
+    Path refused =
+        write(
+            dir,
+            "refused.weasis",
+            "$bad = @fails math:add --a nope\n@expect ${bad.code} == usage\nmath:add --a 1 --b 2\n");
+    Path passed = write(dir, "passed.weasis", "@fails math:add --a 1 --b 2\n");
+    CommandResult ok =
+        manager()
+            .run(List.of("script:run", "--file", refused.toString()), CommandOrigin.LAUNCH_ARGS);
+    CommandResult wrong =
+        manager()
+            .run(List.of("script:run", "--file", passed.toString()), CommandOrigin.LAUNCH_ARGS);
+    CommandResult checked =
+        manager()
+            .run(List.of("script:check", "--file", refused.toString()), CommandOrigin.LAUNCH_ARGS);
+    assertAll(
+        () -> assertEquals(CommandResult.OK, ok.status(), ok.error() + ok.body()),
+        () -> assertTrue(ok.body().contains("\"ran\":3,\"failed\":0"), ok.body()),
+        () -> assertFalse(wrong.isOk()),
+        () -> assertTrue(wrong.error().contains("@fails expected a refusal"), wrong.error()),
+        () -> assertEquals(CommandResult.OK, checked.status(), checked.error()));
+  }
 }

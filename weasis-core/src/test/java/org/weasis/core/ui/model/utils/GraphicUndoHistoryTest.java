@@ -115,4 +115,23 @@ class GraphicUndoHistoryTest {
         () -> assertFalse(off.commit()),
         () -> assertFalse(off.canUndo()));
   }
+
+  @Test
+  void aModelReadBackFromItsXmlKeepsItsLayersSerializable() throws Exception {
+    // JAXB builds a layer with the no-arg constructor (TEMP_DRAW, not serializable) and sets its
+    // type afterwards: the flag must follow, or the view drops the restored graphics as soon as it
+    // leaves the image (Canvas#removeGraphicManager deletes the non-serializable ones)
+    XmlGraphicModel model = new XmlGraphicModel();
+    model.addGraphic(line(30, 40));
+    GraphicModel back =
+        XmlSerializer.readPresentationModel(new StringReader(XmlSerializer.toXml(model)));
+    assertAll(
+        () -> assertEquals(1, back.getAllGraphics().size()),
+        () ->
+            assertTrue(
+                back.getLayers().stream().allMatch(l -> Boolean.TRUE.equals(l.getSerializable())),
+                "the layers read back are serializable like the ones written"));
+    back.deleteNonSerializableGraphics();
+    assertEquals(1, back.getAllGraphics().size(), "nothing is dropped when the view moves on");
+  }
 }

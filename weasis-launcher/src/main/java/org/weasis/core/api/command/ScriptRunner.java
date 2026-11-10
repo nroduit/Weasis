@@ -13,9 +13,15 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Runs the steps of a script, one after the other, through the same {@link CommandManager} as a
@@ -89,11 +95,44 @@ public final class ScriptRunner {
     this.watermark = manager.eventBus().lastSequence();
   }
 
-  /** Parses every step against the models without resolving or running anything. */
+  /**
+   * Parses every step against the models without resolving or running anything: the grammar of each
+   * step, its command, its quotes, and the references that name a step the script assigns later (a
+   * name the script never assigns is a parameter, see {@link #parameters}).
+   */
   public List<String> check(List<ScriptStep> steps) {
     List<String> problems = new ArrayList<>();
+    Map<String, Integer> assignedAt = new HashMap<>();
+    for (ScriptStep step : steps) {
+      if (step.variable() != null) {
+        assignedAt.putIfAbsent(step.variable(), step.line());
+      }
+    }
+    Set<String> assigned = new HashSet<>();
     for (ScriptStep step : steps) {
       String text = step.text();
+      if (unterminatedQuote(text)) {
+        problems.add("line " + step.line() + ": unterminated quote");
+      }
+      for (String name : referencedNames(text)) {
+        Integer later = assignedAt.get(name);
+        if (!assigned.contains(name) && later != null && later >= step.line()) {
+          problems.add(
+              "line "
+                  + step.line()
+                  + ": '${"
+                  + name
+                  + "}' is used before line "
+                  + later
+                  + " assigns it");
+        }
+      }
+      if (step.isWait()) {
+        assigned.add(EVENT_VARIABLE);
+      }
+      if (step.variable() != null) {
+        assigned.add(step.variable());
+      }
       if (step.isExpectation()) {
         try {
           ScriptExpectation.parse(withoutReferences(text));
@@ -262,6 +301,9 @@ public final class ScriptRunner {
     }
     watermark = manager.eventBus().lastSequence();
     CommandResult result = manager.run(argv, origin, options.assumeYes());
+    if (step.isFailureExpected()) {
+      return expectedFailure(step, number, argv.getFirst(), result, values, options, start);
+    }
     if (step.variable() != null) {
       values.setBody(step.variable(), result.body());
     }
@@ -273,6 +315,61 @@ public final class ScriptRunner {
         elapsed(start),
         options.brief() ? "" : result.body().strip(),
         result.error().strip());
+  }
+
+  /**
+   * A {@code @fails} step: the refusal is the expected outcome, so the step passes with the error
+   * object as its body (bound to the variable, {@code ${bad.code}}), and a command that went
+   * through is the failure.
+   */
+  private StepResult expectedFailure(
+      ScriptStep step,
+      int number,
+      String command,
+      CommandResult result,
+      ScriptValues values,
+      Options options,
+      long start) {
+    if (result.isOk()) {
+      return new StepResult(
+          number,
+          step.line(),
+          command,
+          CommandResult.ERROR,
+          elapsed(start),
+          options.brief() ? "" : result.body().strip(),
+          "The command succeeded; @fails expected a refusal");
+    }
+    String error = result.error().strip();
+    if (!error.startsWith("{")) {
+      // a plain-text refusal (a local caller): give it the shape of the remote error object
+      error =
+          new JsonWriter()
+              .beginObject()
+              .name("code") // NON-NLS
+              .value(
+                  switch (result.status()) {
+                    case CommandResult.USAGE -> "usage"; // NON-NLS
+                    case CommandResult.FORBIDDEN -> "refused-by-policy"; // NON-NLS
+                    case CommandResult.TIMEOUT -> "timeout"; // NON-NLS
+                    default -> "failed"; // NON-NLS
+                  })
+              .name("message") // NON-NLS
+              .value(error)
+              .endObject()
+              .toString();
+    }
+    if (step.variable() != null) {
+      values.setBody(step.variable(), error);
+    }
+    return new StepResult(
+        number,
+        step.line(),
+        command,
+        CommandResult.OK,
+        elapsed(start),
+        options.brief() ? "" : error,
+        "");
   }
 
   /**
@@ -405,6 +502,60 @@ public final class ScriptRunner {
   /** The text of a step with its references blanked, to parse it without running anything. */
   private static String withoutReferences(String text) {
     return text.replaceAll("\\$\\{[^}]*}", "x"); // NON-NLS
+  }
+
+  /**
+   * The names a script takes from its caller: every name it references and never assigns, in the
+   * order of first use, so {@code --set} knows what to give.
+   */
+  public static List<String> parameters(List<ScriptStep> steps) {
+    Set<String> assigned = new HashSet<>();
+    for (ScriptStep step : steps) {
+      if (step.variable() != null) {
+        assigned.add(step.variable());
+      }
+      if (step.isWait()) {
+        assigned.add(EVENT_VARIABLE);
+      }
+    }
+    List<String> parameters = new ArrayList<>();
+    for (ScriptStep step : steps) {
+      for (String name : referencedNames(step.text())) {
+        if (!assigned.contains(name) && !parameters.contains(name)) {
+          parameters.add(name);
+        }
+      }
+    }
+    return parameters;
+  }
+
+  private static final Pattern REFERENCE_NAME =
+      Pattern.compile("\\$\\{\\s*([A-Za-z_][A-Za-z0-9_]*)"); // NON-NLS
+
+  /** The first name of every {@code ${…}} reference of a line. */
+  static List<String> referencedNames(String text) {
+    List<String> names = new ArrayList<>();
+    Matcher matcher = REFERENCE_NAME.matcher(text);
+    while (matcher.find()) {
+      names.add(matcher.group(1));
+    }
+    return names;
+  }
+
+  /** True when a quote opened on the line is never closed (the parser would swallow the rest). */
+  static boolean unterminatedQuote(String text) {
+    char quote = 0;
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      if (quote != 0) {
+        if (c == quote) {
+          quote = 0;
+        }
+      } else if (c == '"' || c == '\'') {
+        quote = c;
+      }
+    }
+    return quote != 0;
   }
 
   private static List<String> tokens(String text) {

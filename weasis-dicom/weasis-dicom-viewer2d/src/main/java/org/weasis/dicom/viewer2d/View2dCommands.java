@@ -42,14 +42,12 @@ import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.AbstractVerb;
-import org.weasis.core.api.command.Returns;
-import org.weasis.core.api.command.ResultSchema;
-import org.weasis.core.api.command.Produces;
 import org.weasis.core.api.command.CanvasRect;
 import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.command.CommandError;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.CommandFailure;
+import org.weasis.core.api.command.Definition;
 import org.weasis.core.api.command.Degrees;
 import org.weasis.core.api.command.GraphicId;
 import org.weasis.core.api.command.GridId;
@@ -63,7 +61,9 @@ import org.weasis.core.api.command.ListOptions;
 import org.weasis.core.api.command.Magnification;
 import org.weasis.core.api.command.OutputPath;
 import org.weasis.core.api.command.PaneIndex;
-import org.weasis.core.api.command.Definition;
+import org.weasis.core.api.command.Produces;
+import org.weasis.core.api.command.ResultSchema;
+import org.weasis.core.api.command.Returns;
 import org.weasis.core.api.command.SemanticType;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.command.ViewId;
@@ -82,6 +82,7 @@ import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.provenance.Provenance;
@@ -105,6 +106,8 @@ import org.weasis.core.ui.editor.image.ViewState;
 import org.weasis.core.ui.editor.image.ViewTransferHandler;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ViewportPane;
+import org.weasis.core.ui.editor.image.export.CaptureScope;
+import org.weasis.core.ui.editor.image.export.ViewCapture;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -137,7 +140,6 @@ import org.weasis.dicom.explorer.SeriesUid;
 import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
 import org.weasis.dicom.viewer2d.fusion.FusionState;
-import org.weasis.opencv.op.ImageConversion;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ITypeConverter;
@@ -145,9 +147,6 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.TypeConversionException;
-import org.weasis.core.ui.editor.image.export.CaptureScope;
-import org.weasis.core.ui.editor.image.export.ViewCapture;
-import org.weasis.core.api.media.data.MaskingProfile;
 
 /** Command namespace {@code view2d}: display of a 2D DICOM view. */
 @Extension
@@ -1379,7 +1378,6 @@ public class View2dCommands implements CommandExtension {
       }
       return gray;
     }
-
   }
 
   /** Exclusive region of interest of the stats verb. */
@@ -1550,7 +1548,8 @@ public class View2dCommands implements CommandExtension {
           .field("measurements[].name", String.class, "English name") // NON-NLS
           .field("measurements[].value", double.class, "the value") // NON-NLS
           .field("measurements[].unit", String.class, "UCUM code of the unit") // NON-NLS
-          .field("measurements[].provenance", "object", "where the calibration comes from") // NON-NLS
+          .field(
+              "measurements[].provenance", "object", "where the calibration comes from") // NON-NLS
           .build();
     }
 
@@ -1600,7 +1599,9 @@ public class View2dCommands implements CommandExtension {
             org.weasis.core.ui.model.graphic.GraphicRegistry.getInstance()
                 .descriptor(tool)
                 .orElseThrow(
-                    () -> CommandFailure.unknownHandle("Unknown tool: " + tool, "measure:tools")); // NON-NLS
+                    () ->
+                        CommandFailure.unknownHandle(
+                            "Unknown tool: " + tool, "measure:tools")); // NON-NLS
         if (count < descriptor.minPoints()) {
           throw invalid(tool + " needs at least " + descriptor.minPoints() + " x,y pairs");
         }
@@ -1621,6 +1622,7 @@ public class View2dCommands implements CommandExtension {
                 }
                 GraphicLayer layer = aiLayer(view, LayerType.MEASURE);
                 AbstractGraphicModel.addGraphicToModel(view, layer, graphic);
+                view.settleGraphicUndo(); // one undo step per command, not per 300 ms burst
                 view.getJComponent().repaint();
                 var measurable = view.getMeasurableLayer();
                 Unit spatial = spatialUnit();
@@ -1860,8 +1862,22 @@ public class View2dCommands implements CommandExtension {
               () -> {
                 ImageViewerPlugin<DicomImageElement> container = target.resolve();
                 focus(container);
-                if (layout.grid() != null) {
-                  Grid.requireGrid(container, new GridId(layout.grid()));
+                MigLayoutModel gridModel =
+                    layout.grid() != null
+                        ? Grid.requireGrid(container, new GridId(layout.grid()))
+                        : container.getLayoutModel();
+                int cells = gridModel.getCellCount();
+                for (HangingLayout.Cell cell : layout.cells()) {
+                  if (cell.position() >= cells) {
+                    throw new IllegalArgumentException(
+                        "No cell "
+                            + (cell.position() + 1)
+                            + " in the grid "
+                            + gridModel.getId()
+                            + " ("
+                            + cells
+                            + " cells)");
+                  }
                 }
                 if (!container.hang(layout, id -> Optional.ofNullable(resolved.get(id)))) {
                   throw new IllegalStateException("This viewer does not hang layouts");
@@ -1973,7 +1989,8 @@ public class View2dCommands implements CommandExtension {
     @Override
     public ResultSchema result() {
       return ResultSchema.of()
-          .field("presets", "array", "the presets of the series, the selected one marked") // NON-NLS
+          .field(
+              "presets", "array", "the presets of the series, the selected one marked") // NON-NLS
           .field("presets[].preset", PresetId.class, "the preset id") // NON-NLS
           .field("presets[].name", String.class, "the name shown") // NON-NLS
           .field("presets[].selected", boolean.class, "true for the preset applied") // NON-NLS
@@ -2215,6 +2232,9 @@ public class View2dCommands implements CommandExtension {
         EventManager.getInstance().refreshFusionWindowControl();
         return;
       }
+      if (view.getImage() == null) {
+        throw new IllegalStateException("No image displayed in the pane");
+      }
       FusionState current = FusionController.snapshot(view);
       if (series == null && current == null) {
         throw new IllegalStateException("No overlay on the pane: give --series");
@@ -2361,6 +2381,7 @@ public class View2dCommands implements CommandExtension {
                 graphic.setLabels(new String[] {text});
                 GraphicLayer layer = aiLayer(view, LayerType.ANNOTATION);
                 AbstractGraphicModel.addGraphicToModel(view, layer, graphic);
+                view.settleGraphicUndo(); // one undo step per command, not per 300 ms burst
                 view.getJComponent().repaint();
                 return Json.createObjectBuilder()
                     .add("target", ViewDisplayState.target(resolved.container(), view)) // NON-NLS
@@ -2469,14 +2490,22 @@ public class View2dCommands implements CommandExtension {
           .field("graphics[].layer", "object", "the layer of the graphic") // NON-NLS
           .field("graphics[].layer.name", LayerName.class, "the layer name") // NON-NLS
           .field("graphics[].layer.type", String.class, "the layer type") // NON-NLS
-          .field("graphics[].points", "array", "the points in image pixels, as x,y pairs") // NON-NLS
+          .field(
+              "graphics[].points", "array", "the points in image pixels, as x,y pairs") // NON-NLS
           .field("graphics[].labels", "array", "the labels drawn next to the graphic") // NON-NLS
-          .field("graphics[].measurements", "array", "the measured values of the graphic") // NON-NLS
-          .field("graphics[].measurements[].key", String.class, "stable name of the measurement") // NON-NLS
+          .field(
+              "graphics[].measurements", "array", "the measured values of the graphic") // NON-NLS
+          .field(
+              "graphics[].measurements[].key",
+              String.class,
+              "stable name of the measurement") // NON-NLS
           .field("graphics[].measurements[].name", String.class, "English name") // NON-NLS
           .field("graphics[].measurements[].value", double.class, "the value") // NON-NLS
           .field("graphics[].measurements[].unit", String.class, "UCUM code of the unit") // NON-NLS
-          .field("graphics[].measurements[].provenance", "object", "where the calibration comes from") // NON-NLS
+          .field(
+              "graphics[].measurements[].provenance",
+              "object",
+              "where the calibration comes from") // NON-NLS
           .field("total", int.class, "graphics before the window") // NON-NLS
           .field("truncated", boolean.class, "true when the window cut the list") // NON-NLS
           .field("next", int.class, "offset of the next window, when truncated") // NON-NLS

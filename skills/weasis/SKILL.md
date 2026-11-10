@@ -191,10 +191,12 @@ $line = view2d:measure --view ${open.target.view} --type line --points 316,272,3
 One command per line, `#` comments, `$name = <command>` keeps the body of a step, `${name.path}`
 reads inside it (`[2]` indexes an array, `[key=length]` picks the entry whose `key` is `length`),
 `--set name=value` passes a parameter, and `@expect <value> <op> <value>` checks a value
-(`==`, `!=`, `<`, `<=`, `>`, `>=`, `~ <n> +-<tolerance>`, `matches <regex>`). The answer is one
-JSON object per step, then a summary; a failing step stops the run unless `--keep-going`.
-`script:check --file <file>` parses a plan without running it, which is the cheapest way to
-validate one before proposing it.
+(`==`, `!=`, `<`, `<=`, `>`, `>=`, `~ <n> +-<tolerance>`, `matches <regex>`). `$bad = @fails
+<command>` expects a refusal: the step passes when the command fails and `${bad.code}`,
+`${bad.message}` read its error. The answer is one JSON object per step, then a summary; a failing
+step stops the run unless `--keep-going`. `script:check --file <file>` parses a plan without running
+it (unknown verbs and options, unterminated quotes, a reference used before its step) and lists the
+parameters it expects, which is the cheapest way to validate one before proposing it.
 
 ## Watching for changes
 

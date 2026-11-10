@@ -248,6 +248,14 @@ public final class CommandModel {
         || ex instanceof CommandLine.MaxValuesExceededException) {
       return CommandError.usage(message, synopsis, List.of());
     }
+    if (ex.getCause() instanceof IndexOutOfBoundsException
+        || message.startsWith("IndexOutOfBoundsException")) {
+      // picocli 4.7 trips over an empty positional argument when abbreviated options are allowed
+      return CommandError.usage(
+          "Unexpected empty argument '': quote a value after its option, or drop it",
+          synopsis,
+          List.of());
+    }
     return CommandError.invalidValue(message, optionName(ex), synopsis);
   }
 
@@ -545,7 +553,7 @@ public final class CommandModel {
     if (!produces.isEmpty()) {
       sb.append("Produces: `").append(String.join("`, `", produces)).append("`\n\n");
     }
-    List<PositionalParamSpec> params=
+    List<PositionalParamSpec> params =
         spec.positionalParameters().stream().filter(p -> !p.hidden()).toList();
     if (!params.isEmpty()) {
       sb.append("| Parameter | Type | Description |\n|---|---|---|\n");
@@ -829,8 +837,8 @@ public final class CommandModel {
   /**
    * The alternatives of an argument group, sorted: Picocli renders them in the order reflection
    * gives the fields, which differs between JVM starts (a class from the AOT cache lists them in
-   * another order), and the descriptor and the reference are compared with a snapshot. The
-   * options outside a group are sorted by Picocli itself.
+   * another order), and the descriptor and the reference are compared with a snapshot. The options
+   * outside a group are sorted by Picocli itself.
    */
   static String sortedGroups(String synopsis) {
     StringBuilder out = new StringBuilder();
@@ -894,11 +902,11 @@ public final class CommandModel {
     return parts.stream().map(String::trim).sorted().collect(Collectors.joining(" | "));
   }
 
-  /** The options of a verb by name, so the descriptor and the reference never depend on reflection. */
+  /**
+   * The options of a verb by name, so the descriptor and the reference never depend on reflection.
+   */
   private static List<OptionSpec> sortedOptions(CommandSpec spec) {
-    return spec.options().stream()
-        .sorted(Comparator.comparing(OptionSpec::longestName))
-        .toList();
+    return spec.options().stream().sorted(Comparator.comparing(OptionSpec::longestName)).toList();
   }
 
   private static String cell(String text) {

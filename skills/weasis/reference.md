@@ -1419,7 +1419,7 @@ Runs a list of commands from a file, with variables and expectations.
 
 ### script:check (since 5.0)
 
-Parses every step against the command models without running anything, and answers what would fail.
+Parses every step against the command models without running anything, and answers what would fail: unknown commands, bad options, unterminated quotes, a reference used before the step that assigns it; the names the script never assigns are its parameters, to give with --set.
 
 Usage: `script:check [-h] [--json] --file=<input-path>`
 
@@ -1443,7 +1443,7 @@ Usage: `script:pause [-h] [--json] --seconds=<s>`
 
 ### script:run (since 5.0)
 
-Runs every command of the file and answers one JSON object per step, then a summary.
+Runs every command of the file and answers one JSON object per step, then a summary. A line is a command ('$name = cmd' keeps its answer under the name), '@expect <ref> <op> <value>', '@wait <event-glob> --timeout s', or '@fails cmd', a command that must be refused: the step passes on the refusal and keeps the error as its body.
 
 Usage: `script:run [-h] [--brief] [--json] [--keep] [--keep-going] [--rollback] [--delay=<ms>] --file=<input-path> [--from=<n>] [--report=<output-path>] [--timeout=<s>] [--to=<n>] [--set=<name=value>]...`
 

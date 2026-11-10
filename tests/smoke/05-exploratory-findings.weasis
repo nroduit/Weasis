@@ -1,0 +1,64 @@
+# 05 — what the exploratory agent pass of 2026-11-09 found, pinned: each step below was a defect.
+# A `@fails` step passes when the command is refused; its error object is the body of the step.
+
+dicom:unload --all
+$load = dicom:load --path ${data} --wait
+# a local load lists the series it added, not only the downloads
+@expect ${load.series} matches ${ct}
+
+$open = dicom:open --series ${ct} --wait
+$v = view2d:zoom --view ${open.target.view}
+@expect ${v.target.image} == 1
+
+# an empty argument is a usage error, not a stack message
+$empty = @fails dicom:list ""
+@expect ${empty.code} == usage
+@expect ${empty.message} matches empty argument
+
+# a redone drawing survives a scroll away and back (the layer read from XML stayed non-serializable)
+$line = view2d:measure --view ${open.target.view} --type line --points 10,10,60,60
+view2d:undo --view ${open.target.view}
+$redo = view2d:redo --view ${open.target.view}
+@expect ${redo.graphics} == 1
+view2d:scroll --view ${open.target.view} --image 12
+view2d:scroll --view ${open.target.view} --image 1
+$kept = view2d:graphics --view ${open.target.view}
+@expect ${kept.graphics[0].id} == ${line.id}
+
+# graphics restored by a rollback survive it too
+$cp = state:checkpoint --label "smoke findings"
+view2d:clear-ai --view ${open.target.view}
+$back = state:rollback --to ${cp.checkpoint}
+@expect ${back.graphics} == 1
+view2d:scroll --view ${open.target.view} --image 12
+view2d:scroll --view ${open.target.view} --image 1
+$restored = view2d:graphics --view ${open.target.view}
+@expect ${restored.graphics[0].id} == ${line.id}
+
+# two scripted drawings are two undo steps, not one 300 ms burst
+$second = view2d:measure --view ${open.target.view} --type line --points 20,20,70,70
+$one = view2d:undo --view ${open.target.view}
+@expect ${one.graphics} == 1
+$left = view2d:graphics --view ${open.target.view}
+@expect ${left.graphics[0].id} == ${line.id}
+view2d:clear-ai --view ${open.target.view}
+
+# a cell outside the grid is refused instead of ignored
+$cell = @fails view2d:hang --view ${open.target.view} --grid 2x2 --cell 1=${ct} --cell 9=${ct}
+@expect ${cell.message} matches No cell 9
+
+# fusion needs an image in the pane
+view2d:grid --view ${open.target.view} --panes 2
+$fusion = @fails view2d:fusion --view ${open.target.view} --pane 2 --series ${mr}
+@expect ${fusion.message} matches No image displayed
+view2d:grid --view ${open.target.view} --panes 1
+
+# a blank protocol name, a wrong feature value and a wrong --by are told apart
+$blank = @fails hp:save --view ${open.target.view} --name "   "
+@expect ${blank.message} matches must not be blank
+$role = @fails hp:feature --series ${ct} --set role=nope
+@expect ${role.message} matches role is one of
+$by = @fails hp:feature --series ${ct} --set orientation=axial --by robot
+@expect ${by.message} matches user or agent
+
+workspace:close --view ${open.target.view}

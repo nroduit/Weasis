@@ -28,6 +28,9 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
   private Boolean serializable;
   private Boolean selectable;
 
+  /** True once {@link #setSerializable} was called: the flag then no longer follows the type. */
+  private boolean serializableSet;
+
   protected AbstractGraphicLayer(LayerType type) {
     setType(type);
     this.level = type.getLevel();
@@ -90,6 +93,13 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
   @Override
   public void setType(LayerType type) {
     this.type = Objects.requireNonNull(type);
+    // The flag is not written to XML: a layer read back is built with the no-arg constructor
+    // (TEMP_DRAW, not serializable) and gets its type afterwards, so the flag follows the type
+    // unless it was set on purpose; a layer that stayed TEMP_DRAW would lose its graphics when the
+    // view leaves the image (Canvas#removeGraphicManager deletes the non-serializable ones).
+    if (!serializableSet) {
+      this.serializable = type.getSerializable();
+    }
   }
 
   @XmlAttribute(name = "selectable")
@@ -111,6 +121,7 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
   @Override
   public void setSerializable(Boolean serializable) {
     this.serializable = serializable;
+    this.serializableSet = true;
   }
 
   @Override

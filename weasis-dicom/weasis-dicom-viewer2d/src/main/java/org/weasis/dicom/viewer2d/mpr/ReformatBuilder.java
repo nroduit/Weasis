@@ -101,7 +101,26 @@ public final class ReformatBuilder {
         throw new IllegalStateException("The volume of the series cannot be built");
       }
       Volume<?, ?> volume = owned.volume();
-      ReformatGrid grid = ReformatGrid.of(corners(volume), volume.getMinPixelRatio(), plane);
+      ReformatGrid grid;
+      try {
+        grid = ReformatGrid.of(corners(volume), volume.getMinPixelRatio(), plane);
+      } catch (IllegalArgumentException e) {
+        // too few slices or no spacing: the empty volume the request built must not stay
+        FileUtil.delete(dir);
+        VolumeService.getInstance().evict(series);
+        throw new IllegalStateException(
+            "The series makes no volume ("
+                + series.size(null)
+                + " slices, "
+                + volume.getSize().x
+                + "x"
+                + volume.getSize().y
+                + "x"
+                + volume.getSize().z
+                + " voxels): "
+                + e.getMessage(),
+            e);
+      }
       Attributes base = baseAttributes(middle.getMediaReader().getDicomObject(), plane, grid);
       double fill = volume.getPhotometricMinValue().doubleValue();
       FileRawImage[] files = new FileRawImage[grid.slices()];

@@ -13,11 +13,13 @@ import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.api.provenance.Sourced;
 import org.weasis.core.api.provenance.Sourced.Contest;
@@ -358,21 +360,43 @@ public record SeriesFeatures(
     String t = text == null ? "" : text.trim();
     String upper = t.toUpperCase(Locale.ROOT);
     return switch (key) {
-      case ROLE -> Role.valueOf(upper);
-      case ORIENTATION -> Orientation.valueOf(upper);
+      case ROLE -> constant(Role.class, key, upper);
+      case ORIENTATION -> constant(Orientation.class, key, upper);
       case ANATOMY ->
           anatomy != null && t.equals(anatomy.notation())
               ? anatomy
               : new Anatomy(t, null, null, Set.of());
       case LATERALITY, VIEW -> t;
       case CONTRAST ->
-          new Contrast(Contrast.Agent.valueOf(upper), contrast == null ? null : contrast.phase());
-      case MR_WEIGHTING -> MrWeighting.valueOf(upper);
+          new Contrast(
+              constant(Contrast.Agent.class, key, upper),
+              contrast == null ? null : contrast.phase());
+      case MR_WEIGHTING -> constant(MrWeighting.class, key, upper);
       case CT_KERNEL_FAMILY ->
-          new CtKernel(ctKernel == null ? null : ctKernel.kernel(), CtKernel.Family.valueOf(upper));
-      case TEMPORAL -> Temporal.valueOf(upper);
+          new CtKernel(
+              ctKernel == null ? null : ctKernel.kernel(),
+              constant(CtKernel.Family.class, key, upper));
+      case TEMPORAL -> constant(Temporal.class, key, upper);
       default -> throw new IllegalArgumentException(key.id() + " is read, never derived");
     };
+  }
+
+  /** The constant named by the text, or the list of the names a caller may use. */
+  private static <E extends Enum<E>> E constant(Class<E> type, Key key, String upper) {
+    for (E constant : type.getEnumConstants()) {
+      if (constant.name().equals(upper)) {
+        return constant;
+      }
+    }
+    throw new IllegalArgumentException(
+        key.id()
+            + " is one of "
+            + Arrays.stream(type.getEnumConstants())
+                .map(c -> c.name().toLowerCase(Locale.ROOT))
+                .collect(Collectors.joining(", "))
+            + ", not '"
+            + upper.toLowerCase(Locale.ROOT)
+            + "'");
   }
 
   /** The contests by feature, for {@code hp:features}. */
