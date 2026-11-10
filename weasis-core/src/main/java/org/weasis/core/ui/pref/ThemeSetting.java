@@ -15,6 +15,7 @@ import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Window;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -38,6 +39,8 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.Settings;
 import org.weasis.core.util.StringUtil;
 
 public class ThemeSetting extends AbstractItemDialogPage {
@@ -61,6 +64,22 @@ public class ThemeSetting extends AbstractItemDialogPage {
 
   private final JCheckBox checkboxFileChooser =
       new JCheckBox(Messages.getString("use.system.file.chooser"));
+
+  private final JComboBox<IconSize> comboIconSize = new JComboBox<>();
+
+  /** A size of the side stripe icons, in pixels before the display scale. */
+  record IconSize(String name, int size) {
+    static final List<IconSize> PRESETS =
+        List.of(
+            new IconSize(Messages.getString("icon.size.small"), 16),
+            new IconSize(Messages.getString("icon.size.medium"), 24),
+            new IconSize(Messages.getString("icon.size.large"), 32));
+
+    @Override
+    public String toString() {
+      return name;
+    }
+  }
 
   record LookInfo(String name, String className) {
     @Override
@@ -122,6 +141,13 @@ public class ThemeSetting extends AbstractItemDialogPage {
               };
           GuiExecutor.execute(runnable);
         });
+
+    add(
+        GuiUtils.getFlowLayoutPanel(
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR_LARGE,
+            new JLabel(Messages.getString("side.bar.icon.size") + StringUtil.COLON),
+            comboIconSize));
 
     if (SystemInfo.isLinux) {
       add(
@@ -194,6 +220,27 @@ public class ThemeSetting extends AbstractItemDialogPage {
     }
     checkboxFileChooser.setSelected(
         preferences.getBooleanProperty(UICore.USE_SYSTEM_FILE_CHOOSER, true));
+
+    initIconSize();
+  }
+
+  /** The presets, plus the size in force when a configuration set another one. */
+  private void initIconSize() {
+    int size = Settings.get(CoreSettings.SIDE_PANEL_ICON_SIZE);
+    comboIconSize.removeAllItems();
+    IconSize.PRESETS.forEach(comboIconSize::addItem);
+    IconSize selected =
+        IconSize.PRESETS.stream()
+            .filter(p -> p.size() == size)
+            .findFirst()
+            .orElseGet(
+                () -> {
+                  IconSize custom = new IconSize(size + " px", size); // NON-NLS
+                  comboIconSize.addItem(custom);
+                  return custom;
+                });
+    comboIconSize.setSelectedItem(selected);
+    comboIconSize.setEnabled(!Settings.isLocked(CoreSettings.SIDE_PANEL_ICON_SIZE));
   }
 
   public void setList(JComboBox<LookInfo> jComboBox, LookAndFeelInfo[] look) {
@@ -262,6 +309,11 @@ public class ThemeSetting extends AbstractItemDialogPage {
           UICore.LINUX_WINDOWS_DECORATION, checkboxDecoration.isSelected());
     }
 
+    if (comboIconSize.getSelectedItem() instanceof IconSize iconSize
+        && iconSize.size() != Settings.get(CoreSettings.SIDE_PANEL_ICON_SIZE)) {
+      Settings.set(CoreSettings.SIDE_PANEL_ICON_SIZE, iconSize.size());
+    }
+
     boolean useSystemFileChooser = checkboxFileChooser.isSelected();
     preferences.putBooleanProperty(UICore.USE_SYSTEM_FILE_CHOOSER, useSystemFileChooser);
     System.setProperty(
@@ -277,6 +329,7 @@ public class ThemeSetting extends AbstractItemDialogPage {
       preferences.setProperty(UICore.LINUX_WINDOWS_DECORATION, Boolean.FALSE.toString());
     }
     preferences.putBooleanProperty(UICore.USE_SYSTEM_FILE_CHOOSER, true);
+    Settings.reset(CoreSettings.SIDE_PANEL_ICON_SIZE);
     initialize(false);
   }
 }

@@ -82,6 +82,16 @@ public final class CoreSettings {
           .declare();
 
   /**
+   * Size in pixels, before the display scale factor, of the icons of the button stripes of the side
+   * panels (explorer and tools).
+   */
+  public static final Setting<Integer> SIDE_PANEL_ICON_SIZE =
+      Setting.builder(SettingType.INTEGER, GROUP, "weasis.sidepanel.icon.size", 24) // NON-NLS
+          .description("Size of the icons of the side panel button stripes, in pixels")
+          .since("5.0.0")
+          .declare();
+
+  /**
    * Runs only the display operations whose input or parameters changed since their last run; off,
    * every operation runs on every pass.
    */

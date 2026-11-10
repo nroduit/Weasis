@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.docking;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -30,6 +31,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -41,6 +43,7 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.setting.CoreSettings;
@@ -110,10 +113,31 @@ public class SidePanel extends JPanel {
   private static final double DEFAULT_RATIO = 0.6;
   private static final double MIN_RATIO = 0.1;
   private static final double MAX_RATIO = 0.9;
+  private static final int MIN_ICON_SIZE = 12;
+  private static final int MAX_ICON_SIZE = 64;
 
   private final Role role;
   private final Side side;
-  private final JPanel stripe = new JPanel();
+  private final Consumer<Integer> iconSizeListener =
+      size -> GuiExecutor.execute(this::refreshIcons);
+
+  /** Follows the icon size setting while it is in a window, so a discarded side is not retained. */
+  private final JPanel stripe =
+      new JPanel() {
+        @Override
+        public void addNotify() {
+          super.addNotify();
+          Settings.addListener(CoreSettings.SIDE_PANEL_ICON_SIZE, iconSizeListener);
+          refreshIcons();
+        }
+
+        @Override
+        public void removeNotify() {
+          Settings.removeListener(CoreSettings.SIDE_PANEL_ICON_SIZE, iconSizeListener);
+          super.removeNotify();
+        }
+      };
+
   private final JSplitPane slotSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
   private final SlotHost[] hosts = {new SlotHost(Slot.TOP), new SlotHost(Slot.BOTTOM)};
   private final List<DockableTool> tools = new ArrayList<>();
@@ -651,7 +675,6 @@ public class SidePanel extends JPanel {
     List<String> ids = toolIds();
     if (!new ArrayList<>(buttons.keySet()).equals(ids)) {
       Map<String, JToggleButton> kept = new LinkedHashMap<>();
-      stripe.removeAll();
       for (DockableTool tool : tools) {
         String id = tool.getToolId();
         JToggleButton button = buttons.get(id);
@@ -659,12 +682,10 @@ public class SidePanel extends JPanel {
           button = createButton(tool);
         }
         kept.put(id, button);
-        stripe.add(button);
       }
       buttons.clear();
       buttons.putAll(kept);
-      stripe.revalidate();
-      stripe.repaint();
+      layoutStripe();
     }
     for (DockableTool tool : tools) {
       JToggleButton button = buttons.get(tool.getToolId());
@@ -685,9 +706,23 @@ public class SidePanel extends JPanel {
     }
   }
 
+  /** The buttons in order, separated by a gap that follows the icon size. */
+  private void layoutStripe() {
+    int gap = GuiUtils.getScaleLength(Math.max(4, iconSize() / 4));
+    stripe.removeAll();
+    for (JToggleButton button : buttons.values()) {
+      if (stripe.getComponentCount() > 0) {
+        stripe.add(Box.createVerticalStrut(gap));
+      }
+      stripe.add(button);
+    }
+    stripe.revalidate();
+    stripe.repaint();
+  }
+
   private JToggleButton createButton(DockableTool tool) {
     String id = tool.getToolId();
-    Icon icon = buttonIcon(tool);
+    Icon icon = buttonIcon(tool, iconSize());
     JToggleButton button = icon == null ? new JToggleButton(id) : new JToggleButton(icon);
     button.setName(id);
     button.setFocusable(false);
@@ -718,16 +753,47 @@ public class SidePanel extends JPanel {
     return grey != null ? grey : new Color(0x6E6E6E);
   }
 
-  private static Icon buttonIcon(DockableTool tool) {
+  /** The size of the stripe icons in pixels before the display scale, from the settings. */
+  static int iconSize() {
+    Integer size = Settings.get(CoreSettings.SIDE_PANEL_ICON_SIZE);
+    return Math.clamp(size == null ? 24 : size, MIN_ICON_SIZE, MAX_ICON_SIZE);
+  }
+
+  /** Gives the stripe buttons the icon size of the settings; a no-op when it did not change. */
+  void refreshIcons() {
+    int size = iconSize();
+    boolean changed = false;
+    for (DockableTool tool : tools) {
+      JToggleButton button = buttons.get(tool.getToolId());
+      if (button == null || !(button.getIcon() instanceof FlatSVGIcon current)) {
+        continue;
+      }
+      if (current.getWidth() != size || current.getHeight() != size) {
+        button.setIcon(buttonIcon(tool, size));
+        button.setMaximumSize(null);
+        button.setMaximumSize(button.getPreferredSize());
+        changed = true;
+      }
+    }
+    if (changed) {
+      layoutStripe();
+    }
+  }
+
+  /**
+   * The icon of a tool at the stripe size. An SVG icon is derived to that size; another kind of
+   * icon keeps its own.
+   */
+  private static Icon buttonIcon(DockableTool tool, int size) {
     Icon icon = tool instanceof PluginTool pt ? pt.getIcon() : null;
-    if (icon != null) {
-      return icon;
+    if (icon == null) {
+      try {
+        icon = ResourceUtil.getIcon(ActionIcon.MORE_V);
+      } catch (RuntimeException e) {
+        return null; // no resource path (tests): the button shows the id
+      }
     }
-    try {
-      return ResourceUtil.getIcon(ActionIcon.MORE_V);
-    } catch (RuntimeException e) {
-      return null; // no resource path (tests): the button shows the id
-    }
+    return icon instanceof FlatSVGIcon svg ? svg.derive(size, size) : icon;
   }
 
   // ---- sizes -----------------------------------------------------------------------------------

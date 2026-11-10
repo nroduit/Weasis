@@ -40,12 +40,14 @@ class SidePanelTest {
 
   private static List<String> buttonIds(SidePanel panel) {
     return Arrays.stream(panel.getStripe().getComponents())
+        .filter(JToggleButton.class::isInstance)
         .map(c -> ((JToggleButton) c).getName())
         .toList();
   }
 
   private static Optional<JToggleButton> button(SidePanel panel, String id) {
     return Arrays.stream(panel.getStripe().getComponents())
+        .filter(JToggleButton.class::isInstance)
         .map(JToggleButton.class::cast)
         .filter(b -> id.equals(b.getName()))
         .findFirst();
