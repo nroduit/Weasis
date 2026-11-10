@@ -40,7 +40,7 @@ Every extension point is an interface that extends `org.pf4j.ExtensionPoint`; an
 | `org.weasis.core.api.media.data.Codec` | reads a media format into the series model |
 | `org.weasis.dicom.codec.DicomSpecialElementFactory` | handles a DICOM object class that is not an image (a report, a structure set) |
 | `org.weasis.dicom.codec.hp.SeriesFeatureProvider` | derives series features for the hanging protocols, each value with its provenance and confidence |
-| `org.weasis.dicom.explorer.imp.DicomImportFactory`, `exp.DicomExportFactory` | adds an import or export page to the DICOM explorer |
+| `org.weasis.dicom.explorer.imp.DicomImportFactory`, `exp.DicomExportFactory` | adds an import or export page to the explorer side; `getKind()` (local or network) picks the tool that hosts it (`import` or `retrieve`, `export` or `send`) and `isAvailable()` lets the site switch it off |
 
 The purpose and the contract of each point are in its Javadoc; the concept pages of [docs/README.md](README.md) describe the models they plug into.
 A preference page is declared through the settings catalog (`weasis-core/docs/Settings.md`), with the settings of the plugin scoped by its plugin id.

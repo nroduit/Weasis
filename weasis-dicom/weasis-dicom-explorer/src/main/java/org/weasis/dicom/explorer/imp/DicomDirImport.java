@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2020 Weasis Team and other contributors.
+ * Copyright (c) 2026 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
  * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
@@ -9,196 +9,44 @@
  */
 package org.weasis.dicom.explorer.imp;
 
-import com.formdev.flatlaf.util.SystemFileChooser;
 import com.formdev.flatlaf.util.SystemInfo;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JOptionPane;
-import javax.swing.JProgressBar;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.EmbeddedWizardPanel;
-import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.api.net.URIUtils;
 import org.weasis.core.api.util.HardwareInfo;
-import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.api.util.ResourceUtil.OtherIcon;
-import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.explorer.*;
-import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
+import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
-public class DicomDirImport extends AbstractItemDialogPage implements ImportDicom {
+/**
+ * The DICOMDIR side of the local import: finding the file set of an inserted medium (IHE PDI, RAD
+ * TF-2 §4.47) and reading its directory records instead of scanning the files.
+ */
+public final class DicomDirImport {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomDirImport.class);
   private static final List<String> DICOMDIR_NAMES =
       List.of("DICOMDIR", "dicomdir", "DICOMDIR.", "dicomdir."); // NON-NLS
+  private static final String DICOMDIR = "DICOMDIR"; // NON-NLS
 
-  private static final String LAST_DICOM_DIR = "lastDicomDir";
-  private final JTextField textField = new JTextField();
-  private JCheckBox checkboxWriteInCache;
+  private DicomDirImport() {}
 
-  public DicomDirImport() {
-    super(Messages.getString("DicomDirImport.dicomdir"), 5);
-    initGUI();
-  }
-
-  public void initGUI() {
-    add(
-        LocalImport.createSearchPanel(
-            textField,
-            Messages.getString("DicomDirImport.path"),
-            LAST_DICOM_DIR,
-            this::browseDicomDirFile));
-
-    JButton btnCdrom =
-        new JButton(
-            Messages.getString("DicomDirImport.detect"), ResourceUtil.getIcon(OtherIcon.CDROM));
-    btnCdrom.addActionListener(
-        e -> {
-          File dcmdir = getDcmDirFromMedia();
-          if (dcmdir != null) {
-            String path = dcmdir.getPath();
-            textField.setText(path);
-            LocalPersistence.getProperties().setProperty(LAST_DICOM_DIR, path);
-          }
-        });
-    checkboxWriteInCache = new JCheckBox(Messages.getString("DicomDirImport.cache"));
-
-    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, btnCdrom));
-    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkboxWriteInCache));
-
-    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
-  }
-
-  public void browseDicomDirFile() {
-    String directory = getImportPath();
-    if (directory == null) {
-      directory = LocalPersistence.getProperties().getProperty(LAST_DICOM_DIR, "");
+  /** Whether the file is a DICOMDIR, by its name: {@code DICOMDIR} or {@code DICOMDIR.xxx}. */
+  public static boolean isDicomDir(Path file) {
+    if (file == null || file.getFileName() == null || !Files.isRegularFile(file)) {
+      return false;
     }
-    SystemFileChooser fileChooser = getSystemFileChooser(directory);
-    File selectedFile;
-    if (fileChooser.showOpenDialog(this) == SystemFileChooser.APPROVE_OPTION
-        && (selectedFile = fileChooser.getSelectedFile()) != null) {
-      String path = selectedFile.getPath();
-      textField.setText(path);
-      LocalPersistence.getProperties().setProperty(LAST_DICOM_DIR, path);
-    }
+    String name = file.getFileName().toString().toUpperCase(Locale.ROOT);
+    return name.equals(DICOMDIR) || name.startsWith(DICOMDIR + '.');
   }
 
-  private static SystemFileChooser getSystemFileChooser(String directory) {
-    SystemFileChooser fileChooser = new SystemFileChooser(directory);
-    fileChooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
-    fileChooser.setMultiSelectionEnabled(false);
-    fileChooser.setApproveCallback(
-        (selectedFiles, context) -> {
-          if (selectedFiles.length > 0) {
-            File f = selectedFiles[0];
-            String name = f.getName().toUpperCase();
-            if (name.equals("DICOMDIR") || name.startsWith("DICOMDIR.")) {
-              return SystemFileChooser.APPROVE_OPTION;
-            } else {
-              context.showMessageDialog(
-                  JOptionPane.WARNING_MESSAGE,
-                  "Select a \"DICOMDIR\" filename.",
-                  null,
-                  0,
-                  Messages.common("close"));
-            }
-          }
-          return SystemFileChooser.CANCEL_OPTION;
-        });
-    return fileChooser;
-  }
-
-  @Override
-  public void closeAdditionalWindow() {
-    // No additional window to close
-  }
-
-  private OpeningViewer getOpeningViewer() {
-    return OpeningViewer.ALL_PATIENTS;
-  }
-
-  @Override
-  public void resetToDefaultValues() {
-    // Do nothing
-  }
-
-  private String getImportPath() {
-    String path = textField.getText().trim();
-    if (StringUtil.hasText(path)) {
-      return path;
-    }
-    return null;
-  }
-
-  @Override
-  public void importDICOM(DicomModel dicomModel, JProgressBar info) {
-    File file = null;
-    String path = getImportPath();
-    if (path != null) {
-      File f = new File(path);
-      if (f.canRead()) {
-        file = f;
-      } else {
-        try {
-          f = URIUtils.toFile(new URI(path));
-          if (f.canRead()) {
-            file = f;
-          }
-        } catch (Exception e) {
-          LOGGER.error("Cannot read {}", path);
-        }
-      }
-    }
-    if (file != null) {
-      LocalPersistence.getProperties().setProperty(LAST_DICOM_DIR, file.getPath());
-      List<LoadSeries> loadSeries =
-          loadDicomDir(file, dicomModel, checkboxWriteInCache.isSelected());
-
-      if (loadSeries != null && !loadSeries.isEmpty()) {
-        DicomModel.LOADING_EXECUTOR.execute(
-            new LoadDicomDir(loadSeries, dicomModel, getOpeningViewer()));
-      } else {
-        LOGGER.error("Cannot import DICOM from {}", file);
-
-        int response =
-            JOptionPane.showConfirmDialog(
-                WinUtil.getValidComponent(this),
-                Messages.getString("DicomExplorer.mes_import_manual"),
-                this.getTitle(),
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE);
-
-        if (response == JOptionPane.YES_OPTION) {
-          // the local page of the same wizard, on the folder of the DICOMDIR
-          EmbeddedWizardPanel wizard =
-              (EmbeddedWizardPanel)
-                  SwingUtilities.getAncestorOfClass(EmbeddedWizardPanel.class, this);
-          if (wizard != null) {
-            wizard.selectPage(Messages.getString("LocalImport.local_dev"));
-            if (wizard.getSelectedPage() instanceof LocalImport localImport) {
-              localImport.setImportPath(file.getParent());
-            }
-          }
-        }
-      }
-    }
-  }
-
+  /** The series of a DICOMDIR, null when the file cannot be read. */
   public static List<LoadSeries> loadDicomDir(
       File file, DicomModel dicomModel, boolean writeInCache) {
     List<LoadSeries> loadSeries = null;

@@ -60,11 +60,14 @@ import org.weasis.dicom.codec.*;
 import org.weasis.dicom.explorer.*;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.TransferTool;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.explorer.exp.ExportTool;
 import org.weasis.dicom.explorer.exp.ExportToolBar;
+import org.weasis.dicom.explorer.exp.SendTool;
 import org.weasis.dicom.explorer.imp.ImportTool;
 import org.weasis.dicom.explorer.imp.ImportToolBar;
+import org.weasis.dicom.explorer.imp.RetrieveTool;
 import org.weasis.dicom.explorer.items.FacetCounts;
 import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 
@@ -93,8 +96,10 @@ public class DicomExplorer extends PluginTool
   }
 
   private final DicomModel model;
-  private final ImportTool importTool;
-  private final ExportTool exportTool;
+
+  /** The import, retrieve, export and send tools of the bottom slot, in stripe order. */
+  private final List<TransferTool> transferTools;
+
   private final DicomPaneManager paneManager;
   private final SplitSeriesManager splitSeriesManager;
   private final DicomTaskManager taskManager;
@@ -192,8 +197,12 @@ public class DicomExplorer extends PluginTool
     setupFilterBar();
     setupThumbnailView();
     this.model.addPropertyChangeListener(this);
-    this.importTool = new ImportTool(this.model);
-    this.exportTool = new ExportTool(this.model);
+    this.transferTools =
+        List.of(
+            new ImportTool(this.model),
+            new RetrieveTool(this.model),
+            new ExportTool(this.model),
+            new SendTool(this.model));
   }
 
   @Override
@@ -1778,30 +1787,27 @@ public class DicomExplorer extends PluginTool
     return model;
   }
 
-  public ImportTool getImportTool() {
-    return importTool;
+  /**
+   * The transfer tool of that id ({@code import}, {@code retrieve}, {@code export}, {@code send}).
+   */
+  public Optional<TransferTool> getTransferTool(String id) {
+    return transferTools.stream().filter(tool -> tool.getToolId().equals(id)).findFirst();
   }
 
-  public ExportTool getExportTool() {
-    return exportTool;
-  }
-
-  /** Shows the explorer and, when the site allows them, the import and export tools beside it. */
+  /** Shows the explorer and, beside it, the transfer tools the site offers. */
   @Override
   public void showDockable() {
     super.showDockable();
-    if (ImportTool.isAllowed()) {
-      importTool.showDockable();
-    }
-    if (ExportTool.isAllowed()) {
-      exportTool.showDockable();
+    for (TransferTool tool : transferTools) {
+      if (tool.isOffered()) {
+        tool.showDockable();
+      }
     }
   }
 
   @Override
   public void closeDockable() {
-    importTool.closeDockable();
-    exportTool.closeDockable();
+    transferTools.forEach(TransferTool::closeDockable);
     super.closeDockable();
   }
 
@@ -1954,8 +1960,7 @@ public class DicomExplorer extends PluginTool
       splitSeriesManager.dispose();
     }
 
-    importTool.closeDockable();
-    exportTool.closeDockable();
+    transferTools.forEach(TransferTool::closeDockable);
     super.closeDockable();
     LOGGER.info("DicomExplorer disposed");
   }

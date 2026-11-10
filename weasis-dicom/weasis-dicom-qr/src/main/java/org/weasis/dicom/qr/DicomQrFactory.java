@@ -12,6 +12,7 @@ package org.weasis.dicom.qr;
 import java.util.Map;
 import org.pf4j.Extension;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.dicom.explorer.TransferKind;
 import org.weasis.dicom.explorer.imp.DicomImportFactory;
 import org.weasis.dicom.explorer.imp.ImportDicom;
 import org.weasis.plugin.SingletonExtension;
@@ -20,13 +21,20 @@ import org.weasis.plugin.SingletonExtension;
 @SingletonExtension
 public class DicomQrFactory implements DicomImportFactory {
 
+  private static final String FEATURE = "weasis.import.dicom.qr"; // NON-NLS
+
   @Override
   public ImportDicom createDicomImportPage(Map<String, Object> properties) {
-    if (GuiUtils.getUICore()
-        .getSystemPreferences()
-        .getBooleanProperty("weasis.import.dicom.qr", true)) {
-      return new DicomQrView();
-    }
-    return null;
+    return isAvailable() ? new DicomQrView() : null;
+  }
+
+  @Override
+  public boolean isAvailable() {
+    return GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(FEATURE, true);
+  }
+
+  @Override
+  public TransferKind getKind() {
+    return TransferKind.NETWORK;
   }
 }

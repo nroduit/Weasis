@@ -10,7 +10,9 @@
 package org.weasis.dicom.explorer.imp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,6 +41,22 @@ class DicomDirImportTest {
     Path dicomdir = Files.createFile(media.resolve("dicomdir"));
 
     assertEquals(dicomdir, DicomDirImport.findDicomDir(media));
+  }
+
+  @Test
+  void a_DICOMDIR_file_is_told_from_the_rest_of_a_selection_by_its_name() throws Exception {
+    Path plain = Files.createFile(media.resolve("DICOMDIR"));
+    Path dotted = Files.createFile(media.resolve("dicomdir.bak"));
+    Path image = Files.createFile(media.resolve("IM000001"));
+    Path folder = Files.createDirectory(media.resolve("sub")).resolve("DICOMDIR");
+    Files.createDirectory(folder);
+
+    assertTrue(DicomDirImport.isDicomDir(plain));
+    assertTrue(DicomDirImport.isDicomDir(dotted));
+    assertFalse(DicomDirImport.isDicomDir(image), "an image");
+    assertFalse(DicomDirImport.isDicomDir(folder), "a folder of that name");
+    assertFalse(DicomDirImport.isDicomDir(media.resolve("missing")), "a missing file");
+    assertFalse(DicomDirImport.isDicomDir(null));
   }
 
   @Test

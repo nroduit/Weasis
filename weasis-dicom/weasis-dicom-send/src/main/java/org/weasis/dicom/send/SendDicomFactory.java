@@ -13,6 +13,7 @@ import java.util.Map;
 import org.pf4j.Extension;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.TransferKind;
 import org.weasis.dicom.explorer.exp.CheckTreeModel;
 import org.weasis.dicom.explorer.exp.DicomExportFactory;
 import org.weasis.dicom.explorer.exp.ExportDicom;
@@ -22,12 +23,21 @@ import org.weasis.plugin.SingletonExtension;
 @SingletonExtension
 public class SendDicomFactory implements DicomExportFactory {
 
+  private static final String FEATURE = "weasis.export.dicom.send"; // NON-NLS
+
+  @Override
+  public boolean isAvailable() {
+    return GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(FEATURE, true);
+  }
+
+  @Override
+  public TransferKind getKind() {
+    return TransferKind.NETWORK;
+  }
+
   @Override
   public ExportDicom createDicomExportPage(Map<String, Object> properties) {
-    if (properties != null
-        && GuiUtils.getUICore()
-            .getSystemPreferences()
-            .getBooleanProperty("weasis.export.dicom.send", true)) {
+    if (properties != null && isAvailable()) {
       DicomModel dicomModel = (DicomModel) properties.get(DicomModel.class.getName());
       CheckTreeModel treeModel = (CheckTreeModel) properties.get(CheckTreeModel.class.getName());
       if (dicomModel != null && treeModel != null) {

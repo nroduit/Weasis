@@ -637,7 +637,7 @@
     {
       "code": "weasis.import.dicom",
       "value": "true",
-      "description": "Show the DICOM import menu and dialog",
+      "description": "Show the DICOM import menu and the import and retrieve tools of the explorer side",
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "UI"
@@ -645,7 +645,7 @@
     {
       "code": "weasis.import.dicom.qr",
       "value": "true",
-      "description": "Show the DICOM Q/R page in the DICOM Export dialog",
+      "description": "Show the DICOM query/retrieve page, in the retrieve tool of the explorer side",
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "UI"
@@ -653,7 +653,7 @@
     {
       "code": "weasis.export.dicom",
       "value": "true",
-      "description": "Show the DICOM export menu and dialog",
+      "description": "Show the DICOM export menu and the export and send tools of the explorer side",
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "UI"
@@ -661,7 +661,7 @@
     {
       "code": "weasis.export.dicom.send",
       "value": "true",
-      "description": "Show the send page in the DICOM Export dialog",
+      "description": "Show the DICOM send page, in the send tool of the explorer side",
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "UI"

@@ -11,6 +11,7 @@ package org.weasis.dicom.explorer.imp;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Dimension;
 import java.io.File;
 import java.net.URI;
@@ -19,9 +20,8 @@ import java.util.List;
 import java.util.Properties;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import org.slf4j.Logger;
@@ -31,335 +31,235 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.net.URIUtils;
 import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
+import org.weasis.dicom.explorer.LoadDicomDir;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.LocalPersistence;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.wado.LoadSeries;
 
 /**
- * Local DICOM import page for importing files and folders.
- *
- * <p>This class provides UI components and functionality to import DICOM data from local file
- * system, supporting both individual files and directory imports with recursive scanning option.
+ * The import from the local device in one page: a path field fed by the system file chooser (files
+ * and folders at once on macOS, files or a folder elsewhere) or by the DICOMDIR detection of an
+ * inserted medium. A selected DICOMDIR is read through its directory records, everything else is
+ * scanned; the two kinds may be mixed in one selection.
  */
 public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalImport.class);
 
   public static final String LAST_RECURSIVE_MODE = "last.recursive.mode";
-  public static final String LAST_OPEN_FILES = "last.open.files";
+  public static final String LAST_IMPORT_PATH = "last.import.path";
+
+  /** The folder of the last import, also the folder the export placeholders point to. */
   public static final String LAST_OPEN_DIR = "lastOpenDir";
 
-  private static final String MULTI_DIR_MESSAGE = "LocalImport.multi_dir";
-  private static final String DIR_SUFFIX = ".dir";
-
-  private final JCheckBox checkboxSearch =
-      new JCheckBox(Messages.getString("LocalImport.recursive"), true);
-  private final JTextField textFieldFiles = new JTextField();
-  private final JTextField textFieldFolders = new JTextField();
-  private File[] selectedFiles;
-  private File[] selectedFolders;
+  private final JTextField pathField = new JTextField();
+  private final JCheckBox recursive = new JCheckBox(Messages.getString("LocalImport.recursive"));
+  private final JCheckBox copyToCache = new JCheckBox(Messages.getString("LocalImport.cache"));
+  private List<File> selection = List.of();
 
   public LocalImport() {
-    super(Messages.getString("LocalImport.local_dev"));
-    setComponentPosition(0);
+    super(Messages.getString("LocalImport.local_dev"), 0);
     initGUI();
   }
 
-  public void initGUI() {
-    add(
-        createGroupPanel(
-            Messages.getString("LocalImport.files"),
-            GuiUtils.getHorizontalBoxLayoutPanel(
-                ITEM_SEPARATOR,
-                createSearchField(textFieldFiles, LAST_OPEN_FILES, this::browseFiles))));
-    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
-
+  private void initGUI() {
     Properties props = LocalPersistence.getProperties();
-    boolean recursive = LangUtil.emptyToTrue(props.getProperty(LAST_RECURSIVE_MODE));
-    checkboxSearch.setSelected(recursive);
+    pathField.setText(props.getProperty(LAST_IMPORT_PATH, ""));
+    pathField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+    Dimension size = pathField.getPreferredSize();
+    size.width = 200;
+    pathField.setPreferredSize(size);
+    pathField.setMaximumSize(new Dimension(Short.MAX_VALUE, size.height));
+    recursive.setSelected(LangUtil.emptyToTrue(props.getProperty(LAST_RECURSIVE_MODE)));
 
+    JLabel label = new JLabel(Messages.getString("LocalImport.path") + StringUtil.COLON);
     add(
-        createGroupPanel(
-            Messages.getString("LocalImport.folders"),
-            GuiUtils.getHorizontalBoxLayoutPanel(
-                ITEM_SEPARATOR,
-                createSearchField(textFieldFolders, LAST_OPEN_DIR, this::browseFolders)),
-            GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, checkboxSearch)));
-
+        GuiUtils.getHorizontalBoxLayoutPanel(
+            label, GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL), pathField));
+    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
+    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, createBrowseButtons()));
+    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, recursive));
+    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, copyToCache));
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
   }
 
-  private static JPanel createGroupPanel(String title, JComponent... items) {
-    JPanel panel = GuiUtils.getVerticalBoxLayoutPanel(ITEM_SEPARATOR, items);
-    panel.setBorder(GuiUtils.getTitledBorder(title));
-    return panel;
+  /**
+   * One Browse button where the system dialog takes files and folders together (macOS); a Files and
+   * a Folder button where it takes one kind at a time. The media button looks for a DICOMDIR.
+   */
+  private JButton[] createBrowseButtons() {
+    List<JButton> buttons = new ArrayList<>();
+    if (SystemInfo.isMacOS) {
+      buttons.add(
+          browseButton(
+              Messages.getString("LocalImport.browse"), SystemFileChooser.FILES_AND_DIRECTORIES));
+    } else {
+      buttons.add(
+          browseButton(
+              Messages.getString("LocalImport.browse_files"), SystemFileChooser.FILES_ONLY));
+      buttons.add(
+          browseButton(
+              Messages.getString("LocalImport.browse_folder"), SystemFileChooser.DIRECTORIES_ONLY));
+    }
+    JButton media =
+        new JButton(Messages.getString("LocalImport.media"), ResourceUtil.getIcon(OtherIcon.CDROM));
+    media.addActionListener(_ -> detectMedia());
+    buttons.add(media);
+    return buttons.toArray(JButton[]::new);
   }
 
-  static JPanel createSearchPanel(
-      JTextField textField, String title, String key, Runnable browseAction) {
-    JLabel label = new JLabel(title + StringUtil.COLON);
-    return GuiUtils.getHorizontalBoxLayoutPanel(
-        label,
-        GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL),
-        createSearchField(textField, key, browseAction));
+  private JButton browseButton(String label, int selectionMode) {
+    JButton button = new JButton(label);
+    button.addActionListener(_ -> browse(selectionMode));
+    return button;
   }
 
-  static JTextField createSearchField(JTextField textField, String key, Runnable browseAction) {
-    JButton btnSearch = new JButton(ResourceUtil.getIcon(ActionIcon.MORE_H));
-    btnSearch.addActionListener(_ -> browseAction.run());
-
-    configureTextField(textField, key);
-    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, btnSearch);
-    return textField;
-  }
-
-  private static void configureTextField(JTextField textField, String key) {
-    Properties props = LocalPersistence.getProperties();
-    textField.setText(props.getProperty(key, ""));
-    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
-    Dimension preferredSize = textField.getPreferredSize();
-    preferredSize.width = 200;
-    textField.setPreferredSize(preferredSize);
-    textField.setMaximumSize(new Dimension(Short.MAX_VALUE, preferredSize.height));
-  }
-
-  private void browseFiles() {
-    browseFileSystem(true);
-  }
-
-  private void browseFolders() {
-    browseFileSystem(false);
-  }
-
-  private void browseFileSystem(boolean filesOnly) {
-    String lastItemKey = filesOnly ? LAST_OPEN_FILES : LAST_OPEN_DIR;
-    String initialDirectory = getInitialDirectory(lastItemKey);
-
-    SystemFileChooser fileChooser = new SystemFileChooser(initialDirectory);
-    fileChooser.setFileSelectionMode(
-        filesOnly ? SystemFileChooser.FILES_ONLY : SystemFileChooser.DIRECTORIES_ONLY);
-    fileChooser.setMultiSelectionEnabled(true);
-    if (fileChooser.showOpenDialog(WinUtil.getParentWindow(this))
-        == SystemFileChooser.APPROVE_OPTION) {
-      File[] selected = fileChooser.getSelectedFiles();
+  private void browse(int selectionMode) {
+    SystemFileChooser chooser = new SystemFileChooser(initialDirectory());
+    chooser.setFileSelectionMode(selectionMode);
+    chooser.setMultiSelectionEnabled(true);
+    if (chooser.showOpenDialog(WinUtil.getParentWindow(this)) == SystemFileChooser.APPROVE_OPTION) {
+      File[] selected = chooser.getSelectedFiles();
       if (selected != null && selected.length > 0) {
-        handleSelection(selected, filesOnly, lastItemKey);
+        setSelection(List.of(selected));
       }
     }
   }
 
-  private String getInitialDirectory(String lastItemKey) {
-    String path =
-        (LAST_OPEN_FILES.equals(lastItemKey) ? textFieldFiles : textFieldFolders).getText().trim();
-
-    if (StringUtil.hasText(path) && !path.equals(Messages.getString(MULTI_DIR_MESSAGE))) {
-      return directoryPath(path);
+  private void detectMedia() {
+    File dicomdir = DicomDirImport.getDcmDirFromMedia();
+    if (dicomdir == null) {
+      JOptionPane.showMessageDialog(
+          WinUtil.getValidComponent(this),
+          Messages.getString("LocalImport.no_media"),
+          getTitle(),
+          JOptionPane.INFORMATION_MESSAGE);
+      return;
     }
+    setSelection(List.of(dicomdir));
+    copyToCache.setSelected(true);
+  }
 
+  private String initialDirectory() {
+    File typed = typedFile();
+    if (typed != null) {
+      return directoryOf(typed);
+    }
+    return LocalPersistence.getProperties().getProperty(LAST_OPEN_DIR, "");
+  }
+
+  private static String directoryOf(File file) {
+    if (file.isFile()) {
+      File parent = file.getParentFile();
+      return parent != null ? parent.getPath() : file.getPath();
+    }
+    return file.getPath();
+  }
+
+  /** Shows a selection in the field: the path of a single item, a count otherwise. */
+  private void setSelection(List<File> files) {
+    selection = List.copyOf(files);
+    pathField.setText(
+        files.size() == 1
+            ? files.getFirst().getPath()
+            : Messages.format("LocalImport.items", files.size()));
+    File first = files.getFirst();
     Properties props = LocalPersistence.getProperties();
-    String dir = props.getProperty(lastItemKey + DIR_SUFFIX, "");
-    if (StringUtil.hasText(dir)) {
-      return dir;
-    }
-    return directoryPath(props.getProperty(lastItemKey, ""));
+    props.setProperty(LAST_OPEN_DIR, directoryOf(first));
+    props.setProperty(LAST_IMPORT_PATH, files.size() == 1 ? first.getPath() : "");
   }
 
-  /**
-   * Returns the path itself when it points to a directory, or its parent path when it points to a
-   * file. This ensures the file chooser always opens at a valid directory.
-   */
-  private static String directoryPath(String path) {
-    if (!StringUtil.hasText(path)) {
-      return path;
-    }
-    File f = new File(path);
-    if (f.isFile()) {
-      File parent = f.getParentFile();
-      return parent != null ? parent.getPath() : path;
-    }
-    return path;
+  /** Fills the field with a path to import, as the CD import does with the folder of a medium. */
+  public void setImportPath(String path) {
+    selection = List.of();
+    pathField.setText(path);
   }
 
-  private void handleSelection(File[] selected, boolean filesOnly, String lastItemKey) {
-    JTextField textField = filesOnly ? textFieldFiles : textFieldFolders;
-    boolean isSingleSelection = selected.length == 1;
-
-    // Update UI
-    if (isSingleSelection) {
-      textField.setText(selected[0].getPath());
-    } else {
-      textField.setText(Messages.getString(MULTI_DIR_MESSAGE));
-    }
-
-    // Store selection
-    if (filesOnly) {
-      selectedFiles = selected;
-    } else {
-      selectedFolders = selected;
-    }
-    // Save to preferences
-    saveSelection(lastItemKey, selected, isSingleSelection);
-  }
-
-  private void saveSelection(String key, File[] selected, boolean isSingleSelection) {
-    Properties props = LocalPersistence.getProperties();
-    if (isSingleSelection) {
-      // Single selection: store the exact path for display; derive chooser dir from it
-      String path = selected[0].getPath();
-      props.setProperty(key, path);
-      props.setProperty(key + DIR_SUFFIX, directoryPath(path));
-    } else {
-      // Multi selection: nothing to display – clear the display value so the text field
-      // stays empty after a restart; store the common parent for the file chooser only
-      props.setProperty(key, "");
-      File commonParent = commonParent(selected);
-      props.setProperty(key + DIR_SUFFIX, commonParent != null ? commonParent.getPath() : "");
-    }
-  }
-
-  /**
-   * Returns the deepest directory that is a common ancestor of all given files. Falls back to the
-   * parent of the first item when no deeper common ancestor exists.
-   */
-  private static File commonParent(File[] files) {
-    File parent = files[0].getParentFile();
-    if (parent == null) {
+  private File typedFile() {
+    String path = pathField.getText().trim();
+    if (!StringUtil.hasText(path) || !selection.isEmpty()) {
       return null;
     }
-    for (int i = 1; i < files.length; i++) {
-      File p = files[i].getParentFile();
-      while (p != null && !isAncestorOrSelf(p, parent) && !isAncestorOrSelf(parent, p)) {
-        parent = parent.getParentFile();
-        if (parent == null) {
-          return null;
-        }
-      }
-      // Keep the deeper one if one is an ancestor of the other
-      if (p != null && isAncestorOrSelf(parent, p)) {
-        parent = p;
-      }
+    File file = new File(path);
+    if (file.canRead()) {
+      return file;
     }
-    return parent;
+    try {
+      return URIUtils.toFile(new URI(path));
+    } catch (Exception e) {
+      LOGGER.debug("Not a file path nor a file URI: {}", path);
+      return null;
+    }
   }
 
-  private static boolean isAncestorOrSelf(File ancestor, File file) {
-    File current = file;
-    while (current != null) {
-      if (current.equals(ancestor)) {
-        return true;
-      }
-      current = current.getParentFile();
+  /** The files to import: the chooser selection, or the typed path. */
+  private List<File> filesToImport() {
+    if (!selection.isEmpty()) {
+      return selection;
     }
-    return false;
+    File typed = typedFile();
+    if (typed == null) {
+      LOGGER.error("Cannot import DICOM from {}", pathField.getText());
+      return List.of();
+    }
+    return List.of(typed);
+  }
+
+  @Override
+  public void importDICOM(DicomModel dicomModel, JProgressBar info) {
+    List<File> files = filesToImport();
+    if (files.isEmpty()) {
+      return;
+    }
+    List<File> toScan = new ArrayList<>();
+    for (File file : files) {
+      if (DicomDirImport.isDicomDir(file.toPath())) {
+        List<LoadSeries> series =
+            DicomDirImport.loadDicomDir(file, dicomModel, copyToCache.isSelected());
+        if (series != null && !series.isEmpty()) {
+          DicomModel.LOADING_EXECUTOR.execute(
+              new LoadDicomDir(series, dicomModel, OpeningViewer.ALL_PATIENTS));
+        } else {
+          // an empty or unreadable directory: scan the file set itself
+          LOGGER.warn("No series in {}, scanning its folder", file);
+          toScan.add(file.getParentFile() != null ? file.getParentFile() : file);
+        }
+      } else {
+        toScan.add(file);
+      }
+    }
+    if (!toScan.isEmpty()) {
+      DicomModel.LOADING_EXECUTOR.execute(
+          new LoadLocalDicom(
+              toScan.toArray(File[]::new),
+              recursive.isSelected(),
+              dicomModel,
+              OpeningViewer.ALL_PATIENTS));
+    }
+    selection = List.of();
   }
 
   @Override
   public void closeAdditionalWindow() {
     Properties props = LocalPersistence.getProperties();
-    props.setProperty(LAST_RECURSIVE_MODE, String.valueOf(checkboxSearch.isSelected()));
-
-    // Skip only the multi-selection placeholder – the real parent path is already stored.
-    String filesText = textFieldFiles.getText().trim();
-    if (!filesText.equals(Messages.getString(MULTI_DIR_MESSAGE))) {
-      props.setProperty(LAST_OPEN_FILES, filesText);
-      props.setProperty(LAST_OPEN_FILES + DIR_SUFFIX, directoryPath(filesText));
+    props.setProperty(LAST_RECURSIVE_MODE, String.valueOf(recursive.isSelected()));
+    if (selection.isEmpty()) {
+      String path = pathField.getText().trim();
+      props.setProperty(LAST_IMPORT_PATH, path);
+      File file = new File(path);
+      if (StringUtil.hasText(path) && file.exists()) {
+        props.setProperty(LAST_OPEN_DIR, directoryOf(file));
+      }
     }
-    String foldersText = textFieldFolders.getText().trim();
-    if (!foldersText.equals(Messages.getString(MULTI_DIR_MESSAGE))) {
-      props.setProperty(LAST_OPEN_DIR, foldersText);
-      props.setProperty(LAST_OPEN_DIR + DIR_SUFFIX, directoryPath(foldersText));
-    }
-  }
-
-  private OpeningViewer getOpeningViewer() {
-    return OpeningViewer.ALL_PATIENTS;
   }
 
   @Override
   public void resetToDefaultValues() {
-    // No default values to reset
-  }
-
-  public void setImportPath(String path) {
-    textFieldFolders.setText(path);
-  }
-
-  @Override
-  public void importDICOM(DicomModel dicomModel, JProgressBar info) {
-    List<File> filesToImport = collectFilesToImport();
-
-    if (!filesToImport.isEmpty()) {
-      File[] filesArray = filesToImport.toArray(File[]::new);
-
-      DicomModel.LOADING_EXECUTOR.execute(
-          new LoadLocalDicom(
-              filesArray, checkboxSearch.isSelected(), dicomModel, getOpeningViewer()));
-      resetSelection();
-    }
-  }
-
-  private List<File> collectFilesToImport() {
-    List<File> files = new ArrayList<>();
-
-    // Add selected files
-    if (selectedFiles != null) {
-      files.addAll(List.of(selectedFiles));
-    } else {
-      File file = getFileFromTextField(textFieldFiles);
-      if (file != null && file.isFile()) {
-        files.add(file);
-      }
-    }
-
-    // Add selected folders
-    if (selectedFolders != null) {
-      files.addAll(List.of(selectedFolders));
-    } else {
-      File folder = getFileFromTextField(textFieldFolders);
-      if (folder != null) {
-        files.add(folder);
-      }
-    }
-    return files;
-  }
-
-  private File getFileFromTextField(JTextField textField) {
-    String path = textField.getText().trim();
-
-    if (!StringUtil.hasText(path) || path.equals(Messages.getString(MULTI_DIR_MESSAGE))) {
-      return null;
-    }
-
-    File file = tryCreateFile(path);
-    if (file != null && file.canRead()) {
-      return file;
-    }
-
-    // Try as URI
-    try {
-      return URIUtils.toFile(new URI(path));
-    } catch (Exception e) {
-      LOGGER.error("Cannot import DICOM from {}", path);
-
-      return null;
-    }
-  }
-
-  private File tryCreateFile(String path) {
-    try {
-      return new File(path);
-    } catch (Exception e) {
-      LOGGER.debug("Cannot create file from path: {}", path);
-      return null;
-    }
-  }
-
-  private void resetSelection() {
-    selectedFiles = null;
-    selectedFolders = null;
+    // nothing to reset
   }
 }

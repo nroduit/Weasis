@@ -59,45 +59,42 @@ public class ImportToolBar extends WtoolBar {
     }
   }
 
+  /**
+   * Imports the DICOMDIR of the inserted medium; without one, or when it lists nothing, offers the
+   * import page on the medium instead.
+   */
   public static void openImportDicomCdAction(
       Component parent, DicomModel model, String actionName) {
     File file = DicomDirImport.getDcmDirFromMedia();
     if (file == null) {
-      int response =
-          JOptionPane.showConfirmDialog(
-              WinUtil.getValidComponent(SwingUtilities.getWindowAncestor(parent)),
-              Messages.getString("ImportToolBar.import_cd_question"),
-              actionName,
-              JOptionPane.YES_NO_OPTION,
-              JOptionPane.WARNING_MESSAGE);
-
-      if (response == JOptionPane.YES_OPTION) {
-        ImportTool.open(Messages.getString("DicomDirImport.dicomdir"));
+      if (confirm(parent, Messages.getString("ImportToolBar.import_cd_question"), actionName)) {
+        ImportTool.open(Messages.getString("LocalImport.local_dev"));
       }
+      return;
+    }
+    List<LoadSeries> loadSeries = DicomDirImport.loadDicomDir(file, model, true);
+    if (loadSeries != null && !loadSeries.isEmpty()) {
+      DicomModel.LOADING_EXECUTOR.execute(
+          new LoadDicomDir(loadSeries, model, OpeningViewer.ALL_PATIENTS));
     } else {
-      List<LoadSeries> loadSeries = DicomDirImport.loadDicomDir(file, model, true);
-      if (loadSeries != null && !loadSeries.isEmpty()) {
-        DicomModel.LOADING_EXECUTOR.execute(
-            new LoadDicomDir(loadSeries, model, OpeningViewer.ALL_PATIENTS));
-      } else {
-        LOGGER.error("Cannot import DICOM from {}", file);
-
-        int response =
-            JOptionPane.showConfirmDialog(
-                WinUtil.getValidComponent(SwingUtilities.getWindowAncestor(parent)),
-                Messages.getString("DicomExplorer.mes_import_manual"),
-                actionName,
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE);
-
-        if (response == JOptionPane.YES_OPTION) {
-          EmbeddedWizardPanel wizard = ImportTool.open(Messages.getString("LocalImport.local_dev"));
-          if (wizard != null && wizard.getSelectedPage() instanceof LocalImport localImport) {
-            localImport.setImportPath(file.getParent());
-          }
+      LOGGER.error("Cannot import DICOM from {}", file);
+      if (confirm(parent, Messages.getString("DicomExplorer.mes_import_manual"), actionName)) {
+        EmbeddedWizardPanel wizard = ImportTool.open(Messages.getString("LocalImport.local_dev"));
+        if (wizard != null && wizard.getSelectedPage() instanceof LocalImport localImport) {
+          localImport.setImportPath(file.getParent());
         }
       }
     }
+  }
+
+  private static boolean confirm(Component parent, String question, String title) {
+    return JOptionPane.showConfirmDialog(
+            WinUtil.getValidComponent(SwingUtilities.getWindowAncestor(parent)),
+            question,
+            title,
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE)
+        == JOptionPane.YES_OPTION;
   }
 
   public static DefaultAction buildImportAction(

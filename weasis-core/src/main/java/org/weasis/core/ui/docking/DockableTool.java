@@ -30,6 +30,15 @@ public interface DockableTool extends Insertable, Relevant {
     return Slot.TOP;
   }
 
+  /**
+   * The share of the side height this tool asks for when it fills the bottom slot, in ]0, 1[, or 0
+   * to share the ratio of the side with the other bottom tools. A tool with a share of its own
+   * opens at it and then keeps the ratio the user drags for it.
+   */
+  default double getPreferredBottomShare() {
+    return 0;
+  }
+
   void showDockable();
 
   void closeDockable();

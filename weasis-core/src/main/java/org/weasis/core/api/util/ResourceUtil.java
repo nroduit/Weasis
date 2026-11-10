@@ -100,6 +100,8 @@ public class ResourceUtil {
     SCREENSHOT("svg/action/screenshot.svg"), // NON-NLS
     EXPORT_ANIMATION("svg/action/exportAnimation.svg"), // NON-NLS
     RECORD("svg/action/record.svg"), // NON-NLS
+    RETRIEVE_DICOM("svg/action/retrieveDicom.svg"), // NON-NLS
+    SEND_DICOM("svg/action/sendDicom.svg"), // NON-NLS
     EXPORT_ANNOTATIONS("svg/action/exportAnnotations.svg"), // NON-NLS
     FILTER("svg/action/filter.svg"), // NON-NLS
     FLIP("svg/action/flip.svg"), // NON-NLS

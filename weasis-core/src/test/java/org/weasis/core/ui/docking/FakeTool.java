@@ -18,6 +18,7 @@ final class FakeTool implements DockableTool {
   private final String name;
   private final int position;
   private final Slot preferred;
+  private final double share;
   private final JPanel component = new JPanel();
   private boolean enabled = true;
 
@@ -26,10 +27,15 @@ final class FakeTool implements DockableTool {
   }
 
   FakeTool(String id, int position, Slot preferred) {
+    this(id, position, preferred, 0);
+  }
+
+  FakeTool(String id, int position, Slot preferred, double share) {
     this.id = id;
     this.name = id.toUpperCase();
     this.position = position;
     this.preferred = preferred;
+    this.share = share;
   }
 
   @Override
@@ -40,6 +46,11 @@ final class FakeTool implements DockableTool {
   @Override
   public Slot getPreferredSlot() {
     return preferred;
+  }
+
+  @Override
+  public double getPreferredBottomShare() {
+    return share;
   }
 
   @Override

@@ -19,15 +19,19 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.swing.BorderFactory;
@@ -40,14 +44,19 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.Scope;
 import org.weasis.core.api.setting.Setting;
+import org.weasis.core.api.setting.SettingCatalog;
+import org.weasis.core.api.setting.SettingType;
 import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -111,6 +120,7 @@ public class SidePanel extends JPanel {
   private static final int MIN_CONTENT_WIDTH = 200;
   private static final int MIN_SLOT_HEIGHT = 120;
   private static final double DEFAULT_RATIO = 0.6;
+  private static final Map<String, Setting<Double>> TOOL_RATIOS = new ConcurrentHashMap<>();
   private static final double MIN_RATIO = 0.1;
   private static final double MAX_RATIO = 0.9;
   private static final int MIN_ICON_SIZE = 12;
@@ -138,7 +148,26 @@ public class SidePanel extends JPanel {
         }
       };
 
-  private final JSplitPane slotSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+  /** Records the ratio when the user releases the divider; layout moves are not the user's. */
+  private final MouseAdapter dividerDrag =
+      new MouseAdapter() {
+        @Override
+        public void mouseReleased(MouseEvent e) {
+          recordDividerRatio();
+        }
+      };
+
+  private final JSplitPane slotSplit =
+      new JSplitPane(JSplitPane.VERTICAL_SPLIT) {
+        @Override
+        public void updateUI() {
+          super.updateUI();
+          if (getUI() instanceof BasicSplitPaneUI ui && ui.getDivider() != null) {
+            ui.getDivider().removeMouseListener(dividerDrag);
+            ui.getDivider().addMouseListener(dividerDrag);
+          }
+        }
+      };
   private final SlotHost[] hosts = {new SlotHost(Slot.TOP), new SlotHost(Slot.BOTTOM)};
   private final List<DockableTool> tools = new ArrayList<>();
   private final Map<String, JToggleButton> buttons = new LinkedHashMap<>();
@@ -154,10 +183,16 @@ public class SidePanel extends JPanel {
   private JSplitPane split;
   private boolean leftChild;
   private int contentWidth;
-  private double ratio;
+
+  /**
+   * The ratio in force per key: the side itself (empty key) or the id of a bottom tool that asks
+   * for a share of its own; each seeded from its setting the first time it is needed.
+   */
+  private final Map<String, Double> ratios = new HashMap<>();
+
   private boolean applyingWidth;
-  private boolean applyingRatio;
   private boolean relayoutPending;
+  private boolean ratioPending;
   private boolean bottomSuppressed;
   private Icon minimizeIcon;
 
@@ -177,13 +212,13 @@ public class SidePanel extends JPanel {
     slotSplit.setContinuousLayout(true);
     slotSplit.setBorder(null);
     slotSplit.setResizeWeight(DEFAULT_RATIO);
-    slotSplit.addPropertyChangeListener(
-        JSplitPane.DIVIDER_LOCATION_PROPERTY,
-        e -> {
-          int usable = slotSplit.getHeight() - slotSplit.getDividerSize();
-          if (!applyingRatio && bothShown() && usable > 0) {
-            ratio = clampRatio((double) slotSplit.getDividerLocation() / usable);
-            Settings.set(ratioSetting(), ratio);
+    slotSplit.addComponentListener(
+        new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent e) {
+            if (ratioPending) {
+              applyRatio();
+            }
           }
         });
     addComponentListener(
@@ -388,8 +423,9 @@ public class SidePanel extends JPanel {
         : Settings.get(widthSetting(), this::preferredContentWidth);
   }
 
+  /** The share of the top slot in force: the one of the bottom tool shown, or of the side. */
   public double getRatio() {
-    return ratio > 0 ? ratio : Settings.get(ratioSetting(), () -> DEFAULT_RATIO);
+    return ratioFor(ratioKey());
   }
 
   /**
@@ -433,10 +469,43 @@ public class SidePanel extends JPanel {
     }
   }
 
+  /** Sets the share of the top slot for the bottom tool shown, or for the side when it is empty. */
   public void setRatio(double value) {
-    ratio = clampRatio(value);
-    Settings.set(ratioSetting(), ratio);
+    rememberRatio(clampRatio(value));
     applyRatio();
+  }
+
+  private void recordDividerRatio() {
+    int usable = slotSplit.getHeight() - slotSplit.getDividerSize();
+    if (bothShown() && usable > 0) {
+      rememberRatio(clampRatio((double) slotSplit.getDividerLocation() / usable));
+    }
+  }
+
+  private void rememberRatio(double value) {
+    String key = ratioKey();
+    ratios.put(key, value);
+    Settings.set(ratioSetting(key), value);
+  }
+
+  /** The bottom tool with a share of its own, or the side. */
+  private String ratioKey() {
+    DockableTool tool = host(Slot.BOTTOM).tool;
+    return tool != null && tool.getPreferredBottomShare() > 0 ? tool.getToolId() : "";
+  }
+
+  private double ratioFor(String key) {
+    Double known = ratios.get(key);
+    if (known != null) {
+      return known;
+    }
+    return clampRatio(Settings.get(ratioSetting(key), () -> defaultRatio(key)));
+  }
+
+  private double defaultRatio(String key) {
+    return key.isEmpty()
+        ? DEFAULT_RATIO
+        : find(key).map(t -> 1 - t.getPreferredBottomShare()).orElse(DEFAULT_RATIO);
   }
 
   /** The state of this side as a session or a UI profile records it. */
@@ -804,10 +873,34 @@ public class SidePanel extends JPanel {
         : CoreSettings.SIDE_PANEL_RIGHT_WIDTH;
   }
 
-  private Setting<Double> ratioSetting() {
-    return role == Role.EXPLORER
-        ? CoreSettings.SIDE_PANEL_EXPLORER_RATIO
-        : CoreSettings.SIDE_PANEL_TOOLS_RATIO;
+  private Setting<Double> ratioSetting(String toolId) {
+    if (toolId.isEmpty()) {
+      return role == Role.EXPLORER
+          ? CoreSettings.SIDE_PANEL_EXPLORER_RATIO
+          : CoreSettings.SIDE_PANEL_TOOLS_RATIO;
+    }
+    return TOOL_RATIOS.computeIfAbsent(
+        role.key() + '/' + toolId, _ -> declareToolRatio(role, toolId));
+  }
+
+  /** Declares {@code weasis.sidepanel.<role>.ratio.<toolId>} once; the catalog may know it. */
+  @SuppressWarnings("unchecked")
+  private static Setting<Double> declareToolRatio(Role role, String toolId) {
+    String key = "weasis.sidepanel." + role.key() + ".ratio." + toolId; // NON-NLS
+    Optional<Setting<?>> known = SettingCatalog.find(key);
+    if (known.isPresent() && known.get().type() == SettingType.DOUBLE) {
+      return (Setting<Double>) known.get();
+    }
+    return Setting.builder(SettingType.DOUBLE, AppProperties.CORE_PLUGIN_ID, key, 0.0)
+        .scope(Scope.MACHINE)
+        .description(
+            "Share of the top slot of the "
+                + role.key()
+                + " side when "
+                + toolId
+                + " is at the bottom")
+        .since("5.0.0") // NON-NLS
+        .declare();
   }
 
   private static double clampRatio(double value) {
@@ -855,18 +948,13 @@ public class SidePanel extends JPanel {
     if (!bothShown()) {
       return;
     }
-    if (ratio <= 0) {
-      ratio = clampRatio(Settings.get(ratioSetting(), () -> DEFAULT_RATIO));
-    }
-    applyingRatio = true;
-    try {
-      slotSplit.setResizeWeight(ratio);
-      int usable = slotSplit.getHeight() - slotSplit.getDividerSize();
-      if (usable > 0) {
-        slotSplit.setDividerLocation((int) Math.round(ratio * usable));
-      }
-    } finally {
-      applyingRatio = false;
+    double ratio = getRatio();
+    slotSplit.setResizeWeight(ratio);
+    int usable = slotSplit.getHeight() - slotSplit.getDividerSize();
+    // no size yet (first show): applied when the split pane gets one
+    ratioPending = usable <= 0;
+    if (!ratioPending) {
+      slotSplit.setDividerLocation((int) Math.round(ratio * usable));
     }
   }
 

@@ -12,6 +12,7 @@ package org.weasis.core.ui.docking;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -162,6 +163,33 @@ class SidePanelTest {
         () -> assertEquals(Optional.of("display"), tools.toolIn(Slot.TOP)),
         () -> assertEquals(Optional.empty(), tools.toolIn(Slot.BOTTOM)),
         () -> assertTrue(tools.isCollapsed()));
+  }
+
+  @Test
+  void aBottomToolWithAShareOfItsOwnOpensAtItAndKeepsTheRatioSetForIt() throws Exception {
+    SidePanel explorer = new SidePanel(Role.EXPLORER, Side.LEFT);
+    edt(() -> explorer.show(new FakeTool("dicom-explorer", 10)));
+    edt(() -> explorer.show(new FakeTool("share-import", 30, Slot.BOTTOM, 0.25)));
+    edt(() -> explorer.show(new FakeTool("share-retrieve", 31, Slot.BOTTOM, 0.65)));
+    edt(() -> explorer.open("share-import", Slot.BOTTOM));
+    flush();
+    double importRatio = explorer.getRatio();
+    edt(() -> explorer.setRatio(0.5));
+    flush();
+    edt(() -> explorer.open("share-retrieve", Slot.BOTTOM));
+    flush();
+    double retrieveRatio = explorer.getRatio();
+    edt(() -> explorer.open("share-import", Slot.BOTTOM));
+    flush();
+    double importAgain = explorer.getRatio();
+    edt(() -> explorer.clear(Slot.BOTTOM));
+    flush();
+    double sideRatio = explorer.getRatio();
+    assertAll(
+        () -> assertEquals(0.75, importRatio, 1e-9, "opens at its share"),
+        () -> assertEquals(0.35, retrieveRatio, 1e-9, "another tool, another share"),
+        () -> assertEquals(0.5, importAgain, 1e-9, "the ratio set for it is kept"),
+        () -> assertNotEquals(0.5, sideRatio, 1e-9, "the side ratio is not touched"));
   }
 
   @Test
