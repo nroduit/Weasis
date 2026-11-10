@@ -24,3 +24,4 @@ sync modality modalities group groups tab panes images frames measurements annot
 phases plugins graphics studies patients views entries objects steps checkpoints sessions
 explorer collapsed main birth date sex instance time description accession number total truncated ready unit
 profile
+root preferences data setting added replaced item

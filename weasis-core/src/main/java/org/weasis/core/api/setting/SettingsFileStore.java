@@ -217,6 +217,67 @@ public final class SettingsFileStore {
     }
   }
 
+  /** What an import did to a group: keys added, keys replaced, keys left as they were. */
+  public record Counts(int added, int replaced, int kept) {
+    public Counts plus(Counts other) {
+      return new Counts(added + other.added, replaced + other.replaced, kept + other.kept);
+    }
+
+    public int changed() {
+      return added + replaced;
+    }
+  }
+
+  /**
+   * Brings the values of {@code data} into a group: a key the group lacks is added, a key it has is
+   * replaced only with {@code replace}, else kept. Nothing is written with {@code dryRun}; the
+   * counts say what would change. The nodes already opened see the new values at once; the file
+   * follows after the save delay.
+   */
+  Counts importGroup(String name, Data data, boolean replace, boolean dryRun) {
+    Group group = groups.computeIfAbsent(name, Group::new);
+    load(group);
+    int[] counts = new int[3];
+    synchronized (group) {
+      mergeInto(data, group.data, replace, dryRun, counts);
+      if (!dryRun && counts[0] + counts[1] > 0) {
+        group.markDirty();
+      }
+    }
+    if (!dryRun && counts[0] + counts[1] > 0) {
+      scheduleSave(group);
+    }
+    return new Counts(counts[0], counts[1], counts[2]);
+  }
+
+  private static void mergeInto(Data from, Data into, boolean replace, boolean dryRun, int[] c) {
+    from.values.forEach(
+        (key, value) -> {
+          String current = into.values.get(key);
+          if (current == null) {
+            c[0]++;
+            if (!dryRun) {
+              into.values.put(key, value);
+            }
+          } else if (!current.equals(value) && replace) {
+            c[1]++;
+            if (!dryRun) {
+              into.values.put(key, value);
+            }
+          } else {
+            c[2]++;
+          }
+        });
+    from.children.forEach(
+        (name, child) -> {
+          Data target = into.children.get(name);
+          if (target == null) {
+            target = dryRun ? new Data() : into.children.computeIfAbsent(name, n -> new Data());
+          }
+          mergeInto(child, target, replace, dryRun, c);
+        });
+  }
+
   /** The JDK node of a group, the store of the earlier 5.0 builds; null when it has none. */
   public static Preferences jdkNode(String id) {
     try {

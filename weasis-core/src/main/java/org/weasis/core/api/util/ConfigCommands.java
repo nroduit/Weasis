@@ -30,8 +30,11 @@ import org.weasis.core.api.command.CommandManager;
 import org.weasis.core.api.command.InputPath;
 import org.weasis.core.api.command.Needs;
 import org.weasis.core.api.command.OutputPath;
+import org.weasis.core.api.command.ResultSchema;
+import org.weasis.core.api.command.Returns;
 import org.weasis.core.api.command.Since;
 import org.weasis.core.api.service.UICore;
+import org.weasis.core.api.setting.LegacyInstallation;
 import org.weasis.core.api.setting.RemoteSettings;
 import org.weasis.core.api.setting.SettingCatalog;
 import org.weasis.core.api.setting.Settings;
@@ -64,7 +67,8 @@ import picocli.CommandLine.Parameters;
       ConfigCommands.Setting.class,
       ConfigCommands.Pack.class,
       ConfigCommands.Unpack.class,
-      ConfigCommands.Sync.class
+      ConfigCommands.Sync.class,
+      ConfigCommands.ImportLegacy.class
     })
 @Since("5.0")
 public class ConfigCommands implements CommandExtension {
@@ -342,6 +346,80 @@ public class ConfigCommands implements CommandExtension {
         SiteDocuments.reloadAll();
       }
       JsonObjectBuilder json = Json.createObjectBuilder(toJson(plan, dryRun, replace));
+      checkpoint.ifPresent(id -> json.add("checkpoint", id)); // NON-NLS
+      print(json.build().toString());
+    }
+  }
+
+  @Command(
+      name = "import-legacy",
+      description =
+          "Imports the settings, workstation values and documents of a Weasis 4 installation"
+              + " (~/.weasis) into this one; nothing there is changed. A value already set here is"
+              + " kept unless --replace; --dry-run shows what would change.")
+  @Needs(Capability.FILE_READ)
+  @Since("5.0")
+  static class ImportLegacy extends AbstractVerb implements Returns {
+    @Option(
+        names = "--from",
+        paramLabel = "<input-path>",
+        description = "The folder of the Weasis 4 installation (default: ~/.weasis).")
+    InputPath from;
+
+    @Option(
+        names = "--replace",
+        description = "Take the Weasis 4 value where this installation already has one.")
+    boolean replace;
+
+    @Option(names = "--dry-run", description = "Show what would change, change nothing.")
+    boolean dryRun;
+
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("root", String.class, "the Weasis 4 folder read") // NON-NLS
+          .field("preferences", String.class, "its preference folder of the user and profile") // NON-NLS
+          .field("data", String.class, "its data folder") // NON-NLS
+          .field("dryRun", boolean.class, "true when nothing was changed") // NON-NLS
+          .field("replace", boolean.class, "true when existing values were replaced") // NON-NLS
+          .field("items", "array", "what was imported: a settings group, a machine group, a document") // NON-NLS
+          .field("items[].kind", String.class, "settings, machine or document") // NON-NLS
+          .field("items[].name", String.class, "the group or the document") // NON-NLS
+          .field("items[].source", String.class, "the Weasis 4 file read") // NON-NLS
+          .field("items[].target", String.class, "the file of this installation") // NON-NLS
+          .field("items[].added", int.class, "values or documents added") // NON-NLS
+          .field("items[].replaced", int.class, "values or documents replaced") // NON-NLS
+          .field("items[].kept", int.class, "values or documents left as they were") // NON-NLS
+          .field("added", int.class, "total added") // NON-NLS
+          .field("replaced", int.class, "total replaced") // NON-NLS
+          .field("kept", int.class, "total kept") // NON-NLS
+          .field("checkpoint", String.class, "the checkpoint taken before the import, when one was") // NON-NLS
+          .build();
+    }
+
+    @Override
+    protected void run() {
+      Optional<LegacyInstallation.Roots> roots =
+          from == null
+              ? LegacyInstallation.find()
+              : LegacyInstallation.find(
+                  from.value(),
+                  LegacyInstallation.property(
+                      "weasis.user", System.getProperty("user.name", "")), // NON-NLS
+                  LegacyInstallation.property("weasis.profile", "default")); // NON-NLS
+      if (roots.isEmpty()) {
+        throw new IllegalArgumentException(
+            "No Weasis 4 installation at "
+                + (from == null ? "~/.weasis" : from.value()) // NON-NLS
+                + " (or it is this installation)");
+      }
+      Optional<String> checkpoint =
+          dryRun
+              ? Optional.empty()
+              : CommandManager.stateBoundary()
+                  .checkpoint("before the import of Weasis 4 settings", CommandContext.current().origin());
+      LegacyInstallation.Report report = LegacyInstallation.run(roots.get(), replace, dryRun);
+      JsonObjectBuilder json = Json.createObjectBuilder(LegacyInstallation.toJson(report));
       checkpoint.ifPresent(id -> json.add("checkpoint", id)); // NON-NLS
       print(json.build().toString());
     }

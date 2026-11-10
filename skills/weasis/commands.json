@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.31",
+  "apiVersion": "2.32",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -209,6 +209,150 @@
               "description": "Folder to write the JSON documents into (default: the config folder of the preference directory)."
             }
           ]
+        },
+        {
+          "name": "import-legacy",
+          "description": "Imports the settings, workstation values and documents of a Weasis 4 installation (~/.weasis) into this one; nothing there is changed. A value already set here is kept unless --replace; --dry-run shows what would change.",
+          "since": "5.0",
+          "usage": "config:import-legacy [-h] [--dry-run] [--json] [--replace] [--from=<input-path>]",
+          "needs": [
+            "file-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--dry-run"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Show what would change, change nothing."
+            },
+            {
+              "names": [
+                "--from"
+              ],
+              "label": "<input-path>",
+              "type": "input-path",
+              "arity": "1",
+              "required": false,
+              "description": "The folder of the Weasis 4 installation (default: ~/.weasis).",
+              "needs": [
+                "file-read"
+              ]
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--replace"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Take the Weasis 4 value where this installation already has one."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "root",
+                "type": "string",
+                "description": "the Weasis 4 folder read"
+              },
+              {
+                "name": "preferences",
+                "type": "string",
+                "description": "its preference folder of the user and profile"
+              },
+              {
+                "name": "data",
+                "type": "string",
+                "description": "its data folder"
+              },
+              {
+                "name": "dryRun",
+                "type": "boolean",
+                "description": "true when nothing was changed"
+              },
+              {
+                "name": "replace",
+                "type": "boolean",
+                "description": "true when existing values were replaced"
+              },
+              {
+                "name": "items",
+                "type": "array",
+                "description": "what was imported: a settings group, a machine group, a document"
+              },
+              {
+                "name": "items[].kind",
+                "type": "string",
+                "description": "settings, machine or document"
+              },
+              {
+                "name": "items[].name",
+                "type": "string",
+                "description": "the group or the document"
+              },
+              {
+                "name": "items[].source",
+                "type": "string",
+                "description": "the Weasis 4 file read"
+              },
+              {
+                "name": "items[].target",
+                "type": "string",
+                "description": "the file of this installation"
+              },
+              {
+                "name": "items[].added",
+                "type": "integer",
+                "description": "values or documents added"
+              },
+              {
+                "name": "items[].replaced",
+                "type": "integer",
+                "description": "values or documents replaced"
+              },
+              {
+                "name": "items[].kept",
+                "type": "integer",
+                "description": "values or documents left as they were"
+              },
+              {
+                "name": "added",
+                "type": "integer",
+                "description": "total added"
+              },
+              {
+                "name": "replaced",
+                "type": "integer",
+                "description": "total replaced"
+              },
+              {
+                "name": "kept",
+                "type": "integer",
+                "description": "total kept"
+              },
+              {
+                "name": "checkpoint",
+                "type": "string",
+                "description": "the checkpoint taken before the import, when one was"
+              }
+            ]
+          }
         },
         {
           "name": "list",
@@ -10949,6 +11093,7 @@
       "producedBy": [],
       "consumedBy": [
         "color:set",
+        "config:import-legacy",
         "config:unpack",
         "dicom:load",
         "hp:apply",
@@ -11396,6 +11541,10 @@
     {
       "term": "layout",
       "definition": "the arrangement of windows, tab groups and views, saved as a snapshot"
+    },
+    {
+      "term": "legacy installation",
+      "definition": "the ~/.weasis folder of a Weasis 4 release of the same account, read by the import and never written"
     },
     {
       "term": "level",

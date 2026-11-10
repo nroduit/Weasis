@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.command.CommandManager;
+import org.weasis.core.api.setting.LegacyInstallation;
 import org.weasis.core.api.setting.SettingsPackage;
 import org.weasis.core.api.setting.SettingsPackage.Change;
 import org.weasis.core.api.setting.SettingsPackage.Environment;
@@ -130,6 +131,61 @@ final class SettingsPackageActions {
   }
 
   /** added, replaced, unchanged, skipped. */
+  /** Imports the settings of the Weasis 4 installation of this account, after a confirmation. */
+  static void importLegacy(Component parent) {
+    Optional<LegacyInstallation.Roots> roots = LegacyInstallation.find();
+    if (roots.isEmpty()) {
+      JOptionPane.showMessageDialog(
+          parent,
+          Messages.format(
+              "PreferenceDialog.import.legacy.none",
+              String.valueOf(org.weasis.pref.PlatformDirectories.legacyDir())));
+      return;
+    }
+    try {
+      LegacyInstallation.Report plan = LegacyInstallation.run(roots.get(), false, true);
+      if (plan.items().isEmpty()) {
+        JOptionPane.showMessageDialog(
+            parent, Messages.getString("PreferenceDialog.import.nothing"));
+        return;
+      }
+      Object[] options = {
+        Messages.getString("PreferenceDialog.import.merge"),
+        Messages.getString("PreferenceDialog.import.replace"),
+        Messages.common("cancel")
+      };
+      int choice =
+          JOptionPane.showOptionDialog(
+              parent,
+              Messages.format(
+                  "PreferenceDialog.import.legacy.plan",
+                  String.valueOf(roots.get().root()),
+                  plan.count(LegacyInstallation.SETTINGS),
+                  plan.count(LegacyInstallation.MACHINE),
+                  plan.count(LegacyInstallation.DOCUMENT)),
+              Messages.getString("PreferenceDialog.import.legacy"),
+              JOptionPane.YES_NO_CANCEL_OPTION,
+              JOptionPane.QUESTION_MESSAGE,
+              null,
+              options,
+              options[0]);
+      if (choice != 0 && choice != 1) {
+        return;
+      }
+      CommandManager.stateBoundary().checkpoint("before the import of Weasis 4 settings", null);
+      LegacyInstallation.Report done = LegacyInstallation.run(roots.get(), choice == 1, false);
+      JOptionPane.showMessageDialog(
+          parent,
+          Messages.format(
+              "PreferenceDialog.import.legacy.done",
+              done.totals().added(),
+              done.totals().replaced()));
+    } catch (RuntimeException e) {
+      LOGGER.error("Cannot import the Weasis 4 settings of {}", roots.get().root(), e);
+      error(parent, e);
+    }
+  }
+
   private static int[] totals(Plan plan) {
     int[] t = new int[4];
     for (Change c : plan.changes()) {

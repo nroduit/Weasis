@@ -60,6 +60,7 @@ destination | where a print job goes: a system printer, a DICOM printer or a fil
 slide | a whole slide image, with its pyramid of levels
 tile | one square of a level of a slide
 level | one resolution of the pyramid of a slide, or one entry of a layered document
+legacy installation | the ~/.weasis folder of a Weasis 4 release of the same account, read by the import and never written
 document | a JSON file of settings or of a list (nodes, presets, protocols), with its id, schema and layers
 entry | one item of a document or a library, with its id
 plugin | a module loaded by the plugin manager, with its id, version and signature

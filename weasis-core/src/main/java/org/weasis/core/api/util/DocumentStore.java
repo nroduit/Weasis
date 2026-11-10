@@ -64,8 +64,11 @@ public final class DocumentStore {
   /** The folder of the documents, in the preference directory and in {@code machine}. */
   public static final String FOLDER = "documents"; // NON-NLS
 
-  /** A document known to the running installation. */
-  public record Declared(String name, Scope scope, Path file) {}
+  /**
+   * A document known to the running installation, with the places earlier versions kept it (the
+   * newest first), so an explicit import of a 4.x installation can look for it there.
+   */
+  public record Declared(String name, Scope scope, Path file, List<Path> earlier) {}
 
   private static final Map<String, Declared> DECLARED = new ConcurrentSkipListMap<>();
   private static volatile Path userFolder;
@@ -114,7 +117,8 @@ public final class DocumentStore {
       return earlier.length > 0 ? earlier[0] : null;
     }
     Path file = folder.resolve(name);
-    DECLARED.put(scope.id() + "/" + name, new Declared(name, scope, file));
+    List<Path> known = java.util.Arrays.stream(earlier).filter(e -> e != null).toList();
+    DECLARED.put(scope.id() + "/" + name, new Declared(name, scope, file, known));
     if (!Files.exists(file)) {
       copyEarlier(file, earlier);
     }
@@ -163,6 +167,11 @@ public final class DocumentStore {
   }
 
   /** Told by a rollback that wrote a document back; notifies the registries, then the writers. */
+  /** Tells the registries that {@code file} was replaced from outside, so they read it again. */
+  public static void reload(Path file) {
+    restored(file);
+  }
+
   static void restored(Path file) {
     Path key = file.toAbsolutePath().normalize();
     for (Consumer<Path> listener : RESTORED) {

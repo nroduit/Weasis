@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.31, protocol 2, application development.
+Command API 2.32, protocol 2, application development.
 
 ## color
 
@@ -65,6 +65,41 @@ Needs: file read, file write
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --source | path |  | Root of the resources package holding the XML documents (default: the current one). |
 | --target | path |  | Folder to write the JSON documents into (default: the config folder of the preference directory). |
+
+### config:import-legacy (since 5.0)
+
+Imports the settings, workstation values and documents of a Weasis 4 installation (~/.weasis) into this one; nothing there is changed. A value already set here is kept unless --replace; --dry-run shows what would change.
+
+Usage: `config:import-legacy [-h] [--dry-run] [--json] [--replace] [--from=<input-path>]`
+
+Needs: file read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --dry-run | boolean |  | Show what would change, change nothing. |
+| --from | input-path |  | The folder of the Weasis 4 installation (default: ~/.weasis). |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --replace | boolean |  | Take the Weasis 4 value where this installation already has one. |
+
+| Result | Type | Description |
+|---|---|---|
+| root | string | the Weasis 4 folder read |
+| preferences | string | its preference folder of the user and profile |
+| data | string | its data folder |
+| dryRun | boolean | true when nothing was changed |
+| replace | boolean | true when existing values were replaced |
+| items | array | what was imported: a settings group, a machine group, a document |
+| items[].kind | string | settings, machine or document |
+| items[].name | string | the group or the document |
+| items[].source | string | the Weasis 4 file read |
+| items[].target | string | the file of this installation |
+| items[].added | integer | values or documents added |
+| items[].replaced | integer | values or documents replaced |
+| items[].kept | integer | values or documents left as they were |
+| added | integer | total added |
+| replaced | integer | total replaced |
+| kept | integer | total kept |
+| checkpoint | string | the checkpoint taken before the import, when one was |
 
 ### config:list
 
@@ -2640,7 +2675,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | image-point | a point in image pixels, origin at the top-left corner of the image |  | view2d:annotate, wsi:goto |
 | image-polygon | an outline in image pixels, two points at least |  | redact:add, view2d:measure, view2d:stats |
 | image-rect | a rectangle in image pixels: x,y,width,height |  | redact:add, view2d:stats |
-| input-path | a local file the verb reads; the policy decides what a remote caller may read |  | color:set, config:unpack, dicom:load, hp:apply, hp:features, hp:import, hp:match, hp:validate, image:compare, image:load, plugins:add, redact:import, script:check, script:run, view2d:hang, workspace:load |
+| input-path | a local file the verb reads; the policy decides what a remote caller may read |  | color:set, config:import-legacy, config:unpack, dicom:load, hp:apply, hp:features, hp:import, hp:match, hp:validate, image:compare, image:load, plugins:add, redact:import, script:check, script:run, view2d:hang, workspace:load |
 | layer-name | the name of a layer of graphics in a view |  | view2d:graphics |
 | magnification | how much an image is magnified in a pane: 1 is one image pixel per canvas pixel |  | view2d:zoom, wsi:goto |
 | masking-profile-id | the id of a masking profile of the configuration |  | redact:export |
@@ -2689,6 +2724,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | job | a print job: the pages prepared for a destination |  |
 | layer | the named group a graphic belongs to; the AI layer holds what a remote caller drew |  |
 | layout | the arrangement of windows, tab groups and views, saved as a snapshot |  |
+| legacy installation | the ~/.weasis folder of a Weasis 4 release of the same account, read by the import and never written |  |
 | level | one resolution of the pyramid of a slide, or one entry of a layered document |  |
 | load | bring data into the explorer model, from files, a URL or an archive |  |
 | mask | the series or frames subtracted from another in a subtraction |  |

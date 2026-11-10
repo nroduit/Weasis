@@ -49,6 +49,8 @@ public class PreferenceDialog extends AbstractWizardDialog {
       new JButton(Messages.getString("PreferenceDialog.export.settings"));
   protected final JButton importButton =
       new JButton(Messages.getString("PreferenceDialog.import.settings"));
+  protected final JButton importLegacyButton =
+      new JButton(Messages.getString("PreferenceDialog.import.legacy"));
   protected final JPanel bottomPrefPanel =
       GuiUtils.getFlowLayoutPanel(
           FlowLayout.TRAILING,
@@ -57,6 +59,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
           jButtonHelp,
           exportButton,
           importButton,
+          importLegacyButton,
           reloadSiteButton,
           restoreButton,
           applyButton);
@@ -83,6 +86,8 @@ public class PreferenceDialog extends AbstractWizardDialog {
     exportButton.addActionListener(e -> SettingsPackageActions.exportSettings(this));
     importButton.setToolTipText(Messages.getString("PreferenceDialog.import.settings.tip"));
     importButton.addActionListener(e -> SettingsPackageActions.importSettings(this));
+    importLegacyButton.setToolTipText(Messages.getString("PreferenceDialog.import.legacy.tip"));
+    importLegacyButton.addActionListener(e -> SettingsPackageActions.importLegacy(this));
     applyButton.addActionListener(
         e -> {
           if (currentPage != null) currentPage.closeAdditionalWindow();

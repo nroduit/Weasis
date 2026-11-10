@@ -39,6 +39,20 @@ directory, so they belong to the current Weasis user and profile:
 - A file that does not parse is renamed `.invalid` and the plugin starts from its defaults; a
   file of a newer `schema` is read but never overwritten.
 
+### Importing a Weasis 4 installation
+
+A preview build never migrates `~/.weasis` by itself: the 4.x release the person still runs keeps
+using it. The import is an explicit action instead, *Import Weasis 4 settings…* in the preference
+dialog or `config:import-legacy [--from <folder>] [--replace] [--dry-run]`, implemented by
+`LegacyInstallation`. It reads `~/.weasis/preferences/<user>/<profile>/<module>.xml` into the user
+store (`weasis-core-ui` into `weasis-core`), the `.properties` files of `~/.weasis/data/<plugin>`
+into the machine store, and the documents the registries declared with their earlier location
+(`DocumentStore.locate`, the earlier path relocated from the current roots to the 4.x ones) into
+the document folders. A value already set in 5 is kept, replaced only with *Replace* or
+`--replace`; a document is copied when absent, overwritten only on replace, and its registry reads
+it again. Nothing under `~/.weasis` is written. The verb takes a checkpoint first and answers the
+items with their counts; `--dry-run` answers the same without changing anything.
+
 ### Machine settings
 
 What belongs to the workstation rather than to the person — window geometry, last folders, panel

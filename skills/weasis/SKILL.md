@@ -24,7 +24,7 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.31 and protocol
+This instance runs Weasis development with command API 2.32 and protocol
 2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, mpr, plugins, print, redact, script, state, subtraction, ui, view2d, view3d, weasis, workspace, wsi.
 
 Check the connection first:
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.31 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.32 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,
@@ -282,6 +282,7 @@ prints the definitions, `help types` the value types with the verbs that hand th
 - **job**: a print job: the pages prepared for a destination
 - **layer**: the named group a graphic belongs to; the AI layer holds what a remote caller drew
 - **layout**: the arrangement of windows, tab groups and views, saved as a snapshot
+- **legacy installation**: the ~/.weasis folder of a Weasis 4 release of the same account, read by the import and never written
 - **level**: one resolution of the pyramid of a slide, or one entry of a layered document
 - **load**: bring data into the explorer model, from files, a URL or an archive
 - **mask**: the series or frames subtracted from another in a subtraction
