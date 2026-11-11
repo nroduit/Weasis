@@ -20,6 +20,7 @@ class VocabularyTest {
 
   @Test
   void theNamespaceFollowsTheVocabulary() {
-    assertEquals(List.of(), CommandVocabulary.allViolations("view3d", new Viewer3dCommands())); // NON-NLS
+    assertEquals(
+        List.of(), CommandVocabulary.allViolations("view3d", new Viewer3dCommands())); // NON-NLS
   }
 }

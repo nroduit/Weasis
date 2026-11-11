@@ -15,11 +15,14 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.weasis.core.api.command.CommandVocabulary;
 
-/** The acquire namespace follows the command vocabulary: labels, types, words, synonyms, handles. */
+/**
+ * The acquire namespace follows the command vocabulary: labels, types, words, synonyms, handles.
+ */
 class VocabularyTest {
 
   @Test
   void theNamespaceFollowsTheVocabulary() {
-    assertEquals(List.of(), CommandVocabulary.allViolations("acquire", new AcquireManager())); // NON-NLS
+    assertEquals(
+        List.of(), CommandVocabulary.allViolations("acquire", new AcquireManager())); // NON-NLS
   }
 }

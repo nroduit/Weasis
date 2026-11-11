@@ -29,8 +29,11 @@ import org.weasis.core.api.command.CommandModel;
 class Viewer3dCommandsTest {
 
   private static final List<String> LINES =
-      List.of("view3d:info",
-            "view3d:capture --out /tmp/v.png --force --max-pixels 500000 --scope layout", "view3d:info --json", "view3d:info -h");
+      List.of(
+          "view3d:info",
+          "view3d:capture --out /tmp/v.png --force --max-pixels 500000 --scope layout",
+          "view3d:info --json",
+          "view3d:info -h");
 
   @Test
   @DisplayName("Every documented command line parses")
