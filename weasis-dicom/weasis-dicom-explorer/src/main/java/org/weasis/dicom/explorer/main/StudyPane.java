@@ -25,7 +25,6 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.WrapLayout;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.util.FontItem;
@@ -66,6 +65,7 @@ public class StudyPane extends JPanel {
   private Runnable downloadAction;
   private Consumer<ObjectKind> objectKindAction;
   private Map<ObjectKind, Integer> shownCounts = Map.of();
+  private int columns; // thumbnail columns of the sub-panel layout, 0 before the first refresh
 
   /**
    * Creates a new StudyPane for the specified DICOM study.
@@ -238,8 +238,8 @@ public class StudyPane extends JPanel {
   }
 
   /**
-   * Refreshes the sub-panel layout. The thumbnails are laid out by a {@link WrapLayout} that wraps
-   * to the available width on every layout pass, so this only needs to (re)validate the panel.
+   * Refreshes the sub-panel layout: sets the number of thumbnail columns that fit in the width of
+   * the enclosing scroll viewport, and invalidates the sub-panel when that number changes.
    */
   public void refreshLayout() {
     if (subPanel.getLayout() instanceof MigLayout migLayout) {
@@ -258,9 +258,15 @@ public class StudyPane extends JPanel {
 
       if (width > 0 && subPanel.getComponentCount() > 0) {
         int itemWidth = subPanel.getComponent(0).getPreferredSize().width;
-        int count = (width + GAP) / (itemWidth + GAP);
-        migLayout.setLayoutConstraints(
-            "insets 0, gap " + GAP + " " + GAP + ", flowx, wrap " + Math.max(1, count));
+        int count = Math.max(1, (width + GAP) / (itemWidth + GAP));
+        if (count != columns) {
+          columns = count;
+          migLayout.setLayoutConstraints(
+              "insets 0, gap " + GAP + " " + GAP + ", flowx, wrap " + count);
+          // Revalidating only this pane leaves the sub-panel valid, so it keeps its cached
+          // preferred size and more columns never show when the explorer gets wider
+          subPanel.revalidate();
+        }
       }
     }
   }
