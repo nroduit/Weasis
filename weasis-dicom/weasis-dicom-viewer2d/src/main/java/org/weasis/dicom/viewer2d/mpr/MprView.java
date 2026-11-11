@@ -653,7 +653,6 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
 
       GraphicLayer layer = AbstractGraphicModel.getOrBuildLayer(this, LayerType.CROSSLINES);
       getGraphicManager().deleteByLayer(layer);
-      layer.setVisible(!getViewProperty(this, HIDE_CROSSLINES));
       int centerGap = getCenterGap();
       if (LangUtil.nullToFalse((Boolean) actionsInView.get(SHOW_CROSS_CENTER))) {
         centerGap = 0;
@@ -661,6 +660,9 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
       Point2D centerPt = new Point2D.Double(center.x, center.y);
       processImage(pair.first(), layer, axis, false, centerPt, centerGap);
       processImage(pair.second(), layer, axis, true, centerPt, centerGap);
+      // After adding the graphics: a newly added layer takes the per-view visibility of its type
+      // (always on for CROSSLINES), which would override the MPR crosshair toggle
+      layer.setVisible(!getViewProperty(this, HIDE_CROSSLINES));
     }
   }
 

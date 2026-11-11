@@ -913,7 +913,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     if (original.size(null) > 0) {
       // Always split when it is a video or an encapsulated document
       if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
-        logSplitReason(original, media, "video or encapsulated document is always split"); // NON-NLS
+        logSplitReason(
+            original, media, "video or encapsulated document is always split"); // NON-NLS
         splitSeries(dicomReader, original, media);
       } else {
         findMatchingSeriesOrSplit(original, media);
@@ -929,7 +930,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
       if (original.size(null) > 0) {
         // When the series already contains elements (images), always split video and document
-        logSplitReason(original, media, "video or encapsulated document is always split"); // NON-NLS
+        logSplitReason(
+            original, media, "video or encapsulated document is always split"); // NON-NLS
         splitSeries(dicomReader, original, media);
       } else {
         replaceSeries(dicomReader, original, media);

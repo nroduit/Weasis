@@ -271,8 +271,8 @@ public class SeriesBuilder {
 
   /**
    * Copies the window presets of an enhanced multiframe object, which are stored in the Frame VOI
-   * LUT Macro of the Shared Functional Groups (or the first item of the Per-frame Functional Groups)
-   * instead of the root of the dataset.
+   * LUT Macro of the Shared Functional Groups (or the first item of the Per-frame Functional
+   * Groups) instead of the root of the dataset.
    */
   public static void addFunctionalGroupVoiLut(Attributes src, Attributes cpTags) {
     if (src == null
