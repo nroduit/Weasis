@@ -54,7 +54,7 @@
     <weasis.core.img.version>5.0.0.1</weasis.core.img.version>
     <weasis.opencv.native.version>5.0.0-dcm</weasis.opencv.native.version>
     <weasis.opencv.pkg.version>5.0.0-dcm</weasis.opencv.pkg.version>
-    <jaxb.osgi.version>4.0.9</jaxb.osgi.version>
+    <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
     <xml.bind-api.version>4.0.5</xml.bind-api.version>
     <joml.version>1.10.9</joml.version>
     <jogamp.version>2.6.0</jogamp.version>

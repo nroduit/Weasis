@@ -24,10 +24,12 @@ updates:
       maven:
         patterns:
           - "*"
-    # OpenCV 5.1 and weasis-core-img 5.1 belong to the Weasis 5.0 line (OpenCV 5.1.0-dcm also
-    # renames the Linux classifiers); keep master on 5.0.x and take patch releases only.
+    # Versions that belong to the Weasis 5 line stay off master: OpenCV and weasis-core-img keep
+    # 5.0.x patch releases only (OpenCV 5.1 also renames the Linux classifiers), jaxb-osgi stays
+    # on 4.0.3.
     ignore:
       - dependency-name: "org.weasis.thirdparty.org.opencv:*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "org.weasis.core:weasis-core-img"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "org.weasis.thirdparty:jaxb-osgi"
