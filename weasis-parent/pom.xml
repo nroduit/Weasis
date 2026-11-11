@@ -59,9 +59,9 @@
     <semver4j.version>6.0.0</semver4j.version>
     <slf4j.version>2.0.20</slf4j.version>
     <logback.version>1.6.6</logback.version>
-    <!-- Must match the dcm4che version used by weasis-dicom-tools -->
+    <!-- weasis-dicom-tools is versioned <dcm4che version>.<patch>: the suffix is its own patch -->
     <dcm4che.version>5.35.2</dcm4che.version>
-    <weasis-dicom-tools.version>5.35.2.1-SNAPSHOT</weasis-dicom-tools.version>
+    <weasis-dicom-tools.version>${dcm4che.version}.1-SNAPSHOT</weasis-dicom-tools.version>
     <weasis.core.img.version>5.1.0</weasis.core.img.version>
     <weasis.opencv.native.version>5.1.0-dcm</weasis.opencv.native.version>
     <weasis.opencv.pkg.version>5.1.0-dcm</weasis.opencv.pkg.version>
@@ -108,6 +108,14 @@
       </snapshots>
       <id>mvn-repo-master</id>
       <url>https://raw.githubusercontent.com/nroduit/mvn-repo/master/</url>
+    </repository>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>www.dcm4che.org</id>
+      <name>dcm4che Repository</name>
+      <url>https://www.dcm4che.org/maven2</url>
     </repository>
   </repositories>
 
