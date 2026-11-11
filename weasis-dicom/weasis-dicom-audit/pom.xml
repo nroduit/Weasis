@@ -85,7 +85,7 @@
     <dependency>
       <groupId>org.dcm4che</groupId>
       <artifactId>dcm4che-audit</artifactId>
-      <version>5.36.0</version>
+      <version>${dcm4che.version}</version>
       <exclusions>
         <exclusion>
           <groupId>*</groupId>
