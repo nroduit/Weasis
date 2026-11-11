@@ -185,7 +185,6 @@
           <version>3.5.6</version>
           <configuration>
             <argLine>@{argLine} -Xshare:off -XX:+EnableDynamicAgentLoading</argLine>
-            <parallel>all</parallel>
             <!--
               Shared Logback configuration for the test classpath. Logback is the active
               SLF4J binding in tests (logback-classic is inherited from the provided
