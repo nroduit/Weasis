@@ -13,7 +13,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
-import java.util.Optional;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import org.slf4j.Logger;
@@ -41,8 +40,6 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.exp.DicomExportAction;
-import org.weasis.dicom.explorer.exp.ExportToolBar;
-import org.weasis.dicom.explorer.imp.ImportToolBar;
 
 public class AuContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(AuContainer.class);
@@ -124,33 +121,6 @@ public class AuContainer extends DicomViewerPlugin implements PropertyChangeList
       String componentName = InsertableUtil.getCName(this.getClass());
       String key = "enable"; // NON-NLS
       WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
-
-      if (InsertableUtil.getBooleanProperty(
-          preferences,
-          plugInId,
-          componentName,
-          InsertableUtil.getCName(ImportToolBar.class),
-          key,
-          true)) {
-        Optional<Toolbar> b =
-            GuiUtils.getUICore().getExplorerPluginToolbars().stream()
-                .filter(ImportToolBar.class::isInstance)
-                .findFirst();
-        b.ifPresent(toolBars::add);
-      }
-      if (InsertableUtil.getBooleanProperty(
-          preferences,
-          plugInId,
-          componentName,
-          InsertableUtil.getCName(ExportToolBar.class),
-          key,
-          true)) {
-        Optional<Toolbar> b =
-            GuiUtils.getUICore().getExplorerPluginToolbars().stream()
-                .filter(ExportToolBar.class::isInstance)
-                .findFirst();
-        b.ifPresent(toolBars::add);
-      }
 
       if (InsertableUtil.getBooleanProperty(
           preferences,

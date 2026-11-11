@@ -248,6 +248,48 @@ class SidePanelTest {
   }
 
   @Test
+  void anActionButtonSitsAmongTheToolsByPositionAndRunsWithoutTouchingTheSlots() throws Exception {
+    SidePanel explorer = new SidePanel(Role.EXPLORER, Side.LEFT);
+    int[] runs = {0};
+    edt(() -> explorer.show(new FakeTool("dicom-explorer", 10)));
+    edt(() -> explorer.show(new FakeTool("act-import", 30, Slot.BOTTOM)));
+    edt(() -> explorer.show(new FakeTool("act-retrieve", 31, Slot.BOTTOM)));
+    edt(() -> explorer.addAction(new StripeAction("act-disc", 30, null, "Disc", () -> runs[0]++)));
+    flush();
+    List<String> order = stripeIds(explorer);
+    ShellSide before = explorer.captureState();
+    edt(
+        () ->
+            Arrays.stream(explorer.getStripe().getComponents())
+                .filter(c -> "act-disc".equals(c.getName()))
+                .map(javax.swing.AbstractButton.class::cast)
+                .findFirst()
+                .orElseThrow()
+                .doClick());
+    flush();
+    ShellSide after = explorer.captureState();
+    edt(() -> explorer.removeAction("act-disc"));
+    flush();
+    assertAll(
+        () ->
+            assertEquals(
+                List.of("dicom-explorer", "act-import", "act-disc", "act-retrieve"), order),
+        () -> assertEquals(1, runs[0]),
+        () -> assertEquals(before.slots(), after.slots(), "an action opens no slot"),
+        () ->
+            assertEquals(
+                List.of("dicom-explorer", "act-import", "act-retrieve"), stripeIds(explorer)),
+        () -> assertEquals(List.of(), explorer.actionIds()));
+  }
+
+  private static List<String> stripeIds(SidePanel panel) {
+    return Arrays.stream(panel.getStripe().getComponents())
+        .filter(javax.swing.AbstractButton.class::isInstance)
+        .map(Component::getName)
+        .toList();
+  }
+
+  @Test
   void aToolMovedToTheOtherSlotLeavesTheFirstOne() throws Exception {
     SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
     edt(() -> tools.show(new FakeTool("display", 10)));

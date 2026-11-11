@@ -69,15 +69,14 @@ import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.TransferTool;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.explorer.exp.ExportTool;
-import org.weasis.dicom.explorer.exp.ExportToolBar;
 import org.weasis.dicom.explorer.exp.SendTool;
 import org.weasis.dicom.explorer.imp.ImportTool;
-import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.imp.RetrieveTool;
 import org.weasis.dicom.explorer.items.ExplorerItem;
 import org.weasis.dicom.explorer.items.FacetCounts;
 import org.weasis.dicom.explorer.items.ObjectItem;
 import org.weasis.dicom.explorer.items.StudyContents;
+import org.weasis.dicom.explorer.pr.DicomExportPR;
 import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 
 public class DicomExplorer extends PluginTool
@@ -1951,33 +1950,58 @@ public class DicomExplorer extends PluginTool
         tool.showDockable();
       }
     }
+    if (ImportTool.isAllowed()) {
+      GuiExecutor.execute(
+          () -> {
+            SidePanel side = GuiUtils.getUICore().getSidePanel(getRole());
+            if (side != null) {
+              side.addAction(ImportTool.discAction(this, model));
+            }
+          });
+    }
+  }
+
+  private void removeDiscAction() {
+    GuiExecutor.execute(
+        () -> {
+          SidePanel side = GuiUtils.getUICore().getSidePanel(getRole());
+          if (side != null) {
+            side.removeAction(ImportTool.DISC_ACTION_ID);
+          }
+        });
   }
 
   @Override
   public void closeDockable() {
     contentTool.closeDockable();
     transferTools.forEach(TransferTool::closeDockable);
+    removeDiscAction();
     super.closeDockable();
   }
 
   @Override
   public List<Action> getOpenImportDialogAction() {
     ArrayList<Action> actions = new ArrayList<>(2);
-    actions.add(ImportToolBar.buildImportAction(this, model, BUTTON_NAME));
+    actions.add(ImportTool.buildImportAction(BUTTON_NAME));
     DefaultAction importCDAction =
         new DefaultAction(
             Messages.getString("DicomExplorer.dcmCD"),
             ResourceUtil.getIcon(ResourceUtil.OtherIcon.CDROM),
-            event ->
-                ImportToolBar.openImportDicomCdAction(
-                    this, model, Messages.getString("DicomExplorer.dcmCD")));
+            event -> ImportTool.importDisc(this, model));
     actions.add(importCDAction);
     return actions;
   }
 
   @Override
   public List<Action> getOpenExportDialogAction() {
-    return Collections.singletonList(ExportToolBar.buildExportAction(this, model, BUTTON_NAME));
+    List<Action> actions = new ArrayList<>(2);
+    actions.add(ExportTool.buildExportAction(BUTTON_NAME));
+    if (GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getBooleanProperty("weasis.export.annotations", false)) {
+      actions.add(DicomExportPR.buildAction(this, model));
+    }
+    return actions;
   }
 
   @Override
@@ -2112,6 +2136,7 @@ public class DicomExplorer extends PluginTool
 
     contentTool.closeDockable();
     transferTools.forEach(TransferTool::closeDockable);
+    removeDiscAction();
     super.closeDockable();
     LOGGER.info("DicomExplorer disposed");
   }

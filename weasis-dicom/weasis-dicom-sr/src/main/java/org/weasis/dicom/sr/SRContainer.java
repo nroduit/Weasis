@@ -18,7 +18,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.Action;
@@ -55,8 +54,6 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.exp.DicomExportAction;
-import org.weasis.dicom.explorer.exp.ExportToolBar;
-import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.tag.DicomFieldsView;
 
 public class SRContainer extends DicomViewerPlugin implements PropertyChangeListener {
@@ -140,33 +137,6 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
       String componentName = InsertableUtil.getCName(this.getClass());
       String key = "enable"; // NON-NLS
       WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
-
-      if (InsertableUtil.getBooleanProperty(
-          preferences,
-          plugInId,
-          componentName,
-          InsertableUtil.getCName(ImportToolBar.class),
-          key,
-          true)) {
-        Optional<Toolbar> b =
-            GuiUtils.getUICore().getExplorerPluginToolbars().stream()
-                .filter(t -> t instanceof ImportToolBar)
-                .findFirst();
-        b.ifPresent(toolBars::add);
-      }
-      if (InsertableUtil.getBooleanProperty(
-          preferences,
-          plugInId,
-          componentName,
-          InsertableUtil.getCName(ExportToolBar.class),
-          key,
-          true)) {
-        Optional<Toolbar> b =
-            GuiUtils.getUICore().getExplorerPluginToolbars().stream()
-                .filter(t -> t instanceof ExportToolBar)
-                .findFirst();
-        b.ifPresent(toolBars::add);
-      }
 
       if (InsertableUtil.getBooleanProperty(
           preferences,

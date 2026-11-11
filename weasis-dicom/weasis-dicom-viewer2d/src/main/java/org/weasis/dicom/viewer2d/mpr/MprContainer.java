@@ -72,8 +72,6 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
-import org.weasis.dicom.explorer.exp.ExportToolBar;
-import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.print.DicomPrintDestination;
 import org.weasis.dicom.viewer2d.DcmHeaderToolBar;
 import org.weasis.dicom.viewer2d.EventManager;
@@ -206,12 +204,6 @@ public class MprContainer extends DicomViewerPlugin
       // props.putBooleanProperty("weasis.toolbar.synch.button", false);
 
       EventManager evtMg = EventManager.getInstance();
-      Optional<Toolbar> importBar =
-          View2dContainer.UI.toolBars.stream().filter(ImportToolBar.class::isInstance).findFirst();
-      importBar.ifPresent(toolBars::add);
-      Optional<Toolbar> exportBar =
-          View2dContainer.UI.toolBars.stream().filter(ExportToolBar.class::isInstance).findFirst();
-      exportBar.ifPresent(toolBars::add);
       Optional<Toolbar> viewBar =
           View2dContainer.UI.toolBars.stream().filter(ViewerToolBar.class::isInstance).findFirst();
       viewBar.ifPresent(toolBars::add);

@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.AbstractAction;
@@ -77,8 +76,6 @@ import org.weasis.dicom.codec.WaveformAnnotationSource;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.exp.DicomExportAction;
-import org.weasis.dicom.explorer.exp.ExportToolBar;
-import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.tag.DicomFieldsView;
 import org.weasis.dicom.wave.dockable.MeasureAnnotationTool;
 
@@ -163,32 +160,6 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
       String key = "enable"; // NON-NLS
       WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
-      if (InsertableUtil.getBooleanProperty(
-          preferences,
-          plugInId,
-          componentName,
-          InsertableUtil.getCName(ImportToolBar.class),
-          key,
-          true)) {
-        Optional<Toolbar> b =
-            GuiUtils.getUICore().getExplorerPluginToolbars().stream()
-                .filter(ImportToolBar.class::isInstance)
-                .findFirst();
-        b.ifPresent(toolBars::add);
-      }
-      if (InsertableUtil.getBooleanProperty(
-          preferences,
-          plugInId,
-          componentName,
-          InsertableUtil.getCName(ExportToolBar.class),
-          key,
-          true)) {
-        Optional<Toolbar> b =
-            GuiUtils.getUICore().getExplorerPluginToolbars().stream()
-                .filter(ExportToolBar.class::isInstance)
-                .findFirst();
-        b.ifPresent(toolBars::add);
-      }
       if (InsertableUtil.getBooleanProperty(
           preferences,
           plugInId,

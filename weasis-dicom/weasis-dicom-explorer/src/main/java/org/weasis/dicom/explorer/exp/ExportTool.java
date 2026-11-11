@@ -9,11 +9,14 @@
  */
 package org.weasis.dicom.explorer.exp;
 
+import java.awt.Component;
 import java.util.List;
+import javax.swing.JOptionPane;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.EmbeddedWizardPanel;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.TransferKind;
@@ -47,6 +50,21 @@ public class ExportTool extends ExportHostTool {
   /** Opens the export tool, on the page of that title when given. */
   public static EmbeddedWizardPanel open(String pageTitle) {
     return open(ID, pageTitle);
+  }
+
+  /** The export of the File menu: opens the export tool, or says the site does not allow it. */
+  public static DefaultAction buildExportAction(String actionName) {
+    return new DefaultAction(
+        actionName,
+        ResourceUtil.getIcon(ActionIcon.EXPORT_DICOM),
+        event -> {
+          if (isAllowed()) {
+            open(Messages.getString("LocalExport.local_dev"));
+          } else {
+            JOptionPane.showMessageDialog(
+                (Component) event.getSource(), Messages.getString("DicomExplorer.export_perm"));
+          }
+        });
   }
 
   @Override

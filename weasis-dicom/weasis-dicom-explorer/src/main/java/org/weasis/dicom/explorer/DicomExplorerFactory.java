@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.explorer;
 
-import java.util.List;
 import java.util.Map;
 import org.pf4j.Extension;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -18,9 +17,6 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.util.Toolbar;
-import org.weasis.dicom.explorer.exp.ExportToolBar;
-import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.plugin.SingletonExtension;
 
@@ -40,9 +36,6 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
 
       explorer = new DicomExplorer(model);
       model.addPropertyChangeListener(explorer);
-      List<Toolbar> toolbar = GuiUtils.getUICore().getExplorerPluginToolbars();
-      toolbar.add(new ImportToolBar(5, explorer));
-      toolbar.add(new ExportToolBar(7, explorer));
       ViewerPluginBuilder.DefaultDataModel.firePropertyChange(
           new ObservableEvent(ObservableEvent.BasicAction.NULL_SELECTION, explorer, null, null));
     }

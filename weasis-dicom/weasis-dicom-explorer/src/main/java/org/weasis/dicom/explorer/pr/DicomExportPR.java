@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer.pr;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
@@ -20,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -31,6 +34,10 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.tree.TreeCheckingModel;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
@@ -55,6 +62,29 @@ public class DicomExportPR extends AbstractWizardDialog {
    * The export of the presentation states drawn in Weasis, as a dialog of its own: the only export
    * left as a dialog, with the send page of the send plugin as its single page.
    */
+  /**
+   * The File menu action that exports the graphics of the shown images as presentation states, when
+   * the site enables it ({@code weasis.export.annotations}).
+   */
+  public static DefaultAction buildAction(Component parent, DicomModel model) {
+    return new DefaultAction(
+        Messages.getString("AnnotationsToolBar.export_pr"),
+        ResourceUtil.getIcon(ActionIcon.EXPORT_ANNOTATIONS),
+        _ -> {
+          Window win = SwingUtilities.getWindowAncestor(parent);
+          DicomExportPR dialog = new DicomExportPR(win, model);
+          if (dialog.isContainsPR()) {
+            dialog.showFirstPage();
+            dialog.setAlwaysOnTop(true);
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(parent);
+            ColorLayerUI.showCenterScreen(dialog, layer);
+          } else {
+            JOptionPane.showMessageDialog(
+                win, Messages.getString("AnnotationsToolBar.error_no_pr"));
+          }
+        });
+  }
+
   public DicomExportPR(Window parent, DicomModel dicomModel) {
     super(
         parent,

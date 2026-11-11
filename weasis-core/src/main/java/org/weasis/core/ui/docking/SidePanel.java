@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -179,6 +180,12 @@ public class SidePanel extends JPanel {
   private final SlotHost[] hosts = {new SlotHost(Slot.TOP), new SlotHost(Slot.BOTTOM)};
   private final List<DockableTool> tools = new ArrayList<>();
   private final Map<String, JToggleButton> buttons = new LinkedHashMap<>();
+  private final List<StripeAction> actions = new ArrayList<>();
+  private final Map<String, JButton> actionButtons = new LinkedHashMap<>();
+
+  /** The ids of the stripe buttons in the order shown, tools and actions mixed. */
+  private List<String> stripeOrder = List.of();
+
   private final String[] remembered = new String[Slot.values().length];
   private final boolean[] collapsed = new boolean[Slot.values().length];
 
@@ -309,6 +316,36 @@ public class SidePanel extends JPanel {
       tools.sort(Comparator.comparingInt(DockableTool::getComponentPosition));
     }
     scheduleRelayout();
+  }
+
+  /**
+   * Adds a button that runs an action to the stripe; an action with the same id is replaced. The
+   * button sits among the tools by position.
+   */
+  public void addAction(StripeAction action) {
+    actions.removeIf(a -> a.id().equals(action.id()));
+    if (actionButtons.remove(action.id()) != null) {
+      stripeOrder = List.of(); // same id, new button: lay the stripe out again
+    }
+    actions.add(action);
+    scheduleRelayout();
+  }
+
+  /** Removes the action button of that id from the stripe. */
+  public void removeAction(String id) {
+    if (actions.removeIf(a -> a.id().equals(id))) {
+      actionButtons.remove(id);
+      scheduleRelayout();
+    }
+  }
+
+  /** The ids of the action buttons of the stripe, in position order. */
+  public List<String> actionIds() {
+    return sortedActions().stream().map(StripeAction::id).toList();
+  }
+
+  private List<StripeAction> sortedActions() {
+    return actions.stream().sorted(Comparator.comparingInt(StripeAction::position)).toList();
   }
 
   /** Replaces the workspace lookup, for tests and for a shell built elsewhere. */
@@ -783,10 +820,21 @@ public class SidePanel extends JPanel {
 
   // ---- stripe ----------------------------------------------------------------------------------
 
-  /** One button per tool id in position order; unchanged ids keep their button. */
+  /**
+   * One button per tool id and per action in position order (a tool before an action of the same
+   * position); unchanged ids keep their button.
+   */
   private void rebuildStripe() {
-    List<String> ids = toolIds();
-    if (!new ArrayList<>(buttons.keySet()).equals(ids)) {
+    List<String> order = new ArrayList<>();
+    List<StripeAction> pending = new ArrayList<>(sortedActions());
+    for (DockableTool tool : tools) {
+      while (!pending.isEmpty() && pending.getFirst().position() < tool.getComponentPosition()) {
+        order.add(pending.removeFirst().id());
+      }
+      order.add(tool.getToolId());
+    }
+    pending.forEach(a -> order.add(a.id()));
+    if (!order.equals(stripeOrder)) {
       Map<String, JToggleButton> kept = new LinkedHashMap<>();
       for (DockableTool tool : tools) {
         String id = tool.getToolId();
@@ -798,6 +846,14 @@ public class SidePanel extends JPanel {
       }
       buttons.clear();
       buttons.putAll(kept);
+      Map<String, JButton> keptActions = new LinkedHashMap<>();
+      for (StripeAction action : actions) {
+        JButton button = actionButtons.get(action.id());
+        keptActions.put(action.id(), button == null ? createButton(action) : button);
+      }
+      actionButtons.clear();
+      actionButtons.putAll(keptActions);
+      stripeOrder = List.copyOf(order);
       layoutStripe();
     }
     for (DockableTool tool : tools) {
@@ -823,7 +879,14 @@ public class SidePanel extends JPanel {
   private void layoutStripe() {
     int gap = GuiUtils.getScaleLength(Math.max(4, iconSize() / 4));
     stripe.removeAll();
-    for (JToggleButton button : buttons.values()) {
+    for (String id : stripeOrder) {
+      AbstractButton button = buttons.get(id);
+      if (button == null) {
+        button = actionButtons.get(id);
+      }
+      if (button == null) {
+        continue;
+      }
       if (stripe.getComponentCount() > 0) {
         stripe.add(Box.createVerticalStrut(gap));
       }
@@ -842,6 +905,18 @@ public class SidePanel extends JPanel {
     button.setAlignmentX(CENTER_ALIGNMENT);
     button.setMaximumSize(button.getPreferredSize());
     button.addActionListener(e -> toggle(id, (e.getModifiers() & ActionEvent.SHIFT_MASK) != 0));
+    return button;
+  }
+
+  private JButton createButton(StripeAction action) {
+    Icon icon = buttonIcon(action.icon(), iconSize());
+    JButton button = icon == null ? new JButton(action.id()) : new JButton(icon);
+    button.setName(action.id());
+    button.setToolTipText(action.name());
+    button.setFocusable(false);
+    button.setAlignmentX(CENTER_ALIGNMENT);
+    button.setMaximumSize(button.getPreferredSize());
+    button.addActionListener(_ -> action.action().run());
     return button;
   }
 
@@ -888,6 +963,17 @@ public class SidePanel extends JPanel {
         changed = true;
       }
     }
+    for (StripeAction action : actions) {
+      JButton button = actionButtons.get(action.id());
+      if (button != null
+          && button.getIcon() instanceof FlatSVGIcon current
+          && (current.getWidth() != size || current.getHeight() != size)) {
+        button.setIcon(buttonIcon(action.icon(), size));
+        button.setMaximumSize(null);
+        button.setMaximumSize(button.getPreferredSize());
+        changed = true;
+      }
+    }
     if (changed) {
       layoutStripe();
     }
@@ -898,7 +984,11 @@ public class SidePanel extends JPanel {
    * icon keeps its own.
    */
   private static Icon buttonIcon(DockableTool tool, int size) {
-    Icon icon = tool instanceof PluginTool pt ? pt.getIcon() : null;
+    return buttonIcon(tool instanceof PluginTool pt ? pt.getIcon() : null, size);
+  }
+
+  private static Icon buttonIcon(Icon source, int size) {
+    Icon icon = source;
     if (icon == null) {
       try {
         icon = ResourceUtil.getIcon(ActionIcon.MORE_V);

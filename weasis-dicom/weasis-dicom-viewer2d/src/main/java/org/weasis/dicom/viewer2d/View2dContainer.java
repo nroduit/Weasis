@@ -93,8 +93,6 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
-import org.weasis.dicom.explorer.exp.ExportToolBar;
-import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.print.DicomPrintDestination;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
@@ -180,32 +178,6 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       String key = "enable"; // NON-NLS
       WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
-      if (InsertableUtil.getBooleanProperty(
-          preferences,
-          plugInId,
-          componentName,
-          InsertableUtil.getCName(ImportToolBar.class),
-          key,
-          true)) {
-        Optional<Toolbar> b =
-            GuiUtils.getUICore().getExplorerPluginToolbars().stream()
-                .filter(ImportToolBar.class::isInstance)
-                .findFirst();
-        b.ifPresent(toolBars::add);
-      }
-      if (InsertableUtil.getBooleanProperty(
-          preferences,
-          plugInId,
-          componentName,
-          InsertableUtil.getCName(ExportToolBar.class),
-          key,
-          true)) {
-        Optional<Toolbar> b =
-            GuiUtils.getUICore().getExplorerPluginToolbars().stream()
-                .filter(ExportToolBar.class::isInstance)
-                .findFirst();
-        b.ifPresent(toolBars::add);
-      }
       if (InsertableUtil.getBooleanProperty(
           preferences,
           plugInId,
