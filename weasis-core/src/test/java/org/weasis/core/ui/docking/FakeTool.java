@@ -21,6 +21,7 @@ final class FakeTool implements DockableTool {
   private final double share;
   private final JPanel component = new JPanel();
   private boolean enabled = true;
+  private int widthToFit;
 
   FakeTool(String id, int position) {
     this(id, position, Slot.TOP);
@@ -62,6 +63,16 @@ final class FakeTool implements DockableTool {
   @Override
   public Component getToolComponent() {
     return component;
+  }
+
+  @Override
+  public int getWidthToFit() {
+    return widthToFit;
+  }
+
+  FakeTool widthToFit(int width) {
+    this.widthToFit = width;
+    return this;
   }
 
   @Override

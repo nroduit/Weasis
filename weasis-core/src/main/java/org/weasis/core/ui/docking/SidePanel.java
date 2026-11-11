@@ -82,9 +82,13 @@ import org.weasis.launcher.UiOrientation;
  * closes the display tool of one viewer type and shows the display tool of another, the stripe
  * keeps its button and the slot swaps its content in place, without moving the divider. The content
  * width belongs to the user: seeded once from the persisted preference (falling back to the widest
- * tool), memorized on divider drags and written back. The slot ratio is remembered the same way.
- * The expanded tools are sticky as well: when tools are swapped, the slots re-open the remembered
- * ids (or, on the explorer side, the first tool) unless the user explicitly collapsed them.
+ * tool), memorized on divider drags and written back. The slot ratio is remembered the same way. A
+ * tool the user opens may ask for more width ({@link DockableTool#getWidthToFit()}): the side
+ * widens for it while it is shown and returns to the width of the user afterwards; this width is
+ * never persisted, and a divider drag meanwhile becomes the width of the user. Viewer switches and
+ * applied states never widen the side. The expanded tools are sticky as well: when tools are
+ * swapped, the slots re-open the remembered ids (or, on the explorer side, the first tool) unless
+ * the user explicitly collapsed them.
  */
 public class SidePanel extends JPanel {
 
@@ -120,6 +124,10 @@ public class SidePanel extends JPanel {
   private static final int MIN_CONTENT_WIDTH = 200;
   private static final int MIN_SLOT_HEIGHT = 120;
   private static final double DEFAULT_RATIO = 0.6;
+
+  /** The largest share of the split a tool opened by the user widens the side to. */
+  private static final double MAX_FIT_SHARE = 0.4;
+
   private static final Map<String, Setting<Double>> TOOL_RATIOS = new ConcurrentHashMap<>();
   private static final double MIN_RATIO = 0.1;
   private static final double MAX_RATIO = 0.9;
@@ -190,6 +198,15 @@ public class SidePanel extends JPanel {
    */
   private final Map<String, Double> ratios = new HashMap<>();
 
+  /** The width of the user while the side is widened for a tool, 0 when it is not. */
+  private int widthBeforeFit;
+
+  /** The id of the tool the side is widened for, null when it is not. */
+  private String fittedToolId;
+
+  /** The id of the tool the user just opened, whose width is checked on the next relayout. */
+  private String fitPending;
+
   private boolean applyingWidth;
   private boolean relayoutPending;
   private boolean ratioPending;
@@ -256,6 +273,13 @@ public class SidePanel extends JPanel {
         JSplitPane.DIVIDER_LOCATION_PROPERTY,
         e -> {
           if (!applyingWidth && isShowingContent() && getWidth() > 0) {
+            if (fittedToolId != null) {
+              if (dividerWidth(e.getNewValue()) == contentWidth) {
+                return; // a layout pass at the widened width, not the user
+              }
+              // the user drags while the side is widened: the drag wins and nothing is restored
+              forgetFit();
+            }
             contentWidth = getWidth();
             Settings.set(widthSetting(), contentWidth);
           }
@@ -440,6 +464,20 @@ public class SidePanel extends JPanel {
     return tool.isPresent();
   }
 
+  /**
+   * Opens the tool of that id in a slot as a click on its stripe button does: the side widens when
+   * the tool needs more width ({@link DockableTool#getWidthToFit()}).
+   *
+   * @return false when no tool of that id is offered on this side
+   */
+  public boolean openByUser(String toolId, Slot slot) {
+    boolean opened = open(toolId, slot);
+    if (opened) {
+      fitPending = toolId;
+    }
+    return opened;
+  }
+
   /** Empties a slot and forgets it. */
   public void clear(Slot slot) {
     host(slot).setTool(null);
@@ -463,6 +501,7 @@ public class SidePanel extends JPanel {
 
   public void setContentWidth(int width) {
     if (width > 0) {
+      forgetFit();
       contentWidth = width;
       Settings.set(widthSetting(), width);
       applyWidth();
@@ -521,7 +560,9 @@ public class SidePanel extends JPanel {
       int i = slot.ordinal();
       slots.add(collapsed[i] ? remembered[i] : toolIn(slot).orElse(null));
     }
-    return new ShellSide(slots, getContentWidth(), getRatio(), isCollapsed(), viewIds());
+    // a session keeps the width of the user, not the one widened for a tool
+    int width = widthBeforeFit > 0 ? widthBeforeFit : getContentWidth();
+    return new ShellSide(slots, width, getRatio(), isCollapsed(), viewIds());
   }
 
   /**
@@ -635,10 +676,12 @@ public class SidePanel extends JPanel {
     Optional<Slot> current = slotOf(tool).filter(s -> !collapsed[s.ordinal()]);
     if (otherSlot) {
       open(tool, current.map(Slot::other).orElseGet(() -> preferredSlot(tool).other()));
+      fitPending = toolId;
     } else if (current.isPresent()) {
       collapse(current.get());
     } else {
       open(tool, slotOf(tool).orElseGet(() -> preferredSlot(tool)));
+      fitPending = toolId;
     }
   }
 
@@ -660,6 +703,7 @@ public class SidePanel extends JPanel {
     rebuildStripe();
     updateBottomSuppressed();
     rebuildContent();
+    fitWidth();
     applyWidth();
     applyRatio();
     revalidate();
@@ -916,6 +960,51 @@ public class SidePanel extends JPanel {
       }
     }
     return w > 0 ? w : GuiUtils.getScaleLength(MIN_CONTENT_WIDTH);
+  }
+
+  /**
+   * Restores the width of the user when the tool the side was widened for is no longer shown, then
+   * widens the side for the tool the user just opened when it needs more width.
+   */
+  private void fitWidth() {
+    String pending = fitPending;
+    fitPending = null;
+    if (fittedToolId != null && !isToolShown(fittedToolId)) {
+      contentWidth = widthBeforeFit;
+      forgetFit();
+    }
+    if (pending == null || !isToolShown(pending)) {
+      return;
+    }
+    int needed = find(pending).map(DockableTool::getWidthToFit).orElse(0);
+    int base = widthBeforeFit > 0 ? widthBeforeFit : getContentWidth();
+    int max =
+        split != null && split.getWidth() > 0
+            ? (int) (split.getWidth() * MAX_FIT_SHARE)
+            : Integer.MAX_VALUE;
+    int target = Math.min(needed, max);
+    if (target > base && target > contentWidth) {
+      widthBeforeFit = base;
+      fittedToolId = pending;
+      contentWidth = target;
+    }
+  }
+
+  private boolean isToolShown(String toolId) {
+    return find(toolId).flatMap(this::slotOf).filter(this::isShown).isPresent();
+  }
+
+  private void forgetFit() {
+    widthBeforeFit = 0;
+    fittedToolId = null;
+  }
+
+  /** The content width a divider location gives this side. */
+  private int dividerWidth(Object location) {
+    if (!(location instanceof Integer value) || split == null) {
+      return -1;
+    }
+    return leftChild ? value : split.getWidth() - value - split.getDividerSize();
   }
 
   private void applyWidth() {

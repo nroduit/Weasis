@@ -39,6 +39,16 @@ public interface DockableTool extends Insertable, Relevant {
     return 0;
   }
 
+  /**
+   * The content width, in device pixels, this tool needs to be seen whole when the user opens it.
+   * When the side is narrower, it widens to that width (up to a share of the window) while the tool
+   * is shown, then returns to the width of the user; a drag of the divider meanwhile is kept. 0,
+   * the default, never widens the side.
+   */
+  default int getWidthToFit() {
+    return 0;
+  }
+
   void showDockable();
 
   void closeDockable();

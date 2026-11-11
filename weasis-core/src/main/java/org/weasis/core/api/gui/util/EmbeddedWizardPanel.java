@@ -11,7 +11,9 @@ package org.weasis.core.api.gui.util;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.Insets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +105,27 @@ public class EmbeddedWizardPanel extends JPanel {
           .findFirst()
           .ifPresent(this::showPage);
     }
+  }
+
+  /**
+   * The width that shows every page whole: the widest page with the vertical scroll bar the page
+   * area shows when the slot is short, or the selector row or the action bar when wider.
+   */
+  public int getWidthToFit() {
+    int page = 0;
+    for (AbstractItemDialogPage p : pages) {
+      page = Math.max(page, p.getPreferredSize().width);
+    }
+    Insets host = pageHost.getInsets();
+    page += host.left + host.right + pageHost.getVerticalScrollBar().getPreferredSize().width;
+    int width = page;
+    for (Component c : getComponents()) {
+      if (c != pageHost) {
+        width = Math.max(width, c.getPreferredSize().width);
+      }
+    }
+    Insets insets = getInsets();
+    return width + insets.left + insets.right;
   }
 
   /** Releases every page; call when the embedded host is discarded. */

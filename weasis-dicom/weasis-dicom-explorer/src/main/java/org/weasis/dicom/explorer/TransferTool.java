@@ -11,6 +11,7 @@ package org.weasis.dicom.explorer;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Insets;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -74,6 +75,17 @@ public abstract class TransferTool extends PluginTool {
     return share;
   }
 
+  /** The width that shows the forms of the tool whole, so the side widens for them. */
+  @Override
+  public int getWidthToFit() {
+    ensureContent();
+    if (wizard == null) {
+      return 0;
+    }
+    Insets insets = getInsets();
+    return wizard.getWidthToFit() + insets.left + insets.right;
+  }
+
   /** Whether the site offers this tool: its feature switch and, for a host, a page to show. */
   public abstract boolean isOffered();
 
@@ -118,7 +130,7 @@ public abstract class TransferTool extends PluginTool {
       if (!host.contains(this)) {
         host.show(this);
       }
-      host.open(getToolId(), Slot.BOTTOM);
+      host.openByUser(getToolId(), Slot.BOTTOM);
       host.expand();
     }
     if (pageTitle != null && wizard != null) {

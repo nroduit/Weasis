@@ -193,6 +193,61 @@ class SidePanelTest {
   }
 
   @Test
+  void aToolOpenedByTheUserWidensTheSideWhileShownWithoutChangingTheWidthOfTheUser()
+      throws Exception {
+    SidePanel explorer = new SidePanel(Role.EXPLORER, Side.LEFT);
+    edt(() -> explorer.show(new FakeTool("dicom-explorer", 10)));
+    edt(() -> explorer.show(new FakeTool("fit-import", 30, Slot.BOTTOM).widthToFit(420)));
+    edt(() -> explorer.show(new FakeTool("fit-export", 31, Slot.BOTTOM).widthToFit(380)));
+    edt(() -> explorer.show(new FakeTool("fit-narrow", 32, Slot.BOTTOM).widthToFit(150)));
+    edt(() -> explorer.setContentWidth(260));
+    flush();
+    edt(() -> button(explorer, "fit-import").orElseThrow().doClick());
+    flush();
+    int widened = explorer.getContentWidth();
+    int recorded = explorer.captureState().width();
+    edt(() -> button(explorer, "fit-export").orElseThrow().doClick());
+    flush();
+    int switched = explorer.getContentWidth();
+    edt(() -> button(explorer, "fit-narrow").orElseThrow().doClick());
+    flush();
+    int narrow = explorer.getContentWidth();
+    edt(() -> button(explorer, "fit-import").orElseThrow().doClick());
+    flush();
+    edt(() -> button(explorer, "fit-import").orElseThrow().doClick());
+    flush();
+    int closed = explorer.getContentWidth();
+    edt(() -> explorer.open("fit-import", Slot.BOTTOM));
+    flush();
+    int applied = explorer.getContentWidth();
+    assertAll(
+        () -> assertEquals(420, widened, "widened for the tool"),
+        () -> assertEquals(260, recorded, "a session keeps the width of the user"),
+        () -> assertEquals(380, switched, "another tool, its own width"),
+        () -> assertEquals(260, narrow, "a narrower tool gets the width of the user back"),
+        () -> assertEquals(260, closed, "closing the tool restores the width of the user"),
+        () -> assertEquals(260, applied, "an open that is not the user's does not widen"));
+  }
+
+  @Test
+  void aWidthSetWhileWidenedBecomesTheWidthOfTheUser() throws Exception {
+    SidePanel explorer = new SidePanel(Role.EXPLORER, Side.LEFT);
+    edt(() -> explorer.show(new FakeTool("dicom-explorer", 10)));
+    edt(() -> explorer.show(new FakeTool("fit-send", 30, Slot.BOTTOM).widthToFit(400)));
+    edt(() -> explorer.setContentWidth(240));
+    edt(() -> explorer.openByUser("fit-send", Slot.BOTTOM));
+    flush();
+    int widened = explorer.getContentWidth();
+    edt(() -> explorer.setContentWidth(500));
+    edt(() -> explorer.clear(Slot.BOTTOM));
+    flush();
+    assertAll(
+        () -> assertEquals(400, widened),
+        () -> assertEquals(500, explorer.getContentWidth()),
+        () -> assertEquals(500, explorer.captureState().width()));
+  }
+
+  @Test
   void aToolMovedToTheOtherSlotLeavesTheFirstOne() throws Exception {
     SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
     edt(() -> tools.show(new FakeTool("display", 10)));
