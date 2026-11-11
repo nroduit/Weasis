@@ -97,7 +97,10 @@ class LauncherTest {
       mockedStatic
           .when(() -> GuiUtils.openInDefaultBrowser(any(Component.class), any(URI.class)))
           .then(_ -> null);
-      mockedStatic.when(GuiUtils::getUICore).thenReturn(UICore.getInstance());
+      // A mock, not UICore.getInstance(): the singleton fails for good in this JVM when an earlier
+      // test (e.g. GraphicHitOrderTest painting midpoint handles) built it before the MainWindow
+      // MBean was registered, so the outcome would depend on the test order.
+      mockedStatic.when(GuiUtils::getUICore).thenReturn(mock(UICore.class));
       launcher.execute(eventManagerMock);
     }
     // Verify that the launch method was called. This assumes that the launch method's effects are

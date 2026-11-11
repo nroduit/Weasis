@@ -51,14 +51,14 @@
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v480-2026-10-31</weasis.releasenotes>
 
     <flatlaf.version>3.8</flatlaf.version>
-    <miglayout.version>11.4.3</miglayout.version>
+    <miglayout.version>11.5.2</miglayout.version>
     <xz.version>1.12</xz.version>
 
     <pf4j.version>3.15.0</pf4j.version>
     <picocli.version>4.7.7</picocli.version>
     <semver4j.version>6.0.0</semver4j.version>
-    <slf4j.version>2.0.18</slf4j.version>
-    <logback.version>1.6.5</logback.version>
+    <slf4j.version>2.0.20</slf4j.version>
+    <logback.version>1.6.6</logback.version>
     <weasis-dicom-tools.version>5.35.2.1-SNAPSHOT</weasis-dicom-tools.version>
     <weasis.core.img.version>5.1.0</weasis.core.img.version>
     <weasis.opencv.native.version>5.1.0-dcm</weasis.opencv.native.version>
@@ -67,12 +67,12 @@
     <xml.bind-api.version>4.0.5</xml.bind-api.version>
     <joml.version>1.10.9</joml.version>
     <jakarta.json.version>2.1.3</jakarta.json.version>
-    <parsson.version>1.1.7</parsson.version>
+    <parsson.version>1.1.9</parsson.version>
     <zip4j.version>2.11.6</zip4j.version>
-    <oshi.version>7.6.0</oshi.version>
+    <oshi.version>7.7.3</oshi.version>
 
-    <junit-bom.version>6.1.2</junit-bom.version>
-    <mockito.version>5.23.0</mockito.version>
+    <junit-bom.version>6.1.3</junit-bom.version>
+    <mockito.version>5.24.0</mockito.version>
 
     <!--suppress UnresolvedMavenProperty -->
     <argLine>-Djava.library.path=${project.build.directory}/lib/${os-name}-${cpu-name}</argLine>
@@ -115,7 +115,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.15.0</version>
+          <version>3.16.0</version>
           <configuration>
             <release>${java-version}</release>
             <!-- Enable annotation processing for PF4J -->
@@ -131,7 +131,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-install-plugin</artifactId>
-          <version>3.1.4</version>
+          <version>3.2.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -141,7 +141,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.1.4</version>
+          <version>3.2.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -171,7 +171,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>flatten-maven-plugin</artifactId>
-          <version>1.8.0</version>
+          <version>1.9.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -188,10 +188,9 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.5.6</version>
+          <version>3.6.1</version>
           <configuration>
             <argLine>@{argLine} -Xshare:off -XX:+EnableDynamicAgentLoading</argLine>
-            <parallel>all</parallel>
             <!--
               Shared Logback configuration for the test classpath. Logback is the active
               SLF4J binding in tests (logback-classic is inherited from the provided
@@ -223,7 +222,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>3.6.3</version>
+          <version>3.7.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -238,12 +237,12 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
-          <version>3.6.1</version>
+          <version>3.7.0</version>
         </plugin>
         <plugin>
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>3.9.0</version>
+          <version>3.11.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -253,7 +252,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>3.6.3</version>
+          <version>3.6.4</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -263,12 +262,12 @@
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.15</version>
+          <version>0.8.16</version>
         </plugin>
        <plugin>
          <groupId>org.sonarsource.scanner.maven</groupId>
          <artifactId>sonar-maven-plugin</artifactId>
-         <version>5.7.0.6970</version>
+         <version>5.8.0.7211</version>
        </plugin>
       </plugins>
     </pluginManagement>

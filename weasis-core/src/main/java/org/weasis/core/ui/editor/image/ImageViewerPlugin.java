@@ -1103,7 +1103,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     grid.removeAll();
 
     MigLayoutModel currentLayout = cellManager.getLayoutModel();
-    migLayout.setLayoutConstraints(currentLayout.getLayoutConstraints());
+    updateMigLayoutContraints(currentLayout);
 
     // Iterate through cells and add components from cellManager
     for (MigCell cell : currentLayout.getCells()) {
@@ -1248,6 +1248,10 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   }
 
   private void updateMigLayoutContraints(MigLayoutModel layoutModel) {
+    // The fullscreen mode gives the grid its own single-cell layout: put the shared one back
+    if (grid.getLayout() != migLayout) {
+      grid.setLayout(migLayout);
+    }
     migLayout.setLayoutConstraints(layoutModel.getLayoutConstraints());
     migLayout.setColumnConstraints(layoutModel.getColumnConstraints());
     migLayout.setRowConstraints(layoutModel.getRowConstraints());
