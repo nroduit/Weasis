@@ -1003,6 +1003,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       owning.restoreView();
     }
     add(grid, BorderLayout.CENTER);
+    // The grid comes back with the bounds of the fullscreen dialog: lay it out again
+    revalidate();
+    repaint();
     addFocusListenersToViews();
 
     viewCanvas.getJComponent().requestFocusInWindow();
