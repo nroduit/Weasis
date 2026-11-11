@@ -59,7 +59,7 @@
     <semver4j.version>6.0.0</semver4j.version>
     <slf4j.version>2.0.18</slf4j.version>
     <logback.version>1.6.5</logback.version>
-    <weasis-dicom-tools.version>5.35.2</weasis-dicom-tools.version>
+    <weasis-dicom-tools.version>5.35.2.1-SNAPSHOT</weasis-dicom-tools.version>
     <weasis.core.img.version>5.1.0</weasis.core.img.version>
     <weasis.opencv.native.version>5.1.0-dcm</weasis.opencv.native.version>
     <weasis.opencv.pkg.version>5.1.0-dcm</weasis.opencv.pkg.version>
