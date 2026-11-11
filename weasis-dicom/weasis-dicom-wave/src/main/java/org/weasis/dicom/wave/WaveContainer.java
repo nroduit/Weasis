@@ -216,7 +216,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
       }
       JMenuItem export =
           new JMenuItem(
-              Messages.getString("ECGontainer.export"),
+              Messages.getString("WaveContainer.export"),
               ResourceUtil.getIcon(ActionIcon.EXPORT_IMAGE));
       export.addActionListener(e -> exportPage());
       menuRoot.add(export);
@@ -375,7 +375,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
   @Override
   public List<Action> getPrintActions() {
     ArrayList<Action> actions = new ArrayList<>(1);
-    final String title = Messages.getString("ECGontainer.print_layout");
+    final String title = Messages.getString("WaveContainer.print_layout");
 
     AbstractAction printStd =
         new AbstractAction(title, ResourceUtil.getIcon(ActionIcon.PRINT)) {
@@ -477,7 +477,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
       JOptionPane.showMessageDialog(
           this,
           Messages.getString("WaveContainer.export_error") + "\n" + e.getMessage(),
-          Messages.getString("ECGontainer.export"),
+          Messages.getString("WaveContainer.export"),
           JOptionPane.ERROR_MESSAGE);
     }
   }
@@ -578,7 +578,6 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
 
       // Get page format from the printer
       if (pj.printDialog(aset)) {
-        // Force printing in black and white
         PageFormat pageFormat = pj.getPageFormat(aset);
         Paper paper = pageFormat.getPaper();
         double margin = 12;

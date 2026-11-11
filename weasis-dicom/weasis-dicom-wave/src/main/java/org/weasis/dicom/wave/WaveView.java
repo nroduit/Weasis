@@ -30,7 +30,9 @@ import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.prefs.Preferences;
 import javax.swing.BorderFactory;
@@ -87,8 +89,14 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   /** Signal used for the heart rate estimate. */
   private static final int HEART_RATE_SECONDS = 60;
 
-  /** Width in millimetres of the gutter holding the calibration pulse. */
+  /** Smallest width in millimetres of the gutter holding the calibration pulse. */
   private static final double GUTTER_MM = 6;
+
+  /** Duration in seconds of the calibration pulse. */
+  static final double PULSE_SECONDS = 0.2;
+
+  /** Baseline in millimetres drawn before and after the calibration pulse. */
+  static final double PULSE_MARGIN_MM = 0.5;
 
   /** Height in pixels of the patient header of an exported or printed page. */
   static final int HEADER_HEIGHT = 50;
@@ -128,6 +136,9 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   private int multiplexGroup;
 
   private final List<String> multiplexGroupLabels = new ArrayList<>();
+
+  /** The calipers of the multiplex groups left for another one, by group index then by lead. */
+  private final Map<Integer, Map<Lead, List<Caliper>>> groupCalipers = new HashMap<>();
 
   /** The temporal annotations the object itself carries (Waveform Annotation Sequence). */
   private final List<WaveformAnnotation> objectAnnotations = new ArrayList<>();
@@ -325,6 +336,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
         series.setOpen(true);
         series.setFocused(true);
         series.setSelected(true, null);
+        groupCalipers.clear();
         displayECG(s);
       } catch (Exception e) {
         LOGGER.error("Cannot display Waveform", e);
@@ -559,14 +571,48 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     if (index == multiplexGroup || index < 0 || index >= multiplexGroupLabels.size()) {
       return;
     }
+    keepCalipers(multiplexGroup);
     this.multiplexGroup = index;
     try {
       displayECG(currentElement);
     } catch (Exception e) {
       LOGGER.error("Cannot display the multiplex group {}", index, e);
     }
+    restoreCalipers(index);
     revalidate();
     repaint();
+  }
+
+  /** Keeps the calipers of the displayed leads, so that coming back to the group shows them. */
+  private void keepCalipers(int group) {
+    Map<Lead, List<Caliper>> kept = new HashMap<>();
+    if (pane != null) {
+      for (Component c : pane.getComponents()) {
+        if (c instanceof LeadPanel lead && !lead.getCalipers().isEmpty()) {
+          kept.put(lead.getChannels().getLead(), new ArrayList<>(lead.getCalipers()));
+        }
+      }
+    }
+    if (kept.isEmpty()) {
+      groupCalipers.remove(group);
+    } else {
+      groupCalipers.put(group, kept);
+    }
+  }
+
+  private void restoreCalipers(int group) {
+    Map<Lead, List<Caliper>> kept = groupCalipers.remove(group);
+    if (kept != null && pane != null) {
+      for (Component c : pane.getComponents()) {
+        if (c instanceof LeadPanel lead) {
+          List<Caliper> list = kept.get(lead.getChannels().getLead());
+          if (list != null) {
+            lead.setCalipers(list);
+          }
+        }
+      }
+    }
+    updateMarkersTable();
   }
 
   /** Rebuilds the markers coming from other objects (SR TCOORD items) after the model changed. */
@@ -951,7 +997,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   private String caliperLabel;
   private boolean calipersOnAllLeads = true;
 
-  /** The kind of the calipers the next press creates (Alt forces an amplitude caliper). */
+  /** The kind of the calipers the next press creates (Ctrl forces an amplitude caliper). */
   public Caliper.Kind getCaliperKind() {
     return caliperKind;
   }
@@ -1001,7 +1047,23 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
   /** Width in pixels of the calibration gutter of every lead (0 when the pulse is hidden). */
   public int getGutterWidth() {
-    return calibrationPulse ? (int) Math.round(GUTTER_MM * getPixelPerMm()) : 0;
+    if (!calibrationPulse) {
+      return 0;
+    }
+    double speed = getSpeed();
+    if (speed == WaveLayoutManager.AUTO_SPEED) {
+      // The speed is known after the layout only: keep room for the fastest one it may choose
+      speed = WaveLayoutManager.maxAutoSpeed(currentFormat);
+    }
+    return (int) Math.round(gutterMillimeters(speed) * getPixelPerMm());
+  }
+
+  /**
+   * The width in millimetres of the gutter at a paper speed: the 200 ms of the calibration pulse (5
+   * mm at 25 mm/s, 10 mm at 50 mm/s) and its two margins, never less than 6 mm.
+   */
+  static double gutterMillimeters(double mmPerSecond) {
+    return Math.max(GUTTER_MM, PULSE_SECONDS * mmPerSecond + 2 * PULSE_MARGIN_MM);
   }
 
   /** Screen pixels per millimetre of paper at the current zoom. */

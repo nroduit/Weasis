@@ -666,6 +666,21 @@ public class LeadPanel extends JPanel {
     repaint();
   }
 
+  /** Replaces the calipers of this lead by complete ones and measures them. */
+  void setCalipers(List<Caliper> list) {
+    calipers.clear();
+    pending = null;
+    dragged = null;
+    lastEdited = null;
+    for (Caliper c : list) {
+      if (!c.isEmpty()) {
+        calipers.add(c);
+      }
+    }
+    remeasure();
+    repaint();
+  }
+
   /** Measures a caliper again (after a filter change for instance). */
   public void remeasure() {
     for (Caliper c : calipers) {
@@ -889,24 +904,41 @@ public class LeadPanel extends JPanel {
     g2.draw(new Rectangle2D.Double(0.7, 0.0, dim.width - 1.7, dim.height - 1.0));
   }
 
-  /** The 1 mV (one cell) by 200 ms square pulse in the gutter left of the trace. */
+  /**
+   * The 1 mV (one cell) by 200 ms square pulse in the gutter left of the trace: its width follows
+   * the time scale of the lead (5 mm at 25 mm/s) and it ends where the trace starts.
+   */
   private void drawCalibrationPulse(Graphics2D g2, Dimension dim) {
     if (gutter <= 0) {
       return;
     }
-    double mm = view.getPixelPerMm();
+    double[] x =
+        pulseEdges(
+            gutter, view.getPixelsPerSecond(), WaveView.PULSE_MARGIN_MM * view.getPixelPerMm());
     double cellHeight = dim.getHeight() / mvCellCount;
     double base = dim.height / 2.0;
     Path2D pulse = new Path2D.Double();
-    pulse.moveTo(0.5 * mm, base);
-    pulse.lineTo(1 * mm, base);
-    pulse.lineTo(1 * mm, base - cellHeight);
-    pulse.lineTo(5 * mm, base - cellHeight);
-    pulse.lineTo(5 * mm, base);
-    pulse.lineTo(Math.min(gutter, 5.5 * mm), base);
+    pulse.moveTo(x[0], base);
+    pulse.lineTo(x[1], base);
+    pulse.lineTo(x[1], base - cellHeight);
+    pulse.lineTo(x[2], base - cellHeight);
+    pulse.lineTo(x[2], base);
+    pulse.lineTo(x[3], base);
     g2.setColor(traceColor());
     g2.setStroke(SIGNAL_STROKE);
     g2.draw(pulse);
+  }
+
+  /**
+   * The x of the calibration pulse in a gutter: start of the baseline, rising edge, falling edge,
+   * end of the baseline. The edges are 200 ms apart at the given time scale and the pulse is set
+   * against the trace, a margin before the end of the gutter; in a gutter too narrow for it the
+   * rising edge stops at the margin.
+   */
+  static double[] pulseEdges(double gutter, double pixelsPerSecond, double margin) {
+    double fall = Math.max(margin, gutter - margin);
+    double rise = Math.max(Math.min(margin, fall), fall - WaveView.PULSE_SECONDS * pixelsPerSecond);
+    return new double[] {Math.max(0, rise - margin), rise, fall, gutter};
   }
 
   /**

@@ -16,11 +16,12 @@ $open = dicom:open --series ${list.patients[0].studies[0].series[modality=ECG].i
 $ws = workspace:list
 @expect ${ws.selected} == ${open.target.view}
 
-# the storage class of a waveform, and the transfer syntax (T.261 or native) it is stored with
+# the storage class of a waveform, and the transfer syntax it is stored with: a native one, or
+# T.261 under the placeholder names of Sup 253 until the final UIDs are assigned
 $sop = dicom:tag --series ${open.target.series} --tag SOPClassUID
 @expect ${sop.value} matches 1\.2\.840\.10008\.5\.1\.4\.1\.1\.9\..*
 $ts = dicom:tag --series ${open.target.series} --tag TransferSyntaxUID
-@expect ${ts.value} matches 1\.2\.840\.10008\.1\.2.*
+@expect ${ts.value} matches (1\.2\.840\.10008\.1\.2.*|UID_TS[12]_(lossless|lossy))
 
 $back = state:rollback --to ${cp.checkpoint} --close-new
 @expect ${back.restored} == true

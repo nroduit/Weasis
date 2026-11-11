@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.codec;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -769,19 +768,6 @@ public class DicomMediaIO implements DcmMediaReader {
       }
       return buf;
     }
-  }
-
-  private static Mat getRawData(BulkData bulkData) {
-    try (BufferedInputStream input = new BufferedInputStream(bulkData.openStream())) {
-      Mat buf = new Mat(1, bulkData.length(), CvType.CV_8UC1);
-      byte[] b = new byte[bulkData.length()];
-      input.read(b, 0, b.length);
-      buf.put(0, 0, b);
-      return buf;
-    } catch (Exception e) {
-      LOGGER.error("Reading Waveform data");
-    }
-    return new Mat();
   }
 
   private DicomImageElement getSingleImage() {

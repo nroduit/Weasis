@@ -76,6 +76,11 @@ public class WaveLayoutManager implements LayoutManager {
     return amplitude;
   }
 
+  /** The fastest paper speed (mm/s) the automatic speed chooses for a format. */
+  public static int maxAutoSpeed(Format format) {
+    return format != null && format.isSuperimposed() ? SUPERIMPOSED_SPEED : DEFAULT_SPEED;
+  }
+
   /** Pixels of one second of signal at the current speed and zoom (after the last layout). */
   public double getPixelsPerSecond() {
     return pixelsPerSecond;
@@ -146,7 +151,7 @@ public class WaveLayoutManager implements LayoutManager {
     Dimension viewport = parent.getParent().getParent().getSize();
 
     int maxAmplitude = format.isSuperimposed() ? SUPERIMPOSED_AMPLITUDE : DEFAULT_AMPLITUDE;
-    int maxSpeed = format.isSuperimposed() ? SUPERIMPOSED_SPEED : DEFAULT_SPEED;
+    int maxSpeed = maxAutoSpeed(format);
     int height = (int) (amplitude * ratio);
     if (amplitude == AUTO_AMPLITUDE) {
       double h = viewport.height * view.getZoomRatio() - 4;
