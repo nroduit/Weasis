@@ -711,6 +711,11 @@ public abstract class AbstractDicomNode implements LayeredEntries.Entry {
 
   // ---- Actions ------------------------------------------------------------------------------
 
+  /** The title of the node dialog: a printer is named as such, the other DICOM nodes share one. */
+  private static String dialogTitle(Type type) {
+    return (Type.PRINTER == type ? Type.PRINTER : Type.DICOM).toString();
+  }
+
   public static void addNodeActionPerformed(
       JComboBox<? extends AbstractDicomNode> comboBox, Type type) {
     JDialog dialog;
@@ -725,7 +730,7 @@ public abstract class AbstractDicomNode implements LayeredEntries.Entry {
       dialog =
           new DicomNodeDialog(
               SwingUtilities.getWindowAncestor(comboBox),
-              Type.DICOM.toString(),
+              dialogTitle(type),
               null,
               (JComboBox<DefaultDicomNode>) comboBox,
               type);
@@ -750,7 +755,7 @@ public abstract class AbstractDicomNode implements LayeredEntries.Entry {
           dialog =
               new DicomNodeDialog(
                   SwingUtilities.getWindowAncestor(comboBox),
-                  Type.DICOM.toString(),
+                  dialogTitle(type),
                   (DefaultDicomNode) node,
                   (JComboBox<DefaultDicomNode>) comboBox,
                   type);

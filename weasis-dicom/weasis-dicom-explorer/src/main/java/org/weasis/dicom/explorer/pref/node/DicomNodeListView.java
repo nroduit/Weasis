@@ -33,6 +33,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
   private void initGUI() {
     buildPanel(AbstractDicomNode.Type.DICOM_CALLING);
     buildPanel(AbstractDicomNode.Type.DICOM);
+    buildPanel(AbstractDicomNode.Type.PRINTER);
     buildPanel(AbstractDicomNode.Type.WEB);
     // buildPanel(AbstractDicomNode.Type.WEB_QIDO);
 
