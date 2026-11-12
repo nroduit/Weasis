@@ -66,6 +66,16 @@ import org.weasis.dicom.web.MultipartConstants;
 public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, String> {
   private static final Logger LOGGER = LoggerFactory.getLogger(RetrieveTask.class);
 
+  /**
+   * Preference key for the max PDU length (bytes) negotiated on C-GET / C-MOVE associations.
+   * Raising this from the dcm4che3 default of 16384 to 131072 cuts wall-time by ~47 % on large
+   * studies. The value is stored and read from the Weasis system preferences.
+   */
+  public static final String CGET_MAX_PDU_LENGTH = "dicom.cget.max.pdu.length"; // NON-NLS
+
+  /** Default max PDU length (bytes): 128 KiB, proven to give ~47 % speedup vs the 16 KiB floor. */
+  public static final int DEFAULT_MAX_PDU_LENGTH = 131072;
+
   private final RetrieveSelection selection;
   private final DicomModel explorerDcmModel;
   private final DicomQrView dicomQrView;
@@ -99,13 +109,16 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       } else {
         RetrieveType type =
             (RetrieveType) dicomQrView.getComboDicomRetrieveType().getSelectedItem();
+        int maxPdu =
+            GuiUtils.getUICore()
+                .getSystemPreferences()
+                .getIntProperty(CGET_MAX_PDU_LENGTH, DEFAULT_MAX_PDU_LENGTH);
         AdvancedParams params = new AdvancedParams();
         ConnectOptions connectOptions = new ConnectOptions();
         connectOptions.setConnectTimeout(3000);
         connectOptions.setAcceptTimeout(5000);
-        // 131072-byte PDU gives ~47% speedup on large studies vs the dcm4che3 default of 16384
-        connectOptions.setMaxPdulenRcv(131072);
-        connectOptions.setMaxPdulenSnd(131072);
+        connectOptions.setMaxPdulenRcv(maxPdu);
+        connectOptions.setMaxPdulenSnd(maxPdu);
         connectOptions.setTcpNoDelay(true);
         params.setConnectOptions(connectOptions);
 
