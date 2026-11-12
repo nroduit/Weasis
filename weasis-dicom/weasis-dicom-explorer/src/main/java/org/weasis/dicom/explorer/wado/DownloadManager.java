@@ -79,8 +79,8 @@ public class DownloadManager {
       new PriorityBlockingQueue<>(10, new PriorityTaskComparator());
   public static final ThreadPoolExecutor CONCURRENT_EXECUTOR =
       new ThreadPoolExecutor(
-          GuiUtils.getUICore().getSystemPreferences().getIntProperty(CONCURRENT_SERIES, 3),
-          GuiUtils.getUICore().getSystemPreferences().getIntProperty(CONCURRENT_SERIES, 3),
+          GuiUtils.getUICore().getSystemPreferences().getIntProperty(CONCURRENT_SERIES, 4),
+          GuiUtils.getUICore().getSystemPreferences().getIntProperty(CONCURRENT_SERIES, 4),
           0L,
           TimeUnit.MILLISECONDS,
           PRIORITY_QUEUE,
