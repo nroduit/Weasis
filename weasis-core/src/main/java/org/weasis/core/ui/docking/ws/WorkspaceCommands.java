@@ -231,7 +231,8 @@ public class WorkspaceCommands implements CommandExtension {
   /** Adds the viewer type and, for an image viewer, its grid, synchronization and panes. */
   private static void describe(WorkspaceView live, JsonObjectBuilder view) {
     if (live instanceof ToolView toolView) {
-      view.add("tool", toolView.tool().getToolId()); // NON-NLS
+      view.add("tool", toolView.toolId()); // NON-NLS
+      view.add("available", toolView.isAvailable()); // NON-NLS
       return;
     }
     if (!(live instanceof SeriesViewer<?> viewer)) {

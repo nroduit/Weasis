@@ -215,7 +215,8 @@ public final class UiProfiles {
     for (Role role : Role.values()) {
       ShellSide side = template.side(role);
       if (side != null) {
-        List<String> skipped = current.side(role).applyState(side);
+        // a profile never takes back a tool the user shows as a tab
+        List<String> skipped = current.side(role).applyState(side, true);
         if (!skipped.isEmpty()) {
           LOGGER.debug("Tools {} are not offered on the {} side", skipped, role);
         }

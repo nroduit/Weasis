@@ -12,22 +12,31 @@ package org.weasis.core.ui.docking;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.text.MessageFormat;
 import java.util.Objects;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.Icon;
+import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingConstants;
 import org.weasis.core.Messages;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
 import org.weasis.core.ui.editor.image.TabPlacement;
 
 /**
- * A shell tool shown as a central view: a tab of the workspace, so a tool that needs width (a
- * query/retrieve, a DICOM dump, a chart) gets it, and floats like any view when its tab is
- * detached. There is one floating mechanism, the workspace engine; the tool keeps its identity and
- * goes back to its slot when the tab closes ({@link SidePanel#returnFromView}). A snapshot records
- * it by tool id and side, and the restorer asks the side for it again.
+ * A side tool shown as a central view: a tab of the workspace that the user placed, keyed by the
+ * stable id of the tool. It outlives the viewer switches: when the selected viewer offers a tool
+ * with that id, the tab shows it (swapped in place, as a slot does); when it does not, the tab
+ * stays where it is and shows a placeholder, until a viewer offering the tool is selected again.
+ * Only the user closes it.
  */
 public final class ToolView implements WorkspaceView {
 
@@ -39,23 +48,94 @@ public final class ToolView implements WorkspaceView {
 
   private static final String TOOL = "tool"; // NON-NLS
   private static final String SIDE = "side"; // NON-NLS
+  private static final String TITLE = "title"; // NON-NLS
 
   private final SidePanel side;
-  private final DockableTool tool;
+  private final String toolId;
   private final JPanel panel = new JPanel(new BorderLayout());
+  private DockableTool tool;
+  private String title;
+  private Icon icon;
 
   ToolView(SidePanel side, DockableTool tool) {
-    this.side = Objects.requireNonNull(side);
-    this.tool = Objects.requireNonNull(tool);
-    panel.add(tool.getToolComponent(), BorderLayout.CENTER);
+    this(side, tool.getToolId(), tool.getComponentName());
+    setTool(tool);
   }
 
-  public DockableTool tool() {
-    return tool;
+  /** A tab for a tool the selected viewer does not offer (a restored layout): a placeholder. */
+  ToolView(SidePanel side, String toolId, String title) {
+    this.side = Objects.requireNonNull(side);
+    this.toolId = Objects.requireNonNull(toolId);
+    this.title = title == null || title.isBlank() ? toolId : title;
+    if (tool == null) {
+      showPlaceholder();
+    }
+  }
+
+  /** The tool shown, empty while the selected viewer does not offer it. */
+  public java.util.Optional<DockableTool> tool() {
+    return java.util.Optional.ofNullable(tool);
+  }
+
+  public String toolId() {
+    return toolId;
   }
 
   public SidePanel side() {
     return side;
+  }
+
+  /** Whether the tab holds its tool, rather than the placeholder. */
+  public boolean isAvailable() {
+    return tool != null;
+  }
+
+  /**
+   * Shows a tool of this id (the one of the selected viewer), or the placeholder when {@code
+   * newTool} is null.
+   */
+  void setTool(DockableTool newTool) {
+    tool = newTool;
+    panel.removeAll();
+    if (newTool != null) {
+      title = newTool.getComponentName();
+      if (newTool instanceof PluginTool pluginTool && pluginTool.getIcon() != null) {
+        icon = pluginTool.getIcon();
+      }
+      panel.add(newTool.getToolComponent(), BorderLayout.CENTER);
+    } else {
+      showPlaceholder();
+    }
+    panel.revalidate();
+    panel.repaint();
+  }
+
+  /** The tool icon, a message and the ways out, centered in the tab. */
+  private void showPlaceholder() {
+    panel.removeAll();
+    JPanel box = new JPanel();
+    box.setLayout(new BoxLayout(box, BoxLayout.PAGE_AXIS));
+    JLabel message =
+        new JLabel(
+            MessageFormat.format(Messages.getString("Docking.tool_absent"), title),
+            icon,
+            SwingConstants.CENTER);
+    message.setHorizontalTextPosition(SwingConstants.CENTER);
+    message.setVerticalTextPosition(SwingConstants.BOTTOM);
+    message.setEnabled(false);
+    message.setAlignmentX(Component.CENTER_ALIGNMENT);
+    JButton close = new JButton(Messages.common("close"));
+    close.addActionListener(e -> side.closeView(toolId));
+    JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    buttons.add(close);
+    buttons.setAlignmentX(Component.CENTER_ALIGNMENT);
+    box.add(Box.createVerticalGlue());
+    box.add(message);
+    box.add(Box.createVerticalStrut(8));
+    box.add(buttons);
+    box.add(Box.createVerticalGlue());
+    box.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+    panel.add(box, BorderLayout.CENTER);
   }
 
   /** The tool id of a tool view id, null for any other id. */
@@ -67,7 +147,7 @@ public final class ToolView implements WorkspaceView {
 
   @Override
   public String viewId() {
-    return ID_PREFIX + tool.getToolId();
+    return ID_PREFIX + toolId;
   }
 
   @Override
@@ -82,28 +162,34 @@ public final class ToolView implements WorkspaceView {
 
   @Override
   public String tabTitle() {
-    return tool.getComponentName();
+    return title;
   }
 
   @Override
   public Icon tabIcon() {
-    return tool instanceof PluginTool pluginTool ? pluginTool.getIcon() : null;
+    return icon;
+  }
+
+  @Override
+  public boolean isTabDimmed() {
+    return tool == null;
   }
 
   /**
    * Closing the tab does not put the tool back on the side: its stripe button shows it as not open
-   * and opens it again in the slot it left. *Return to the side panel* brings it back at once.
+   * and opens it again in the slot it left. <i>Return to the side panel</i> brings it back at once.
    */
   @Override
   public boolean requestClose() {
-    side.closeView(tool.getToolId());
+    side.closeView(toolId);
     return true;
   }
 
   @Override
   public void populateTabMenu(JPopupMenu menu) {
     JMenuItem back = new JMenuItem(Messages.getString("Docking.return_side"));
-    back.addActionListener(e -> side.returnFromView(tool.getToolId()));
+    back.setEnabled(tool != null); // a tool the selected viewer does not offer has no side to go to
+    back.addActionListener(e -> side.returnFromView(toolId));
     menu.add(back);
     menu.addSeparator();
     TabPlacement.addMenuItems(menu, this);
@@ -112,8 +198,9 @@ public final class ToolView implements WorkspaceView {
   @Override
   public JsonObject saveState() {
     return Json.createObjectBuilder()
-        .add(TOOL, tool.getToolId())
+        .add(TOOL, toolId)
         .add(SIDE, side.getRole().key())
+        .add(TITLE, title)
         .build();
   }
 
@@ -125,5 +212,10 @@ public final class ToolView implements WorkspaceView {
   /** The side role a saved tool view names, null when absent. */
   public static String savedSide(JsonObject state) {
     return state == null ? null : state.getString(SIDE, null);
+  }
+
+  /** The title a saved tool view had, null when absent. */
+  public static String savedTitle(JsonObject state) {
+    return state == null ? null : state.getString(TITLE, null);
   }
 }

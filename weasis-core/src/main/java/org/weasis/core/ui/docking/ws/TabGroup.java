@@ -164,6 +164,13 @@ public final class TabGroup extends JTabbedPane {
     view.component()
         .putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSABLE, view.isClosable());
     insertTab(view.tabTitle(), view.tabIcon(), view.component(), view.tabTooltip(), i);
+    dimTab(view, i);
+  }
+
+  /** Draws the title of a view with nothing to show for the selection as disabled. */
+  private void dimTab(WorkspaceView view, int index) {
+    setForegroundAt(
+        index, view.isTabDimmed() ? UIManager.getColor("Label.disabledForeground") : null);
   }
 
   void removeView(WorkspaceView view) {
@@ -300,6 +307,7 @@ public final class TabGroup extends JTabbedPane {
       setTitleAt(index, view.tabTitle());
       setIconAt(index, view.tabIcon());
       setToolTipTextAt(index, view.tabTooltip());
+      dimTab(view, index);
     }
   }
 

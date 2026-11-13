@@ -469,4 +469,83 @@ class SidePanelTest {
         .findFirst()
         .orElseThrow();
   }
+
+  @Test
+  void aToolTabOutlivesAViewerWithoutTheToolAndRefillsWithTheNextOne() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    WorkspaceManager manager = new WorkspaceManager(null);
+    tools.setWorkspace(() -> manager);
+    FakeTool image2d = new FakeTool("image", 10);
+    edt(() -> tools.show(image2d));
+    edt(() -> tools.openAsView("image"));
+    flush();
+    ToolView view = (ToolView) manager.getViews().getFirst();
+    assertTrue(view.isAvailable());
+
+    // a viewer without the tool is selected: the tab stays, as a placeholder
+    edt(() -> tools.hide(image2d));
+    flush();
+    assertAll(
+        () -> assertTrue(manager.isShowing(view), "the tab stays where the user put it"),
+        () -> assertFalse(view.isAvailable(), "placeholder"),
+        () -> assertTrue(view.isTabDimmed()),
+        () -> assertEquals(List.of("image"), tools.captureState().views(), "still in the layout"));
+
+    // a viewer offering a tool with the same id: the same tab shows it
+    FakeTool imageOther = new FakeTool("image", 10);
+    edt(() -> tools.show(imageOther));
+    flush();
+    assertAll(
+        () -> assertTrue(manager.isShowing(view)),
+        () -> assertTrue(view.isAvailable()),
+        () -> assertEquals(Optional.of(imageOther), view.tool(), "swapped in place"),
+        () -> assertEquals(1, manager.getViews().size(), "no second tab"),
+        () -> assertEquals(Optional.empty(), tools.toolIn(Slot.TOP), "not in a slot"));
+
+    // only the user closes it
+    edt(view::requestClose);
+    flush();
+    assertTrue(manager.getViews().isEmpty());
+  }
+
+  @Test
+  void aRestoredToolTabOfAnAbsentToolIsAPlaceholderWithItsTitle() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    WorkspaceManager manager = new WorkspaceManager(null);
+    tools.setWorkspace(() -> manager);
+    ToolView view = tools.viewForRestore("volume", "Volume Tools").orElseThrow();
+    assertAll(
+        () -> assertFalse(view.isAvailable()),
+        () -> assertEquals("Volume Tools", view.tabTitle()),
+        () -> assertTrue(tools.isView("volume")),
+        () -> assertTrue(tools.viewForRestore("other").isEmpty(), "no title, nothing to restore"));
+    FakeTool volume = new FakeTool("volume", 10);
+    edt(() -> tools.show(volume));
+    flush();
+    assertTrue(view.isAvailable(), "filled when a viewer offers it");
+  }
+
+  @Test
+  void aProfileKeepsAToolTabWhereASessionPutsItBackInItsSlot() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    WorkspaceManager manager = new WorkspaceManager(null);
+    tools.setWorkspace(() -> manager);
+    FakeTool image = new FakeTool("image", 10);
+    edt(() -> tools.show(image));
+    edt(() -> tools.openAsView("image"));
+    flush();
+    ShellSide profile = new ShellSide(Arrays.asList("image", null), 0, 0, false);
+
+    edt(() -> tools.applyState(profile, true));
+    flush();
+    assertAll(
+        () -> assertTrue(tools.isView("image"), "the profile leaves the tab of the user"),
+        () -> assertEquals(Optional.empty(), tools.toolIn(Slot.TOP)));
+
+    edt(() -> tools.applyState(profile));
+    flush();
+    assertAll(
+        () -> assertFalse(tools.isView("image"), "a session restores its slot"),
+        () -> assertEquals(Optional.of("image"), tools.toolIn(Slot.TOP)));
+  }
 }

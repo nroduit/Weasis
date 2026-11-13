@@ -36,6 +36,11 @@ public interface WorkspaceView {
     return null;
   }
 
+  /** Whether the tab title is drawn as disabled: the view has nothing to show for the selection. */
+  default boolean isTabDimmed() {
+    return false;
+  }
+
   default boolean isClosable() {
     return true;
   }

@@ -134,7 +134,8 @@ public final class ViewerRestorer implements ViewRestorer {
     String side = ToolView.savedSide(descriptor.state());
     for (SidePanel.Role role : SidePanel.Role.values()) {
       if (side == null || role.key().equals(side)) {
-        Optional<ToolView> view = shell.side(role).viewForRestore(toolId);
+        Optional<ToolView> view =
+            shell.side(role).viewForRestore(toolId, ToolView.savedTitle(descriptor.state()));
         if (view.isPresent()) {
           return view.map(v -> v);
         }

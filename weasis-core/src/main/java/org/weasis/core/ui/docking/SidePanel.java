@@ -356,7 +356,20 @@ public class SidePanel extends JPanel {
       tools.add(tool);
       tools.sort(Comparator.comparingInt(DockableTool::getComponentPosition));
     }
+    ToolView view = views.get(tool.getToolId());
+    if (view != null && view.tool().orElse(null) != tool) {
+      // the tab of a tool with this id shows the tool of the selected viewer, swapped in place
+      view.setTool(tool);
+      refreshTab(view);
+    }
     scheduleRelayout();
+  }
+
+  private void refreshTab(ToolView view) {
+    WorkspaceManager manager = workspace.get();
+    if (manager != null) {
+      manager.updateTabInfo(view);
+    }
   }
 
   /**
@@ -400,12 +413,11 @@ public class SidePanel extends JPanel {
    */
   public void hide(DockableTool tool) {
     if (tools.remove(tool)) {
-      ToolView view = views.remove(tool.getToolId());
-      if (view != null) {
-        WorkspaceManager manager = workspace.get();
-        if (manager != null) {
-          manager.close(view);
-        }
+      ToolView view = views.get(tool.getToolId());
+      if (view != null && view.tool().orElse(null) == tool) {
+        // the tab belongs to the layout of the user: it waits for a viewer offering the tool
+        view.setTool(null);
+        refreshTab(view);
       }
       for (SlotHost host : hosts) {
         if (host.tool == tool) {
@@ -443,12 +455,28 @@ public class SidePanel extends JPanel {
 
   /** The view of a tool for a restore: created and taken out of its slot, not docked. */
   public Optional<ToolView> viewForRestore(String toolId) {
+    return viewForRestore(toolId, null);
+  }
+
+  /**
+   * The tab of a tool for a restored layout: the existing one, a new one holding the tool, or, when
+   * the selected viewer does not offer the tool, a placeholder titled {@code title}.
+   */
+  public Optional<ToolView> viewForRestore(String toolId, String title) {
+    ToolView view = views.get(toolId);
+    if (view != null) {
+      return Optional.of(view);
+    }
     DockableTool tool = find(toolId).orElse(null);
-    if (tool == null) {
+    if (tool != null) {
+      return Optional.of(detachForView(tool));
+    }
+    if (title == null) {
       return Optional.empty();
     }
-    ToolView view = views.get(toolId);
-    return Optional.of(view != null ? view : detachForView(tool));
+    ToolView placeholder = new ToolView(this, toolId, title);
+    views.put(toolId, placeholder);
+    return Optional.of(placeholder);
   }
 
   /** Closes the central view of a tool and shows the tool in its preferred slot again. */
@@ -736,11 +764,22 @@ public class SidePanel extends JPanel {
    * @return the tool ids this side does not offer, skipped (the viewer decides which tools exist)
    */
   public List<String> applyState(ShellSide state) {
+    return applyState(state, false);
+  }
+
+  /**
+   * Applies a state; with {@code keepTabs}, a tool the user shows as a tab of the workspace stays
+   * there instead of going to the slot the state names (a UI profile applied on a viewer switch
+   * never undoes the layout of the user; a restored session does).
+   */
+  public List<String> applyState(ShellSide state, boolean keepTabs) {
     List<String> skipped = new ArrayList<>();
     for (Slot slot : Slot.values()) {
       String id = state.slot(slot);
       if (id == null) {
         clear(slot);
+      } else if (keepTabs && views.containsKey(id)) {
+        clear(slot); // the tool is in its tab
       } else if (!open(id, slot)) {
         skipped.add(id);
       }
