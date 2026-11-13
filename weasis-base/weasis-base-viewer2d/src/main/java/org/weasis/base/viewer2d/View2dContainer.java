@@ -144,20 +144,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
       String key = "enable"; // NON-NLS
       WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
-      if (InsertableUtil.getBooleanProperty(
-          preferences,
-          plugInId,
-          componentName,
-          InsertableUtil.getCName(ImportToolBar.class),
-          key,
-          true)) {
-        Optional<Toolbar> b =
-            GuiUtils.getUICore().getExplorerPluginToolbars().stream()
-                .filter(ImportToolBar.class::isInstance)
-                .findFirst();
-        b.ifPresent(toolBars::add);
-      }
-      if (InsertableUtil.getBooleanProperty(
+        if (InsertableUtil.getBooleanProperty(
           preferences,
           plugInId,
           componentName,

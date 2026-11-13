@@ -13,10 +13,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.viewer2d.EventManager;
-import org.weasis.base.viewer2d.ImportToolBar;
 import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.gui.InsertableFactory;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.plugin.PluginContext;
@@ -41,10 +39,6 @@ public class Activator extends WeasisPlugin {
         BundleTools.registerInsertableFactory(factory, View2dContainer.UI);
       }
 
-      // Instantiate UI components in EDT
-      GuiExecutor.execute(
-          () -> GuiUtils.getUICore().getExplorerPluginToolbars().add(new ImportToolBar(3)));
-
       LOGGER.info("Weasis base-viewer2d plugin started");
     } catch (Exception e) {
       LOGGER.error("Error starting Weasis base-viewer2d plugin", e);
@@ -68,7 +62,6 @@ public class Activator extends WeasisPlugin {
         BundleTools.unregisterInsertableFactory(factory, View2dContainer.UI);
       }
 
-      GuiUtils.getUICore().getExplorerPluginToolbars().removeIf(ImportToolBar.class::isInstance);
       GuiUtils.getUICore().closeSeriesViewerType(View2dContainer.class);
 
       LOGGER.info("Weasis base-viewer2d plugin stopped");
