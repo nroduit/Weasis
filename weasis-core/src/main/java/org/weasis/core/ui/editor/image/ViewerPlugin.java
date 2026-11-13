@@ -221,7 +221,15 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     if (manager != null && manager.isShowing(this)) {
       manager.select(this);
     }
-    requestFocusInWindow();
+    getFocusTarget().requestFocusInWindow();
+  }
+
+  /**
+   * The component that takes the keyboard focus when this viewer is selected: the viewer itself by
+   * default; an image viewer gives its selected view, so that the viewer shortcuts reach it.
+   */
+  public java.awt.Component getFocusTarget() {
+    return this;
   }
 
   /**

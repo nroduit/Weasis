@@ -9,14 +9,18 @@
  */
 package org.weasis.core.ui.docking.ws;
 
+import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -39,6 +43,7 @@ import org.weasis.core.api.command.ViewId;
 import org.weasis.core.api.event.Event;
 import org.weasis.core.api.event.EventBus;
 import org.weasis.core.api.event.EventType;
+import org.weasis.core.ui.docking.ToolView;
 import org.weasis.core.ui.docking.ws.snapshot.ViewRestorer;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
 import org.weasis.core.ui.editor.ExternalDisplay;
@@ -109,6 +114,39 @@ public final class WorkspaceManager {
     this.mainWindow = mainWindow;
     this.mainWorkspace = new Workspace(mainWindow);
     addWorkspace(mainWindow, mainWorkspace);
+    if (mainWindow != null && !GraphicsEnvironment.isHeadless()) {
+      Toolkit.getDefaultToolkit()
+          .addAWTEventListener(
+              this::selectOnPointer, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+    }
+  }
+
+  /**
+   * One selection for the application: a mouse press or a wheel turn in a view that is not the
+   * selected one selects it, whatever the viewer type, before the view itself handles the event, so
+   * that the tab, the tools, the toolbars, the menus and the mouse actions all follow at once.
+   */
+  void selectOnPointer(AWTEvent event) {
+    if (!(event instanceof MouseEvent mouse)
+        || (mouse.getID() != MouseEvent.MOUSE_PRESSED && mouse.getID() != MouseEvent.MOUSE_WHEEL)
+        || !(mouse.getSource() instanceof Component source)) {
+      return;
+    }
+    WorkspaceView view = viewContaining(source);
+    // a tool shown as a tab acts on the selected viewer: working in it keeps that viewer selected
+    if (view != null && view != selectedView && !(view instanceof ToolView)) {
+      select(view);
+    }
+  }
+
+  /** The view whose component holds {@code component}, null outside every view. */
+  WorkspaceView viewContaining(Component component) {
+    for (WorkspaceView view : viewGroups.keySet()) {
+      if (SwingUtilities.isDescendingFrom(component, view.component())) {
+        return view;
+      }
+    }
+    return null;
   }
 
   public Window mainWindow() {

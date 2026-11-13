@@ -1282,6 +1282,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     return getViewTypeNumber(layout, VIEWPORT_CLASS) + getViewTypeNumber(layout, ViewCanvas.class);
   }
 
+  @Override
+  public java.awt.Component getFocusTarget() {
+    ViewCanvas<E> canvas = getSelectedViewCanvas();
+    return canvas != null && canvas.getJComponent().isShowing() ? canvas.getJComponent() : this;
+  }
+
   public void setSelectedImagePaneFromFocus(ViewCanvas<E> viewCanvas) {
     setSelectedImagePane(viewCanvas);
   }

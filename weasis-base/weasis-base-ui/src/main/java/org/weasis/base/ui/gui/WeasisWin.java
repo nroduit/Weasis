@@ -91,6 +91,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler.DropLocation;
 import javax.swing.WindowConstants;
 import org.semver4j.Semver;
@@ -287,6 +288,7 @@ public class WeasisWin {
                 if (view instanceof ViewerPlugin<?> viewer) {
                   setSelectedPlugin(viewer);
                   moveToolbarRow(window);
+                  focusSelected(viewer);
                 }
               }
 
@@ -813,6 +815,18 @@ public class WeasisWin {
       control.select(next);
     }
     return true;
+  }
+
+  /**
+   * The keyboard focus follows the selection: a viewer selected by its tab, Ctrl+Tab or its window
+   * gets the focus on its selected view, unless the focus is already inside it (a field of the
+   * viewer, or the view a click just reached).
+   */
+  private static void focusSelected(ViewerPlugin<?> viewer) {
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (owner == null || !SwingUtilities.isDescendingFrom(owner, viewer)) {
+      viewer.getFocusTarget().requestFocusInWindow();
+    }
   }
 
   /**

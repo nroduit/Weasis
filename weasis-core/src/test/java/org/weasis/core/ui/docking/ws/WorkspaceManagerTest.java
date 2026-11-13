@@ -369,4 +369,48 @@ class WorkspaceManagerTest {
     }
     return Optional.empty();
   }
+
+  // ---- one selection (2026-11-14) -------------------------------------------------------------
+
+  private static java.awt.event.MouseEvent pointer(java.awt.Component source, int id) {
+    return id == java.awt.event.MouseEvent.MOUSE_WHEEL
+        ? new java.awt.event.MouseWheelEvent(
+            source,
+            id,
+            0L,
+            0,
+            5,
+            5,
+            0,
+            false,
+            java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL,
+            1,
+            1)
+        : new java.awt.event.MouseEvent(
+            source, id, 0L, 0, 5, 5, 1, false, java.awt.event.MouseEvent.BUTTON1);
+  }
+
+  @Test
+  void aPressOrAWheelInAViewOfAnotherGroupSelectsIt() {
+    manager.open(v1);
+    manager.split(v2, v1, DockSide.RIGHT, 0.5);
+    JPanel canvas = new JPanel();
+    v2.add(canvas);
+    manager.select(v1);
+    assertSame(v1, manager.selectedView().orElseThrow());
+
+    manager.selectOnPointer(pointer(canvas, java.awt.event.MouseEvent.MOUSE_PRESSED));
+    assertSame(v2, manager.selectedView().orElseThrow(), "a press inside a view selects it");
+    assertTrue(manager.groupOf(v2).orElseThrow().isActive());
+
+    manager.selectOnPointer(pointer(v1, java.awt.event.MouseEvent.MOUSE_WHEEL));
+    assertSame(v1, manager.selectedView().orElseThrow(), "a wheel turn selects too");
+
+    manager.selectOnPointer(pointer(canvas, java.awt.event.MouseEvent.MOUSE_MOVED));
+    assertSame(v1, manager.selectedView().orElseThrow(), "hovering selects nothing");
+
+    manager.selectOnPointer(
+        pointer(manager.groupOf(v2).orElseThrow(), java.awt.event.MouseEvent.MOUSE_PRESSED));
+    assertSame(v1, manager.selectedView().orElseThrow(), "the tab strip is not a view");
+  }
 }

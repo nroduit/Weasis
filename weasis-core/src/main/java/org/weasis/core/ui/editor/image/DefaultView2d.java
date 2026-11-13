@@ -93,6 +93,7 @@ import org.weasis.core.api.setting.CoreSettings;
 import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.event.ViewerEventBridge;
@@ -2384,7 +2385,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
               .forEach(
                   v -> {
                     if (v instanceof ImageViewerPlugin plugin && plugin.isContainingView(this)) {
-                      plugin.setSelected(true);
+                      // the focus reached another viewer (keyboard): it becomes the selection
+                      WorkspaceManager manager = GuiUtils.getUICore().getWorkspaceManager();
+                      if (manager != null && manager.isShowing(plugin)) {
+                        manager.select(plugin);
+                      } else {
+                        plugin.setSelected(true);
+                      }
                       plugin.setSelectedImagePaneFromFocus(this);
                     }
                   });
