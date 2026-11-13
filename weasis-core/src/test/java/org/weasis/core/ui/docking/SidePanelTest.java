@@ -286,6 +286,7 @@ class SidePanelTest {
     return Arrays.stream(panel.getStripe().getComponents())
         .filter(javax.swing.AbstractButton.class::isInstance)
         .map(Component::getName)
+        .filter(name -> !"stripe-more".equals(name)) // the overflow button, not a tool or action
         .toList();
   }
 
@@ -430,5 +431,42 @@ class SidePanelTest {
     edt(() -> assertTrue(tools.focusContent()));
     flush();
     assertEquals(Optional.of("display"), tools.toolIn(Slot.TOP));
+  }
+
+  @Test
+  void aShortStripeHidesItsTrailingButtonsBehindAnOverflowButton() throws Exception {
+    SidePanel explorer = new SidePanel(Role.EXPLORER, Side.LEFT);
+    for (int i = 0; i < 8; i++) {
+      FakeTool tool = new FakeTool("tool" + i, 10 + i);
+      edt(() -> explorer.show(tool));
+    }
+    flush();
+    javax.swing.JPanel stripe = explorer.getStripe();
+    int full = stripe.getPreferredSize().height;
+    edt(
+        () -> {
+          stripe.setSize(60, full / 2);
+          stripe.doLayout();
+        });
+    assertAll(
+        () -> assertFalse(button(explorer, "tool7").orElseThrow().isVisible(), "clipped"),
+        () -> assertTrue(button(explorer, "tool0").orElseThrow().isVisible()),
+        () -> assertTrue(overflow(stripe).isVisible(), "the overflow button shows"));
+
+    edt(
+        () -> {
+          stripe.setSize(60, full + 200);
+          stripe.doLayout();
+        });
+    assertAll(
+        () -> assertTrue(button(explorer, "tool7").orElseThrow().isVisible(), "back"),
+        () -> assertFalse(overflow(stripe).isVisible()));
+  }
+
+  private static java.awt.Component overflow(javax.swing.JPanel stripe) {
+    return Arrays.stream(stripe.getComponents())
+        .filter(c -> "stripe-more".equals(c.getName()))
+        .findFirst()
+        .orElseThrow();
   }
 }

@@ -86,14 +86,11 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JRootPane;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.TransferHandler.DropLocation;
 import javax.swing.WindowConstants;
 import org.semver4j.Semver;
@@ -320,51 +317,8 @@ public class WeasisWin {
     }
     setSelectedPlugin(null);
 
-    var toolbarContainer = GuiUtils.getUICore().getToolbarContainer();
-    var scrollPane =
-        new JScrollPane(toolbarContainer) {
-          @Override
-          public Dimension getPreferredSize() {
-            Dimension containerPreferredSize = toolbarContainer.getPreferredSize();
-            int scrollBarHeight = getScrollBarHeight(containerPreferredSize);
-            return new Dimension(
-                super.getPreferredSize().width, containerPreferredSize.height + scrollBarHeight);
-          }
-
-          private int getScrollBarHeight(Dimension containerPreferredSize) {
-            JScrollBar hScrollBar = getHorizontalScrollBar();
-            int scrollBarHeight = 0;
-
-            if (hScrollBar != null) {
-              int availableWidth = getViewport().getWidth();
-              int contentWidth = containerPreferredSize.width;
-
-              if (availableWidth > 0 && contentWidth > availableWidth) {
-                scrollBarHeight = hScrollBar.getPreferredSize().height;
-              } else if (hScrollBar.isVisible()) {
-                scrollBarHeight = hScrollBar.getPreferredSize().height;
-              }
-            }
-            return scrollBarHeight;
-          }
-
-          @Override
-          public Dimension getMinimumSize() {
-            Dimension containerMinSize = toolbarContainer.getMinimumSize();
-            JScrollBar hScrollBar = getHorizontalScrollBar();
-            int scrollBarHeight = 0;
-            if (hScrollBar != null && hScrollBar.isVisible()) {
-              scrollBarHeight = hScrollBar.getPreferredSize().height;
-            }
-            return new Dimension(
-                super.getMinimumSize().width, containerMinSize.height + scrollBarHeight);
-          }
-        };
-
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-    scrollPane.setBorder(null);
-    toolbarRow = scrollPane;
+    // the row is as long as the window: what does not fit goes to its overflow button
+    toolbarRow = GuiUtils.getUICore().getToolbarContainer();
     toolbarHost.add(toolbarRow, BorderLayout.CENTER);
     toolbarWindow = frame;
     rootPaneContainer
@@ -1286,11 +1240,17 @@ public class WeasisWin {
   }
 
   private void buildToolBarSubMenu(final JMenu toolBarMenu) {
-    List<Toolbar> bars = GuiUtils.getUICore().getToolbarContainer().getRegisteredToolBars();
+    ToolBarContainer container = GuiUtils.getUICore().getToolbarContainer();
+    List<Toolbar> bars = container.getRegisteredToolBars();
+    List<Toolbar> shown = container.shownBars();
     for (final Toolbar bar : bars) {
       if (!Insertable.Type.EMPTY.equals(bar.getPanelType())) {
-        JCheckBoxMenuItem item =
-            new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
+        boolean selected = container.isSelected(bar);
+        JCheckBoxMenuItem item = new JCheckBoxMenuItem(bar.getComponentName(), selected);
+        if (selected && !shown.contains(bar)) {
+          // selected, yet out of the row: the selected view does not need it
+          item.setToolTipText(Messages.getString("WeasisWin.toolbar_not_relevant"));
+        }
         item.addActionListener(
             e -> {
               if (e.getSource() instanceof JCheckBoxMenuItem menuItem) {

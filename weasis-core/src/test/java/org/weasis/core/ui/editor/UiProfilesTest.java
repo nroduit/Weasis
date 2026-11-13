@@ -278,7 +278,7 @@ class UiProfilesTest {
     UiProfile profile = UiProfiles.apply(context(null, "test.ct"));
     container.applyContext(context(null, "test.ct"), profile);
     assertEquals(List.of(measure, viewer), container.shownBars(), "listed bars, profile order");
-    assertEquals(3, container.getComponentCount(), "the two bars and the overflow");
+    assertEquals(2, shownCount(container), "the two bars");
     assertEquals(List.of(cine), container.hiddenBars(), "not in the profile");
 
     container.displayToolbar(cine, true);
@@ -379,5 +379,13 @@ class UiProfilesTest {
 
   private static UiProfile menus() {
     return new UiProfile("test.menus", null, null, null, List.of("presets", "zoom"), null, null);
+  }
+
+  /** The components of the row that are shown: the overflow buttons are there only when needed. */
+  private static int shownCount(java.awt.Container container) {
+    return (int)
+        java.util.Arrays.stream(container.getComponents())
+            .filter(java.awt.Component::isVisible)
+            .count();
   }
 }

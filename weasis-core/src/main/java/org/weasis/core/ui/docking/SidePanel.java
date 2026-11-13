@@ -55,6 +55,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -174,7 +175,22 @@ public class SidePanel extends JPanel {
           Settings.removeListener(CoreSettings.SIDE_PANEL_ICON_SIZE, iconSizeListener);
           super.removeNotify();
         }
+
+        @Override
+        public void doLayout() {
+          fitStripe();
+          super.doLayout();
+        }
       };
+
+  /** The stripe buttons (and their gaps) the fitting of the stripe hid, in their order. */
+  private final List<Component> stripeClipped = new ArrayList<>();
+
+  /**
+   * The last button of a stripe too short for all: a chevron, the sign of what does not fit, with a
+   * menu of the buttons left out.
+   */
+  private final JButton stripeMore = createStripeMore();
 
   /** Records the ratio when the user releases the divider; layout moves are not the user's. */
   private final MouseAdapter dividerDrag =
@@ -1009,6 +1025,9 @@ public class SidePanel extends JPanel {
   /** The buttons in order, separated by a gap that follows the icon size. */
   private void layoutStripe() {
     int gap = GuiUtils.getScaleLength(Math.max(4, iconSize() / 4));
+    // what the last fitting hid is shown again: the next fitting decides anew
+    stripeClipped.forEach(c -> c.setVisible(true));
+    stripeClipped.clear();
     stripe.removeAll();
     for (String id : stripeOrder) {
       AbstractButton button = buttons.get(id);
@@ -1023,8 +1042,96 @@ public class SidePanel extends JPanel {
       }
       stripe.add(button);
     }
+    stripeMore.setVisible(false);
+    stripe.add(stripeMore); // shown by fitStripe when the stripe is too short
     stripe.revalidate();
     stripe.repaint();
+  }
+
+  private JButton createStripeMore() {
+    JButton button = new JButton();
+    button.setName("stripe-more"); // NON-NLS
+    button.setToolTipText(Messages.getString("Docking.more_buttons"));
+    button.setFocusable(false);
+    button.setAlignmentX(CENTER_ALIGNMENT);
+    button.putClientProperty(
+        FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+    button.addActionListener(e -> showStripeMore(button));
+    return button;
+  }
+
+  /**
+   * Hides the trailing buttons of the stripe that do not fit in its height, and shows the overflow
+   * button in their place; the buttons come back as soon as the stripe is tall enough.
+   */
+  private void fitStripe() {
+    for (Component c : stripeClipped) {
+      c.setVisible(true);
+    }
+    stripeClipped.clear();
+    if (stripeMore.getIcon() == null) {
+      try {
+        stripeMore.setIcon(
+            buttonIcon(ResourceUtil.getIcon(ActionIcon.CHEVRON_DOUBLE_DOWN), iconSize()));
+      } catch (RuntimeException e) {
+        stripeMore.setText("»"); // NON-NLS no resource path (tests)
+      }
+    }
+    java.awt.Insets in = stripe.getInsets();
+    int avail = stripe.getHeight() - in.top - in.bottom;
+    List<Component> items = new ArrayList<>();
+    int total = 0;
+    for (Component c : stripe.getComponents()) {
+      if (c != stripeMore && c.isVisible()) {
+        items.add(c);
+        total += c.getPreferredSize().height;
+      }
+    }
+    if (avail <= 0 || total <= avail) {
+      stripeMore.setVisible(false);
+      return;
+    }
+    int budget = avail - stripeMore.getPreferredSize().height;
+    int used = 0;
+    int kept = 0;
+    for (Component c : items) {
+      int h = c.getPreferredSize().height;
+      if (used + h > budget) {
+        break;
+      }
+      used += h;
+      kept++;
+    }
+    for (Component c : items.subList(kept, items.size())) {
+      c.setVisible(false);
+      stripeClipped.add(c);
+    }
+    stripeMore.setVisible(true);
+  }
+
+  /** The buttons the stripe has no room for, as menu items with their icon and state. */
+  private void showStripeMore(JButton anchor) {
+    JPopupMenu menu = new JPopupMenu();
+    for (Component c : stripeClipped) {
+      if (!(c instanceof AbstractButton button)) {
+        continue;
+      }
+      String name = button.getToolTipText() != null ? button.getToolTipText() : button.getName();
+      JMenuItem item =
+          button instanceof JToggleButton toggle
+              ? new JCheckBoxMenuItem(name, toggle.getIcon(), toggle.isSelected())
+              : new JMenuItem(name, button.getIcon());
+      item.addActionListener(e -> button.doClick());
+      menu.add(item);
+    }
+    if (menu.getComponentCount() == 0) {
+      return;
+    }
+    menu.applyComponentOrientation(anchor.getComponentOrientation());
+    Dimension size = menu.getPreferredSize();
+    // beside the stripe, toward the content
+    int x = side == Side.LEFT ? anchor.getWidth() : -size.width;
+    menu.show(anchor, x, anchor.getHeight() - size.height);
   }
 
   /** The client property of a stripe button whose tool is shown as a tab. */

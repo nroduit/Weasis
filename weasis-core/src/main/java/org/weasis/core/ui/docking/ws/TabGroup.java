@@ -62,6 +62,13 @@ public final class TabGroup extends JTabbedPane {
     putClientProperty(
         FlatClientProperties.TABBED_PANE_TAB_TYPE, FlatClientProperties.TABBED_PANE_TAB_TYPE_CARD);
     putClientProperty(FlatClientProperties.TABBED_PANE_MAXIMUM_TAB_WIDTH, MAX_TAB_WIDTH);
+    // tabs that do not fit: a chevron at the end lists them, no scroll arrows
+    putClientProperty(
+        FlatClientProperties.TABBED_PANE_SCROLL_BUTTONS_POLICY,
+        FlatClientProperties.TABBED_PANE_POLICY_NEVER);
+    putClientProperty(
+        FlatClientProperties.TABBED_PANE_TABS_POPUP_POLICY,
+        FlatClientProperties.TABBED_PANE_POLICY_AS_NEEDED);
     styleReady = true;
     applyStyle();
     putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSABLE, true);

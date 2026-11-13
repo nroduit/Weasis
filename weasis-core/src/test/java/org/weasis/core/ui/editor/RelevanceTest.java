@@ -259,13 +259,13 @@ class RelevanceTest {
     container.registerToolBar(List.of(cine, volume, viewer));
     assertEquals(
         List.of(viewer), container.shownBars(), "no context: the capabilities are unknown");
-    assertEquals(2, container.getComponentCount(), "the viewer bar and the overflow");
+    assertEquals(1, shownCount(container), "the viewer bar");
     assertEquals(List.of(volume, cine), container.hiddenBars());
 
     container.applyContext(
         context(Map.of(ContextFacts.VOLUME, true, ContextFacts.TEMPORAL, "CINE")));
     assertEquals(List.of(viewer, volume, cine), container.shownBars(), "sorted by position");
-    assertEquals(3, container.getComponentCount(), "nothing hidden: no overflow");
+    assertEquals(3, shownCount(container), "the three bars");
 
     container.applyContext(context(Map.of(ContextFacts.VOLUME, true)));
     assertEquals(List.of(viewer, volume), container.shownBars());
@@ -304,7 +304,7 @@ class RelevanceTest {
     assertAll(
         () -> assertEquals(List.of(viewer, cine), container.shownBars()),
         () -> assertTrue(container.hiddenBars().isEmpty()),
-        () -> assertEquals(2, container.getComponentCount(), "no overflow left"));
+        () -> assertEquals(2, shownCount(container), "the two bars"));
 
     container.applyContext(
         new ViewContext(null, "2d", series, Map.of(ContextFacts.TEMPORAL, "STATIC", "x", 1)));
@@ -380,5 +380,13 @@ class RelevanceTest {
     } finally {
       Relevance.setToolbarContainer(() -> null);
     }
+  }
+
+  /** The components of the row that are shown: the overflow button is there only when needed. */
+  private static int shownCount(java.awt.Container container) {
+    return (int)
+        java.util.Arrays.stream(container.getComponents())
+            .filter(java.awt.Component::isVisible)
+            .count();
   }
 }

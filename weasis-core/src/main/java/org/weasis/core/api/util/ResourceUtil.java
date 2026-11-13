@@ -66,6 +66,9 @@ public class ResourceUtil {
   }
 
   public enum ActionIcon implements ResourceIconPath {
+    CHEVRON_DOUBLE_DOWN("svg/action/chevronDoubleDown.svg"), // NON-NLS
+    CHEVRON_DOUBLE_LEFT("svg/action/chevronDoubleLeft.svg"), // NON-NLS
+    CHEVRON_DOUBLE_RIGHT("svg/action/chevronDoubleRight.svg"), // NON-NLS
     CONTEXT_MENU("svg/action/contextMenu.svg"), // NON-NLS
     CROSSHAIR("svg/action/crosshair.svg"), // NON-NLS
     DRAW("svg/action/draw.svg"), // NON-NLS
