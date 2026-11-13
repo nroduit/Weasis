@@ -408,6 +408,8 @@ public final class ShortcutManager {
   public static final String ID_DOCKING_PANEL_LIST = "docking.panelList";
   public static final String ID_DOCKING_NEXT_TAB = "docking.nextTab";
   public static final String ID_DOCKING_PREV_TAB = "docking.prevTab";
+  public static final String ID_DOCKING_FOCUS_EXPLORER = "docking.focusExplorer";
+  public static final String ID_DOCKING_FOCUS_TOOLS = "docking.focusTools";
 
   // -- Shortcut IDs: MPR --
   public static final String ID_MPR_RECENTER = "mpr.recenter";
@@ -944,6 +946,18 @@ public final class ShortcutManager {
         CATEGORY_DOCKING,
         KeyEvent.VK_TAB,
         InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
+    register(
+        ID_DOCKING_FOCUS_EXPLORER,
+        Messages.getString("ShortcutManager.dock_focus_explorer"),
+        CATEGORY_DOCKING,
+        KeyEvent.VK_1,
+        InputEvent.ALT_DOWN_MASK);
+    register(
+        ID_DOCKING_FOCUS_TOOLS,
+        Messages.getString("ShortcutManager.dock_focus_tools"),
+        CATEGORY_DOCKING,
+        KeyEvent.VK_2,
+        InputEvent.ALT_DOWN_MASK);
 
     // ---- DICOM Explorer shortcuts (ThumbnailMouseAndKeyAdapter.keyPressed()) ----
     register(

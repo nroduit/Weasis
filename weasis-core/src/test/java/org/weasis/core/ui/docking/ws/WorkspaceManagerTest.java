@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 
 class WorkspaceManagerTest {
 
-  private static final class StubView extends JPanel implements WorkspaceView {
+  private static class StubView extends JPanel implements WorkspaceView {
     private final String id = UUID.randomUUID().toString();
     private final String title;
 
@@ -269,5 +269,104 @@ class WorkspaceManagerTest {
     assertNull(manager.mainWorkspace().getTransferHandler());
     manager.setDropHandler(() -> new javax.swing.TransferHandler("name"));
     assertNotNull(manager.mainWorkspace().getTransferHandler());
+  }
+
+  // ---- tab gestures (2026-11-14) -------------------------------------------------------------
+
+  /** Lays the group out so that its tabs have bounds, as on screen. */
+  private static TabGroup laidOut(TabGroup group) {
+    group.setSize(600, 400);
+    group.doLayout();
+    return group;
+  }
+
+  private static void mouse(TabGroup group, int index, int id, int button, int clicks) {
+    java.awt.Rectangle tab = group.getBoundsAt(index);
+    int mask =
+        switch (button) {
+          case java.awt.event.MouseEvent.BUTTON2 -> java.awt.event.InputEvent.BUTTON2_DOWN_MASK;
+          default -> java.awt.event.InputEvent.BUTTON1_DOWN_MASK;
+        };
+    group.dispatchEvent(
+        new java.awt.event.MouseEvent(
+            group,
+            id,
+            System.currentTimeMillis(),
+            id == java.awt.event.MouseEvent.MOUSE_PRESSED ? mask : 0,
+            tab.x + tab.width / 2,
+            tab.y + tab.height / 2,
+            clicks,
+            false,
+            button));
+  }
+
+  @Test
+  void middleClickOnATabAsksTheViewToClose() {
+    List<String> closed = new ArrayList<>();
+    StubView closable =
+        new StubView("closable") {
+          @Override
+          public boolean requestClose() {
+            closed.add(tabTitle());
+            return true;
+          }
+        };
+    manager.open(v1);
+    manager.open(closable);
+    TabGroup group = laidOut(manager.groupOf(v1).orElseThrow());
+    mouse(group, 1, java.awt.event.MouseEvent.MOUSE_RELEASED, java.awt.event.MouseEvent.BUTTON2, 1);
+    assertEquals(List.of("closable"), closed);
+  }
+
+  @Test
+  void doubleClickOnATabMaximizesThenTheHeaderRestores() {
+    manager.open(v1);
+    manager.open(v2);
+    TabGroup group = laidOut(manager.groupOf(v1).orElseThrow());
+    mouse(group, 1, java.awt.event.MouseEvent.MOUSE_CLICKED, java.awt.event.MouseEvent.BUTTON1, 2);
+    assertTrue(manager.isMaximized(v2));
+    // the maximized view shows a bar with a restore button, the way back without the tabs
+    javax.swing.JButton restore =
+        findButton(manager.mainWorkspace()).orElseThrow(() -> new AssertionError("no restore"));
+    restore.doClick();
+    assertFalse(manager.isMaximized(v2));
+  }
+
+  @Test
+  void theMaximizedBarIsHiddenWhileImmersive() {
+    manager.open(v1);
+    manager.maximize(v1);
+    assertTrue(findButton(manager.mainWorkspace()).orElseThrow().getParent().isVisible());
+    manager.mainWorkspace().setImmersive(true);
+    assertFalse(findButton(manager.mainWorkspace()).orElseThrow().getParent().isVisible());
+    manager.mainWorkspace().setImmersive(false);
+    assertTrue(findButton(manager.mainWorkspace()).orElseThrow().getParent().isVisible());
+  }
+
+  @Test
+  void onlyTheGroupOfTheSelectedViewIsActive() {
+    manager.open(v1);
+    manager.split(v2, v1, DockSide.RIGHT, 0.5);
+    manager.select(v2);
+    assertFalse(manager.groupOf(v1).orElseThrow().isActive());
+    assertTrue(manager.groupOf(v2).orElseThrow().isActive());
+    manager.select(v1);
+    assertTrue(manager.groupOf(v1).orElseThrow().isActive());
+    assertFalse(manager.groupOf(v2).orElseThrow().isActive());
+  }
+
+  private static Optional<javax.swing.JButton> findButton(java.awt.Container container) {
+    for (java.awt.Component c : container.getComponents()) {
+      if (c instanceof javax.swing.JButton button) {
+        return Optional.of(button);
+      }
+      if (c instanceof java.awt.Container inner && !(c instanceof TabGroup)) {
+        Optional<javax.swing.JButton> found = findButton(inner);
+        if (found.isPresent()) {
+          return found;
+        }
+      }
+    }
+    return Optional.empty();
   }
 }

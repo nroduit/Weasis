@@ -491,6 +491,10 @@ public final class WorkspaceManager {
     } else {
       immersive.remove(window);
     }
+    Workspace workspace = workspaces.get(window);
+    if (workspace != null) {
+      workspace.setImmersive(on);
+    }
     for (WorkspaceListener listener : listeners) {
       listener.immersiveChanged(window, on);
     }

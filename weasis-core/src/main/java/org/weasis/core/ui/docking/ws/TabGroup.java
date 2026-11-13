@@ -82,6 +82,28 @@ public final class TabGroup extends JTabbedPane {
           @Override
           public void mouseReleased(MouseEvent e) {
             maybeShowMenu(e);
+            if (SwingUtilities.isMiddleMouseButton(e)) {
+              // middle click closes the tab, as in a browser
+              WorkspaceView view = viewAt(indexAtLocation(e.getX(), e.getY()));
+              if (view != null && view.isClosable()) {
+                view.requestClose();
+              }
+            }
+          }
+
+          @Override
+          public void mouseClicked(MouseEvent e) {
+            if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
+              // double click maximizes the view in its window, again restores it
+              WorkspaceView view = viewAt(indexAtLocation(e.getX(), e.getY()));
+              if (view != null) {
+                if (manager.isMaximized(view)) {
+                  manager.restore(view);
+                } else {
+                  manager.maximize(view);
+                }
+              }
+            }
           }
         });
   }

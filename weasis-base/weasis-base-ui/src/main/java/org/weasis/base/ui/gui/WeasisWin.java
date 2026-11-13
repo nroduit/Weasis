@@ -143,7 +143,9 @@ import org.weasis.core.api.util.ResourceUtil.LogoIcon;
 import org.weasis.core.api.util.SiteDocuments;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.MiniStrip;
+import org.weasis.core.ui.docking.Shell;
 import org.weasis.core.ui.docking.SidePanel;
+import org.weasis.core.ui.docking.SidePanel.Role;
 import org.weasis.core.ui.docking.ToolContributions;
 import org.weasis.core.ui.docking.ToolVisibility;
 import org.weasis.core.ui.docking.ws.DetachedFrame;
@@ -227,6 +229,10 @@ public class WeasisWin {
       new ShortcutTable<Integer>()
           .on(ShortcutManager.ID_DOCKING_NEXT_TAB, 1)
           .on(ShortcutManager.ID_DOCKING_PREV_TAB, -1);
+  private final ShortcutTable<Role> sideFocus =
+      new ShortcutTable<Role>()
+          .on(ShortcutManager.ID_DOCKING_FOCUS_EXPLORER, Role.EXPLORER)
+          .on(ShortcutManager.ID_DOCKING_FOCUS_TOOLS, Role.TOOLS);
   private final ShortcutTable<Consumer<ViewerPlugin<?>>> dockingActions = buildDockingActions();
 
   private final Frame frame;
@@ -772,7 +778,11 @@ public class WeasisWin {
     }
     Optional<Integer> tabShift = tabShifts.find(e);
     if (tabShift.isPresent()) {
-      return cycleViewer(tabShift.get());
+      return cycleView(tabShift.get());
+    }
+    Optional<Role> focusTarget = sideFocus.find(e);
+    if (focusTarget.isPresent()) {
+      return focusSide(focusTarget.get());
     }
     ViewerPlugin<?> plugin = getSelectedPlugin();
     if (plugin == null) {
@@ -824,19 +834,51 @@ public class WeasisWin {
         .ifPresent(window -> control.setFullscreen(window, !control.isFullscreen(window)));
   }
 
-  private boolean cycleViewer(int delta) {
+  /**
+   * Selects the next or previous tab in the order the tabs are shown: the tabs of a group, then the
+   * next group, then the next window; viewers and tools shown as tabs alike.
+   */
+  private boolean cycleView(int delta) {
     WorkspaceManager control = workspace();
-    List<ViewerPlugin<?>> docked =
-        GuiUtils.getUICore().getViewerPlugins().stream().filter(control::isShowing).toList();
-    if (docked.size() < 2) {
+    List<WorkspaceView> views =
+        control.getWindows().stream()
+            .flatMap(window -> control.getTabGroups(window).stream())
+            .flatMap(group -> group.getViews().stream())
+            .toList();
+    if (views.size() < 2) {
       return false;
     }
-    int index = docked.indexOf(getSelectedPlugin());
+    int index = control.selectedView().map(views::indexOf).orElse(-1);
     if (index < 0) {
       index = 0;
     }
-    docked.get(Math.floorMod(index + delta, docked.size())).setSelectedAndGetFocus();
+    WorkspaceView next = views.get(Math.floorMod(index + delta, views.size()));
+    if (next instanceof ViewerPlugin<?> viewer) {
+      viewer.setSelectedAndGetFocus();
+    } else {
+      control.select(next);
+    }
     return true;
+  }
+
+  /**
+   * Puts the focus in a side of the shell, opening its tools when it is collapsed; when the focus
+   * is already there, gives it back to the selected viewer.
+   */
+  private boolean focusSide(Role role) {
+    Shell shell = Shell.current();
+    if (shell == null) {
+      return false;
+    }
+    SidePanel side = shell.side(role);
+    if (side.hasFocusInside()) {
+      ViewerPlugin<?> plugin = getSelectedPlugin();
+      if (plugin != null) {
+        plugin.setSelectedAndGetFocus();
+      }
+      return true;
+    }
+    return side.focusContent();
   }
 
   public void showWindow() {

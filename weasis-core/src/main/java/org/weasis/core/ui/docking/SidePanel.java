@@ -21,10 +21,12 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.ActionEvent;
@@ -58,6 +60,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
@@ -584,6 +587,60 @@ public class SidePanel extends JPanel {
     for (Slot slot : Slot.values()) {
       collapse(slot);
     }
+  }
+
+  /** Whether the keyboard focus is inside the content of this side. */
+  public boolean hasFocusInside() {
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    return owner != null && SwingUtilities.isDescendingFrom(owner, this);
+  }
+
+  /**
+   * Puts the keyboard focus in this side: shows its remembered tools when it is collapsed (or its
+   * first tool when it holds none), then focuses the first focusable component of the top slot, or
+   * of the bottom slot when the top one is empty.
+   *
+   * @return false when the side offers no tool
+   */
+  public boolean focusContent() {
+    if (tools.isEmpty()) {
+      return false;
+    }
+    if (Arrays.stream(Slot.values()).noneMatch(this::isShown)) {
+      expand();
+      if (Arrays.stream(hosts).allMatch(h -> h.tool == null)) {
+        DockableTool first = tools.getFirst();
+        open(first, preferredSlot(first));
+      }
+    }
+    // after the relayout that shows the slots
+    SwingUtilities.invokeLater(
+        () ->
+            SwingUtilities.invokeLater(
+                () -> {
+                  for (Slot slot : Slot.values()) {
+                    if (isShown(slot) && focusFirstIn(host(slot).content)) {
+                      return;
+                    }
+                  }
+                }));
+    return true;
+  }
+
+  private static boolean focusFirstIn(Container container) {
+    for (Component c : container.getComponents()) {
+      if (!c.isShowing() || !c.isEnabled()) {
+        continue;
+      }
+      if (c.isFocusable() && !(c instanceof JPanel) && !(c instanceof JScrollPane)) {
+        c.requestFocusInWindow();
+        return true;
+      }
+      if (c instanceof Container inner && focusFirstIn(inner)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** Shows the remembered tools again. */

@@ -400,4 +400,35 @@ class SidePanelTest {
     flush();
     assertEquals(Optional.of("display"), tools.toolIn(Slot.BOTTOM));
   }
+
+  @Test
+  void focusingACollapsedSideShowsItsToolsFirst() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    FakeTool display = new FakeTool("display", 10);
+    edt(() -> tools.show(display));
+    edt(() -> tools.open("display", Slot.TOP));
+    flush();
+    edt(tools::collapse);
+    flush();
+    assertTrue(tools.isCollapsed());
+
+    edt(() -> assertTrue(tools.focusContent()));
+    flush();
+    assertAll(
+        () -> assertFalse(tools.isCollapsed(), "shown again"),
+        () -> assertEquals(Optional.of("display"), tools.toolIn(Slot.TOP)),
+        () -> assertFalse(new SidePanel(Role.EXPLORER, Side.LEFT).focusContent(), "no tool"));
+  }
+
+  @Test
+  void focusingAnEmptySideOpensItsFirstTool() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    FakeTool display = new FakeTool("display", 10);
+    edt(() -> tools.show(display));
+    edt(() -> tools.clear(Slot.TOP));
+    flush();
+    edt(() -> assertTrue(tools.focusContent()));
+    flush();
+    assertEquals(Optional.of("display"), tools.toolIn(Slot.TOP));
+  }
 }
