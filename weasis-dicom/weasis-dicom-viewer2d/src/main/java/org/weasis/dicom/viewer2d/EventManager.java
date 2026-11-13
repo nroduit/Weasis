@@ -1375,14 +1375,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       }
       synchAction.ifPresent(
           a -> a.setSelectedItemWithoutTriggerAction(selectedView2dContainer.getSynchView()));
-      // a viewer restored or hung while another was selected kept its synch view without its
-      // listeners; they are registered against this event manager now
-      updateAllListeners(selectedView2dContainer, selectedView2dContainer.getSynchView());
       layoutAction.ifPresent(
           a ->
               a.setSelectedItemWithoutTriggerAction(
                   selectedView2dContainer.getOriginalLayoutModel()));
-      updateComponentsListener(selectedView2dContainer.getSelectedViewCanvas());
+      // binds the actions to the selected pane first: the listeners of the synch view (registered
+      // at its end) redraw the crosslines with the scroll slider, which must hold the slice of
+      // this pane and not the one of the viewer selected before (or both would jump to it)
+      if (!updateComponentsListener(selectedView2dContainer.getSelectedViewCanvas())) {
+        // a viewer restored or hung while another was selected, its pane without an image yet:
+        // the listeners of its synch view are registered against this event manager now
+        updateAllListeners(selectedView2dContainer, selectedView2dContainer.getSynchView());
+      }
       selectedView2dContainer.setMouseActions(mouseActions);
       ViewCanvas<DicomImageElement> pane = selectedView2dContainer.getSelectedViewCanvas();
       if (pane != null) {
@@ -1515,9 +1519,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
     if (view2d.getSourceImage() == null) {
       enableActions(false);
-      if (view2d.getSeries() != null) {
-        // Let scrolling if only one image is corrupted in the series
-        cineAction.ifPresent(a -> a.enableAction(true));
+      MediaSeries<DicomImageElement> series = view2d.getSeries();
+      if (series != null) {
+        // Let scrolling if only one image is corrupted in the series, from the slice of this pane
+        int maxSlice =
+            series.size(
+                (Filter<DicomImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()));
+        int currentSlice = view2d.getFrameIndex() + 1;
+        cineAction.ifPresent(
+            a -> {
+              a.setSliderMinMaxValue(1, Math.max(1, maxSlice), currentSlice, false);
+              a.enableAction(true);
+            });
       }
       View2dContainer.UI.updateDynamicTools(view2d.getSeries());
       return false;
