@@ -113,12 +113,6 @@ public class MeasureToolBar extends WtoolBar {
     MeasureGroupMenu menu = new MeasureGroupMenu(action.getActionW());
     action.registerActionState(menu);
 
-    for (RadioMenuItem item : menu.getRadioMenuItemListCopy()) {
-      if (item.getUserObject() instanceof Graphic g && g.getKeyCode() != 0) {
-        item.setAccelerator(KeyStroke.getKeyStroke(g.getKeyCode(), g.getModifier()));
-      }
-    }
-
     DropDownButton dropDownButton =
         new DropDownButton(
             action.getActionW().cmd(),
@@ -185,6 +179,21 @@ public class MeasureToolBar extends WtoolBar {
 
     public MeasureGroupMenu(Feature<? extends ActionState> action) {
       this.action = Objects.requireNonNull(action);
+    }
+
+    /**
+     * Shows the keyboard shortcut of each tool. The items are built again whenever the list changes
+     * (a measurement profile, a plugin adding a tool), so this is done here and not once when the
+     * toolbar is created.
+     */
+    @Override
+    protected void init() {
+      super.init();
+      for (RadioMenuItem item : itemList) {
+        if (item.getUserObject() instanceof Graphic g && g.getKeyCode() != 0) {
+          item.setAccelerator(KeyStroke.getKeyStroke(g.getKeyCode(), g.getModifier()));
+        }
+      }
     }
 
     @Override
