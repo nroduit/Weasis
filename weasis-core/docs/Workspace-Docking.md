@@ -39,13 +39,13 @@ reports the selection under `selected`.
 ### Screens by role
 
 A screen is addressed by a role, never by a device, in what travels (sessions, protocols,
-verbs): `control` (the worklist screen, where the main window is), `diagnostic-1`,
-`diagnostic-2`, `color`, `portrait` (`ScreenRole` in the command vocabulary). `ScreenRoles`
+verbs): `control` (the worklist screen, where the main window is), `viewer-1`,
+`viewer-2`, `color`, `portrait` (`ScreenRole` in the command vocabulary). `ScreenRoles`
 maps them to the monitors of the workstation. A role the user gave a monitor on the Screens
 preference page wins (local setting `weasis.screen.<id>.role`, never in the remote
 preferences; `workspace:screens --id <screen> --role <role>` sets it too, `--auto` takes it
 back); the other roles are derived: the main window's screen is `control`, the other screens
-from left to right are `diagnostic-1` and `diagnostic-2`, `portrait` the first other screen
+from left to right are `viewer-1` and `viewer-2`, `portrait` the first other screen
 taller than wide, `color` the first other screen. A role no monitor fills resolves to the
 nearest one, so every role resolves and a single-screen workstation maps every role to its
 screen; the mapping says which roles are *fulfilled* by a monitor of their own.
@@ -272,6 +272,6 @@ numbers are positions in that listing and change with the layout.
 `UiCommands` exposes the UI profiles, the overflow and the action catalog under the `ui:` namespace (profiles, profile, reveal, actions, action, context).
 
 `detach` floats a view in a viewer window near the main window, on the usable area of the
-screen of a role (`--screen diagnostic-1`) or at explicit bounds (`--bounds`); `screens` lists
+screen of a role (`--screen viewer-1`) or at explicit bounds (`--bounds`); `screens` lists
 the roles with the monitor each one resolves to. `hp:apply --screen <role>` hangs a reading
 step in a viewer window on that screen.

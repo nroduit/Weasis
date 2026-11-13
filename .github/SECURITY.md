@@ -1,6 +1,6 @@
 # Security Policy
 
-Weasis is a desktop DICOM viewer (a pf4j / Swing application) used in clinical and research settings for diagnostic imaging.
+Weasis is a desktop DICOM viewer (a pf4j / Swing application) used for medical imaging in clinical and research settings.
 Because it opens and processes medical-imaging data that may contain sensitive health information (PHI/PII) — from local files, DICOMDIRs, and remote DICOMWeb/DICOM network sources — we take security issues seriously and appreciate responsible disclosure.
 
 ## Supported Versions

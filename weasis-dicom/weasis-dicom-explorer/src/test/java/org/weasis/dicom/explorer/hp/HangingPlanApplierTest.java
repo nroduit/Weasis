@@ -282,8 +282,7 @@ class HangingPlanApplierTest {
             .add(
                 "displaySets", // NON-NLS
                 jakarta.json.Json.createObjectBuilder()
-                    .add(
-                        "2", jakarta.json.Json.createObjectBuilder().add("screen", "diagnostic-2")))
+                    .add("2", jakarta.json.Json.createObjectBuilder().add("screen", "viewer-2")))
             .build();
     org.weasis.dicom.codec.hp.ProtocolJson.Document document =
         new org.weasis.dicom.codec.hp.ProtocolJson.Document(
@@ -321,7 +320,7 @@ class HangingPlanApplierTest {
     when(factory.getViewerTypeId()).thenReturn("2d"); // NON-NLS
     doReturn(first, second).when(factory).createSeriesViewer(any(), any());
 
-    // no monitor for diagnostic-2: the second display set folds into a tab, with a warning
+    // no monitor for viewer-2: the second display set folds into a tab, with a warning
     Applied folded =
         applier(factory)
             .withMonitors(role -> false)
@@ -329,9 +328,9 @@ class HangingPlanApplierTest {
     assertAll(
         () -> assertEquals(2, folded.viewers().size(), "one viewer per screen"),
         () -> assertEquals(1, folded.warnings().size(), folded.warnings().toString()),
-        () -> assertTrue(folded.warnings().getFirst().contains("diagnostic-2")),
+        () -> assertTrue(folded.warnings().getFirst().contains("viewer-2")),
         () -> assertTrue(folded.warnings().getFirst().contains("tab")));
-    assertEquals(java.util.Map.of(2, "diagnostic-2"), HangingPlanApplier.screensOf(context, plan));
+    assertEquals(java.util.Map.of(2, "viewer-2"), HangingPlanApplier.screensOf(context, plan));
 
     // an explicit screen for the whole step wins over the display sets' screens
     shown.clear();

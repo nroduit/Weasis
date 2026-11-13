@@ -122,7 +122,7 @@ public final class CoreSettings {
 
   /**
    * After a pass that skipped operations, runs the whole chain on copies and logs an error when the
-   * images differ. For diagnosis: it doubles the cost of a pass.
+   * images differ. For troubleshooting: it doubles the cost of a pass.
    */
   public static final Setting<Boolean> DISPLAY_OP_VERIFY =
       Setting.builder(SettingType.BOOLEAN, GROUP, "weasis.display.op.verify", false) // NON-NLS

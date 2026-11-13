@@ -29,16 +29,16 @@ class WeasisExtensionsTest {
                 "displaySets",
                 Json.createObjectBuilder()
                     .add("1", Json.createObjectBuilder().add("viewer", "VIEWER_2D"))
-                    .add("2", Json.createObjectBuilder().add("screen", "diagnostic-2")))
+                    .add("2", Json.createObjectBuilder().add("screen", "viewer-2")))
             .build();
     WeasisExtensions extensions = WeasisExtensions.fromJson(json);
     JsonObject back = extensions.toJson();
     assertAll(
         () -> assertNull(extensions.displaySets().get(1).screen()),
-        () -> assertEquals("diagnostic-2", extensions.displaySets().get(2).screen()),
+        () -> assertEquals("viewer-2", extensions.displaySets().get(2).screen()),
         () ->
             assertEquals(
-                "diagnostic-2",
+                "viewer-2",
                 back.getJsonObject("displaySets").getJsonObject("2").getString("screen")),
         () -> assertEquals(extensions, WeasisExtensions.fromJson(back)));
   }

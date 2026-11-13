@@ -13,22 +13,22 @@ import java.util.Locale;
 
 /**
  * A screen of the workstation named by its role, never by its device: {@code control} is the
- * worklist screen that holds the main window, {@code diagnostic-1} and {@code diagnostic-2} the
- * reading screens, {@code color} and {@code portrait} the screens with that capability. A session
- * or a protocol names roles; the workstation maps them to its monitors.
+ * worklist screen that holds the main window, {@code viewer-1} and {@code viewer-2} the viewer
+ * screens, {@code color} and {@code portrait} the screens with that capability. A session or a
+ * protocol names roles; the workstation maps them to its monitors.
  */
 @Definition(value = "the role a screen plays in the window model")
 public enum ScreenRole implements SemanticType {
   CONTROL,
-  DIAGNOSTIC_1,
-  DIAGNOSTIC_2,
+  VIEWER_1,
+  VIEWER_2,
   COLOR,
   PORTRAIT;
 
   private static final String EXPECTED =
-      "a screen role: control, diagnostic-1, diagnostic-2, color or portrait"; // NON-NLS
+      "a screen role: control, viewer-1, viewer-2, color or portrait"; // NON-NLS
 
-  /** The vocabulary key of the role: {@code diagnostic-1}. */
+  /** The vocabulary key of the role: {@code viewer-1}. */
   public String key() {
     return SemanticType.valueOf(this);
   }

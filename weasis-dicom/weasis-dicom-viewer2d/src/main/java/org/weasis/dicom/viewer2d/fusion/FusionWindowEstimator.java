@@ -16,7 +16,7 @@ import org.weasis.dicom.viewer2d.mpr.Volume;
  * Estimates the upper bound of a fusion display window from the voxel distribution.
  *
  * <p>The plain maximum is unusable for PET: physiologic excretion (bladder) and the injection site
- * are several times hotter than any diagnostic structure, so windowing to them pushes marrow,
+ * are several times hotter than any anatomical structure, so windowing to them pushes marrow,
  * muscle and lesions into the bottom tenth of the color scale. A high percentile of the active
  * voxels discards those few outliers and keeps the scale on the tissue actually being read — the
  * bladder simply saturates at the top of the LUT, which is what other PET viewers show.

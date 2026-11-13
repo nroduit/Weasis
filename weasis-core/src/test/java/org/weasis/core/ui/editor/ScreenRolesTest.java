@@ -36,7 +36,7 @@ class ScreenRolesTest {
     assertEquals(ScreenRole.values().length, roles.screens().size());
     roles.screens().values().forEach(screen -> assertSame(LEFT, screen));
     assertTrue(roles.isFulfilled(ScreenRole.CONTROL));
-    assertFalse(roles.isFulfilled(ScreenRole.DIAGNOSTIC_1));
+    assertFalse(roles.isFulfilled(ScreenRole.VIEWER_1));
     assertEquals(Optional.of(ScreenRole.CONTROL), roles.roleOf("left"));
   }
 
@@ -49,40 +49,40 @@ class ScreenRolesTest {
   void theMainWindowScreenIsControlAndTheOtherIsEveryReadingRole() {
     Mapping roles = ScreenRoles.assign("middle", List.of(LEFT, MIDDLE));
     assertSame(MIDDLE, roles.screen(ScreenRole.CONTROL));
-    assertSame(LEFT, roles.screen(ScreenRole.DIAGNOSTIC_1));
-    assertSame(LEFT, roles.screen(ScreenRole.DIAGNOSTIC_2));
+    assertSame(LEFT, roles.screen(ScreenRole.VIEWER_1));
+    assertSame(LEFT, roles.screen(ScreenRole.VIEWER_2));
     assertSame(LEFT, roles.screen(ScreenRole.COLOR));
     assertSame(LEFT, roles.screen(ScreenRole.PORTRAIT));
-    assertTrue(roles.isFulfilled(ScreenRole.DIAGNOSTIC_1));
-    assertFalse(roles.isFulfilled(ScreenRole.DIAGNOSTIC_2));
+    assertTrue(roles.isFulfilled(ScreenRole.VIEWER_1));
+    assertFalse(roles.isFulfilled(ScreenRole.VIEWER_2));
     assertFalse(roles.isFulfilled(ScreenRole.PORTRAIT));
-    assertEquals(Optional.of(ScreenRole.DIAGNOSTIC_1), roles.roleOf("left"));
+    assertEquals(Optional.of(ScreenRole.VIEWER_1), roles.roleOf("left"));
   }
 
   @Test
   void threeScreensAreOrderedLeftToRightAndPortraitIsDetected() {
     Mapping roles = ScreenRoles.assign("middle", List.of(RIGHT, LEFT, MIDDLE));
     assertSame(MIDDLE, roles.screen(ScreenRole.CONTROL));
-    assertSame(LEFT, roles.screen(ScreenRole.DIAGNOSTIC_1));
-    assertSame(RIGHT, roles.screen(ScreenRole.DIAGNOSTIC_2));
+    assertSame(LEFT, roles.screen(ScreenRole.VIEWER_1));
+    assertSame(RIGHT, roles.screen(ScreenRole.VIEWER_2));
     assertSame(RIGHT, roles.screen(ScreenRole.PORTRAIT));
     assertSame(LEFT, roles.screen(ScreenRole.COLOR));
     assertTrue(roles.isFulfilled(ScreenRole.PORTRAIT));
-    assertEquals(Optional.of(ScreenRole.DIAGNOSTIC_2), roles.roleOf("right"));
+    assertEquals(Optional.of(ScreenRole.VIEWER_2), roles.roleOf("right"));
   }
 
   @Test
   void anUnknownMainScreenMakesTheFirstScreenControl() {
     Mapping roles = ScreenRoles.assign("other", List.of(LEFT, MIDDLE));
     assertSame(LEFT, roles.screen(ScreenRole.CONTROL));
-    assertSame(MIDDLE, roles.screen(ScreenRole.DIAGNOSTIC_1));
+    assertSame(MIDDLE, roles.screen(ScreenRole.VIEWER_1));
   }
 
   @Test
   void rolesParseByTheirKey() {
-    assertEquals(ScreenRole.DIAGNOSTIC_1, ScreenRole.parse("diagnostic-1"));
+    assertEquals(ScreenRole.VIEWER_1, ScreenRole.parse("viewer-1"));
     assertEquals(ScreenRole.CONTROL, ScreenRole.parse(" Control "));
-    assertEquals("diagnostic-2", ScreenRole.DIAGNOSTIC_2.toString());
+    assertEquals("viewer-2", ScreenRole.VIEWER_2.toString());
     assertThrows(IllegalArgumentException.class, () -> ScreenRole.parse("screen-3"));
   }
 
@@ -97,10 +97,10 @@ class ScreenRolesTest {
     assertTrue(roles.isExplicit(ScreenRole.COLOR));
     assertFalse(roles.isExplicit(ScreenRole.PORTRAIT), "an unknown screen id is ignored");
     assertSame(MIDDLE, roles.screen(ScreenRole.CONTROL));
-    assertSame(RIGHT, roles.screen(ScreenRole.DIAGNOSTIC_1), "the free screen comes first");
-    assertSame(RIGHT, roles.screen(ScreenRole.DIAGNOSTIC_2));
-    assertFalse(roles.isFulfilled(ScreenRole.DIAGNOSTIC_2));
-    assertEquals(Optional.of(ScreenRole.DIAGNOSTIC_1), roles.roleOf("right"));
+    assertSame(RIGHT, roles.screen(ScreenRole.VIEWER_1), "the free screen comes first");
+    assertSame(RIGHT, roles.screen(ScreenRole.VIEWER_2));
+    assertFalse(roles.isFulfilled(ScreenRole.VIEWER_2));
+    assertEquals(Optional.of(ScreenRole.VIEWER_1), roles.roleOf("right"));
     assertEquals(Optional.of(ScreenRole.COLOR), roles.roleOf("left"));
   }
 
@@ -109,7 +109,7 @@ class ScreenRolesTest {
     Mapping roles =
         ScreenRoles.assign("left", List.of(LEFT, MIDDLE), Map.of("middle", ScreenRole.CONTROL));
     assertSame(MIDDLE, roles.screen(ScreenRole.CONTROL));
-    assertSame(LEFT, roles.screen(ScreenRole.DIAGNOSTIC_1));
-    assertTrue(roles.isFulfilled(ScreenRole.DIAGNOSTIC_1));
+    assertSame(LEFT, roles.screen(ScreenRole.VIEWER_1));
+    assertTrue(roles.isFulfilled(ScreenRole.VIEWER_1));
   }
 }

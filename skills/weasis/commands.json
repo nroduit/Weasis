@@ -2315,14 +2315,14 @@
               "type": "screen-role",
               "values": [
                 "control",
-                "diagnostic-1",
-                "diagnostic-2",
+                "viewer-1",
+                "viewer-2",
                 "color",
                 "portrait"
               ],
               "arity": "1",
               "required": false,
-              "description": "Opens the viewers of the step in a viewer window on the screen of this role (control, diagnostic-1, diagnostic-2, color, portrait, see 'workspace:screens')."
+              "description": "Opens the viewers of the step in a viewer window on the screen of this role (control, viewer-1, viewer-2, color, portrait, see 'workspace:screens')."
             },
             {
               "names": [
@@ -10383,14 +10383,14 @@
               "type": "screen-role",
               "values": [
                 "control",
-                "diagnostic-1",
-                "diagnostic-2",
+                "viewer-1",
+                "viewer-2",
                 "color",
                 "portrait"
               ],
               "arity": "1",
               "required": false,
-              "description": "Screen by role: control, diagnostic-1, diagnostic-2, color, portrait."
+              "description": "Screen by role: control, viewer-1, viewer-2, color, portrait."
             },
             {
               "names": [
@@ -10775,14 +10775,14 @@
               "type": "screen-role",
               "values": [
                 "control",
-                "diagnostic-1",
-                "diagnostic-2",
+                "viewer-1",
+                "viewer-2",
                 "color",
                 "portrait"
               ],
               "arity": "1",
               "required": true,
-              "description": "Screen by role: control, diagnostic-1, diagnostic-2, color, portrait."
+              "description": "Screen by role: control, viewer-1, viewer-2, color, portrait."
             },
             {
               "names": [
@@ -11062,7 +11062,7 @@
         },
         {
           "name": "screens",
-          "description": "The screens of the workstation by role (control, diagnostic-1, diagnostic-2, color, portrait) with the monitor each one resolves to: the main window's screen is the control screen, the others are derived left to right, and a role the user gave a monitor on the Screens preference page wins. A role without a monitor of its own resolves to the nearest one and is reported as not fulfilled. --id with --role gives a monitor a role, --id with --auto takes it back.",
+          "description": "The screens of the workstation by role (control, viewer-1, viewer-2, color, portrait) with the monitor each one resolves to: the main window's screen is the control screen, the others are derived left to right, and a role the user gave a monitor on the Screens preference page wins. A role without a monitor of its own resolves to the nearest one and is reported as not fulfilled. --id with --role gives a monitor a role, --id with --auto takes it back.",
           "since": "5.0",
           "usage": "workspace:screens [-h] [--auto] [--json] [--id=<screen-id>] [--role=<screen-role>]",
           "parameters": [],
@@ -11105,14 +11105,14 @@
               "type": "screen-role",
               "values": [
                 "control",
-                "diagnostic-1",
-                "diagnostic-2",
+                "viewer-1",
+                "viewer-2",
                 "color",
                 "portrait"
               ],
               "arity": "1",
               "required": false,
-              "description": "The role of --id: control, diagnostic-1, diagnostic-2, color, portrait."
+              "description": "The role of --id: control, viewer-1, viewer-2, color, portrait."
             }
           ]
         },

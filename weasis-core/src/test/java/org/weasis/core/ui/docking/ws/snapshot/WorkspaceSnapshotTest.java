@@ -189,14 +189,14 @@ class WorkspaceSnapshotTest {
             new GroupNode(
                 List.of(new ViewDescriptor("d", "viewer2d", JsonObject.EMPTY_JSON_OBJECT)), 0),
             null,
-            "diagnostic-1",
+            "viewer-1",
             new Rectangle(1920, 0, 2560, 1440),
             WindowSnapshot.MAXIMIZED);
     WorkspaceSnapshot snapshot =
         new WorkspaceSnapshot(WorkspaceSnapshot.CURRENT_VERSION, List.of(window));
     JsonObject json = WorkspaceSnapshotIO.toJson(snapshot);
     JsonObject w = json.getJsonArray("windows").getJsonObject(0);
-    assertEquals("diagnostic-1", w.getString("role"));
+    assertEquals("viewer-1", w.getString("role"));
     assertEquals("maximized", w.getString("state"));
     assertEquals(2560, w.getJsonObject("screenBounds").getInt("width"));
     assertEquals(snapshot, WorkspaceSnapshotIO.fromJson(json));
@@ -223,7 +223,7 @@ class WorkspaceSnapshotTest {
                         new GroupNode(List.of(descriptor(b)), 0),
                         new GroupNode(List.of(descriptor(c)), 0)),
                     null,
-                    "diagnostic-2",
+                    "viewer-2",
                     farAway,
                     WindowSnapshot.NORMAL),
                 new WindowSnapshot(
@@ -234,13 +234,13 @@ class WorkspaceSnapshotTest {
     WorkspaceManager tabs = new WorkspaceManager(null);
     WorkspaceManager.RestoreReport report =
         tabs.restore(snapshot, restorer, ScreenRoles.FoldMode.TABS);
-    assertEquals(List.of("diagnostic-2"), report.folded());
+    assertEquals(List.of("viewer-2"), report.folded());
     assertEquals(1, tabs.getTabGroups(null).size(), "the folded views joined the first group");
     assertEquals(List.of(a, b, c), tabs.getViews());
 
     WorkspaceManager split = new WorkspaceManager(null);
     assertEquals(
-        List.of("diagnostic-2"),
+        List.of("viewer-2"),
         split.restore(snapshot, restorer, ScreenRoles.FoldMode.SPLIT).folded());
     assertEquals(3, split.getTabGroups(null).size(), "the folded tree was split beside the main");
     assertTrue(split.isShowing(b));

@@ -36,11 +36,11 @@ import org.weasis.core.api.service.WProperties;
  * Maps the {@link ScreenRole screen roles} to the monitors of the workstation. A role the user gave
  * to a monitor on the Screens preference page (local setting {@code weasis.screen.<id>.role}, never
  * in the remote preferences) wins; the other roles are derived: the screen of the main window is
- * the control screen; the other screens, from left to right then top to bottom, are diagnostic-1
- * and diagnostic-2; portrait is the first other screen taller than wide; color is diagnostic-1. A
- * role no screen fills degrades to the nearest one, so every role resolves to one monitor, and the
- * mapping says which roles are <em>fulfilled</em> by a monitor of their own: a restore places a
- * window on a fulfilled role and folds it into the main window otherwise.
+ * the control screen; the other screens, from left to right then top to bottom, are viewer-1 and
+ * viewer-2; portrait is the first other screen taller than wide; color is viewer-1. A role no
+ * screen fills degrades to the nearest one, so every role resolves to one monitor, and the mapping
+ * says which roles are <em>fulfilled</em> by a monitor of their own: a restore places a window on a
+ * fulfilled role and folds it into the main window otherwise.
  */
 public final class ScreenRoles {
 
@@ -118,7 +118,7 @@ public final class ScreenRoles {
 
   private ScreenRoles() {}
 
-  /** The localized name of a role for menus and pages: "Diagnostic screen 1". */
+  /** The localized name of a role for menus and pages: "Viewer screen 1". */
   public static String label(ScreenRole role) {
     return Messages.getString("ScreenRoles." + role.key());
   }
@@ -187,11 +187,11 @@ public final class ScreenRoles {
     }
     Screen first = others.getFirst();
     Optional<Screen> portrait = others.stream().filter(Screen::isPortrait).findFirst();
-    derive(roles, fulfilled, ScreenRole.DIAGNOSTIC_1, first, hasOthers);
+    derive(roles, fulfilled, ScreenRole.VIEWER_1, first, hasOthers);
     derive(
         roles,
         fulfilled,
-        ScreenRole.DIAGNOSTIC_2,
+        ScreenRole.VIEWER_2,
         others.size() > 1 ? others.get(1) : first,
         others.size() > 1);
     derive(roles, fulfilled, ScreenRole.PORTRAIT, portrait.orElse(first), portrait.isPresent());

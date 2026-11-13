@@ -551,7 +551,7 @@ public class WorkspaceCommands implements CommandExtension {
   @Command(
       name = "screens",
       description =
-          "The screens of the workstation by role (control, diagnostic-1, diagnostic-2, color, "
+          "The screens of the workstation by role (control, viewer-1, viewer-2, color, "
               + "portrait) with the monitor each one resolves to: the main window's screen is "
               + "the control screen, the others are derived left to right, and a role the user "
               + "gave a monitor on the Screens preference page wins. A role without a monitor of "

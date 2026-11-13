@@ -125,7 +125,7 @@ public record WeasisExtensions(
    *     to be seen (radiographs, cine runs, ultrasound clips)
    */
   /**
-   * @param screen the role of the screen the display set opens on ({@code diagnostic-2}, {@code
+   * @param screen the role of the screen the display set opens on ({@code viewer-2}, {@code
    *     color}...), null for the screen of the step; a role no monitor fills folds the display set
    *     into the main window
    */

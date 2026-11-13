@@ -558,7 +558,7 @@ Needs: file read
 | --new-tab | boolean |  | Opens new viewers instead of re-hanging the one of the same patient. |
 | --protocol | string |  | Hangs this protocol from 'list' even when another one scores better. |
 | --protocols | input-path |  | A JSON file of protocol entries used instead of the layers, to try a draft. |
-| --screen | screen-role |  | Opens the viewers of the step in a viewer window on the screen of this role (control, diagnostic-1, diagnostic-2, color, portrait, see 'workspace:screens'). |
+| --screen | screen-role |  | Opens the viewers of the step in a viewer window on the screen of this role (control, viewer-1, viewer-2, color, portrait, see 'workspace:screens'). |
 | --step | integer |  | The reading step to hang, from 1 (default: the first). |
 | --study | study-uid |  | Study Instance UID from 'dicom:list'. |
 
@@ -2603,7 +2603,7 @@ Usage: `workspace:detach [-h] [--json] [--bounds=<screen-rect>] [--screen=<scree
 |---|---|---|---|
 | --bounds | screen-rect |  | Screen bounds of the new window, as x,y,width,height. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --screen | screen-role |  | Screen by role: control, diagnostic-1, diagnostic-2, color, portrait. |
+| --screen | screen-role |  | Screen by role: control, viewer-1, viewer-2, color, portrait. |
 | --view | view-id |  | View id from 'workspace:list'. |
 
 ### workspace:explorer (since 5.0)
@@ -2717,7 +2717,7 @@ Usage: `workspace:move [-h] [--json] --screen=<screen-role> --view=<view-id>`
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --screen | screen-role |  | Screen by role: control, diagnostic-1, diagnostic-2, color, portrait. |
+| --screen | screen-role |  | Screen by role: control, viewer-1, viewer-2, color, portrait. |
 | --view | view-id |  | View id from 'workspace:list'. |
 
 ### workspace:panel (since 5.0)
@@ -2775,7 +2775,7 @@ Needs: file write
 
 ### workspace:screens (since 5.0)
 
-The screens of the workstation by role (control, diagnostic-1, diagnostic-2, color, portrait) with the monitor each one resolves to: the main window's screen is the control screen, the others are derived left to right, and a role the user gave a monitor on the Screens preference page wins. A role without a monitor of its own resolves to the nearest one and is reported as not fulfilled. --id with --role gives a monitor a role, --id with --auto takes it back.
+The screens of the workstation by role (control, viewer-1, viewer-2, color, portrait) with the monitor each one resolves to: the main window's screen is the control screen, the others are derived left to right, and a role the user gave a monitor on the Screens preference page wins. A role without a monitor of its own resolves to the nearest one and is reported as not fulfilled. --id with --role gives a monitor a role, --id with --auto takes it back.
 
 Usage: `workspace:screens [-h] [--auto] [--json] [--id=<screen-id>] [--role=<screen-role>]`
 
@@ -2784,7 +2784,7 @@ Usage: `workspace:screens [-h] [--auto] [--json] [--id=<screen-id>] [--role=<scr
 | --auto | boolean |  | Clears the role of --id; it is derived again. |
 | --id | string |  | A screen id from the listing, to give it a role or take it back. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
-| --role | screen-role |  | The role of --id: control, diagnostic-1, diagnostic-2, color, portrait. |
+| --role | screen-role |  | The role of --id: control, viewer-1, viewer-2, color, portrait. |
 
 ### workspace:select
 
