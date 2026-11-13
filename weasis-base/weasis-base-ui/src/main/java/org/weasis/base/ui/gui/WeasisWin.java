@@ -147,6 +147,7 @@ import org.weasis.core.ui.docking.SidePanel.Role;
 import org.weasis.core.ui.docking.ToolContributions;
 import org.weasis.core.ui.docking.ToolVisibility;
 import org.weasis.core.ui.docking.ws.DetachedFrame;
+import org.weasis.core.ui.docking.ws.ToolbarRowHost;
 import org.weasis.core.ui.docking.ws.Workspace;
 import org.weasis.core.ui.docking.ws.WorkspaceListener;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
@@ -235,8 +236,13 @@ public class WeasisWin {
 
   private final Frame frame;
 
-  /** The toolbar row: one component that follows the active window (main or viewer window). */
-  private final JPanel toolbarHost = new JPanel(new BorderLayout());
+  /**
+   * The place of the toolbar row in the main window: the row is one component that follows the
+   * active window (main or viewer window); the place keeps its height when the row leaves. A press
+   * on the empty place selects the view of the main window.
+   */
+  private final ToolbarRowHost toolbarHost =
+      new ToolbarRowHost(() -> workspace().activate(workspace().mainWorkspace()));
 
   private JComponent toolbarRow;
   private Window toolbarWindow;
@@ -321,7 +327,7 @@ public class WeasisWin {
 
     // the row is as long as the window: what does not fit goes to its overflow button
     toolbarRow = GuiUtils.getUICore().getToolbarContainer();
-    toolbarHost.add(toolbarRow, BorderLayout.CENTER);
+    toolbarHost.setRow(toolbarRow);
     toolbarWindow = frame;
     rootPaneContainer
         .getContentPane()
@@ -652,19 +658,16 @@ public class WeasisWin {
     if (target == toolbarWindow || toolbarRow == null) {
       return;
     }
+    // every place keeps the height of the row: no window moves its views
     if (toolbarWindow instanceof DetachedFrame previous) {
       previous.setToolbarRow(null);
     } else {
-      toolbarHost.remove(toolbarRow);
-      toolbarHost.revalidate();
-      toolbarHost.repaint();
+      toolbarHost.setRow(null);
     }
     if (target instanceof DetachedFrame next) {
       next.setToolbarRow(toolbarRow);
     } else {
-      toolbarHost.add(toolbarRow, BorderLayout.CENTER);
-      toolbarHost.revalidate();
-      toolbarHost.repaint();
+      toolbarHost.setRow(toolbarRow);
     }
     toolbarWindow = target;
   }

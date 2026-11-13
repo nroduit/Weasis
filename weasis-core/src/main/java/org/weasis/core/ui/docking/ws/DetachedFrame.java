@@ -15,7 +15,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 /**
@@ -26,11 +25,13 @@ import javax.swing.WindowConstants;
 public final class DetachedFrame extends JFrame {
 
   private final Workspace workspace;
-  private final JPanel toolbarHost = new JPanel(new BorderLayout());
+  private final ToolbarRowHost toolbarHost;
 
   DetachedFrame(WorkspaceManager manager, String title) {
     super(title);
     this.workspace = new Workspace(this);
+    // a press on the empty place of the toolbar row selects the view of this window
+    this.toolbarHost = new ToolbarRowHost(() -> manager.activate(workspace));
     if (manager.mainWindow() instanceof Frame mainFrame) {
       setIconImages(mainFrame.getIconImages());
     }
@@ -59,22 +60,17 @@ public final class DetachedFrame extends JFrame {
     return workspace;
   }
 
-  /**
-   * Shows the toolbar row of the application under the title bar, or empties the host with null.
-   * The row is one component that follows the active window; the caller removes it from its
-   * previous host.
-   */
   /** Hides or shows the toolbar host, for the immersive presentation. */
   public void setToolbarVisible(boolean visible) {
     toolbarHost.setVisible(visible);
   }
 
+  /**
+   * Shows the toolbar row of the application under the title bar, or empties the host with null:
+   * the empty host keeps the height of the row, so the views do not move. The row is one component
+   * that follows the active window; the caller removes it from its previous host.
+   */
   public void setToolbarRow(JComponent row) {
-    toolbarHost.removeAll();
-    if (row != null) {
-      toolbarHost.add(row, BorderLayout.CENTER);
-    }
-    toolbarHost.revalidate();
-    toolbarHost.repaint();
+    toolbarHost.setRow(row);
   }
 }
