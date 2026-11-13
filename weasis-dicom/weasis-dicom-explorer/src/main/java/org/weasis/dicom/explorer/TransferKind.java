@@ -11,11 +11,12 @@ package org.weasis.dicom.explorer;
 
 /**
  * Where the DICOM objects of an import or export page come from or go to: the local device (files,
- * folders, media) or a network node. The kind decides which tool of the explorer side hosts the
- * page: {@code import} or {@code export} for the local kind, {@code retrieve} or {@code send} for
- * the network kind.
+ * folders), a disc (CD/DVD) or a network node. The kind decides which tool of the explorer side
+ * hosts the page: {@code import} or {@code export} for the local kind, {@code import} or {@code
+ * export-disc} for the disc kind, {@code retrieve} or {@code send} for the network kind.
  */
 public enum TransferKind {
   LOCAL,
+  DISC,
   NETWORK
 }

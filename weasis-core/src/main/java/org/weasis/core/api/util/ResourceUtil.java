@@ -98,6 +98,7 @@ public class ResourceUtil {
     EXECUTE("svg/action/execute.svg"), // NON-NLS
     EXPORT("svg/action/export.svg"), // NON-NLS
     EXPORT_CLIPBOARD("svg/action/exportClipboard.svg"), // NON-NLS
+    EXPORT_CD("svg/action/exportCd.svg"), // NON-NLS
     EXPORT_DICOM("svg/action/exportDicom.svg"), // NON-NLS
     EXPORT_IMAGE("svg/action/exportImage.svg"), // NON-NLS
     CAPTURE("svg/action/capture.svg"), // NON-NLS

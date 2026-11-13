@@ -81,11 +81,7 @@ public class IsoImageExport extends LocalExport {
     comboBoxImgFormat.setModel(new DefaultComboBoxModel<>(new Format[] {Format.DICOM}));
     checkBoxAddWeasisViewer.setEnabled(SystemInfo.isWindows);
 
-    return List.of(
-        GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_LARGE),
-        checkBoxAddJpeg,
-        GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_LARGE),
-        checkBoxAddWeasisViewer);
+    return List.of(checkBoxAddJpeg, checkBoxAddWeasisViewer);
   }
 
   protected void initialize(boolean first) {
@@ -107,6 +103,7 @@ public class IsoImageExport extends LocalExport {
 
   @Override
   public void closeAdditionalWindow() {
+    super.closeAdditionalWindow();
     Properties pref = getPreferences();
     pref.setProperty(ADD_JPEG, String.valueOf(checkBoxAddJpeg.isSelected()));
     pref.setProperty(ADD_VIEWER, String.valueOf(checkBoxAddWeasisViewer.isSelected()));
@@ -123,6 +120,7 @@ public class IsoImageExport extends LocalExport {
 
   @Override
   public void exportDICOM(final CheckTreeModel model, JProgressBar info) throws IOException {
+    saveOptions();
     browseImgFile();
     if (outputFile != null) {
       final File exportFile = outputFile.getCanonicalFile();

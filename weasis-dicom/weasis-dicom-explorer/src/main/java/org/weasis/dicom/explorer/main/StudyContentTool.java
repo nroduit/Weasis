@@ -99,7 +99,7 @@ public class StudyContentTool extends PluginTool {
   private ExplorerItem item;
 
   public StudyContentTool(DicomExplorer explorer) {
-    super(ID, Messages.getString("StudyContentTool.title"), Insertable.Type.EXPLORER, 34);
+    super(ID, Messages.getString("StudyContentTool.title"), Insertable.Type.EXPLORER, 25);
     this.explorer = Objects.requireNonNull(explorer);
     this.model = explorer.getDataExplorerModel();
     setIcon(ResourceUtil.getIcon(ActionIcon.STUDY_CONTENT));

@@ -23,7 +23,8 @@ import org.weasis.dicom.explorer.TransferKind;
 
 /**
  * The export to the local device: the local page (DICOM, images, media layout) and the local pages
- * of the export plugins (a disc image), on the checked tree of the loaded studies.
+ * of the export plugins, on the checked tree of the loaded studies. The disc image has its own
+ * tool, {@link DiscExportTool}.
  */
 public class ExportTool extends ExportHostTool {
 

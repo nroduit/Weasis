@@ -104,7 +104,7 @@ A viewer feature usually touches a base class in `weasis-core` and its subclasse
 - **MigLayout** for layout: read `weasis-core/docs/MigLayoutModel-Best-Practices.md` (weights, grow and shrink priorities) before touching a layout.
 - A **custom workspace engine** (`org.weasis.core.ui.docking.ws`) for the central viewer area: `WorkspaceManager` (owned by `UICore`) manages tab groups (`TabGroup` on FlatLaf closable tabs) in a `JSplitPane` tree per window, with glass-pane tab drag, detach to `DetachedFrame`, maximize, JSON layout snapshots (`snapshot/`) and the `workspace:` command namespace.
   Explorer and tool side panels are plain Swing (`SidePanel` / `MiniStrip` in `org.weasis.core.ui.docking`), not part of the workspace tree.
-  The DICOM transfers are four tools of the bottom slot of the explorer side, one per direction and `TransferKind`: `ImportTool`, `RetrieveTool`, `ExportTool` and `SendTool` on `TransferTool` in weasis-dicom-explorer, plus the study content panel (`StudyContentTool`) that follows the explorer selection; there is no footer and no import or export dialog.
+  The DICOM transfers are five tools of the bottom slot of the explorer side, one per direction and `TransferKind`: `ImportTool`, `RetrieveTool`, `ExportTool`, `DiscExportTool` (CD/DVD) and `SendTool` on `TransferTool` in weasis-dicom-explorer, plus the study content panel (`StudyContentTool`) that follows the explorer selection; there is no footer and no import or export dialog.
 - DICOM I/O comes from the external `weasis-dicom-tools` library (`weasis-dicom-tools.version` in `weasis-parent/pom.xml`; packages `org.weasis.dicom.{geom,hp,macro,mf,op,param,ref,tool,util,web}`).
   Its source is not in this repository: treat it as a third-party dependency.
 

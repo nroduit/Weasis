@@ -28,7 +28,7 @@ public class SendTool extends ExportHostTool {
     super(
         ID,
         Messages.common("send"),
-        33,
+        34,
         ResourceUtil.getIcon(ActionIcon.SEND),
         0.6,
         Messages.common("send"),

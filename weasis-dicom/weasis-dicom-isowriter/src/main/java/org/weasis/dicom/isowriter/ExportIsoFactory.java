@@ -12,6 +12,7 @@ package org.weasis.dicom.isowriter;
 import java.util.Map;
 import org.pf4j.Extension;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.TransferKind;
 import org.weasis.dicom.explorer.exp.CheckTreeModel;
 import org.weasis.dicom.explorer.exp.DicomExportFactory;
 import org.weasis.dicom.explorer.exp.ExportDicom;
@@ -31,5 +32,11 @@ public class ExportIsoFactory implements DicomExportFactory {
       }
     }
     return null;
+  }
+
+  /** The disc image goes to the CD/DVD export tool. */
+  @Override
+  public TransferKind getKind() {
+    return TransferKind.DISC;
   }
 }

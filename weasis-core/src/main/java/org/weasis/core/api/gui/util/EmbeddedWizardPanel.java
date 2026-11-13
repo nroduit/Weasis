@@ -12,8 +12,10 @@ package org.weasis.core.api.gui.util;
 import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +25,9 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
+import javax.swing.JViewport;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
 
 /**
  * Compact embedded host of {@link AbstractItemDialogPage} pages: a scrollable page area with a
@@ -81,7 +86,7 @@ public class EmbeddedWizardPanel extends JPanel {
       if (button != null) {
         button.setSelected(true);
       }
-      pageHost.setViewportView(page);
+      pageHost.setViewportView(new PageView(page));
       page.selectPageAction();
     }
     revalidate();
@@ -132,6 +137,47 @@ public class EmbeddedWizardPanel extends JPanel {
   public void closeAllPages() {
     for (AbstractItemDialogPage page : pages) {
       page.closeAdditionalWindow();
+    }
+  }
+
+  /**
+   * Holds a page in the scroll pane: the page follows the width of the slot down to its minimum
+   * width, then scrolls, and fills the height of the slot when it is shorter.
+   */
+  private static final class PageView extends JPanel implements Scrollable {
+    private static final int SCROLL_UNIT = 16;
+
+    PageView(JComponent page) {
+      super(new BorderLayout());
+      add(page, BorderLayout.CENTER);
+    }
+
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+      return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+      return GuiUtils.getScaleLength(SCROLL_UNIT);
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+      int extent = orientation == SwingConstants.VERTICAL ? visibleRect.height : visibleRect.width;
+      return Math.max(GuiUtils.getScaleLength(SCROLL_UNIT), extent - SCROLL_UNIT);
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+      return getParent() instanceof JViewport viewport
+          && viewport.getWidth() >= getMinimumSize().width;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+      return getParent() instanceof JViewport viewport
+          && viewport.getHeight() >= getPreferredSize().height;
     }
   }
 }

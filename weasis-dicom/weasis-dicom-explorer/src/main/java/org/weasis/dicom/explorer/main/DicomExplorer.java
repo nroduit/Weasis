@@ -67,6 +67,7 @@ import org.weasis.dicom.explorer.*;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.TransferTool;
+import org.weasis.dicom.explorer.exp.DiscExportTool;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.explorer.exp.ExportTool;
 import org.weasis.dicom.explorer.exp.SendTool;
@@ -228,6 +229,7 @@ public class DicomExplorer extends PluginTool
             new ImportTool(this.model),
             new RetrieveTool(this.model),
             new ExportTool(this.model),
+            new DiscExportTool(this.model),
             new SendTool(this.model));
     this.contentTool = new StudyContentTool(this);
     // the transfer tools and the study content serve this explorer: the stripe shows them with it

@@ -653,7 +653,7 @@
     {
       "code": "weasis.export.dicom",
       "value": "true",
-      "description": "Show the DICOM export menu and the export and send tools of the explorer side",
+      "description": "Show the DICOM export menu and the export, CD/DVD export and send tools of the explorer side",
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "UI"

@@ -152,6 +152,7 @@ public class ImportTool extends TransferTool {
     List<AbstractItemDialogPage> list = new ArrayList<>();
     list.add(new LocalImport());
     list.addAll(createPluginPages(TransferKind.LOCAL));
+    list.addAll(createPluginPages(TransferKind.DISC));
     InsertableUtil.sortInsertable(list);
     return list;
   }

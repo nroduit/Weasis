@@ -11,7 +11,7 @@ package org.weasis.dicom.explorer.exp;
 
 import com.formdev.flatlaf.util.SystemFileChooser;
 import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
-import java.awt.Component;
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ItemEvent;
 import java.awt.image.BufferedImage;
@@ -28,18 +28,17 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Vector;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JSlider;
 import javax.swing.UIManager;
-import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -61,6 +60,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.CollapsiblePanel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.SimpleOpManager;
@@ -178,6 +178,14 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
           TransferSyntax.JPEGXL);
   protected final JComboBox<Format> comboBoxImgFormat;
 
+  /** The local persistence key of the fold state of the export options. */
+  private static final String OPTIONS_EXPANDED = "dicom.export.options.expanded"; // NON-NLS
+
+  private final JPanel optionsHost = new JPanel(new BorderLayout());
+  private final JPanel reviewHost = new JPanel(new BorderLayout());
+  private List<JComponent> additionalOptions = List.of();
+  private OptionsForm optionsForm;
+
   public LocalExport(DicomModel dicomModel, CheckTreeModel treeModel) {
     this(Messages.getString("LocalExport.local_dev"), 0, dicomModel, treeModel);
   }
@@ -191,24 +199,49 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     initGUI();
   }
 
+  /**
+   * The options of a format, shown in the fold panel of the page and written to the preferences on
+   * save.
+   */
+  protected interface OptionsForm {
+    JComponent component();
+
+    void save(Properties pref);
+  }
+
   public void initGUI() {
-    JLabel lblImportAFolder = new JLabel(Messages.getString("LocalExport.exp") + StringUtil.COLON);
-    JButton btnNewButton = new JButton(Messages.common("options"));
-    btnNewButton.addActionListener(e -> showExportingOptions());
+    additionalOptions = getAdditionalOption();
+    if (comboBoxImgFormat.getItemCount() > 1) {
+      JLabel formatLabel = new JLabel(Messages.getString("LocalExport.exp") + StringUtil.COLON);
+      add(row(formatLabel, fitted(GuiUtils.shrinkable(comboBoxImgFormat))));
+      add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_SMALL));
+    }
+    comboBoxImgFormat.addItemListener(
+        e -> {
+          if (e.getStateChange() == ItemEvent.SELECTED) {
+            rebuildOptions();
+          }
+        });
+    CollapsiblePanel options =
+        new CollapsiblePanel(Messages.common("options"), optionsHost, true, OPTIONS_EXPANDED);
+    add(options);
+    rebuildOptions();
+    // the review warning of an image export follows what is checked
+    exportTree
+        .getCheckTreeModel()
+        .getCheckingModel()
+        .addTreeCheckingListener(_ -> refreshReviewWarning());
 
-    List<JComponent> list = new ArrayList<>();
-    list.add(lblImportAFolder);
-    list.add(comboBoxImgFormat);
-    list.add(GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR));
-    list.add(btnNewButton);
-    list.addAll(getAdditionalOption());
-
-    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, list.toArray(JComponent[]::new)));
     add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
     exportTree.setBorder(UIManager.getBorder("ScrollPane.border"));
+    exportTree.setAlignmentX(LEFT_ALIGNMENT);
     add(exportTree);
   }
 
+  /**
+   * Options added at the end of the options of every format, built once before the page is laid
+   * out.
+   */
   protected List<JComponent> getAdditionalOption() {
     return Collections.emptyList();
   }
@@ -217,189 +250,267 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     return LocalPersistence.getProperties();
   }
 
-  protected void showExportingOptions() {
-    Properties pref = getPreferences();
+  /** Writes the options shown to the preferences: before an export and when the page closes. */
+  protected void saveOptions() {
+    if (optionsForm != null) {
+      optionsForm.save(getPreferences());
+    }
+  }
+
+  private void rebuildOptions() {
+    saveOptions();
+    optionsForm = buildOptions((Format) comboBoxImgFormat.getSelectedItem(), getPreferences());
+    optionsHost.removeAll();
+    if (optionsForm != null) {
+      optionsHost.add(optionsForm.component(), BorderLayout.CENTER);
+    }
+    refreshReviewWarning();
+    optionsHost.revalidate();
+    optionsHost.repaint();
+  }
+
+  /** The options of that format, null when it has none. */
+  protected OptionsForm buildOptions(Format format, Properties pref) {
+    if (format == null) {
+      return null;
+    }
+    return switch (format) {
+      case DICOM, DICOM_ZIP -> buildDicomOptions(format, pref);
+      case JPEG, JPEG_XL, PNG, TIFF, JP2 -> buildImageOptions(format, pref);
+    };
+  }
+
+  private OptionsForm buildDicomOptions(Format format, Properties pref) {
     boolean forceDICOMDIR =
-        Boolean.parseBoolean(pref.getProperty("force.dicomdir", Boolean.FALSE.toString()));
-    final JCheckBox boxKeepNames =
+        Format.DICOM_ZIP == format
+            || Boolean.parseBoolean(pref.getProperty("force.dicomdir", Boolean.FALSE.toString()));
+    TransferSyntax tsuid =
+        TransferSyntax.getTransferSyntax(pref.getProperty(DICOM_TSUID, TransferSyntax.NONE.name()));
+    JSlider slider = buildQualitySlider(pref, qualityKey(tsuid));
+    JCheckBox onlyUncompressed =
         new JCheckBox(
-            Messages.getString("LocalExport.keep_dir"),
-            Boolean.parseBoolean(pref.getProperty(KEEP_INFO_DIR, Boolean.TRUE.toString())));
+            Messages.getString("transcode.only.uncompressed"),
+            Boolean.parseBoolean(pref.getProperty(DICOM_ONLY_RAW, Boolean.TRUE.toString())));
+    JComboBox<TransferSyntax> syntaxComboBox = new JComboBox<>(new Vector<>(transferSyntaxList));
+    syntaxComboBox.setSelectedItem(null);
+    syntaxComboBox.addItemListener(
+        e -> {
+          if (e.getStateChange() == ItemEvent.SELECTED) {
+            TransferSyntax t = (TransferSyntax) e.getItem();
+            boolean realTsuid = t != null && t != TransferSyntax.NONE;
+            slider.setEnabled(
+                realTsuid
+                    && TransferSyntaxType.isLossyCompression(t.getTransferSyntaxUID())
+                    && t != TransferSyntax.JPEGXL_RECOMPRESSION);
+            onlyUncompressed.setEnabled(
+                realTsuid && !DicomUtils.isNative(t.getTransferSyntaxUID()));
+          }
+        });
+    syntaxComboBox.setSelectedItem(tsuid);
+    JPanel transcodingPanel =
+        GuiUtils.getVerticalBoxLayoutPanel(
+            leftAligned(GuiUtils.shrinkable(syntaxComboBox)),
+            leftAligned(GuiUtils.shrinkable(onlyUncompressed)),
+            leftAligned(slider));
+    transcodingPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("transcoding")));
 
-    Format selected = (Format) comboBoxImgFormat.getSelectedItem();
-    boolean dicomZip = Format.DICOM_ZIP == selected;
-    if (Format.DICOM == selected || dicomZip) {
-      if (dicomZip) {
-        forceDICOMDIR = true;
+    JCheckBox newUidCheckBox =
+        new JCheckBox(
+            Messages.getString("generate.new.unique.identifiers"),
+            Boolean.parseBoolean(pref.getProperty(DICOM_NEW_UID, Boolean.FALSE.toString())));
+    JCheckBox dicomdirBox =
+        new JCheckBox(
+            Messages.getString("LocalExport.inc_dicomdir"),
+            Boolean.parseBoolean(pref.getProperty(INC_DICOMDIR, Boolean.TRUE.toString())));
+    JCheckBox cdFoldersBox =
+        new JCheckBox(
+            Messages.getString("LocalExport.cd_folders"),
+            Boolean.parseBoolean(pref.getProperty(CD_COMPATIBLE, Boolean.FALSE.toString())));
+    JCheckBox keepNamesBox = buildKeepNamesBox(pref);
+    cdFoldersBox.setEnabled(dicomdirBox.isSelected());
+    keepNamesBox.setEnabled(!dicomdirBox.isSelected());
+    dicomdirBox.addActionListener(
+        _ -> {
+          keepNamesBox.setEnabled(!dicomdirBox.isSelected());
+          cdFoldersBox.setEnabled(dicomdirBox.isSelected());
+        });
+
+    List<JComponent> options = new ArrayList<>();
+    options.add(transcodingPanel);
+    options.add(newUidCheckBox);
+    if (!forceDICOMDIR) {
+      options.add(dicomdirBox);
+      options.add(cdFoldersBox);
+      options.add(keepNamesBox);
+    }
+    JComponent component = column(options);
+    return new OptionsForm() {
+      @Override
+      public JComponent component() {
+        return component;
       }
 
-      TransferSyntax tsuid =
-          TransferSyntax.getTransferSyntax(
-              pref.getProperty(DICOM_TSUID, TransferSyntax.NONE.name()));
-      boolean jxl =
-          tsuid == TransferSyntax.JPEGXL_LOSSLESS
-              || tsuid == TransferSyntax.JPEGXL_RECOMPRESSION
-              || tsuid == TransferSyntax.JPEGXL;
-      String qualityKey = jxl ? IMG_JXL_QUALITY : IMG_QUALITY;
-      List<Component> options = new ArrayList<>();
-      JSlider slider = buildQualitySlider(pref, qualityKey);
-      JCheckBox onlyUncompressed =
-          new JCheckBox(
-              Messages.getString("transcode.only.uncompressed"),
-              Boolean.parseBoolean(pref.getProperty(DICOM_ONLY_RAW, Boolean.TRUE.toString())));
-      JComboBox<TransferSyntax> syntaxComboBox = new JComboBox<>(new Vector<>(transferSyntaxList));
-      syntaxComboBox.setSelectedItem(null);
-      syntaxComboBox.addItemListener(
-          e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-              TransferSyntax t = (TransferSyntax) e.getItem();
-              boolean realTsuid = t != null && t != TransferSyntax.NONE;
-              slider.setEnabled(
-                  realTsuid
-                      && TransferSyntaxType.isLossyCompression(t.getTransferSyntaxUID())
-                      && t != TransferSyntax.JPEGXL_RECOMPRESSION);
-              onlyUncompressed.setEnabled(
-                  realTsuid && !DicomUtils.isNative(t.getTransferSyntaxUID()));
-            }
-          });
-
-      syntaxComboBox.setSelectedItem(tsuid);
-      JPanel transcodingPanel =
-          GuiUtils.getVerticalBoxLayoutPanel(
-              GuiUtils.getFlowLayoutPanel(syntaxComboBox),
-              GuiUtils.getFlowLayoutPanel(onlyUncompressed),
-              slider);
-      Border spaceY = GuiUtils.getEmptyBorder(10, 5, 10, 5);
-      transcodingPanel.setBorder(
-          BorderFactory.createCompoundBorder(
-              spaceY, GuiUtils.getTitledBorder(Messages.getString("transcoding"))));
-      options.add(transcodingPanel);
-
-      JCheckBox newUidCheckBox =
-          new JCheckBox(
-              Messages.getString("generate.new.unique.identifiers"),
-              Boolean.parseBoolean(pref.getProperty(DICOM_NEW_UID, Boolean.FALSE.toString())));
-      options.add(newUidCheckBox);
-
-      final JCheckBox box1 =
-          new JCheckBox(
-              Messages.getString("LocalExport.inc_dicomdir"),
-              Boolean.parseBoolean(pref.getProperty(INC_DICOMDIR, Boolean.TRUE.toString())));
-      final JCheckBox box2 =
-          new JCheckBox(
-              Messages.getString("LocalExport.cd_folders"),
-              Boolean.parseBoolean(pref.getProperty(CD_COMPATIBLE, Boolean.FALSE.toString())));
-      box2.setEnabled(box1.isSelected());
-      boxKeepNames.setEnabled(!box1.isSelected());
-      if (!forceDICOMDIR) {
-        options.add(box1);
-        options.add(box2);
-        options.add(boxKeepNames);
-      }
-      box1.addActionListener(
-          e -> {
-            boxKeepNames.setEnabled(!box1.isSelected());
-            box2.setEnabled(box1.isSelected());
-          });
-
-      int response =
-          JOptionPane.showOptionDialog(
-              WinUtil.getValidComponent(
-                  WinUtil.getParentWindow(this)), // Use parent because this has large size
-              options.toArray(),
-              Messages.getString("LocalExport.export_message"),
-              JOptionPane.OK_CANCEL_OPTION,
-              JOptionPane.PLAIN_MESSAGE,
-              null,
-              null,
-              null);
-      if (response == JOptionPane.OK_OPTION) {
-        pref.setProperty(qualityKey, String.valueOf(slider.getValue()));
-        pref.setProperty(
-            DICOM_TSUID,
-            StringUtil.getEmptyStringIfNullEnum((TransferSyntax) syntaxComboBox.getSelectedItem()));
-        pref.setProperty(DICOM_ONLY_RAW, String.valueOf(onlyUncompressed.isSelected()));
-        pref.setProperty(DICOM_NEW_UID, String.valueOf(newUidCheckBox.isSelected()));
+      @Override
+      public void save(Properties p) {
+        TransferSyntax syntax = (TransferSyntax) syntaxComboBox.getSelectedItem();
+        p.setProperty(qualityKey(syntax), String.valueOf(slider.getValue()));
+        p.setProperty(DICOM_TSUID, StringUtil.getEmptyStringIfNullEnum(syntax));
+        p.setProperty(DICOM_ONLY_RAW, String.valueOf(onlyUncompressed.isSelected()));
+        p.setProperty(DICOM_NEW_UID, String.valueOf(newUidCheckBox.isSelected()));
         if (!forceDICOMDIR) {
-          pref.setProperty(INC_DICOMDIR, String.valueOf(box1.isSelected()));
-          pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
-          pref.setProperty(CD_COMPATIBLE, String.valueOf(box2.isSelected()));
+          p.setProperty(INC_DICOMDIR, String.valueOf(dicomdirBox.isSelected()));
+          p.setProperty(KEEP_INFO_DIR, String.valueOf(keepNamesBox.isSelected()));
+          p.setProperty(CD_COMPATIBLE, String.valueOf(cdFoldersBox.isSelected()));
         }
       }
-    } else if (Format.JPEG == selected
-        || Format.PNG == selected
-        || Format.TIFF == selected
-        || Format.JP2 == selected
-        || Format.JPEG_XL == selected) {
-      boolean jxl = Format.JPEG_XL == selected;
-      boolean lossy = Format.JPEG == selected || jxl;
-      String qualityKey = jxl ? IMG_JXL_QUALITY : IMG_QUALITY;
-      JSlider slider = null;
-      JCheckBox preservePixelCheckBox;
-      String dicom = "DICOM "; // NON-NLS
-      JCheckBox paddingCheckBox =
-          new JCheckBox(
-              dicom + ActionW.IMAGE_PIX_PADDING.getTitle(),
-              Boolean.parseBoolean(pref.getProperty(IMG_PIXEL_PADDING, Boolean.TRUE.toString())));
-      JCheckBox overlayCheckBox =
-          new JCheckBox(
-              dicom + ActionW.IMAGE_OVERLAY.getTitle(),
-              Boolean.parseBoolean(pref.getProperty(IMG_OVERLAY, Boolean.TRUE.toString())));
-      JCheckBox shutterCheckBox =
-          new JCheckBox(
-              dicom + ActionW.IMAGE_SHUTTER.getTitle(),
-              Boolean.parseBoolean(pref.getProperty(IMG_SHUTTER, Boolean.TRUE.toString())));
-      List<Component> options = new ArrayList<>();
+    };
+  }
 
-      if (lossy) {
-        slider = buildQualitySlider(pref, qualityKey);
-        options.add(slider);
+  private OptionsForm buildImageOptions(Format format, Properties pref) {
+    boolean jxl = Format.JPEG_XL == format;
+    boolean lossy = Format.JPEG == format || jxl;
+    String qualityKey = jxl ? IMG_JXL_QUALITY : IMG_QUALITY;
+    String dicom = "DICOM "; // NON-NLS
+    JSlider slider = lossy ? buildQualitySlider(pref, qualityKey) : null;
+    JCheckBox preservePixelCheckBox =
+        new JCheckBox(
+            Messages.getString("LocalExport.ch_16"),
+            Boolean.parseBoolean(pref.getProperty(IMG_16_BIT, Boolean.FALSE.toString())));
+    preservePixelCheckBox.setEnabled(Format.JPEG != format);
+    JCheckBox paddingCheckBox =
+        new JCheckBox(
+            dicom + ActionW.IMAGE_PIX_PADDING.getTitle(),
+            Boolean.parseBoolean(pref.getProperty(IMG_PIXEL_PADDING, Boolean.TRUE.toString())));
+    JCheckBox shutterCheckBox =
+        new JCheckBox(
+            dicom + ActionW.IMAGE_SHUTTER.getTitle(),
+            Boolean.parseBoolean(pref.getProperty(IMG_SHUTTER, Boolean.TRUE.toString())));
+    JCheckBox overlayCheckBox =
+        new JCheckBox(
+            dicom + ActionW.IMAGE_OVERLAY.getTitle(),
+            Boolean.parseBoolean(pref.getProperty(IMG_OVERLAY, Boolean.TRUE.toString())));
+    JCheckBox keepNamesBox = buildKeepNamesBox(pref);
+    MaskingProfileSelector maskingSelector = new MaskingProfileSelector();
+    maskingSelector.setSelectedProfileId(pref.getProperty(IMG_MASKING_PROFILE));
+
+    List<JComponent> options = new ArrayList<>();
+    if (slider != null) {
+      options.add(slider);
+    }
+    options.add(preservePixelCheckBox);
+    options.add(paddingCheckBox);
+    options.add(shutterCheckBox);
+    options.add(overlayCheckBox);
+    options.add(keepNamesBox);
+    options.add(row(maskingSelector.createLabel(), fitted(GuiUtils.shrinkable(maskingSelector))));
+    options.add(reviewHost);
+    JComponent component = column(options);
+    return new OptionsForm() {
+      @Override
+      public JComponent component() {
+        return component;
       }
 
-      preservePixelCheckBox =
-          new JCheckBox(
-              Messages.getString("LocalExport.ch_16"),
-              Boolean.parseBoolean(pref.getProperty(IMG_16_BIT, Boolean.FALSE.toString())));
-      preservePixelCheckBox.setEnabled(Format.JPEG != selected);
-      options.add(preservePixelCheckBox);
-      options.add(paddingCheckBox);
-      options.add(shutterCheckBox);
-      options.add(overlayCheckBox);
-      options.add(boxKeepNames);
-      MaskingProfileSelector maskingSelector = new MaskingProfileSelector();
-      maskingSelector.setSelectedProfileId(pref.getProperty(IMG_MASKING_PROFILE));
-      options.add(GuiUtils.getFlowLayoutPanel(maskingSelector.createLabel(), maskingSelector));
+      @Override
+      public void save(Properties p) {
+        if (slider != null) {
+          p.setProperty(qualityKey, String.valueOf(slider.getValue()));
+        }
+        p.setProperty(IMG_16_BIT, String.valueOf(preservePixelCheckBox.isSelected()));
+        p.setProperty(IMG_PIXEL_PADDING, String.valueOf(paddingCheckBox.isSelected()));
+        p.setProperty(IMG_SHUTTER, String.valueOf(shutterCheckBox.isSelected()));
+        p.setProperty(IMG_OVERLAY, String.valueOf(overlayCheckBox.isSelected()));
+        p.setProperty(IMG_MASKING_PROFILE, maskingSelector.getSelectedProfileId());
+        p.setProperty(KEEP_INFO_DIR, String.valueOf(keepNamesBox.isSelected()));
+      }
+    };
+  }
+
+  /** Shows the burned-in annotation warning when a checked series needs a review. */
+  private void refreshReviewWarning() {
+    reviewHost.removeAll();
+    if (reviewHost.getParent() != null) {
       ReviewedImage reviewed = reviewedMedia();
       if (reviewed != null) {
         // The series carries the modality the verdict needs: without it only an explicit
         // BurnedInAnnotation could raise the warning
-        options.add(
-            MaskingProfileSelector.createReviewWarning(reviewed.media(), reviewed.series()));
-      }
-
-      int response =
-          JOptionPane.showOptionDialog(
-              WinUtil.getValidComponent(
-                  WinUtil.getParentWindow(this)), // Use parent because this has large size
-              options.toArray(),
-              Messages.getString("LocalExport.export_message"),
-              JOptionPane.OK_CANCEL_OPTION,
-              JOptionPane.PLAIN_MESSAGE,
-              null,
-              null,
-              null);
-      if (response == JOptionPane.OK_OPTION) {
-        if (slider != null) {
-          pref.setProperty(qualityKey, String.valueOf(slider.getValue()));
-        }
-        pref.setProperty(IMG_16_BIT, String.valueOf(preservePixelCheckBox.isSelected()));
-        pref.setProperty(IMG_PIXEL_PADDING, String.valueOf(paddingCheckBox.isSelected()));
-        pref.setProperty(IMG_SHUTTER, String.valueOf(shutterCheckBox.isSelected()));
-        pref.setProperty(IMG_OVERLAY, String.valueOf(overlayCheckBox.isSelected()));
-        pref.setProperty(IMG_MASKING_PROFILE, maskingSelector.getSelectedProfileId());
-        pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
+        reviewHost.add(
+            MaskingProfileSelector.createReviewWarning(reviewed.media(), reviewed.series()),
+            BorderLayout.CENTER);
       }
     }
+    reviewHost.revalidate();
+    reviewHost.repaint();
+  }
+
+  private static String qualityKey(TransferSyntax tsuid) {
+    boolean jxl =
+        tsuid == TransferSyntax.JPEGXL_LOSSLESS
+            || tsuid == TransferSyntax.JPEGXL_RECOMPRESSION
+            || tsuid == TransferSyntax.JPEGXL;
+    return jxl ? IMG_JXL_QUALITY : IMG_QUALITY;
+  }
+
+  private static JCheckBox buildKeepNamesBox(Properties pref) {
+    return new JCheckBox(
+        Messages.getString("LocalExport.keep_dir"),
+        Boolean.parseBoolean(pref.getProperty(KEEP_INFO_DIR, Boolean.TRUE.toString())));
+  }
+
+  /** The options and the additional options one under the other, aligned on the leading edge. */
+  private JComponent column(List<JComponent> options) {
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+    panel.setBorder(GuiUtils.getEmptyBorder(0, 5, 5, 5));
+    for (JComponent option : options) {
+      panel.add(leftAligned(shrinkable(option)));
+    }
+    for (JComponent option : additionalOptions) {
+      panel.add(leftAligned(shrinkable(option)));
+    }
+    return panel;
+  }
+
+  private static JComponent leftAligned(JComponent component) {
+    component.setAlignmentX(LEFT_ALIGNMENT);
+    return component;
+  }
+
+  private static JComponent shrinkable(JComponent option) {
+    return option instanceof JCheckBox checkBox ? GuiUtils.shrinkable(checkBox) : option;
+  }
+
+  /** A shrinkable combo that does not grow beyond its preferred width. */
+  private static JComponent fitted(JComboBox<?> combo) {
+    combo.setMaximumSize(combo.getPreferredSize());
+    return combo;
+  }
+
+  /**
+   * A row of components that keeps its height in a vertical box and shrinks with the side, down to
+   * the minimum width of its components.
+   */
+  private static JPanel row(JComponent... items) {
+    JPanel panel =
+        new JPanel() {
+          @Override
+          public Dimension getMaximumSize() {
+            Dimension dim = getPreferredSize();
+            dim.width = Integer.MAX_VALUE;
+            return dim;
+          }
+        };
+    panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+    for (int i = 0; i < items.length; i++) {
+      if (i > 0) {
+        panel.add(GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL));
+      }
+      items[i].setAlignmentY(CENTER_ALIGNMENT);
+      panel.add(items[i]);
+    }
+    panel.add(Box.createHorizontalGlue());
+    panel.setAlignmentX(LEFT_ALIGNMENT);
+    return panel;
   }
 
   private static JSlider buildQualitySlider(Properties pref, String qualityKey) {
@@ -488,7 +599,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
   @Override
   public void closeAdditionalWindow() {
-    // Do nothing
+    saveOptions();
   }
 
   @Override
@@ -498,6 +609,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
   @Override
   public void exportDICOM(final CheckTreeModel model, JProgressBar info) throws IOException {
+    saveOptions();
     Format format = (Format) comboBoxImgFormat.getSelectedItem();
     browseImgFile(format);
     if (outputFolder != null) {
