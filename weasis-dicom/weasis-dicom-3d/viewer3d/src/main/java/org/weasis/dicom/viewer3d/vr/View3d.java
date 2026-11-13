@@ -385,6 +385,8 @@ public class View3d extends VolumeCanvas
         new ComponentAdapter() {
           @Override
           public void componentResized(ComponentEvent e) {
+            // The aspect ratio and the camera distance follow the size of the view
+            camera.resetTransformation();
             Double currentZoom = (Double) actionsInView.get(ActionW.ZOOM.cmd());
             /*
              * Negative value means a default value according to the zoom type (pixel size, best fit...). Set again
@@ -2375,7 +2377,7 @@ public class View3d extends VolumeCanvas
     initActionWState();
 
     View c = Camera.getDefaultOrientation();
-    camera.set(c.position(), c.rotation(), -getBestFitViewScale(), false);
+    camera.set(c.position(), c.rotation(), -getBestFitViewScale(c.position(), c.rotation()), false);
     renderingLayer.setEnableRepaint(false);
     renderingLayer.setQuality(getDefaultQuality());
     renderingLayer.setOpacity(1.0);

@@ -23,8 +23,10 @@ import java.util.Optional;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import org.joml.Quaterniondc;
 import org.joml.Vector2d;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.model.ViewModel;
@@ -53,6 +55,10 @@ public class VolumeCanvas extends JPanel implements Canvas {
   private static final Logger LOGGER = LoggerFactory.getLogger(VolumeCanvas.class);
 
   private static final double ROUNDING_FACTOR = 0.5;
+  // Part of the view the rounded content of the volume covers at best fit, in its larger direction
+  private static final double BEST_FIT_COVERAGE = 0.92;
+  // How far the corners of the box, mostly air, may reach: a bit beyond the edges of the view
+  private static final double BEST_FIT_CORNER_LIMIT = 1.5;
   protected final Camera camera;
   protected DicomVolTexture volTexture;
   protected GraphicModel graphicManager;
@@ -281,7 +287,11 @@ public class VolumeCanvas extends JPanel implements Canvas {
           if (realFactor > 0.0) {
             Unit imgUnit = vol.getPixelSpacingUnit();
             if (!Unit.PIXEL.equals(imgUnit)) {
-              viewScale = imgUnit.getFactorToMeters() * vol.getTexelSize().x / realFactor;
+              // Screen pixels per texel, then the zoom factor giving them (world box: ±texel)
+              double pixelsPerTexel =
+                  imgUnit.getFactorToMeters() * vol.getTexelSize().x / realFactor;
+              double unitsPerTexel = 2.0 * vol.getNormalizedTexelSize().x / vol.width;
+              viewScale = pixelsPerTexel / (unitsPerTexel * Camera.getPixelsPerUnit());
               viewScale = -adjustViewScale(viewScale);
             }
           }
@@ -303,21 +313,34 @@ public class VolumeCanvas extends JPanel implements Canvas {
 
   @Override
   public double getBestFitViewScale() {
-    final double viewportWidth = getWidth() - 1.0;
-    final double viewportHeight = getHeight() - 1.0;
-    Vector3d d = getDisplayDimensions();
-    double min = Math.min(Math.min(viewportWidth / d.x, viewportWidth / d.y), viewportHeight / d.z);
-    return adjustViewScale(Math.sqrt(min * 1.3));
+    return getBestFitViewScale(camera.getPosition(), camera.getRotation());
   }
 
-  public Vector3d getDisplayDimensions() {
+  /**
+   * The zoom factor at which the volume fills the view, from the given camera pose: its rounded
+   * content is fitted with a small border in the orientation the view shows, the corners of its box
+   * (mostly air) may go a bit beyond the edges. See {@link Camera#getFitZoom}.
+   *
+   * @param position the camera position
+   * @param rotation the camera rotation
+   */
+  public double getBestFitViewScale(Vector3dc position, Quaterniondc rotation) {
+    if (getWidth() <= 0 || getHeight() <= 0) {
+      // Computed again by the resize listener once the view is laid out
+      return adjustViewScale(Camera.SCALE_MIN);
+    }
+    return adjustViewScale(
+        camera.getFitZoom(
+            getWorldHalfExtent(), position, rotation, BEST_FIT_COVERAGE, BEST_FIT_CORNER_LIMIT));
+  }
+
+  /** Half of the size of the volume in world units: the box the ray caster intersects is ±texel. */
+  public Vector3d getWorldHalfExtent() {
     DicomVolTexture vol = getVolTexture();
     if (vol != null) {
-      Vector3d v = new Vector3d(volTexture.width, volTexture.height, volTexture.depth);
-      v.mul(vol.getTexelSize());
-      return v;
+      return vol.getNormalizedTexelSize();
     }
-    return new Vector3d(512, 512, 512);
+    return new Vector3d(1.0, 1.0, 1.0);
   }
 
   private double cropViewScale(double viewScale) {

@@ -44,6 +44,22 @@ public class Camera {
   static final double Z_NEAR = 0.1;
   static final double Z_FAR = 10000;
   static final double DEFAULT_ZOOM = 1;
+  // The orthographic camera stands this many times farther than the perspective one
+  static final double ORTHOGRAPHIC_DISTANCE_FACTOR = 3.5;
+  // Tangent of half the vertical field of view: the projection takes FIELD_OF_VIEW in radians
+  static final double TAN_HALF_FOV = Math.tan(FIELD_OF_VIEW * 0.5);
+
+  /**
+   * Height of the view, in logical pixels, at which the perspective camera sees with a field of
+   * view of {@link #FIELD_OF_VIEW} (radians, as the projection reads it). The camera moves back as
+   * the view grows taller, so that a zoom factor gives the same number of pixels per millimeter
+   * whatever the size of the view: resizing the window shows more or less around the volume instead
+   * of scaling it, as in the 2D views. The value makes the orthographic projection, sized with the
+   * view height, match the perspective one.
+   */
+  static final double REFERENCE_HEIGHT =
+      (Z_FAR + 1.0) * TAN_HALF_FOV / ORTHOGRAPHIC_DISTANCE_FACTOR;
+
   static final Vector3dc POSITION_ZERO = new Vector3d();
 
   private final VolumeCanvas renderer;
@@ -55,7 +71,6 @@ public class Camera {
 
   // Zoom
   private double zoomFactor = DEFAULT_ZOOM;
-  private double internalZoomFactor = -FIELD_OF_VIEW * Z_NEAR / DEFAULT_ZOOM;
 
   // Matrix
   public static final Matrix4d currentModelMatrix =
@@ -173,7 +188,7 @@ public class Camera {
     if (viewMatrix == null) {
       viewMatrix =
           new Matrix4d()
-              .setTranslation(new Vector3d(0, 0, internalZoomFactor))
+              .setTranslation(new Vector3d(0, 0, -getDistance()))
               .rotate(rotation)
               .translate(position);
     }
@@ -184,7 +199,7 @@ public class Camera {
     if (projectionMatrix == null) {
       projectionMatrix = new Matrix4d();
       if (orthographicProjection) {
-        double size = renderer.getSurfaceHeight();
+        double size = getViewHeight();
         projectionMatrix.setOrthoSymmetric(renderer.getAspectRatio() * size, size, Z_FAR, 1);
       } else {
         projectionMatrix.setPerspective(FIELD_OF_VIEW, renderer.getAspectRatio(), Z_NEAR, Z_FAR);
@@ -220,6 +235,175 @@ public class Camera {
     isAdjusting = adjusting;
   }
 
+  /** Height of the view in logical pixels, the reference height while it is not laid out. */
+  double getViewHeight() {
+    int height = renderer.getHeight();
+    return height > 0 ? height : REFERENCE_HEIGHT;
+  }
+
+  /**
+   * Distance from the camera to the center of rotation. The perspective camera moves back with the
+   * height of the view and the orthographic one, whose rays widen with that height, does not: both
+   * keep the scale of the zoom factor when the view is resized.
+   */
+  double getDistance() {
+    return getDistance(zoomFactor);
+  }
+
+  private double getDistance(double zoom) {
+    double distance = FIELD_OF_VIEW * Z_NEAR / zoom;
+    if (orthographicProjection) {
+      return distance * ORTHOGRAPHIC_DISTANCE_FACTOR;
+    }
+    return distance * getViewHeight() / REFERENCE_HEIGHT;
+  }
+
+  /**
+   * Tangent of the half vertical angle of the rays: fixed for the perspective projection, growing
+   * with the view height for the orthographic one (see {@link #getProjectionMatrix()}).
+   */
+  private double getTanHalfAngle() {
+    return orthographicProjection ? getViewHeight() / (Z_FAR + 1.0) : TAN_HALF_FOV;
+  }
+
+  /**
+   * The largest zoom factor at which the volume, a box centered on the origin, fills the view as
+   * much as allowed, seen from {@code position} and {@code rotation}. The content of a volume is
+   * rounded and its corners are mostly air, so the fit is made on the ellipsoid inscribed in the
+   * box, which must cover at most {@code coverage} of the view, while the corners of the box may
+   * reach {@code cornerLimit} of it (beyond the edge when greater than one). Both are projected as
+   * the renderer casts its rays: the perspective (what is near looks larger) and the aspect ratio
+   * of the view are taken into account.
+   *
+   * @param halfExtent half of the box size along each world axis
+   * @param position the camera position (the opposite of the center of rotation)
+   * @param rotation the camera rotation
+   * @param coverage the part of the view the ellipsoid may cover, from 0 to 1
+   * @param cornerLimit the part of the view the corners of the box may reach
+   * @return the zoom factor, between {@link #SCALE_MIN} and {@link #SCALE_MAX}
+   */
+  public double getFitZoom(
+      Vector3dc halfExtent,
+      Vector3dc position,
+      Quaterniondc rotation,
+      double coverage,
+      double cornerLimit) {
+    double aspect = renderer.getAspectRatio();
+    if (!(aspect > 0.0) || Double.isInfinite(aspect)) {
+      aspect = 1.0;
+    }
+    FitShape shape = new FitShape(halfExtent, position, rotation);
+    double ratio = aspect;
+    java.util.function.DoublePredicate fits =
+        zoom ->
+            shape.cornersFit(getDistance(zoom), getTanHalfAngle() * cornerLimit, ratio)
+                && shape.ellipsoidFits(getDistance(zoom), getTanHalfAngle() * coverage, ratio);
+    if (fits.test(SCALE_MAX)) {
+      return SCALE_MAX;
+    }
+    if (!fits.test(SCALE_MIN)) {
+      return SCALE_MIN;
+    }
+    // The volume only grows on the screen with the zoom: bisection in log space
+    double low = java.lang.Math.log(SCALE_MIN);
+    double high = java.lang.Math.log(SCALE_MAX);
+    for (int i = 0; i < 40; i++) {
+      double mid = (low + high) * 0.5;
+      if (fits.test(java.lang.Math.exp(mid))) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+    return java.lang.Math.exp(low);
+  }
+
+  /**
+   * The box of the volume and its inscribed ellipsoid in view axes, before the camera distance is
+   * applied along z (the camera looks towards -z).
+   */
+  private static final class FitShape {
+    private final Vector3d[] corners = new Vector3d[8];
+    private final Vector3d center;
+    // Rows of the ellipsoid matrix in view axes: a point is center + A u with |u| <= 1
+    private final Vector3d rowX;
+    private final Vector3d rowY;
+    private final Vector3d rowZ;
+
+    FitShape(Vector3dc halfExtent, Vector3dc position, Quaterniondc rotation) {
+      for (int i = 0; i < corners.length; i++) {
+        Vector3d c =
+            new Vector3d(
+                (i & 1) == 0 ? -halfExtent.x() : halfExtent.x(),
+                (i & 2) == 0 ? -halfExtent.y() : halfExtent.y(),
+                (i & 4) == 0 ? -halfExtent.z() : halfExtent.z());
+        corners[i] = rotation.transform(c.add(position));
+      }
+      center = rotation.transform(new Vector3d(position));
+      Vector3d ax = rotation.transform(new Vector3d(halfExtent.x(), 0, 0));
+      Vector3d ay = rotation.transform(new Vector3d(0, halfExtent.y(), 0));
+      Vector3d az = rotation.transform(new Vector3d(0, 0, halfExtent.z()));
+      rowX = new Vector3d(ax.x, ay.x, az.x);
+      rowY = new Vector3d(ax.y, ay.y, az.y);
+      rowZ = new Vector3d(ax.z, ay.z, az.z);
+    }
+
+    boolean cornersFit(double distance, double tan, double aspect) {
+      for (Vector3d c : corners) {
+        double depth = distance - c.z;
+        if (depth <= Z_NEAR) {
+          return false;
+        }
+        if (abs(c.y) > depth * tan || abs(c.x) > depth * tan * aspect) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    boolean ellipsoidFits(double distance, double tan, double aspect) {
+      double cz = center.z - distance;
+      return silhouette(center.y, rowY, cz) <= tan
+          && silhouette(center.x, rowX, cz) <= tan * aspect;
+    }
+
+    /**
+     * Largest tangent r / -z reached by the ellipsoid along one screen axis: the planes r + k z = 0
+     * through the camera tangent to it satisfy (cr + k cz)^2 = |Ar + k Az|^2.
+     */
+    private double silhouette(double cr, Vector3d row, double cz) {
+      double a = cz * cz - rowZ.lengthSquared();
+      if (a <= 0.0 || cz >= 0.0) {
+        // The camera is inside the ellipsoid slab, or behind it
+        return Double.POSITIVE_INFINITY;
+      }
+      double b = 2.0 * (cr * cz - row.dot(rowZ));
+      double c = cr * cr - row.lengthSquared();
+      double disc = b * b - 4.0 * a * c;
+      if (disc < 0.0) {
+        return Double.POSITIVE_INFINITY;
+      }
+      double sq = sqrt(disc);
+      return java.lang.Math.max(abs((-b + sq) / (2.0 * a)), abs((-b - sq) / (2.0 * a)));
+    }
+  }
+
+  /**
+   * Half of the height seen on the plane through the center of rotation, in world units: the same
+   * for both projections, proportional to the view height and inverse to the zoom factor.
+   */
+  double getHalfHeightOnCenterPlane() {
+    return FIELD_OF_VIEW * Z_NEAR / zoomFactor * TAN_HALF_FOV * getViewHeight() / REFERENCE_HEIGHT;
+  }
+
+  /**
+   * Logical pixels per world unit on the plane through the center of rotation at a zoom factor of
+   * one. The world box of the volume spans twice its normalized texel size.
+   */
+  public static double getPixelsPerUnit() {
+    return REFERENCE_HEIGHT / (2.0 * FIELD_OF_VIEW * Z_NEAR * TAN_HALF_FOV);
+  }
+
   public double getFieldOfView() {
     return FIELD_OF_VIEW;
   }
@@ -250,11 +434,6 @@ public class Camera {
   public void setZoomFactor(double zoomFactor, boolean repaint) {
     renderer.setActionsInView(ActionW.ZOOM.cmd(), zoomFactor);
     this.zoomFactor = Math.abs(zoomFactor);
-    double ratio = this.zoomFactor;
-    if (orthographicProjection) {
-      ratio /= 3.5;
-    }
-    this.internalZoomFactor = -FIELD_OF_VIEW * Z_NEAR / ratio;
 
     if (repaint) {
       updateCameraTransform();
@@ -303,12 +482,7 @@ public class Camera {
 
   /** Moves the volume in the view plane by a shift in normalized device coordinates. */
   private void moveInView(Vector2dc ndc) {
-    double hh;
-    if (orthographicProjection) {
-      hh = 2.0 / zoomFactor;
-    } else {
-      hh = abs(internalZoomFactor) * tan(getFieldOfView() * 0.5);
-    }
+    double hh = getHalfHeightOnCenterPlane();
     double hw = hh * renderer.getAspectRatio();
 
     Vector4d invTransform =
