@@ -28,7 +28,6 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -65,7 +64,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1411,9 +1409,9 @@ public class SidePanel extends JPanel {
     }
   }
 
-  /** A slot: a header with the tool title and a minimize button, and the tool component. */
+  /** The color of the frames and lines of the slots. */
   private static Color borderColor() {
-    return FlatUIUtils.getUIColor("Component.borderColor", Color.GRAY); // NON-NLS
+    return RoundedTopBorder.color();
   }
 
   /** The background of a slot title bar: the panel background, slightly lifted off it. */
@@ -1427,47 +1425,7 @@ public class SidePanel extends JPanel {
         : ColorFunctions.darken(bg, 0.05f);
   }
 
-  /** The diameter of the rounded top corners of a slot, from the arc of the look and feel. */
-  private static int arc() {
-    return GuiUtils.getScaleLength(Math.max(8, FlatUIUtils.getUIInt("Component.arc", 5) + 9));
-  }
-
-  /** A rectangle whose top corners are rounded with the given diameter and bottom ones square. */
-  private static Shape topRounded(double x, double y, double w, double h, double arc) {
-    double r = Math.min(arc / 2.0, Math.min(w, h) / 2.0);
-    Path2D path = new Path2D.Double();
-    path.moveTo(x, y + h);
-    path.lineTo(x, y + r);
-    path.quadTo(x, y, x + r, y);
-    path.lineTo(x + w - r, y);
-    path.quadTo(x + w, y, x + w, y + r);
-    path.lineTo(x + w, y + h);
-    path.closePath();
-    return path;
-  }
-
-  /** A one-pixel outline of a slot with rounded top corners and square bottom ones. */
-  private static final class SlotBorder extends AbstractBorder {
-    @Override
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      Graphics2D g2 = (Graphics2D) g.create();
-      try {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-        g2.setColor(borderColor());
-        g2.draw(topRounded(x + 0.5, y + 0.5, width - 1.0, height - 1.0, arc()));
-      } finally {
-        g2.dispose();
-      }
-    }
-
-    @Override
-    public Insets getBorderInsets(Component c, Insets insets) {
-      insets.set(1, 1, 1, 1);
-      return insets;
-    }
-  }
-
+  /** A slot: a title bar with the tool title and its buttons, and the tool component. */
   private final class SlotHost {
     final Slot slot;
 
@@ -1481,7 +1439,7 @@ public class SidePanel extends JPanel {
           @Override
           public void updateUI() {
             super.updateUI();
-            setBorder(new SlotBorder());
+            setBorder(new RoundedTopBorder());
           }
 
           @Override
@@ -1496,7 +1454,13 @@ public class SidePanel extends JPanel {
               g2.setRenderingHint(
                   RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
               g2.setColor(tint);
-              g2.fill(topRounded(0, 0, getWidth(), header.getY() + header.getHeight(), arc()));
+              g2.fill(
+                  RoundedTopBorder.topRounded(
+                      0,
+                      0,
+                      getWidth(),
+                      header.getY() + header.getHeight(),
+                      RoundedTopBorder.arc()));
             } finally {
               g2.dispose();
             }

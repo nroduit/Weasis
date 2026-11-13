@@ -23,6 +23,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import org.weasis.core.Messages;
+import org.weasis.core.ui.docking.RoundedTopBorder;
 import org.weasis.core.ui.docking.ws.drag.TabDragController;
 
 /**
@@ -34,6 +35,9 @@ public final class TabGroup extends JTabbedPane {
   private final WorkspaceManager manager;
   private final Workspace workspace;
   private final List<WorkspaceView> views = new ArrayList<>();
+
+  /** The gap between the frame of a group and the edge of its area (unscaled pixels). */
+  static final int GROUP_MARGIN = 2;
 
   /** The widest a tab gets before its title is cut with an ellipsis (unscaled pixels). */
   static final int MAX_TAB_WIDTH = 240;
@@ -258,6 +262,8 @@ public final class TabGroup extends JTabbedPane {
       style.append(" selectedForeground: ").append(hex(title)).append(';'); // NON-NLS
     }
     putClientProperty(FlatClientProperties.STYLE, style.toString());
+    // framed as the slots of the sides, a small margin apart from the neighbor groups
+    setBorder(new RoundedTopBorder(GROUP_MARGIN));
   }
 
   private static String hex(Color c) {
