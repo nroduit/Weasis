@@ -24,6 +24,7 @@ import javax.swing.border.Border;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
+import org.weasis.core.api.gui.util.WrapFlowLayout;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -73,7 +74,7 @@ public class VolumeTool extends PluginTool {
         .ifPresent(
             comboItem -> {
               JLabel label = new JLabel(ActionVol.VOL_PRESET.getTitle() + StringUtil.COLON);
-              JComboBox<?> combo = comboItem.createCombo(140);
+              JComboBox<?> combo = GuiUtils.shrinkable(comboItem.createCombo(140));
               combo.setMaximumRowCount(15);
               JPanel lutPanel = GuiUtils.getHorizontalBoxLayoutPanel(5, label, combo);
               EventManager.getInstance()
@@ -105,7 +106,7 @@ public class VolumeTool extends PluginTool {
         .ifPresent(
             c -> {
               JLabel label = new JLabel(ActionVol.RENDERING_TYPE.getTitle() + StringUtil.COLON);
-              JComboBox<?> combo = c.createCombo(140);
+              JComboBox<?> combo = GuiUtils.shrinkable(c.createCombo(140));
               combo.setMaximumRowCount(10);
               volumePanel.add(GuiUtils.getHorizontalBoxLayoutPanel(3, label, combo));
               volumePanel.add(GuiUtils.boxVerticalStrut(gabY));
@@ -142,8 +143,12 @@ public class VolumeTool extends PluginTool {
                     }
                   });
               JCheckBox box = b.createCheckBox(ActionVol.VOL_SHADING.getTitle());
-              volumePanel.add(
-                  GuiUtils.getFlowLayoutPanel(box, GuiUtils.boxHorizontalStrut(10), btnOptions));
+              // the button goes under the check box when the side is narrow
+              int gap = GuiUtils.getScaleLength(5);
+              JPanel row = new JPanel(new WrapFlowLayout(2 * gap, gap));
+              row.add(box);
+              row.add(btnOptions);
+              volumePanel.add(row);
               volumePanel.add(GuiUtils.boxVerticalStrut(gabY));
             });
 
@@ -199,11 +204,11 @@ public class VolumeTool extends PluginTool {
         .getAction(ActionW.FLIP)
         .ifPresent(
             toggleButton -> {
-              JPanel pane = GuiUtils.getFlowLayoutPanel();
-              pane.add(
-                  toggleButton.createCheckBox(
-                      org.weasis.dicom.viewer2d.Messages.getString("View2dContainer.flip_h")));
-              transform.add(pane);
+              JCheckBox checkBox =
+                  GuiUtils.shrinkable(
+                      toggleButton.createCheckBox(
+                          org.weasis.dicom.viewer2d.Messages.getString("View2dContainer.flip_h")));
+              transform.add(GuiUtils.getHorizontalBoxLayoutPanel(5, checkBox));
             });
     return transform;
   }

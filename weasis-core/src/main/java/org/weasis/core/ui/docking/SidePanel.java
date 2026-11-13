@@ -152,7 +152,16 @@ public class SidePanel extends JPanel {
     }
   }
 
+  /** The minimum content width of the explorer side. */
   private static final int MIN_CONTENT_WIDTH = 200;
+
+  /**
+   * The minimum content width of the tools side. A tool follows the width of its side and must fit
+   * at this width beside a vertical scroll bar (218 pixels at scale 1), or it gets a horizontal
+   * one.
+   */
+  private static final int MIN_TOOLS_CONTENT_WIDTH = 230;
+
   private static final int MIN_SLOT_HEIGHT = 120;
   private static final double DEFAULT_RATIO = 0.6;
 
@@ -932,8 +941,8 @@ public class SidePanel extends JPanel {
   public void setContentWidth(int width) {
     if (width > 0) {
       forgetFit();
-      contentWidth = width;
-      Settings.set(widthSetting(), width);
+      contentWidth = Math.max(width, minContentWidth());
+      Settings.set(widthSetting(), contentWidth);
       applyWidth();
     }
   }
@@ -1821,15 +1830,30 @@ public class SidePanel extends JPanel {
     return Math.clamp(value, MIN_RATIO, MAX_RATIO);
   }
 
-  /** Fallback content width when nothing is persisted: the widest hosted panel's width. */
+  /**
+   * The first width of the side: the widest tool plus a vertical scroll bar, which a tool gets when
+   * it shares the side with a tool in the other slot.
+   */
   private int preferredContentWidth() {
     int w = 0;
     for (DockableTool t : tools) {
       if (t.getDockableWidth() > 0) {
-        w = Math.max(w, GuiUtils.getScaleLength(t.getDockableWidth()));
+        w = Math.max(w, t.getDockableWidth());
       }
     }
-    return w > 0 ? w : GuiUtils.getScaleLength(MIN_CONTENT_WIDTH);
+    int min = minContentWidth();
+    return w > 0 ? Math.max(min, GuiUtils.getScaleLength(w + scrollBarWidth())) : min;
+  }
+
+  /** The minimum content width of this side, constant for the role. */
+  private int minContentWidth() {
+    return GuiUtils.getScaleLength(
+        role == Role.TOOLS ? MIN_TOOLS_CONTENT_WIDTH : MIN_CONTENT_WIDTH);
+  }
+
+  private static int scrollBarWidth() {
+    int width = UIManager.getInt("ScrollBar.width"); // NON-NLS
+    return width > 0 ? width : 10;
   }
 
   /**
@@ -1881,11 +1905,12 @@ public class SidePanel extends JPanel {
     boolean showing = isShowingContent();
     if (showing && contentWidth <= 0) {
       // seed once: the user-set width survives viewer switches and sessions
-      contentWidth = Settings.get(widthSetting(), this::preferredContentWidth);
+      contentWidth =
+          Math.max(minContentWidth(), Settings.get(widthSetting(), this::preferredContentWidth));
     }
     int total = showing ? contentWidth : 0;
     // constant minimum: a per-tool minimum would push the divider on viewer switches
-    int min = showing ? GuiUtils.getScaleLength(MIN_CONTENT_WIDTH) : 0;
+    int min = showing ? minContentWidth() : 0;
     setPreferredSize(new Dimension(total, getPreferredSize().height));
     setMinimumSize(new Dimension(min, 0));
     if (split != null && split.getWidth() > 0) {

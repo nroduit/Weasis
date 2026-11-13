@@ -10,13 +10,18 @@
 package org.weasis.core.ui.docking;
 
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.util.Objects;
 import javax.swing.Icon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.ui.docking.SidePanel.Role;
 import org.weasis.core.ui.docking.SidePanel.Side;
@@ -27,8 +32,15 @@ import org.weasis.core.ui.docking.SidePanel.Side;
  * the locale decides which is left); it is not part of the central workspace, so viewers can never
  * be dropped on it. {@link #showDockable()} / {@link #closeDockable()} add and remove it from its
  * side host, where it replaces any tool of the same {@link #getToolId() id}.
+ *
+ * <p>A tool shown through {@link #getToolComponentFromJScrollPane} is as wide as its side and
+ * scrolls vertically only: the side width belongs to the user, so the content follows it instead of
+ * asking for more. A horizontal bar appears only when the side is narrower than the {@link
+ * #getMinimumSize() minimum width} of the tool.
  */
-public abstract class PluginTool extends JPanel implements DockableTool {
+public abstract class PluginTool extends JPanel implements DockableTool, Scrollable {
+  private static final int SCROLL_UNIT = 16;
+
   private final Type panelType;
   private final String toolId;
   private final String toolName;
@@ -145,6 +157,34 @@ public abstract class PluginTool extends JPanel implements DockableTool {
       viewPort.setView(this);
     }
     return rootPane;
+  }
+
+  @Override
+  public Dimension getPreferredScrollableViewportSize() {
+    return getPreferredSize();
+  }
+
+  @Override
+  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+    return GuiUtils.getScaleLength(SCROLL_UNIT);
+  }
+
+  @Override
+  public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+    int extent = orientation == SwingConstants.VERTICAL ? visibleRect.height : visibleRect.width;
+    return Math.max(GuiUtils.getScaleLength(SCROLL_UNIT), extent - SCROLL_UNIT);
+  }
+
+  /** Follows the width of the side down to the minimum width of the tool. */
+  @Override
+  public boolean getScrollableTracksViewportWidth() {
+    return !(getParent() instanceof JViewport viewport)
+        || viewport.getWidth() >= getMinimumSize().width;
+  }
+
+  @Override
+  public boolean getScrollableTracksViewportHeight() {
+    return false;
   }
 
   @Override

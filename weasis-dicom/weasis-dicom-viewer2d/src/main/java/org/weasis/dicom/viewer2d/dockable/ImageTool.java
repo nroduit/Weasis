@@ -10,9 +10,7 @@
 package org.weasis.dicom.viewer2d.dockable;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +38,7 @@ import org.weasis.core.api.gui.util.Feature.SliderChangeListenerValue;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.gui.util.WrapFlowLayout;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -118,7 +117,7 @@ public class ImageTool extends PluginTool {
     if (mask.isEmpty()) {
       return;
     }
-    JComboBox<?> maskCombo = mask.get().createCombo(160);
+    JComboBox<?> maskCombo = GuiUtils.shrinkable(mask.get().createCombo(160));
     CollapsiblePanel section =
         addSection(
             Messages.getString("SubtractionTool.title"),
@@ -177,7 +176,11 @@ public class ImageTool extends PluginTool {
               a.registerActionState(resetButton);
             });
 
-    JPanel panel = GuiUtils.getFlowLayoutPanel(resetComboBox, resetButton);
+    int gap = GuiUtils.getScaleLength(5);
+    // the button goes under the combo when the side is narrow
+    JPanel panel = new JPanel(new WrapFlowLayout(gap, gap));
+    panel.add(resetComboBox);
+    panel.add(resetButton);
     panel.setBorder(
         BorderFactory.createCompoundBorder(
             hspace, GuiUtils.getTitledBorder(ActionW.RESET.getTitle())));
@@ -220,9 +223,13 @@ public class ImageTool extends PluginTool {
               stopButton.addActionListener(EventManager.getInstance());
               sliderItem.registerActionState(stopButton);
 
-              JPanel cinePanel =
-                  GuiUtils.getFlowLayoutPanel(
-                      3, 3, speedLabel, speedSpinner, startButton, stopButton);
+              int gap = GuiUtils.getScaleLength(3);
+              // the buttons go under the speed when the side is narrow
+              JPanel cinePanel = new JPanel(new WrapFlowLayout(gap, gap));
+              cinePanel.add(speedLabel, WrapFlowLayout.KEEP_WITH_NEXT);
+              cinePanel.add(speedSpinner);
+              cinePanel.add(startButton);
+              cinePanel.add(stopButton);
               EventManager.getInstance()
                   .getAction(ActionW.CINE_SWEEP)
                   .ifPresent(
@@ -310,7 +317,7 @@ public class ImageTool extends PluginTool {
         .ifPresent(
             comboItem -> {
               JLabel presetsLabel = new JLabel(ActionW.PRESET.getTitle() + StringUtil.COLON);
-              JComboBox<?> presetComboBox = comboItem.createCombo(160);
+              JComboBox<?> presetComboBox = GuiUtils.shrinkable(comboItem.createCombo(160));
               presetComboBox.setMaximumRowCount(10);
               winLevelPanel.add(
                   GuiUtils.getHorizontalBoxLayoutPanel(
@@ -326,7 +333,7 @@ public class ImageTool extends PluginTool {
         .ifPresent(
             comboItem -> {
               JLabel label = new JLabel(ActionW.LUT_SHAPE.getTitle() + StringUtil.COLON);
-              JComboBox<?> combo = comboItem.createCombo(140);
+              JComboBox<?> combo = GuiUtils.shrinkable(comboItem.createCombo(140));
               combo.setMaximumRowCount(10);
               winLevelPanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, combo));
               winLevelPanel.add(GuiUtils.boxVerticalStrut(gabY));
@@ -338,7 +345,7 @@ public class ImageTool extends PluginTool {
           .ifPresent(
               comboItem -> {
                 JLabel lutLabel = new JLabel(ActionW.LUT.getTitle() + StringUtil.COLON);
-                JComboBox<?> lutComboBox = comboItem.createCombo(140);
+                JComboBox<?> lutComboBox = GuiUtils.shrinkable(comboItem.createCombo(140));
                 JPanel lutPanel = GuiUtils.getHorizontalBoxLayoutPanel(5, lutLabel, lutComboBox);
                 manager
                     .getAction(ActionW.INVERT_LUT)
@@ -359,7 +366,7 @@ public class ImageTool extends PluginTool {
           .ifPresent(
               comboItem -> {
                 JLabel label = new JLabel(Messages.common("filter") + StringUtil.COLON);
-                JComboBox<?> combo = comboItem.createCombo(160);
+                JComboBox<?> combo = GuiUtils.shrinkable(comboItem.createCombo(160));
                 winLevelPanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, combo));
                 winLevelPanel.add(GuiUtils.boxVerticalStrut(5));
               });
@@ -395,9 +402,10 @@ public class ImageTool extends PluginTool {
         .getAction(ActionW.FLIP)
         .ifPresent(
             toggleButton -> {
-              JPanel pane = GuiUtils.getFlowLayoutPanel();
-              pane.add(toggleButton.createCheckBox(Messages.getString("View2dContainer.flip_h")));
-              transform.add(pane);
+              JCheckBox checkBox =
+                  GuiUtils.shrinkable(
+                      toggleButton.createCheckBox(Messages.getString("View2dContainer.flip_h")));
+              transform.add(GuiUtils.getHorizontalBoxLayoutPanel(5, checkBox));
             });
     return transform;
   }
@@ -487,21 +495,17 @@ public class ImageTool extends PluginTool {
               panel.add(GuiUtils.getFlowLayoutPanel(motion));
             });
 
-    JPanel bottom = new JPanel(new BorderLayout());
-    bottom.setAlignmentX(Component.LEFT_ALIGNMENT);
+    // the button goes under the check box when the side is narrow
+    int gap = GuiUtils.getScaleLength(5);
+    JPanel bottom = new JPanel(new WrapFlowLayout(gap, gap));
     manager
         .getAction(SubtractionAction.PREVIEW)
-        .ifPresent(
-            a ->
-                bottom.add(
-                    a.createCheckBox(SubtractionAction.PREVIEW.getTitle()),
-                    BorderLayout.LINE_START));
+        .ifPresent(a -> bottom.add(a.createCheckBox(SubtractionAction.PREVIEW.getTitle())));
     JButton build = new JButton(Messages.getString("SubtractionTool.subtract"));
     build.setToolTipText(Messages.getString("SubtractionTool.subtract.tip"));
     build.addActionListener(e -> SubtractionController.subtractSelected());
     manager.getAction(SubtractionAction.MASK).ifPresent(a -> a.registerActionState(build));
-    bottom.add(build, BorderLayout.LINE_END);
-    bottom.setMaximumSize(new Dimension(Integer.MAX_VALUE, bottom.getPreferredSize().height));
+    bottom.add(build);
     panel.add(bottom);
     return panel;
   }
@@ -528,7 +532,9 @@ public class ImageTool extends PluginTool {
         .ifPresent(
             a -> {
               JLabel label = new JLabel(Messages.common("series") + StringUtil.COLON);
-              fusionPanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, a.createCombo(160)));
+              fusionPanel.add(
+                  GuiUtils.getHorizontalBoxLayoutPanel(
+                      5, label, GuiUtils.shrinkable(a.createCombo(160))));
               fusionPanel.add(GuiUtils.boxVerticalStrut(gabY));
             });
 
@@ -537,7 +543,9 @@ public class ImageTool extends PluginTool {
         .ifPresent(
             a -> {
               JLabel label = new JLabel(Messages.getString("FusionTool.lut") + StringUtil.COLON);
-              fusionPanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, a.createCombo(160)));
+              fusionPanel.add(
+                  GuiUtils.getHorizontalBoxLayoutPanel(
+                      5, label, GuiUtils.shrinkable(a.createCombo(160))));
               fusionPanel.add(GuiUtils.boxVerticalStrut(gabY));
             });
 

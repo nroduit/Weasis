@@ -62,6 +62,8 @@ import javax.swing.Box.Filler;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFormattedTextField.AbstractFormatterFactory;
@@ -100,6 +102,13 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.launcher.UiOrientation;
 
 public class GuiUtils {
+
+  /** The width a combo made {@link #shrinkable(JComboBox)} can shrink to. */
+  public static final int MIN_SHRUNK_COMBO_WIDTH = 100;
+
+  /** The width a check box made {@link #shrinkable(JCheckBox)} can shrink to. */
+  public static final int MIN_SHRUNK_CHECK_BOX_WIDTH = 60;
+
   private static final Logger LOGGER = LoggerFactory.getLogger(GuiUtils.class);
 
   public static final String HTML_START = "<html>";
@@ -448,6 +457,33 @@ public class GuiUtils {
     int w = getScaleLength(width);
     int h = getScaleLength(height);
     return new Dimension(w, h);
+  }
+
+  /**
+   * Lets a combo of a side tool shrink with the side, down to its arrow and the first characters of
+   * the item, instead of imposing its preferred width.
+   */
+  public static <C extends JComboBox<?>> C shrinkable(C combo) {
+    combo.setMinimumSize(
+        new Dimension(getScaleLength(MIN_SHRUNK_COMBO_WIDTH), combo.getMinimumSize().height));
+    combo.setMaximumSize(new Dimension(Short.MAX_VALUE, combo.getPreferredSize().height));
+    return combo;
+  }
+
+  /**
+   * Lets a check box of a side tool shrink with the side: its text is cut and given whole in the
+   * tooltip.
+   */
+  public static JCheckBox shrinkable(JCheckBox checkBox) {
+    if (checkBox.getToolTipText() == null) {
+      checkBox.setToolTipText(checkBox.getText());
+    }
+    checkBox.setMinimumSize(
+        new Dimension(
+            getScaleLength(MIN_SHRUNK_CHECK_BOX_WIDTH), checkBox.getPreferredSize().height));
+    // fills its row, so it stays at the start of the line
+    checkBox.setMaximumSize(new Dimension(Short.MAX_VALUE, checkBox.getPreferredSize().height));
+    return checkBox;
   }
 
   public static void setPreferredWidth(Component component, int width, int minWidth) {

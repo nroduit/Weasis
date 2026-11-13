@@ -38,6 +38,9 @@ import org.weasis.core.api.util.FontItem;
  */
 public class CollapsiblePanel extends JPanel {
 
+  /** The width the header can shrink to, its title cut. */
+  private static final int MIN_HEADER_WIDTH = 60;
+
   private final JComponent content;
   private final JButton header;
   private final String persistenceKey;
@@ -65,6 +68,10 @@ public class CollapsiblePanel extends JPanel {
     header.putClientProperty(
         FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_BORDERLESS);
     header.addActionListener(e -> setExpanded(!expanded));
+    // a narrow tool cuts the title (whole in the tooltip) instead of scrolling sideways
+    header.setToolTipText(title);
+    header.setMinimumSize(
+        new Dimension(GuiUtils.getScaleLength(MIN_HEADER_WIDTH), header.getPreferredSize().height));
 
     setAlignmentX(Component.LEFT_ALIGNMENT);
     setBorder(buildSectionBorder());

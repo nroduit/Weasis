@@ -52,6 +52,7 @@ import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.gui.util.WrapFlowLayout;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -123,6 +124,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private final JScrollPane rootPane = new JScrollPane();
   private final JTabbedPane tabbedPane = new JTabbedPane();
   private final JButton btnLoad = new JButton(Messages.getString("load.rt"));
+
   private final JComboBox<StructureSet> comboRtStructureSet = new JComboBox<>();
   private final JComboBox<Plan> comboRtPlan = new JComboBox<>();
   private final JSliderW slider;
@@ -255,25 +257,27 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     progressBar.setVisible(false);
     headerPanel.add(loadPanel);
 
-    // Structure set panel
-    JPanel structPanel = createFlowPanel(FlowLayout.LEADING);
-    structPanel.add(new JLabel(Messages.getString("structures") + StringUtil.COLON));
-    GuiUtils.setPreferredWidth(comboRtStructureSet, 230, 150);
-    structPanel.add(comboRtStructureSet);
-    headerPanel.add(structPanel);
+    // Structure set and plan: the combos follow the width of the side, down to a cut name
+    GuiUtils.setPreferredWidth(comboRtStructureSet, 230, GuiUtils.MIN_SHRUNK_COMBO_WIDTH);
+    headerPanel.add(
+        GuiUtils.getHorizontalBoxLayoutPanel(
+            5,
+            new JLabel(Messages.getString("structures") + StringUtil.COLON),
+            comboRtStructureSet));
+    headerPanel.add(GuiUtils.boxVerticalStrut(5));
+    GuiUtils.setPreferredWidth(comboRtPlan, 240, GuiUtils.MIN_SHRUNK_COMBO_WIDTH);
+    headerPanel.add(
+        GuiUtils.getHorizontalBoxLayoutPanel(
+            5, new JLabel(Messages.getString("plan") + StringUtil.COLON), comboRtPlan));
 
-    // Plan panel
-    JPanel planPanel = createFlowPanel(FlowLayout.LEADING);
-    planPanel.add(new JLabel(Messages.getString("plan") + StringUtil.COLON));
-    GuiUtils.setPreferredWidth(comboRtPlan, 240, 150);
-    planPanel.add(comboRtPlan);
-    headerPanel.add(planPanel);
-
-    // Dose panel
-    JPanel dosePanel = createFlowPanel(FlowLayout.LEADING);
-    dosePanel.add(new JLabel(Messages.getString("dose") + StringUtil.COLON));
-    dosePanel.add(txtRtPlanDoseValue);
-    dosePanel.add(new JLabel("cGy"));
+    // Dose panel: the check box goes under the dose when the side is narrow
+    int gap = GuiUtils.getScaleLength(5);
+    JPanel dosePanel = new JPanel(new WrapFlowLayout(gap, gap));
+    dosePanel.setBorder(GuiUtils.getEmptyBorder(5, 5, 5, 5));
+    dosePanel.add(
+        new JLabel(Messages.getString("dose") + StringUtil.COLON), WrapFlowLayout.KEEP_WITH_NEXT);
+    dosePanel.add(txtRtPlanDoseValue, WrapFlowLayout.KEEP_WITH_NEXT);
+    dosePanel.add(new JLabel("cGy")); // NON-NLS
     colorwashCheck.addActionListener(e -> applyColorwash(colorwashCheck.isSelected()));
     dosePanel.add(colorwashCheck);
     headerPanel.add(dosePanel);

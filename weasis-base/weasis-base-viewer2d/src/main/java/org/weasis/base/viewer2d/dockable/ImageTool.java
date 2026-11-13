@@ -14,6 +14,7 @@ import java.awt.Component;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -27,6 +28,7 @@ import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
+import org.weasis.core.api.gui.util.WrapFlowLayout;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -81,7 +83,11 @@ public class ImageTool extends PluginTool {
               a.registerActionState(resetButton);
             });
 
-    JPanel panel = GuiUtils.getFlowLayoutPanel(resetComboBox, resetButton);
+    int gap = GuiUtils.getScaleLength(5);
+    // the button goes under the combo when the side is narrow
+    JPanel panel = new JPanel(new WrapFlowLayout(gap, gap));
+    panel.add(resetComboBox);
+    panel.add(resetButton);
     panel.setBorder(
         BorderFactory.createCompoundBorder(
             spaceY, GuiUtils.getTitledBorder(ActionW.RESET.getTitle())));
@@ -120,9 +126,14 @@ public class ImageTool extends PluginTool {
               stopButton.addActionListener(EventManager.getInstance());
               sliderItem.registerActionState(stopButton);
               framePanel.add(frameSlider);
-              framePanel.add(
-                  GuiUtils.getFlowLayoutPanel(
-                      3, 3, speedLabel, speedSpinner, startButton, stopButton));
+              int gap = GuiUtils.getScaleLength(3);
+              // the buttons go under the speed when the side is narrow
+              JPanel cinePanel = new JPanel(new WrapFlowLayout(gap, gap));
+              cinePanel.add(speedLabel, WrapFlowLayout.KEEP_WITH_NEXT);
+              cinePanel.add(speedSpinner);
+              cinePanel.add(startButton);
+              cinePanel.add(stopButton);
+              framePanel.add(cinePanel);
             });
     return framePanel;
   }
@@ -158,7 +169,7 @@ public class ImageTool extends PluginTool {
         .ifPresent(
             comboItem -> {
               JLabel lutLabel = new JLabel(ActionW.LUT.getTitle() + StringUtil.COLON);
-              JComboBox<?> lutComboBox = comboItem.createCombo(140);
+              JComboBox<?> lutComboBox = GuiUtils.shrinkable(comboItem.createCombo(140));
               JPanel lutPanel = GuiUtils.getHorizontalBoxLayoutPanel(5, lutLabel, lutComboBox);
               EventManager.getInstance()
                   .getAction(ActionW.INVERT_LUT)
@@ -179,7 +190,7 @@ public class ImageTool extends PluginTool {
         .ifPresent(
             comboItem -> {
               JLabel label = new JLabel(Messages.common("filter") + StringUtil.COLON);
-              JComboBox<?> combo = comboItem.createCombo(160);
+              JComboBox<?> combo = GuiUtils.shrinkable(comboItem.createCombo(160));
               winLevelPanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, combo));
               winLevelPanel.add(GuiUtils.boxVerticalStrut(5));
             });
@@ -214,9 +225,10 @@ public class ImageTool extends PluginTool {
         .getAction(ActionW.FLIP)
         .ifPresent(
             toggleButton -> {
-              JPanel pane = GuiUtils.getFlowLayoutPanel();
-              pane.add(toggleButton.createCheckBox(Messages.getString("ImageTool.flip")));
-              transform.add(pane);
+              JCheckBox checkBox =
+                  GuiUtils.shrinkable(
+                      toggleButton.createCheckBox(Messages.getString("ImageTool.flip")));
+              transform.add(GuiUtils.getHorizontalBoxLayoutPanel(5, checkBox));
             });
     return transform;
   }
