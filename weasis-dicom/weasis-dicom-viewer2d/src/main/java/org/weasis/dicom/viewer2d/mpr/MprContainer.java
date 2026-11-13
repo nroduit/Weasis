@@ -73,6 +73,7 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.print.DicomPrintDestination;
+import org.weasis.dicom.viewer2d.Basic3DToolBar;
 import org.weasis.dicom.viewer2d.DcmHeaderToolBar;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.LutToolBar;
@@ -212,6 +213,7 @@ public class MprContainer extends DicomViewerPlugin
       toolBars.add(new RotationToolBar(evtMg, 30));
       toolBars.add(new DcmHeaderToolBar(evtMg, 35));
       toolBars.add(new LutToolBar(evtMg, 40));
+      toolBars.add(new Basic3DToolBar(50));
 
       String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
       Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);

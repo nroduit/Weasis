@@ -45,6 +45,10 @@ public class Activator extends WeasisPlugin {
 
     // Register tools and toolbars
     BundleTools.registerExistingComponents(View2dContainer.UI);
+    for (InsertableFactory factory :
+        GuiUtils.getUICore().getPluginManager().getExtensions(InsertableFactory.class)) {
+      GuiExecutor.execute(() -> registerMprToolBar(factory));
+    }
 
     // Start listening for InsertableFactory extensions from other plugins
     GuiUtils.getUICore()
@@ -75,6 +79,18 @@ public class Activator extends WeasisPlugin {
     extensionCache.put(plugin.getPluginId(), filteredExtensions);
     for (InsertableFactory factory : filteredExtensions) {
       GuiExecutor.execute(() -> BundleTools.registerInsertableFactory(factory, View2dContainer.UI));
+      GuiExecutor.execute(() -> registerMprToolBar(factory));
+    }
+  }
+
+  /**
+   * The MPR viewer shares the tools of the 2D viewer but has its own toolbars: the toolbars
+   * contributed by the plugins (such as opening the 3D viewer) are added to it as well, once.
+   */
+  private static void registerMprToolBar(InsertableFactory factory) {
+    if (Type.TOOLBAR.equals(factory.getType())
+        && MprContainer.UI.toolBars.stream().noneMatch(factory::isComponentCreatedByThisFactory)) {
+      BundleTools.registerInsertableFactory(factory, MprContainer.UI);
     }
   }
 
@@ -84,6 +100,9 @@ public class Activator extends WeasisPlugin {
       for (InsertableFactory factory : removed) {
         GuiExecutor.execute(
             () -> BundleTools.unregisterInsertableFactory(factory, View2dContainer.UI));
+        if (Type.TOOLBAR.equals(factory.getType())) {
+          BundleTools.unregisterInsertableFactory(factory, MprContainer.UI);
+        }
       }
     }
   }

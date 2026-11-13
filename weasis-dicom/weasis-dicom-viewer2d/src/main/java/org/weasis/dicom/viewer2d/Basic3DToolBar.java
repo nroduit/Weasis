@@ -19,6 +19,7 @@ import org.weasis.core.ui.editor.Relevance;
 import org.weasis.core.ui.editor.ViewContext;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.viewer2d.mip.MipMenu;
+import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprFactory;
 
 /** MPR and MIP of the selected series; relevant when that series is a volume. */
@@ -48,7 +49,8 @@ public class Basic3DToolBar extends WtoolBar {
 
   @Override
   public boolean isRelevant(ViewContext context) {
-    return Relevance.VOLUME.test(context);
+    // The series of an MPR view is a reformat, not a volume: the slab editor applies to it
+    return context.viewerIs(MprContainer.class) || Relevance.VOLUME.test(context);
   }
 
   /**
