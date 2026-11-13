@@ -34,7 +34,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.SidePanel;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.ViewerOpenOptions;
@@ -48,9 +48,9 @@ public class WeasisWinListener implements PropertyChangeListener, PluginStateLis
   private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWinListener.class);
   private final WeasisWin mainWindow;
 
+  /** Listens once {@link #activate()} is called (by the plugin start), never twice. */
   public WeasisWinListener(WeasisWin mainWindow) {
     this.mainWindow = mainWindow;
-    activate();
   }
 
   @Override
@@ -67,19 +67,8 @@ public class WeasisWinListener implements PropertyChangeListener, PluginStateLis
       if (evt.getSource() instanceof DataExplorerModel) {
         if (ObservableEvent.BasicAction.SELECT.equals(action)) {
           if (source instanceof DataExplorerModel model) {
-            DataExplorerView view = null;
-            List<DataExplorerView> explorerPlugins = GuiUtils.getUICore().getExplorerPlugins();
-            synchronized (explorerPlugins) {
-              for (DataExplorerView dataExplorerView : explorerPlugins) {
-                if (dataExplorerView.getDataExplorerModel() == model) {
-                  view = dataExplorerView;
-                  break;
-                }
-              }
-              if (view instanceof PluginTool tool) {
-                tool.showDockable();
-              }
-            }
+            // data arrives in a model from outside (a launch, a load or unload command)
+            showExplorerOf(model);
           }
           // Select a plugin from that as the same key as the MediaSeriesGroup
           else if (source instanceof MediaSeriesGroup group) {
@@ -197,6 +186,39 @@ public class WeasisWinListener implements PropertyChangeListener, PluginStateLis
     ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(this);
     GuiUtils.getUICore().getPluginManager().removePluginStateListener(this);
     LOGGER.info("Deactivate the main window PropertyChangeListener");
+  }
+
+  /**
+   * Shows the family of the explorer that owns the model, unless the explorer shown feeds that
+   * model (the file explorer or a catalog loading into the DICOM model stays shown). Selecting a
+   * viewer never comes here: its event carries the group of the viewer, not the model.
+   */
+  static void showExplorerOf(DataExplorerModel model) {
+    DataExplorerView owner = null;
+    DataExplorerView shown = null;
+    SidePanel side = GuiUtils.getUICore().getSidePanel(SidePanel.Role.EXPLORER);
+    String active = side == null ? null : side.activeFamily().orElse(null);
+    List<DataExplorerView> explorerPlugins = GuiUtils.getUICore().getExplorerPlugins();
+    synchronized (explorerPlugins) {
+      for (DataExplorerView view : explorerPlugins) {
+        if (owner == null && view.getDataExplorerModel() == model) {
+          owner = view;
+        }
+        if (view instanceof DockableTool tool && tool.getToolId().equals(active)) {
+          shown = view;
+        }
+      }
+    }
+    if (!(owner instanceof DockableTool tool)) {
+      return;
+    }
+    tool.showDockable();
+    if (side != null
+        && owner != shown
+        && tool.isFamilyHead()
+        && (shown == null || !shown.isSourceFor(model))) {
+      side.selectFamily(tool.getToolId());
+    }
   }
 
   public void monitorDataExplorerFactories() {

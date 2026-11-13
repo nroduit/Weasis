@@ -11,6 +11,7 @@ package org.weasis.core.ui.docking;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -106,5 +107,33 @@ class ShellStateTest {
         () ->
             assertTrue(
                 !new ShellSide(List.of("display"), 0, 0, false).toJson().containsKey("views")));
+  }
+
+  @Test
+  void theFamilyAndTheBottomOfEachFamilyRoundTripAndStayAbsentWithoutFamilies() {
+    java.util.Map<String, String> bottoms = new java.util.LinkedHashMap<>();
+    bottoms.put("dicom-explorer", "import");
+    bottoms.put("dataset-catalog", null);
+    ShellSide side =
+        new ShellSide(
+            Arrays.asList("file-explorer", null),
+            300,
+            0.6,
+            false,
+            List.of(),
+            "file-explorer",
+            bottoms);
+    ShellSide back = ShellSide.fromJson(side.toJson());
+    assertAll(
+        () -> assertEquals(side, back),
+        () -> assertEquals("file-explorer", back.family()),
+        () -> assertTrue(back.bottoms().containsKey("dataset-catalog")),
+        () -> assertEquals(null, back.bottoms().get("dataset-catalog")),
+        () ->
+            assertFalse(
+                new ShellSide(List.of("display"), 0, 0, false).toJson().containsKey("family")),
+        () ->
+            assertFalse(
+                new ShellSide(List.of("display"), 0, 0, false).toJson().containsKey("bottoms")));
   }
 }

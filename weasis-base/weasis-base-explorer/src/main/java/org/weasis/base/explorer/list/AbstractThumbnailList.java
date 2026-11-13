@@ -25,11 +25,14 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,6 +49,7 @@ import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.JIUtility;
 import org.weasis.base.explorer.Messages;
 import org.weasis.base.explorer.ThumbnailRenderer;
+import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.DragGhost;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
@@ -282,7 +286,9 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
 
   public void openSelection() {
     E object = getSelectedValue();
-    openSelection(Collections.singletonList(object), true, true, false);
+    if (object != null) {
+      openSelection(Collections.singletonList(object), true, true, false);
+    }
   }
 
   public void openSelection(
@@ -290,7 +296,8 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
       boolean compareEntryToBuildNewViewer,
       boolean bestDefaultLayout,
       boolean inSelView) {
-    if (selMedias != null) {
+    selMedias = handOver(selMedias);
+    if (selMedias != null && !selMedias.isEmpty()) {
       boolean oneFile = selMedias.size() == 1;
       String sUID = null;
       String gUID;
@@ -373,7 +380,8 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
       boolean bestDefaultLayout,
       boolean modeLayout,
       boolean inSelView) {
-    if (selMedias != null) {
+    selMedias = handOver(selMedias);
+    if (selMedias != null && !selMedias.isEmpty()) {
       String groupUID = null;
 
       if (modeLayout) {
@@ -434,6 +442,52 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
                 item.getKey(), item.getValue(), ViewerPluginBuilder.DefaultDataModel, opts)
             .open();
       }
+    }
+  }
+
+  /**
+   * Hands the files another explorer imports (DICOM files to the DICOM explorer) to that explorer,
+   * so they land in its model rather than in a viewer outside it; returns the files left to open
+   * here.
+   */
+  private List<E> handOver(List<E> medias) {
+    if (medias == null) {
+      return null;
+    }
+    List<E> rest = new ArrayList<>();
+    Map<DataExplorerView, List<File>> handed = new LinkedHashMap<>();
+    for (E media : medias) {
+      DataExplorerView target = media == null ? null : importer(media.getMimeType());
+      File file = target == null ? null : fileOf(media);
+      if (file == null) {
+        rest.add(media);
+      } else {
+        handed.computeIfAbsent(target, _ -> new ArrayList<>()).add(file);
+      }
+    }
+    handed.forEach((explorer, files) -> explorer.importFiles(files.toArray(File[]::new), false));
+    return rest;
+  }
+
+  private static DataExplorerView importer(String mimeType) {
+    if (mimeType == null) {
+      return null;
+    }
+    List<DataExplorerView> explorers = GuiUtils.getUICore().getExplorerPlugins();
+    synchronized (explorers) {
+      return explorers.stream().filter(v -> v.canImport(mimeType)).findFirst().orElse(null);
+    }
+  }
+
+  private static File fileOf(MediaElement media) {
+    URI uri = media.getMediaURI();
+    if (uri == null || !"file".equalsIgnoreCase(uri.getScheme())) { // NON-NLS
+      return null;
+    }
+    try {
+      return Path.of(uri).toFile();
+    } catch (RuntimeException e) {
+      return null;
     }
   }
 

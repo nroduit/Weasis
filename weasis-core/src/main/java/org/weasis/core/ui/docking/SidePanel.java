@@ -38,6 +38,7 @@ import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -61,8 +62,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
@@ -110,6 +113,13 @@ import org.weasis.launcher.UiOrientation;
  * applied states never widen the side. The expanded tools are sticky as well: when tools are
  * swapped, the slots re-open the remembered ids (or, on the explorer side, the first tool) unless
  * the user explicitly collapsed them.
+ *
+ * <p>On the explorer side, an explorer heads a <em>family</em> of the tools and actions that serve
+ * it ({@link DockableTool#getFamily()}). The stripe shows the explorers first, then only the
+ * companions of the family shown, then the tools of no family; the top slot holds the explorer of
+ * that family and the bottom slot one of its companions, a tool of no family or another explorer
+ * opened under it. Switching family gives the bottom slot back what the family held there when it
+ * was left. A side whose tools declare no family keeps a single group.
  */
 public class SidePanel extends JPanel {
 
@@ -232,6 +242,19 @@ public class SidePanel extends JPanel {
    * stripe button opens it after the tab was closed.
    */
   private final Map<String, Slot> viewOrigins = new HashMap<>();
+
+  /**
+   * The explorer whose family the stripe shows, null while no tool of this side declares a family.
+   */
+  private String activeFamily;
+
+  /** Whether the user, a command or a state chose the family; until then the default follows. */
+  private boolean familyChosen;
+
+  /** What the bottom slot held when each family was left, by explorer id (null: empty). */
+  private final Map<String, String> familyBottoms = new HashMap<>();
+
+  private Consumer<String> familyChange = family -> {};
 
   private Supplier<WorkspaceManager> workspace = () -> GuiUtils.getUICore().getWorkspaceManager();
   private Consumer<SidePanel> userChange = side -> {};
@@ -437,6 +460,173 @@ public class SidePanel extends JPanel {
     }
   }
 
+  // ---- families --------------------------------------------------------------------------------
+
+  /** The ids of the explorers heading a family, in position order. */
+  public List<String> familyIds() {
+    return heads().stream().map(DockableTool::getToolId).toList();
+  }
+
+  /** The explorer whose family the stripe shows; empty when no tool declares a family. */
+  public Optional<String> activeFamily() {
+    resolveFamily();
+    return Optional.ofNullable(activeFamily);
+  }
+
+  /** The ids of the tools and actions serving that explorer, in position order, without it. */
+  public List<String> companionIds(String family) {
+    return merge(
+        tools.stream()
+            .filter(t -> !t.isFamilyHead() && Objects.equals(family, t.getFamily()))
+            .toList(),
+        sortedActions().stream().filter(a -> Objects.equals(family, a.family())).toList());
+  }
+
+  /** What the bottom slot held when each family was left, by explorer id (null: empty). */
+  public Map<String, String> familyBottoms() {
+    return Collections.unmodifiableMap(familyBottoms);
+  }
+
+  /** The name of a tool this side offers. */
+  public Optional<String> toolName(String toolId) {
+    return find(toolId).map(DockableTool::getComponentName);
+  }
+
+  /**
+   * Shows the family of that explorer: the explorer in the top slot and, in the bottom slot, what
+   * the family held there when it was left.
+   *
+   * @return false when no explorer of that id heads a family on this side
+   */
+  public boolean selectFamily(String explorerId) {
+    Optional<DockableTool> head = find(explorerId).filter(DockableTool::isFamilyHead);
+    head.ifPresent(this::switchFamily);
+    return head.isPresent();
+  }
+
+  /**
+   * Opens an explorer in the bottom slot, under the explorer shown, without switching family.
+   *
+   * @return false when no explorer of that id heads a family, or when it is the one shown
+   */
+  public boolean openBelow(String explorerId) {
+    resolveFamily();
+    Optional<DockableTool> head =
+        find(explorerId)
+            .filter(DockableTool::isFamilyHead)
+            .filter(h -> !h.getToolId().equals(activeFamily));
+    head.ifPresent(h -> place(h, Slot.BOTTOM));
+    return head.isPresent();
+  }
+
+  /** Told with the explorer id each time the family shown changes. */
+  public void onFamilyChange(Consumer<String> listener) {
+    this.familyChange = Objects.requireNonNull(listener);
+  }
+
+  private List<DockableTool> heads() {
+    return tools.stream().filter(DockableTool::isFamilyHead).toList();
+  }
+
+  private static String defaultFamily() {
+    try {
+      String id = Settings.get(CoreSettings.EXPLORER_DEFAULT);
+      return id == null ? "" : id;
+    } catch (RuntimeException e) {
+      return ""; // no catalog (tests)
+    }
+  }
+
+  /**
+   * Keeps the family shown valid. Until the user, a command or a state chooses one, it is the
+   * default explorer ({@link CoreSettings#EXPLORER_DEFAULT}) or else the first by position, so an
+   * explorer registered after another still wins when it is the default.
+   */
+  private void resolveFamily() {
+    List<DockableTool> heads = heads();
+    if (heads.isEmpty()) {
+      activeFamily = null;
+      return;
+    }
+    boolean present = heads.stream().anyMatch(h -> h.getToolId().equals(activeFamily));
+    if (present && familyChosen) {
+      return;
+    }
+    familyChosen = familyChosen && present;
+    String preferred = defaultFamily();
+    String target =
+        heads.stream()
+            .map(DockableTool::getToolId)
+            .filter(preferred::equals)
+            .findFirst()
+            .orElse(heads.getFirst().getToolId());
+    if (target.equals(activeFamily)) {
+      return;
+    }
+    String previous = activeFamily;
+    activeFamily = target;
+    SlotHost top = host(Slot.TOP);
+    if (top.tool != null
+        && top.tool.getToolId().equals(previous)
+        && remembered[Slot.TOP.ordinal()] == null) {
+      top.setTool(null); // put there by default: the new default takes its place
+    }
+    familyChange.accept(target);
+  }
+
+  private void setActiveFamily(String explorerId) {
+    familyChosen = true;
+    if (!explorerId.equals(activeFamily)) {
+      activeFamily = explorerId;
+      familyChange.accept(explorerId);
+    }
+  }
+
+  /**
+   * Shows the family of that explorer: the explorer on top, and in the bottom slot what the family
+   * held when it was left; a tool of no family stays in the bottom slot.
+   */
+  private void switchFamily(DockableTool head) {
+    resolveFamily();
+    String id = head.getToolId();
+    if (id.equals(activeFamily)) {
+      familyChosen = true;
+      place(head, Slot.TOP);
+      return;
+    }
+    int bottom = Slot.BOTTOM.ordinal();
+    if (activeFamily != null) {
+      familyBottoms.put(activeFamily, remembered[bottom]);
+    }
+    setActiveFamily(id);
+    place(head, Slot.TOP);
+    DockableTool restore =
+        Optional.ofNullable(familyBottoms.get(id))
+            .flatMap(this::find)
+            .filter(this::fitsBottom)
+            .orElse(null);
+    if (restore != null) {
+      place(restore, Slot.BOTTOM);
+    } else {
+      DockableTool kept = remembered[bottom] == null ? null : find(remembered[bottom]).orElse(null);
+      if (kept == null || kept.getFamily() != null) {
+        clear(Slot.BOTTOM);
+      }
+    }
+  }
+
+  /** The bottom slot holds a companion of the family shown, a tool of no family or an explorer. */
+  private boolean fitsBottom(DockableTool tool) {
+    String family = tool.getFamily();
+    return family == null || tool.isFamilyHead() || family.equals(activeFamily);
+  }
+
+  /** The tool an empty top slot shows: the explorer of the family shown, or the first tool. */
+  private DockableTool defaultTop() {
+    resolveFamily();
+    return activeFamily == null ? tools.getFirst() : find(activeFamily).orElse(tools.getFirst());
+  }
+
   // ---- tools as views --------------------------------------------------------------------------
 
   /**
@@ -444,12 +634,13 @@ public class SidePanel extends JPanel {
    * any view. Its slot empties meanwhile; the tab, its menu entry or {@link #returnFromView} bring
    * it back.
    *
-   * @return false when no tool of that id is offered on this side or there is no workspace
+   * @return false when no tool of that id is offered on this side, the tool stays on its side
+   *     ({@link DockableTool#canBeView()}) or there is no workspace
    */
   public boolean openAsView(String toolId) {
     DockableTool tool = find(toolId).orElse(null);
     WorkspaceManager manager = workspace.get();
-    if (tool == null || manager == null) {
+    if (tool == null || manager == null || !tool.canBeView()) {
       return false;
     }
     pruneViews(manager);
@@ -477,6 +668,11 @@ public class SidePanel extends JPanel {
       return Optional.of(view);
     }
     DockableTool tool = find(toolId).orElse(null);
+    if (tool != null && !tool.canBeView()) {
+      // a layout saved when an explorer could be a tab: the explorer goes back to its side
+      open(tool, Slot.TOP);
+      return Optional.empty();
+    }
     if (tool != null) {
       return Optional.of(detachForView(tool));
     }
@@ -531,6 +727,14 @@ public class SidePanel extends JPanel {
     scheduleRelayout();
     userChange.accept(this);
     return true;
+  }
+
+  /**
+   * Whether the tool of that id may become a tab of the workspace; false for an explorer, which
+   * stays on its side, and for an id this side does not offer.
+   */
+  public boolean canBeView(String toolId) {
+    return find(toolId).map(DockableTool::canBeView).orElse(false);
   }
 
   /** Whether the tool is shown as a central view. */
@@ -660,7 +864,7 @@ public class SidePanel extends JPanel {
     if (Arrays.stream(Slot.values()).noneMatch(this::isShown)) {
       expand();
       if (Arrays.stream(hosts).allMatch(h -> h.tool == null)) {
-        DockableTool first = tools.getFirst();
+        DockableTool first = defaultTop();
         open(first, preferredSlot(first));
       }
     }
@@ -763,7 +967,9 @@ public class SidePanel extends JPanel {
     }
     // a session keeps the width of the user, not the one widened for a tool
     int width = widthBeforeFit > 0 ? widthBeforeFit : getContentWidth();
-    return new ShellSide(slots, width, getRatio(), isCollapsed(), viewIds());
+    resolveFamily();
+    return new ShellSide(
+        slots, width, getRatio(), isCollapsed(), viewIds(), activeFamily, familyBottoms);
   }
 
   /**
@@ -783,18 +989,38 @@ public class SidePanel extends JPanel {
    */
   public List<String> applyState(ShellSide state, boolean keepTabs) {
     List<String> skipped = new ArrayList<>();
+    String family = state.family();
+    if (family != null) {
+      if (find(family).filter(DockableTool::isFamilyHead).isPresent()) {
+        setActiveFamily(family);
+      } else {
+        skipped.add(family);
+      }
+    }
+    familyBottoms.putAll(state.bottoms());
     for (Slot slot : Slot.values()) {
       String id = state.slot(slot);
+      Optional<DockableTool> tool = id == null ? Optional.empty() : find(id);
       if (id == null) {
         clear(slot);
       } else if (keepTabs && views.containsKey(id)) {
         clear(slot); // the tool is in its tab
-      } else if (!open(id, slot)) {
+      } else if (tool.isEmpty()) {
         skipped.add(id);
+      } else {
+        if (family == null && slot == Slot.TOP && tool.get().isFamilyHead()) {
+          setActiveFamily(id); // a state saved before the families: its explorer on top
+        }
+        place(tool.get(), slot); // a state is reproduced as it is, not through the rule
       }
     }
     for (String id : state.views()) {
-      if (!openAsView(id)) {
+      Optional<DockableTool> tool = find(id);
+      if (tool.isPresent() && !tool.get().canBeView()) {
+        if (toolIn(Slot.TOP).isEmpty()) {
+          place(tool.get(), Slot.TOP); // an explorer saved as a tab goes back to its slot
+        }
+      } else if (!openAsView(id)) {
         skipped.add(id);
       }
     }
@@ -831,7 +1057,29 @@ public class SidePanel extends JPanel {
     return Optional.empty();
   }
 
+  /**
+   * Opens a tool in a slot under the rule of the families: a companion of another family switches
+   * to that family first; an explorer on top switches to its family, an explorer at the bottom
+   * opens under the explorer shown.
+   */
   private void open(DockableTool tool, Slot slot) {
+    String family = tool.getFamily();
+    if (family != null) {
+      resolveFamily();
+      if (tool.isFamilyHead()) {
+        if (slot == Slot.TOP) {
+          switchFamily(tool);
+          return;
+        }
+      } else if (!family.equals(activeFamily)) {
+        find(family).filter(DockableTool::isFamilyHead).ifPresent(this::switchFamily);
+      }
+    }
+    place(tool, slot);
+  }
+
+  /** Puts a tool in a slot as it is asked, replacing what was there. */
+  private void place(DockableTool tool, Slot slot) {
     viewOrigins.remove(tool.getToolId());
     ToolView view = views.remove(tool.getToolId());
     if (view != null) {
@@ -926,6 +1174,7 @@ public class SidePanel extends JPanel {
   }
 
   private void relayout() {
+    resolveFamily();
     refillSlots();
     rebuildStripe();
     updateBottomSuppressed();
@@ -947,9 +1196,9 @@ public class SidePanel extends JPanel {
       }
       DockableTool tool = null;
       if (remembered[i] != null) {
-        tool = find(remembered[i]).orElse(slot == Slot.TOP ? tools.getFirst() : null);
+        tool = find(remembered[i]).orElse(slot == Slot.TOP ? defaultTop() : null);
       } else if (slot == Slot.TOP && role == Role.EXPLORER) {
-        tool = tools.getFirst(); // explorers open by default
+        tool = defaultTop(); // explorers open by default
       }
       if (tool != null && slotOf(tool).isEmpty()) {
         host.setTool(tool);
@@ -1010,13 +1259,50 @@ public class SidePanel extends JPanel {
 
   // ---- stripe ----------------------------------------------------------------------------------
 
+  /** The id of a separator between two groups of the stripe. */
+  private static final String SEPARATOR = "|"; // NON-NLS
+
   /**
-   * One button per tool id and per action in position order (a tool before an action of the same
-   * position); unchanged ids keep their button.
+   * The ids of the stripe in order. Without families, the tools and actions by position. With
+   * families: the explorers, then the companions of the family shown (and the tools of another
+   * family shown as a tab, which keep their button), then the tools and actions of no family; a
+   * separator between two groups.
    */
-  private void rebuildStripe() {
+  private List<String> stripeEntries() {
+    List<DockableTool> heads = heads();
+    if (heads.isEmpty()) {
+      return merge(tools, sortedActions());
+    }
     List<String> order = new ArrayList<>();
-    List<StripeAction> pending = new ArrayList<>(sortedActions());
+    heads.forEach(h -> order.add(h.getToolId()));
+    List<String> companions =
+        merge(
+            tools.stream()
+                .filter(t -> !t.isFamilyHead() && t.getFamily() != null)
+                .filter(t -> t.getFamily().equals(activeFamily) || views.containsKey(t.getToolId()))
+                .toList(),
+            sortedActions().stream()
+                .filter(a -> a.family() != null && a.family().equals(activeFamily))
+                .toList());
+    if (!companions.isEmpty()) {
+      order.add(SEPARATOR + 1);
+      order.addAll(companions);
+    }
+    List<String> global =
+        merge(
+            tools.stream().filter(t -> t.getFamily() == null).toList(),
+            sortedActions().stream().filter(a -> a.family() == null).toList());
+    if (!global.isEmpty()) {
+      order.add(SEPARATOR + 2);
+      order.addAll(global);
+    }
+    return order;
+  }
+
+  /** Tools and actions in position order, a tool before an action of the same position. */
+  private static List<String> merge(List<DockableTool> tools, List<StripeAction> actions) {
+    List<String> order = new ArrayList<>();
+    List<StripeAction> pending = new ArrayList<>(actions);
     for (DockableTool tool : tools) {
       while (!pending.isEmpty() && pending.getFirst().position() < tool.getComponentPosition()) {
         order.add(pending.removeFirst().id());
@@ -1024,6 +1310,23 @@ public class SidePanel extends JPanel {
       order.add(tool.getToolId());
     }
     pending.forEach(a -> order.add(a.id()));
+    return order;
+  }
+
+  /** " — Explorer" after the name of a companion, so the tooltip says which explorer it serves. */
+  private String familySuffix(String family, boolean head) {
+    if (family == null || head) {
+      return "";
+    }
+    return find(family).map(h -> " — " + h.getComponentName()).orElse(""); // NON-NLS
+  }
+
+  /**
+   * One button per tool id and per action, in the order of {@link #stripeEntries()}; unchanged ids
+   * keep their button.
+   */
+  private void rebuildStripe() {
+    List<String> order = stripeEntries();
     if (!order.equals(stripeOrder)) {
       Map<String, JToggleButton> kept = new LinkedHashMap<>();
       for (DockableTool tool : tools) {
@@ -1056,17 +1359,19 @@ public class SidePanel extends JPanel {
         button.putClientProperty(AS_TAB, asView);
         button.repaint();
       }
+      String name = tool.getComponentName() + familySuffix(tool.getFamily(), tool.isFamilyHead());
       button.setToolTipText(
           asView
-              ? tool.getComponentName() + " (" + Messages.getString("Docking.tab") + ")"
+              ? name + " (" + Messages.getString("Docking.tab") + ")"
               : slot.filter(s -> s == Slot.BOTTOM)
-                  .map(
-                      s ->
-                          tool.getComponentName()
-                              + " ("
-                              + Messages.getString("Docking.bottom")
-                              + ")")
-                  .orElse(tool.getComponentName()));
+                  .map(s -> name + " (" + Messages.getString("Docking.bottom") + ")")
+                  .orElse(name));
+    }
+    for (StripeAction action : actions) {
+      JButton button = actionButtons.get(action.id());
+      if (button != null) {
+        button.setToolTipText(action.name() + familySuffix(action.family(), false));
+      }
     }
   }
 
@@ -1078,6 +1383,11 @@ public class SidePanel extends JPanel {
     stripeClipped.clear();
     stripe.removeAll();
     for (String id : stripeOrder) {
+      if (id.startsWith(SEPARATOR)) {
+        stripe.add(Box.createVerticalStrut(gap));
+        stripe.add(stripeSeparator());
+        continue;
+      }
       AbstractButton button = buttons.get(id);
       if (button == null) {
         button = actionButtons.get(id);
@@ -1094,6 +1404,17 @@ public class SidePanel extends JPanel {
     stripe.add(stripeMore); // shown by fitStripe when the stripe is too short
     stripe.revalidate();
     stripe.repaint();
+  }
+
+  /** The line between two groups of the stripe, as wide as an icon. */
+  private static JSeparator stripeSeparator() {
+    JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
+    separator.setName("stripe-separator"); // NON-NLS
+    separator.setAlignmentX(CENTER_ALIGNMENT);
+    int width = GuiUtils.getScaleLength(iconSize());
+    separator.setMaximumSize(new Dimension(width, separator.getPreferredSize().height));
+    separator.setPreferredSize(new Dimension(width, separator.getPreferredSize().height));
+    return separator;
   }
 
   private JButton createStripeMore() {
@@ -1699,9 +2020,11 @@ public class SidePanel extends JPanel {
             }
           });
       menu.add(move);
-      JMenuItem tab = new JMenuItem(Messages.getString("Docking.open_tab"), asTabIcon);
-      tab.addActionListener(e -> openAsView());
-      menu.add(tab);
+      if (tool.canBeView()) {
+        JMenuItem tab = new JMenuItem(Messages.getString("Docking.open_tab"), asTabIcon);
+        tab.addActionListener(e -> openAsView());
+        menu.add(tab);
+      }
       menu.addSeparator();
       JMenuItem hide = new JMenuItem(Messages.getString("Docking.minimize"), minimize.getIcon());
       hide.addActionListener(e -> collapse(slot));

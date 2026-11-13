@@ -41,6 +41,7 @@ import org.weasis.core.api.command.Since;
 import org.weasis.core.api.command.SplitRatio;
 import org.weasis.core.api.command.ToolId;
 import org.weasis.core.api.command.ViewId;
+import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.IdentityMask;
@@ -64,9 +65,11 @@ import org.weasis.core.ui.editor.ViewerRestorer;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewDisplayState;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.event.ShellEventBridge;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
 /**
@@ -95,6 +98,7 @@ import picocli.CommandLine.ParentCommand;
       WorkspaceCommands.Save.class,
       WorkspaceCommands.Load.class,
       WorkspaceCommands.Panel.class,
+      WorkspaceCommands.Explorer.class,
       WorkspaceCommands.Context.class
     })
 @Since("5.0")
@@ -116,7 +120,10 @@ public class WorkspaceCommands implements CommandExtension {
 
   @Override
   public List<org.weasis.core.api.event.EventType> getEventTypes() {
-    return WorkspaceManager.eventTypes();
+    List<org.weasis.core.api.event.EventType> types =
+        new ArrayList<>(WorkspaceManager.eventTypes());
+    types.addAll(ShellEventBridge.types());
+    return types;
   }
 
   /** Replaces the workspace lookup, for headless tests. */
@@ -817,7 +824,8 @@ public class WorkspaceCommands implements CommandExtension {
         names = "--as-view",
         description =
             "Shows --tool of --side as a tab of the active window instead of a slot, where it "
-                + "gets width and floats like any view; --tool with --slot brings it back.")
+                + "gets width and floats like any view; --tool with --slot brings it back. "
+                + "An explorer stays on its side and is refused.")
     boolean asView;
 
     @Option(names = "--collapse", description = "Hides both slots of --side (tools remembered).")
@@ -915,6 +923,12 @@ public class WorkspaceCommands implements CommandExtension {
                 "The site locks " + ToolVisibility.key(tool.value())); // NON-NLS
           }
         } else if (asView) {
+          if (panel.toolIds().contains(tool.value()) && !panel.canBeView(tool.value())) {
+            throw invalid(
+                tool.value()
+                    + " is an explorer: it stays on the explorer side; widen the side "
+                    + "(--width) or use its list mode");
+          }
           if (!panel.openAsView(tool.value())) {
             throw unknownTool(tool.value(), side.key(), panel.toolIds());
           }
@@ -975,6 +989,183 @@ public class WorkspaceCommands implements CommandExtension {
       }
       sb.append("strip: ").append(state.strip() == null ? "-" : state.strip()); // NON-NLS
       return sb.toString();
+    }
+  }
+
+  @Command(
+      name = "explorer",
+      description =
+          "The explorers of the explorer side and their families: an explorer with the tools and "
+              + "actions that serve it (the DICOM explorer with import, retrieve, export, send and "
+              + "the study content). Without argument it lists the families and the one shown; "
+              + "with an explorer id it shows that family: the explorer on top and, at the bottom, "
+              + "what the family held when it was left. --companion also opens a tool of the "
+              + "family at the bottom; --below opens the explorer under the one shown instead, "
+              + "without switching family. The setting weasis.explorer.default names the explorer "
+              + "shown at startup.")
+  @Since("5.0")
+  @Produces({ToolId.class})
+  static class Explorer extends Verb implements Returns {
+    @Override
+    public ResultSchema result() {
+      return ResultSchema.of()
+          .field("shown", "tool-id", "the explorer whose family is shown, null without families")
+          .field("families", "object[]", "one entry per explorer, in stripe order") // NON-NLS
+          .field("families[].id", "tool-id", "tool id of the explorer") // NON-NLS
+          .field("families[].name", String.class, "localized name") // NON-NLS
+          .field(
+              "families[].kind",
+              String.class,
+              "model (holds the data of its viewers) or source (feeds another model)")
+          .field(
+              "families[].companions",
+              "tool-id[]",
+              "tools and actions serving the explorer") // NON-NLS
+          .field(
+              "families[].bottom",
+              "tool-id",
+              "what the bottom slot holds for that family, null when empty")
+          .build();
+    }
+
+    @Parameters(
+        index = "0",
+        arity = "0..1",
+        paramLabel = "<tool-id>",
+        description = "Tool id of an explorer, from the list this verb prints.")
+    ToolId explorer;
+
+    @Option(
+        names = "--companion",
+        paramLabel = "<tool-id>",
+        description = "Also opens this tool of the family in the bottom slot.")
+    ToolId companion;
+
+    @Option(
+        names = "--below",
+        description =
+            "Opens the explorer in the bottom slot, under the one shown, without switching "
+                + "family.")
+    boolean below;
+
+    @Override
+    protected void run() {
+      if ((companion != null || below) && explorer == null) {
+        throw invalid("--companion and --below need an explorer id");
+      }
+      if (companion != null && below) {
+        throw invalid("--companion and --below are exclusive");
+      }
+      SidePanel side = parent.requireShell().explorer();
+      if (explorer != null) {
+        GuiExecutor.invokeAndRethrow(() -> apply(side));
+      }
+      JsonObject json = GuiExecutor.invokeAndRethrow(() -> state(side));
+      print(isJson() ? json.toString() : text(json));
+    }
+
+    private void apply(SidePanel side) {
+      String id = explorer.value();
+      if (!side.familyIds().contains(id)) {
+        throw CommandFailure.unknownHandle(
+            "Unknown explorer: " + id + " (available: " + side.familyIds() + ")",
+            "workspace:explorer"); // NON-NLS
+      }
+      if (below) {
+        if (!side.openBelow(id)) {
+          throw invalid(id + " is the explorer shown; --below opens another one under it");
+        }
+        return;
+      }
+      side.selectFamily(id);
+      if (companion != null
+          && (!side.companionIds(id).contains(companion.value())
+              || !side.open(companion.value(), Slot.BOTTOM))) {
+        throw CommandFailure.unknownHandle(
+            "Not a tool of the family of "
+                + id
+                + ": "
+                + companion.value()
+                + " (companions: "
+                + side.companionIds(id)
+                + ")",
+            "workspace:explorer"); // NON-NLS
+      }
+    }
+
+    static JsonObject state(SidePanel side) {
+      String active = side.activeFamily().orElse(null);
+      JsonArrayBuilder families = Json.createArrayBuilder();
+      for (String id : side.familyIds()) {
+        JsonArrayBuilder companions = Json.createArrayBuilder();
+        side.companionIds(id).forEach(companions::add);
+        String bottom =
+            id.equals(active)
+                ? side.toolIn(Slot.BOTTOM).orElse(null)
+                : side.familyBottoms().get(id);
+        JsonObjectBuilder family =
+            Json.createObjectBuilder()
+                .add("id", id) // NON-NLS
+                .add("name", side.toolName(id).orElse(id)) // NON-NLS
+                .add("kind", isSource(id) ? "source" : "model") // NON-NLS
+                .add("companions", companions); // NON-NLS
+        if (bottom == null) {
+          family.addNull("bottom"); // NON-NLS
+        } else {
+          family.add("bottom", bottom); // NON-NLS
+        }
+        families.add(family);
+      }
+      JsonObjectBuilder json = Json.createObjectBuilder();
+      if (active == null) {
+        json.addNull("shown"); // NON-NLS
+      } else {
+        json.add("shown", active); // NON-NLS
+      }
+      return json.add("families", families).build(); // NON-NLS
+    }
+
+    private static boolean isSource(String toolId) {
+      try {
+        List<DataExplorerView> explorers = GuiUtils.getUICore().getExplorerPlugins();
+        synchronized (explorers) {
+          return explorers.stream()
+              .anyMatch(
+                  v -> v instanceof DockableTool t && toolId.equals(t.getToolId()) && v.isSource());
+        }
+      } catch (RuntimeException e) {
+        return false; // no UI core (headless tests)
+      }
+    }
+
+    private static String text(JsonObject json) {
+      StringBuilder sb = new StringBuilder();
+      String active = json.isNull("shown") ? null : json.getString("shown"); // NON-NLS
+      for (JsonObject family : json.getJsonArray("families").getValuesAs(JsonObject.class)) {
+        String id = family.getString("id"); // NON-NLS
+        sb.append(id.equals(active) ? "* " : "  ")
+            .append(id)
+            .append(" (")
+            .append(family.getString("name")) // NON-NLS
+            .append(", ")
+            .append(family.getString("kind")) // NON-NLS
+            .append(")");
+        List<String> companions =
+            family.getJsonArray("companions").getValuesAs(jakarta.json.JsonString.class).stream()
+                .map(jakarta.json.JsonString::getString)
+                .toList();
+        if (!companions.isEmpty()) {
+          sb.append(" companions: ").append(String.join(", ", companions)); // NON-NLS
+        }
+        if (!family.isNull("bottom")) {
+          sb.append(" bottom: ").append(family.getString("bottom")); // NON-NLS
+        }
+        sb.append(System.lineSeparator());
+      }
+      if (sb.isEmpty()) {
+        sb.append("No explorer heads a family"); // NON-NLS
+      }
+      return sb.toString().stripTrailing();
     }
   }
 }

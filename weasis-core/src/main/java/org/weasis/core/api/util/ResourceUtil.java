@@ -96,6 +96,7 @@ public class ResourceUtil {
     DRAW_TOP_LEFT("svg/action/drawTopLeft.svg"), // NON-NLS
     EDIT_KEY_IMAGE("svg/action/editKeyImage.svg"), // NON-NLS
     EXECUTE("svg/action/execute.svg"), // NON-NLS
+    EXPORT("svg/action/export.svg"), // NON-NLS
     EXPORT_CLIPBOARD("svg/action/exportClipboard.svg"), // NON-NLS
     EXPORT_DICOM("svg/action/exportDicom.svg"), // NON-NLS
     EXPORT_IMAGE("svg/action/exportImage.svg"), // NON-NLS
@@ -103,7 +104,10 @@ public class ResourceUtil {
     SCREENSHOT("svg/action/screenshot.svg"), // NON-NLS
     EXPORT_ANIMATION("svg/action/exportAnimation.svg"), // NON-NLS
     RECORD("svg/action/record.svg"), // NON-NLS
+    RETRIEVE("svg/action/retrieve.svg"), // NON-NLS
     RETRIEVE_DICOM("svg/action/retrieveDicom.svg"), // NON-NLS
+    SEND("svg/action/send.svg"), // NON-NLS
+    STUDY_CONTENT("svg/action/studyContent.svg"), // NON-NLS
     SEND_DICOM("svg/action/sendDicom.svg"), // NON-NLS
     EXPORT_ANNOTATIONS("svg/action/exportAnnotations.svg"), // NON-NLS
     FILTER("svg/action/filter.svg"), // NON-NLS
@@ -111,6 +115,7 @@ public class ResourceUtil {
     FUZZY("svg/action/fuzzy.svg"), // NON-NLS
     HAND("svg/action/hand.svg"), // NON-NLS
     HELP("svg/action/help.svg"), // NON-NLS
+    IMPORT("svg/action/import.svg"), // NON-NLS
     IMPORT_CD("svg/action/importCd.svg"), // NON-NLS
     IMPORT_DICOM("svg/action/importDicom.svg"), // NON-NLS
     IMPORT_IMAGE("svg/action/importImage.svg"), // NON-NLS
@@ -200,6 +205,7 @@ public class ResourceUtil {
     KEY("svg/other/key.svg"), // NON-NLS
     SEGMENTATION("svg/other/segmentation.svg"), // NON-NLS
     RADIOACTIVE("svg/other/radioactive.svg"), // NON-NLS
+    FOLDER("svg/other/folder.svg"), // NON-NLS
     RASTER_IMAGE("svg/other/rasterImage.svg"), // NON-NLS
     TICK_OFF("svg/other/tickOff.svg"), // NON-NLS
     TICK_ON("svg/other/tickOn.svg"), // NON-NLS

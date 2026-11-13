@@ -11,8 +11,8 @@
     },
     {
       "code": "weasis.plugins.40",
-      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-base-explorer-${app.version}.jar${xz.ext}",
-      "description": "Replace DICOM explorer by a standard image explorer"
+      "value": "",
+      "description": "REMOVE - DICOM explorer (the file explorer comes with the viewer of standard images)"
     },
     {
       "code": "weasis.plugins.70",

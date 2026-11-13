@@ -30,4 +30,26 @@ public interface DataExplorerView extends PropertyChangeListener, GUIEntry {
   void importFiles(File[] files, boolean recursive);
 
   boolean canImportFiles();
+
+  /**
+   * Whether this explorer can import files of that MIME type into its model, so that another
+   * explorer which only browses files hands them over instead of opening them outside the model.
+   */
+  default boolean canImport(String mimeType) {
+    return false;
+  }
+
+  /**
+   * Whether this explorer is a source browser: it finds data and hands it to the model of another
+   * explorer (the file explorer, a catalog of cases) rather than holding a model the viewers belong
+   * to. Data arriving in that model while a source browser is shown keeps it shown.
+   */
+  default boolean isSource() {
+    return false;
+  }
+
+  /** Whether this explorer feeds that model, so data loaded into it keeps this explorer shown. */
+  default boolean isSourceFor(DataExplorerModel model) {
+    return isSource() && model != null && model != getDataExplorerModel();
+  }
 }

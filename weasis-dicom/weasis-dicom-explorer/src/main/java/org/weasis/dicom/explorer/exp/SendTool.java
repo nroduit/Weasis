@@ -27,9 +27,9 @@ public class SendTool extends ExportHostTool {
   public SendTool(DicomModel model) {
     super(
         ID,
-        Messages.getString("SendTool.title"),
+        Messages.common("send"),
         33,
-        ResourceUtil.getIcon(ActionIcon.SEND_DICOM),
+        ResourceUtil.getIcon(ActionIcon.SEND),
         0.6,
         Messages.common("send"),
         "dicom-export", // NON-NLS

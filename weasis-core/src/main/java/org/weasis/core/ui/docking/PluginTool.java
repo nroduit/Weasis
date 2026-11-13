@@ -15,6 +15,7 @@ import javax.swing.Icon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
+import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.ui.docking.SidePanel.Role;
@@ -34,6 +35,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
   private final Role role;
 
   private int toolPosition;
+  private String family;
   private int dockableWidth;
   private Icon icon;
 
@@ -80,6 +82,20 @@ public abstract class PluginTool extends JPanel implements DockableTool {
   @Override
   public String getToolId() {
     return toolId;
+  }
+
+  /** The family set by {@link #setFamily}; an explorer ({@link DataExplorerView}) heads its own. */
+  @Override
+  public String getFamily() {
+    if (family != null) {
+      return family;
+    }
+    return this instanceof DataExplorerView ? toolId : null;
+  }
+
+  /** Makes this tool a companion of the explorer of that tool id; null for a tool of no family. */
+  public void setFamily(String family) {
+    this.family = family;
   }
 
   /**

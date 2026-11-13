@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.38",
+  "apiVersion": "2.39",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -10405,6 +10405,94 @@
           ]
         },
         {
+          "name": "explorer",
+          "description": "The explorers of the explorer side and their families: an explorer with the tools and actions that serve it (the DICOM explorer with import, retrieve, export, send and the study content). Without argument it lists the families and the one shown; with an explorer id it shows that family: the explorer on top and, at the bottom, what the family held when it was left. --companion also opens a tool of the family at the bottom; --below opens the explorer under the one shown instead, without switching family. The setting weasis.explorer.default names the explorer shown at startup.",
+          "since": "5.0",
+          "usage": "workspace:explorer [-h] [--below] [--json] [--companion=<tool-id>] [<tool-id>]",
+          "produces": [
+            "tool-id"
+          ],
+          "parameters": [
+            {
+              "label": "<tool-id>",
+              "type": "tool-id",
+              "arity": "0..1",
+              "description": "Tool id of an explorer, from the list this verb prints."
+            }
+          ],
+          "options": [
+            {
+              "names": [
+                "--below"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Opens the explorer in the bottom slot, under the one shown, without switching family."
+            },
+            {
+              "names": [
+                "--companion"
+              ],
+              "label": "<tool-id>",
+              "type": "tool-id",
+              "arity": "1",
+              "required": false,
+              "description": "Also opens this tool of the family in the bottom slot."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "shown",
+                "type": "tool-id",
+                "description": "the explorer whose family is shown, null without families"
+              },
+              {
+                "name": "families",
+                "type": "object[]",
+                "description": "one entry per explorer, in stripe order"
+              },
+              {
+                "name": "families[].id",
+                "type": "tool-id",
+                "description": "tool id of the explorer"
+              },
+              {
+                "name": "families[].name",
+                "type": "string",
+                "description": "localized name"
+              },
+              {
+                "name": "families[].kind",
+                "type": "string",
+                "description": "model (holds the data of its viewers) or source (feeds another model)"
+              },
+              {
+                "name": "families[].companions",
+                "type": "tool-id[]",
+                "description": "tools and actions serving the explorer"
+              },
+              {
+                "name": "families[].bottom",
+                "type": "tool-id",
+                "description": "what the bottom slot holds for that family, null when empty"
+              }
+            ]
+          }
+        },
+        {
           "name": "fullscreen",
           "description": "Puts a window on the full bounds of its monitor without decorations: the window of --view, else the active window. --off ends it. A window state, kept by 'workspace:save' and restored by 'workspace:load'.",
           "since": "5.0",
@@ -10726,7 +10814,7 @@
               "type": "boolean",
               "arity": "0",
               "required": false,
-              "description": "Shows --tool of --side as a tab of the active window instead of a slot, where it gets width and floats like any view; --tool with --slot brings it back."
+              "description": "Shows --tool of --side as a tab of the active window instead of a slot, where it gets width and floats like any view; --tool with --slot brings it back. An explorer stays on its side and is refused."
             },
             {
               "names": [
@@ -11189,6 +11277,19 @@
         }
       ],
       "events": [
+        {
+          "name": "workspace:explorer.changed",
+          "since": "5.0",
+          "description": "The explorer side shows another family: an explorer and the tools that serve it.",
+          "coalesced": false,
+          "fields": [
+            {
+              "name": "explorer",
+              "type": "string",
+              "description": "tool id of the explorer shown, as workspace:explorer"
+            }
+          ]
+        },
         {
           "name": "workspace:layout.changed",
           "since": "5.0",
@@ -12239,6 +12340,19 @@
     ],
     "workspace": [
       {
+        "name": "workspace:explorer.changed",
+        "since": "5.0",
+        "description": "The explorer side shows another family: an explorer and the tools that serve it.",
+        "coalesced": false,
+        "fields": [
+          {
+            "name": "explorer",
+            "type": "string",
+            "description": "tool id of the explorer shown, as workspace:explorer"
+          }
+        ]
+      },
+      {
         "name": "workspace:layout.changed",
         "since": "5.0",
         "description": "A viewer changed its pane layout.",
@@ -12754,9 +12868,11 @@
       "definition": "the id of a tool of the shell, from workspace:panel",
       "handle": true,
       "producedBy": [
+        "workspace:explorer",
         "workspace:panel"
       ],
       "consumedBy": [
+        "workspace:explorer",
         "workspace:panel"
       ]
     },
@@ -12903,6 +13019,10 @@
       "definition": "a named mapping of the pixel values to colors applied to a pane"
     },
     {
+      "term": "companion",
+      "definition": "a tool or action that serves an explorer and is shown with its family"
+    },
+    {
       "term": "current",
       "definition": "the study being read, as opposed to a prior"
     },
@@ -12939,6 +13059,10 @@
     {
       "term": "event",
       "definition": "a change of state the instance publishes on its bus, named like the commands"
+    },
+    {
+      "term": "family",
+      "definition": "an explorer of the explorer side with the tools and actions that serve it; the stripe shows the explorers, then the companions of the family shown"
     },
     {
       "term": "format",

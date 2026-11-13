@@ -102,7 +102,7 @@ public class StudyContentTool extends PluginTool {
     super(ID, Messages.getString("StudyContentTool.title"), Insertable.Type.EXPLORER, 34);
     this.explorer = Objects.requireNonNull(explorer);
     this.model = explorer.getDataExplorerModel();
-    setIcon(ResourceUtil.getIcon(ActionIcon.METADATA));
+    setIcon(ResourceUtil.getIcon(ActionIcon.STUDY_CONTENT));
     setLayout(new BorderLayout());
     refresh.setRepeats(false);
     buildLayout();

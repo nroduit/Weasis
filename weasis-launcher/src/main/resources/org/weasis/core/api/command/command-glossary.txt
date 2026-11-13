@@ -46,6 +46,8 @@ canvas | the pixel space of a pane after zoom, pan, rotation and flip
 screen | a physical display of the workstation, with a role in the window model
 slot | one of the two places of a side of the shell that holds a tool
 tool | a panel of the workspace (explorer, image tool, measurements…), shown in a slot or as a view
+family | an explorer of the explorer side with the tools and actions that serve it; the stripe shows the explorers, then the companions of the family shown
+companion | a tool or action that serves an explorer and is shown with its family
 protocol | a hanging protocol: the rules that hang a study, with its display sets and steps
 session | a reading state kept as an exact restore of a study: views, panes, protocol and sidecar
 step | one reading step of a protocol, or one line of a script

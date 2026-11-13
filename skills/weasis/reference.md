@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.38, protocol 2, application development.
+Command API 2.39, protocol 2, application development.
 
 ## color
 
@@ -2606,6 +2606,34 @@ Usage: `workspace:detach [-h] [--json] [--bounds=<screen-rect>] [--screen=<scree
 | --screen | screen-role |  | Screen by role: control, diagnostic-1, diagnostic-2, color, portrait. |
 | --view | view-id |  | View id from 'workspace:list'. |
 
+### workspace:explorer (since 5.0)
+
+The explorers of the explorer side and their families: an explorer with the tools and actions that serve it (the DICOM explorer with import, retrieve, export, send and the study content). Without argument it lists the families and the one shown; with an explorer id it shows that family: the explorer on top and, at the bottom, what the family held when it was left. --companion also opens a tool of the family at the bottom; --below opens the explorer under the one shown instead, without switching family. The setting weasis.explorer.default names the explorer shown at startup.
+
+Usage: `workspace:explorer [-h] [--below] [--json] [--companion=<tool-id>] [<tool-id>]`
+
+Produces: `tool-id`
+
+| Parameter | Type | Description |
+|---|---|---|
+| <tool-id> | tool-id | Tool id of an explorer, from the list this verb prints. |
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --below | boolean |  | Opens the explorer in the bottom slot, under the one shown, without switching family. |
+| --companion | tool-id |  | Also opens this tool of the family in the bottom slot. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+| Result | Type | Description |
+|---|---|---|
+| shown | tool-id | the explorer whose family is shown, null without families |
+| families | object[] | one entry per explorer, in stripe order |
+| families[].id | tool-id | tool id of the explorer |
+| families[].name | string | localized name |
+| families[].kind | string | model (holds the data of its viewers) or source (feeds another model) |
+| families[].companions | tool-id[] | tools and actions serving the explorer |
+| families[].bottom | tool-id | what the bottom slot holds for that family, null when empty |
+
 ### workspace:fullscreen (since 5.0)
 
 Puts a window on the full bounds of its monitor without decorations: the window of --view, else the active window. --off ends it. A window state, kept by 'workspace:save' and restored by 'workspace:load'.
@@ -2702,7 +2730,7 @@ Produces: `tool-id`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| --as-view | boolean |  | Shows --tool of --side as a tab of the active window instead of a slot, where it gets width and floats like any view; --tool with --slot brings it back. |
+| --as-view | boolean |  | Shows --tool of --side as a tab of the active window instead of a slot, where it gets width and floats like any view; --tool with --slot brings it back. An explorer stays on its side and is refused. |
 | --clear | boolean |  | Empties --slot of --side. |
 | --collapse | boolean |  | Hides both slots of --side (tools remembered). |
 | --expand | boolean |  | Shows the remembered tools of --side again. |
@@ -2810,6 +2838,7 @@ Usage: `workspace:unmaximize [-h] [--json] --view=<view-id>`
 
 | Event | Since | Payload | Description |
 |---|---|---|---|
+| `workspace:explorer.changed` | 5.0 | explorer: string | The explorer side shows another family: an explorer and the tools that serve it. |
 | `workspace:layout.changed` | 5.0 | view: view-id, layout: string | A viewer changed its pane layout. |
 | `workspace:panel.changed` | 5.0 | panel: string | The toolbars or the tool panels were rebuilt for the selected viewer. |
 | `workspace:view.closed` | 5.0 | view: view-id, window: integer | A view left the workspace. |
@@ -2953,6 +2982,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 
 | Event | Since | Payload | Description |
 |---|---|---|---|
+| `workspace:explorer.changed` | 5.0 | explorer: string | The explorer side shows another family: an explorer and the tools that serve it. |
 | `workspace:layout.changed` | 5.0 | view: view-id, layout: string | A viewer changed its pane layout. |
 | `workspace:panel.changed` | 5.0 | panel: string | The toolbars or the tool panels were rebuilt for the selected viewer. |
 | `workspace:view.closed` | 5.0 | view: view-id, window: integer | A view left the workspace. |
@@ -2989,7 +3019,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | series-uid | the Series Instance UID, or the series id, of a loaded series, from dicom:list (handle) | dicom:list | dicom:download, dicom:info, dicom:interest, dicom:objects, dicom:open, dicom:tag, dicom:unload, explorer:reveal, explorer:select, mpr:delete, mpr:prefetch, mpr:reformat, subtraction:create, subtraction:delete, subtraction:info, subtraction:phases, subtraction:preview, view2d:fusion |
 | split-ratio | the share of the space given to the first side of a split, strictly between 0 and 1 |  | workspace:panel, workspace:split |
 | study-uid | the Study Instance UID of a loaded study, from dicom:list (handle) | dicom:list | dicom:download, dicom:interest, dicom:objects, dicom:unload, explorer:filter, hp:apply, hp:compare, hp:features, hp:match, hp:open, state:export, state:restore, subtraction:list |
-| tool-id | the id of a tool of the shell, from workspace:panel (handle) | workspace:panel | workspace:panel |
+| tool-id | the id of a tool of the shell, from workspace:panel (handle) | workspace:explorer, workspace:panel | workspace:explorer, workspace:panel |
 | view-id | the id of a view, from workspace:list (handle) | dicom:open, workspace:list | color:status, dicom:info, dicom:open, dicom:tag, hp:correct, hp:explain, hp:group, hp:save, hp:sets, measure:calibrate, measure:export, print:page, redact:add, redact:apply, redact:attest, redact:clear, redact:list, redact:match, redact:save, subtraction:mask, subtraction:preview, subtraction:shift, view2d:annotate, view2d:capture, view2d:clear-ai, view2d:export-cine, view2d:flip, view2d:fusion, view2d:graphics, view2d:grid, view2d:hang, view2d:measure, view2d:pan, view2d:preset, view2d:redo, view2d:reset, view2d:rotate, view2d:scroll, view2d:sort, view2d:stats, view2d:sync, view2d:undo, view2d:viewport, view2d:window-level, view2d:zoom, view3d:capture, view3d:export-rotation, workspace:close, workspace:detach, workspace:fullscreen, workspace:maximize, workspace:move, workspace:select, workspace:split, workspace:stack, workspace:unmaximize, wsi:annotations, wsi:export, wsi:goto, wsi:info |
 | window-center | the window center applied to the pixel values, in their own unit |  | view2d:window-level |
 | window-width | the window width applied to the pixel values, in their own unit |  | view2d:window-level |
@@ -3010,6 +3040,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | checkpoint id | the handle of a checkpoint, from state:checkpoints |  |
 | close | remove a view, a study or a patient from the workspace |  |
 | color map | a named mapping of the pixel values to colors applied to a pane |  |
+| companion | a tool or action that serves an explorer and is shown with its family |  |
 | current | the study being read, as opposed to a prior |  |
 | destination | where a print job goes: a system printer, a DICOM printer or a file |  |
 | device entry | a saved set of redaction regions matched by the attributes of a device | template |
@@ -3018,6 +3049,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | downloading | how many downloads were already running when the request came |  |
 | entry | one item of a document or a library, with its id |  |
 | event | a change of state the instance publishes on its bus, named like the commands |  |
+| family | an explorer of the explorer side with the tools and actions that serve it; the stripe shows the explorers, then the companions of the family shown |  |
 | format | the file format of an export or a capture: png, jpg, xml, csv, or what a plugin adds |  |
 | frame | one frame of a multiframe DICOM instance |  |
 | graphic | any drawn object on a pane (measurement, annotation, region) with a graphic id | shape |

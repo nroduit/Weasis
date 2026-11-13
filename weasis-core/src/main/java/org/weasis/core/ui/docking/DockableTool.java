@@ -25,6 +25,30 @@ public interface DockableTool extends Insertable, Relevant {
   /** A plain lowercase token, never a localized name: {@code display}, {@code measure}, ... */
   String getToolId();
 
+  /**
+   * The family of the tool on the explorer side: the tool id of the explorer it serves (the DICOM
+   * import serves the DICOM explorer), its own id for an explorer heading a family, null for a tool
+   * shown whatever the explorer. The stripe shows the explorers first, then only the tools of the
+   * explorer shown.
+   */
+  default String getFamily() {
+    return null;
+  }
+
+  /** Whether the tool heads its family: an explorer, which its companions serve. */
+  default boolean isFamilyHead() {
+    return getToolId().equals(getFamily());
+  }
+
+  /**
+   * Whether the tool may leave its side to become a tab of the workspace. An explorer heading a
+   * family never does: it anchors the stripe of its side and feeds the viewers beside it, so it
+   * stays in its slot and widens the side when it needs room.
+   */
+  default boolean canBeView() {
+    return !isFamilyHead();
+  }
+
   /** The slot the tool opens in when the user clicks its stripe button. */
   default Slot getPreferredSlot() {
     return Slot.TOP;

@@ -598,4 +598,231 @@ class SidePanelTest {
         () -> assertFalse(tools.isView("image"), "a session restores its slot"),
         () -> assertEquals(Optional.of("image"), tools.toolIn(Slot.TOP)));
   }
+
+  // ---- families
+  // ----------------------------------------------------------------------------------
+
+  /** The ids of the stripe in order, buttons and separators ("|"). */
+  private static List<String> groupedIds(SidePanel panel) {
+    return Arrays.stream(panel.getStripe().getComponents())
+        .filter(c -> c.isVisible() || c instanceof javax.swing.JSeparator)
+        .filter(c -> c instanceof javax.swing.AbstractButton || c instanceof javax.swing.JSeparator)
+        .map(c -> c instanceof javax.swing.JSeparator ? "|" : c.getName())
+        .filter(id -> !"stripe-more".equals(id))
+        .toList();
+  }
+
+  /** DICOM with import and export, Files without companion, a catalog, and a global action. */
+  private static SidePanel familySide() throws Exception {
+    SidePanel side = new SidePanel(Role.EXPLORER, Side.LEFT);
+    edt(
+        () -> {
+          side.show(FakeTool.explorer("file-explorer", 20));
+          side.show(FakeTool.explorer("dataset-catalog", 30));
+          side.show(FakeTool.companion("import", 30, "dicom-explorer"));
+          side.show(FakeTool.companion("export", 32, "dicom-explorer"));
+          side.show(FakeTool.companion("contents", 34, "dicom-explorer"));
+          side.show(FakeTool.explorer("dicom-explorer", 10));
+          side.addAction(
+              new StripeAction("import-disc", 31, null, "Disc", () -> {}, "dicom-explorer"));
+        });
+    flush();
+    return side;
+  }
+
+  @Test
+  void theStripeShowsTheExplorersThenOnlyTheCompanionsOfTheFamilyShown() throws Exception {
+    SidePanel side = familySide();
+    assertAll(
+        () -> assertEquals(Optional.of("dicom-explorer"), side.activeFamily()),
+        () ->
+            assertEquals(
+                List.of(
+                    "dicom-explorer",
+                    "file-explorer",
+                    "dataset-catalog",
+                    "|",
+                    "import",
+                    "import-disc",
+                    "export",
+                    "contents"),
+                groupedIds(side)),
+        () -> assertEquals(Optional.of("dicom-explorer"), side.toolIn(Slot.TOP)),
+        () ->
+            assertEquals(
+                List.of("import", "import-disc", "export", "contents"),
+                side.companionIds("dicom-explorer")),
+        () ->
+            assertEquals(
+                "IMPORT — DICOM-EXPLORER",
+                button(side, "import").orElseThrow().getToolTipText(),
+                "the tooltip names the explorer the tool serves"));
+
+    edt(() -> side.selectFamily("file-explorer"));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.of("file-explorer"), side.toolIn(Slot.TOP)),
+        () ->
+            assertEquals(
+                List.of("dicom-explorer", "file-explorer", "dataset-catalog"),
+                groupedIds(side),
+                "a family without companions has no second group"));
+  }
+
+  @Test
+  void theDefaultExplorerWinsOverAnExplorerRegisteredBeforeIt() throws Exception {
+    SidePanel side = new SidePanel(Role.EXPLORER, Side.LEFT);
+    edt(() -> side.show(FakeTool.explorer("file-explorer", 20)));
+    flush();
+    assertEquals(Optional.of("file-explorer"), side.toolIn(Slot.TOP), "the only explorer");
+
+    edt(() -> side.show(FakeTool.explorer("dicom-explorer", 10)));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.of("dicom-explorer"), side.activeFamily()),
+        () -> assertEquals(Optional.of("dicom-explorer"), side.toolIn(Slot.TOP)));
+
+    edt(() -> side.selectFamily("file-explorer"));
+    edt(() -> side.show(FakeTool.explorer("dataset-catalog", 30)));
+    flush();
+    assertEquals(
+        Optional.of("file-explorer"), side.activeFamily(), "a family the user chose stays");
+  }
+
+  @Test
+  void eachFamilyGetsBackTheBottomToolItHadWhenItWasLeft() throws Exception {
+    SidePanel side = familySide();
+    edt(() -> side.open("export", Slot.BOTTOM));
+    edt(() -> side.selectFamily("dataset-catalog"));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.of("dataset-catalog"), side.toolIn(Slot.TOP)),
+        () -> assertEquals(Optional.empty(), side.toolIn(Slot.BOTTOM), "export left with DICOM"),
+        () -> assertEquals("export", side.familyBottoms().get("dicom-explorer")));
+
+    edt(() -> side.selectFamily("dicom-explorer"));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.of("dicom-explorer"), side.toolIn(Slot.TOP)),
+        () -> assertEquals(Optional.of("export"), side.toolIn(Slot.BOTTOM)));
+  }
+
+  @Test
+  void aCompanionOfAnotherFamilySwitchesToItsFamilyFirst() throws Exception {
+    SidePanel side = familySide();
+    edt(() -> side.selectFamily("dataset-catalog"));
+    edt(() -> side.open("import", Slot.BOTTOM));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.of("dicom-explorer"), side.activeFamily()),
+        () -> assertEquals(Optional.of("dicom-explorer"), side.toolIn(Slot.TOP)),
+        () -> assertEquals(Optional.of("import"), side.toolIn(Slot.BOTTOM)));
+
+    edt(() -> side.open("dataset-catalog", Slot.TOP));
+    flush();
+    assertEquals(
+        Optional.of("dataset-catalog"), side.activeFamily(), "an explorer on top is its family");
+  }
+
+  @Test
+  void anExplorerOpensBelowTheOneShownWithoutSwitchingFamily() throws Exception {
+    SidePanel side = familySide();
+    edt(() -> assertTrue(side.openBelow("dataset-catalog")));
+    edt(() -> assertFalse(side.openBelow("dicom-explorer"), "the explorer shown"));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.of("dicom-explorer"), side.activeFamily()),
+        () -> assertEquals(Optional.of("dicom-explorer"), side.toolIn(Slot.TOP)),
+        () -> assertEquals(Optional.of("dataset-catalog"), side.toolIn(Slot.BOTTOM)),
+        () -> assertTrue(button(side, "dataset-catalog").orElseThrow().isSelected()));
+
+    // Shift-click on the stripe button of an explorer does the same
+    edt(() -> side.clear(Slot.BOTTOM));
+    edt(
+        () ->
+            button(side, "file-explorer")
+                .orElseThrow()
+                .dispatchEvent(
+                    new java.awt.event.ActionEvent(
+                        button(side, "file-explorer").orElseThrow(),
+                        java.awt.event.ActionEvent.ACTION_PERFORMED,
+                        "",
+                        java.awt.event.ActionEvent.SHIFT_MASK)));
+    flush();
+    assertEquals(Optional.of("dicom-explorer"), side.activeFamily());
+  }
+
+  @Test
+  void theStateCarriesTheFamilyAndTheBottomOfEachFamily() throws Exception {
+    SidePanel side = familySide();
+    edt(() -> side.open("contents", Slot.BOTTOM));
+    edt(() -> side.selectFamily("file-explorer"));
+    flush();
+    ShellSide state = side.captureState();
+    assertAll(
+        () -> assertEquals("file-explorer", state.family()),
+        () -> assertEquals("contents", state.bottoms().get("dicom-explorer")));
+
+    SidePanel other = familySide();
+    edt(() -> other.applyState(state));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.of("file-explorer"), other.activeFamily()),
+        () -> assertEquals(Optional.of("file-explorer"), other.toolIn(Slot.TOP)));
+    edt(() -> other.selectFamily("dicom-explorer"));
+    flush();
+    assertEquals(Optional.of("contents"), other.toolIn(Slot.BOTTOM));
+
+    // a state saved before the families: the explorer on top names the family
+    SidePanel old = familySide();
+    edt(() -> old.applyState(new ShellSide(Arrays.asList("dataset-catalog", null), 0, 0, false)));
+    flush();
+    assertEquals(Optional.of("dataset-catalog"), old.activeFamily());
+  }
+
+  @Test
+  void aCompanionShownAsATabKeepsItsButtonWhenItsFamilyIsLeft() throws Exception {
+    SidePanel side = familySide();
+    WorkspaceManager manager = new WorkspaceManager(null);
+    side.setWorkspace(() -> manager);
+    edt(() -> side.openAsView("contents"));
+    edt(() -> side.selectFamily("file-explorer"));
+    flush();
+    assertTrue(groupedIds(side).contains("contents"), "the tab keeps a button on its side");
+    assertFalse(groupedIds(side).contains("import"));
+  }
+
+  @Test
+  void anExplorerStaysOnItsSideWhileItsCompanionsMayBecomeTabs() throws Exception {
+    SidePanel side = familySide();
+    WorkspaceManager manager = new WorkspaceManager(null);
+    side.setWorkspace(() -> manager);
+    edt(() -> assertFalse(side.openAsView("dicom-explorer")));
+    edt(() -> assertTrue(side.openAsView("contents")));
+    flush();
+    assertAll(
+        () -> assertFalse(side.canBeView("dicom-explorer")),
+        () -> assertTrue(side.canBeView("contents")),
+        () -> assertFalse(side.isView("dicom-explorer")),
+        () -> assertEquals(Optional.of("dicom-explorer"), side.toolIn(Slot.TOP)),
+        () -> assertTrue(side.isView("contents")));
+  }
+
+  @Test
+  void anExplorerSavedAsATabComesBackToItsSlot() throws Exception {
+    SidePanel side = familySide();
+    WorkspaceManager manager = new WorkspaceManager(null);
+    side.setWorkspace(() -> manager);
+    ShellSide saved =
+        new ShellSide(Arrays.asList(null, null), 0, 0, false, List.of("file-explorer"));
+    edt(() -> side.applyState(saved));
+    flush();
+    assertAll(
+        () -> assertFalse(side.isView("file-explorer")),
+        () -> assertEquals(Optional.of("file-explorer"), side.toolIn(Slot.TOP)));
+
+    edt(() -> assertTrue(side.viewForRestore("dataset-catalog", "Catalog").isEmpty()));
+    flush();
+    assertEquals(Optional.of("dataset-catalog"), side.toolIn(Slot.TOP), "a restored tab");
+  }
 }

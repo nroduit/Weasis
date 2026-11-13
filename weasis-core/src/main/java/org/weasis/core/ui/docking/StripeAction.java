@@ -22,11 +22,19 @@ import javax.swing.Icon;
  * @param icon the icon, derived to the stripe size when it is an SVG icon; null for the default
  * @param name the tooltip
  * @param action what a click runs, on the EDT
+ * @param family the tool id of the explorer the action serves (shown only with it), null for an
+ *     action shown whatever the explorer
  */
-public record StripeAction(String id, int position, Icon icon, String name, Runnable action) {
+public record StripeAction(
+    String id, int position, Icon icon, String name, Runnable action, String family) {
   public StripeAction {
     Objects.requireNonNull(id);
     Objects.requireNonNull(name);
     Objects.requireNonNull(action);
+  }
+
+  /** An action of no family, shown whatever the explorer. */
+  public StripeAction(String id, int position, Icon icon, String name, Runnable action) {
+    this(id, position, icon, name, action, null);
   }
 }

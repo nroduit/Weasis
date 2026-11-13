@@ -137,8 +137,8 @@
     },
     {
       "code": "weasis.plugins.100",
-      "value": "file:${maven.localRepository}/org/weasis/base/weasis-base-viewer2d/${app.version}/weasis-base-viewer2d-${app.version}.jar",
-      "description": "Viewer 2D for standard images",
+      "value": "file:${maven.localRepository}/org/weasis/base/weasis-base-viewer2d/${app.version}/weasis-base-viewer2d-${app.version}.jar file:${maven.localRepository}/org/weasis/base/weasis-base-explorer/${app.version}/weasis-base-explorer-${app.version}.jar",
+      "description": "Viewer 2D and file explorer for standard images",
       "type": "A",
       "category": "PLUGIN_INSTALL"
     },

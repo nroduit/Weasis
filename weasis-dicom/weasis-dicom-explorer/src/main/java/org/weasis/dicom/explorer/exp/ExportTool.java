@@ -32,9 +32,9 @@ public class ExportTool extends ExportHostTool {
   public ExportTool(DicomModel model) {
     super(
         ID,
-        Messages.getString("DicomExport.exp_dicom"),
+        Messages.common("export"),
         32,
-        ResourceUtil.getIcon(ActionIcon.EXPORT_DICOM),
+        ResourceUtil.getIcon(ActionIcon.EXPORT),
         0.6,
         Messages.common("export"),
         "dicom-export/#exporting", // NON-NLS

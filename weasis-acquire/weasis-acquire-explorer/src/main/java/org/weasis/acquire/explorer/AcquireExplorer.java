@@ -59,7 +59,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
   private final ImportPanel importPanel;
 
   public AcquireExplorer() {
-    super("acquire-explorer", TOOL_NAME, Insertable.Type.EXPLORER, 20); // NON-NLS
+    super("acquire-explorer", TOOL_NAME, Insertable.Type.EXPLORER, 40); // NON-NLS
     setDockableWidth(400);
 
     JIThumbnailCache thumbCache = new JIThumbnailCache();

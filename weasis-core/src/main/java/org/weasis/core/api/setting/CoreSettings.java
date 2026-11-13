@@ -75,6 +75,17 @@ public final class CoreSettings {
           .description("Width of the right side panel")
           .declare();
 
+  /**
+   * Tool id of the explorer the explorer side shows first when several are loaded (the DICOM
+   * explorer, the file explorer, a catalog); the first explorer by position when it is not loaded.
+   */
+  public static final Setting<String> EXPLORER_DEFAULT =
+      Setting.builder(
+              SettingType.STRING, GROUP, "weasis.explorer.default", "dicom-explorer") // NON-NLS
+          .description("Explorer shown first when several explorers are loaded")
+          .since("5.0.0")
+          .declare();
+
   /** Share of the top slot of the explorer side when both slots are shown. */
   public static final Setting<Double> SIDE_PANEL_EXPLORER_RATIO =
       Setting.builder(SettingType.DOUBLE, GROUP, "weasis.sidepanel.explorer.ratio", 0.0) // NON-NLS

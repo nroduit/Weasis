@@ -18,7 +18,9 @@ import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.weasis.core.ui.docking.SidePanel.Role;
 
@@ -46,20 +48,40 @@ public record ShellState(ShellSide explorer, ShellSide tools, String strip) {
   private static final String COLLAPSED = "collapsed"; // NON-NLS
   private static final String STRIP = "strip"; // NON-NLS
   private static final String VIEWS = "views"; // NON-NLS
+  private static final String FAMILY = "family"; // NON-NLS
+  private static final String BOTTOMS = "bottoms"; // NON-NLS
 
   /**
    * One side: the tool id of each slot from top to bottom ({@code null} for an empty slot; a list,
    * so a third slot would not change the schema), the content width in pixels (0 = unchanged), the
    * share of the top slot (0 = unchanged), the collapsed flag and the ids of the tools shown as
-   * central views ({@code views}, absent when none).
+   * central views ({@code views}, absent when none); on the explorer side, the explorer whose
+   * family the stripe shows ({@code family}, absent when no tool declares a family) and what the
+   * bottom slot held when each other family was left ({@code bottoms}, by explorer id, a null value
+   * for an empty slot; absent when empty).
    */
   public record ShellSide(
-      List<String> slots, int width, double ratio, boolean collapsed, List<String> views) {
+      List<String> slots,
+      int width,
+      double ratio,
+      boolean collapsed,
+      List<String> views,
+      String family,
+      Map<String, String> bottoms) {
 
     public ShellSide {
       // Collections.unmodifiableList keeps null entries, List.copyOf would refuse them
       slots = Collections.unmodifiableList(new ArrayList<>(slots == null ? List.of() : slots));
       views = views == null ? List.of() : List.copyOf(views);
+      // a LinkedHashMap keeps the null values of the families that left the bottom slot empty
+      bottoms =
+          Collections.unmodifiableMap(new LinkedHashMap<>(bottoms == null ? Map.of() : bottoms));
+    }
+
+    /** A side without family. */
+    public ShellSide(
+        List<String> slots, int width, double ratio, boolean collapsed, List<String> views) {
+      this(slots, width, ratio, collapsed, views, null, null);
     }
 
     /** A side without tools shown as views. */
@@ -93,6 +115,21 @@ public record ShellState(ShellSide explorer, ShellSide tools, String strip) {
         views.forEach(array::add);
         json.add(VIEWS, array);
       }
+      if (family != null) {
+        json.add(FAMILY, family);
+      }
+      if (!bottoms.isEmpty()) {
+        JsonObjectBuilder map = Json.createObjectBuilder();
+        bottoms.forEach(
+            (head, tool) -> {
+              if (tool == null) {
+                map.addNull(head);
+              } else {
+                map.add(head, tool);
+              }
+            });
+        json.add(BOTTOMS, map);
+      }
       return json.build();
     }
 
@@ -116,12 +153,25 @@ public record ShellState(ShellSide explorer, ShellSide tools, String strip) {
           }
         }
       }
+      Map<String, String> bottoms = new LinkedHashMap<>();
+      JsonObject bottomMap = json.getJsonObject(BOTTOMS);
+      if (bottomMap != null) {
+        bottomMap.forEach(
+            (head, value) ->
+                bottoms.put(
+                    head,
+                    value.getValueType() == JsonValue.ValueType.STRING
+                        ? ((JsonString) value).getString()
+                        : null));
+      }
       return new ShellSide(
           ids,
           json.getInt(WIDTH, 0),
           json.containsKey(RATIO) ? json.getJsonNumber(RATIO).doubleValue() : 0,
           json.getBoolean(COLLAPSED, false),
-          views);
+          views,
+          json.getString(FAMILY, null),
+          bottoms);
     }
   }
 

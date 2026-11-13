@@ -84,6 +84,9 @@ public class DicomExplorer extends PluginTool
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomExplorer.class);
 
+  /** The tool id of the DICOM explorer, which its companions name as their family. */
+  public static final String TOOL_ID = "dicom-explorer"; // NON-NLS
+
   public static final String NAME =
       org.weasis.dicom.explorer.Messages.getString("DicomExplorer.title");
   public static final String BUTTON_NAME =
@@ -178,7 +181,7 @@ public class DicomExplorer extends PluginTool
   }
 
   public DicomExplorer(DicomModel model) {
-    super("dicom-explorer", NAME, Insertable.Type.EXPLORER, 20); // NON-NLS
+    super(TOOL_ID, NAME, Insertable.Type.EXPLORER, 10);
     setIcon(ResourceUtil.getIcon(ResourceUtil.OtherIcon.PATIENT));
 
     // Initialize core model and managers
@@ -227,6 +230,9 @@ public class DicomExplorer extends PluginTool
             new ExportTool(this.model),
             new SendTool(this.model));
     this.contentTool = new StudyContentTool(this);
+    // the transfer tools and the study content serve this explorer: the stripe shows them with it
+    transferTools.forEach(tool -> tool.setFamily(TOOL_ID));
+    contentTool.setFamily(TOOL_ID);
   }
 
   @Override
@@ -2036,6 +2042,12 @@ public class DicomExplorer extends PluginTool
   @Override
   public boolean canImportFiles() {
     return true;
+  }
+
+  /** DICOM files found by another explorer (the file explorer) are imported here. */
+  @Override
+  public boolean canImport(String mimeType) {
+    return mimeType != null && mimeType.contains("dicom"); // NON-NLS
   }
 
   /**

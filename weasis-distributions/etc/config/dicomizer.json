@@ -6,8 +6,8 @@
     },
     {
       "code": "weasis.plugins.45",
-      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-base-explorer-${app.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-acquire-explorer-${app.version}.jar${xz.ext}",
-      "description": "Base and Thumbnail explorer",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-acquire-explorer-${app.version}.jar${xz.ext}",
+      "description": "Acquire explorer (the file explorer comes with the viewer of standard images)",
       "type": "A",
       "category": "PLUGIN_INSTALL"
     },
@@ -212,14 +212,6 @@
       "code": "weasis-base-viewer2d.all.rotationtoolbar.enable",
       "value": "false",
       "description": "Show the rotation toolbar with base 2D viewer",
-      "type": "A",
-      "javaType": "BOOLEAN",
-      "category": "UI"
-    },
-    {
-      "code": "weasis-base-viewer2d.all.importtoolbar.enable",
-      "value": "false",
-      "description": "Show the import toolbar with base 2D viewer",
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "UI"

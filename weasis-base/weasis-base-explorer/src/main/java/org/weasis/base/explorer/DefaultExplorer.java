@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.Action;
-import javax.swing.Icon;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -52,6 +51,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
@@ -74,7 +74,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
   private final JPanel jRootPanel = new JPanel();
 
   public DefaultExplorer(final FileTreeModel model, JIThumbnailCache thumbCache) {
-    super("file-explorer", NAME, Insertable.Type.EXPLORER, 10); // NON-NLS
+    super("file-explorer", NAME, Insertable.Type.EXPLORER, 20); // NON-NLS
+    setIcon(ResourceUtil.getIcon(ResourceUtil.OtherIcon.FOLDER));
     if (model == null) {
       throw new IllegalArgumentException();
     }
@@ -503,11 +504,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getUIName() {
     return NAME;
   }
@@ -530,5 +526,14 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
   @Override
   public boolean canImportFiles() {
     return false;
+  }
+
+  /**
+   * A source browser: the files it opens go to the model of the explorer that imports them (DICOM
+   * files to the DICOM explorer), so loading from here keeps this explorer shown.
+   */
+  @Override
+  public boolean isSource() {
+    return true;
   }
 }

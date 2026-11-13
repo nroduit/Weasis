@@ -87,6 +87,7 @@ import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.event.GraphicEventBridge;
+import org.weasis.core.ui.event.ShellEventBridge;
 import org.weasis.core.ui.event.UiActivityBridge;
 import org.weasis.core.ui.event.ViewerEventBridge;
 import org.weasis.core.ui.launcher.Launcher;
@@ -161,6 +162,7 @@ public final class UICore {
     } else {
       this.workspaceManager = new WorkspaceManager(mainWindow);
       this.explorerSidePanel = new SidePanel(SidePanel.Role.EXPLORER);
+      explorerSidePanel.onFamilyChange(ShellEventBridge::explorerChanged);
       this.toolsSidePanel = new SidePanel(SidePanel.Role.TOOLS);
       this.miniStrip = new MiniStrip();
       Shell.register(new Shell(explorerSidePanel, toolsSidePanel, miniStrip));
@@ -197,6 +199,7 @@ public final class UICore {
     CommandManager.setViewerTypeSupplier(() -> ViewContexts.current().viewerTypeId());
     EventBus.global().catalog().declare(ViewerEventBridge.types());
     EventBus.global().catalog().declare(GraphicEventBridge.types());
+    EventBus.global().catalog().declare(ShellEventBridge.types());
     UiActivityBridge.install(
         window -> workspaceManager == null ? 0 : workspaceManager.windowNumber(window));
     this.propsFile =

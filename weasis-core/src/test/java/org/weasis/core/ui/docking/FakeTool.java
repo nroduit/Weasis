@@ -22,6 +22,7 @@ final class FakeTool implements DockableTool {
   private final JPanel component = new JPanel();
   private boolean enabled = true;
   private int widthToFit;
+  private String family;
 
   FakeTool(String id, int position) {
     this(id, position, Slot.TOP);
@@ -63,6 +64,27 @@ final class FakeTool implements DockableTool {
   @Override
   public Component getToolComponent() {
     return component;
+  }
+
+  @Override
+  public String getFamily() {
+    return family;
+  }
+
+  /** Puts the tool in the family of that explorer; its own id makes it an explorer. */
+  FakeTool family(String family) {
+    this.family = family;
+    return this;
+  }
+
+  /** An explorer heading its own family. */
+  static FakeTool explorer(String id, int position) {
+    return new FakeTool(id, position).family(id);
+  }
+
+  /** A tool serving an explorer, opening at the bottom. */
+  static FakeTool companion(String id, int position, String explorer) {
+    return new FakeTool(id, position, Slot.BOTTOM).family(explorer);
   }
 
   @Override

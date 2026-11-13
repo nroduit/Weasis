@@ -33,6 +33,7 @@ import org.weasis.dicom.explorer.LoadDicomDir;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.TransferKind;
 import org.weasis.dicom.explorer.TransferTool;
+import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 /**
@@ -55,9 +56,9 @@ public class ImportTool extends TransferTool {
   public ImportTool(DicomModel model) {
     super(
         ID,
-        Messages.getString("DicomImport.imp_dicom"),
+        Messages.common("import"),
         30,
-        ResourceUtil.getIcon(ActionIcon.IMPORT_DICOM),
+        ResourceUtil.getIcon(ActionIcon.IMPORT),
         0.25,
         Messages.common("import"),
         "dicom-import", // NON-NLS
@@ -88,8 +89,9 @@ public class ImportTool extends TransferTool {
         DISC_ACTION_ID,
         30,
         ResourceUtil.getIcon(ActionIcon.IMPORT_CD),
-        Messages.getString("ImportToolBar.import_dcm_cd"),
-        () -> importDisc(parent, model));
+        Messages.getString("ImportTool.disc"),
+        () -> importDisc(parent, model),
+        DicomExplorer.TOOL_ID);
   }
 
   /** The import of the File menu: opens the import tool, or says the site does not allow it. */

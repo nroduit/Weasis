@@ -70,6 +70,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.swing.Action;
 import javax.swing.Box;
+import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
@@ -1330,7 +1331,24 @@ public class WeasisWin {
     }
   }
 
+  /**
+   * The families of the explorer side as radio items (the explorer shown is checked) when several
+   * explorers are loaded, then the visibility of each explorer.
+   */
   private static void buildExplorerSubMenu(final JMenu explorerMenu) {
+    SidePanel side = GuiUtils.getUICore().getSidePanel(SidePanel.Role.EXPLORER);
+    if (side != null && side.familyIds().size() > 1) {
+      String active = side.activeFamily().orElse(null);
+      ButtonGroup group = new ButtonGroup();
+      for (String id : side.familyIds()) {
+        JRadioButtonMenuItem item =
+            new JRadioButtonMenuItem(side.toolName(id).orElse(id), id.equals(active));
+        item.addActionListener(e -> side.selectFamily(id));
+        group.add(item);
+        explorerMenu.add(item);
+      }
+      explorerMenu.addSeparator();
+    }
     synchronized (GuiUtils.getUICore().getExplorerPlugins()) {
       List<DataExplorerView> explorers = GuiUtils.getUICore().getExplorerPlugins();
       for (final DataExplorerView dataExplorerView : explorers) {

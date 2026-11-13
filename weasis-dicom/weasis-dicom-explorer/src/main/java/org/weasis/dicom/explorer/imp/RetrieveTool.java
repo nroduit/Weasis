@@ -31,9 +31,9 @@ public class RetrieveTool extends TransferTool {
   public RetrieveTool(DicomModel model) {
     super(
         ID,
-        Messages.getString("RetrieveTool.title"),
+        Messages.common("retrieve"),
         31,
-        ResourceUtil.getIcon(ActionIcon.RETRIEVE_DICOM),
+        ResourceUtil.getIcon(ActionIcon.RETRIEVE),
         0.65,
         Messages.common("retrieve"),
         "dicom-import", // NON-NLS
