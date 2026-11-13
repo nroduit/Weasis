@@ -40,6 +40,8 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Taggable;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.lut.ByteLut;
+import org.weasis.opencv.op.lut.ColorLut;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
 class ColorProfileOpTest {
@@ -131,6 +133,40 @@ class ColorProfileOpTest {
 
     op.handleImageOpEvent(ImageOpEvent.of(OpEvent.RESET_DISPLAY));
     assertNull(op.getParam(ColorProfileOp.P_SOURCE_PROFILE));
+  }
+
+  @Test
+  void colors_of_a_map_are_srgb_whatever_the_image_profile() throws Exception {
+    ImageCV src = color(16, 8);
+    ColorProfileOp op = new ColorProfileOp();
+    op.setParam(ColorProfileOp.P_SOURCE_PROFILE, wide);
+    op.setParam(ColorProfileOp.P_MAPPED_COLORS, true);
+
+    PlanarImage out = run(op, src);
+
+    byte[] in = pixels(src);
+    byte[] expected = new byte[in.length];
+    ColorManagement.toDisplay(null).convertRow(in, expected, in.length);
+    assertArrayEquals(expected, pixels(out.toImageCV()), "converted as sRGB");
+  }
+
+  @Test
+  void a_palette_of_a_state_is_a_map_unless_the_state_has_a_profile() {
+    ImageElement image = mock(ImageElement.class);
+    ByteLut palette = ColorLut.RED.getByteLut();
+    ColorProfileOp op = new ColorProfileOp();
+
+    op.handleImageOpEvent(
+        new ImageOpEvent(OpEvent.APPLY_PR, null, image, Map.of(PseudoColorOp.P_LUT, palette)));
+    assertEquals(true, op.getParam(ColorProfileOp.P_MAPPED_COLORS));
+
+    op.handleImageOpEvent(
+        new ImageOpEvent(
+            OpEvent.APPLY_PR,
+            null,
+            image,
+            Map.of(PseudoColorOp.P_LUT, palette, ActionW.PR_STATE.cmd(), taggable(wide))));
+    assertEquals(false, op.getParam(ColorProfileOp.P_MAPPED_COLORS), "the state's own colors");
   }
 
   @Test

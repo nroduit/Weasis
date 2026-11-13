@@ -13,6 +13,7 @@ import org.opencv.core.CvType;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.op.ByteLutCollection;
+import org.weasis.core.api.image.util.GrayLevels;
 import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.LookupTableCV;
@@ -26,7 +27,8 @@ import org.weasis.opencv.op.lut.colormap.ColorMapCompiler;
  * Colorizes the windowed image through the selected {@link ByteLut}. An 8-bit source goes through
  * the 256-entry table; a 16-bit source (a {@link WindowOp} with {@link WindowOp#P_OUTPUT_BITS}
  * above 8) is indexed over {@code [0, 2^bits - 1]} through the map behind the table, so wide
- * windows keep smooth gradients.
+ * windows keep smooth gradients. An 8-bit color source is mapped through its luma; the colors that
+ * come out are those of the map, in sRGB (see {@link ColorProfileOp#P_MAPPED_COLORS}).
  */
 public final class PseudoColorOp extends AbstractOp {
 
@@ -83,6 +85,12 @@ public final class PseudoColorOp extends AbstractOp {
     }
   }
 
+  /** True when {@code lut} replaces the colors of the image (any map but the image's own). */
+  public static boolean mapsColors(Object lut) {
+    return lut instanceof ByteLut byteLut
+        && (byteLut.lutTable() != null || byteLut.source() != null);
+  }
+
   @Override
   public void process() throws Exception {
     PlanarImage source = getSourceImage();
@@ -97,20 +105,24 @@ public final class PseudoColorOp extends AbstractOp {
     if (lutTable == null) {
       return source;
     }
-    // A color source (true color, or gray colored by a Supplemental Palette) has no gray level
-    // for a color map to map: applying it per channel would distort the colors
-    if (source.channels() > 1) {
-      return invertLut ? ImageTransformer.invertLUT(source.toImageCV()) : source;
-    }
     if (isWideSource(source)) {
       return applyWide(source, lutTable, invertLut);
     }
     byte[][] lut = lutTable.lutTable();
-    if (lut == null) {
+    // A color source is mapped through its luma: the map replaces its colors. Color with an alpha
+    // channel has no gray level.
+    PlanarImage gray = lut == null ? null : GrayLevels.of(source);
+    if (gray == null) {
       return invertLut ? ImageTransformer.invertLUT(source.toImageCV()) : source;
     }
     byte[][] finalLut = invertLut ? ByteLutCollection.invert(lut) : lut;
-    return ImageTransformer.applyLUT(source.toMat(), finalLut);
+    try {
+      return ImageTransformer.applyLUT(gray.toMat(), finalLut);
+    } finally {
+      if (gray != source) {
+        gray.release();
+      }
+    }
   }
 
   private static boolean isWideSource(PlanarImage source) {

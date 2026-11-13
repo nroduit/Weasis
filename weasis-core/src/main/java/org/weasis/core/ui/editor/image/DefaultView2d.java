@@ -70,6 +70,7 @@ import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.AffineTransformOp;
+import org.weasis.core.api.image.ColorProfileOp;
 import org.weasis.core.api.image.FilterOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpNode;
@@ -298,6 +299,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     disOp.setParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA, KernelData.NONE);
     disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, ColorLut.IMAGE.getByteLut());
     disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, false);
+    disOp.setParamValue(ColorProfileOp.OP_NAME, ColorProfileOp.P_MAPPED_COLORS, false);
     disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_OUTPUT_BITS, ColorMap.MIN_BITS);
     disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_OUTPUT_RANGE, null);
     disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_INPUT_BITS, ColorMap.MIN_BITS);
@@ -2148,6 +2150,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
               WindowOp.P_OUTPUT_RANGE,
               WindowOp.outputRangeOf(entry.getValue()).orElse(null));
           manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_INPUT_BITS, bits);
+          manager.setParamValue(
+              ColorProfileOp.OP_NAME,
+              ColorProfileOp.P_MAPPED_COLORS,
+              PseudoColorOp.mapsColors(entry.getValue()));
           imageLayer.updateDisplayOperations();
         }
       } else if (command.equals(ActionW.INVERT_LUT.cmd())) {

@@ -40,6 +40,13 @@ public final class ColorProfileOp extends AbstractOp {
    */
   public static final String P_TARGET_PROFILE = "icc.target.profile"; // NON-NLS
 
+  /**
+   * The colors entering the operation come from a color map, not from the image: they are sRGB,
+   * whatever profile the image carries. Set with the map of {@link PseudoColorOp}. (Boolean,
+   * Optional: false)
+   */
+  public static final String P_MAPPED_COLORS = "icc.mapped.colors"; // NON-NLS
+
   public ColorProfileOp() {
     setName(OP_NAME);
   }
@@ -76,6 +83,12 @@ public final class ColorProfileOp extends AbstractOp {
         Object pr = event.params().get(ActionW.PR_STATE.cmd());
         IccProfile profile = pr instanceof Taggable t ? profileOf(t) : null;
         setParam(P_SOURCE_PROFILE, profile == null ? profileOf(event.image()) : profile);
+        // A palette of the state is a color map, unless the state describes its colors
+        if (event.params().get(PseudoColorOp.P_LUT) != null) {
+          setParam(
+              P_MAPPED_COLORS,
+              profile == null && PseudoColorOp.mapsColors(event.params().get(PseudoColorOp.P_LUT)));
+        }
       }
     }
   }
@@ -108,7 +121,10 @@ public final class ColorProfileOp extends AbstractOp {
     if (source == null || source.type() != CvType.CV_8UC3) {
       return source;
     }
-    IccProfile profile = (IccProfile) params.get(P_SOURCE_PROFILE);
+    IccProfile profile =
+        Boolean.TRUE.equals(params.get(P_MAPPED_COLORS))
+            ? null
+            : (IccProfile) params.get(P_SOURCE_PROFILE);
     IccProfile target = (IccProfile) params.get(P_TARGET_PROFILE);
     ColorTransform transform;
     if (target == null) {

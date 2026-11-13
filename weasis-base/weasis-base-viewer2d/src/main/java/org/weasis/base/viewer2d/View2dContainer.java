@@ -144,7 +144,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
       String key = "enable"; // NON-NLS
       WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
-        if (InsertableUtil.getBooleanProperty(
+      if (InsertableUtil.getBooleanProperty(
           preferences,
           plugInId,
           componentName,
