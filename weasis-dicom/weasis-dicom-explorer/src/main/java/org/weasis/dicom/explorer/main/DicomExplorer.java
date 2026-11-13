@@ -422,7 +422,7 @@ public class DicomExplorer extends PluginTool
     if (patient == null) {
       return defaultMode;
     }
-    int viewportWidth = thumbnailView.getViewport().getWidth();
+    int viewportWidth = stableViewportWidth();
     int narrow =
         GuiUtils.getScaleLength(intPreference(DicomExplorerPrefView.LIST_WIDTH_THRESHOLD, 220));
     if (viewportWidth > 0 && viewportWidth < narrow) {
@@ -440,11 +440,32 @@ public class DicomExplorer extends PluginTool
           GuiUtils.getScaleLength(SeriesThumbnail.getThumbnailSizeFromPreferences())
               + GuiUtils.getScaleLength(40); // label lines under the thumbnail
       long height = (long) Math.ceil(seriesCount / (double) perRow) * rowHeight;
-      return height > 3L * viewportHeight ? ExplorerMode.LIST : defaultMode;
+      // Hysteresis: leaving the list takes a column clearly shorter than the one that entered it,
+      // so a size change near the limit does not flip the mode back and forth
+      double limit = mode == ExplorerMode.LIST ? 2.5 : 3.0;
+      return height > limit * viewportHeight ? ExplorerMode.LIST : defaultMode;
     }
     return seriesCount > intPreference(DicomExplorerPrefView.LIST_SERIES_THRESHOLD, 30)
         ? ExplorerMode.LIST
         : defaultMode;
+  }
+
+  /**
+   * Width of the viewport with the vertical scrollbar always counted as shown. The thumbnail column
+   * shows the scrollbar and the shorter list often does not, so the raw viewport width differs
+   * between the two modes: deciding on it made the mode flip at each switch (a side widened by the
+   * window fullscreen fitting two columns without the scrollbar and one with it).
+   */
+  private int stableViewportWidth() {
+    int viewportWidth = thumbnailView.getViewport().getWidth();
+    if (viewportWidth <= 0) {
+      return viewportWidth;
+    }
+    JScrollBar bar = thumbnailView.getVerticalScrollBar();
+    if (!bar.isVisible()) {
+      viewportWidth -= bar.getPreferredSize().width;
+    }
+    return Math.max(1, viewportWidth);
   }
 
   private static int intPreference(String key, int fallback) {
