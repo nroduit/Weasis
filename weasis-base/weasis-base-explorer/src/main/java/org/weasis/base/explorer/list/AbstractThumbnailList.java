@@ -46,8 +46,7 @@ import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.JIUtility;
 import org.weasis.base.explorer.Messages;
 import org.weasis.base.explorer.ThumbnailRenderer;
-import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.GhostGlassPane;
+import org.weasis.core.api.gui.util.DragGhost;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.ImageElement;
@@ -611,7 +610,6 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
       E media = getSelectedValue();
       MediaSeries<?> series = buildSeriesFromMediaElement(media);
       if (series != null) {
-        GhostGlassPane glassPane = AppProperties.glassPane;
         Icon icon = null;
         if (media instanceof ImageElement imageElement) {
           icon = thumbCache.getThumbnailFor(imageElement, this, index);
@@ -619,12 +617,11 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         if (icon == null) {
           icon = JIUtility.getSystemIcon(media);
         }
-        glassPane.setIcon(icon);
         dragPressed = new Point(icon.getIconWidth() / 2, icon.getIconHeight() / 2);
         Point p = (Point) dge.getDragOrigin().clone();
         SwingUtilities.convertPointToScreen(p, comp);
-        drawGlassPane(p);
-        glassPane.setVisible(true);
+        // follows the pointer into every window of Weasis, viewer windows included
+        DragGhost.start(icon, dragPressed, p);
         dge.startDrag(null, series, this);
       }
     }
@@ -648,11 +645,8 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
 
   @Override
   public void dragDropEnd(DragSourceDropEvent dragEvent) {
-    GhostGlassPane glassPane = AppProperties.glassPane;
     dragPressed = null;
-    glassPane.setImagePosition(null);
-    glassPane.setIcon(null);
-    glassPane.setVisible(false);
+    DragGhost.stop();
   }
 
   @Override
@@ -660,10 +654,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
 
   public void drawGlassPane(Point p) {
     if (dragPressed != null) {
-      GhostGlassPane glassPane = AppProperties.glassPane;
-      SwingUtilities.convertPointFromScreen(p, glassPane);
-      p.translate(-dragPressed.x, -dragPressed.y);
-      glassPane.setImagePosition(p);
+      DragGhost.move(p);
     }
   }
 

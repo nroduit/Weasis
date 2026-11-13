@@ -41,7 +41,7 @@ import javax.swing.border.EmptyBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.GhostGlassPane;
+import org.weasis.core.api.gui.util.DragGhost;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.image.OpManager;
@@ -301,13 +301,11 @@ public class SeriesThumbnail extends Thumbnail
   public void dragGestureRecognized(DragGestureEvent dge) {
     Component comp = dge.getComponent();
     try {
-      GhostGlassPane glassPane = AppProperties.glassPane;
-      glassPane.setIcon(getIcon());
       Point p = (Point) dge.getDragOrigin().clone();
       dragPressed = new Point(p.x - 4, p.y - 4);
       SwingUtilities.convertPointToScreen(p, comp);
-      drawGlassPane(p);
-      glassPane.setVisible(true);
+      // follows the pointer into every window of Weasis, viewer windows included
+      DragGhost.start(getIcon(), dragPressed, p);
       dge.startDrag(null, series, this);
     } catch (Exception e) {
       LOGGER.error("Prepare to drag", e);
@@ -338,11 +336,8 @@ public class SeriesThumbnail extends Thumbnail
 
   @Override
   public void dragDropEnd(DragSourceDropEvent dsde) {
-    GhostGlassPane glassPane = AppProperties.glassPane;
     dragPressed = null;
-    glassPane.setImagePosition(null);
-    glassPane.setIcon(null);
-    glassPane.setVisible(false);
+    DragGhost.stop();
   }
 
   @Override
@@ -352,10 +347,7 @@ public class SeriesThumbnail extends Thumbnail
 
   public void drawGlassPane(Point p) {
     if (dragPressed != null) {
-      GhostGlassPane glassPane = AppProperties.glassPane;
-      SwingUtilities.convertPointFromScreen(p, glassPane);
-      p.translate(-dragPressed.x, -dragPressed.y);
-      glassPane.setImagePosition(p);
+      DragGhost.move(p);
     }
   }
 

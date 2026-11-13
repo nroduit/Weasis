@@ -48,8 +48,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import net.miginfocom.swing.MigLayout;
 import org.dcm4che3.data.Tag;
-import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.GhostGlassPane;
+import org.weasis.core.api.gui.util.DragGhost;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -537,13 +536,11 @@ public class SeriesListPane extends JPanel implements Scrollable {
       DicomSeries series = draggedSeries();
       Icon icon = series == null ? null : ghostIcon(series);
       if (icon != null && e instanceof MouseEvent me) {
-        GhostGlassPane glassPane = AppProperties.glassPane;
-        glassPane.setIcon(icon);
         ghostOffset = new Point(icon.getIconWidth() / 2, icon.getIconHeight() / 2);
         Point p = me.getPoint();
         SwingUtilities.convertPointToScreen(p, comp);
-        moveGhost(p);
-        glassPane.setVisible(true);
+        // follows the pointer into every window of Weasis, viewer windows included
+        DragGhost.start(icon, ghostOffset, p);
         DragSource.getDefaultDragSource().addDragSourceMotionListener(motion);
       }
       super.exportAsDrag(comp, e, action);
@@ -554,21 +551,14 @@ public class SeriesListPane extends JPanel implements Scrollable {
       DragSource.getDefaultDragSource().removeDragSourceMotionListener(motion);
       if (ghostOffset != null) {
         ghostOffset = null;
-        GhostGlassPane glassPane = AppProperties.glassPane;
-        glassPane.setImagePosition(null);
-        glassPane.setIcon(null);
-        glassPane.setVisible(false);
+        DragGhost.stop();
       }
       pressedRow = -1;
     }
 
     private void moveGhost(Point screen) {
       if (ghostOffset != null) {
-        GhostGlassPane glassPane = AppProperties.glassPane;
-        Point p = new Point(screen);
-        SwingUtilities.convertPointFromScreen(p, glassPane);
-        p.translate(-ghostOffset.x, -ghostOffset.y);
-        glassPane.setImagePosition(p);
+        DragGhost.move(screen);
       }
     }
 
