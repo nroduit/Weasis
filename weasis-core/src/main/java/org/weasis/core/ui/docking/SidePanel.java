@@ -737,6 +737,31 @@ public class SidePanel extends JPanel {
     return find(toolId).map(DockableTool::canBeView).orElse(false);
   }
 
+  /**
+   * Whether a UI profile may put that entry in a slot: a tool of no family or of the family shown;
+   * an empty entry only in a slot that holds no explorer. Without families, everything.
+   */
+  private boolean profileMayPlace(Slot slot, DockableTool tool, String id) {
+    resolveFamily();
+    if (activeFamily == null) {
+      return true;
+    }
+    if (id == null) {
+      DockableTool current = host(slot).tool;
+      return current == null || !current.isFamilyHead();
+    }
+    if (tool == null) {
+      return true; // not offered: reported as skipped
+    }
+    String family = tool.getFamily();
+    return !tool.isFamilyHead() && (family == null || family.equals(activeFamily));
+  }
+
+  /** The ⋮ menu of the title bar of a slot, null when the slot is empty; for tests. */
+  JPopupMenu slotMenu(Slot slot) {
+    return host(slot).buildMenu();
+  }
+
   /** Whether the tool is shown as a central view. */
   public boolean isView(String toolId) {
     return views.containsKey(toolId);
@@ -983,13 +1008,15 @@ public class SidePanel extends JPanel {
   }
 
   /**
-   * Applies a state; with {@code keepTabs}, a tool the user shows as a tab of the workspace stays
-   * there instead of going to the slot the state names (a UI profile applied on a viewer switch
-   * never undoes the layout of the user; a restored session does).
+   * Applies a state; with {@code keepTabs}, the state is a UI profile applied on a viewer switch,
+   * which never undoes the layout of the user: a tool the user shows as a tab of the workspace
+   * stays there, and the explorers stay where the user put them (a profile names neither the family
+   * shown nor an explorer, and only the tools of the family shown); a restored session reproduces
+   * everything.
    */
   public List<String> applyState(ShellSide state, boolean keepTabs) {
     List<String> skipped = new ArrayList<>();
-    String family = state.family();
+    String family = keepTabs ? null : state.family();
     if (family != null) {
       if (find(family).filter(DockableTool::isFamilyHead).isPresent()) {
         setActiveFamily(family);
@@ -997,10 +1024,15 @@ public class SidePanel extends JPanel {
         skipped.add(family);
       }
     }
-    familyBottoms.putAll(state.bottoms());
+    if (!keepTabs) {
+      familyBottoms.putAll(state.bottoms());
+    }
     for (Slot slot : Slot.values()) {
       String id = state.slot(slot);
       Optional<DockableTool> tool = id == null ? Optional.empty() : find(id);
+      if (keepTabs && !profileMayPlace(slot, tool.orElse(null), id)) {
+        continue; // the explorers and the other families are the user's
+      }
       if (id == null) {
         clear(slot);
       } else if (keepTabs && views.containsKey(id)) {
@@ -2004,11 +2036,27 @@ public class SidePanel extends JPanel {
 
     /** The other actions on the tool of this slot, under the trailing edge of the button. */
     private void showMenu() {
-      if (tool == null) {
+      JPopupMenu menu = buildMenu();
+      if (menu == null) {
         return;
+      }
+      menu.applyComponentOrientation(more.getComponentOrientation());
+      Dimension size = menu.getPreferredSize();
+      int x = more.getComponentOrientation().isLeftToRight() ? more.getWidth() - size.width : 0;
+      menu.show(more, x, more.getHeight());
+    }
+
+    /** The ⋮ menu: the actions of the tool, then move, open as a tab and minimize. */
+    JPopupMenu buildMenu() {
+      if (tool == null) {
+        return null;
       }
       String toolId = tool.getToolId();
       JPopupMenu menu = new JPopupMenu();
+      tool.populateSlotMenu(menu);
+      if (menu.getComponentCount() > 0) {
+        menu.addSeparator();
+      }
       Slot target = slot.other();
       JMenuItem move =
           new JMenuItem(
@@ -2029,10 +2077,7 @@ public class SidePanel extends JPanel {
       JMenuItem hide = new JMenuItem(Messages.getString("Docking.minimize"), minimize.getIcon());
       hide.addActionListener(e -> collapse(slot));
       menu.add(hide);
-      menu.applyComponentOrientation(more.getComponentOrientation());
-      Dimension size = menu.getPreferredSize();
-      int x = more.getComponentOrientation().isLeftToRight() ? more.getWidth() - size.width : 0;
-      menu.show(more, x, more.getHeight());
+      return menu;
     }
 
     void setTool(DockableTool newTool) {

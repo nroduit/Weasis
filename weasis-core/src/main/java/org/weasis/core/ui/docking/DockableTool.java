@@ -10,6 +10,7 @@
 package org.weasis.core.ui.docking;
 
 import java.awt.Component;
+import javax.swing.JPopupMenu;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.ui.editor.Relevant;
 
@@ -47,6 +48,15 @@ public interface DockableTool extends Insertable, Relevant {
    */
   default boolean canBeView() {
     return !isFamilyHead();
+  }
+
+  /**
+   * Adds the actions of the tool to the ⋮ menu of the title bar of its slot, above the entries of
+   * the slot (move, open as a tab, minimize): what is used now and then, so the tool keeps its own
+   * space for its content. Nothing by default.
+   */
+  default void populateSlotMenu(JPopupMenu menu) {
+    // no actions of its own
   }
 
   /** The slot the tool opens in when the user clicks its stripe button. */

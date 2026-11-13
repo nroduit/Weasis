@@ -825,4 +825,61 @@ class SidePanelTest {
     flush();
     assertEquals(Optional.of("dataset-catalog"), side.toolIn(Slot.TOP), "a restored tab");
   }
+
+  @Test
+  void aToolPutsItsActionsAboveTheEntriesOfItsSlotMenu() throws Exception {
+    SidePanel side = new SidePanel(Role.EXPLORER, Side.LEFT);
+    edt(() -> side.show(FakeTool.explorer("dataset-catalog", 30).slotActions("Refresh", "Site")));
+    edt(() -> side.show(new FakeTool("contents", 34, Slot.BOTTOM)));
+    edt(() -> side.open("contents", Slot.BOTTOM));
+    flush();
+    List<String> top = new java.util.ArrayList<>();
+    List<String> bottom = new java.util.ArrayList<>();
+    edt(
+        () -> {
+          for (Component c : side.slotMenu(Slot.TOP).getComponents()) {
+            top.add(c instanceof javax.swing.JMenuItem item ? item.getText() : "|");
+          }
+          for (Component c : side.slotMenu(Slot.BOTTOM).getComponents()) {
+            bottom.add(c instanceof javax.swing.JMenuItem item ? item.getText() : "|");
+          }
+        });
+    assertAll(
+        () -> assertEquals(List.of("Refresh", "Site", "|"), top.subList(0, 3)),
+        () -> assertFalse(top.contains(org.weasis.core.Messages.getString("Docking.open_tab"))),
+        () -> assertTrue(bottom.contains(org.weasis.core.Messages.getString("Docking.open_tab"))),
+        () -> assertFalse(bottom.getFirst().equals("|"), "no separator without tool actions"));
+  }
+
+  @Test
+  void aProfileNeverMovesTheExplorersNorSwitchesFamily() throws Exception {
+    SidePanel side = familySide();
+    edt(() -> side.selectFamily("dataset-catalog"));
+    flush();
+    // what a profile recorded while the user had the file explorer under the DICOM explorer
+    ShellSide profile =
+        new ShellSide(Arrays.asList("dicom-explorer", "file-explorer"), 0, 0, false);
+    edt(() -> side.applyState(profile, true));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.of("dataset-catalog"), side.activeFamily()),
+        () -> assertEquals(Optional.of("dataset-catalog"), side.toolIn(Slot.TOP)),
+        () -> assertEquals(Optional.empty(), side.toolIn(Slot.BOTTOM)));
+
+    // a tool of the family shown is still the profile's to place, or to clear
+    edt(() -> side.selectFamily("dicom-explorer"));
+    edt(() -> side.applyState(new ShellSide(Arrays.asList(null, "contents"), 0, 0, false), true));
+    flush();
+    assertAll(
+        () -> assertEquals(Optional.of("dicom-explorer"), side.toolIn(Slot.TOP)),
+        () -> assertEquals(Optional.of("contents"), side.toolIn(Slot.BOTTOM)));
+    edt(() -> side.applyState(new ShellSide(Arrays.asList(null, null), 0, 0, false), true));
+    flush();
+    assertEquals(Optional.empty(), side.toolIn(Slot.BOTTOM));
+
+    // a session reproduces what it saved, explorers included
+    edt(() -> side.applyState(profile, false));
+    flush();
+    assertEquals(Optional.of("file-explorer"), side.toolIn(Slot.BOTTOM));
+  }
 }

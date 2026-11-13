@@ -23,6 +23,7 @@ final class FakeTool implements DockableTool {
   private boolean enabled = true;
   private int widthToFit;
   private String family;
+  private java.util.List<String> slotActions = java.util.List.of();
 
   FakeTool(String id, int position) {
     this(id, position, Slot.TOP);
@@ -64,6 +65,17 @@ final class FakeTool implements DockableTool {
   @Override
   public Component getToolComponent() {
     return component;
+  }
+
+  @Override
+  public void populateSlotMenu(javax.swing.JPopupMenu menu) {
+    slotActions.forEach(name -> menu.add(new javax.swing.JMenuItem(name)));
+  }
+
+  /** Entries the tool adds to the ⋮ menu of its slot. */
+  FakeTool slotActions(String... names) {
+    this.slotActions = java.util.List.of(names);
+    return this;
   }
 
   @Override
