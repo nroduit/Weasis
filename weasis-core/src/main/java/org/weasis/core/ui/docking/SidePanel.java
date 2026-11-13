@@ -9,18 +9,32 @@
  */
 package org.weasis.core.ui.docking;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
+import com.formdev.flatlaf.ui.FlatUIUtils;
+import com.formdev.flatlaf.util.ColorFunctions;
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Path2D;
+import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -41,10 +55,14 @@ import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -191,6 +209,12 @@ public class SidePanel extends JPanel {
 
   /** The tools shown as central views, by id; their slot is empty meanwhile. */
   private final Map<String, ToolView> views = new LinkedHashMap<>();
+
+  /**
+   * The slot a tool left to become a view, by id: where it returns from the tab and where its
+   * stripe button opens it after the tab was closed.
+   */
+  private final Map<String, Slot> viewOrigins = new HashMap<>();
 
   private Supplier<WorkspaceManager> workspace = () -> GuiUtils.getUICore().getWorkspaceManager();
   private Consumer<SidePanel> userChange = side -> {};
@@ -412,6 +436,14 @@ public class SidePanel extends JPanel {
 
   /** Closes the central view of a tool and shows the tool in its preferred slot again. */
   public boolean returnFromView(String toolId) {
+    return returnFromView(toolId, null);
+  }
+
+  /**
+   * Brings a tool shown as a view back to the side, in the given slot or, when null, in the slot it
+   * left.
+   */
+  public boolean returnFromView(String toolId, Slot slot) {
     ToolView view = views.remove(toolId);
     if (view == null) {
       return false;
@@ -420,7 +452,30 @@ public class SidePanel extends JPanel {
     if (manager != null) {
       manager.close(view);
     }
-    find(toolId).ifPresent(tool -> open(tool, preferredSlot(tool)));
+    Slot origin = viewOrigins.remove(toolId);
+    find(toolId)
+        .ifPresent(
+            tool ->
+                open(tool, slot != null ? slot : origin != null ? origin : preferredSlot(tool)));
+    userChange.accept(this);
+    return true;
+  }
+
+  /**
+   * Closes the tab of a tool shown as a view without bringing the tool back: its stripe button
+   * shows it as not open and opens it again in the slot it left.
+   */
+  public boolean closeView(String toolId) {
+    ToolView view = views.remove(toolId);
+    if (view == null) {
+      return false;
+    }
+    WorkspaceManager manager = workspace.get();
+    if (manager != null) {
+      manager.close(view);
+    }
+    scheduleRelayout();
+    userChange.accept(this);
     return true;
   }
 
@@ -435,12 +490,13 @@ public class SidePanel extends JPanel {
   }
 
   private ToolView detachForView(DockableTool tool) {
-    slotOf(tool)
-        .ifPresent(
-            slot -> {
-              host(slot).setTool(null);
-              remembered[slot.ordinal()] = null;
-            });
+    Optional<Slot> origin = slotOf(tool);
+    viewOrigins.put(tool.getToolId(), origin.orElseGet(() -> preferredSlot(tool)));
+    origin.ifPresent(
+        slot -> {
+          host(slot).setTool(null);
+          remembered[slot.ordinal()] = null;
+        });
     ToolView view = new ToolView(this, tool);
     views.put(tool.getToolId(), view);
     scheduleRelayout();
@@ -451,8 +507,8 @@ public class SidePanel extends JPanel {
   private void pruneViews(WorkspaceManager manager) {
     for (String id : List.copyOf(views.keySet())) {
       if (!manager.isShowing(views.get(id))) {
-        views.remove(id);
-        find(id).ifPresent(tool -> open(tool, preferredSlot(tool)));
+        views.remove(id); // closed elsewhere: the tool stays off the side, as a closed tab
+        scheduleRelayout();
       }
     }
   }
@@ -657,6 +713,7 @@ public class SidePanel extends JPanel {
   }
 
   private void open(DockableTool tool, Slot slot) {
+    viewOrigins.remove(tool.getToolId());
     ToolView view = views.remove(tool.getToolId());
     if (view != null) {
       // back from the central area into a slot
@@ -702,13 +759,27 @@ public class SidePanel extends JPanel {
     }
     ToolView view = views.get(toolId);
     if (view != null) {
-      // the stripe button of a tool shown as a view brings its tab to the front
       WorkspaceManager manager = workspace.get();
+      if (otherSlot) {
+        // Shift-click brings the tool back to the side, in the other slot than the one it left
+        Slot origin = viewOrigins.getOrDefault(toolId, preferredSlot(tool));
+        returnFromView(toolId, origin.other());
+        fitPending = toolId;
+        return;
+      }
       if (manager != null && manager.isShowing(view)) {
+        // the stripe button of a tool shown as a view brings its tab (and its window) to the front
         manager.select(view);
         return;
       }
       views.remove(toolId);
+    }
+    Slot closedFrom = viewOrigins.remove(toolId);
+    if (closedFrom != null && !otherSlot) {
+      // the tab was closed: the button opens the tool where it was before it became a tab
+      open(tool, closedFrom);
+      fitPending = toolId;
+      return;
     }
     Optional<Slot> current = slotOf(tool).filter(s -> !collapsed[s.ordinal()]);
     if (otherSlot) {
@@ -860,7 +931,12 @@ public class SidePanel extends JPanel {
       JToggleButton button = buttons.get(tool.getToolId());
       Optional<Slot> slot = slotOf(tool).filter(this::isShown);
       boolean asView = views.containsKey(tool.getToolId());
-      button.setSelected(slot.isPresent() || asView);
+      // pressed means "on this side"; a tool shown as a tab is marked instead
+      button.setSelected(slot.isPresent());
+      if (!Objects.equals(button.getClientProperty(AS_TAB), asView)) {
+        button.putClientProperty(AS_TAB, asView);
+        button.repaint();
+      }
       button.setToolTipText(
           asView
               ? tool.getComponentName() + " (" + Messages.getString("Docking.tab") + ")"
@@ -896,11 +972,142 @@ public class SidePanel extends JPanel {
     stripe.repaint();
   }
 
+  /** The client property of a stripe button whose tool is shown as a tab. */
+  private static final String AS_TAB = "weasis.stripe.asTab"; // NON-NLS
+
+  /** The menu of the stripe button of a tool shown as a tab. */
+  private void showTabMenu(MouseEvent e, String toolId) {
+    if (!e.isPopupTrigger() || !views.containsKey(toolId)) {
+      return;
+    }
+    JPopupMenu menu = new JPopupMenu();
+    JMenuItem show = new JMenuItem(Messages.getString("Docking.show_tab"));
+    show.addActionListener(
+        ev -> {
+          WorkspaceManager manager = workspace.get();
+          ToolView view = views.get(toolId);
+          if (manager != null && view != null) {
+            manager.select(view);
+          }
+        });
+    menu.add(show);
+    JMenuItem back = new JMenuItem(Messages.getString("Docking.return_side"));
+    back.addActionListener(ev -> returnFromView(toolId));
+    menu.add(back);
+    menu.applyComponentOrientation(e.getComponent().getComponentOrientation());
+    menu.show(e.getComponent(), e.getX(), e.getY());
+  }
+
+  /**
+   * A stripe toggle button with three states: transparent when its tool is not open; pressed with
+   * an accent bar on the window edge while its tool is on the side; outlined in the accent and
+   * marked with a small tab in its bottom trailing corner while its tool is shown as a tab of the
+   * workspace.
+   */
+  private static final class StripeButton extends JToggleButton {
+    /** Whether the stripe is on the left edge of the window, where the bar goes. */
+    private final boolean leftEdge;
+
+    StripeButton(String text, Icon icon, boolean leftEdge) {
+      super(text, icon);
+      this.leftEdge = leftEdge;
+      // no background until hovered or pressed, as the buttons of a toolbar
+      putClientProperty(
+          FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+    }
+
+    @Override
+    protected void paintChildren(Graphics g) {
+      super.paintChildren(g);
+      if (!isSelected()) {
+        return;
+      }
+      Graphics2D g2 = (Graphics2D) g.create();
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(FlatUIUtils.getUIColor("Component.accentColor", new Color(0x4A88C7)));
+        int w = GuiUtils.getScaleLength(3);
+        int h = Math.round(getHeight() * 0.6f);
+        int x = leftEdge ? 0 : getWidth() - w;
+        g2.fillRoundRect(x, (getHeight() - h) / 2, w, h, w, w);
+      } finally {
+        g2.dispose();
+      }
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      boolean asTab = Boolean.TRUE.equals(getClientProperty(AS_TAB));
+      Color accent = FlatUIUtils.getUIColor("Component.accentColor", new Color(0x4A88C7));
+      int arc = GuiUtils.getScaleLength(FlatUIUtils.getUIInt("Button.arc", 6)); // NON-NLS
+      if (asTab) {
+        // a tinted, outlined button: neither pressed (on the side) nor plain (not open)
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 56));
+          g2.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
+        } finally {
+          g2.dispose();
+        }
+      }
+      super.paintComponent(g);
+      if (!asTab) {
+        return;
+      }
+      Graphics2D g2 = (Graphics2D) g.create();
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        float stroke = GuiUtils.getScaleLength(1) * 1.5f;
+        g2.setStroke(new BasicStroke(stroke));
+        g2.setColor(accent);
+        g2.draw(
+            new RoundRectangle2D.Float(
+                stroke / 2, stroke / 2, getWidth() - stroke, getHeight() - stroke, arc, arc));
+        int w = GuiUtils.getScaleLength(10);
+        int h = GuiUtils.getScaleLength(8);
+        int m = GuiUtils.getScaleLength(2);
+        int x = getComponentOrientation().isLeftToRight() ? getWidth() - w - m : m;
+        int y = getHeight() - h - m;
+        // a tab: a raised tab on the left of its top edge over a box
+        int tabW = w / 2;
+        int tabH = Math.max(2, h / 3);
+        Path2D shape = new Path2D.Float();
+        shape.moveTo(x, y + h);
+        shape.lineTo(x, y);
+        shape.lineTo(x + tabW, y);
+        shape.lineTo(x + tabW, y + tabH);
+        shape.lineTo(x + w, y + tabH);
+        shape.lineTo(x + w, y + h);
+        shape.closePath();
+        // translucent, so that the icon under it stays readable; the button outline carries the
+        // state
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
+        g2.setColor(accent);
+        g2.fill(shape);
+      } finally {
+        g2.dispose();
+      }
+    }
+  }
+
   private JToggleButton createButton(DockableTool tool) {
     String id = tool.getToolId();
     Icon icon = buttonIcon(tool, iconSize());
-    JToggleButton button = icon == null ? new JToggleButton(id) : new JToggleButton(icon);
+    JToggleButton button = new StripeButton(icon == null ? id : null, icon, side == Side.LEFT);
     button.setName(id);
+    button.addMouseListener(
+        new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent e) {
+            showTabMenu(e, id);
+          }
+
+          @Override
+          public void mouseReleased(MouseEvent e) {
+            showTabMenu(e, id);
+          }
+        });
     button.setFocusable(false);
     button.setAlignmentX(CENTER_ALIGNMENT);
     button.setMaximumSize(button.getPreferredSize());
@@ -914,6 +1121,9 @@ public class SidePanel extends JPanel {
     button.setName(action.id());
     button.setToolTipText(action.name());
     button.setFocusable(false);
+    // as the tool buttons of the stripe: no background until hovered
+    button.putClientProperty(
+        FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
     button.setAlignmentX(CENTER_ALIGNMENT);
     button.setMaximumSize(button.getPreferredSize());
     button.addActionListener(_ -> action.action().run());
@@ -934,6 +1144,13 @@ public class SidePanel extends JPanel {
       }
     }
     return minimizeIcon;
+  }
+
+  /** The size of the icons of a slot title bar, as FlatLaf sizes the icons of a title pane. */
+  private static final int HEADER_ICON_SIZE = 16;
+
+  private static Icon headerIcon(Icon icon) {
+    return icon instanceof FlatSVGIcon svg ? svg.derive(HEADER_ICON_SIZE, HEADER_ICON_SIZE) : icon;
   }
 
   private static Color greyColor() {
@@ -1138,42 +1355,185 @@ public class SidePanel extends JPanel {
   }
 
   /** A slot: a header with the tool title and a minimize button, and the tool component. */
+  private static Color borderColor() {
+    return FlatUIUtils.getUIColor("Component.borderColor", Color.GRAY); // NON-NLS
+  }
+
+  /** The background of a slot title bar: the panel background, slightly lifted off it. */
+  private static Color headerTint() {
+    Color bg = UIManager.getColor("Panel.background"); // NON-NLS
+    if (bg == null) {
+      return null;
+    }
+    return FlatLaf.isLafDark()
+        ? ColorFunctions.lighten(bg, 0.05f)
+        : ColorFunctions.darken(bg, 0.05f);
+  }
+
+  /** The diameter of the rounded top corners of a slot, from the arc of the look and feel. */
+  private static int arc() {
+    return GuiUtils.getScaleLength(Math.max(8, FlatUIUtils.getUIInt("Component.arc", 5) + 9));
+  }
+
+  /** A rectangle whose top corners are rounded with the given diameter and bottom ones square. */
+  private static Shape topRounded(double x, double y, double w, double h, double arc) {
+    double r = Math.min(arc / 2.0, Math.min(w, h) / 2.0);
+    Path2D path = new Path2D.Double();
+    path.moveTo(x, y + h);
+    path.lineTo(x, y + r);
+    path.quadTo(x, y, x + r, y);
+    path.lineTo(x + w - r, y);
+    path.quadTo(x + w, y, x + w, y + r);
+    path.lineTo(x + w, y + h);
+    path.closePath();
+    return path;
+  }
+
+  /** A one-pixel outline of a slot with rounded top corners and square bottom ones. */
+  private static final class SlotBorder extends AbstractBorder {
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      Graphics2D g2 = (Graphics2D) g.create();
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+        g2.setColor(borderColor());
+        g2.draw(topRounded(x + 0.5, y + 0.5, width - 1.0, height - 1.0, arc()));
+      } finally {
+        g2.dispose();
+      }
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c, Insets insets) {
+      insets.set(1, 1, 1, 1);
+      return insets;
+    }
+  }
+
   private final class SlotHost {
     final Slot slot;
-    final JPanel panel = new JPanel(new BorderLayout());
+
+    /** Framed so that two stacked slots read as two windows, not one long panel. */
+    /**
+     * Framed with rounded top corners, so that two stacked slots read as two windows, not one long
+     * panel. The slot paints the tint of its title bar, clipped to the same rounded shape.
+     */
+    final JPanel panel =
+        new JPanel(new BorderLayout()) {
+          @Override
+          public void updateUI() {
+            super.updateUI();
+            setBorder(new SlotBorder());
+          }
+
+          @Override
+          protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Color tint = headerTint();
+            if (tint == null || header.getParent() != this) {
+              return;
+            }
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+              g2.setRenderingHint(
+                  RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+              g2.setColor(tint);
+              g2.fill(topRounded(0, 0, getWidth(), header.getY() + header.getHeight(), arc()));
+            } finally {
+              g2.dispose();
+            }
+          }
+        };
+
+    /** The title bar, underlined as in a tool window; its tint is painted by {@link #panel}. */
+    final JPanel header =
+        new JPanel(new BorderLayout()) {
+          @Override
+          public void updateUI() {
+            super.updateUI();
+            setOpaque(false);
+            Insets pad = GuiUtils.isRightToLeft() ? new Insets(2, 2, 2, 5) : new Insets(2, 5, 2, 2);
+            setBorder(
+                BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, borderColor()),
+                    BorderFactory.createEmptyBorder(pad.top, pad.left, pad.bottom, pad.right)));
+          }
+        };
+
     final JPanel content = new JPanel(new BorderLayout());
     final JLabel title = new JLabel();
     final JButton minimize = new JButton();
-    final JButton asTab = new JButton();
+
+    /** The icon of the "open as a tab" menu item; the action has no button of its own. */
+    Icon asTabIcon;
+
+    final JButton more = new JButton();
     DockableTool tool;
 
     SlotHost(Slot slot) {
       this.slot = slot;
-      minimize.setToolTipText(Messages.getString("Docking.minimize"));
-      minimize.setFocusable(false);
-      minimize.addActionListener(e -> collapse(slot));
-      asTab.setToolTipText(Messages.getString("Docking.open_tab"));
-      asTab.setFocusable(false);
-      asTab.addActionListener(
-          e -> {
-            if (tool != null) {
-              openAsView(tool.getToolId());
-            }
-          });
-      JPanel header = new JPanel(new BorderLayout());
-      header.setBorder(
-          GuiUtils.isRightToLeft()
-              ? BorderFactory.createEmptyBorder(2, 2, 2, 5)
-              : BorderFactory.createEmptyBorder(2, 5, 2, 2));
+      headerButton(more, "Docking.more", e -> showMenu());
+      headerButton(minimize, "Docking.minimize", e -> collapse(slot));
+      more.setName("slot-menu"); // NON-NLS
       header.add(title, BorderLayout.CENTER);
       JPanel actions = new JPanel();
+      actions.setOpaque(false);
       actions.setLayout(new BoxLayout(actions, BoxLayout.LINE_AXIS));
-      actions.add(asTab);
+      actions.add(more);
+      actions.add(Box.createHorizontalStrut(GuiUtils.getScaleLength(2)));
       actions.add(minimize);
       header.add(actions, BorderLayout.LINE_END);
       panel.add(header, BorderLayout.NORTH);
       panel.add(content, BorderLayout.CENTER);
       panel.setMinimumSize(new Dimension(0, GuiUtils.getScaleLength(MIN_SLOT_HEIGHT)));
+    }
+
+    /** A title bar button as FlatLaf draws a toolbar button: no background until hovered. */
+    private static void headerButton(JButton button, String tipKey, ActionListener action) {
+      button.setToolTipText(Messages.getString(tipKey));
+      button.setFocusable(false);
+      button.putClientProperty(
+          FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+      button.putClientProperty(FlatClientProperties.STYLE, "margin: 2,2,2,2"); // NON-NLS
+      button.addActionListener(action);
+    }
+
+    private void openAsView() {
+      if (tool != null) {
+        SidePanel.this.openAsView(tool.getToolId());
+      }
+    }
+
+    /** The other actions on the tool of this slot, under the trailing edge of the button. */
+    private void showMenu() {
+      if (tool == null) {
+        return;
+      }
+      String toolId = tool.getToolId();
+      JPopupMenu menu = new JPopupMenu();
+      Slot target = slot.other();
+      JMenuItem move =
+          new JMenuItem(
+              Messages.getString(target == Slot.TOP ? "Docking.move_top" : "Docking.move_bottom"));
+      move.addActionListener(
+          e -> {
+            if (openByUser(toolId, target)) {
+              userChange.accept(SidePanel.this);
+            }
+          });
+      menu.add(move);
+      JMenuItem tab = new JMenuItem(Messages.getString("Docking.open_tab"), asTabIcon);
+      tab.addActionListener(e -> openAsView());
+      menu.add(tab);
+      menu.addSeparator();
+      JMenuItem hide = new JMenuItem(Messages.getString("Docking.minimize"), minimize.getIcon());
+      hide.addActionListener(e -> collapse(slot));
+      menu.add(hide);
+      menu.applyComponentOrientation(more.getComponentOrientation());
+      Dimension size = menu.getPreferredSize();
+      int x = more.getComponentOrientation().isLeftToRight() ? more.getWidth() - size.width : 0;
+      menu.show(more, x, more.getHeight());
     }
 
     void setTool(DockableTool newTool) {
@@ -1182,8 +1542,9 @@ public class SidePanel extends JPanel {
       if (newTool != null) {
         if (minimize.getIcon() == null) {
           // load lazily: the resource path is only configured after the launcher starts
-          minimize.setIcon(minimizeIcon());
-          asTab.setIcon(ResourceUtil.getIcon(ActionIcon.OPEN_NEW_TAB));
+          minimize.setIcon(headerIcon(minimizeIcon()));
+          asTabIcon = headerIcon(ResourceUtil.getIcon(ActionIcon.OPEN_NEW_TAB));
+          more.setIcon(headerIcon(ResourceUtil.getIcon(ActionIcon.MORE_V)));
         }
         title.setText(newTool.getComponentName());
         content.add(newTool.getToolComponent(), BorderLayout.CENTER);

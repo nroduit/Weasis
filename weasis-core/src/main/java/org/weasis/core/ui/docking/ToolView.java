@@ -20,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import org.weasis.core.Messages;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
+import org.weasis.core.ui.editor.image.TabPlacement;
 
 /**
  * A shell tool shown as a central view: a tab of the workspace, so a tool that needs width (a
@@ -89,10 +90,13 @@ public final class ToolView implements WorkspaceView {
     return tool instanceof PluginTool pluginTool ? pluginTool.getIcon() : null;
   }
 
-  /** Closing the tab puts the tool back in its slot. */
+  /**
+   * Closing the tab does not put the tool back on the side: its stripe button shows it as not open
+   * and opens it again in the slot it left. *Return to the side panel* brings it back at once.
+   */
   @Override
   public boolean requestClose() {
-    side.returnFromView(tool.getToolId());
+    side.closeView(tool.getToolId());
     return true;
   }
 
@@ -101,6 +105,8 @@ public final class ToolView implements WorkspaceView {
     JMenuItem back = new JMenuItem(Messages.getString("Docking.return_side"));
     back.addActionListener(e -> side.returnFromView(tool.getToolId()));
     menu.add(back);
+    menu.addSeparator();
+    TabPlacement.addMenuItems(menu, this);
   }
 
   @Override

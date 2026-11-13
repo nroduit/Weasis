@@ -10,6 +10,8 @@
 package org.weasis.core.ui.docking.ws;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.util.UIScale;
+import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -19,6 +21,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import org.weasis.core.Messages;
 import org.weasis.core.ui.docking.ws.drag.TabDragController;
 
@@ -32,11 +35,31 @@ public final class TabGroup extends JTabbedPane {
   private final Workspace workspace;
   private final List<WorkspaceView> views = new ArrayList<>();
 
+  /** The widest a tab gets before its title is cut with an ellipsis (unscaled pixels). */
+  static final int MAX_TAB_WIDTH = 240;
+
+  private static final String BASE_STYLE =
+      "cardTabArc: 14; tabArc: 10; cardTabSelectionHeight: 2;" // NON-NLS
+          + " tabInsets: 4,12,4,8; tabAreaInsets: 3,4,0,4; selectedInsets: 0,0,0,0;"; // NON-NLS
+
+  /** Whether this group holds the selected view of the workspace: only it shows the accent. */
+  private boolean active = true;
+
+  /** False while the super constructor runs updateUI, before the fields are set. */
+  private boolean styleReady;
+
   TabGroup(WorkspaceManager manager, Workspace workspace) {
     this.manager = manager;
     this.workspace = workspace;
     setTabLayoutPolicy(SCROLL_TAB_LAYOUT);
     setFocusable(false);
+    // card tabs: the selected tab is a card with rounded top corners joined to its content, as the
+    // title bars of the side slots; the others show a rounded background when hovered
+    putClientProperty(
+        FlatClientProperties.TABBED_PANE_TAB_TYPE, FlatClientProperties.TABBED_PANE_TAB_TYPE_CARD);
+    putClientProperty(FlatClientProperties.TABBED_PANE_MAXIMUM_TAB_WIDTH, MAX_TAB_WIDTH);
+    styleReady = true;
+    applyStyle();
     putClientProperty(FlatClientProperties.TABBED_PANE_TAB_CLOSABLE, true);
     putClientProperty(
         FlatClientProperties.TABBED_PANE_TAB_CLOSE_CALLBACK,
@@ -167,6 +190,72 @@ public final class TabGroup extends JTabbedPane {
     if (index >= 0 && index != getSelectedIndex()) {
       setSelectedIndex(index);
     }
+  }
+
+  /**
+   * Marks this group as the one holding the selected view, or not. The selected tab of the active
+   * group carries the accent (top line and title color); the selected tab of another group is drawn
+   * in neutral colors, so the view that the next action targets is clear across splits and windows.
+   */
+  public void setActive(boolean active) {
+    if (this.active != active) {
+      this.active = active;
+      applyStyle();
+    }
+  }
+
+  public boolean isActive() {
+    return active;
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (styleReady) {
+      applyStyle(); // the colors come from the look and feel
+    }
+  }
+
+  private void applyStyle() {
+    Color line;
+    Color title;
+    if (active) {
+      line = UIManager.getColor("TabbedPane.underlineColor"); // NON-NLS
+      title = UIManager.getColor("TabbedPane.selectedForeground"); // NON-NLS
+    } else {
+      line = UIManager.getColor("Component.borderColor"); // NON-NLS
+      title = UIManager.getColor("TabbedPane.foreground"); // NON-NLS
+    }
+    StringBuilder style = new StringBuilder(BASE_STYLE);
+    if (line != null) {
+      // the card line is painted with the inactive color while the group has no focus
+      style.append(" inactiveUnderlineColor: ").append(hex(line)).append(';'); // NON-NLS
+      style.append(" underlineColor: ").append(hex(line)).append(';'); // NON-NLS
+    }
+    if (title != null) {
+      style.append(" selectedForeground: ").append(hex(title)).append(';'); // NON-NLS
+    }
+    putClientProperty(FlatClientProperties.STYLE, style.toString());
+  }
+
+  private static String hex(Color c) {
+    return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue()); // NON-NLS
+  }
+
+  /** The full title of a tab cut at {@link #MAX_TAB_WIDTH}, when the view gives no tooltip. */
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    String tip = super.getToolTipText(event);
+    if (tip != null) {
+      return tip;
+    }
+    int index = indexAtLocation(event.getX(), event.getY());
+    if (index < 0) {
+      return null;
+    }
+    Rectangle bounds = getBoundsAt(index);
+    boolean cut = bounds != null && bounds.width >= UIScale.scale(MAX_TAB_WIDTH) - 1;
+    return cut ? getTitleAt(index) : null;
   }
 
   /** Refreshes the tab title, icon and tooltip of the given view. */

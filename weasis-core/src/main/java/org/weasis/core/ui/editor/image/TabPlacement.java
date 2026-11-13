@@ -24,6 +24,7 @@ import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.docking.ws.TabGroup;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
+import org.weasis.core.ui.docking.ws.WorkspaceView;
 import org.weasis.core.ui.editor.SplitLayout;
 import org.weasis.core.ui.editor.SplitPosition;
 
@@ -32,17 +33,19 @@ import org.weasis.core.ui.editor.SplitPosition;
  * splitting its tab group in two, as when the 3D viewer is opened from an MPR container, or moving
  * it into another tab group.
  *
- * <p>Every placement re-docks the viewer relative to a viewer of the target group, either beside it
- * to split that group, or in its center to stack the tab into it.
+ * <p>Every placement re-docks the view relative to a view of the target group, either beside it to
+ * split that group, or in its center to stack the tab into it. The entries serve any view, a viewer
+ * or a side tool shown as a tab: since a tab cannot be dragged to another window, this menu is the
+ * way to move it there.
  */
-final class TabPlacement {
+public final class TabPlacement {
 
   private static final int MAX_MENU_LABEL_LENGTH = 60;
 
   private TabPlacement() {}
 
   /** Adds the placement entries to the contextual menu of the tab of {@code plugin}. */
-  static void addMenuItems(JPopupMenu menu, ViewerPlugin<?> plugin) {
+  public static void addMenuItems(JPopupMenu menu, WorkspaceView plugin) {
     JMenuItem splitRight = splitItem(plugin, SplitPosition.RIGHT);
     JMenuItem splitDown = splitItem(plugin, SplitPosition.BOTTOM);
     JMenu moveToGroup = new JMenu(Messages.getString("ViewerPlugin.move_group"));
@@ -88,7 +91,7 @@ final class TabPlacement {
     return GuiUtils.getUICore().getWorkspaceManager();
   }
 
-  private static JMenuItem splitItem(ViewerPlugin<?> plugin, SplitPosition position) {
+  private static JMenuItem splitItem(WorkspaceView plugin, SplitPosition position) {
     boolean down = position == SplitPosition.BOTTOM;
     JMenuItem item =
         new JMenuItem(
@@ -99,10 +102,10 @@ final class TabPlacement {
     return item;
   }
 
-  private static JMenuItem moveItem(ViewerPlugin<?> plugin, TabGroup group) {
-    List<ViewerPlugin<?>> members = viewers(group);
+  private static JMenuItem moveItem(WorkspaceView plugin, TabGroup group) {
+    List<WorkspaceView> members = group.getViews();
     String label = groupLabel(members);
-    if (SwingUtilities.getWindowAncestor(plugin) != group.getWorkspace().getWindow()
+    if (SwingUtilities.getWindowAncestor(plugin.component()) != group.getWorkspace().getWindow()
         && group.getWorkspace().getWindow() instanceof Frame frame) {
       label += " — " + frame.getTitle();
     }
@@ -110,48 +113,50 @@ final class TabPlacement {
     JMenuItem item = new JMenuItem(menuLabel(label), areaIcon(group));
     item.addActionListener(
         e -> {
-          workspace().stack(plugin, members.getFirst());
-          plugin.setSelectedAndGetFocus();
+          workspace().stack(plugin, group, -1);
+          focus(plugin);
         });
     return item;
   }
 
   /** Splits the tab group holding this tab in two, this tab taking the new half. */
-  private static void split(ViewerPlugin<?> plugin, SplitPosition position) {
+  private static void split(WorkspaceView plugin, SplitPosition position) {
     TabGroup group = tabGroup(plugin);
     if (group == null) {
       return;
     }
     // The group keeps at least one tab, so the split can be anchored on a viewer staying there
-    viewers(group).stream()
-        .filter(viewer -> viewer != plugin)
+    group.getViews().stream()
+        .filter(view -> view != plugin)
         .findFirst()
         .ifPresent(
             sibling -> {
               workspace().split(plugin, sibling, position.toDockSide(), SplitLayout.DEFAULT_RATIO);
-              plugin.setSelectedAndGetFocus();
+              focus(plugin);
             });
   }
 
-  /** Returns the tab group of {@code plugin} when it holds more than one viewer. */
-  private static TabGroup tabGroup(ViewerPlugin<?> plugin) {
+  /** Selects the moved view; a viewer also takes the focus. */
+  private static void focus(WorkspaceView view) {
+    if (view instanceof ViewerPlugin<?> viewer) {
+      viewer.setSelectedAndGetFocus();
+    } else {
+      workspace().select(view);
+    }
+  }
+
+  /** Returns the tab group of {@code plugin} when it holds more than one view. */
+  private static TabGroup tabGroup(WorkspaceView plugin) {
     return workspace().groupOf(plugin).filter(group -> group.getViewCount() > 1).orElse(null);
   }
 
-  /** Returns every other tab group holding viewers, in this window and in floating ones. */
-  private static List<TabGroup> otherGroups(ViewerPlugin<?> plugin) {
+  /** Returns every other tab group, in this window and in floating ones. */
+  private static List<TabGroup> otherGroups(WorkspaceView plugin) {
     WorkspaceManager manager = workspace();
     TabGroup current = manager.groupOf(plugin).orElse(null);
     return manager.getWindows().stream()
         .flatMap(window -> manager.getTabGroups(window).stream())
-        .filter(group -> group != current && !viewers(group).isEmpty())
-        .toList();
-  }
-
-  private static List<ViewerPlugin<?>> viewers(TabGroup group) {
-    return group.getViews().stream()
-        .filter(ViewerPlugin.class::isInstance)
-        .<ViewerPlugin<?>>map(view -> (ViewerPlugin<?>) view)
+        .filter(group -> group != current && group.getViewCount() > 0)
         .toList();
   }
 
@@ -175,9 +180,11 @@ final class TabPlacement {
   }
 
   /** Returns the title of a tab group: the title its viewers share, or all their titles. */
-  private static String groupLabel(List<ViewerPlugin<?>> members) {
+  private static String groupLabel(List<WorkspaceView> members) {
     return members.stream()
-        .map(ViewerPlugin::getPluginName)
+        .map(
+            view ->
+                view instanceof ViewerPlugin<?> viewer ? viewer.getPluginName() : view.tabTitle())
         .distinct()
         .collect(Collectors.joining(", "));
   }

@@ -1035,6 +1035,7 @@ public final class WorkspaceManager {
     selectedView = view;
     activeOverride = null;
     TabGroup group = viewGroups.get(view);
+    markActiveGroup(group);
     if (group != null) {
       group.getWorkspace().setLastSelected(view);
       refreshTitle(group.getWorkspace());
@@ -1047,6 +1048,15 @@ public final class WorkspaceManager {
             viewEvent(VIEW_SELECTED, view, window)
                 .coalesce(VIEW_SELECTED)
                 .put("type", view.typeId())); // NON-NLS
+  }
+
+  /** Only the group of the selected view shows the accent on its selected tab. */
+  private void markActiveGroup(TabGroup active) {
+    for (Window window : workspaces.keySet()) {
+      for (TabGroup group : getTabGroups(window)) {
+        group.setActive(active == null || group == active);
+      }
+    }
   }
 
   /** The number {@code workspace:list} gives a window: the main window is 1; 0 for a stranger. */

@@ -325,7 +325,14 @@ class SidePanelTest {
                 List.of("tool:display"), manager.getViews().stream().map(v -> v.viewId()).toList()),
         () -> assertEquals("tool", manager.getViews().getFirst().typeId()),
         () ->
-            assertTrue(button(tools, "display").orElseThrow().isSelected(), "the stripe shows it"),
+            assertFalse(
+                button(tools, "display").orElseThrow().isSelected(),
+                "not pressed: not on the side"),
+        () ->
+            assertEquals(
+                Boolean.TRUE,
+                button(tools, "display").orElseThrow().getClientProperty("weasis.stripe.asTab"),
+                "marked as a tab"),
         () -> assertFalse(tools.openAsView("nope")));
 
     edt(() -> assertTrue(tools.returnFromView("display")));
@@ -349,5 +356,48 @@ class SidePanelTest {
         () -> assertFalse(tools.isView("display")),
         () -> assertEquals(Optional.of("display"), tools.toolIn(Slot.TOP)),
         () -> assertTrue(manager.getViews().isEmpty()));
+  }
+
+  @Test
+  void aClosedTabLeavesTheToolOffTheSideUntilItsButtonOpensItWhereItWas() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    WorkspaceManager manager = new WorkspaceManager(null);
+    tools.setWorkspace(() -> manager);
+    FakeTool display = new FakeTool("display", 10);
+    edt(() -> tools.show(display));
+    edt(() -> tools.open("display", Slot.BOTTOM));
+    edt(() -> tools.openAsView("display"));
+    flush();
+
+    edt(() -> manager.getViews().getFirst().requestClose());
+    flush();
+    assertAll(
+        () -> assertFalse(tools.isView("display")),
+        () -> assertTrue(manager.getViews().isEmpty()),
+        () -> assertEquals(Optional.empty(), tools.toolIn(Slot.BOTTOM), "not back by itself"),
+        () -> assertFalse(button(tools, "display").orElseThrow().isSelected()),
+        () ->
+            assertEquals(
+                Boolean.FALSE,
+                button(tools, "display").orElseThrow().getClientProperty("weasis.stripe.asTab")));
+
+    edt(() -> button(tools, "display").orElseThrow().doClick());
+    flush();
+    assertEquals(Optional.of("display"), tools.toolIn(Slot.BOTTOM), "opened in the slot it left");
+  }
+
+  @Test
+  void aToolReturnsFromItsTabToTheSlotItLeft() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    WorkspaceManager manager = new WorkspaceManager(null);
+    tools.setWorkspace(() -> manager);
+    FakeTool display = new FakeTool("display", 10);
+    edt(() -> tools.show(display));
+    edt(() -> tools.open("display", Slot.BOTTOM));
+    edt(() -> tools.openAsView("display"));
+    flush();
+    edt(() -> assertTrue(tools.returnFromView("display")));
+    flush();
+    assertEquals(Optional.of("display"), tools.toolIn(Slot.BOTTOM));
   }
 }
