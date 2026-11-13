@@ -774,8 +774,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             + " \u00B7 " // NON-NLS
             + TagUtil.formatDateTime(prior.date())
             + " \u00B7 " // NON-NLS
-            + Messages.getString("InfoLayer.hp.earlier." + interval.unit()) // NON-NLS
-                .formatted(interval.count());
+            + Messages.format(
+                "InfoLayer.hp.earlier." + interval.unit(), interval.count()); // NON-NLS
     g2.setColor(old);
     FontTools.paintColorFontOutline(
         g2,
