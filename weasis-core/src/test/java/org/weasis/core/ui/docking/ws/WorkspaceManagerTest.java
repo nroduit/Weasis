@@ -12,9 +12,7 @@ package org.weasis.core.ui.docking.ws;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -266,9 +264,11 @@ class WorkspaceManagerTest {
 
   @Test
   void theDropHandlerReachesEveryWorkspace() {
-    assertNull(manager.mainWorkspace().getTransferHandler());
+    // every workspace takes the tabs dragged from any window, then wraps the series handler
+    javax.swing.TransferHandler tabs = manager.mainWorkspace().getTransferHandler();
+    assertInstanceOf(org.weasis.core.ui.docking.ws.drag.WorkspaceDropHandler.class, tabs);
     manager.setDropHandler(() -> new javax.swing.TransferHandler("name"));
-    assertNotNull(manager.mainWorkspace().getTransferHandler());
+    assertSame(tabs, manager.mainWorkspace().getTransferHandler(), "the same, now wrapping it");
   }
 
   // ---- tab gestures (2026-11-14) -------------------------------------------------------------

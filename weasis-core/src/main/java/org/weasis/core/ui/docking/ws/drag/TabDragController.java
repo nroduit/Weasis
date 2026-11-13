@@ -10,276 +10,169 @@
 package org.weasis.core.ui.docking.ws.drag;
 
 import com.formdev.flatlaf.util.UIScale;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragGestureEvent;
+import java.awt.dnd.DragGestureListener;
 import java.awt.dnd.DragSource;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.dnd.DragSourceAdapter;
+import java.awt.dnd.DragSourceDropEvent;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.InvalidDnDOperationException;
+import java.awt.event.InputEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Icon;
-import javax.swing.JLayeredPane;
-import javax.swing.JRootPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import org.weasis.core.ui.docking.ws.DockSide;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.ui.docking.ws.TabGroup;
 import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.docking.ws.WorkspaceView;
 
 /**
- * Drag state machine of one tab group: pressing a tab and dragging past the system threshold shows
- * a lightweight ghost on the layered pane with drop-zone highlighting; releasing executes the drop.
- * All hit-testing uses component-relative coordinates converted to the root pane, never the global
- * pointer position (Wayland-safe). Group bounds are snapshotted once at drag start.
+ * Starts the drag of a tab: a system drag and drop, so that the tab can be dropped on the workspace
+ * of any window of Weasis (main window or viewer window); the windowing system routes the drag to
+ * the window under the pointer, on Wayland as on X11, Windows and macOS. The targets are the {@link
+ * WorkspaceDropHandler}s of the workspaces. A tab released outside every workspace (on a side
+ * panel, on the desktop) goes to a window of its own, at the drop position when the system gives
+ * one. Escape cancels the drag over a workspace; outside every workspace a cancel cannot be told
+ * from a drop, so the tab is detached as well.
  */
-public final class TabDragController extends MouseAdapter {
+public final class TabDragController extends DragSourceAdapter implements DragGestureListener {
 
-  private record GroupZone(
-      TabGroup group, Rectangle bounds, Rectangle tabStrip, Rectangle[] tabRects) {}
+  private static final Logger LOGGER = LoggerFactory.getLogger(TabDragController.class);
+
+  /** The ghost the targets draw when the system cannot show a drag image, during a drag. */
+  private static BufferedImage targetGhost;
+
+  /** Whether the pointer is over a workspace of Weasis, from the targets. */
+  private static boolean overWorkspace;
 
   private final WorkspaceManager manager;
   private final TabGroup source;
-
-  private Point pressPoint;
-  private int pressedIndex = -1;
-  private boolean dragging;
   private WorkspaceView draggedView;
-  private DragOverlay overlay;
-  private JLayeredPane layeredPane;
-  private List<GroupZone> zones;
-  private Rectangle workspaceBounds;
-  private DropZone currentZone;
-  private KeyEventDispatcher escapeDispatcher;
 
-  private TabDragController(WorkspaceManager manager, TabGroup source) {
+  /**
+   * The drop targets inside the workspaces (a view takes series drops), switched off while a tab is
+   * dragged so that the workspace itself gets the drag wherever the pointer is.
+   */
+  private final List<DropTarget> paused = new ArrayList<>();
+
+  TabDragController(WorkspaceManager manager, TabGroup source) {
     this.manager = manager;
     this.source = source;
   }
 
-  /** Installs a drag controller on the tab strip of the given group. */
+  /** Installs the drag of the tabs of the given group. */
   public static void install(WorkspaceManager manager, TabGroup group) {
-    group.addTabAreaListener(new TabDragController(manager, group));
+    TabDragController controller = new TabDragController(manager, group);
+    DragSource.getDefaultDragSource()
+        .createDefaultDragGestureRecognizer(group, DnDConstants.ACTION_MOVE, controller);
+  }
+
+  /** The ghost the targets draw near the pointer, null when the system shows the drag image. */
+  static BufferedImage ghostForTargets() {
+    return targetGhost;
+  }
+
+  /** Told by a target when the pointer enters or leaves its workspace. */
+  static void enteredWorkspace(boolean entered) {
+    overWorkspace = entered;
   }
 
   @Override
-  public void mousePressed(MouseEvent e) {
-    if (SwingUtilities.isLeftMouseButton(e) && manager.isDragEnabled()) {
-      pressedIndex = source.indexAtLocation(e.getX(), e.getY());
-      pressPoint = pressedIndex >= 0 ? e.getPoint() : null;
+  public void dragGestureRecognized(DragGestureEvent dge) {
+    if (!manager.isDragEnabled()
+        || !(dge.getTriggerEvent() instanceof InputEvent trigger)
+        || !SwingUtilities.isLeftMouseButton((java.awt.event.MouseEvent) trigger)) {
+      return;
     }
-  }
-
-  @Override
-  public void mouseDragged(MouseEvent e) {
-    if (!dragging) {
-      if (pressPoint == null || e.getPoint().distance(pressPoint) < DragSource.getDragThreshold()) {
-        return;
-      }
-      startDrag();
-      if (!dragging) {
-        return;
-      }
-    }
-    updateDrag(e.getPoint());
-  }
-
-  @Override
-  public void mouseReleased(MouseEvent e) {
-    if (dragging) {
-      try {
-        executeDrop(e.getPoint());
-      } finally {
-        finishDrag();
-      }
-    }
-    pressPoint = null;
-    pressedIndex = -1;
-  }
-
-  private void startDrag() {
+    Point origin = dge.getDragOrigin();
+    int index = source.indexAtLocation(origin.x, origin.y);
     List<WorkspaceView> views = source.getViews();
-    if (pressedIndex >= views.size()) {
+    if (index < 0 || index >= views.size()) {
       return;
     }
-    draggedView = views.get(pressedIndex);
-    JRootPane rootPane = SwingUtilities.getRootPane(source);
-    if (rootPane == null) {
-      draggedView = null;
-      return;
+    draggedView = views.get(index);
+    BufferedImage ghost = renderGhost(draggedView);
+    boolean imageShown = DragSource.isDragImageSupported();
+    targetGhost = imageShown ? null : ghost;
+    overWorkspace = true; // the drag starts on a tab strip
+    pauseInnerTargets();
+    try {
+      dge.startDrag(
+          Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR),
+          imageShown ? ghost : null,
+          new Point(-ghost.getWidth() / 2, -ghost.getHeight() / 2),
+          new TabTransfer(draggedView),
+          this);
+    } catch (InvalidDnDOperationException e) {
+      LOGGER.debug("Tab drag not started", e);
+      reset();
     }
-    layeredPane = rootPane.getLayeredPane();
-    overlay = new DragOverlay(renderGhost(draggedView));
-    overlay.setBounds(0, 0, layeredPane.getWidth(), layeredPane.getHeight());
-    overlay.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
-    layeredPane.add(overlay, JLayeredPane.DRAG_LAYER);
-
-    // one snapshot per drag: the layout cannot change while dragging
-    var workspace = source.getWorkspace();
-    workspaceBounds = boundsInLayer(workspace);
-    zones = new ArrayList<>();
-    for (TabGroup group : manager.getTabGroups(workspace.getWindow())) {
-      Rectangle bounds = boundsInLayer(group);
-      Rectangle[] tabRects = new Rectangle[group.getTabCount()];
-      Rectangle strip = null;
-      for (int i = 0; i < group.getTabCount(); i++) {
-        Rectangle r = group.getBoundsAt(i);
-        tabRects[i] = convertToLayer(group, r);
-        strip = strip == null ? new Rectangle(tabRects[i]) : strip.union(tabRects[i]);
-      }
-      if (strip != null) {
-        // the whole strip row is a drop target, beyond the last tab included
-        strip.width = bounds.width - (strip.x - bounds.x);
-      }
-      zones.add(new GroupZone(group, bounds, strip, tabRects));
-    }
-
-    escapeDispatcher =
-        e -> {
-          if (e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-            finishDrag();
-            return true;
-          }
-          return false;
-        };
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(escapeDispatcher);
-    dragging = true;
   }
 
-  private void updateDrag(Point sourcePoint) {
-    Point p = SwingUtilities.convertPoint(source, sourcePoint, layeredPane);
-    currentZone = computeZone(p);
-    overlay.update(p, highlightFor(currentZone, p));
-  }
-
-  private DropZone computeZone(Point p) {
-    for (GroupZone zone : zones) {
-      if (zone.tabStrip() != null && zone.tabStrip().contains(p)) {
-        return new DropZone.Stack(
-            zone.group(), DropGeometry.tabInsertionIndex(zone.tabRects(), p.x));
-      }
-    }
-    for (GroupZone zone : zones) {
-      if (zone.bounds().contains(p)) {
-        DockSide side = DropGeometry.sideAt(zone.bounds(), p);
-        return side == null
-            ? new DropZone.Stack(zone.group(), -1)
-            : new DropZone.Split(zone.group(), side);
-      }
-    }
-    if (!workspaceBounds.contains(p) && draggedView.isDetachable()) {
-      return new DropZone.Detach();
-    }
-    return null;
-  }
-
-  private Rectangle highlightFor(DropZone zone, Point p) {
-    return switch (zone) {
-      case DropZone.Stack(TabGroup group, int index) -> stackHighlight(group, index);
-      case DropZone.Split(TabGroup group, DockSide side) ->
-          DropGeometry.highlightRect(groupBounds(group), side);
-      case DropZone.Detach() -> null;
-      case null -> null;
-    };
-  }
-
-  private Rectangle stackHighlight(TabGroup group, int index) {
-    GroupZone zone = zoneOf(group);
-    if (index < 0 || zone.tabStrip() == null) {
-      return DropGeometry.highlightRect(zone.bounds(), null);
-    }
-    // insertion caret in the tab strip
-    Rectangle[] tabs = zone.tabRects();
-    int x =
-        index < tabs.length
-            ? tabs[index].x
-            : tabs.length > 0 ? tabs[tabs.length - 1].x + tabs[tabs.length - 1].width : 0;
-    return new Rectangle(x - 2, zone.tabStrip().y, 4, zone.tabStrip().height);
-  }
-
-  private GroupZone zoneOf(TabGroup group) {
-    return zones.stream().filter(z -> z.group() == group).findFirst().orElseThrow();
-  }
-
-  private Rectangle groupBounds(TabGroup group) {
-    return zoneOf(group).bounds();
-  }
-
-  private void executeDrop(Point sourcePoint) {
-    Point p = SwingUtilities.convertPoint(source, sourcePoint, layeredPane);
+  @Override
+  public void dragDropEnd(DragSourceDropEvent dsde) {
     WorkspaceView view = draggedView;
-    switch (currentZone) {
-      case DropZone.Stack(TabGroup group, int index) -> {
-        if (group == source) {
-          if (index >= 0) {
-            manager.moveTab(view, index);
-          }
-        } else {
-          manager.stack(view, group, index);
-        }
-        manager.select(view);
+    boolean outside = !overWorkspace;
+    reset();
+    if (view == null || dsde.getDropSuccess() || !outside || !manager.isShowing(view)) {
+      return;
+    }
+    // released outside every workspace: the tab gets a window of its own
+    Rectangle bounds = null;
+    Point at = dsde.getLocation(); // null or meaningless where the screen position is not known
+    if (at != null && (at.x != 0 || at.y != 0)) {
+      Dimension size = view.component().getSize();
+      if (size.width < 100 || size.height < 100) {
+        size = new Dimension(800, 600);
       }
-      case DropZone.Split(TabGroup group, DockSide side) ->
-          group.getViews().stream()
-              .filter(v -> v != view)
-              .findFirst()
-              .ifPresent(
-                  anchor -> {
-                    manager.split(view, anchor, side, 0.5);
-                    manager.select(view);
-                  });
-      case DropZone.Detach() -> {
-        Point screen = layeredPane.getLocationOnScreen();
-        Dimension size = view.component().getSize();
-        if (size.width < 100 || size.height < 100) {
-          size = new Dimension(800, 600);
-        }
-        manager.detach(
-            view, new Rectangle(screen.x + p.x, screen.y + p.y, size.width, size.height));
-      }
-      case null -> {
-        // no target: cancelled
+      bounds = new Rectangle(at.x, at.y, size.width, size.height);
+    }
+    manager.detach(view, bounds);
+  }
+
+  /** Switches off the drop targets inside every workspace, for the time of the drag. */
+  void pauseInnerTargets() {
+    for (java.awt.Window window : manager.getWindows()) {
+      for (TabGroup group : manager.getTabGroups(window)) {
+        pauseIn(group.getWorkspace());
       }
     }
   }
 
-  private void finishDrag() {
-    if (overlay != null) {
-      Rectangle bounds = overlay.getBounds();
-      layeredPane.remove(overlay);
-      layeredPane.repaint(bounds);
+  private void pauseIn(Container container) {
+    for (Component child : container.getComponents()) {
+      DropTarget target = child.getDropTarget();
+      if (target != null && target.isActive() && !paused.contains(target)) {
+        target.setActive(false);
+        paused.add(target);
+      }
+      if (child instanceof Container inner) {
+        pauseIn(inner);
+      }
     }
-    if (escapeDispatcher != null) {
-      KeyboardFocusManager.getCurrentKeyboardFocusManager()
-          .removeKeyEventDispatcher(escapeDispatcher);
-    }
-    overlay = null;
-    layeredPane = null;
-    zones = null;
-    workspaceBounds = null;
-    currentZone = null;
+  }
+
+  void reset() {
+    paused.forEach(target -> target.setActive(true));
+    paused.clear();
     draggedView = null;
-    dragging = false;
-    pressPoint = null;
-    pressedIndex = -1;
-  }
-
-  private Rectangle boundsInLayer(java.awt.Component component) {
-    return convertToLayer(component, new Rectangle(component.getSize()));
-  }
-
-  private Rectangle convertToLayer(java.awt.Component component, Rectangle rect) {
-    return SwingUtilities.convertRectangle(component, rect, layeredPane);
+    targetGhost = null;
+    overWorkspace = false;
   }
 
   /** Renders the drag ghost once: a small rounded chip with the tab icon and title. */

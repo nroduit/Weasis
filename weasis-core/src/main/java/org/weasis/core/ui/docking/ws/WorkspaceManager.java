@@ -44,6 +44,7 @@ import org.weasis.core.api.event.Event;
 import org.weasis.core.api.event.EventBus;
 import org.weasis.core.api.event.EventType;
 import org.weasis.core.ui.docking.ToolView;
+import org.weasis.core.ui.docking.ws.drag.WorkspaceDropHandler;
 import org.weasis.core.ui.docking.ws.snapshot.ViewRestorer;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot;
 import org.weasis.core.ui.editor.ExternalDisplay;
@@ -212,10 +213,8 @@ public final class WorkspaceManager {
    */
   public void setDropHandler(Supplier<TransferHandler> handlers) {
     this.dropHandlers = handlers;
-    if (handlers != null) {
-      for (Workspace workspace : workspaces.values()) {
-        workspace.setTransferHandler(handlers.get());
-      }
+    for (Workspace workspace : workspaces.values()) {
+      WorkspaceDropHandler.install(this, workspace, handlers == null ? null : handlers.get());
     }
   }
 
@@ -997,9 +996,8 @@ public final class WorkspaceManager {
 
   private void addWorkspace(Window window, Workspace workspace) {
     workspaces.put(window, workspace);
-    if (dropHandlers != null) {
-      workspace.setTransferHandler(dropHandlers.get());
-    }
+    // tabs dragged from any window land here; the series of the explorer as well
+    WorkspaceDropHandler.install(this, workspace, dropHandlers == null ? null : dropHandlers.get());
     if (window != null) {
       window.addWindowFocusListener(
           new WindowAdapter() {
