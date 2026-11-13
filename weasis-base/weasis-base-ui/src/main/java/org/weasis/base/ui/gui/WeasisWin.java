@@ -717,7 +717,7 @@ public class WeasisWin {
     }
     selectedPlugin = plugin;
     GuiUtils.getUICore().setSelectedPlugin(plugin);
-    menuSelectedPlugin.setText(selectedPlugin.getName());
+    menuSelectedPlugin.setText(viewerTypeName(selectedPlugin));
 
     SeriesViewerUI.updateTools(oldPlugin, selectedPlugin, false);
     SeriesViewerUI.updateToolbars(oldPlugin, selectedPlugin, false);
@@ -1363,6 +1363,16 @@ public class WeasisWin {
                       GuiUtils.applySelectedIconEffect(item);
                       menu.add(item);
                     }));
+  }
+
+  /**
+   * Menu title of the selected viewer: its type (2D Viewer, Oblique MPR, 3D Viewer…), not its tab
+   * title, which names the patient and is the same for every viewer of a study.
+   */
+  private static String viewerTypeName(ViewerPlugin<?> plugin) {
+    SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(plugin);
+    String name = factory == null ? null : factory.getUIName();
+    return StringUtil.hasText(name) ? name : plugin.getName();
   }
 
   private void buildSelectedPluginMenu(final JMenu selectedPluginMenu) {
