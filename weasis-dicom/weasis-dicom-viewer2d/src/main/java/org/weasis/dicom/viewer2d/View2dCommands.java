@@ -94,6 +94,7 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.DisplayProfile;
 import org.weasis.core.ui.editor.image.HangingLayout;
 import org.weasis.core.ui.editor.image.ImageRegionStatistics;
+import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActionType;
 import org.weasis.core.ui.editor.image.MouseActions;
@@ -204,19 +205,42 @@ public class View2dCommands implements CommandExtension {
     return this;
   }
 
+  /**
+   * The shared action of the selected 2D viewer, from its own event manager: the DICOM viewer or
+   * the default viewer of plain images (verbs that change a pane select it first).
+   */
   static <T> T action(Feature<T> feature) {
-    return EventManager.getInstance()
+    return selectedContainer()
+        .getEventManager()
         .getAction(feature)
-        .orElseThrow(() -> new IllegalStateException("No 2D view selected"));
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "Not available in this viewer: " + feature.cmd())); // NON-NLS
   }
 
+  /**
+   * The selected 2D viewer: the selected view of the workspace when it shows 2D panes (DICOM or
+   * plain images), else the last DICOM 2D viewer.
+   */
+  @SuppressWarnings("unchecked")
   static ImageViewerPlugin<DicomImageElement> selectedContainer() {
     ImageViewerPlugin<DicomImageElement> container =
-        EventManager.getInstance().getSelectedView2dContainer();
+        GuiUtils.getUICore()
+            .getSelectedPlugin()
+            .filter(View2dCommands::is2dViewer)
+            .map(p -> (ImageViewerPlugin<DicomImageElement>) p)
+            .orElseGet(() -> EventManager.getInstance().getSelectedView2dContainer());
     if (container == null) {
       throw new IllegalStateException("No 2D viewer selected");
     }
     return container;
+  }
+
+  private static boolean is2dViewer(Object plugin) {
+    return plugin instanceof ImageViewerPlugin<?> viewer
+        && viewer.getEventManager() != null
+        && viewer.getSelectedViewCanvas() instanceof DefaultView2d<?>;
   }
 
   @SuppressWarnings("unchecked")
@@ -252,8 +276,8 @@ public class View2dCommands implements CommandExtension {
   }
 
   static void focus(ImageViewerPlugin<DicomImageElement> container) {
-    EventManager manager = EventManager.getInstance();
-    if (manager.getSelectedView2dContainer() != container) {
+    ImageViewerEventManager<DicomImageElement> manager = container.getEventManager();
+    if (manager == null || manager.getSelectedView2dContainer() != container) {
       container.setSelectedAndGetFocus();
       container.setSelected(true);
     }
@@ -487,11 +511,13 @@ public class View2dCommands implements CommandExtension {
         zoom.setRealValue(choice.set.value());
       } else if (choice.fit != null) {
         // A fit is not a slider value: the view computes it, so it goes straight to the pane.
-        EventManager e = EventManager.getInstance();
-        e.firePropertyChange(
-            ActionW.SYNCH.cmd(),
-            null,
-            new SynchEvent(target.view(), ActionW.ZOOM.cmd(), choice.fit.command()));
+        target
+            .container()
+            .getEventManager()
+            .firePropertyChange(
+                ActionW.SYNCH.cmd(),
+                null,
+                new SynchEvent(target.view(), ActionW.ZOOM.cmd(), choice.fit.command()));
       } else if (choice.steps != null) {
         zoom.setSliderValue(zoom.getSliderValue() + choice.steps);
       }
@@ -600,7 +626,7 @@ public class View2dCommands implements CommandExtension {
     @Override
     void apply(Target target) {
       PanPoint point = new PanPoint(PanPoint.State.MOVE, dx == null ? 0 : dx, dy == null ? 0 : dy);
-      EventManager.getInstance().getAction(ActionW.PAN).ifPresent(a -> a.setPoint(point));
+      target.container().getEventManager().getAction(ActionW.PAN).ifPresent(a -> a.setPoint(point));
     }
   }
 
@@ -918,11 +944,15 @@ public class View2dCommands implements CommandExtension {
 
     @Override
     void apply(Target target) {
-      EventManager e = EventManager.getInstance();
-      if (all) {
-        e.reset(ResetTools.ALL);
+      List<ResetTools> chosen =
+          all ? List.of(ResetTools.ALL) : tools.stream().map(ResetTool::tool).toList();
+      ImageViewerEventManager<DicomImageElement> manager = target.container().getEventManager();
+      if (manager instanceof EventManager dicom) {
+        chosen.forEach(dicom::reset);
       } else {
-        tools.forEach(tool -> e.reset(tool.tool()));
+        // The default viewer of plain images: the same tools in the core enumeration
+        chosen.forEach(
+            tool -> manager.reset(org.weasis.core.ui.editor.image.ResetTools.valueOf(tool.name())));
       }
     }
   }
@@ -1300,7 +1330,8 @@ public class View2dCommands implements CommandExtension {
 
     private static Rendered render(Target resolved, CaptureFrame frame, Toggle annotations) {
       DefaultView2d<DicomImageElement> view = resolved.view();
-      DicomImageElement image = view.getImage();
+      // Also a plain image of the default viewer
+      ImageElement image = view.getImage();
       String modality = TagD.getTagValue(image, Tag.Modality, String.class);
       if (CommandContext.current().isRemote()
           && PixelPrivacy.requiresReview(image, modality)

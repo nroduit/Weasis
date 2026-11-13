@@ -14,13 +14,16 @@ import jakarta.json.JsonObjectBuilder;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import org.weasis.core.api.command.CommandContext;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.ui.editor.image.export.AnimatedImageSink;
 import org.weasis.core.ui.editor.image.export.AnimationExportTask;
+import org.weasis.core.ui.editor.image.export.AnimationFormat;
 import org.weasis.core.ui.editor.image.export.FrameGrabber;
 import org.weasis.core.ui.editor.image.export.FrameSink;
 import org.weasis.core.ui.editor.image.export.FrameSinkFactory;
@@ -58,7 +61,7 @@ public final class AnimationVerbs {
   /**
    * The sink the extension of {@code out} names among the formats the export offers for the series:
    * {@code .apng} or {@code .png} (APNG), {@code .gif}, {@code .dcm} (a Secondary Capture in the
-   * study of the series, when a series is given).
+   * study of the series, when a series of DICOM images is given).
    */
   public static FrameSinkFactory sinkFor(
       Path out, MediaSeries<DicomImageElement> series, String title) {
@@ -66,12 +69,30 @@ public final class AnimationVerbs {
     if ("png".equals(extension)) { // NON-NLS
       extension = "apng"; // NON-NLS
     }
-    for (FrameSinkFactory factory : DicomScSinkFactory.defaultSinks(series, title)) {
+    boolean dicom = isDicom(series);
+    List<FrameSinkFactory> sinks =
+        dicom
+            ? DicomScSinkFactory.defaultSinks(series, title)
+            : List.of(
+                AnimatedImageSink.factory(AnimationFormat.APNG),
+                AnimatedImageSink.factory(AnimationFormat.GIF));
+    for (FrameSinkFactory factory : sinks) {
       if (factory.extension().equalsIgnoreCase(extension)) {
         return factory;
       }
     }
-    throw new IllegalArgumentException("--out must end with .apng, .png, .gif or .dcm");
+    throw new IllegalArgumentException(
+        dicom
+            ? "--out must end with .apng, .png, .gif or .dcm"
+            : "--out must end with .apng, .png or .gif");
+  }
+
+  /** Whether the series holds DICOM images, and not plain images of the default viewer. */
+  private static boolean isDicom(MediaSeries<DicomImageElement> series) {
+    // raw access: the elements of the default viewer are plain images whatever the type argument
+    MediaSeries<?> any = series;
+    return any == null
+        || any.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null) instanceof DicomImageElement;
   }
 
   /** Refuses a file that exists and was not written by this session, unless forced. */
