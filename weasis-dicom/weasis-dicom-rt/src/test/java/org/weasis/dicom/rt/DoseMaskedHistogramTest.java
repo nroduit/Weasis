@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.rt;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.anyDouble;
@@ -102,5 +103,52 @@ class DoseMaskedHistogramTest {
     }
     assertFalse(byteMask.empty(), "the caller's mask must not be released");
     assertEquals(inside, Core.countNonZero(byteMask));
+  }
+
+  private static int[] isoDoseMask(int depth, int[] values, double rawThreshold) {
+    Mat plane = new Mat(1, values.length, depth);
+    for (int i = 0; i < values.length; i++) {
+      plane.put(0, i, values[i]);
+    }
+    DicomImageElement element = mock(DicomImageElement.class);
+    when(element.getImage()).thenReturn(ImageCV.fromMat(plane));
+    Mat mask = Dose.buildBinaryDoseMask(element, rawThreshold);
+    assertEquals(CvType.CV_8UC1, mask.type());
+    int[] out = new int[values.length];
+    for (int i = 0; i < values.length; i++) {
+      out[i] = (int) mask.get(0, i)[0];
+    }
+    mask.release();
+    return out;
+  }
+
+  @Test
+  void isodose_mask_keeps_the_pixels_strictly_above_the_threshold() {
+    int[] values = {0, 15399, 15400, 15401, 60000};
+    int[] expected = {0, 0, 0, 255, 255};
+    assertArrayEquals(expected, isoDoseMask(CvType.CV_16UC1, values, 15400.0));
+    assertArrayEquals(expected, isoDoseMask(CvType.CV_32SC1, values, 15400.0));
+  }
+
+  @Test
+  void isodose_mask_compares_with_a_fractional_threshold() {
+    int[] values = {15399, 15400, 15401};
+    assertArrayEquals(new int[] {0, 255, 255}, isoDoseMask(CvType.CV_32SC1, values, 15399.5));
+    assertArrayEquals(new int[] {0, 0, 255}, isoDoseMask(CvType.CV_32SC1, values, 15400.5));
+  }
+
+  @Test
+  void isodose_mask_uses_the_exact_threshold_not_its_float_rounding() {
+    // (isoDose / 100) / doseGridScaling can land just below an integer: 15399.999999999998 rounds
+    // to 15400 in float, which wrongly excluded the pixels at 15400 when thresholding in float.
+    int[] values = {15399, 15400};
+    assertArrayEquals(new int[] {0, 255}, isoDoseMask(CvType.CV_32SC1, values, 15399.999999999998));
+  }
+
+  @Test
+  void isodose_mask_handles_32_bit_doses_beyond_float_precision() {
+    // Above 2^24 a float cannot hold every integer: 16777217 became 16777216 in the float path.
+    int[] values = {16_777_216, 16_777_217};
+    assertArrayEquals(new int[] {0, 255}, isoDoseMask(CvType.CV_32SC1, values, 16_777_216.0));
   }
 }

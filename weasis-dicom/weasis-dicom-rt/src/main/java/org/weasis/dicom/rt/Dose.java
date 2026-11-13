@@ -619,16 +619,14 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     return segContour;
   }
 
-  private static Mat buildBinaryDoseMask(DicomImageElement dosePlane, double rawThreshold) {
-    Mat src = dosePlane.getImage().toMat();
-    Mat srcF = new Mat();
-    src.convertTo(srcF, CvType.CV_32FC1);
-    Mat thr = new Mat();
-    Imgproc.threshold(srcF, thr, rawThreshold, 255, Imgproc.THRESH_BINARY);
-    ImageConversion.releaseMat(srcF);
+  /**
+   * Returns a {@code CV_8UC1} mask, 255 where the raw dose is strictly above the threshold. The
+   * comparison runs on the raw pixel depth against the exact (double) threshold, with no float copy
+   * of the plane.
+   */
+  static Mat buildBinaryDoseMask(DicomImageElement dosePlane, double rawThreshold) {
     Mat doseMask = new Mat();
-    thr.convertTo(doseMask, CvType.CV_8UC1);
-    ImageConversion.releaseMat(thr);
+    Core.compare(dosePlane.getImage().toMat(), new Scalar(rawThreshold), doseMask, Core.CMP_GT);
     return doseMask;
   }
 
