@@ -11,42 +11,67 @@ package org.weasis.dicom.explorer.imp;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.util.SystemFileChooser;
-import com.formdev.flatlaf.util.SystemInfo;
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.TooManyListenersException;
+import javax.swing.BoxLayout;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.text.JTextComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.gui.util.WrapLayout;
 import org.weasis.core.api.net.URIUtils;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
+import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
-import org.weasis.dicom.explorer.LoadDicomDir;
-import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.LocalPersistence;
 import org.weasis.dicom.explorer.Messages;
-import org.weasis.dicom.explorer.wado.LoadSeries;
 
 /**
- * The import from the local device in one page: a path field fed by the system file chooser (files
- * and folders at once on macOS, files or a folder elsewhere) or by the DICOMDIR detection of an
- * inserted medium. A selected DICOMDIR is read through its directory records, everything else is
- * scanned; the two kinds may be mixed in one selection.
+ * The import from the local device in one page. Files and folders of any kind (DICOM, ZIP,
+ * DICOMDIR), mixed, are dropped on the page or picked in the native Files and Folder dialogs, and
+ * are imported at once. The path field keeps the recent sources: a typed or recalled path is
+ * imported with Enter or the Import button of the tool.
+ *
+ * <p>The native dialogs of Windows and Linux cannot pick files and folders together (FlatLaf maps
+ * {@code FILES_AND_DIRECTORIES} to {@code FILES_ONLY} there), so a mixed set goes through the drop.
  */
 public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalImport.class);
@@ -54,69 +79,217 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
   public static final String LAST_RECURSIVE_MODE = "last.recursive.mode";
   public static final String LAST_IMPORT_PATH = "last.import.path";
 
+  /** The recent sources, most recent first, one per line. */
+  public static final String RECENT_IMPORT_PATHS = "last.import.paths";
+
   /** The folder of the last import, also the folder the export placeholders point to. */
   public static final String LAST_OPEN_DIR = "lastOpenDir";
 
-  private final JTextField pathField = new JTextField();
-  private final JCheckBox recursive = new JCheckBox(Messages.getString("LocalImport.recursive"));
-  private final JCheckBox copyToCache = new JCheckBox(Messages.getString("LocalImport.cache"));
-  private List<File> selection = List.of();
+  static final int MAX_RECENT = 8;
 
-  public LocalImport() {
+  private final DicomModel model;
+  private final JComboBox<String> pathCombo = new JComboBox<>();
+  private final JCheckBox recursive = new JCheckBox(Messages.getString("LocalImport.recursive"));
+
+  public LocalImport(DicomModel model) {
     super(Messages.getString("LocalImport.local_dev"), 0);
+    this.model = model;
     initGUI();
   }
 
   private void initGUI() {
     Properties props = LocalPersistence.getProperties();
-    pathField.setText(props.getProperty(LAST_IMPORT_PATH, ""));
-    pathField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
-    Dimension size = pathField.getPreferredSize();
-    size.width = 200;
-    pathField.setPreferredSize(size);
-    pathField.setMaximumSize(new Dimension(Short.MAX_VALUE, size.height));
     recursive.setSelected(LangUtil.emptyToTrue(props.getProperty(LAST_RECURSIVE_MODE)));
+    recursive.addActionListener(
+        _ ->
+            LocalPersistence.getProperties()
+                .setProperty(LAST_RECURSIVE_MODE, String.valueOf(recursive.isSelected())));
 
+    pathCombo.setEditable(true);
+    recentPaths(props).forEach(pathCombo::addItem);
+    pathCombo.setSelectedItem(pathCombo.getItemCount() > 0 ? pathCombo.getItemAt(0) : "");
+    pathCombo.putClientProperty(
+        FlatClientProperties.PLACEHOLDER_TEXT, Messages.getString("LocalImport.path_hint"));
+    pathCombo.setToolTipText(Messages.getString("LocalImport.path_tip"));
+    pathCombo.addActionListener(
+        e -> {
+          if ("comboBoxEdited".equals(e.getActionCommand())) { // NON-NLS
+            importDICOM(model, null);
+          }
+        });
+    GuiUtils.shrinkable(pathCombo);
+
+    DropZone dropZone = new DropZone();
+    dropZone.setAlignmentX(CENTER_ALIGNMENT);
+    add(dropZone);
+    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
     JLabel label = new JLabel(Messages.getString("LocalImport.path") + StringUtil.COLON);
+    label.setLabelFor(pathCombo);
     add(
         GuiUtils.getHorizontalBoxLayoutPanel(
-            label, GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL), pathField));
-    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
-    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, createBrowseButtons()));
-    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, recursive));
-    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, copyToCache));
+            label, GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL), pathCombo));
+    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_SMALL));
+    add(GuiUtils.getFlowLayoutPanel(0, 0, GuiUtils.shrinkable(recursive)));
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
-  }
 
-  /**
-   * One Browse button where the system dialog takes files and folders together (macOS); a Files and
-   * a Folder button where it takes one kind at a time. The media button looks for a DICOMDIR.
-   */
-  private JButton[] createBrowseButtons() {
-    List<JButton> buttons = new ArrayList<>();
-    if (SystemInfo.isMacOS) {
-      buttons.add(
-          browseButton(
-              Messages.getString("LocalImport.browse"), SystemFileChooser.FILES_AND_DIRECTORIES));
-    } else {
-      buttons.add(
-          browseButton(
-              Messages.getString("LocalImport.browse_files"), SystemFileChooser.FILES_ONLY));
-      buttons.add(
-          browseButton(
-              Messages.getString("LocalImport.browse_folder"), SystemFileChooser.DIRECTORIES_ONLY));
+    // The whole page takes drops, the zone shows them
+    setTransferHandler(new FileDropHandler());
+    try {
+      getDropTarget().addDropTargetListener(dropZone);
+    } catch (TooManyListenersException e) {
+      LOGGER.debug("No drop highlight", e);
     }
-    JButton media =
-        new JButton(Messages.getString("LocalImport.media"), ResourceUtil.getIcon(OtherIcon.CDROM));
-    media.addActionListener(_ -> detectMedia());
-    buttons.add(media);
-    return buttons.toArray(JButton[]::new);
   }
 
-  private JButton browseButton(String label, int selectionMode) {
-    JButton button = new JButton(label);
-    button.addActionListener(_ -> browse(selectionMode));
-    return button;
+  /** The dashed zone at the top of the page: drop target, Files, Folder and disc buttons. */
+  private final class DropZone extends JPanel implements DropTargetListener {
+    private boolean dragOver;
+
+    DropZone() {
+      setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+      setOpaque(false);
+      setBorder(GuiUtils.getEmptyBorder(ITEM_SEPARATOR, ITEM_SEPARATOR_SMALL));
+
+      JLabel title =
+          new JLabel(
+              Messages.getString("LocalImport.drop"),
+              ResourceUtil.getIcon(ActionIcon.IMPORT_DICOM),
+              JLabel.CENTER);
+      title.setIconTextGap(GuiUtils.getScaleLength(ITEM_SEPARATOR_SMALL));
+      title.putClientProperty(FlatClientProperties.STYLE_CLASS, "h4"); // NON-NLS
+      JLabel kinds = new JLabel(Messages.getString("LocalImport.drop_kinds"), JLabel.CENTER);
+      kinds.putClientProperty(FlatClientProperties.STYLE_CLASS, "small"); // NON-NLS
+      kinds.setForeground(UIManager.getColor("Label.disabledForeground"));
+
+      JButton disc =
+          button(
+              Messages.getString("LocalImport.media"),
+              ResourceUtil.getIcon(OtherIcon.CDROM),
+              _ -> importDisc());
+      disc.setToolTipText(Messages.getString("LocalImport.media_tip"));
+      JPanel buttons =
+          new JPanel(new WrapLayout(FlowLayout.CENTER, ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_SMALL));
+      buttons.setOpaque(false);
+      buttons.add(
+          button(
+              Messages.getString("LocalImport.browse_files"),
+              ResourceUtil.getIcon(OtherIcon.RASTER_IMAGE),
+              _ -> browse(SystemFileChooser.FILES_ONLY)));
+      buttons.add(
+          button(
+              Messages.getString("LocalImport.browse_folder"),
+              ResourceUtil.getIcon(OtherIcon.FOLDER),
+              _ -> browse(SystemFileChooser.DIRECTORIES_ONLY)));
+      buttons.add(disc);
+      // the wrapped height is known once the row has its width: lay out again when it changes
+      buttons.addComponentListener(
+          new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+              if (buttons.getPreferredSize().height != buttons.getHeight()) {
+                SwingUtilities.invokeLater(buttons::revalidate);
+              }
+            }
+          });
+
+      for (JComponent c : List.of(title, kinds, buttons)) {
+        c.setAlignmentX(CENTER_ALIGNMENT);
+        add(c);
+      }
+    }
+
+    private static JButton button(String text, Icon icon, ActionListener action) {
+      JButton button = new JButton(text, icon);
+      button.addActionListener(action);
+      return button;
+    }
+
+    /** Narrow enough to follow the side: the texts are cut, the buttons wrap. */
+    @Override
+    public Dimension getMinimumSize() {
+      return new Dimension(GuiUtils.getScaleLength(120), getPreferredSize().height);
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return new Dimension(Short.MAX_VALUE, getPreferredSize().height);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+      Graphics2D g2 = (Graphics2D) g.create();
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        float line = GuiUtils.getScaleLength(1.5f);
+        float arc = GuiUtils.getScaleLength(Math.max(10f, UIManager.getInt("Component.arc")));
+        RoundRectangle2D shape =
+            new RoundRectangle2D.Float(
+                line / 2, line / 2, getWidth() - line, getHeight() - line, arc, arc);
+        Color accent = UIManager.getColor("Component.focusColor");
+        if (dragOver && accent != null) {
+          g2.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 48));
+          g2.fill(shape);
+        }
+        Color border = dragOver ? accent : UIManager.getColor("Component.borderColor");
+        g2.setColor(border != null ? border : getForeground());
+        float dash = GuiUtils.getScaleLength(5f);
+        g2.setStroke(
+            new BasicStroke(
+                line, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10f, new float[] {dash}, 0f));
+        g2.draw(shape);
+      } finally {
+        g2.dispose();
+      }
+    }
+
+    private void setDragOver(boolean over) {
+      if (dragOver != over) {
+        dragOver = over;
+        repaint();
+      }
+    }
+
+    @Override
+    public void dragEnter(DropTargetDragEvent e) {
+      setDragOver(true);
+    }
+
+    @Override
+    public void dragOver(DropTargetDragEvent e) {
+      // the state of the enter holds
+    }
+
+    @Override
+    public void dropActionChanged(DropTargetDragEvent e) {
+      // nothing to change
+    }
+
+    @Override
+    public void dragExit(DropTargetEvent e) {
+      setDragOver(false);
+    }
+
+    @Override
+    public void drop(DropTargetDropEvent e) {
+      setDragOver(false);
+    }
+  }
+
+  /** Takes dropped files and folders, of any kind and mixed. */
+  private final class FileDropHandler extends SequenceHandler {
+    FileDropHandler() {
+      super(false, true);
+    }
+
+    @Override
+    protected boolean dropFiles(List<Path> paths) {
+      if (paths == null || paths.isEmpty()) {
+        return false;
+      }
+      importSources(paths.stream().map(Path::toFile).toList());
+      return true;
+    }
   }
 
   private void browse(int selectionMode) {
@@ -126,12 +299,12 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     if (chooser.showOpenDialog(WinUtil.getParentWindow(this)) == SystemFileChooser.APPROVE_OPTION) {
       File[] selected = chooser.getSelectedFiles();
       if (selected != null && selected.length > 0) {
-        setSelection(List.of(selected));
+        importSources(Arrays.asList(selected));
       }
     }
   }
 
-  private void detectMedia() {
+  private void importDisc() {
     File dicomdir = DicomDirImport.getDcmDirFromMedia();
     if (dicomdir == null) {
       JOptionPane.showMessageDialog(
@@ -141,13 +314,21 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
           JOptionPane.INFORMATION_MESSAGE);
       return;
     }
-    setSelection(List.of(dicomdir));
-    copyToCache.setSelected(true);
+    importSources(List.of(dicomdir));
+  }
+
+  /** Imports the sources at once and remembers them. */
+  private void importSources(List<File> files) {
+    if (files.isEmpty() || model == null) {
+      return;
+    }
+    remember(files);
+    DicomDirImport.importFiles(files, model, recursive.isSelected());
   }
 
   private String initialDirectory() {
     File typed = typedFile();
-    if (typed != null) {
+    if (typed != null && typed.exists()) {
       return directoryOf(typed);
     }
     return LocalPersistence.getProperties().getProperty(LAST_OPEN_DIR, "");
@@ -161,101 +342,110 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     return file.getPath();
   }
 
-  /** Shows a selection in the field: the path of a single item, a count otherwise. */
-  private void setSelection(List<File> files) {
-    selection = List.copyOf(files);
-    pathField.setText(
-        files.size() == 1
-            ? files.getFirst().getPath()
-            : Messages.format("LocalImport.items", files.size()));
-    File first = files.getFirst();
+  /**
+   * Keeps the sources worth recalling in the path history: folders, DICOMDIR and a single file. The
+   * files of a multiple selection are not recalled one by one.
+   */
+  private void remember(List<File> files) {
+    List<String> recalled = new ArrayList<>();
+    for (File file : files) {
+      if (files.size() == 1 || !file.isFile() || DicomDirImport.isDicomDir(file.toPath())) {
+        recalled.add(file.getPath());
+      }
+    }
     Properties props = LocalPersistence.getProperties();
-    props.setProperty(LAST_OPEN_DIR, directoryOf(first));
-    props.setProperty(LAST_IMPORT_PATH, files.size() == 1 ? first.getPath() : "");
+    props.setProperty(LAST_OPEN_DIR, directoryOf(files.getFirst()));
+    if (recalled.isEmpty()) {
+      return;
+    }
+    List<String> recent = mergeRecent(recalled, recentPaths(props));
+    props.setProperty(RECENT_IMPORT_PATHS, String.join("\n", recent));
+    props.setProperty(LAST_IMPORT_PATH, recent.getFirst());
+    pathCombo.removeAllItems();
+    recent.forEach(pathCombo::addItem);
+    pathCombo.setSelectedItem(recent.getFirst());
+  }
+
+  /**
+   * The new sources first, then the older ones, without duplicates or blanks, at most {@value
+   * #MAX_RECENT}.
+   */
+  static List<String> mergeRecent(List<String> added, List<String> older) {
+    List<String> merged = new ArrayList<>(MAX_RECENT);
+    for (List<String> list : List.of(added, older)) {
+      for (String path : list) {
+        if (StringUtil.hasText(path) && !merged.contains(path) && merged.size() < MAX_RECENT) {
+          merged.add(path);
+        }
+      }
+    }
+    return merged;
+  }
+
+  /** The recent sources, seeded with the single last path of the earlier versions. */
+  static List<String> recentPaths(Properties props) {
+    String recent = props.getProperty(RECENT_IMPORT_PATHS);
+    if (recent == null) {
+      recent = props.getProperty(LAST_IMPORT_PATH, "");
+    }
+    return mergeRecent(recent.lines().map(String::trim).toList(), List.of());
   }
 
   /** Fills the field with a path to import, as the CD import does with the folder of a medium. */
   public void setImportPath(String path) {
-    selection = List.of();
-    pathField.setText(path);
+    pathCombo.setSelectedItem(path);
   }
 
+  private String typedPath() {
+    Object item =
+        pathCombo.getEditor().getEditorComponent() instanceof JTextComponent text
+            ? text.getText()
+            : pathCombo.getSelectedItem();
+    return item == null ? "" : item.toString().trim();
+  }
+
+  /** The typed path as a file, also when given as a file URI; null when the field is empty. */
   private File typedFile() {
-    String path = pathField.getText().trim();
-    if (!StringUtil.hasText(path) || !selection.isEmpty()) {
+    String path = typedPath();
+    if (!StringUtil.hasText(path)) {
       return null;
     }
     File file = new File(path);
-    if (file.canRead()) {
+    if (file.exists() || !path.contains(":/")) {
       return file;
     }
     try {
       return URIUtils.toFile(new URI(path));
     } catch (Exception e) {
       LOGGER.debug("Not a file path nor a file URI: {}", path);
-      return null;
+      return file;
     }
   }
 
-  /** The files to import: the chooser selection, or the typed path. */
-  private List<File> filesToImport() {
-    if (!selection.isEmpty()) {
-      return selection;
-    }
-    File typed = typedFile();
-    if (typed == null) {
-      LOGGER.error("Cannot import DICOM from {}", pathField.getText());
-      return List.of();
-    }
-    return List.of(typed);
-  }
-
+  /** Imports the path of the field (Enter, or the Import button of the tool). */
   @Override
   public void importDICOM(DicomModel dicomModel, JProgressBar info) {
-    List<File> files = filesToImport();
-    if (files.isEmpty()) {
+    File file = typedFile();
+    if (file == null || !file.canRead()) {
+      LOGGER.warn("Cannot import DICOM from {}", typedPath());
+      JOptionPane.showMessageDialog(
+          WinUtil.getValidComponent(this),
+          file == null
+              ? Messages.getString("LocalImport.no_path")
+              : Messages.format("LocalImport.unreadable", file.getPath()),
+          getTitle(),
+          JOptionPane.WARNING_MESSAGE);
       return;
     }
-    List<File> toScan = new ArrayList<>();
-    for (File file : files) {
-      if (DicomDirImport.isDicomDir(file.toPath())) {
-        List<LoadSeries> series =
-            DicomDirImport.loadDicomDir(file, dicomModel, copyToCache.isSelected());
-        if (series != null && !series.isEmpty()) {
-          DicomModel.LOADING_EXECUTOR.execute(
-              new LoadDicomDir(series, dicomModel, OpeningViewer.ALL_PATIENTS));
-        } else {
-          // an empty or unreadable directory: scan the file set itself
-          LOGGER.warn("No series in {}, scanning its folder", file);
-          toScan.add(file.getParentFile() != null ? file.getParentFile() : file);
-        }
-      } else {
-        toScan.add(file);
-      }
-    }
-    if (!toScan.isEmpty()) {
-      DicomModel.LOADING_EXECUTOR.execute(
-          new LoadLocalDicom(
-              toScan.toArray(File[]::new),
-              recursive.isSelected(),
-              dicomModel,
-              OpeningViewer.ALL_PATIENTS));
-    }
-    selection = List.of();
+    remember(List.of(file));
+    DicomDirImport.importFiles(
+        List.of(file), dicomModel != null ? dicomModel : model, recursive.isSelected());
   }
 
   @Override
   public void closeAdditionalWindow() {
-    Properties props = LocalPersistence.getProperties();
-    props.setProperty(LAST_RECURSIVE_MODE, String.valueOf(recursive.isSelected()));
-    if (selection.isEmpty()) {
-      String path = pathField.getText().trim();
-      props.setProperty(LAST_IMPORT_PATH, path);
-      File file = new File(path);
-      if (StringUtil.hasText(path) && file.exists()) {
-        props.setProperty(LAST_OPEN_DIR, directoryOf(file));
-      }
-    }
+    LocalPersistence.getProperties()
+        .setProperty(LAST_RECURSIVE_MODE, String.valueOf(recursive.isSelected()));
   }
 
   @Override

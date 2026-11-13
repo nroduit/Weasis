@@ -28,13 +28,10 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.StripeAction;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
-import org.weasis.dicom.explorer.LoadDicomDir;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.TransferKind;
 import org.weasis.dicom.explorer.TransferTool;
 import org.weasis.dicom.explorer.main.DicomExplorer;
-import org.weasis.dicom.explorer.wado.LoadSeries;
 
 /**
  * The import from the local device: files, folders, archives and DICOMDIR media in one page, plus
@@ -59,7 +56,7 @@ public class ImportTool extends TransferTool {
         Messages.common("import"),
         30,
         ResourceUtil.getIcon(ActionIcon.IMPORT),
-        0.25,
+        0.4,
         Messages.common("import"),
         "dicom-import", // NON-NLS
         model);
@@ -122,11 +119,7 @@ public class ImportTool extends TransferTool {
       }
       return;
     }
-    List<LoadSeries> loadSeries = DicomDirImport.loadDicomDir(file, model, true);
-    if (loadSeries != null && !loadSeries.isEmpty()) {
-      DicomModel.LOADING_EXECUTOR.execute(
-          new LoadDicomDir(loadSeries, model, OpeningViewer.ALL_PATIENTS));
-    } else {
+    if (!DicomDirImport.openDicomDir(file, model, true)) {
       LOGGER.error("Cannot import DICOM from {}", file);
       if (confirm(parent, Messages.getString("DicomExplorer.mes_import_manual"), title)) {
         EmbeddedWizardPanel wizard = open(Messages.getString("LocalImport.local_dev"));
@@ -150,7 +143,7 @@ public class ImportTool extends TransferTool {
   @Override
   protected List<AbstractItemDialogPage> createPages() {
     List<AbstractItemDialogPage> list = new ArrayList<>();
-    list.add(new LocalImport());
+    list.add(new LocalImport(getModel()));
     list.addAll(createPluginPages(TransferKind.LOCAL));
     list.addAll(createPluginPages(TransferKind.DISC));
     InsertableUtil.sortInsertable(list);

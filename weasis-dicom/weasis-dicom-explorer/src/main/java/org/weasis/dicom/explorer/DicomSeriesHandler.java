@@ -10,7 +10,6 @@
 package org.weasis.dicom.explorer;
 
 import java.awt.datatransfer.Transferable;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +28,7 @@ import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
+import org.weasis.dicom.explorer.imp.DicomDirImport;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.main.SeriesSelectionModel;
 
@@ -97,10 +96,8 @@ public class DicomSeriesHandler extends SequenceHandler {
     return getDicomExplorer()
         .map(
             explorer -> {
-              var model = explorer.getDataExplorerModel();
-              var files = paths.stream().map(Path::toFile).toArray(File[]::new);
-              DicomModel.LOADING_EXECUTOR.execute(
-                  new LoadLocalDicom(files, true, model, OpeningViewer.ALL_PATIENTS));
+              DicomDirImport.importFiles(
+                  paths.stream().map(Path::toFile).toList(), explorer.getDataExplorerModel(), true);
               return true;
             })
         .orElse(false);

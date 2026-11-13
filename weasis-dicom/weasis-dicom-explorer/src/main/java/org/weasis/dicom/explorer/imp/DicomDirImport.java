@@ -19,10 +19,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
+import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.HardwareInfo;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
+import org.weasis.dicom.explorer.LoadDicomDir;
+import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 /**
@@ -44,6 +48,88 @@ public final class DicomDirImport {
     }
     String name = file.getFileName().toString().toUpperCase(Locale.ROOT);
     return name.equals(DICOMDIR) || name.startsWith(DICOMDIR + '.');
+  }
+
+  /**
+   * Imports local sources the same way from every entry (import page, drop on the explorer or on a
+   * view, disc): a DICOMDIR is read through its directory records, its images copied to the cache
+   * when it sits on a disc or a removable drive, so they stay available once the medium is removed;
+   * everything else (files, folders, archives) is scanned. A DICOMDIR that lists nothing is
+   * replaced by a scan of its folder.
+   *
+   * @param files the files and folders to import, kinds mixed
+   * @param model the model receiving the series
+   * @param recursive whether folders are scanned with their subfolders
+   */
+  public static void importFiles(List<File> files, DicomModel model, boolean recursive) {
+    List<File> dicomDirs = new ArrayList<>();
+    List<File> toScan = new ArrayList<>();
+    for (File file : files) {
+      if (isDicomDir(file.toPath())) {
+        dicomDirs.add(file);
+      } else {
+        toScan.add(file);
+      }
+    }
+    scan(toScan, model, recursive);
+    if (dicomDirs.isEmpty()) {
+      return;
+    }
+    // The media probe may query the system (WMI on Windows): keep it off the event thread
+    Thread.ofVirtual()
+        .name("dicomdir-media") // NON-NLS
+        .start(
+            () -> {
+              List<Boolean> removable =
+                  dicomDirs.stream().map(f -> isOnRemovableMedium(f.toPath())).toList();
+              SwingUtilities.invokeLater(
+                  () -> {
+                    List<File> fallback = new ArrayList<>();
+                    for (int i = 0; i < dicomDirs.size(); i++) {
+                      File file = dicomDirs.get(i);
+                      if (!openDicomDir(file, model, removable.get(i))) {
+                        LOGGER.warn("No series in {}, scanning its folder", file);
+                        File parent = file.getParentFile();
+                        fallback.add(parent != null ? parent : file);
+                      }
+                    }
+                    scan(fallback, model, true);
+                  });
+            });
+  }
+
+  /** Loads the series of a DICOMDIR, false when it lists none or cannot be read. */
+  static boolean openDicomDir(File file, DicomModel model, boolean writeInCache) {
+    List<LoadSeries> series = loadDicomDir(file, model, writeInCache);
+    if (series == null || series.isEmpty()) {
+      return false;
+    }
+    DicomModel.LOADING_EXECUTOR.execute(
+        new LoadDicomDir(series, model, OpeningViewer.ALL_PATIENTS));
+    return true;
+  }
+
+  private static void scan(List<File> files, DicomModel model, boolean recursive) {
+    if (!files.isEmpty()) {
+      DicomModel.LOADING_EXECUTOR.execute(
+          new LoadLocalDicom(
+              files.toArray(File[]::new), recursive, model, OpeningViewer.ALL_PATIENTS));
+    }
+  }
+
+  /**
+   * Whether the path is on an optical disc or a removable drive, as {@link #getDcmDirFromMedia()}
+   * finds them. Without the hardware probe on Windows, every drive counts as removable, so the
+   * images are copied rather than lost with the medium.
+   */
+  public static boolean isOnRemovableMedium(Path path) {
+    Path absolute = path.toAbsolutePath().normalize();
+    for (Path mount : mediaMounts()) {
+      if (absolute.startsWith(mount)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** The series of a DICOMDIR, null when the file cannot be read. */
