@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -21,6 +22,7 @@ import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.model.layer.InfoValue;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.util.StringUtil;
@@ -38,6 +40,9 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
   private long lastUpdateTime;
 
   private boolean buttonPressActive;
+
+  /** The cursor before the pointer entered a value of the corner text, restored when it leaves. */
+  private Cursor cursorBeforeValue;
 
   public FocusHandler(ViewCanvas<E> viewCanvas) {
     this.viewCanvas = viewCanvas;
@@ -60,6 +65,18 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
       selectViewIfNeeded(pane);
       viewCanvas.getJComponent().requestFocusInWindow();
       handleViewButtonClick(evt, selectedButton.get());
+      return;
+    }
+
+    Optional<InfoValue> value = findInfoValueAt(evt.getPoint());
+    if (value.isPresent() && evt.getButton() == MouseEvent.BUTTON1) {
+      buttonPressActive = true;
+      evt.consume();
+      selectViewIfNeeded(pane);
+      viewCanvas.getJComponent().requestFocusInWindow();
+      // The editors open above the value: the values are at the bottom of the view
+      Rectangle area = value.get().getBounds();
+      value.get().getEditor().showPopup(evt.getComponent(), area.x, area.y);
       return;
     }
 
@@ -106,11 +123,25 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
   public void mouseMoved(MouseEvent evt) {
     showPixelInfos(evt);
     updateViewButtonsHoverState(evt.getPoint());
+    if (updateInfoValuesHoverState(evt.getPoint())) {
+      // Over a value: the graphic handler must not change the cursor
+      evt.consume();
+    }
+  }
+
+  @Override
+  public void mouseExited(MouseEvent evt) {
+    updateInfoValuesHoverState(null);
   }
 
   @Override
   public void mouseReleased(MouseEvent evt) {
-    viewCanvas.getJComponent().setCursor(DefaultView2d.DEFAULT_CURSOR);
+    viewCanvas
+        .getJComponent()
+        .setCursor(
+            cursorBeforeValue == null
+                ? DefaultView2d.DEFAULT_CURSOR
+                : Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     if (buttonPressActive) {
       // Consume even if the release point drifted off the button; clear the flag so a real
       // subsequent drag (Pan, Scroll, …) is not wrongly suppressed.
@@ -119,6 +150,51 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
     } else {
       findViewButtonAt(evt.getPoint()).ifPresent(_ -> evt.consume());
     }
+  }
+
+  private Optional<InfoValue> findInfoValueAt(Point point) {
+    // Only the values drawn by the last paint: a hidden layer may still draw some (a tag)
+    LayerAnnotation<?> infoLayer = viewCanvas.getInfoLayer();
+    if (infoLayer == null) {
+      return Optional.empty();
+    }
+    return infoLayer.getInfoValues().stream().filter(v -> v.contains(point.x, point.y)).findFirst();
+  }
+
+  /**
+   * Shows the hover background and the hand cursor on the value under the pointer.
+   *
+   * @param point the pointer, null when it left the view
+   * @return whether the pointer is over a value
+   */
+  private boolean updateInfoValuesHoverState(Point point) {
+    LayerAnnotation<?> infoLayer = viewCanvas.getInfoLayer();
+    if (infoLayer == null) {
+      return false;
+    }
+    var component = viewCanvas.getJComponent();
+    boolean over = false;
+    for (InfoValue value : infoLayer.getInfoValues()) {
+      boolean hover = point != null && value.contains(point.x, point.y);
+      over |= hover;
+      if (hover != value.isHover()) {
+        value.setHover(hover);
+        component.repaint(value.getBounds());
+      }
+    }
+    if (over && cursorBeforeValue == null) {
+      cursorBeforeValue = component.getCursor();
+      component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    } else if (!over && cursorBeforeValue != null) {
+      component.setCursor(cursorBeforeValue);
+      cursorBeforeValue = null;
+    }
+    return over;
+  }
+
+  /** The tooltip of the value under the pointer, or null. */
+  public String getInfoValueTooltip(Point point) {
+    return findInfoValueAt(point).map(InfoValue::getTooltip).orElse(null);
   }
 
   private Optional<ViewButton> findViewButtonAt(Point point) {

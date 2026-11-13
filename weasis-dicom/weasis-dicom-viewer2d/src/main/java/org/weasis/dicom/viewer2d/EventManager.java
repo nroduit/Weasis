@@ -117,6 +117,7 @@ import org.weasis.dicom.viewer2d.fusion.FusionWindow;
 import org.weasis.dicom.viewer2d.fusion.FusionWindowListener;
 import org.weasis.dicom.viewer2d.mip.MipMenu;
 import org.weasis.dicom.viewer2d.mip.MipView;
+import org.weasis.dicom.viewer2d.mip.Slab;
 import org.weasis.dicom.viewer2d.mpr.MprAxis;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprController;
@@ -598,6 +599,26 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       firePropertyChange(ActionW.SYNCH.cmd(), null, evt);
     }
 
+    if (selectedView2dContainer != null) {
+      fireSeriesViewerListeners(
+          new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.WIN_LEVEL));
+    }
+  }
+
+  /**
+   * Sets a window and level typed by the user on the selected view and the views synchronized with
+   * it. The values are sent as they are: the sliders only follow, since their steps would round
+   * them.
+   */
+  public void setWindowLevel(double window, double level) {
+    getAction(ActionW.WINDOW).ifPresent(a -> a.setRealValue(window, false));
+    getAction(ActionW.LEVEL).ifPresent(a -> a.setRealValue(level, false));
+    getAction(ActionW.PRESET).ifPresent(a -> a.setSelectedItemWithoutTriggerAction(null));
+    getAction(ActionW.DEFAULT_PRESET).ifPresent(a -> a.setSelectedWithoutTriggerAction(false));
+    SynchEvent evt = new SynchEvent(getSelectedViewPane(), ActionW.DEFAULT_PRESET.cmd(), false);
+    evt.put(ActionW.WINDOW.cmd(), window);
+    evt.put(ActionW.LEVEL.cmd(), level);
+    firePropertyChange(ActionW.SYNCH.cmd(), null, evt);
     if (selectedView2dContainer != null) {
       fireSeriesViewerListeners(
           new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.WIN_LEVEL));
@@ -1256,7 +1277,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         .on(
             ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES_ALL,
             () -> onMprView(v -> toggleCrossLines(v, true)))
-        .on(ShortcutManager.ID_MPR_CYCLE_MIP, () -> onMprView(EventManager::cycleMipType));
+        .on(ShortcutManager.ID_MPR_CYCLE_MIP, this::cycleSlabMode);
   }
 
   private void onMprView(Consumer<MprView> action) {
@@ -1273,6 +1294,27 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   private static void toggleCrossLines(MprView mprView, boolean allViews) {
     boolean hidden = MprView.getViewProperty(mprView, MprView.HIDE_CROSSLINES);
     mprView.showCrossLines(hidden, allViews); // NOSONAR mprView is never null
+  }
+
+  /** The projection of the selected pane, an MPR view or a MIP of a stack, goes to the next. */
+  private void cycleSlabMode() {
+    ViewCanvas<DicomImageElement> view = selectedView2dContainer.getSelectedViewCanvas();
+    if (view instanceof MprView mprView) {
+      cycleMipType(mprView);
+    } else if (view instanceof MipView) {
+      // A stack keeps a projection: None would put the plain stack back
+      Slab.of(view)
+          .ifPresent(
+              slab -> {
+                MipView.Type next =
+                    switch (slab.type()) {
+                      case MAX -> MipView.Type.MIN;
+                      case MIN -> MipView.Type.MEAN;
+                      default -> MipView.Type.MAX;
+                    };
+                slab.apply(next, slab.extent());
+              });
+    }
   }
 
   private static void cycleMipType(MprView mprView) {

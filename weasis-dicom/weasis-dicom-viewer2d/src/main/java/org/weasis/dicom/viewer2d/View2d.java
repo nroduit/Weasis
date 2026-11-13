@@ -41,6 +41,7 @@ import javax.swing.Action;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3d;
@@ -71,8 +72,6 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.Relevance;
 import org.weasis.core.ui.editor.ViewContexts;
 import org.weasis.core.ui.editor.image.CaptureAction;
@@ -136,6 +135,8 @@ import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
 import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
 import org.weasis.dicom.viewer2d.fusion.FusionScaleDragHandler;
+import org.weasis.dicom.viewer2d.mip.Slab;
+import org.weasis.dicom.viewer2d.mip.SlabEditor;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.dicom.viewer2d.mpr.ReformatMenu;
 import org.weasis.opencv.data.PlanarImage;
@@ -166,7 +167,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   protected Vector3d lastCrosshairPosition;
 
   protected final KOViewButton koStarButton;
-  private final ViewButton planeButton;
+
+  /** How long the slab is shown on the image after a change, when the corner text hides it. */
+  private static final int SLAB_FLASH_MS = 1500;
+
+  private String lastSlabSummary;
+  private boolean slabSummaryKnown;
+  private long slabFlashUntil;
+  private Timer slabFlashTimer;
 
   public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
@@ -198,32 +206,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     koStarButton.setPosition(
         GridBagConstraints.NORTHEAST); // absolute side: a button drawn in the image corner
     getViewButtons().add(koStarButton);
-    this.planeButton = buildPlaneButton();
-    getViewButtons().add(planeButton);
-  }
-
-  /** The plane of the pane: a popup with the acquired plane and the two reformats. */
-  private ViewButton buildPlaneButton() {
-    ViewButton button =
-        new ViewButton(
-            (invoker, x, y) ->
-                ReformatMenu.popup(eventManager.getSelectedView2dContainer(), this)
-                    .show(invoker, x, y),
-            ResourceUtil.getIcon(OtherIcon.VIEW_3D, 24, 24),
-            Messages.getString("ReformatMenu.title"));
-    button.setVisible(false);
-    button.setPosition(
-        GridBagConstraints.NORTHEAST); // absolute side: a button drawn in the image corner
-    return button;
-  }
-
-  /** Shows the plane button on the series that can be resliced, and on their reformats. */
-  private void updatePlaneButton() {
-    boolean visible = ReformatMenu.applies(this);
-    if (planeButton.isVisible() != visible) {
-      planeButton.setVisible(visible);
-      repaint();
-    }
   }
 
   @Override
@@ -808,7 +790,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     updateKOButtonVisibleState();
-    updatePlaneButton();
   }
 
   /**
@@ -1046,6 +1027,46 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       g2d.translate(-p.getX(), -p.getY());
     }
     drawLoadingMessages(g2d);
+    drawSlabFlash(g2d);
+  }
+
+  /**
+   * Shows the slab for a moment after it changed (Alt+wheel, a drag of the slab lines, a shortcut)
+   * when the corner text is hidden: the tag of the derived image says it too, but a projection must
+   * never change unnoticed.
+   */
+  private void drawSlabFlash(Graphics2D g2d) {
+    String summary = Slab.summaryOf(this);
+    if (!Objects.equals(summary, lastSlabSummary)) {
+      if (slabSummaryKnown || summary != null) {
+        slabFlashUntil = System.currentTimeMillis() + SLAB_FLASH_MS;
+        if (slabFlashTimer == null) {
+          slabFlashTimer = new Timer(SLAB_FLASH_MS + 50, _ -> repaint());
+          slabFlashTimer.setRepeats(false);
+        }
+        slabFlashTimer.restart();
+      }
+      lastSlabSummary = summary;
+      slabSummaryKnown = true;
+    }
+    boolean textShown = infoLayer != null && LangUtil.nullToTrue(infoLayer.getVisible());
+    if (textShown || System.currentTimeMillis() >= slabFlashUntil) {
+      return;
+    }
+    String text = summary == null ? Messages.getString("Slab.off") : summary;
+    g2d.setFont(getLayerFont());
+    FontMetrics fm = g2d.getFontMetrics();
+    int pad = GuiUtils.getScaleLength(6);
+    int w = fm.stringWidth(text) + 2 * pad;
+    int h = fm.getHeight() + pad;
+    int x = (getWidth() - w) / 2;
+    int y = getHeight() - h - fm.getHeight() * 3;
+    Color old = g2d.getColor();
+    g2d.setColor(new Color(0, 0, 0, 160));
+    int arc = GuiUtils.getScaleLength(10);
+    g2d.fillRoundRect(x, y, w, h, arc, arc);
+    g2d.setColor(old);
+    FontTools.paintFontOutline(g2d, text, x + pad, y + pad / 2f + fm.getAscent());
   }
 
   /** Paints the pending background builds, stacked at the bottom of the view. */
@@ -1407,6 +1428,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         GuiUtils.addItemToMenu(
             popupMenu, ReformatMenu.menu(manager.getSelectedView2dContainer(), this));
       }
+      GuiUtils.addItemToMenu(popupMenu, SlabEditor.menu(this, this, evt.getX(), evt.getY()));
       if (Relevance.applies(
           Relevance.TEMPORAL, ViewContexts.of(manager.getSelectedView2dContainer(), getSeries()))) {
         GuiUtils.addItemToMenu(popupMenu, manager.getCineMenu("weasis.contextmenu.cine"));

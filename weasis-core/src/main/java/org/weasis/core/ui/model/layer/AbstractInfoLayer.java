@@ -11,13 +11,18 @@ package org.weasis.core.ui.model.layer;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.Rectangle;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -25,6 +30,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.prefs.Preferences;
 import javax.swing.Icon;
+import javax.swing.UIManager;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -39,6 +45,7 @@ import org.weasis.core.ui.editor.image.DisplayByteLut;
 import org.weasis.core.ui.editor.image.HistogramData;
 import org.weasis.core.ui.editor.image.HistogramView;
 import org.weasis.core.ui.editor.image.PixelInfo;
+import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -94,6 +101,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
   private final Map<Position, Point2D> positions = new EnumMap<>(Position.class);
   private Map<LayerItem, Boolean> captureOverride;
+  private final Map<String, InfoValue> infoValues = new LinkedHashMap<>();
 
   protected AbstractInfoLayer(ViewCanvas<E> view2DPane) {
     this(view2DPane, true);
@@ -372,6 +380,110 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   @Override
   public Rectangle getPreloadingProgressBound() {
     return preloadingProgressBound;
+  }
+
+  @Override
+  public Collection<InfoValue> getInfoValues() {
+    List<InfoValue> list = new ArrayList<>();
+    for (InfoValue value : infoValues.values()) {
+      if (value.isPainted()) {
+        list.add(value);
+      }
+    }
+    return list;
+  }
+
+  /** Forgets where the values were drawn: called when a paint starts. */
+  protected void clearInfoValues() {
+    infoValues.values().forEach(InfoValue::clear);
+  }
+
+  /**
+   * Paints a line of the corner text whose part from {@code valueStart} to {@code valueEnd} is a
+   * value that can be clicked: the value gets a hover background and opens {@code editor} on a
+   * click. Without editor, the line is painted as plain text.
+   *
+   * @return the area of the value in view coordinates
+   */
+  protected Rectangle paintInfoValue(
+      Graphics2D g2,
+      String id,
+      String text,
+      int valueStart,
+      int valueEnd,
+      float x,
+      float y,
+      Color textColor,
+      ShowPopup editor,
+      String tooltip) {
+    Rectangle area = addInfoValue(g2, id, text, valueStart, valueEnd, x, y, editor, tooltip);
+    FontTools.paintColorFontOutline(g2, text, x, y, textColor);
+    if (editor != null && Color.WHITE.equals(textColor)) {
+      markEditable(g2, text, valueStart, valueEnd, x, y);
+    }
+    return area;
+  }
+
+  /** The color of the values that can be clicked: close to white, cool enough to stand out. */
+  private static final Color EDITABLE_TINT = new Color(0xA8, 0xD8, 0xFF);
+
+  /**
+   * Repaints a value that can be clicked in a pale tint, on the selected view only, so that the
+   * values to click stand out where the user works; the other views keep plain white text. Not in a
+   * capture, whose view is not the selected one.
+   */
+  protected void markEditable(
+      Graphics2D g2, String text, int valueStart, int valueEnd, float x, float y) {
+    if (view2DPane.getEventManager() == null
+        || view2DPane.getEventManager().getSelectedViewPane() != view2DPane) {
+      return;
+    }
+    FontMetrics fm = g2.getFontMetrics();
+    int end = Math.clamp(valueEnd, 0, text.length());
+    int start = Math.clamp(valueStart, 0, end);
+    float vx = x + fm.stringWidth(text.substring(0, start));
+    FontTools.paintColorFontOutline(g2, text.substring(start, end), vx, y, EDITABLE_TINT);
+  }
+
+  /**
+   * Makes a part of a line of the corner text a value that can be clicked, without painting the
+   * text: for a line that holds several values, call it for each before painting the line.
+   *
+   * @return the area of the value in view coordinates
+   */
+  protected Rectangle addInfoValue(
+      Graphics2D g2,
+      String id,
+      String text,
+      int valueStart,
+      int valueEnd,
+      float x,
+      float y,
+      ShowPopup editor,
+      String tooltip) {
+    FontMetrics fm = g2.getFontMetrics();
+    int end = Math.clamp(valueEnd, 0, text.length());
+    int start = Math.clamp(valueStart, 0, end);
+    int pad = GuiUtils.getScaleLength(2);
+    Rectangle area =
+        new Rectangle(
+            Math.round(x + fm.stringWidth(text.substring(0, start))) - pad,
+            Math.round(y) - fm.getAscent() - pad,
+            fm.stringWidth(text.substring(start, end)) + 2 * pad,
+            fm.getAscent() + fm.getDescent() + 2 * pad);
+    if (editor != null) {
+      InfoValue value = infoValues.computeIfAbsent(id, InfoValue::new);
+      value.update(area, editor, tooltip);
+      if (value.isHover()) {
+        Color oldColor = g2.getColor();
+        Color bck = UIManager.getColor("Button.background");
+        g2.setColor(bck == null ? Color.DARK_GRAY : bck);
+        int arc = GuiUtils.getScaleLength(7);
+        g2.fillRoundRect(area.x, area.y, area.width, area.height, arc, arc);
+        g2.setColor(oldColor);
+      }
+    }
+    return area;
   }
 
   @Override

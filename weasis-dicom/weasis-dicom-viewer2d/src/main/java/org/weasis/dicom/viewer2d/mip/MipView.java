@@ -10,7 +10,9 @@
 package org.weasis.dicom.viewer2d.mip;
 
 import java.awt.Cursor;
-import java.awt.GridBagConstraints;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.JPopupMenu;
+import javax.swing.Timer;
 import org.dcm4che3.data.Tag;
 import org.joml.Vector3d;
 import org.slf4j.Logger;
@@ -39,8 +41,6 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.provenance.Provenance;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPlacement;
@@ -48,7 +48,6 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchCineEvent;
-import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
@@ -123,24 +122,49 @@ public class MipView extends View2d {
 
   public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
-    // Remove PR and KO buttons
+    // Remove PR and KO buttons: the slab is edited from the corner text and the context menu
     getViewButtons().clear();
-    getViewButtons().add(buildMipButton());
   }
 
-  public ViewButton buildMipButton() {
-    ViewButton button =
-        new ViewButton(
-            (invoker, x, y) -> {
-              JPopupMenu popup = MipMenu.buildViewButtonPopup(this);
-              popup.show(invoker, x, y);
-            },
-            ResourceUtil.getIcon(OtherIcon.VIEW_MIP, 24, 24),
-            Messages.getString("MipPopup.title"));
-    button.setVisible(true);
-    button.setPosition(
-        GridBagConstraints.NORTHEAST); // absolute side: a button drawn in the image corner
-    return button;
+  /** Rebuilds the projection once the wheel stops, not at each notch. */
+  private Timer slabWheelTimer;
+
+  private MouseWheelListener slabWheel;
+
+  @Override
+  public synchronized void iniDefaultMouseListener() {
+    super.iniDefaultMouseListener();
+    if (slabWheel == null) {
+      slabWheel = this::slabWheelMoved;
+    }
+    addMouseWheelListener(slabWheel);
+  }
+
+  /** Alt+wheel changes the thickness of the slab, as in the MPR views. */
+  private void slabWheelMoved(MouseWheelEvent e) {
+    if (e.isConsumed() || (e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) == 0) {
+      return;
+    }
+    e.consume();
+    Integer extend = (Integer) getActionValue(MIP_THICKNESS.cmd());
+    int max = series == null ? 1 : Math.max(series.size(null) / 2, 1);
+    int next = Math.clamp((extend == null ? 1 : extend) + e.getWheelRotation(), 1, max);
+    if (extend != null && extend == next) {
+      return;
+    }
+    setActionsInView(MIP_THICKNESS.cmd(), next);
+    repaint();
+    if (slabWheelTimer == null) {
+      slabWheelTimer =
+          new Timer(
+              300,
+              _ -> {
+                activateCrosslinesUpdate();
+                buildMip(this);
+              });
+      slabWheelTimer.setRepeats(false);
+    }
+    slabWheelTimer.restart();
   }
 
   @Override

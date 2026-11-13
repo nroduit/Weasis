@@ -12,6 +12,8 @@ package org.weasis.core.ui.model.layer;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
+import java.util.Collection;
+import java.util.List;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -31,6 +33,11 @@ public interface LayerAnnotation<E extends ImageElement> extends Layer {
   Rectangle getPreloadingProgressBound();
 
   Rectangle getPixelInfoBound();
+
+  /** The values of the corner text that can be clicked to edit them, as drawn by the last paint. */
+  default Collection<InfoValue> getInfoValues() {
+    return List.of();
+  }
 
   void setPixelInfo(PixelInfo pixelInfo);
 

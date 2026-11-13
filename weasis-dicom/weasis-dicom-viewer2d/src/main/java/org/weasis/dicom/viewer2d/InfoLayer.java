@@ -15,7 +15,9 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.font.TextAttribute;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +43,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
@@ -68,8 +71,12 @@ import org.weasis.dicom.explorer.hp.ActiveHanging;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier;
 import org.weasis.dicom.explorer.hp.PriorMarker;
 import org.weasis.dicom.viewer2d.fusion.FusionColorBar;
+import org.weasis.dicom.viewer2d.mip.Slab;
+import org.weasis.dicom.viewer2d.mip.SlabEditor;
 import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
+import org.weasis.dicom.viewer2d.mpr.ReformatMenu;
+import org.weasis.dicom.viewer2d.mpr.ReformatService;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 
@@ -79,6 +86,9 @@ import org.weasis.opencv.op.lut.DefaultWlPresentation;
  * @author Nicolas Roduit
  */
 public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
+
+  /** The id of the slab in the corner text. */
+  private static final String SLAB = "slab"; // NON-NLS
 
   public InfoLayer(ViewCanvas<DicomImageElement> view2DPane) {
     this(view2DPane, true);
@@ -129,6 +139,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
   @Override
   public void paint(Graphics2D g2) {
+    clearInfoValues();
     DicomImageElement image = view2DPane.getImage();
     // Get the smallest font for better size calculations
     FontMetrics fontMetrics =
@@ -141,6 +152,15 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         setPosition(Position.BottomLeft, border, (double) bound.height - border);
         setDefaultCornerPositions(bound);
         drawExtendedActions(g2);
+      } else if (!visible && image != null && editable()) {
+        // The corner text is hidden: a derived image still says so (not in a capture)
+        Object[] hints =
+            GuiUtils.setRenderingHints(g2, true, false, view2DPane.requiredTextAntialiasing());
+        try {
+          paintTags(g2, derivedTags(true, true, true), bound.height - border - 1.5f);
+        } finally {
+          GuiUtils.resetRenderingHints(g2, hints);
+        }
       }
       return;
     }
@@ -268,6 +288,17 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     if (view2DPane instanceof MprView mprView) {
       drawY = paintMprTransformationMessage(g2, mprView, drawY, fontHeight);
     }
+    // Not hidden with the minimal annotations: a thick slab changes what the image shows
+    drawY = paintSlab(g2, drawY, fontHeight);
+    // A reformat and a flip, when the annotations do not show the plane and the orientation
+    boolean orientationShown =
+        getDisplayPreferences(LayerItem.ANNOTATIONS)
+            && getDisplayPreferences(LayerItem.IMAGE_ORIENTATION);
+    List<DerivedTag> tags = derivedTags(false, !orientationShown, !orientationShown);
+    if (!tags.isEmpty()) {
+      paintTags(g2, tags, drawY);
+      drawY -= fontHeight;
+    }
 
     if (getDisplayPreferences(LayerItem.PIXEL) && hideMin) {
       drawY = paintPixelInfo(g2, drawY, fontHeight);
@@ -286,6 +317,124 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     }
 
     return drawY;
+  }
+
+  /**
+   * The line of the slab, shown whenever a projection is on and the corner text is visible, even
+   * with the minimal annotations: a thick slab changes what the image shows, so it is not an item
+   * that can be hidden on its own. When the corner text is hidden, the slab is part of the tag of
+   * the derived image (see {@link #derivedTags}).
+   */
+  private float paintSlab(Graphics2D g2, float drawY, int fontHeight) {
+    String summary = Slab.summaryOf(view2DPane);
+    if (summary == null) {
+      return drawY;
+    }
+    String prefix = Messages.getString("Slab.title") + StringUtil.COLON_AND_SPACE;
+    String text = prefix + summary;
+    paintInfoValue(
+        g2,
+        SLAB,
+        text,
+        prefix.length(),
+        text.length(),
+        border,
+        drawY,
+        Color.WHITE,
+        editable() ? SlabEditor.editor(view2DPane) : null,
+        Messages.getString("InfoValue.edit_slab"));
+    return drawY - fontHeight;
+  }
+
+  /** A part of the tag of a derived image, with the editor that changes it. */
+  private record DerivedTag(String id, String text, ShowPopup editor, String tooltip) {}
+
+  /**
+   * What makes the image differ from the acquired one, for the parts the corner text does not show:
+   * the slab, a reformat (a plane other than the acquired one; not in an MPR view, whose planes are
+   * all reformats) and a horizontal flip (left and right swapped).
+   */
+  private List<DerivedTag> derivedTags(boolean slab, boolean reformat, boolean flip) {
+    List<DerivedTag> tags = new ArrayList<>(3);
+    boolean edit = editable();
+    if (slab) {
+      String summary = Slab.summaryOf(view2DPane);
+      if (summary != null) {
+        tags.add(
+            new DerivedTag(
+                SLAB,
+                summary,
+                edit ? SlabEditor.editor(view2DPane) : null,
+                Messages.getString("InfoValue.edit_slab")));
+      }
+    }
+    MediaSeries<DicomImageElement> series = view2DPane.getSeries();
+    if (reformat
+        && series != null
+        && !(view2DPane instanceof MprView)
+        && ReformatService.sourceOf(series) != series) {
+      tags.add(
+          new DerivedTag(
+              InfoValueEditors.PLANE,
+              Messages.format(
+                  "InfoLayer.reformat", ReformatMenu.label(ReformatService.planeOf(series))),
+              edit ? InfoValueEditors.plane(liveView()) : null,
+              Messages.getString("InfoValue.edit_plane")));
+    }
+    if (flip && LangUtil.nullToFalse((Boolean) view2DPane.getActionValue(ActionW.FLIP.cmd()))) {
+      tags.add(
+          new DerivedTag(
+              InfoValueEditors.ROTATION,
+              Messages.getString("InfoLayer.flipped"),
+              edit ? InfoValueEditors.rotation(liveView()) : null,
+              Messages.getString("InfoValue.edit_rotation")));
+    }
+    return tags;
+  }
+
+  /** Paints the parts of a tag on one line, "MIP 10 mm · Coronal reformat · Flipped". */
+  private void paintTags(Graphics2D g2, List<DerivedTag> tags, float y) {
+    if (tags.isEmpty()) {
+      return;
+    }
+    StringBuilder text = new StringBuilder();
+    int[] starts = new int[tags.size()];
+    for (int i = 0; i < tags.size(); i++) {
+      if (i > 0) {
+        text.append(" · ");
+      }
+      starts[i] = text.length();
+      text.append(tags.get(i).text());
+    }
+    String line = text.toString();
+    for (int i = 0; i < tags.size(); i++) {
+      DerivedTag tag = tags.get(i);
+      addInfoValue(
+          g2,
+          tag.id(),
+          line,
+          starts[i],
+          starts[i] + tag.text().length(),
+          border,
+          y,
+          tag.editor(),
+          tag.tooltip());
+    }
+    FontTools.paintFontOutline(g2, line, border, y);
+    for (int i = 0; i < tags.size(); i++) {
+      if (tags.get(i).editor() != null) {
+        markEditable(g2, line, starts[i], starts[i] + tags.get(i).text().length(), border, y);
+      }
+    }
+  }
+
+  /** Whether the values of the corner text can be edited: only on a live view, not on a copy. */
+  private boolean editable() {
+    return view2DPane instanceof View2d;
+  }
+
+  private View2d liveView() {
+    return (View2d) view2DPane;
   }
 
   private float paintMprTransformationMessage(
@@ -341,12 +490,19 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     if (window != null && level != null) {
       boolean outside = isWindowLevelOutside(image, disOp, window, level);
       String text = buildWindowLevelText(window, level, outside);
-
-      if (outside) {
-        FontTools.paintColorFontOutline(g2, text, border, drawY, IconColor.ACTIONS_RED.getColor());
-      } else {
-        FontTools.paintFontOutline(g2, text, border, drawY);
-      }
+      String prefix = ActionW.WINLEVEL.getTitle() + StringUtil.COLON_AND_SPACE;
+      String value = DecFormatter.allNumber(window) + "/" + DecFormatter.allNumber(level);
+      paintInfoValue(
+          g2,
+          InfoValueEditors.WINDOW_LEVEL,
+          text,
+          prefix.length(),
+          prefix.length() + value.length(),
+          border,
+          drawY,
+          outside ? IconColor.ACTIONS_RED.getColor() : Color.WHITE,
+          editable() ? InfoValueEditors.windowLevel(liveView()) : null,
+          Messages.getString("InfoValue.edit_wl"));
     }
     return drawY - fontHeight;
   }
@@ -385,27 +541,56 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   }
 
   private float paintZoom(Graphics2D g2, float drawY, int fontHeight) {
+    String prefix = Messages.common("zoom") + StringUtil.COLON_AND_SPACE;
     String zoomText =
-        Messages.common("zoom")
-            + StringUtil.COLON_AND_SPACE
-            + DecFormatter.percentTwoDecimal(view2DPane.getViewModel().getViewScale());
-    FontTools.paintFontOutline(g2, zoomText, border, drawY);
+        prefix + DecFormatter.percentTwoDecimal(view2DPane.getViewModel().getViewScale());
+    paintInfoValue(
+        g2,
+        InfoValueEditors.ZOOM,
+        zoomText,
+        prefix.length(),
+        zoomText.length(),
+        border,
+        drawY,
+        Color.WHITE,
+        editable() ? InfoValueEditors.zoom(liveView()) : null,
+        Messages.getString("InfoValue.edit_zoom"));
     return drawY - fontHeight;
   }
 
   private float paintRotation(Graphics2D g2, float drawY, int fontHeight) {
-    String rotationText =
-        Messages.getString("InfoLayer.angle")
-            + StringUtil.COLON_AND_SPACE
-            + view2DPane.getActionValue(ActionW.ROTATION.cmd())
-            + " °";
-    FontTools.paintFontOutline(g2, rotationText, border, drawY);
+    String prefix = Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE;
+    String rotationText = prefix + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " °";
+    paintInfoValue(
+        g2,
+        InfoValueEditors.ROTATION,
+        rotationText,
+        prefix.length(),
+        rotationText.length(),
+        border,
+        drawY,
+        Color.WHITE,
+        editable() ? InfoValueEditors.rotation(liveView()) : null,
+        Messages.getString("InfoValue.edit_rotation"));
     return drawY - fontHeight;
   }
 
   private float paintFrame(Graphics2D g2, DicomImageElement image, float drawY, int fontHeight) {
     String frameText = buildFrameText(image);
-    FontTools.paintFontOutline(g2, frameText, border, drawY);
+    // The position "12 / 353" ends the line, after the instance number
+    int slash = frameText.lastIndexOf(" / ");
+    int start = slash < 0 ? frameText.length() : frameText.lastIndexOf(' ', slash - 1) + 1;
+    paintInfoValue(
+        g2,
+        InfoValueEditors.FRAME,
+        frameText,
+        start,
+        frameText.length(),
+        border,
+        drawY,
+        Color.WHITE,
+        editable() ? InfoValueEditors.frame(liveView()) : null,
+        Messages.getString("InfoValue.edit_frame"));
     drawY -= fontHeight;
 
     Double imgProgression = (Double) view2DPane.getActionValue(ActionW.PROGRESSION.cmd());
@@ -695,18 +880,37 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     }
 
     OrientationInfo orientInfo = getOrientationInfo(image, series);
+    int planStart = -1;
+    int planEnd = -1;
 
     if (orientInfo != null) {
       paintOrientationLabels(g2, orientInfo, midX, midY, fontHeight);
       if (orientInfo.plan() != null) {
         orientation.append(" - ");
+        planStart = orientation.length();
         orientation.append(orientInfo.plan());
+        planEnd = orientation.length();
       }
       orientation.append(StringUtil.SPACE);
     }
 
     float offsetY = bound.height - border - GuiUtils.getScaleLength(1.5f);
-    FontTools.paintFontOutline(g2, orientation.toString(), border, offsetY);
+    // The plane of an MPR view is fixed: only a stack and its reformats can switch it
+    if (planStart >= 0 && editable() && !(view2DPane instanceof MprView)) {
+      paintInfoValue(
+          g2,
+          InfoValueEditors.PLANE,
+          orientation.toString(),
+          planStart,
+          planEnd,
+          border,
+          offsetY,
+          Color.WHITE,
+          InfoValueEditors.plane(liveView()),
+          Messages.getString("InfoValue.edit_plane"));
+    } else {
+      FontTools.paintFontOutline(g2, orientation.toString(), border, offsetY);
+    }
 
     if (orientInfo != null && orientInfo.plan() != null && view2DPane instanceof MprView) {
       paintPlanIndicator(

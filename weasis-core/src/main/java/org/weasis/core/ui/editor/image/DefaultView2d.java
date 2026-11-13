@@ -2216,6 +2216,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
    */
   @Override
   public String getToolTipText(MouseEvent event) {
+    String valueTip = focusHandler.getInfoValueTooltip(event.getPoint());
+    if (valueTip != null) {
+      return valueTip;
+    }
     SegRegion<?> region = findSegRegionAt(event);
     setHighlightedSegRegion(region);
     return region == null ? null : region.getToolTipHtml();

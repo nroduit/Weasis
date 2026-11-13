@@ -17,12 +17,9 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.Relevance;
 import org.weasis.core.ui.editor.ViewContext;
-import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.WtoolBar;
-import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.mip.MipMenu;
 import org.weasis.dicom.viewer2d.mpr.MprFactory;
-import org.weasis.dicom.viewer2d.mpr.MprView;
 
 /** MPR and MIP of the selected series; relevant when that series is a volume. */
 public class Basic3DToolBar extends WtoolBar {
@@ -62,12 +59,8 @@ public class Basic3DToolBar extends WtoolBar {
   public static ActionListener getMipAction() {
     return e -> {
       if (e.getSource() instanceof Component src) {
-        ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
-        if (view instanceof MprView mprView) {
-          mprView.showMprPopup(src, 0, src.getHeight());
-        } else {
-          MipMenu.showPopup(src, 0, src.getHeight());
-        }
+        // The slab editor of the selected pane, a stack or an MPR view
+        MipMenu.showPopup(src, 0, src.getHeight());
       }
     };
   }

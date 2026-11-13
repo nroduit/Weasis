@@ -10,12 +10,7 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.FontMetrics;
 import java.awt.Graphics2D;
-import java.awt.GridBagConstraints;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
@@ -31,16 +26,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.dcm4che3.data.Tag;
@@ -57,7 +46,6 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -67,12 +55,9 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.SynchCineEvent;
 import org.weasis.core.ui.editor.image.SynchEvent;
-import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewProgress;
 import org.weasis.core.ui.model.AbstractGraphicModel;
@@ -87,7 +72,6 @@ import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.Pair;
-import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
@@ -176,7 +160,6 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
 
     // Remove PR and KO buttons
     getViewButtons().clear();
-    getViewButtons().add(buildMprButton());
   }
 
   @Override
@@ -213,7 +196,7 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     return mprController;
   }
 
-  protected MprAxis getMprAxis() {
+  public MprAxis getMprAxis() {
     if (mprController == null) {
       return null;
     }
@@ -457,6 +440,10 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     } else {
       ctx = super.buildContextMenu(evt);
     }
+
+    // The settings of the MPR, formerly behind a button in the corner of the view
+    ctx.addSeparator();
+    ctx.add(buildMprMenu());
 
     // Add "Generate Curved MPR" option if a polyline is under the cursor
     addCurvedMprMenuItem(ctx, evt);
@@ -857,11 +844,12 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
   }
 
   /**
-   * Shows the MPR settings popup anchored at ({@code x}, {@code y}) relative to {@code invoker}.
+   * The MPR submenu of the context menu: crosshair, centering, series built from the views and the
+   * synchronization options. The slab has its own submenu ({@link SlabEditor}).
    */
-  public void showMprPopup(Component invoker, int x, int y) {
+  public JMenu buildMprMenu() {
     ShortcutManager sm = ShortcutManager.getInstance();
-    JPopupMenu popupMenu = new JPopupMenu();
+    JMenu popupMenu = new JMenu(Messages.getString("MPRFactory.title"));
     JMenu menu = new JMenu(Messages.getString("all.views"));
 
     if (getCenterMode() != 2) {
@@ -905,20 +893,6 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     boxMenuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES_ALL));
     menu.add(boxMenuItem);
 
-    menu.addSeparator();
-    JMenu menuItem =
-        mprController
-            .getMipTypeOption()
-            .createUnregisteredRadioMenu(Messages.getString("mip.type"));
-    menu.add(menuItem);
-
-    popupMenu.addSeparator();
-    menuItem = buildMipThicknessMenu(false);
-    popupMenu.add(menuItem);
-
-    menuItem = buildMipThicknessMenu(true);
-    menu.add(menuItem);
-
     popupMenu.addSeparator();
     JMenuItem item = new JMenuItem(Messages.getString("build.series.from.current.view"));
     item.addActionListener(_ -> rebuildView(false));
@@ -948,123 +922,7 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
 
     popupMenu.addSeparator();
     popupMenu.add(menu);
-    popupMenu.show(invoker, x, y);
-  }
-
-  public ViewButton buildMprButton() {
-    ViewButton button =
-        new ViewButton(
-            this::showMprPopup,
-            ResourceUtil.getIcon(OtherIcon.VIEW_SETTING).derive(24, 24),
-            Messages.getString("MPRFactory.title"));
-    button.setVisible(true);
-    button.setPosition(
-        GridBagConstraints.NORTHEAST); // absolute side: a button drawn in the image corner
-    return button;
-  }
-
-  private JMenu buildMipThicknessMenu(boolean all) {
-    MprAxis axis = getMprAxis();
-    JMenu menu = new JMenu(Messages.getString("mip.thickness"));
-    DicomImageElement img = axis.getImageElement();
-    if (img == null) {
-      return menu;
-    }
-    String abbr = img.getPixelSpacingUnit().getAbbreviation();
-    double minRatio = mprController.getVolume().getMinPixelRatio();
-    int oldThickness = axis.getThicknessExtension();
-    List<MprAxis> allAxis =
-        List.of(mprController.getAxial(), mprController.getCoronal(), mprController.getSagittal());
-    List<MprAxis> mprAxisList = all ? allAxis : List.of(axis);
-
-    List<Integer> extendsValues = List.of(1, 2, 3, 5, 7, 10, 15, 20);
-    for (Integer i : extendsValues) {
-      double thickness = (i * 2 + 1) * minRatio;
-      String title = i + " (" + DecFormatter.allNumber(thickness) + " " + abbr + ")";
-      JRadioButtonMenuItem item = new JRadioButtonMenuItem(title, i == oldThickness);
-      item.addActionListener(
-          e -> {
-            JRadioButtonMenuItem source = (JRadioButtonMenuItem) e.getSource();
-            if (source.isSelected()) {
-              int thicknessValue = Integer.parseInt(source.getText().substring(0, 2).trim());
-              for (MprAxis mprAxis : mprAxisList) {
-                mprAxis.setThicknessExtension(thicknessValue);
-                mprAxis.updateImage();
-              }
-              if (mprAxisList != allAxis) {
-                allAxis.forEach(mprAxis -> mprAxis.getMprView().repaint());
-              }
-            }
-          });
-      menu.add(item);
-    }
-    menu.add(new JPopupMenu.Separator());
-
-    menu.add(new JMenuItem(Messages.getString("reset.thickness")))
-        .addActionListener(
-            e -> {
-              for (MprAxis mprAxis : mprAxisList) {
-                mprAxis.setThicknessExtension(0);
-                mprAxis.updateImage();
-              }
-              if (mprAxisList != allAxis) {
-                allAxis.forEach(mprAxis -> mprAxis.getMprView().repaint());
-              }
-            });
-
-    menu.add(new JMenuItem(Messages.getString("custom.thickness")))
-        .addActionListener(
-            e -> {
-              int maxValue = mprController.getVolume().getSliceSize();
-              JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
-              SpinnerNumberModel spinnerModel = new SpinnerNumberModel(maxValue, 1, maxValue, 1);
-              JSpinner thicknessSpinner = new JSpinner(spinnerModel);
-              JLabel conversionLabel = new JLabel();
-              thicknessSpinner.addChangeListener(
-                  _ -> {
-                    int value = (Integer) thicknessSpinner.getValue();
-                    double mmValue = (value * 2 + 1) * minRatio;
-                    conversionLabel.setText(
-                        " %d pix = %s %s" // NON-NLS
-                            .formatted(value, DecFormatter.allNumber(mmValue), abbr));
-                  });
-
-              // Adding components to the panel
-              panel.add(new JLabel(Messages.getString("MipView.img_extend") + StringUtil.COLON));
-              panel.add(thicknessSpinner);
-              panel.add(conversionLabel);
-              FontMetrics metrics = conversionLabel.getFontMetrics(conversionLabel.getFont());
-              String maxExpectedLabel =
-                  " %d pix = %s %s" // NON-NLS
-                      .formatted(
-                          maxValue, DecFormatter.allNumber((maxValue * 2 + 1) * minRatio), abbr);
-              conversionLabel.setPreferredSize(
-                  new Dimension(metrics.stringWidth(maxExpectedLabel), metrics.getHeight()));
-              int initialValue = Math.max(oldThickness, 1);
-              thicknessSpinner.setValue(initialValue);
-
-              int result =
-                  JOptionPane.showConfirmDialog(
-                      null,
-                      panel,
-                      Messages.getString("custom.thickness"),
-                      JOptionPane.OK_CANCEL_OPTION,
-                      JOptionPane.PLAIN_MESSAGE);
-
-              if (result == JOptionPane.OK_OPTION) {
-                int customThickness = (Integer) thicknessSpinner.getValue();
-
-                for (MprAxis mprAxis : mprAxisList) {
-                  mprAxis.setThicknessExtension(customThickness);
-                  mprAxis.updateImage();
-                }
-
-                if (mprAxisList != allAxis) {
-                  allAxis.forEach(mprAxis -> mprAxis.getMprView().repaint());
-                }
-              }
-            });
-    return menu;
+    return popupMenu;
   }
 
   public boolean getAllViewsProperty(String key) {
@@ -1125,7 +983,7 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     }
   }
 
-  private void rebuildView(boolean all) {
+  public void rebuildView(boolean all) {
     // Capture the crosshair centre once, before any export worker mutates it
     Vector3d initialCenter = mprController.getAxesControl().getCenter();
     Runnable restoreCrosshair =
