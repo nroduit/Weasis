@@ -1376,11 +1376,27 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
     if (view2d.getSourceImage() == null) {
       enableActions(false);
-      if (view2d.getSeries() != null) {
-        // Let scrolling if only one image is corrupted in the series
-        cineAction.ifPresent(a -> a.enableAction(true));
+      MediaSeries<DicomImageElement> series = view2d.getSeries();
+      if (series != null) {
+        // Let scrolling if only one image is corrupted in the series: from the slice of this pane,
+        // with the listeners of the synch view (cleared above) so that the slider reaches it
+        int maxSlice =
+            series.size(
+                (Filter<DicomImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()));
+        int currentSlice = view2d.getFrameIndex() + 1;
+        cineAction.ifPresent(
+            a -> {
+              a.setSliderMinMaxValue(1, Math.max(1, maxSlice), currentSlice, false);
+              a.enableAction(true);
+            });
+        ComboItemListener<SynchView> synchAction = getAction(ActionW.SYNCH).orElse(null);
+        updateAllListeners(
+            selectedView2dContainer,
+            synchAction == null
+                ? SynchView.DEFAULT_STACK
+                : (SynchView) synchAction.getSelectedItem());
       }
-      View2dContainer.UI.updateDynamicTools(view2d.getSeries());
+      View2dContainer.UI.updateDynamicTools(series);
       return false;
     }
 

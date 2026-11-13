@@ -16,17 +16,13 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.awt.Color;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 import org.opencv.core.CvType;
 import org.weasis.core.api.image.ImageOpNode.Param;
+import org.weasis.core.api.image.cv.OpenCvTestLoader;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.ByteLut;
@@ -42,7 +38,7 @@ class PseudoColorOpTest {
 
   @BeforeAll
   static void loadOpenCV() {
-    assumeTrue(tryLoadOpenCV(), "OpenCV native library unavailable, skipping");
+    assumeTrue(OpenCvTestLoader.tryLoad(), "OpenCV native library unavailable, skipping");
   }
 
   @Test
@@ -106,17 +102,39 @@ class PseudoColorOpTest {
   }
 
   @Test
-  void color_source_is_not_mapped_again() throws Exception {
+  void color_source_with_the_image_lut_keeps_its_colors() throws Exception {
     ImageCV src = new ImageCV(1, 1, CvType.CV_8UC3);
     src.put(0, 0, new byte[] {10, 20, 30});
 
-    PlanarImage inverted = process(src, ColorMapCompiler.toByteLut(RAMP), true, 8);
+    PlanarImage inverted = process(src, ColorLut.IMAGE.getByteLut(), true, 8);
     byte[] pixels = new byte[3];
     inverted.toMat().get(0, 0, pixels);
 
     assertAll(
-        () -> assertSame(src, process(src, ColorMapCompiler.toByteLut(RAMP), false, 8)),
+        () -> assertSame(src, process(src, ColorLut.IMAGE.getByteLut(), false, 8)),
         () -> assertArrayEquals(new byte[] {(byte) 245, (byte) 235, (byte) 225}, pixels));
+  }
+
+  @Test
+  void color_source_is_mapped_through_its_luma() throws Exception {
+    ImageCV src = new ImageCV(1, 2, CvType.CV_8UC3);
+    // BGR: pure red (luma 76), pure blue (luma 29)
+    src.put(0, 0, new byte[] {0, 0, (byte) 255, (byte) 255, 0, 0});
+
+    byte[] pixels = run(src, ColorMapCompiler.toByteLut(RAMP), false, 8);
+
+    assertArrayEquals(new byte[] {0, 0, 76, 0, 0, 29}, pixels, "BGR, red ramps");
+  }
+
+  @Test
+  void gray_stored_as_color_is_mapped_through_one_channel() throws Exception {
+    ImageCV src = new ImageCV(1, 3, CvType.CV_8UC3);
+    src.put(0, 0, new byte[] {0, 0, 0, (byte) 128, (byte) 128, (byte) 128, -1, -1, -1});
+
+    byte[] pixels = run(src, ColorMapCompiler.toByteLut(RAMP), false, 8);
+
+    assertArrayEquals(
+        new byte[] {0, 0, 0, 0, 0, (byte) 128, 0, 0, (byte) 255}, pixels, "BGR, red ramps");
   }
 
   private static byte[] run(ImageCV src, ByteLut lut, boolean invert, int bits) throws Exception {
@@ -136,39 +154,5 @@ class PseudoColorOpTest {
     op.setParam(PseudoColorOp.P_INPUT_BITS, bits);
     op.process();
     return (PlanarImage) op.getParam(Param.OUTPUT_IMG);
-  }
-
-  /**
-   * Loads {@code opencv_java} from a sibling {@code weasis-opencv-core-*} module's build output.
-   */
-  private static boolean tryLoadOpenCV() {
-    String os = System.getProperty("os.name", "").toLowerCase();
-    String libFile =
-        os.contains("win")
-            ? "opencv_java.dll"
-            : os.contains("mac") ? "libopencv_java.dylib" : "libopencv_java.so";
-    Path opencvModules =
-        Path.of(System.getProperty("user.dir")).getParent().resolve("weasis-opencv");
-    if (!Files.isDirectory(opencvModules)) {
-      return false;
-    }
-    try (Stream<Path> dirs = Files.list(opencvModules)) {
-      List<Path> candidates =
-          dirs.filter(Files::isDirectory)
-              .map(d -> d.resolve("target").resolve("classes").resolve(libFile))
-              .filter(Files::isRegularFile)
-              .toList();
-      for (Path lib : candidates) {
-        try {
-          System.load(lib.toAbsolutePath().toString());
-          return true;
-        } catch (Throwable ignore) {
-          // wrong architecture or incompatible binary: try the next candidate
-        }
-      }
-    } catch (IOException e) {
-      return false;
-    }
-    return false;
   }
 }
