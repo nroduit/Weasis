@@ -73,6 +73,7 @@ import javax.swing.Box;
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
@@ -90,6 +91,7 @@ import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
+import javax.swing.MenuSelectionManager;
 import javax.swing.RootPaneContainer;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler.DropLocation;
@@ -167,6 +169,7 @@ import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.GraphicEditActions;
+import org.weasis.core.ui.editor.image.GraphicMouseHandler;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -743,6 +746,9 @@ public class WeasisWin {
     if (focusTarget.isPresent()) {
       return focusSide(focusTarget.get());
     }
+    if (leaveWindowFullscreen(e)) {
+      return true;
+    }
     ViewerPlugin<?> plugin = getSelectedPlugin();
     if (plugin == null) {
       return false;
@@ -750,6 +756,39 @@ public class WeasisWin {
     Optional<Consumer<ViewerPlugin<?>>> action = dockingActions.find(e);
     action.ifPresent(a -> a.accept(plugin));
     return action.isPresent();
+  }
+
+  /**
+   * Escape ends the window fullscreen (Shift+F11) as it ends the canvas fullscreen (F11). The
+   * canvas fullscreen keeps its own way out through the viewer; an open menu or combo popup and a
+   * drawing in progress keep their Escape.
+   */
+  private boolean leaveWindowFullscreen(KeyEvent e) {
+    if (e.getKeyCode() != KeyEvent.VK_ESCAPE || e.getModifiersEx() != 0) {
+      return false;
+    }
+    KeyboardFocusManager focus = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    Window window = focus.getActiveWindow();
+    WorkspaceManager control = workspace();
+    if (window == null
+        || !control.isFullscreen(window)
+        || control.isImmersive(window)
+        || MenuSelectionManager.defaultManager().getSelectedPath().length > 0
+        || (focus.getFocusOwner() instanceof JComboBox<?> combo && combo.isPopupVisible())
+        || isDrawingInProgress()) {
+      return false;
+    }
+    control.setFullscreen(window, false);
+    return true;
+  }
+
+  private boolean isDrawingInProgress() {
+    if (getSelectedPlugin() instanceof ImageViewerPlugin<?> viewer) {
+      ViewCanvas<?> canvas = viewer.getSelectedViewCanvas();
+      GraphicMouseHandler<?> handler = canvas == null ? null : canvas.getGraphicMouseHandler();
+      return handler != null && handler.isDrawing();
+    }
+    return false;
   }
 
   /** Docking shortcuts acting on the selected viewer. */
