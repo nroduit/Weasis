@@ -20,6 +20,8 @@ import java.awt.Component;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import org.junit.jupiter.api.Test;
@@ -227,6 +229,54 @@ class SidePanelTest {
         () -> assertEquals(260, narrow, "a narrower tool gets the width of the user back"),
         () -> assertEquals(260, closed, "closing the tool restores the width of the user"),
         () -> assertEquals(260, applied, "an open that is not the user's does not widen"));
+  }
+
+  /**
+   * The canvas fullscreen collapses the tools side while the window grows to its monitor: the
+   * divider set at the old width must not leave the grown space to the empty side.
+   */
+  @Test
+  void aCollapsedTrailingSideGetsNoWidthWhenItsSplitGrowsAfterTheCollapse() throws Exception {
+    SidePanel tools = new SidePanel(Role.TOOLS, Side.RIGHT);
+    JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JPanel(), tools);
+    split.setResizeWeight(1.0);
+    edt(
+        () -> {
+          split.setSize(1000, 600);
+          tools.attachTo(split);
+          tools.show(new FakeTool("display", 10));
+          tools.setContentWidth(300);
+          tools.open("display", Slot.TOP);
+        });
+    flush();
+    edt(split::doLayout);
+    int shown = tools.getWidth();
+    edt(tools::collapse);
+    flush();
+    // the window resize of the fullscreen arrives after the collapse
+    edt(
+        () -> {
+          split.setSize(1400, 600);
+          split.doLayout();
+        });
+    flush();
+    edt(split::doLayout);
+    int collapsed = tools.getWidth();
+    // the way back: the side expands, then the window shrinks to its previous bounds
+    edt(tools::expand);
+    flush();
+    edt(
+        () -> {
+          split.setSize(1000, 600);
+          split.doLayout();
+        });
+    flush();
+    edt(split::doLayout);
+    assertAll(
+        () -> assertTrue(Math.abs(shown - 300) <= 1, "the width of the user while shown"),
+        () -> assertEquals(0, collapsed, "no empty space for the collapsed side"),
+        () -> assertEquals(shown, tools.getWidth(), "the width of the user on the way back"),
+        () -> assertEquals(300, tools.getContentWidth(), "the width of the user is kept"));
   }
 
   @Test

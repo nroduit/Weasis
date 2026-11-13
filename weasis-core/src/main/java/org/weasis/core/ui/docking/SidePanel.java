@@ -332,6 +332,15 @@ public class SidePanel extends JPanel {
             Settings.set(widthSetting(), contentWidth);
           }
         });
+    // a divider placed just before the split resizes (the window going in or out of fullscreen
+    // while the side collapses or expands) wins over the resize weight: place it again
+    splitPane.addComponentListener(
+        new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent e) {
+            applyWidth();
+          }
+        });
     applyWidth();
   }
 
