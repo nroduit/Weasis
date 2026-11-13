@@ -550,8 +550,12 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     multiply(src, new Scalar(doseGridScaling * 100), doseMatrix);
     ImageConversion.releaseMat(src);
 
-    Mat maskSrc = new Mat(mask.rows(), mask.cols(), CvType.CV_8U);
-    mask.convertTo(maskSrc, CvType.CV_8U);
+    // calcHist needs an 8-bit mask: use it as is, convert any other mask type
+    Mat maskSrc = mask;
+    if (mask.type() != CvType.CV_8UC1) {
+      maskSrc = new Mat();
+      mask.convertTo(maskSrc, CvType.CV_8U);
+    }
 
     Mat hist = new Mat();
     Imgproc.calcHist(
@@ -562,7 +566,9 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
         new MatOfInt(maxDose),
         new MatOfFloat(0, maxDose));
 
-    ImageConversion.releaseMat(maskSrc);
+    if (maskSrc != mask) {
+      ImageConversion.releaseMat(maskSrc);
+    }
     ImageConversion.releaseMat(doseMatrix);
     // OpenCV 4 returned calcHist as a column (maxDose rows × 1); OpenCV 5 returns a 1-row vector.
     // The DVH accumulator and readers expect a column, so normalize the shape here.

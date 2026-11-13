@@ -487,8 +487,9 @@ public class RtSet {
   }
 
   /**
-   * Computes a binary {@code CV_32FC1} mask (255 inside the polygon, 0 outside) for the given
-   * contour, using the dose-grid mm LUT to convert patient coordinates into pixel indices.
+   * Computes a binary {@code CV_8UC1} mask (255 inside the polygon, 0 outside) for the given
+   * contour, using the dose-grid mm LUT to convert patient coordinates into pixel indices. The mask
+   * goes to {@code calcHist} as is, so it stays in 8 bits.
    *
    * <p>Implementation: previously this performed an {@code Imgproc.pointPolygonTest} per pixel
    * (O(rows · cols · vertices)). It now rasterises the polygon once with {@code fillPoly}.
@@ -499,7 +500,7 @@ public class RtSet {
     int cols = xLut.length;
     int rows = yLut.length;
 
-    Mat binaryMask = Mat.zeros(rows, cols, CvType.CV_32FC1);
+    Mat binaryMask = Mat.zeros(rows, cols, CvType.CV_8UC1);
     if (!(contour instanceof StructContour structContour)) {
       return binaryMask;
     }
@@ -526,11 +527,8 @@ public class RtSet {
     MatOfPoint poly = new MatOfPoint();
     poly.fromArray(roundPoints(pixelPoints));
 
-    Mat byteMask = Mat.zeros(rows, cols, CvType.CV_8UC1);
-    Imgproc.fillPoly(byteMask, java.util.List.of(poly), new Scalar(255));
-    byteMask.convertTo(binaryMask, CvType.CV_32FC1);
+    Imgproc.fillPoly(binaryMask, java.util.List.of(poly), new Scalar(255));
     poly.release();
-    ImageConversion.releaseMat(byteMask);
     return binaryMask;
   }
 
