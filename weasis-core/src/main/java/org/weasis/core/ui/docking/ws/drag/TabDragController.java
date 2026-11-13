@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.docking.ws.drag;
 
+import com.formdev.flatlaf.util.UIScale;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -292,6 +293,8 @@ public final class TabDragController extends MouseAdapter {
     int width = Math.max(40, fm.stringWidth(title) + iconWidth + 20);
     int height = Math.max(24, fm.getHeight() + 10);
 
+    // the chip of the dragged tab, as round as the cards of the tabs
+    int arc = UIScale.scale(14);
     BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = image.createGraphics();
     try {
@@ -299,9 +302,9 @@ public final class TabDragController extends MouseAdapter {
       g2.setRenderingHint(
           RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
       g2.setColor(UIManager.getColor("Panel.background"));
-      g2.fillRoundRect(0, 0, width - 1, height - 1, 10, 10);
+      g2.fillRoundRect(0, 0, width - 1, height - 1, arc, arc);
       g2.setColor(DragOverlay.accentColor());
-      g2.drawRoundRect(0, 0, width - 1, height - 1, 10, 10);
+      g2.drawRoundRect(0, 0, width - 1, height - 1, arc, arc);
       int x = 10;
       if (icon != null) {
         icon.paintIcon(null, g2, x, (height - icon.getIconHeight()) / 2);

@@ -9,13 +9,16 @@
  */
 package org.weasis.core.ui.docking.ws.drag;
 
+import com.formdev.flatlaf.util.UIScale;
 import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import javax.swing.JComponent;
 import javax.swing.UIManager;
@@ -76,17 +79,49 @@ final class DragOverlay extends JComponent {
     return rect;
   }
 
+  /** The narrowest highlight drawn as an area; a narrower one is the insertion mark of a tab. */
+  private static final int CARET_MAX_WIDTH = 8;
+
+  /**
+   * Paints the drop target: an area (a group, or the half of it a split takes) as a translucent
+   * rounded card inset from the edges of the group, as the cards of the tabs and the frames of the
+   * side slots; the insertion mark between two tabs as a solid pill.
+   */
+  private static void paintHighlight(Graphics2D g2, Rectangle r) {
+    Color accent = accentColor();
+    if (r.width <= CARET_MAX_WIDTH) {
+      float w = Math.max(3f, UIScale.scale(3f));
+      g2.setColor(accent);
+      g2.fill(
+          new RoundRectangle2D.Float(
+              r.x + (r.width - w) / 2f, r.y + 2f, w, Math.max(0, r.height - 4f), w, w));
+      return;
+    }
+    float inset = UIScale.scale(4f);
+    float arc = UIScale.scale(14f);
+    float stroke = Math.max(1.5f, UIScale.scale(1.5f));
+    RoundRectangle2D.Float card =
+        new RoundRectangle2D.Float(
+            r.x + inset,
+            r.y + inset,
+            Math.max(0, r.width - 2 * inset),
+            Math.max(0, r.height - 2 * inset),
+            arc,
+            arc);
+    g2.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 64));
+    g2.fill(card);
+    g2.setStroke(new BasicStroke(stroke));
+    g2.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 220));
+    g2.draw(card);
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     Graphics2D g2 = (Graphics2D) g.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       if (highlight != null) {
-        Color accent = accentColor();
-        g2.setColor(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 90));
-        g2.fillRect(highlight.x, highlight.y, highlight.width, highlight.height);
-        g2.setColor(accent);
-        g2.drawRect(highlight.x, highlight.y, highlight.width - 1, highlight.height - 1);
+        paintHighlight(g2, highlight);
       }
       if (cursor != null) {
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.85f));
