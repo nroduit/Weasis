@@ -526,8 +526,9 @@ public class WeasisWin {
             viewerPlugins.remove(i);
             continue;
           }
+          // Match by factory: the component name follows the tab title (the patient)
           if (p instanceof ImageViewerPlugin viewer
-              && p.getName().equals(factory.getUIName())
+              && factory.isViewerCreatedByThisFactory(p)
               && group.equals(p.getGroupID())) {
             if (reuse.openInSelection() && seriesList.size() == 1) {
               viewer.addSeries(seriesList.getFirst());

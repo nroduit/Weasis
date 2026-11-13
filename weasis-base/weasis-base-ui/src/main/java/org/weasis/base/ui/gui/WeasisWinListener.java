@@ -137,11 +137,10 @@ public class WeasisWinListener implements PropertyChangeListener, PluginStateLis
         } else if (ObservableEvent.BasicAction.UNREGISTER.equals(action)) {
           if (source instanceof SeriesViewerFactory viewerFactory) {
             final List<ViewerPlugin<?>> pluginsToRemove = new ArrayList<>();
-            String name = viewerFactory.getUIName();
             List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
             synchronized (viewerPlugins) {
               for (final ViewerPlugin<?> plugin : viewerPlugins) {
-                if (name.equals(plugin.getName())) {
+                if (viewerFactory.isViewerCreatedByThisFactory(plugin)) {
                   // Do not close Series directly, it can produce deadlock.
                   pluginsToRemove.add(plugin);
                 }
