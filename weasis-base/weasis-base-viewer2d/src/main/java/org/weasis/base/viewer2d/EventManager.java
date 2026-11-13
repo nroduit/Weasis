@@ -94,7 +94,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     setAction(new BasicActionState(ActionW.DRAW));
     setAction(new BasicActionState(ActionW.MEASURE));
 
-    setAction(getMoveTroughSliceAction(10.0, TIME.MINUTE, 0.1));
+    // The timer plays the speed in frames per second
+    setAction(getMoveTroughSliceAction(10.0, TIME.SECOND, 0.1));
     setAction(newWindowAction());
     setAction(newLevelAction());
     setAction(newRotateAction());
@@ -300,6 +301,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     reset(ResetTools.ALL);
   }
 
+  @Override
   public void reset(ResetTools action) {
     AuditLog.LOGGER.info("reset action:{}", action.name());
     if (ResetTools.ALL.equals(action)) {
@@ -466,7 +468,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     (Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
                 view2d.getFrameIndex() + 1,
                 false));
-    Double speed = (Double) series.getTagValue(TagW.get("CineRate"));
+    Double cineRate = (Double) series.getTagValue(TagW.get("CineRate"));
+    // Otherwise the rate of an animated image (GIF, APNG)
+    Double speed = cineRate != null ? cineRate : (Double) series.getTagValue(TagW.FrameRate);
     if (speed != null) {
       cineAction.ifPresent(a -> a.setSpeed(speed));
     }

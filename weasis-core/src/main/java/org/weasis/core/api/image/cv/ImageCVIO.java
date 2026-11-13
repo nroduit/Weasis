@@ -40,7 +40,9 @@ import org.opencv.core.CvException;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfInt;
+import org.opencv.imgcodecs.Animation;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -85,12 +87,18 @@ public class ImageCVIO implements MediaReader<ImageElement> {
   private static final String DICOM_MIME_TYPE = "dicom";
   private static final double MIN_MAX_EQUAL_OFFSET = 1.0;
 
+  /** Formats that can hold an animation, read frame by frame as a multiframe image. */
+  private static final List<String> ANIMATED_MIME_TYPES =
+      List.of("image/gif", "image/png", "image/apng"); // NON-NLS
+
   private final URI uri;
   private final String mimeType;
 
   private final FileCache fileCache;
   private final Codec codec;
   private ImageElement image;
+  private ImageElement[] frames;
+  private boolean framesDecoded;
 
   public ImageCVIO(URI media, String mimeType, Codec codec) {
     this.uri = Objects.requireNonNull(media);
@@ -102,6 +110,10 @@ public class ImageCVIO implements MediaReader<ImageElement> {
   @Override
   public PlanarImage getImageFragment(MediaElement media) throws Exception {
     Objects.requireNonNull(media);
+
+    if (getFrames().length > 1) {
+      return readFrame(media);
+    }
 
     Path imagePath = resolveImagePath(media);
     if (imagePath == null) {
@@ -135,7 +147,7 @@ public class ImageCVIO implements MediaReader<ImageElement> {
 
   @Override
   public ImageElement[] getMediaElement() {
-    return new ImageElement[] {getSingleImage()};
+    return getFrames().clone();
   }
 
   @Override
@@ -143,15 +155,21 @@ public class ImageCVIO implements MediaReader<ImageElement> {
     String seriesUID = getSeriesUID();
     MediaSeries<ImageElement> series = createMediaSeries(seriesUID);
 
-    ImageElement img = getSingleImage();
-    series.add(img);
+    ImageElement[] elements = getFrames();
+    for (ImageElement element : elements) {
+      series.add(element);
+    }
+    ImageElement img = elements[0];
     series.setTag(TagW.FileName, img.getName());
+    if (elements.length > 1) {
+      series.setTagNoNull(TagW.FrameRate, frameRate(elements));
+    }
     return series;
   }
 
   @Override
   public int getMediaElementNumber() {
-    return 1;
+    return getFrames().length;
   }
 
   @Override
@@ -369,6 +387,175 @@ public class ImageCVIO implements MediaReader<ImageElement> {
       image = new ImageElement(this, 0);
     }
     return image;
+  }
+
+  /**
+   * The elements of the file: one per frame for an animated GIF or PNG (APNG), the first being the
+   * single image of a still file.
+   */
+  private synchronized ImageElement[] getFrames() {
+    if (frames == null) {
+      Path path = fileCache.getOriginalFile().orElse(null);
+      int count = countFrames(path);
+      frames = new ImageElement[count];
+      frames[0] = getSingleImage();
+      for (int i = 1; i < count; i++) {
+        frames[i] = new ImageElement(this, i);
+      }
+      if (count > 1) {
+        // Durations are required to build the series (cine rate)
+        decodeFrames(path);
+      }
+    }
+    return frames;
+  }
+
+  private int countFrames(Path path) {
+    if (!ANIMATED_MIME_TYPES.contains(mimeType)) {
+      return 1;
+    }
+    if (path == null || !Files.isReadable(path)) {
+      return 1;
+    }
+    try {
+      long count = Imgcodecs.imcount(path.toAbsolutePath().toString());
+      return (int) Math.clamp(count, 1, Integer.MAX_VALUE);
+    } catch (Exception e) {
+      LOGGER.warn("Cannot count the frames of {}", path, e);
+      return 1;
+    }
+  }
+
+  private static Double frameRate(ImageElement[] elements) {
+    double total = 0;
+    for (ImageElement element : elements) {
+      if (element.getTagValue(TagW.FrameDuration) instanceof Double duration) {
+        total += duration;
+      }
+    }
+    return total > 0 ? 1000.0 * elements.length / total : null;
+  }
+
+  /**
+   * Reads one frame of an animation. The first call decodes the whole animation once (frames are
+   * composited by the decoder) and keeps each frame as an uncompressed file in the cache.
+   */
+  private PlanarImage readFrame(MediaElement media) throws Exception {
+    int index = media.getKey() instanceof Integer key ? key : 0;
+    Path path = fileCache.getOriginalFile().orElse(null);
+    if (path == null) {
+      return null;
+    }
+    Path framePath = buildFrameCachePath(path, index);
+    PlanarImage img;
+    if (Files.isReadable(framePath)) {
+      img = new FileRawImage(framePath).read();
+    } else {
+      img = decodeFrame(path, index);
+    }
+    if (img != null && media instanceof ImageElement element) {
+      element.setTag(TagW.ImageWidth, img.width());
+      element.setTag(TagW.ImageHeight, img.height());
+    }
+    return img;
+  }
+
+  private void decodeFrames(Path path) {
+    if (framesDecoded) {
+      return;
+    }
+    framesDecoded = true;
+    ImageElement[] elements = frames;
+    // Metadata (EXIF, ICC profile) of the file, shared by all the frames
+    readFrameMetadata(path, elements);
+
+    Animation animation = new Animation();
+    MatOfInt durationMat = null;
+    try {
+      if (!Imgcodecs.imreadanimation(path.toAbsolutePath().toString(), animation)) {
+        LOGGER.warn("Cannot decode the animation of {}", path);
+        return;
+      }
+      List<Mat> decoded = animation.get_frames();
+      durationMat = animation.get_durations();
+      int[] durations = durationMat.empty() ? new int[0] : durationMat.toArray();
+      try {
+        for (int i = 0; i < elements.length && i < decoded.size(); i++) {
+          ImageCV img = toDisplayable(decoded.get(i));
+          try {
+            new FileRawImage(buildFrameCachePath(path, i)).write(img);
+          } finally {
+            img.release();
+          }
+          if (i < durations.length && durations[i] > 0) {
+            elements[i].setTag(TagW.FrameDuration, (double) durations[i]);
+          }
+        }
+      } finally {
+        decoded.forEach(Mat::release);
+      }
+    } catch (Exception e) {
+      LOGGER.error("Cannot decode the animation of {}", path, e);
+    } finally {
+      if (durationMat != null) {
+        durationMat.release();
+      }
+    }
+  }
+
+  private void readFrameMetadata(Path path, ImageElement[] elements) {
+    MatOfInt metadataTypes = new MatOfInt();
+    List<Mat> metadata = new ArrayList<>();
+    try {
+      Mat mat =
+          Imgcodecs.imreadWithMetadata(path.toAbsolutePath().toString(), metadataTypes, metadata);
+      mat.release();
+      List<String> exif = MetadataParser.parseExifParseMetadata(metadata, metadataTypes);
+      IccProfile profile = iccProfile(metadata, metadataTypes, path);
+      for (ImageElement element : elements) {
+        applyExifTags(element, exif);
+        element.setTagNoNull(TagW.IccProfile, profile);
+      }
+    } catch (Exception e) {
+      LOGGER.warn("Cannot read the metadata of {}", path, e);
+    } finally {
+      metadataTypes.release();
+      metadata.forEach(Mat::release);
+    }
+  }
+
+  /** Fallback when the frame is not in the cache: decodes the frames up to the requested one. */
+  private static PlanarImage decodeFrame(Path path, int index) {
+    List<Mat> mats = new ArrayList<>();
+    try {
+      if (Imgcodecs.imreadmulti(
+              path.toAbsolutePath().toString(), mats, index, 1, Imgcodecs.IMREAD_UNCHANGED)
+          && !mats.isEmpty()) {
+        return toDisplayable(mats.getFirst());
+      }
+      return null;
+    } finally {
+      mats.forEach(Mat::release);
+    }
+  }
+
+  /** Drops the alpha channel the decoder gives to the frames (BGRA), as for a still image. */
+  private static ImageCV toDisplayable(Mat frame) {
+    ImageCV img = new ImageCV();
+    if (frame.channels() == 4) {
+      Imgproc.cvtColor(frame, img, Imgproc.COLOR_BGRA2BGR);
+    } else if (frame.channels() == 2) {
+      Core.extractChannel(frame, img, 0);
+    } else {
+      frame.copyTo(img);
+    }
+    return img;
+  }
+
+  private static Path buildFrameCachePath(Path path, int index) throws NoSuchAlgorithmException {
+    String key = path.toAbsolutePath() + "|" + path.toFile().lastModified(); // NON-NLS
+    String filename = StringUtil.bytesToMD5(key.getBytes(StandardCharsets.UTF_8));
+    return CACHE_UNCOMPRESSED_DIR.resolve(filename + "-" + index + WCV_EXTENSION);
   }
 
   private String getSeriesUID() {

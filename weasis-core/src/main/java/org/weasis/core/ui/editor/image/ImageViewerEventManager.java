@@ -145,11 +145,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
           }
         }
 
-        SynchData synchData =
-            (SynchData) getSelectedViewPane().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
-        if (synchData != null && synchData.isSynchActivated()) {
-          firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
-        }
+        // Always sent: the issuing view shows the image, the other views apply their own synch
+        // rules (a viewer without synch link, like the default viewer, has only the issuer).
+        firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
         if (image != null) {
           fireSeriesViewerListeners(
               new SeriesViewerEvent(selectedView2dContainer, series, image, EVENT.SELECT));
@@ -1036,6 +1034,13 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   public abstract void resetDisplay();
+
+  /** Resets one tool of the selected pane; by default only the whole display is reset. */
+  public void reset(ResetTools action) {
+    if (ResetTools.ALL.equals(action)) {
+      resetDisplay();
+    }
+  }
 
   public String resolvePlaceholders(String template) {
     return template;

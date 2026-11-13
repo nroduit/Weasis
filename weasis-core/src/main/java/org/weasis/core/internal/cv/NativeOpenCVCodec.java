@@ -29,6 +29,8 @@ public class NativeOpenCVCodec implements Codec<ImageElement> {
     "image/jpeg",
     "image/pjpeg", // NON-NLS
     "image/png",
+    "image/apng", // NON-NLS
+    "image/gif",
     "image/x-portable-bitmap",
     "image/x-portable-graymap",
     "image/x-portable-greymap", // NON-NLS
@@ -48,7 +50,8 @@ public class NativeOpenCVCodec implements Codec<ImageElement> {
     "image/jxl" // NON-NLS
   };
   private static final String[] readerFileSuffixes = {
-    "bm", "bmp", "dib", "jpeg", "jpg", "jpe", "png", "x-png", "pbm", "pgm", "ppm", "pxm", // NON-NLS
+    "bm", "bmp", "dib", "jpeg", "jpg", "jpe", "png", "x-png", "apng", "gif", "pbm", "pgm", "ppm",
+    "pxm", // NON-NLS
     "pnm", "ras", "rast", // NON-NLS
     "tiff", "tif", "hdr", "jp2", "jp2k", // NON-NLS
     "j2k", "j2c", // NON-NLS

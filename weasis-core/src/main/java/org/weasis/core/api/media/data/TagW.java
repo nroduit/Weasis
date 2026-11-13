@@ -222,6 +222,12 @@ public class TagW {
   public static final TagW ExifDateTime = new TagW("ExifDateTime", TagType.STRING);
   public static final TagW ExifCopyright = new TagW("ExifCopyright", TagType.STRING);
 
+  /** Display duration of one frame of an animated image (GIF, APNG), in milliseconds. */
+  public static final TagW FrameDuration = new TagW("AnimationFrameDuration", TagType.DOUBLE);
+
+  /** Playback rate of an animated image (GIF, APNG), in frames per second. */
+  public static final TagW FrameRate = new TagW("AnimationFrameRate", TagType.DOUBLE);
+
   static {
     addTag(ImageBitsPerPixel);
     addTag(ImageCache);
@@ -244,6 +250,8 @@ public class TagW {
     addTag(FileName);
     addTag(FilePath);
     addTag(CurrentFolder);
+    addTag(FrameDuration);
+    addTag(FrameRate);
 
     // DICOM
     addTag(PatientPseudoUID);
