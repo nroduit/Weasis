@@ -474,7 +474,8 @@ public class Singleton {
           sendResponse(s, isr, SI_EXIT);
           System.exit(0);
         }
-        siApp.newActivation(args);
+        // the raw command line (a weasis:// URI, $-commands or files) as the commands a launch runs
+        siApp.newActivation(ConfigData.commandsOf(args));
         sendResponse(s, isr, SI_ACK);
         return;
       }

@@ -152,21 +152,7 @@ public class ConfigData {
         LOGGER.info("Main arg {} = {}", i, args[i]);
       }
 
-      int index = Utils.getWeasisProtocolIndex(args);
-      if (index < 0) {
-        splitArgToCmd(args);
-      } else {
-        extractArgFromUri(args[index]);
-        if (args.length > 1) {
-          ArrayList<String> otherArgs = new ArrayList<>(args.length - 1);
-          for (int i = 0; i < args.length; i++) {
-            if (i != index) {
-              otherArgs.add(args[i]);
-            }
-          }
-          splitArgToCmd(otherArgs.toArray(new String[0]));
-        }
-      }
+      addCommands(arguments, args);
     }
 
     // Define the HttpUrlConnection userAgent (without Weasis Version) for the writeRequests() call
@@ -347,6 +333,47 @@ public class ConfigData {
   }
 
   public void extractArgFromUri(String uri) {
+    commandsOfUri(arguments, uri);
+  }
+
+  /**
+   * The commands of a launch command line, appended to {@code out}: those of a {@code weasis://}
+   * URI and the other arguments, the {@code $}-prefixed commands with their parameters, or else the
+   * files and URIs to load.
+   */
+  static void addCommands(List<String> out, String... args) {
+    int index = Utils.getWeasisProtocolIndex(args);
+    if (index < 0) {
+      splitArgToCmd(out, args);
+      return;
+    }
+    commandsOfUri(out, args[index]);
+    if (args.length > 1) {
+      List<String> otherArgs = new ArrayList<>(args.length - 1);
+      for (int i = 0; i < args.length; i++) {
+        if (i != index) {
+          otherArgs.add(args[i]);
+        }
+      }
+      splitArgToCmd(out, otherArgs.toArray(new String[0]));
+    }
+  }
+
+  /**
+   * The commands a running instance runs for the command line of another launch handed over to it
+   * (the bootstrap offers the raw command line), without the launch configuration ({@code
+   * weasis:config}), which only a new instance applies.
+   */
+  public static List<String> commandsOf(List<String> args) {
+    List<String> out = new ArrayList<>();
+    if (args != null && !args.isEmpty()) {
+      addCommands(out, args.toArray(new String[0]));
+    }
+    out.removeIf(c -> c.startsWith("weasis:config")); // NON-NLS
+    return out;
+  }
+
+  private static void commandsOfUri(List<String> arguments, String uri) {
     String url = URLDecoder.decode(uri, StandardCharsets.UTF_8);
     String[] cmds = url.split("\\$");
     boolean windows = System.getProperty(P_OS_NAME, "").toLowerCase().startsWith("win"); // NON-NLS
@@ -616,7 +643,7 @@ public class ConfigData {
     }
   }
 
-  private void splitArgToCmd(String... args) {
+  private static void splitArgToCmd(List<String> arguments, String... args) {
     boolean files = true;
     int length = args.length;
     for (int i = 0; i < length; i++) {

@@ -91,4 +91,24 @@ class ConfigDataTest {
     ConfigData.readMachineValues(file, values);
     assertTrue(values.isEmpty());
   }
+
+  /**
+   * A launch handed over to a running instance arrives as its raw command line: the instance runs
+   * the commands a new launch would, without the launch configuration.
+   */
+  @Test
+  void aHandedOverCommandLineGivesTheCommandsOfALaunch() {
+    String uri =
+        "weasis://?%24dicom%3Aget+-l+%22%2Ftmp%2Fa.dcm%22" // NON-NLS
+            + "+%24weasis%3Aconfig+pro%3D%22weasis.user+bob%22"; // NON-NLS
+    assertEquals(List.of("dicom:get -l \"/tmp/a.dcm\" "), ConfigData.commandsOf(List.of(uri)));
+    assertEquals(
+        List.of("dicom:get -l /tmp/a.dcm", "view2d:zoom 2"), // NON-NLS
+        ConfigData.commandsOf(
+            List.of("$dicom:get", "-l", "/tmp/a.dcm", "$view2d:zoom", "2"))); // NON-NLS
+    assertEquals(
+        List.of("dicom:get -l \"/tmp/b.dcm\""), // NON-NLS
+        ConfigData.commandsOf(List.of("/tmp/b.dcm"))); // NON-NLS
+    assertTrue(ConfigData.commandsOf(List.of()).isEmpty());
+  }
 }
