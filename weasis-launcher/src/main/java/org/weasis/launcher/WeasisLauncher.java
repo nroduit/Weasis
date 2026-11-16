@@ -352,15 +352,24 @@ Starting PF4J Plugins...
   // Run the commands now if the framework is ready, otherwise queue them until it is loaded. Used
   // by the macOS Apple "open file/URI" events, which can arrive while the plugin framework is still
   // starting (e.g. cold start from a Finder file association), before the dicom:get command exists.
-  protected void executeCommandsWhenLoaded(
-      CommandManager commandManager, List<String> commandList) {
+  // The command manager is resolved only once the framework is loaded: before that the plugin
+  // manager does not exist and building one throws, which the event thread swallowed, so the
+  // event was lost instead of queued.
+  protected void executeCommandsWhenLoaded(List<String> commandList) {
     synchronized (pendingCommands) {
       if (!frameworkLoaded) {
         pendingCommands.addAll(commandList);
         return;
       }
     }
-    executeCommands(commandManager, commandList, CommandOrigin.URI);
+    executeCommands(commandManager(), commandList, CommandOrigin.URI);
+  }
+
+  /** The commands queued until the framework is loaded. */
+  List<String> pendingCommands() {
+    synchronized (pendingCommands) {
+      return List.copyOf(pendingCommands);
+    }
   }
 
   /**
@@ -1075,7 +1084,7 @@ Starting PF4J Plugins...
     int index = Utils.getWeasisProtocolIndex(uri);
     if (index < 0) {
       uri = "dicom:get -r \"" + uri + "\""; // NON-NLS
-      instance.executeCommandsWhenLoaded(instance.commandManager(), List.of(uri));
+      instance.executeCommandsWhenLoaded(List.of(uri));
     } else {
       boolean sameInstance = System.currentTimeMillis() - time < 3000;
       String[] args = getArgsForURI(uri);
@@ -1120,7 +1129,7 @@ Starting PF4J Plugins...
             .map(f -> "dicom:get -l \"" + f.getPath() + "\"") // NON-NLS
             .toList();
     LOGGER.info("Get open file event from OS. Files: {}", files);
-    instance.executeCommandsWhenLoaded(instance.commandManager(), files);
+    instance.executeCommandsWhenLoaded(files);
   }
 
   protected void shutdownHook() {
