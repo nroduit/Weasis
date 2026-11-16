@@ -95,7 +95,11 @@ jobs:
       - name: Build with Maven
         shell: bash
         run: |
-          mvn -B clean install
+          # The Swing tests (workspace, side panels) need a display: a virtual one, as for the
+          # smoke suite of maven.yml; without it they fail with a HeadlessException.
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb
+          xvfb-run -a -s "-screen 0 1920x1080x24" mvn -B clean install
           mvn -B -P compressXZ $WEASIS_SIGN_OPT -f weasis-distributions clean package
           rm -f "$RUNNER_TEMP/release.key"
           file="weasis-distributions/target/native-dist/weasis-native.zip"

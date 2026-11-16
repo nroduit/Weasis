@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.weasis.core.api.setting.LegacyInstallation.Report;
@@ -26,6 +27,12 @@ import org.weasis.core.api.util.DocumentStore;
 
 /** The explicit import of a Weasis 4 installation into the stores of this one. */
 class LegacyInstallationTest {
+
+  /** The import test points the static document store at its temporary folder: put it back. */
+  @AfterEach
+  void unconfigureDocuments() {
+    DocumentStore.configure(null, null);
+  }
 
   private static Roots legacy(Path home) throws IOException {
     Path root = home.resolve(".weasis");

@@ -35,13 +35,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0
+            libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 xvfb
 
       - name: Build with coverage
         # install (not verify) so every reactor module — including inter-module provided deps
         # such as weasis-launcher — lands in the local repo, where the standalone
-        # dependency:copy-dependencies invocation below can resolve them.
-        run: mvn -Pcoverage -B -ntp install
+        # dependency:copy-dependencies invocation below can resolve them. Under a virtual display:
+        # the Swing tests (workspace, side panels) fail with a HeadlessException without one.
+        run: xvfb-run -a -s "-screen 0 1920x1080x24" mvn -Pcoverage -B -ntp install
 
       - name: Scripted smoke suite
         # The scripts of tests/smoke run through weasis-cli against a Weasis started from the
