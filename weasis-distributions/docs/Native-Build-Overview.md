@@ -73,7 +73,10 @@ The workflow (macOS, Windows) and `package-weasis.sh` (Linux) both source it wit
 The module list is read from `build.properties` (`jdk.modules`, filtered from the pom), the same value the package declares in `weasis.requires.modules`.
 
 The native launchers start the **bootstrap** (`weasis-bootstrap.jar`, stage 1), so their options are those of a small, short-lived JVM; the options of the application (stage 2) are served by the package (`weasis.launcher.jvm-options` in `base.json`, also from the pom) and applied by the bootstrap.
-macOS is the exception: the bootstrap runs the launcher set in its own process there, so its `.cfg` carries the application options.
+macOS is the exception: LaunchServices delivers the open-file and `weasis://` events to the process it started, and AppKit hands them only to the bundle's own launcher, so the bootstrap runs the launcher set in that process and its `.cfg` carries the application options.
+There the launcher set keeps its plain `.jar` names, so jpackage puts it on the class path of the launchers and the system class loader runs it (a set from the hub still runs in a child class loader).
+For the per-user AOT cache, which a read-only `.cfg` cannot name, the bootstrap replaces itself once (`execv`, same executable and PID) with the AOT flags in `JAVA_TOOL_OPTIONS`; a marker file it writes before, deleted at READY, lets the next start discard a cache that never reached READY, since no stage 1 is left to watch.
+The macOS launchers show no splash in stage 1 (AppKit must stay untouched before the replacement), and `weasis-cli` runs without an AOT cache there, as the second JVM start would cost more than the cache saves.
 The **Dicomizer** and **weasis-cli** launchers do not inherit the command-line options: jpackage discards them for a launcher whose properties file sets `java-options`, so `resources/<platform>/*-launcher.properties` repeat the stage-1 set and name the entry class (`weasis.bootstrap.entry`).
 See `weasis-launcher/docs/Launcher-Overview.md` (“Bootstrap and Launcher Set”) for the runtime side.
 
@@ -83,8 +86,9 @@ The distribution build copies the launcher jar and the common libraries, plain, 
 The same libraries stay in `bundle/` as `.jar.xz` for the development launch and remote codebases.
 A hub serves `launcher/` like the bundles.
 
-Before jpackage runs, the packaging step renames `launcher/*.jar` to `*.jar.embedded`: jpackage adds every plain `*.jar` found under `--input` to the class path of the native launchers, which must carry `weasis-bootstrap.jar` only.
+Before jpackage runs, the packaging step renames `launcher/*.jar` to `*.jar.embedded` on Linux and Windows: jpackage adds every plain `*.jar` found under `--input` to the class path of the native launchers, which must carry `weasis-bootstrap.jar` only.
 The bootstrap builds the class path of stage 2 itself, from the embedded set or from a set downloaded into the per-user cache.
+On macOS the set keeps its plain names and is on the class path of the launchers, which run it (see §3).
 Any other plain jar under `--input` fails the build, so **`-P compressXZ` is required** when building `weasis-distributions` for native packaging (CI always uses it).
 A site that signs its own launcher sets drops the certificates in `launcher/truststore/` through `prepare-input-site.sh`.
 

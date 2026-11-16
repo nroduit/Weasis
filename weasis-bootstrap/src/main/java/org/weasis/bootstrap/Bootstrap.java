@@ -111,11 +111,88 @@ public final class Bootstrap {
 
   private int finish(int code) {
     decision.put("exit", String.valueOf(code)); // NON-NLS
+    writeDecision();
+    return code;
+  }
+
+  private void writeDecision() {
     StringBuilder line = new StringBuilder();
     decision.forEach(
         (k, v) -> line.append(line.isEmpty() ? "" : " ").append(k).append('=').append(v));
     BootLog.write(stateDir, line.toString());
-    return code;
+  }
+
+  /** macOS: this process is the launcher stage 1 replaced itself by, with the AOT flags. */
+  private static boolean reexecuted() {
+    return Boolean.getBoolean(Contract.P_REEXEC);
+  }
+
+  /**
+   * macOS: the launch keeps one process, the native launcher LaunchServices started (the only
+   * executable AppKit hands the open-file and open-URI events to), and runs the launcher set in it.
+   * The {@code .cfg} of that launcher cannot carry the per-user AOT flags, so this process replaces
+   * itself (same executable, same PID) with them in {@code JAVA_TOOL_OPTIONS}; the replacing
+   * process skips this step. Returns only when no replacement is needed or it failed: stage 2 then
+   * runs here, without the AOT cache.
+   */
+  private void reexecWithAotFlags(Stage2.Plan plan, AotCache aot) {
+    if (reexecuted() || plan.aotFlags().isEmpty()) {
+      return;
+    }
+    Optional<String> executable = ProcessHandle.current().info().command();
+    if (executable.isEmpty()) {
+      BootLog.note("no executable path: AOT cache off"); // NON-NLS
+      return;
+    }
+    List<String> options = new ArrayList<>(plan.aotFlags());
+    options.add("-D" + Contract.P_REEXEC + "=true"); // NON-NLS
+    Path pending = null;
+    if (usesAotCache(plan)) {
+      // nobody watches the READY line after the replacement: the marker does it for the next start
+      pending = aot.pendingMarker();
+      try {
+        Files.writeString(pending, Instant.now().toString());
+        options.add("-D" + Contract.P_PENDING + "=" + pending); // NON-NLS
+      } catch (IOException e) {
+        BootLog.note("cannot write the pending marker, AOT cache off: " + e); // NON-NLS
+        return;
+      }
+    }
+    List<String> command = new ArrayList<>();
+    command.add(executable.get());
+    command.addAll(plan.args());
+    String toolOptions =
+        Exec.toolOptions(System.getenv(Contract.JAVA_TOOL_OPTIONS), options);
+    decision.put("launch", "reexec"); // NON-NLS
+    writeDecision();
+    String failure = Exec.replace(command, Map.of(Contract.JAVA_TOOL_OPTIONS, toolOptions));
+    BootLog.note("cannot replace the process, AOT cache off: " + failure); // NON-NLS
+    decision.put("launch", "in-process"); // NON-NLS
+    if (pending != null) {
+      try {
+        Files.deleteIfExists(pending);
+      } catch (IOException e) {
+        // the next start only discards the cache
+      }
+    }
+  }
+
+  /**
+   * A launch that used this AOT cache and never reached READY left its pending marker: the cache is
+   * discarded and disabled, as stage 1 does on Linux and Windows when it sees the early failure
+   * itself. The process stage 1 replaced itself by finds the marker of that same launch: skipped.
+   */
+  private void discardIfNeverReady(AotCache aot) {
+    if (aot == null || reexecuted() || !Files.exists(aot.pendingMarker())) {
+      return;
+    }
+    BootLog.note("the last launch with the AOT cache never reached READY: cache discarded");
+    aot.discard();
+    try {
+      Files.deleteIfExists(aot.pendingMarker());
+    } catch (IOException e) {
+      BootLog.note("cannot delete the pending marker: " + e); // NON-NLS
+    }
   }
 
   private String lockName() {
@@ -158,17 +235,21 @@ public final class Bootstrap {
     }
     Map<String, String> props = stage2Properties(choice, remote);
     AotCache aot = AotCache.of(cacheDir, entryName(entry), "", choice.set().id());
+    discardIfNeverReady(aot);
     Stage2.Plan plan =
         new Stage2.Plan(choice.set(), choice.options(), aotFlags(aot, true), props, entry, args);
     describe(choice, aot);
 
-    closeSplash();
     if (PlatformDirs.isMacOS()) {
       single.close();
       sets.markCurrent(choice.set());
+      reexecWithAotFlags(plan, aot);
+      closeSplash();
       BootLog.note("in-process launch, JVM options of the package not applied"); // NON-NLS
       return Stage2.runInProcess(plan);
     }
+
+    closeSplash();
 
     Stage2.Outcome outcome =
         Stage2.run(
@@ -505,7 +586,14 @@ public final class Bootstrap {
     String entry =
         System.getProperty(Contract.P_ENTRY, "org.weasis.launcher.CommandClient"); // NON-NLS
     Choice choice = new Choice(set, options, !set.embedded(), false, null);
-    AotCache aot = AotCache.of(cacheDir, "weasis-cli", "cli", set.id()); // NON-NLS
+    // macOS: no client cache. The client runs in the launcher process with the set on its class
+    // path; the AOT flags would need a second JVM start (the re-execution of the application), which
+    // costs more than the cache saves on a call of about 130 ms.
+    AotCache aot =
+        PlatformDirs.isMacOS()
+            ? null
+            : AotCache.of(cacheDir, "weasis-cli", "cli", set.id()); // NON-NLS
+    discardIfNeverReady(aot);
     Stage2.Plan plan =
         new Stage2.Plan(
             set, options, aotFlags(aot, false), stage2Properties(choice, null), entry, args);

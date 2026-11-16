@@ -9,7 +9,10 @@
  */
 package org.weasis.launcher;
 
+import java.io.IOException;
 import java.lang.module.ModuleFinder;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -49,6 +52,12 @@ public final class BootstrapContract {
   public static final String P_CONFIG_CACHE = "weasis.config.cache";
 
   public static final String P_CONFIG_CACHE_URI = "weasis.config.cache.uri";
+
+  /**
+   * A file to delete once READY: stage 1 replaced itself by this process (macOS) and cannot watch
+   * the READY line, so the file tells the next start whether the AOT cache reached it.
+   */
+  public static final String P_PENDING = "weasis.bootstrap.pending";
 
   public static final String REQUIRES_JDK = "weasis.requires.jdk";
   public static final String REQUIRES_MODULES = "weasis.requires.modules";
@@ -193,6 +202,22 @@ public final class BootstrapContract {
     if (launchedByBootstrap()) {
       System.out.println(READY);
       System.out.flush();
+      clearPending();
+    }
+  }
+
+  /**
+   * Deletes the file of {@link #P_PENDING}: this JVM came up with the AOT cache stage 1 gave it.
+   * The application calls it at READY, the command-line client at its start.
+   */
+  public static void clearPending() {
+    String pending = System.getProperty(P_PENDING);
+    if (pending != null && !pending.isBlank()) {
+      try {
+        Files.deleteIfExists(Path.of(pending));
+      } catch (IOException | RuntimeException e) {
+        // the next start discards a cache that only looked unready
+      }
     }
   }
 

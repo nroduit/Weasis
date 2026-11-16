@@ -111,4 +111,30 @@ class Stage2Test {
             withTestClasspath(Stage2.command(javaHome(), plan("boom", 97))), false, () -> {});
     assertTrue(clientCrash.earlyFailure());
   }
+
+  @Test
+  void theSetRunsWithTheSystemLoaderOnlyWhenAllItsJarsAreOnTheClassPath(@TempDir Path dir) {
+    Path a = dir.resolve("launcher").resolve("weasis-launcher.jar"); // NON-NLS
+    Path b = dir.resolve("launcher").resolve("zip4j.jar"); // NON-NLS
+    String sep = java.io.File.pathSeparator;
+    String cp = dir.resolve("weasis-bootstrap.jar") + sep + a + sep + b; // NON-NLS
+    Path detour = dir.resolve("launcher/../launcher/weasis-launcher.jar"); // NON-NLS
+    assertTrue(Stage2.onClassPath(List.of(a, b), cp));
+    assertTrue(Stage2.onClassPath(List.of(a), detour.toString()), "normalized paths");
+    assertFalse(Stage2.onClassPath(List.of(a, b), dir.resolve("weasis-bootstrap.jar") + sep + a));
+    assertFalse(Stage2.onClassPath(List.of(), cp));
+    assertFalse(Stage2.onClassPath(List.of(a), ""));
+  }
+
+  @Test
+  void theAotFlagsAreAppendedToTheToolOptionsAndQuotedWithASpace() {
+    assertEquals(
+        "-Duser.home=/u -XX:AOTCache=/c/a.aot -Dweasis.bootstrap.reexec=true", // NON-NLS
+        Exec.toolOptions(
+            " -Duser.home=/u ",
+            List.of("-XX:AOTCache=/c/a.aot", "-Dweasis.bootstrap.reexec=true"))); // NON-NLS
+    assertEquals(
+        "\"-XX:AOTCache=/Users/a b/c.aot\"", // NON-NLS
+        Exec.toolOptions(null, List.of("-XX:AOTCache=/Users/a b/c.aot"))); // NON-NLS
+  }
 }

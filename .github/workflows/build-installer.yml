@@ -187,21 +187,31 @@ jobs:
           find ${{ env.WEASIS_INPUT_BIN }}/bundle/weasis-opencv-core-* -type f ! -name "*-${{ matrix.wsystem }}-${{ matrix.warc }}-*" -exec rm -f {} \;
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
 
-      - name: Keep the embedded launcher set off the jpackage class path
+      - name: Place the embedded launcher set for the jpackage class path
         shell: bash
+        env:
+          WSYSTEM: ${{ matrix.wsystem }}
         run: |
           # jpackage adds every plain *.jar found under --input to the class path of the native
-          # launchers, which must carry weasis-bootstrap.jar only: the bootstrap (stage 1) builds the
-          # class path of stage 2 itself from launcher/, so the set is renamed *.jar.embedded.
+          # launchers. On Windows that class path must carry weasis-bootstrap.jar only: the
+          # bootstrap (stage 1) builds the class path of stage 2 itself from launcher/, so the set
+          # is renamed *.jar.embedded. On macOS the set runs in the launcher process and keeps its
+          # plain names, so that it is on that class path and covered by the AOT cache.
           # Same step as package-weasis.sh.
-          for f in ${{ env.WEASIS_INPUT_BIN }}/launcher/*.jar; do
-            [ -f "$f" ] || continue
-            echo "embedded set: $(basename "$f")"
-            mv "$f" "$f.embedded"
-          done
+          if [ "$WSYSTEM" != "macosx" ]; then
+            for f in ${{ env.WEASIS_INPUT_BIN }}/launcher/*.jar; do
+              [ -f "$f" ] || continue
+              echo "embedded set: $(basename "$f")"
+              mv "$f" "$f.embedded"
+            done
+          fi
           [ -f "${{ env.WEASIS_INPUT_BIN }}/weasis-bootstrap.jar" ] || { echo "ERROR: weasis-bootstrap.jar is missing"; exit 1; }
           rm -f "${{ env.WEASIS_INPUT_BIN }}"/weasis-launcher.jar
-          OTHER_JARS=$(find "${{ env.WEASIS_INPUT_BIN }}" -name '*.jar' ! -path "${{ env.WEASIS_INPUT_BIN }}/weasis-bootstrap.jar")
+          if [ "$WSYSTEM" = "macosx" ]; then
+            OTHER_JARS=$(find "${{ env.WEASIS_INPUT_BIN }}" -name '*.jar' ! -path "${{ env.WEASIS_INPUT_BIN }}/weasis-bootstrap.jar" ! -path "${{ env.WEASIS_INPUT_BIN }}/launcher/*")
+          else
+            OTHER_JARS=$(find "${{ env.WEASIS_INPUT_BIN }}" -name '*.jar' ! -path "${{ env.WEASIS_INPUT_BIN }}/weasis-bootstrap.jar")
+          fi
           if [ -n "$OTHER_JARS" ]; then
             echo "ERROR: plain jars besides weasis-bootstrap.jar under --input (build weasis-distributions with -P compressXZ):"
             echo "$OTHER_JARS"
@@ -299,7 +309,7 @@ jobs:
             # Pre-sign ALL native libraries embedded in JARs.
             # jpackage --mac-sign will sign the extracted content of the app image,
             # but dylibs INSIDE jars must be signed before jpackage repackages them.
-            for jar_file in "${{ env.WEASIS_INPUT_BIN }}"/*.jar "${{ env.WEASIS_INPUT_BIN }}"/launcher/*.jar.embedded "${{ env.WEASIS_INPUT_BIN }}"/bundle/*.jar; do
+            for jar_file in "${{ env.WEASIS_INPUT_BIN }}"/*.jar "${{ env.WEASIS_INPUT_BIN }}"/launcher/*.jar "${{ env.WEASIS_INPUT_BIN }}"/launcher/*.jar.embedded "${{ env.WEASIS_INPUT_BIN }}"/bundle/*.jar; do
               [ -f "$jar_file" ] || continue
               if unzip -l "$jar_file" 2>/dev/null | grep -qE '\.(dylib|jnilib)$'; then
                 echo "--- Signing native libs in: $jar_file"

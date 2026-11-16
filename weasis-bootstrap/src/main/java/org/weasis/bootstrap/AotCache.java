@@ -33,11 +33,10 @@ final class AotCache {
 
   /**
    * {@code <cache>/aot[/<subdir>]/<prefix>-<setId>-<runtimeStamp>.aot}; empty when the launch opted
-   * out ({@code -Dweasis.aot.cache=false}) or runs on macOS, where the single process keeps the
-   * open-file events and no relaunch happens.
+   * out ({@code -Dweasis.aot.cache=false}).
    */
   static AotCache of(Path cacheRoot, String prefix, String subdir, String setId) {
-    if (PlatformDirs.isMacOS() || "false".equals(System.getProperty(Contract.P_AOT))) { // NON-NLS
+    if ("false".equals(System.getProperty(Contract.P_AOT))) { // NON-NLS
       return null;
     }
     long runtimeMtime = 0;
@@ -81,10 +80,12 @@ final class AotCache {
         String name = p.getFileName().toString();
         if ((name.endsWith(".aot")
                 || name.endsWith(".disabled")
-                || name.endsWith(".training")) // NON-NLS
+                || name.endsWith(".training")
+                || name.endsWith(".pending")) // NON-NLS
             && !p.equals(file)
             && !p.equals(disabledMarker())
-            && !p.equals(trainingMarker())) {
+            && !p.equals(trainingMarker())
+            && !p.equals(pendingMarker())) {
           Files.deleteIfExists(p);
         }
       }
@@ -93,6 +94,14 @@ final class AotCache {
 
   Path trainingMarker() {
     return file.resolveSibling(file.getFileName() + ".training"); // NON-NLS
+  }
+
+  /**
+   * Written before stage 1 replaces itself (macOS) by a launcher using this cache, deleted by that
+   * process once it came up ({@link Contract#P_PENDING}).
+   */
+  Path pendingMarker() {
+    return file.resolveSibling(file.getFileName() + ".pending"); // NON-NLS
   }
 
   /** The flags that use the cache when it exists, or train it when {@code train} is allowed. */

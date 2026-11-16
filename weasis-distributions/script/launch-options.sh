@@ -6,8 +6,8 @@
 #
 # The options of the application process (stage 2) are not here: they are served by the package
 # (weasis.launcher.jvm-options in base.json, filtered from the pom) and applied by the bootstrap.
-# macOS is the exception: the bootstrap runs the launcher set in its own process there, so the
-# .cfg carries the full set.
+# macOS replaces stage 1 by stage 2 in the same process (execv) instead of spawning it; its .cfg
+# still carries the full set for the in-process fallback.
 #
 # Usage: . launch-options.sh <macosx|windows|linux>
 # Defines: JDK_MODULES, customOptions[], commonOptions[]
@@ -33,15 +33,18 @@ stage1Options=("--java-options" "-XX:+UseSerialGC" \
 case "$1" in
   macosx)
     JDK_MODULES="$JDK_MODULES_BASE"
-    customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" \
-    "--java-options" "-Dapple.laf.useScreenMenuBar=true" \
+    # No splash in stage 1: open-file events reach the process LaunchServices started, so the
+    # bootstrap replaces itself (execv, same PID) by the stage-2 JVM before AppKit is initialized;
+    # stage 2 shows the splash (weasis.launcher.jvm-options). The options below only serve the
+    # fallback that runs stage 2 in this process (-Dweasis.bootstrap.inprocess=true, or a failed
+    # execv): they must match weasis.launcher.jvm-options of the pom, except the accessibility
+    # provider, since the system class loader holds weasis-bootstrap.jar only.
+    customOptions=("--java-options" "-Dapple.laf.useScreenMenuBar=true" \
     "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
-    # One process on macOS (open-file events reach the first process): the application options
-    # are native here and must match weasis.launcher.jvm-options of the pom.
     commonOptions=("--java-options" "--enable-native-access=ALL-UNNAMED" \
     "--java-options" "-XX:MaxRAMPercentage=25" \
     "--java-options" "-XX:+UseStringDeduplication" \
-    "--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
+    "--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.bootstrap.EmptyAccessibilityProvider" \
     "--java-options" "-Djavax.accessibility.screen_magnifier_present=false")
     ;;
   windows)

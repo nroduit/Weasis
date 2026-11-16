@@ -74,7 +74,8 @@ Two plain JARs, neither a plugin, start the application:
 
 The native image holds the JDK runtime, `weasis-bootstrap.jar` and an **embedded launcher
 set**: `$APPDIR/launcher/*.jar.embedded` (the launcher jar and the common libraries, renamed so
-that jpackage keeps them off its class path) with its `launcher.sha256` manifest. The package a
+that jpackage keeps them off its class path; on macOS they keep their `.jar` names and are on that
+class path, as the set runs in the launcher process there) with its `launcher.sha256` manifest. The package a
 hub serves declares its own set with three keys of `base.json`, `weasis.launcher.url`,
 `weasis.launcher.libs` and `weasis.launcher.sha256`, plus the entry class
 (`weasis.launcher.main`), the JVM options of stage 2 (`weasis.launcher.jvm-options`, one common

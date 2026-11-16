@@ -226,18 +226,30 @@ rm -f "$INPUT_DIR"/*.jar.pack.gz
 find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'"${ARC_OS}"'-*'  -exec rm -f {} \;
 
 # Embedded launcher set. jpackage adds every plain *.jar found under --input to the class path of
-# the native launchers, which must carry weasis-bootstrap.jar only: stage 1 (the bootstrap) builds
-# the class path of stage 2 itself from launcher/, so the set is renamed *.jar.embedded to stay
-# off the jpackage class path. The sha256sum manifest keeps its name. pf4j plugins stay .jar.xz.
-for f in "$INPUT_DIR"/launcher/*.jar; do
+# the native launchers. On Linux and Windows that class path must carry weasis-bootstrap.jar only:
+# stage 1 (the bootstrap) builds the class path of stage 2 itself from launcher/, so the set is
+# renamed *.jar.embedded to stay off the jpackage class path. On macOS the set runs in the launcher
+# process (open-file events reach the first process): it keeps its plain names so that jpackage
+# puts it on that class path, where the AOT cache covers it. The sha256sum manifest keeps its
+# name. pf4j plugins stay .jar.xz.
+for f in "$INPUT_DIR"/launcher/*.jar "$INPUT_DIR"/launcher/*.jar.embedded; do
   [ -f "$f" ] || continue
-  echo "embedded set: $(basename "$f")"
-  mv "$f" "$f.embedded"
+  if [ "$machine" = "macosx" ] ; then
+    case "$f" in *.embedded) mv "$f" "${f%.embedded}" ;; esac
+    echo "launcher set on the class path: $(basename "${f%.embedded}")"
+  else
+    case "$f" in *.embedded) ;; *) mv "$f" "$f.embedded" ;; esac
+    echo "embedded set: $(basename "${f%.embedded}").embedded"
+  fi
 done
 [ -f "$INPUT_DIR/weasis-bootstrap.jar" ] || die "weasis-bootstrap.jar is missing from $INPUT_DIR"
 rm -f "$INPUT_DIR"/weasis-launcher.jar
 # Safety: any other plain jar under --input would be added to the stage-1 class path by jpackage
-OTHER_JARS=$(find "$INPUT_DIR" -name '*.jar' ! -path "$INPUT_DIR/weasis-bootstrap.jar")
+if [ "$machine" = "macosx" ] ; then
+  OTHER_JARS=$(find "$INPUT_DIR" -name '*.jar' ! -path "$INPUT_DIR/weasis-bootstrap.jar" ! -path "$INPUT_DIR/launcher/*")
+else
+  OTHER_JARS=$(find "$INPUT_DIR" -name '*.jar' ! -path "$INPUT_DIR/weasis-bootstrap.jar")
+fi
 if [ -n "$OTHER_JARS" ]; then
   die "Plain jars besides weasis-bootstrap.jar under $INPUT_DIR (build weasis-distributions with -P compressXZ):\n$OTHER_JARS"
 fi
@@ -252,7 +264,7 @@ fi
 # jpackage --mac-sign will sign the extracted content of the app image,
 # but dylibs INSIDE jars must be signed before jpackage repackages them.
 if [ "$machine" = "macosx" ] && [[ -n "$CERTIFICATE" ]] ; then
-    for jar_file in "$INPUT_DIR"/*.jar "$INPUT_DIR"/launcher/*.jar.embedded "$INPUT_DIR"/bundle/*.jar; do
+    for jar_file in "$INPUT_DIR"/*.jar "$INPUT_DIR"/launcher/*.jar "$INPUT_DIR"/launcher/*.jar.embedded "$INPUT_DIR"/bundle/*.jar; do
       [ -f "$jar_file" ] || continue
       if unzip -l "$jar_file" 2>/dev/null | grep -qE '\.(dylib|jnilib)$'; then
         echo "--- Signing native libs in: $jar_file"

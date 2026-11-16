@@ -69,7 +69,11 @@ final class LauncherSets {
     return cacheDir;
   }
 
-  /** The embedded set, whose jars carry {@link Contract#EMBEDDED_SUFFIX}. */
+  /**
+   * The embedded set: its jars carry {@link Contract#EMBEDDED_SUFFIX}, which keeps them off the
+   * class path of a launcher spawning stage 2 (Linux, Windows), or keep their plain name on macOS,
+   * where the native launcher puts them on the class path of the process that runs them.
+   */
   static Optional<LauncherSet> embedded(Path appDir) {
     Path dir = appDir.resolve("launcher"); // NON-NLS
     if (!Files.isDirectory(dir)) {
@@ -79,10 +83,11 @@ final class LauncherSets {
       List<Path> jars =
           files
               .filter(
-                  p ->
-                      p.getFileName()
-                          .toString()
-                          .endsWith(".jar" + Contract.EMBEDDED_SUFFIX)) // NON-NLS
+                  p -> {
+                    String name = p.getFileName().toString();
+                    return name.endsWith(".jar" + Contract.EMBEDDED_SUFFIX) // NON-NLS
+                        || name.endsWith(".jar"); // NON-NLS
+                  })
               .sorted(LauncherSets::launcherFirst)
               .toList();
       if (jars.isEmpty()) {

@@ -73,13 +73,15 @@ Three things are enough to navigate the codebase.
 
 - `weasis-bootstrap/` is **stage 1** of a packaged launch and the only jar jpackage puts on the class path of the native launchers.
   `org.weasis.bootstrap.Bootstrap` depends on the JDK alone: it offers the activation to a running instance, resolves and verifies the **launcher set** (the launcher jar and the common libraries, downloaded from the package into the per-user cache or embedded as `$APPDIR/launcher/*.jar.embedded`), and spawns stage 2 with that set as its `-cp`, the served JVM options and the AOT flags.
+  On macOS stage 2 runs in the launcher process instead (only it receives the open-file and `weasis://` events): the embedded set keeps plain `.jar` names and is on the launcher class path, and the bootstrap re-executes itself once (`Exec`, same PID) to add the per-user AOT flags through `JAVA_TOOL_OPTIONS`.
   Never add a dependency to it.
   What it shares with the launcher (`weasis.bootstrap.*` properties, the `READY` line, exit code 78) is `org.weasis.bootstrap.Contract` on one side and `org.weasis.launcher.BootstrapContract` on the other.
 - `weasis-launcher/` is **stage 2**, a **plain JAR**, not a plugin.
   `org.weasis.launcher.AppLauncher` (extends `WeasisLauncher`, reached through the `Weasis` or `Dicomizer` entry class, or directly from an IDE) sets up the boot log through Logback and builds `ConfigData` from `conf/base.json` (plus an optional profile JSON through `weasis.extended.config.properties`).
   `AutoProcessor` then downloads the jars listed in the `weasis.plugins.N` entries into the per-user cache, and `WeasisPluginManager` (pf4j `DefaultPluginManager`) loads and starts them.
 - Jars without a `Plugin-Id` manifest header are **common libraries**, loaded into the application class loader (the launcher set) or the common-library class loader; jars with one are pf4j plugins with their own class loader.
-- `EmptyAccessibilityProvider` is wired in through `-Djavax.accessibility.assistive_technologies=...` (set in `weasis-distributions/script/launch-options.sh`) to suppress the discovery of assistive technologies at launch.
+- `EmptyAccessibilityProvider` is wired in through `-Djavax.accessibility.assistive_technologies=...` to suppress the discovery of assistive technologies at launch.
+  AWT loads it through the system class loader, so each JVM names a class on its own class path: the stage-2 process `org.weasis.launcher.EmptyAccessibilityProvider` (`launcher.jvm.options` in `weasis-parent/pom.xml`), the macOS native launchers, where the launcher set runs in the bootstrap process, `org.weasis.bootstrap.EmptyAccessibilityProvider` (`weasis-distributions/script/launch-options.sh` and `resources/macosx/dicomizer-launcher.properties`).
 - Everything under `weasis-base/*`, `weasis-dicom/*`, `weasis-acquire/*`, `weasis-imageio` and `weasis-opencv/*` is a **pf4j plugin**; `weasis-core` is a common library (its `Plugin-Id` is deliberately blank).
   Each plugin has an `Activator extends WeasisPlugin` in a package ending in `.internal`; the pf4j manifest headers (`Plugin-Id`, `Plugin-Class`, …) are injected by the `maven-jar-plugin` configuration in `weasis-parent/pom.xml`.
 - Keep `.internal` packages private to their plugin: never import an `internal` package from another plugin.

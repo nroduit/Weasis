@@ -56,6 +56,21 @@ final class Contract {
   /** Overrides the JDK gate of {@code AOTClassLinking}. */
   static final String P_AOT_CLASSLINKING = "weasis.aot.classlinking";
 
+  /**
+   * macOS: set (through {@code JAVA_TOOL_OPTIONS}) on the launcher stage 1 replaced itself by to
+   * add the AOT flags; that process runs the launcher set without replacing itself again.
+   */
+  static final String P_REEXEC = "weasis.bootstrap.reexec";
+
+  /**
+   * A file stage 1 writes before it hands the launch to a JVM using an AOT cache it cannot watch
+   * (macOS), and that JVM deletes once READY: still there at the next start, the cache did not
+   * reach READY.
+   */
+  static final String P_PENDING = "weasis.bootstrap.pending";
+
+  static final String JAVA_TOOL_OPTIONS = "JAVA_TOOL_OPTIONS";
+
   static final String P_JPACKAGE_VERSION = "jpackage.app-version";
   static final String P_LAUNCH_TYPE = "weasis.launch.type";
   static final String P_EXTENDED_CONFIG = "weasis.extended.config.properties";
