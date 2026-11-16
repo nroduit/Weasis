@@ -1088,20 +1088,55 @@ Starting PF4J Plugins...
     } else {
       boolean sameInstance = System.currentTimeMillis() - time < 3000;
       String[] args = getArgsForURI(uri);
-      Thread launcherThread =
-          Thread.ofVirtual().start(() -> launchProcess(args, sameInstance, noArgs, instance));
-      launcherThread.start();
+      Thread.ofVirtual().start(() -> launchProcess(args, sameInstance, noArgs, instance));
     }
   }
 
   private static String[] getArgsForURI(String uri) {
     if (SystemInfo.isMacOS) {
-      return new String[] {"open", "-n", "-b", "org.weasis.launcher", "--args", uri}; // NON-NLS
+      // This bundle by its path: by bundle id, LaunchServices would pick the registered Weasis,
+      // which can be another installation sharing the id (a 4.x next to the 5.0 preview).
+      Optional<Path> bundle =
+          appBundle(
+              System.getProperty("jpackage.app-path"), // NON-NLS
+              System.getProperty(BootstrapContract.P_APPDIR));
+      return macOpenArgs(bundle, uri);
     } else if (SystemInfo.isWindows) {
       return new String[] {"cmd", "/c", "start", uri}; // NON-NLS
     } else {
       return new String[] {"xdg-open", uri}; // NON-NLS
     }
+  }
+
+  /** The {@code open} command starting a new instance of the bundle (or of the bundle id). */
+  static String[] macOpenArgs(Optional<Path> bundle, String uri) {
+    return bundle
+        .map(b -> new String[] {"open", "-n", "-a", b.toString(), "--args", uri}) // NON-NLS
+        .orElseGet(
+            () ->
+                new String[] {
+                  "open", "-n", "-b", "org.weasis.launcher", "--args", uri // NON-NLS
+                });
+  }
+
+  /**
+   * The {@code .app} directory holding one of these paths (the native launcher, {@code
+   * jpackage.app-path}, or the application directory of the image); empty outside a bundle, as in
+   * a development launch.
+   */
+  static Optional<Path> appBundle(String... paths) {
+    for (String p : paths) {
+      if (p == null || p.isBlank()) {
+        continue;
+      }
+      for (Path d = Path.of(p).toAbsolutePath().normalize(); d != null; d = d.getParent()) {
+        Path name = d.getFileName();
+        if (name != null && name.toString().endsWith(".app")) { // NON-NLS
+          return Optional.of(d);
+        }
+      }
+    }
+    return Optional.empty();
   }
 
   private static void launchProcess(
