@@ -10,6 +10,7 @@
 package org.weasis.launcher.integrity;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,16 +18,19 @@ import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Stream;
+import org.tukaani.xz.XZInputStream;
 
 /**
  * The release side of the integrity list, for the release scripts and a site with its own codebase:
@@ -41,10 +45,15 @@ import java.util.stream.Stream;
  * {@code keygen} writes {@code <id>.key} (PKCS#8, base64, keep it private) and {@code <id>.pub}
  * (X.509, base64, the file a site drops in {@code integrity-keys/} or the release ships in {@code
  * release-keys.json}); {@code digest} rewrites the {@code integrity} object of {@code base.json}
- * from the jars found (the {@code .xz} suffix is dropped: the digest is of the jar); {@code sign}
+ * from the jars found (a packed {@code .jar.xz} is digested decompressed, under the jar name, which
+ * is what the launcher checks); {@code sign}
  * writes {@code base.json.sig} as {@code <id>:<base64 signature>}.
  */
 public final class IntegrityTool {
+
+  private static final String JAR = ".jar"; // NON-NLS
+  private static final String XZ = ".xz"; // NON-NLS
+  private static final String JAR_XZ = JAR + XZ;
 
   private IntegrityTool() {}
 
@@ -99,22 +108,60 @@ public final class IntegrityTool {
 
   /**
    * Rewrites the {@code integrity} object of the configuration from the jars of the folders (one
-   * level, {@code .jar} files); the entries are keyed by file name, the number of entries written.
+   * level, {@code .jar} and {@code .jar.xz} files); the entries are keyed by jar name, the number
+   * of entries written.
+   *
+   * <p>A packed {@code <name>.jar.xz} wins over a {@code <name>.jar} beside it and is digested
+   * decompressed: that is the file the launcher checks, and the packer writes the jar again
+   * (without compression) before it compresses it, so the jar it started from has another digest.
+   *
+   * <p>The list is keyed by name only: when two folders hold a jar of the same name, the first
+   * folder wins. The distribution passes the bundle first, whose jars are those the launcher
+   * downloads and checks; the launcher set carries its own manifest ({@code launcher.sha256}).
    */
   public static int digest(Path baseJson, List<Path> folders) throws IOException {
     Map<String, Integrity.Entry> entries = new TreeMap<>();
     for (Path folder : folders) {
+      Map<String, Integrity.Entry> found = new TreeMap<>();
       try (Stream<Path> files = Files.list(folder)) {
-        for (Path file : files.filter(f -> f.toString().endsWith(".jar")).toList()) { // NON-NLS
-          entries.put(
-              file.getFileName().toString(),
-              new Integrity.Entry(Integrity.sha256(file), Files.size(file)));
+        for (Path file : files.sorted().toList()) {
+          String name = file.getFileName().toString();
+          if (name.endsWith(JAR_XZ)) {
+            found.put(name.substring(0, name.length() - XZ.length()), digestXz(file));
+          } else if (name.endsWith(JAR) && !Files.exists(file.resolveSibling(name + XZ))) {
+            found.put(name, new Integrity.Entry(Integrity.sha256(file), Files.size(file)));
+          }
         }
       }
+      found.forEach(
+          (name, entry) -> {
+            Integrity.Entry first = entries.putIfAbsent(name, entry);
+            if (first != null && !first.sha256().equalsIgnoreCase(entry.sha256())) {
+              System.out.println(
+                  name + " of " + folder + " differs from the one listed first: not listed");
+            }
+          });
     }
     String text = Files.readString(baseJson, StandardCharsets.UTF_8);
     Files.writeString(baseJson, withIntegrity(text, entries), StandardCharsets.UTF_8);
     return entries.size();
+  }
+
+  /** The digest and the size of the content of an xz file, as the launcher decompresses it. */
+  static Integrity.Entry digestXz(Path file) throws IOException {
+    try (InputStream in = new XZInputStream(Files.newInputStream(file))) {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256"); // NON-NLS
+      byte[] buffer = new byte[65536];
+      long size = 0;
+      int read;
+      while ((read = in.read(buffer)) > 0) {
+        digest.update(buffer, 0, read);
+        size += read;
+      }
+      return new Integrity.Entry(HexFormat.of().formatHex(digest.digest()), size);
+    } catch (GeneralSecurityException e) {
+      throw new IOException(e);
+    }
   }
 
   /** The configuration text with its {@code integrity} object replaced or inserted first. */

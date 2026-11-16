@@ -16,6 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -23,6 +25,8 @@ import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.tukaani.xz.LZMA2Options;
+import org.tukaani.xz.XZOutputStream;
 
 class IntegrityTest {
 
@@ -82,6 +86,39 @@ class IntegrityTest {
     IntegrityTool.digest(base, List.of(dir.resolve("bundle")));
     String again = Files.readString(base);
     assertEquals(1, again.split("\"integrity\"").length - 1, again);
+  }
+
+  @Test
+  void aPackedJarIsDigestedAsTheLauncherDecompressesIt(@TempDir Path dir) throws Exception {
+    Path base = setup(dir);
+    Path bundle = dir.resolve("bundle");
+    // build-xz writes the jar again before packing it: the packed content differs from the jar
+    byte[] packed =
+        "core bytes written again without compression".getBytes(StandardCharsets.UTF_8); // NON-NLS
+    try (OutputStream out =
+        new XZOutputStream(
+            Files.newOutputStream(bundle.resolve("weasis-core-5.0.0.jar.xz")), new LZMA2Options())) {
+      out.write(packed);
+    }
+
+    // the launcher set holds the same jar, unpacked: the bundle, listed first, keeps its entry
+    Path launcher = dir.resolve("launcher");
+    Files.createDirectories(launcher);
+    Files.writeString(launcher.resolve("weasis-core-5.0.0.jar"), "core bytes"); // NON-NLS
+
+    int entries = IntegrityTool.digest(base, List.of(bundle, launcher));
+    Map<String, Integrity.Entry> parsed = Integrity.parse(Files.readAllBytes(base));
+    Integrity.Entry core = parsed.get("weasis-core-5.0.0.jar");
+    assertAll(
+        () -> assertEquals(2, entries, "the .xz and its .jar are one entry"),
+        () -> assertFalse(parsed.containsKey("weasis-core-5.0.0.jar.xz")),
+        () -> assertEquals(Integrity.sha256(packed), core.sha256()),
+        () -> assertEquals(packed.length, core.size()),
+        () ->
+            assertEquals(
+                Integrity.sha256(bundle.resolve("weasis-dicom-codec-5.0.0.jar")),
+                parsed.get("weasis-dicom-codec-5.0.0.jar").sha256(),
+                "a jar without .xz is digested as it is"));
   }
 
   @Test

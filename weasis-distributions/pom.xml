@@ -501,10 +501,12 @@
           <execution>
             <!-- The integrity list of base.json (S3 of the security spec): the SHA-256 and size of
                  every jar of the bundle and of the launcher set, after the jars are signed and
-                 before compressXZ packs them (compile, main plugins run before the profile ones).
-                 The launcher checks every download and every cached jar against it. -->
+                 after compressXZ packed them (process-classes, after its compile phase): a packed
+                 jar is digested as it comes out of its .xz, since build-xz writes the jar again
+                 without compression before it packs it. The launcher checks every download and
+                 every cached jar against it; config-sign signs the list in the same phase, after. -->
             <id>config-integrity</id>
-            <phase>compile</phase>
+            <phase>process-classes</phase>
             <goals>
               <goal>java</goal>
             </goals>
@@ -604,8 +606,10 @@
             <version>3.5.0</version>
             <executions>
               <execution>
+                <!-- After config-integrity (same phase, main executions run before the profile
+                     ones), so the signature covers the final list. -->
                 <id>config-sign</id>
-                <phase>compile</phase>
+                <phase>process-classes</phase>
                 <goals>
                   <goal>java</goal>
                 </goals>
