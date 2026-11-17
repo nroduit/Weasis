@@ -57,14 +57,11 @@ if [ -f "$DESKTOP" ] && grep -q 'x-scheme-handler/weasis' "$DESKTOP"; then
 fi
 PRERM="$OUT/prerm"
 if [ -f "$PRERM" ] && grep -q 'x-scheme-handler/weasis' "$PRERM"; then
-  python3 - "$PRERM" <<'PY'
-import re, sys
-p = sys.argv[1]
-t = open(p, encoding="utf-8").read()
-t2 = re.sub(r"\nif command -v desktop_uninstall_default_mime_handler[^\n]*\n.*?\nfi\n", "\n", t, count=1, flags=re.S)
-open(p, "w", encoding="utf-8").write(t2)
-print("prerm: scheme handler uninstall removed" if t2 != t else "prerm: nothing to remove")
-PY
+  # awk, not python3: this part runs in the Linux packaging image, which has no Python
+  awk 'state == 0 && /^if command -v desktop_uninstall_default_mime_handler/ { state = 1; next }
+       state == 1 { if ($0 == "fi") state = 2; next }
+       { print }' "$PRERM" > "$PRERM.tmp" && mv "$PRERM.tmp" "$PRERM"
+  echo "prerm: scheme handler uninstall removed"
   removed=$((removed + 1))
 fi
 

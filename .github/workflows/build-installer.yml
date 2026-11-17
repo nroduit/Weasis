@@ -343,7 +343,7 @@ jobs:
           # archive for the first launch and the AOT stage-1 relauncher.
           jpackage --type app-image --input "${{ env.WEASIS_INPUT_BIN }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" \
           --jlink-options "--strip-debug --no-man-pages --no-header-files --generate-cds-archive" \
-          --main-jar weasis-bootstrap.jar --main-class org.weasis.bootstrap.Bootstrap --add-modules "${{ env.JDK_MODULES }}" \
+          --main-jar weasis-bootstrap.jar --main-class org.weasis.bootstrap.Bootstrap --add-modules "$JDK_MODULES" \
           --resource-dir "${{ env.RES }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --add-launcher "Dicomizer=${{ env.RES }}/dicomizer-launcher.properties" \
           --add-launcher "weasis-cli=${{ env.RES }}/weasis-cli-launcher.properties" \
           "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
