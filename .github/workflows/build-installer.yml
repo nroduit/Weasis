@@ -117,15 +117,14 @@ jobs:
           CVERSION=$(echo $WEASIS_VERSION | sed -e 's/"//g' -e 's/-.*//' -e 's/\(\([0-9]\+\.\)\{2\}[0-9]\+\)\.[0-9]\+/\1/')
           echo "WEASIS_CLEAN_VERSION=${CVERSION}" >> $GITHUB_ENV
           # A version with a suffix (5.0.0-beta.1) is a pre-release: jpackage gets the clean version
-          # (the MSI and the bundle need x.y.z), the installer files carry the full version and the
-          # installers do not register the weasis:// scheme, which stays with the release installed
-          # beside the preview. Same rules as package-weasis.sh (Linux), see
-          # weasis-distributions/docs/Native-Build-Overview.md.
+          # (the MSI and the bundle need x.y.z) and the installer files carry the full version.
+          # Like a release, it registers the weasis:// scheme and weasis-cli. Same rules as
+          # package-weasis.sh (Linux), see weasis-distributions/docs/Native-Build-Overview.md.
           case "$WEASIS_VERSION" in
             *-*) SUFFIX="${WEASIS_VERSION#*-}"
                  echo "WEASIS_PRERELEASE=true" >> $GITHUB_ENV
                  echo "WEASIS_FILE_VERSION=${CVERSION}-${SUFFIX}" >> $GITHUB_ENV
-                 echo "Pre-release **${WEASIS_VERSION}**: package version ${CVERSION}, installer files ${CVERSION}-${SUFFIX}, Linux release 0.$(echo "$SUFFIX" | sed 's/[^A-Za-z0-9.]/./g'), weasis:// not registered" >> $GITHUB_STEP_SUMMARY ;;
+                 echo "Pre-release **${WEASIS_VERSION}**: package version ${CVERSION}, installer files ${CVERSION}-${SUFFIX}, Linux release 0.$(echo "$SUFFIX" | sed 's/[^A-Za-z0-9.]/./g')" >> $GITHUB_STEP_SUMMARY ;;
             *)   echo "WEASIS_PRERELEASE=false" >> $GITHUB_ENV
                  echo "WEASIS_FILE_VERSION=${CVERSION}" >> $GITHUB_ENV
                  echo "Release **${WEASIS_VERSION}**: package version ${CVERSION}" >> $GITHUB_STEP_SUMMARY ;;
@@ -262,19 +261,11 @@ jobs:
 
       - name: Resolve the installer resources
         shell: bash
-        # RES is the --resource-dir of the jpackage steps below. A pre-release (5.0.0-beta.1)
-        # coexists with the installed release of the workstation: its installers register the
-        # weasis:// scheme neither on macOS (Info.plist) nor on Windows (the URIHandlerRegistry
-        # component of the MSI), so the viewer hub launch keeps opening the release;
-        # prerelease-resources.sh removes the registration from a copy of the resources.
-        # The Linux packages do the same in package-weasis.sh.
+        # RES is the --resource-dir of the jpackage steps below: the resources of the platform,
+        # the same for a pre-release, whose installers register the weasis:// scheme and
+        # weasis-cli like a release.
         run: |
           RES="${{ env.WEASIS_SCRIPT }}/resources/${{ matrix.wsystem }}"
-          if [ "$WEASIS_PRERELEASE" = "true" ]; then
-            # a relative path, like the resources themselves: no path conversion on Windows
-            bash "${{ env.WEASIS_SCRIPT }}/prerelease-resources.sh" "$RES" "native-dist/prerelease-resources"
-            RES="native-dist/prerelease-resources"
-          fi
           echo "RES=$RES" >> $GITHUB_ENV
           echo "Resources: $RES"
 

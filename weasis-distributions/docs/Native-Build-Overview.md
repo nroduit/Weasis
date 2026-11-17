@@ -117,7 +117,7 @@ the 5.0.0 release on every platform:
 | the installer **files** carry the full version: `Weasis-5.0.0-beta.1-x86-64.msi`, `Weasis-5.0.0-beta.1-aarch64.pkg` | a tester sees which beta is installed from the file; a release and its betas never share a file name |
 | the Linux packages take the **release** `0.<suffix>`: `weasis_5.0.0-0.beta.1_amd64.deb`, `weasis-5.0.0-0.beta.1.x86_64.rpm` (a release has `1`) | `dpkg` and `rpm` sort `5.0.0-0.beta.1 < 5.0.0-0.beta.2 < 5.0.0-1`, so the release upgrades the preview |
 | the MSI upgrade range includes the **same version** (`IncludeMaximum="yes"` in `main.wxs`) | the betas and the release share `ProductVersion` 5.0.0; without it the release would install beside the beta |
-| the installers do **not register the `weasis://` scheme** (`prerelease-resources.sh` copies the platform resources without `CFBundleURLTypes`, the `.desktop` MIME type, the `prerm` hook and the `URIHandlerRegistry` component) | a viewer hub or browser launch keeps opening the installed release |
+| the installers **register the `weasis://` scheme and `weasis-cli`** as a release does (`CFBundleURLTypes` and the `postinstall` link on macOS, the `.desktop` MIME type on Linux, the `URIHandlerRegistry` component of the MSI) | a viewer hub or browser link opens the installed Weasis, preview or release, and the scripted tests reach it through `weasis-cli` |
 | the application itself reads the suffix (`Prerelease` in the launcher): *preview, not for clinical use* in the title and the About box, a notice at start, `weasis:info` reports `prerelease` | the user knows what runs; the one-time migration of `~/.weasis` stays off |
 
 The GitHub release of a tag with a suffix is a pre-release whose body is `docs/release-notes/<tag>.md`

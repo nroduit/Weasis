@@ -196,8 +196,8 @@ WEASIS_CLEAN_VERSION=$(echo "$WEASIS_VERSION" | sed -e 's/"//g' -e 's/-.*//' -e 
 # A version with a suffix (5.0.0-beta.1, 5.0.0-SNAPSHOT) is a pre-release. jpackage gets the clean
 # version (the MSI and the bundle need x.y.z), the installer files carry the full version and the
 # Linux packages take a release below 1 (5.0.0-0.beta.1 sorts before 5.0.0-1), so that the release
-# upgrades the preview on every platform; the weasis:// scheme stays with the installed release
-# (prerelease-resources.sh). Same rules as the GitHub workflow, see docs/Native-Build-Overview.md.
+# upgrades the preview on every platform. Like a release, a preview registers the weasis:// scheme
+# and weasis-cli. Same rules as the GitHub workflow, see docs/Native-Build-Overview.md.
 case "$WEASIS_VERSION" in
   *-*) WEASIS_SUFFIX="${WEASIS_VERSION#*-}" ;;
   *)   WEASIS_SUFFIX="" ;;
@@ -205,15 +205,7 @@ esac
 WEASIS_FILE_VERSION="$WEASIS_CLEAN_VERSION${WEASIS_SUFFIX:+-$WEASIS_SUFFIX}"
 if [ -n "$WEASIS_SUFFIX" ] ; then
   LINUX_RELEASE="0.$(echo "$WEASIS_SUFFIX" | sed 's/[^A-Za-z0-9.]/./g')"
-  RES_UNIX="${curPath}/resources/$machine"
-  PRERELEASE_RES="$(mktemp -d)/resources"
-  bash "${curPath}/prerelease-resources.sh" "$RES_UNIX" "$PRERELEASE_RES" || die "Cannot prepare the pre-release resources"
-  if [ "$machine" = "windows" ] ; then
-    RES=$(cygpath -w "$PRERELEASE_RES")
-  else
-    RES="$PRERELEASE_RES"
-  fi
-  echo "Pre-release $WEASIS_VERSION: package version $WEASIS_CLEAN_VERSION, installer files $WEASIS_FILE_VERSION, Linux release $LINUX_RELEASE, weasis:// not registered"
+  echo "Pre-release $WEASIS_VERSION: package version $WEASIS_CLEAN_VERSION, installer files $WEASIS_FILE_VERSION, Linux release $LINUX_RELEASE"
 else
   LINUX_RELEASE="$REVISON_INC"
 fi

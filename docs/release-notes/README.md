@@ -31,6 +31,6 @@ Credits
 
 The installers of a pre-release carry the full version in their file name
 (`Weasis-5.0.0-beta.1-x86-64.msi`, `weasis_5.0.0-0.beta.1_amd64.deb`) and the package version of
-the release they precede (`5.0.0`), so that the release upgrades them in place; they do not
-register the `weasis://` scheme, which stays with the installed release.
+the release they precede (`5.0.0`), so that the release upgrades them in place; like a release,
+they register the `weasis://` scheme and `weasis-cli`.
 See `weasis-distributions/docs/Native-Build-Overview.md`, section *Pre-release builds*.
