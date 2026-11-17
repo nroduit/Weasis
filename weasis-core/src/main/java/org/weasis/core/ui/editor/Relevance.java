@@ -267,6 +267,11 @@ public final class Relevance {
     return REVEALED.contains(tool.getToolId());
   }
 
+  /** Forgets the revealed tools, as a change of view does; for the tests sharing this state. */
+  static void clearRevealed() {
+    REVEALED.clear();
+  }
+
   /** An item that is relevant but not applicable now: disabled, with the reason as tooltip. */
   public static void notApplicable(JComponent item, String reason) {
     item.setEnabled(false);

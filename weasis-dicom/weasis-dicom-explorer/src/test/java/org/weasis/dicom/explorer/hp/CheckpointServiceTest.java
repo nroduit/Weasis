@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.weasis.core.api.command.CommandOrigin;
@@ -40,6 +42,17 @@ import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.ViewDescriptor;
 import org.weasis.core.ui.docking.ws.snapshot.WorkspaceSnapshot.WindowSnapshot;
 
 class CheckpointServiceTest {
+
+  /**
+   * A pushed checkpoint opens a version in the static {@link DocumentVersions}: each test starts
+   * and ends without one, and with the document store unconfigured.
+   */
+  @BeforeEach
+  @AfterEach
+  void forgetVersions() {
+    DocumentVersions.clear();
+    DocumentStore.configure(null, null);
+  }
 
   private static JsonObject state(String series, int image) {
     return Json.createObjectBuilder()

@@ -137,11 +137,14 @@ class RelevanceTest {
   void installEmptyEnvironment() {
     Settings.install(SettingEnvironment.inMemory(new HashMap<>()));
     ToolVisibility.setSelectedViewer(java.util.Optional::empty);
+    // another test (or class) may have revealed a tool in the static state
+    Relevance.clearRevealed();
   }
 
   @AfterEach
   void showAllAgain() {
     Settings.install(SettingEnvironment.inMemory(new HashMap<>()));
+    Relevance.clearRevealed();
   }
 
   @Test

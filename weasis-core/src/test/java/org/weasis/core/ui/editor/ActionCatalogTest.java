@@ -58,6 +58,8 @@ class ActionCatalogTest {
   @AfterEach
   void removeSources() {
     sources.forEach(ActionCatalog::removeSource);
+    // running a tool entry reveals it in the static state the relevance tests read
+    Relevance.clearRevealed();
   }
 
   private void source(Supplier<List<ActionEntry>> source) {
