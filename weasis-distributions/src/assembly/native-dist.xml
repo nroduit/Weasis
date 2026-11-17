@@ -9,9 +9,12 @@
   <includeBaseDirectory>false</includeBaseDirectory>
   <fileSets>
     <fileSet>
-      <!-- Copy jws jars -->
+      <!-- Copy jws jars. Readable by everyone: build-xz-plugin writes the .jar.xz files with mode
+           0600, and an installer owned by root (the macOS pkg) left them unreadable to the user. -->
       <directory>target/tmp</directory>
       <outputDirectory>bin-dist/weasis</outputDirectory>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
       <includes>
         <include>/*.jar</include>
         <include>launcher/*.jar</include>
