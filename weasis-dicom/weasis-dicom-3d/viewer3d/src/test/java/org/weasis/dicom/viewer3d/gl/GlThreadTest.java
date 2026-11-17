@@ -33,7 +33,7 @@ class GlThreadTest {
   private static GlThread open() {
     try {
       return new GlThread();
-    } catch (GlException | UnsatisfiedLinkError e) {
+    } catch (GlException | LinkageError e) {
       Assumptions.abort("No OpenGL context on this machine: " + e.getMessage());
       throw new IllegalStateException(e); // unreachable
     }

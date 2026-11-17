@@ -35,11 +35,15 @@ abstract sealed class GlSession implements AutoCloseable {
   @Override
   public abstract void close();
 
-  /** The context of this machine, or the calling test aborted when there is none. */
+  /**
+   * The context of this machine, or the calling test aborted when there is none. A missing EGL
+   * library surfaces as an {@link ExceptionInInitializerError} on the first attempt and a {@link
+   * NoClassDefFoundError} on the next ones: every {@link LinkageError} counts as no context.
+   */
   static GlSession openOrAbort() {
     try {
       return new Offscreen();
-    } catch (RuntimeException | UnsatisfiedLinkError e) {
+    } catch (RuntimeException | LinkageError e) {
       Assumptions.abort("No OpenGL context on this machine: " + e.getMessage());
       throw new IllegalStateException(e); // unreachable
     }
