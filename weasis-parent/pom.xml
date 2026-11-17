@@ -61,7 +61,7 @@
     <logback.version>1.6.6</logback.version>
     <!-- weasis-dicom-tools is versioned <dcm4che version>.<patch>: the suffix is its own patch -->
     <dcm4che.version>5.35.2</dcm4che.version>
-    <weasis-dicom-tools.version>${dcm4che.version}.1-SNAPSHOT</weasis-dicom-tools.version>
+    <weasis-dicom-tools.version>${dcm4che.version}.7</weasis-dicom-tools.version>
     <weasis.core.img.version>5.1.0</weasis.core.img.version>
     <weasis.opencv.native.version>5.1.0-dcm</weasis.opencv.native.version>
     <weasis.opencv.pkg.version>5.1.0-dcm</weasis.opencv.pkg.version>
