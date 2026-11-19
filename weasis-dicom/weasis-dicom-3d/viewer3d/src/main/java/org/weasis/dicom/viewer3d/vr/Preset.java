@@ -42,6 +42,7 @@ import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.EventManager;
+import org.weasis.dicom.viewer3d.Messages;
 import org.weasis.dicom.viewer3d.View3DContainer;
 import org.weasis.dicom.viewer3d.gl.Gl;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
@@ -445,7 +446,10 @@ public class Preset extends TextureData {
     try (InputStream in = Preset.class.getResourceAsStream(BUILTIN_RESOURCE)) {
       List<Preset> presets = new ArrayList<>();
       for (ColorMap map : ColorMapJson.readAll(in)) {
-        presets.add(of(map, false));
+        ColorMap translated =
+            ColorMapRegistry.translated(
+                map, "Preset.name." + map.id(), c -> "Preset.category." + c, Messages::getString);
+        presets.add(of(translated, false));
       }
       presets.sort(Comparator.comparing(p -> String.format("%03d", p.modality.ordinal()) + p.name));
       return presets;

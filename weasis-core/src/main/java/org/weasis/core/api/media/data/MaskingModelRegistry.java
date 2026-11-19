@@ -30,7 +30,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.Messages;
 import org.weasis.core.api.media.data.MaskingModel.TagRule;
+import org.weasis.core.api.util.BuiltInNames;
 import org.weasis.core.api.util.LayeredEntries;
 import org.weasis.core.api.util.LayeredEntries.Layer;
 import org.weasis.core.api.util.LayeredEntries.Merged;
@@ -127,11 +129,31 @@ public final class MaskingModelRegistry {
 
   public static MaskingModel loadBuiltIn() {
     try (InputStream in = MaskingModelRegistry.class.getResourceAsStream(BUILTIN_RESOURCE)) {
-      return in == null ? MaskingModel.EMPTY : MaskingModel.read(in);
+      if (in == null) {
+        return MaskingModel.EMPTY;
+      }
+      MaskingModel model = MaskingModel.read(in);
+      return model.withProfiles(
+          model.profiles().stream().map(MaskingModelRegistry::translated).toList());
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read the built-in masking configuration", e);
       return MaskingModel.EMPTY;
     }
+  }
+
+  /** The bundled profile under its translated name; the English one stays in the document. */
+  private static MaskingProfile translated(MaskingProfile p) {
+    String name =
+        BuiltInNames.translate(
+            BuiltInNames.MASKING,
+            p.id(),
+            p.name(),
+            "MaskingProfile.name." + p.id(),
+            Messages::getString);
+    return name.equals(p.name())
+        ? p
+        : new MaskingProfile(
+            p.id(), name, p.labels(), p.actions(), p.tagActions(), p.offerInExport(), p.locked());
   }
 
   /**

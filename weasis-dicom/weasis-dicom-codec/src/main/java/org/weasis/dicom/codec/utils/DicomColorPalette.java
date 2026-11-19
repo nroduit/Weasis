@@ -34,6 +34,7 @@ import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.lut.ColorMapJson;
+import org.weasis.core.api.util.BuiltInNames;
 import org.weasis.core.ui.editor.image.lut.ColorMapFormat;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.Messages;
@@ -295,7 +296,8 @@ public final class DicomColorPalette {
   public static Attributes toAttributes(ColorMap map) {
     Objects.requireNonNull(map, "Map cannot be null");
     byte[][] bgr = ColorMapCompiler.toBgr(map, ENTRIES);
-    String description = map.metadata().getOrDefault(ColorMap.META_DICOM_DESCRIPTION, map.name());
+    String description =
+        map.metadata().getOrDefault(ColorMap.META_DICOM_DESCRIPTION, sourceName(map));
     String creator = map.metadata().getOrDefault(ColorMap.META_DICOM_CREATOR, DEFAULT_CREATOR);
     String json = ColorMapJson.toJson(map).toString();
     Attributes ds = new Attributes();
@@ -334,7 +336,12 @@ public final class DicomColorPalette {
   /** Content Label: code string of at most 16 characters, upper case, underscores for the rest. */
   static String contentLabel(ColorMap map) {
     String label = map.metadata().get(ColorMap.META_DICOM_LABEL);
-    return codeString(StringUtil.hasText(label) ? label : map.name());
+    return codeString(StringUtil.hasText(label) ? label : sourceName(map));
+  }
+
+  /** The English name of a bundled map, whatever the language of the session. */
+  private static String sourceName(ColorMap map) {
+    return BuiltInNames.source(BuiltInNames.COLOR_MAP, map.id(), map.name());
   }
 
   private static String codeString(String source) {

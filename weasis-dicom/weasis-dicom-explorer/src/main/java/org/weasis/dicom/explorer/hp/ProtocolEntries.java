@@ -22,6 +22,7 @@ import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.api.util.ListDocument;
 import org.weasis.dicom.codec.hp.HangingEngine;
 import org.weasis.dicom.codec.hp.ProtocolJson;
+import org.weasis.dicom.codec.hp.ProtocolNames;
 
 /**
  * The protocols as the preferences page lists and edits them: one row per entry of the layers with
@@ -49,7 +50,9 @@ public final class ProtocolEntries {
       JsonObject json = entry.json();
       String name = null;
       try {
-        name = ProtocolJson.fromJson(json).protocol().getHangingProtocolName();
+        name =
+            ProtocolNames.name(
+                entry.id(), ProtocolJson.fromJson(json).protocol().getHangingProtocolName());
       } catch (RuntimeException e) {
         // an invalid entry is listed by its id
       }

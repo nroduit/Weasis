@@ -23,16 +23,20 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.Messages;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.setting.Scope;
+import org.weasis.core.api.util.BuiltInNames;
 import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LayeredEntries;
@@ -221,11 +225,11 @@ public final class ColorMapRegistry {
     site.clear();
     siteLocked.clear();
     ColorMapJson.Document siteDocument = loadSite();
-    site.addAll(siteDocument.maps());
+    siteDocument.maps().forEach(map -> site.add(displayed(map)));
     siteLocked.addAll(siteDocument.locked());
     ColorMapJson.Document user = loadUser();
     userMaps.clear();
-    user.maps().forEach(map -> userMaps.put(map.id(), map));
+    user.maps().forEach(map -> userMaps.put(map.id(), displayed(map)));
     favorites.clear();
     favorites.addAll(user.favorites());
     changed();
@@ -233,11 +237,66 @@ public final class ColorMapRegistry {
 
   private static List<ColorMap> loadBuiltIn() {
     try (InputStream in = ColorMapRegistry.class.getResourceAsStream(BUILTIN_RESOURCE)) {
-      return in == null ? List.of() : ColorMapJson.readAll(in);
+      return in == null
+          ? List.of()
+          : ColorMapJson.readAll(in).stream()
+              .map(
+                  m ->
+                      translated(
+                          m,
+                          "ColorMap.name." + m.id(),
+                          c -> "ColorMap.category." + c,
+                          Messages::getString))
+              .toList();
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read built-in color maps", e);
       return List.of();
     }
+  }
+
+  /**
+   * A bundled map under its translated name and section; the English ones stay in the document and
+   * go back into every file written ({@link BuiltInNames}).
+   *
+   * @param nameKey the key of the name in the bundle of the calling module
+   * @param categoryKey the key of a section in the same bundle, from the slug of the English one
+   * @param bundle the lookup of the calling module, e.g. {@code Messages::getString}
+   */
+  public static ColorMap translated(
+      ColorMap map,
+      String nameKey,
+      UnaryOperator<String> categoryKey,
+      UnaryOperator<String> bundle) {
+    String name =
+        BuiltInNames.translate(BuiltInNames.COLOR_MAP, map.id(), map.name(), nameKey, bundle);
+    String category = map.category();
+    if (category != null) {
+      String source = BuiltInNames.source(BuiltInNames.COLOR_MAP_CATEGORY, category, category);
+      category =
+          BuiltInNames.translate(
+              BuiltInNames.COLOR_MAP_CATEGORY,
+              source,
+              source,
+              categoryKey.apply(BuiltInNames.slug(source)),
+              bundle);
+    }
+    if (name.equals(map.name()) && Objects.equals(category, map.category())) {
+      return map;
+    }
+    return map.toBuilder().name(name).category(category).build();
+  }
+
+  /** A map read from a site or user file, shown under the translation of a bundled name it kept. */
+  private static ColorMap displayed(ColorMap map) {
+    String name = BuiltInNames.display(BuiltInNames.COLOR_MAP, map.id(), map.name());
+    String category = map.category();
+    if (category != null) {
+      category = BuiltInNames.display(BuiltInNames.COLOR_MAP_CATEGORY, category, category);
+    }
+    if (name.equals(map.name()) && Objects.equals(category, map.category())) {
+      return map;
+    }
+    return map.toBuilder().name(name).category(category).build();
   }
 
   private ColorMapJson.Document loadSite() {

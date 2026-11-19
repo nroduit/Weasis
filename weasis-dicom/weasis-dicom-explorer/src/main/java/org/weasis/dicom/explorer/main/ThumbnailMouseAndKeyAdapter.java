@@ -49,6 +49,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
+import org.weasis.dicom.codec.hp.ProtocolNames;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.LoadLocalDicom;
@@ -188,7 +189,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
       JMenu menu = new JMenu(Messages.getString("DicomExplorer.hang_with"));
       for (ProtocolScore score : candidates) {
         String id = score.document().id();
-        String name = score.document().protocol().getHangingProtocolName();
+        String name = ProtocolNames.name(id, score.document().protocol().getHangingProtocolName());
         JMenuItem item = new JMenuItem(name == null ? id : name);
         item.addActionListener(_ -> HpStudies.hang(dicomModel, study, id));
         menu.add(item);

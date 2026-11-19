@@ -26,10 +26,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.setting.Scope;
+import org.weasis.core.api.util.BuiltInNames;
 import org.weasis.core.api.util.DocumentStore;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LayeredEntries;
@@ -158,11 +160,27 @@ public final class MeasurementProfileRegistry {
 
   public static List<MeasurementProfile> loadBuiltIn() {
     try (InputStream in = MeasurementProfileRegistry.class.getResourceAsStream(BUILTIN_RESOURCE)) {
-      return in == null ? List.of() : MeasurementProfileJson.read(in);
+      return in == null
+          ? List.of()
+          : MeasurementProfileJson.read(in).stream()
+              .map(MeasurementProfileRegistry::translated)
+              .toList();
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read the built-in measurement profiles", e);
       return List.of();
     }
+  }
+
+  /** The bundled profile under its translated name; the English one stays in the document. */
+  private static MeasurementProfile translated(MeasurementProfile p) {
+    String name =
+        BuiltInNames.translate(
+            BuiltInNames.MEASUREMENT,
+            p.id(),
+            p.name(),
+            "MeasurementProfile.name." + p.id(),
+            Messages::getString);
+    return name.equals(p.name()) ? p : p.withIdAndName(p.id(), name).withBuiltIn(p.builtIn());
   }
 
   /** Reloads with another site document, or none. */
@@ -209,15 +227,16 @@ public final class MeasurementProfileRegistry {
     if (result.entries().stream().noneMatch(MeasurementProfile::isDefault)) {
       List<MeasurementProfile> withDefault = new ArrayList<>(result.entries());
       withDefault.add(
-          new MeasurementProfile(
-              MeasurementProfile.DEFAULT_ID,
-              "Default",
-              null,
-              null,
-              null,
-              null,
-              null,
-              true)); // NON-NLS
+          translated(
+              new MeasurementProfile(
+                  MeasurementProfile.DEFAULT_ID,
+                  "Default (all tools)",
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  true))); // NON-NLS
       result = result.withEntries(withDefault);
     }
     merged = result;

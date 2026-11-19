@@ -198,6 +198,25 @@ public record WindowPreset(
   }
 
   /** The same preset with another id, not locked: a copy belongs to whoever makes it. */
+  /** The same preset under another display name; the id is unchanged. */
+  public WindowPreset withName(String newName) {
+    return new WindowPreset(
+        id,
+        newName,
+        modalities,
+        category,
+        tags,
+        hidden,
+        window,
+        level,
+        domain,
+        shape,
+        key,
+        when,
+        defaultPreset,
+        locked);
+  }
+
   public WindowPreset withId(String newId) {
     return new WindowPreset(
         newId,

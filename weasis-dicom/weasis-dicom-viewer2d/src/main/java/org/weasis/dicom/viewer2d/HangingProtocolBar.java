@@ -30,6 +30,7 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
+import org.weasis.dicom.codec.hp.ProtocolNames;
 import org.weasis.dicom.explorer.hp.ActiveHanging;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier.Applied;
@@ -170,7 +171,9 @@ public class HangingProtocolBar extends WtoolBar {
       List<Choice> choices = new ArrayList<>();
       Choice selected = null;
       for (ProtocolScore score : ActiveHanging.candidates(applied)) {
-        String name = score.document().protocol().getHangingProtocolName();
+        String name =
+            ProtocolNames.name(
+                score.document().id(), score.document().protocol().getHangingProtocolName());
         Choice choice =
             new Choice(score.document().id(), name == null ? score.document().id() : name);
         choices.add(choice);

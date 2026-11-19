@@ -45,7 +45,9 @@ public final class BuiltInProtocols {
       try (JsonReader reader = Json.createReader(in)) {
         JsonObject document = reader.readObject();
         JsonArray array = document.getJsonArray(HangingProtocolDocuments.PROTOCOL_ENTRIES);
-        return array == null ? List.of() : array.getValuesAs(JsonObject.class);
+        List<JsonObject> entries = array == null ? List.of() : array.getValuesAs(JsonObject.class);
+        ProtocolNames.register(entries);
+        return entries;
       }
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read the built-in hanging protocols", e);

@@ -33,6 +33,7 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.BuiltInNames;
 import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.ListDocument;
@@ -104,7 +105,10 @@ public final class WindowPresetJson {
   }
 
   public static JsonObject toJson(WindowPreset preset) {
-    JsonObjectBuilder b = Json.createObjectBuilder().add(ID, preset.id()).add(NAME, preset.name());
+    JsonObjectBuilder b =
+        Json.createObjectBuilder()
+            .add(ID, preset.id())
+            .add(NAME, BuiltInNames.source(BuiltInNames.WINDOW_PRESET, preset.id(), preset.name()));
     if (!preset.modalities().isEmpty()) {
       JsonArrayBuilder modalities = Json.createArrayBuilder();
       new TreeSet<>(preset.modalities()).forEach(modalities::add);

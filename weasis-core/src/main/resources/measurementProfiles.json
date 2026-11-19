@@ -3,7 +3,7 @@
   "profiles": [
     {
       "id": "default",
-      "name": "Default",
+      "name": "Default (all tools)",
       "modalities": []
     },
     {

@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
+import org.weasis.core.api.util.BuiltInNames;
 import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.ListDocument;
@@ -124,8 +125,14 @@ public final class ColorMapJson {
   public static JsonObject toJson(ColorMap map) {
     JsonObjectBuilder b = Json.createObjectBuilder();
     b.add(ID, map.id());
-    b.add(NAME, map.name());
-    JsonUtil.addIfPresent(b, CATEGORY, map.category());
+    b.add(NAME, BuiltInNames.source(BuiltInNames.COLOR_MAP, map.id(), map.name()));
+    String category = map.category();
+    JsonUtil.addIfPresent(
+        b,
+        CATEGORY,
+        category == null
+            ? null
+            : BuiltInNames.source(BuiltInNames.COLOR_MAP_CATEGORY, category, category));
     if (!map.tags().isEmpty()) {
       JsonArrayBuilder tags = Json.createArrayBuilder();
       new TreeSet<>(map.tags()).forEach(tags::add);

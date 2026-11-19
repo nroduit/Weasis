@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.BuiltInNames;
 import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.ListDocument;
@@ -168,7 +169,10 @@ public final class MeasurementProfileJson {
 
   public static JsonObject toJson(MeasurementProfile p) {
     JsonObjectBuilder b =
-        Json.createObjectBuilder().add("id", p.id()).add("name", p.name()); // NON-NLS
+        Json.createObjectBuilder()
+            .add("id", p.id())
+            .add(
+                "name", BuiltInNames.source(BuiltInNames.MEASUREMENT, p.id(), p.name())); // NON-NLS
     b.add("modalities", array(p.modalities())); // NON-NLS
     if (p.tools() != null) {
       b.add("tools", array(p.tools())); // NON-NLS

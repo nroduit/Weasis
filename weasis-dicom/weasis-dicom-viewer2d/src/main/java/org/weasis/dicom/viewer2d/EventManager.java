@@ -766,13 +766,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           }
         };
     // The map flagged as PT default (an SUVbw preset), else the hot-metal PET palette.
+    ColorMapRegistry registry = ColorMapRegistry.getInstance();
     ByteLut preferred =
-        ColorMapRegistry.getInstance()
+        registry
             .defaultFor("PT") // NON-NLS
-            .map(ColorMapRegistry.getInstance()::byteLut)
+            .or(() -> registry.findById("weasis.dicom.pet")) // NON-NLS
+            .map(registry::byteLut)
             .orElse(null);
     for (ByteLut lut : luts) {
-      if (lut.equals(preferred) || (preferred == null && "PET".equals(lut.name()))) { // NON-NLS
+      if (lut.equals(preferred)) {
         action.setSelectedItemWithoutTriggerAction(lut);
         break;
       }

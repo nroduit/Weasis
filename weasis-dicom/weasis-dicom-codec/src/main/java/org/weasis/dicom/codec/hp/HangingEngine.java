@@ -672,7 +672,7 @@ public final class HangingEngine {
         });
     return new HangingPlan(
         document.id(),
-        protocol.getHangingProtocolName(),
+        ProtocolNames.name(document.id(), protocol.getHangingProtocolName()),
         protocol.getHangingProtocolLevel(),
         score,
         reasons,
@@ -702,7 +702,9 @@ public final class HangingEngine {
               : displaySet.getDisplaySetNumber();
       DisplaySet extension = document.weasis().displaySets().get(displaySetNumber);
       ViewerType viewer = viewerOf(displaySet, extension);
-      String label = displaySet.getDisplaySetLabel();
+      String label =
+          ProtocolNames.label(
+              document.id(), protocol.getHangingProtocolName(), displaySet.getDisplaySetLabel());
       if (synch == null) {
         synch = synchOf(displaySet, extension, scrolled);
       }

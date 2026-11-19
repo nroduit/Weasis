@@ -38,6 +38,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.BuiltInNames;
 import org.weasis.core.api.util.JsonExtends;
 import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.LayeredEntries;
@@ -207,7 +208,9 @@ public record MaskingModel(
     JsonObjectBuilder entry =
         Json.createObjectBuilder()
             .add("id", profile.id()) // NON-NLS
-            .add("name", profile.name()); // NON-NLS
+            .add(
+                "name",
+                BuiltInNames.source(BuiltInNames.MASKING, profile.id(), profile.name())); // NON-NLS
     addMap(entry, "label", profile.labels()); // NON-NLS
     JsonObjectBuilder actions = Json.createObjectBuilder();
     // Categories in their declaration order, so two writes of the same profile are identical

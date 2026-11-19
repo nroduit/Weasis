@@ -35,11 +35,13 @@ import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.dcm4che3.img.stream.ImageDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.BuiltInNames;
 import org.weasis.core.api.util.LayeredEntries;
 import org.weasis.core.api.util.LayeredEntries.Layer;
 import org.weasis.core.api.util.LayeredEntries.Merged;
 import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.ref.AnatomicItem;
 import org.weasis.dicom.ref.AnatomicRegion;
 import org.weasis.opencv.op.lut.WlPresentation;
@@ -124,11 +126,31 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
 
   public static List<WindowPreset> loadBuiltIn() {
     try (InputStream in = WindowPresetRegistry.class.getResourceAsStream(BUILTIN_RESOURCE)) {
-      return in == null ? List.of() : WindowPresetJson.read(in);
+      return in == null
+          ? List.of()
+          : WindowPresetJson.read(in).stream().map(WindowPresetRegistry::translated).toList();
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read the built-in window presets", e);
       return List.of();
     }
+  }
+
+  /** The bundled preset under its translated name; the English one stays in the document. */
+  private static WindowPreset translated(WindowPreset p) {
+    String name =
+        BuiltInNames.translate(
+            BuiltInNames.WINDOW_PRESET,
+            p.id(),
+            p.name(),
+            "WindowPreset.name." + p.id(),
+            Messages::getString);
+    return name.equals(p.name()) ? p : p.withName(name);
+  }
+
+  /** A preset of a site or user file, shown under the translation of a bundled name it kept. */
+  private static WindowPreset displayed(WindowPreset p) {
+    String name = BuiltInNames.display(BuiltInNames.WINDOW_PRESET, p.id(), p.name());
+    return name.equals(p.name()) ? p : p.withName(name);
   }
 
   /**
@@ -217,7 +239,7 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
   /** Adds or replaces the user presets of those ids, with one write of the user file. */
   public void saveUser(Collection<WindowPreset> presets) throws IOException {
     synchronized (this) {
-      presets.forEach(p -> user.put(p.id(), p));
+      presets.forEach(p -> user.put(p.id(), displayed(p)));
       persistUser();
     }
     apply(merge());
@@ -459,7 +481,10 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
 
   private Optional<List<WindowPreset>> loadSite(Path file) {
     try {
-      return Optional.of(WindowPresetJson.read(file, bases(builtIn)));
+      return Optional.of(
+          WindowPresetJson.read(file, bases(builtIn)).stream()
+              .map(WindowPresetRegistry::displayed)
+              .toList());
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read the site window presets: {}", file, e);
       return Optional.empty();
@@ -475,7 +500,7 @@ public final class WindowPresetRegistry implements ModalityPresetProvider {
     try {
       List<WindowPreset> presets = WindowPresetJson.read(userFile, bases(site, builtIn));
       user.clear();
-      presets.forEach(p -> user.put(p.id(), p));
+      presets.forEach(p -> user.put(p.id(), displayed(p)));
     } catch (IOException | RuntimeException e) {
       userUnreadable = true;
       LOGGER.error("Cannot read the user window presets: {}", userFile, e);

@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.dicom.codec.hp.HangingEngine.ProtocolScore;
+import org.weasis.dicom.codec.hp.ProtocolNames;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.hp.HpStudies;
@@ -64,7 +65,9 @@ public final class StudyHints {
     StringBuilder hint = new StringBuilder();
     if (!candidates.isEmpty()) {
       ProtocolScore best = candidates.getFirst();
-      String name = best.document().protocol().getHangingProtocolName();
+      String name =
+          ProtocolNames.name(
+              best.document().id(), best.document().protocol().getHangingProtocolName());
       hint.append(name == null ? best.document().id() : name);
     }
     session.ifPresent(
