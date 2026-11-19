@@ -313,11 +313,14 @@ public class LoadQrSeries extends LoadSeries {
       return;
     }
     Path file = p.getProcessedFile();
-    applyIdentityOverrides(file, getDicomModel(), getDicomSeries());
-    LoadLocalDicom task =
-        new LoadLocalDicom(
-            new File[] {file.toFile()}, false, getDicomModel(), context.getOpeningStrategy());
-    DicomModel.LOADING_EXECUTOR.execute(task);
+    // Return the C-STORE receive thread to the network immediately; disk I/O runs in the background
+    DicomModel.LOADING_EXECUTOR.execute(
+        () -> {
+          applyIdentityOverrides(file, getDicomModel(), getDicomSeries());
+          new LoadLocalDicom(
+                  new File[] {file.toFile()}, false, getDicomModel(), context.getOpeningStrategy())
+              .run();
+        });
   }
 
   /**
