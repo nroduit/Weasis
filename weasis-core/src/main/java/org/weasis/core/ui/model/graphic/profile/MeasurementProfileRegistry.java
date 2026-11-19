@@ -200,7 +200,7 @@ public final class MeasurementProfileRegistry {
       withDefault.add(
           new MeasurementProfile(
               MeasurementProfile.DEFAULT_ID,
-              "Default",
+              "Default (all tools)",
               null,
               null,
               null,
