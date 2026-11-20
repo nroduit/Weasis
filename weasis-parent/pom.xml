@@ -51,7 +51,11 @@
     <weasis.releasenotes>https://github.com/nroduit/Weasis/releases/tag/v5.0.0-beta.1</weasis.releasenotes>
 
     <flatlaf.version>3.8</flatlaf.version>
-    <miglayout.version>11.5.2</miglayout.version>
+    <!-- Keep 11.4.3: with 11.5.2 the last row of a container that has a border (a titled group) is
+      laid out too short, which clips its combo boxes, check boxes and spinners. It shows since
+      MigLayout shares the class path of FlatLaf, which then gives it the visual padding of the
+      components (4.x loads MigLayout as a bundle and is not affected) -->
+    <miglayout.version>11.4.3</miglayout.version>
     <xz.version>1.12</xz.version>
 
     <pf4j.version>3.15.0</pf4j.version>
