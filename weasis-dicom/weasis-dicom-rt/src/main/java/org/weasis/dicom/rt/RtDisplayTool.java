@@ -12,7 +12,6 @@ package org.weasis.dicom.rt;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
@@ -27,7 +26,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -37,6 +35,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JViewport;
 import javax.swing.SwingWorker;
 import javax.swing.SwingWorker.StateValue;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -52,7 +51,6 @@ import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.api.gui.util.WrapFlowLayout;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -143,7 +141,15 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   /** Map a tree to its root group node. */
   private final Map<SegRegionTree, GroupTreeNode> rootGroupOf = new HashMap<>(2);
 
-  private final JLabel txtRtPlanDoseValue = new JLabel();
+  private static final String NO_VALUE = "–"; // NON-NLS
+  private static final int ISODOSES_TAB = 1;
+
+  private final JLabel lblStructures =
+      new JLabel(Messages.getString("structures") + StringUtil.COLON);
+  private final JLabel lblPlan = new JLabel(Messages.getString("plan") + StringUtil.COLON);
+  private final JLabel lblDose = new JLabel(Messages.getString("dose") + StringUtil.COLON);
+  private final JLabel txtRtPlanDoseValue = new JLabel(NO_VALUE);
+  private final JButton btnShowDvh = new JButton(Messages.getString("display.dvh.chart"));
 
   private RtSet rtSet;
   private boolean initPathSelection;
@@ -243,57 +249,69 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
     initializeTrees();
     setInitialVisibility(false);
+    updateEnabledState();
   }
 
+  /**
+   * The header as a form: the labels in a column at the reading side, the fields filling the rest
+   * of the width.
+   */
   private JPanel createHeaderPanel() {
-    JPanel headerPanel = new JPanel();
-    headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.PAGE_AXIS));
+    JPanel headerPanel =
+        new JPanel(new MigLayout("fillx, ins 5lp, wrap 2", "[][grow,fill]")); // NON-NLS
 
-    // Load panel
     btnLoad.setToolTipText(Messages.getString("populate.rt.objects"));
-    JPanel loadPanel = createFlowPanel(FlowLayout.LEADING);
-    loadPanel.add(btnLoad);
-    loadPanel.add(progressBar);
     progressBar.setVisible(false);
-    headerPanel.add(loadPanel);
+    headerPanel.add(btnLoad, "span, split 2, growx 0"); // NON-NLS
+    headerPanel.add(progressBar, "growx 0"); // NON-NLS
 
     // Structure set and plan: the combos follow the width of the side, down to a cut name
     GuiUtils.setPreferredWidth(comboRtStructureSet, 230, GuiUtils.MIN_SHRUNK_COMBO_WIDTH);
-    headerPanel.add(
-        GuiUtils.getHorizontalBoxLayoutPanel(
-            5,
-            new JLabel(Messages.getString("structures") + StringUtil.COLON),
-            comboRtStructureSet));
-    headerPanel.add(GuiUtils.boxVerticalStrut(5));
-    GuiUtils.setPreferredWidth(comboRtPlan, 240, GuiUtils.MIN_SHRUNK_COMBO_WIDTH);
-    headerPanel.add(
-        GuiUtils.getHorizontalBoxLayoutPanel(
-            5, new JLabel(Messages.getString("plan") + StringUtil.COLON), comboRtPlan));
+    GuiUtils.setPreferredWidth(comboRtPlan, 230, GuiUtils.MIN_SHRUNK_COMBO_WIDTH);
+    lblStructures.setLabelFor(comboRtStructureSet);
+    lblPlan.setLabelFor(comboRtPlan);
+    headerPanel.add(lblStructures);
+    headerPanel.add(comboRtStructureSet);
+    headerPanel.add(lblPlan);
+    headerPanel.add(comboRtPlan);
+    headerPanel.add(lblDose);
+    headerPanel.add(txtRtPlanDoseValue);
 
-    // Dose panel: the check box goes under the dose when the side is narrow
-    int gap = GuiUtils.getScaleLength(5);
-    JPanel dosePanel = new JPanel(new WrapFlowLayout(gap, gap));
-    dosePanel.setBorder(GuiUtils.getEmptyBorder(5, 5, 5, 5));
-    dosePanel.add(
-        new JLabel(Messages.getString("dose") + StringUtil.COLON), WrapFlowLayout.KEEP_WITH_NEXT);
-    dosePanel.add(txtRtPlanDoseValue, WrapFlowLayout.KEEP_WITH_NEXT);
-    dosePanel.add(new JLabel("cGy")); // NON-NLS
     colorwashCheck.addActionListener(e -> applyColorwash(colorwashCheck.isSelected()));
-    dosePanel.add(colorwashCheck);
-    headerPanel.add(dosePanel);
+    headerPanel.add(GuiUtils.shrinkable(colorwashCheck), "skip"); // NON-NLS
 
-    // DVH panel
-    JPanel dvhPanel = createFlowPanel(FlowLayout.LEADING);
-    JButton btnShowDvh = new JButton(Messages.getString("display.dvh.chart"));
     btnShowDvh.addActionListener(e -> showDvhChart());
-    dvhPanel.add(btnShowDvh);
-    headerPanel.add(dvhPanel);
-
+    headerPanel.add(btnShowDvh, "span, growx 0"); // NON-NLS
     return headerPanel;
   }
 
-  private JPanel createFlowPanel(int alignment) {
-    return new JPanel(new FlowLayout(alignment));
+  /**
+   * Enables what the loaded RT objects allow: the lists when they hold a choice, the dose items
+   * (colorwash, isodoses, DVH) when the selected plan has a dose, the opacity when its tab shows a
+   * structure set or a dose.
+   */
+  private void updateEnabledState() {
+    boolean structures = comboRtStructureSet.getItemCount() > 0;
+    boolean plans = comboRtPlan.getItemCount() > 0;
+    Dose dose = selectedDose();
+
+    lblStructures.setEnabled(structures);
+    comboRtStructureSet.setEnabled(structures);
+    lblPlan.setEnabled(plans);
+    comboRtPlan.setEnabled(plans);
+    lblDose.setEnabled(plans);
+    if (!plans) {
+      txtRtPlanDoseValue.setText(NO_VALUE);
+    }
+    txtRtPlanDoseValue.setEnabled(plans);
+    colorwashCheck.setEnabled(dose != null && dose.getImageSeries() != null);
+    btnShowDvh.setEnabled(structures && dose != null);
+
+    tabbedPane.setEnabledAt(ISODOSES_TAB, dose != null);
+    if (dose == null && tabbedPane.getSelectedIndex() == ISODOSES_TAB) {
+      tabbedPane.setSelectedIndex(0);
+    }
+    slider.setEnabled(getSelectedRegion() != null);
   }
 
   private void initializeListeners() {
@@ -303,7 +321,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
     comboRtStructureSet.addItemListener(structureChangeListener);
     comboRtPlan.addItemListener(planChangeListener);
-    tabbedPane.addChangeListener(_ -> initSlider());
+    tabbedPane.addChangeListener(
+        _ -> {
+          initSlider();
+          slider.setEnabled(getSelectedRegion() != null);
+        });
   }
 
   private void initializeTrees() {
@@ -347,9 +369,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   }
 
   private void setInitialVisibility(boolean visible) {
-    comboRtStructureSet.setVisible(visible);
-    comboRtPlan.setVisible(visible);
-    txtRtPlanDoseValue.setVisible(visible);
     treeStructures.setVisible(visible);
     treeIsodoses.setVisible(visible);
   }
@@ -641,7 +660,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   }
 
   private SpecialElementRegion getSelectedRegion() {
-    boolean isDoseSelected = tabbedPane.getSelectedIndex() == 1;
+    boolean isDoseSelected = tabbedPane.getSelectedIndex() == ISODOSES_TAB;
 
     if (isDoseSelected) {
       Plan plan = (Plan) comboRtPlan.getSelectedItem();
@@ -842,11 +861,13 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     syncColorwash(viewCanvas);
     if (rtSet == null || rtSet.getStructures().isEmpty()) {
       clearTrees();
+      updateEnabledState();
       return;
     }
 
     updateComboBoxes();
     initSlider();
+    updateEnabledState();
     updateGraphics(viewCanvas);
   }
 
@@ -1021,6 +1042,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     // fired during the rebuild were ignored (initPathSelection was true), so region visibility
     // would otherwise stay stale until the user manually toggled or moved the slider.
     syncAllRegionsFromTrees();
+    updateEnabledState();
   }
 
   /**
@@ -1102,7 +1124,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   }
 
   private void updatePlanInfo(Plan selectedPlan) {
-    txtRtPlanDoseValue.setText(String.format("%.0f", selectedPlan.getRxDose())); // NON-NLS
+    txtRtPlanDoseValue.setText(String.format("%.0f cGy", selectedPlan.getRxDose())); // NON-NLS
   }
 
   private void addIsodosesToTree(Dose planDose) {
@@ -1268,6 +1290,13 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   @Override
   public Component getToolComponent() {
     return getToolComponentFromJScrollPane(rootPane);
+  }
+
+  /** The lists take the height the slot leaves; the tool scrolls only when the slot is shorter. */
+  @Override
+  public boolean getScrollableTracksViewportHeight() {
+    return getParent() instanceof JViewport viewport
+        && viewport.getHeight() >= getPreferredSize().height;
   }
 
   @Override
