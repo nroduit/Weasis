@@ -53,6 +53,8 @@ final class FacetChipBar extends JPanel {
   private final DicomExplorer explorer;
   private final JLabel countLabel = new JLabel();
   private boolean relayoutPending;
+  // The width a new pass was asked for: one request per width, the parent may not grant the height
+  private int relayoutWidth = -1;
 
   FacetChipBar(DicomExplorer explorer) {
     super(
@@ -76,12 +78,22 @@ final class FacetChipBar extends JPanel {
     return getPreferredSize();
   }
 
-  /** Once the width is known the rows may differ from the first guess: ask for a new pass. */
+  /**
+   * Once the width is known the rows may differ from the first guess: ask for a new pass, once for
+   * a given width. Asking again when the height still differs never ends when the parent cannot
+   * give that height (the bar hidden, a fixed row), and keeps the event thread busy forever.
+   */
   @Override
   public void doLayout() {
     super.doLayout();
-    if (!relayoutPending && super.getPreferredSize().height != getHeight()) {
+    int width = getWidth();
+    if (!relayoutPending
+        && isVisible()
+        && width > 0
+        && width != relayoutWidth
+        && super.getPreferredSize().height != getHeight()) {
       relayoutPending = true;
+      relayoutWidth = width;
       SwingUtilities.invokeLater(
           () -> {
             relayoutPending = false;
@@ -93,6 +105,7 @@ final class FacetChipBar extends JPanel {
   /** Rebuilds the chips from the filter; {@code counts} is {matching, total} or null. */
   void update(SeriesFilter filter, int[] counts) {
     removeAll();
+    relayoutWidth = -1; // New chips: their rows at the current width are not known yet
     boolean active = filter.isActive();
     setVisible(active);
     if (!active) {
