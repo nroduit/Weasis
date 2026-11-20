@@ -41,6 +41,12 @@ public final class ColorProfileOp extends AbstractOp {
   public static final String P_TARGET_PROFILE = "icc.target.profile"; // NON-NLS
 
   /**
+   * Device id of the monitor the pixels are shown on, whose profile is the target when it has one
+   * of its own. (String, Optional: the workstation profile)
+   */
+  public static final String P_DISPLAY_ID = "icc.display.id"; // NON-NLS
+
+  /**
    * The colors entering the operation come from a color map, not from the image: they are sRGB,
    * whatever profile the image carries. Set with the map of {@link PseudoColorOp}. (Boolean,
    * Optional: false)
@@ -128,7 +134,7 @@ public final class ColorProfileOp extends AbstractOp {
     IccProfile target = (IccProfile) params.get(P_TARGET_PROFILE);
     ColorTransform transform;
     if (target == null) {
-      transform = ColorManagement.toDisplay(profile);
+      transform = ColorManagement.toDisplay(profile, (String) params.get(P_DISPLAY_ID));
     } else {
       transform =
           ColorManagement.isEnabled()

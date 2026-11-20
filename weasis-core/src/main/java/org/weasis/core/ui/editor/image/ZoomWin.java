@@ -315,6 +315,11 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
             .orElse(null);
     getDisplayOpManager()
         .setParamValue(ColorProfileOp.OP_NAME, ColorProfileOp.P_SOURCE_PROFILE, profile);
+    getDisplayOpManager()
+        .setParamValue(
+            ColorProfileOp.OP_NAME,
+            ColorProfileOp.P_DISPLAY_ID,
+            DisplayColor.screenId(view2d.getJComponent()));
   }
 
   protected PlanarImage getSourceImage() {

@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.39, protocol 2, application development.
+Command API 2.40, protocol 2, application development.
 
 ## color
 
@@ -10,15 +10,17 @@ Color management of the display: switch, display profile, view conversion.
 
 Switches color management or sets the display profile, then prints the status.
 
-Usage: `color:set [-h] [--json] [--enabled=<true|false>] [--display-profile=<input-path> | --srgb]`
+Usage: `color:set [-h] [--auto] [--json] [--enabled=<true|false>] [--screen=<id>] [--display-profile=<input-path> | --srgb]`
 
 Needs: file read
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| --auto | boolean |  | With --screen: the monitor follows the display profile again. |
 | --display-profile | input-path |  | ICC profile file (.icc, .icm) of the display of this workstation. |
 | --enabled | boolean |  | Convert color images to the display profile. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
+| --screen | string |  | A screen id of 'workspace:screens': --display-profile gives this monitor a profile of its own, --auto takes it back. |
 | --srgb | boolean |  | No display profile: the display is sRGB. |
 
 ### color:status

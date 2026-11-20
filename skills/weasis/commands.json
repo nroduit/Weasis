@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.39",
+  "apiVersion": "2.40",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -20,12 +20,22 @@
         {
           "name": "set",
           "description": "Switches color management or sets the display profile, then prints the status.",
-          "usage": "color:set [-h] [--json] [--enabled=<true|false>] [--display-profile=<input-path> | --srgb]",
+          "usage": "color:set [-h] [--auto] [--json] [--enabled=<true|false>] [--screen=<id>] [--display-profile=<input-path> | --srgb]",
           "needs": [
             "file-read"
           ],
           "parameters": [],
           "options": [
+            {
+              "names": [
+                "--auto"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "With --screen: the monitor follows the display profile again."
+            },
             {
               "names": [
                 "--display-profile"
@@ -62,6 +72,16 @@
               "arity": "0",
               "required": false,
               "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--screen"
+              ],
+              "label": "<id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "A screen id of 'workspace:screens': --display-profile gives this monitor a profile of its own, --auto takes it back."
             },
             {
               "names": [

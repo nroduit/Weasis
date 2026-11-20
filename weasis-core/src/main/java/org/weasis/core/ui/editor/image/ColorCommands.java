@@ -10,10 +10,13 @@
 package org.weasis.core.ui.editor.image;
 
 import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Optional;
 import org.pf4j.Extension;
 import org.weasis.core.api.command.AbstractVerb;
 import org.weasis.core.api.command.Capability;
@@ -27,6 +30,7 @@ import org.weasis.core.api.image.color.ColorManagement;
 import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.core.api.setting.CoreSettings;
 import org.weasis.core.api.setting.Settings;
+import org.weasis.core.ui.editor.ScreenRoles;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -96,15 +100,45 @@ public class ColorCommands implements CommandExtension {
     @ArgGroup(exclusive = true)
     DisplayChoice display;
 
+    @Option(
+        names = "--screen",
+        paramLabel = "<id>",
+        description =
+            "A screen id of 'workspace:screens': --display-profile gives this monitor a profile"
+                + " of its own, --auto takes it back.")
+    String screen;
+
+    @Option(
+        names = "--auto",
+        description = "With --screen: the monitor follows the display profile again.")
+    boolean useDefault;
+
     @Override
     protected void run() throws IOException {
-      if (enabled == null && display == null) {
-        throw invalid("Give --enabled, --display-profile or --srgb");
+      if (enabled == null && display == null && !useDefault) {
+        throw invalid("Give --enabled, --display-profile, --srgb or --screen with --auto");
+      }
+      if (useDefault && (screen == null || display != null)) {
+        throw invalid("--auto goes with --screen, without --display-profile or --srgb");
+      }
+      if (screen != null) {
+        if (!ScreenRoles.devices().containsKey(screen)) {
+          throw invalid("No screen " + screen + ": see 'workspace:screens'");
+        }
+        if (display != null && display.file == null) {
+          throw invalid("--srgb is the display profile; give --screen a file or --auto");
+        }
       }
       if (enabled != null && !DisplayColor.setEnabled(enabled)) {
         throw invalid("Color management is locked by the site configuration");
       }
-      if (display != null) {
+      if (screen != null) {
+        if (useDefault) {
+          DisplayColor.resetScreenProfile(screen);
+        } else if (display != null) {
+          DisplayColor.setScreenProfile(screen, display.file.value());
+        }
+      } else if (display != null) {
         if (display.file != null) {
           DisplayColor.setDisplayProfile(display.file.value());
         } else if (!DisplayColor.resetDisplayProfile()) {
@@ -123,6 +157,18 @@ public class ColorCommands implements CommandExtension {
     JsonObjectBuilder display = describe(ColorManagement.displayProfile());
     ColorManagement.displayProfileFile().ifPresent(f -> display.add("file", f.toString()));
     body.add("display", display); // NON-NLS
+    JsonArrayBuilder screens = Json.createArrayBuilder();
+    for (String id : ScreenRoles.devices().keySet()) {
+      JsonObjectBuilder screen = Json.createObjectBuilder().add("id", id); // NON-NLS
+      Optional<Path> file = ColorManagement.screenProfileFile(id);
+      screen.add("own", file.isPresent()); // NON-NLS
+      if (file.isPresent()) {
+        screen.add("profile", describe(ColorManagement.displayProfile(id))); // NON-NLS
+        screen.add("file", file.get().toString()); // NON-NLS
+      }
+      screens.add(screen);
+    }
+    body.add("screens", screens); // NON-NLS
     target
         .resolve()
         .ifPresent(
@@ -132,6 +178,7 @@ public class ColorCommands implements CommandExtension {
                       .getParamValue(ColorProfileOp.OP_NAME, ColorProfileOp.P_SOURCE_PROFILE)
                       .orElse(null);
               IccProfile source = value instanceof IccProfile p ? p : null;
+              String screenId = DisplayColor.screenId(view.getJComponent());
               JsonObjectBuilder v =
                   Json.createObjectBuilder()
                       .add(
@@ -143,7 +190,13 @@ public class ColorCommands implements CommandExtension {
                       .add("declared", source != null) // NON-NLS
                       .add(
                           "conversion", // NON-NLS
-                          ColorManagement.toDisplay(source).kind().name().toLowerCase(Locale.ROOT));
+                          ColorManagement.toDisplay(source, screenId)
+                              .kind()
+                              .name()
+                              .toLowerCase(Locale.ROOT));
+              if (screenId != null) {
+                v.add("screen", screenId); // NON-NLS
+              }
               body.add("view", v); // NON-NLS
             });
     return body.build();

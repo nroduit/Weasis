@@ -1225,7 +1225,7 @@ public class View2dCommands implements CommandExtension {
       if (file.getParent() != null) {
         Files.createDirectories(file.getParent());
       }
-      ViewCapture.write(result, format, file);
+      ViewCapture.write(result, format, file, resolved.view().getJComponent());
       CommandContext.current().addFile(file);
 
       int dx = cropped == null ? 0 : cropped.x;

@@ -243,9 +243,27 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     setBorder(viewBorder);
     setFocusable(true);
+    // The colors are converted to the profile of the monitor the view is on
+    addPropertyChangeListener("graphicsConfiguration", e -> updateDisplayScreen()); // NON-NLS
     // Must be larger to the screens to be resized correctly by the container
     setPreferredSize(new Dimension(4096, 4096));
     setMinimumSize(new Dimension(50, 50));
+  }
+
+  /** Tells the color operation which monitor shows the view, when it moved to another one. */
+  private void updateDisplayScreen() {
+    String screenId = DisplayColor.screenId(this);
+    if (screenId == null) {
+      return; // not displayed: the last monitor still holds
+    }
+    OpManager disOp = getDisplayOpManager();
+    Object current =
+        disOp.getParamValue(ColorProfileOp.OP_NAME, ColorProfileOp.P_DISPLAY_ID).orElse(null);
+    if (!screenId.equals(current)
+        && disOp.setParamValue(ColorProfileOp.OP_NAME, ColorProfileOp.P_DISPLAY_ID, screenId)
+        && imageLayer.getSourceImage() != null) {
+      imageLayer.updateDisplayOperations();
+    }
   }
 
   @Override

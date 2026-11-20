@@ -54,6 +54,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.hp.HangingProtocolDocuments;
+import org.weasis.core.api.image.color.ColorManagement;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -173,6 +174,7 @@ public final class UICore {
     this.pluginPersistenceMap = new HashMap<>();
     this.localPersistence = new WProperties();
     ScreenRoles.setStore(() -> localPersistence);
+    ColorManagement.setScreenStore(() -> localPersistence);
     this.viewerPlugins = Collections.synchronizedList(new ArrayList<>());
     this.explorerPlugins = Collections.synchronizedList(new ArrayList<>());
     this.explorerPluginToolbars = Collections.synchronizedList(new ArrayList<>());

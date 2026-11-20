@@ -9,9 +9,12 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import java.awt.Component;
+import java.awt.GraphicsConfiguration;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.color.ColorManagement;
@@ -62,6 +65,34 @@ public final class DisplayColor {
     boolean done = Settings.reset(CoreSettings.DISPLAY_PROFILE);
     refreshViews();
     return done;
+  }
+
+  /**
+   * Gives the monitor {@code screenId} a profile of its own, in the local settings of this
+   * workstation.
+   *
+   * @throws IOException when the file holds no RGB profile
+   */
+  public static IccProfile setScreenProfile(String screenId, Path file) throws IOException {
+    ColorManagement.setScreenProfile(screenId, Objects.requireNonNull(file));
+    refreshViews();
+    return ColorManagement.displayProfile(screenId);
+  }
+
+  /** The monitor {@code screenId} follows the profile of the workstation again. */
+  public static void resetScreenProfile(String screenId) {
+    try {
+      ColorManagement.setScreenProfile(screenId, null);
+    } catch (IOException e) {
+      throw new IllegalStateException(e); // no file is read when a profile is removed
+    }
+    refreshViews();
+  }
+
+  /** The device id of the monitor a component is shown on, or null when it is not displayed. */
+  public static String screenId(Component component) {
+    GraphicsConfiguration gc = component == null ? null : component.getGraphicsConfiguration();
+    return gc == null ? null : gc.getDevice().getIDstring();
   }
 
   /** Runs a display pass on every open image view, whose color operation sees the change. */

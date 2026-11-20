@@ -248,7 +248,9 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
           // What is painted holds the values sent to the display; a rendered export is sRGB
           IccProfile profile = null;
           if (!isViewScope() || !isView2d() || viewRadio.isSelected()) {
-            profile = IccImageFiles.displayedProfile().orElse(null);
+            profile =
+                IccImageFiles.displayedProfile(DisplayColor.screenId(viewCanvas.getJComponent()))
+                    .orElse(null);
           }
           if (!isViewScope()) {
             IccProfile displayed = profile;

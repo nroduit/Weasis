@@ -14,17 +14,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.awt.color.ICC_Profile;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Rect;
@@ -38,6 +42,7 @@ import org.weasis.core.api.image.cv.OpenCvTestLoader;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Taggable;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.ByteLut;
@@ -102,6 +107,42 @@ class ColorProfileOpTest {
     byte[] expected = new byte[in.length];
     ColorManagement.toDisplay(wide).convertRow(in, expected, in.length);
     assertArrayEquals(expected, pixels(out.toImageCV()));
+  }
+
+  @Test
+  void a_monitor_with_its_own_profile_gets_its_own_conversion(@TempDir Path dir) throws Exception {
+    Path file = Files.write(dir.resolve("wide.icc"), wide.data());
+    WProperties local = new WProperties();
+    ColorManagement.setScreenStore(() -> local);
+    try {
+      long before = ColorManagement.generation();
+      ColorManagement.setScreenProfile("screen-B", file);
+      assertTrue(ColorManagement.generation() > before, "the views are rendered again");
+      assertEquals(
+          file.toAbsolutePath().toString(), local.getProperty("weasis.screen.screen-B.profile"));
+      assertEquals(wide, ColorManagement.displayProfile("screen-B"));
+      assertEquals(ColorManagement.displayProfile(), ColorManagement.displayProfile("screen-A"));
+
+      ImageCV src = color(24, 16);
+      ColorProfileOp onA = new ColorProfileOp();
+      onA.setParam(ColorProfileOp.P_DISPLAY_ID, "screen-A");
+      assertSame(src, run(onA, src), "sRGB image on a monitor without a profile of its own");
+
+      ColorProfileOp onB = new ColorProfileOp();
+      onB.setParam(ColorProfileOp.P_DISPLAY_ID, "screen-B");
+      PlanarImage out = run(onB, src);
+      assertNotSame(src, out);
+      byte[] in = pixels(src);
+      byte[] expected = new byte[in.length];
+      ColorManagement.to(null, wide).convertRow(in, expected, in.length);
+      assertArrayEquals(expected, pixels(out.toImageCV()));
+
+      ColorManagement.setScreenProfile("screen-B", null);
+      assertNull(local.getProperty("weasis.screen.screen-B.profile"));
+      assertSame(src, run(onB, src), "back to the display profile of the workstation");
+    } finally {
+      ColorManagement.setScreenStore(() -> null);
+    }
   }
 
   @Test

@@ -27,7 +27,9 @@ class ColorCommandsTest {
           "color:status --view v1 --pane 2 --json",
           "color:set --enabled false",
           "color:set --display-profile /tmp/display.icc",
-          "color:set --srgb --enabled true");
+          "color:set --srgb --enabled true",
+          "color:set --screen :0.1 --display-profile /tmp/wide.icc",
+          "color:set --screen :0.1 --auto");
 
   @Test
   void documentedCommandLinesParse() {

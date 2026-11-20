@@ -40,8 +40,16 @@ public final class IccImageFiles {
 
   /** The profile of a capture of the displayed views, when it is not sRGB. */
   public static Optional<IccProfile> displayedProfile() {
-    return ColorManagement.isEnabled() && ColorManagement.hasDisplayProfile()
-        ? Optional.of(ColorManagement.displayProfile())
+    return displayedProfile(null);
+  }
+
+  /**
+   * The profile of a capture of the views displayed on the monitor {@code screenId} (null: the
+   * workstation profile), when it is not sRGB.
+   */
+  public static Optional<IccProfile> displayedProfile(String screenId) {
+    return ColorManagement.isEnabled() && ColorManagement.hasDisplayProfile(screenId)
+        ? Optional.of(ColorManagement.displayProfile(screenId))
         : Optional.empty();
   }
 

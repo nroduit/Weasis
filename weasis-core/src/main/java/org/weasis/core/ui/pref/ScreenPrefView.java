@@ -26,9 +26,11 @@ import java.awt.Stroke;
 import java.awt.Window;
 import java.awt.event.ItemEvent;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -100,6 +102,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
       realZoomButton.setToolTipText(Messages.getString("ScreenPrefView.calib_real"));
       add(GuiUtils.getFlowLayoutPanel(monitorLabel, realZoomButton));
       add(GuiUtils.getFlowLayoutPanel(roleLabel(), roleComboBox(monitor.getMonitorID())));
+      add(screenProfilePanel(monitor.getMonitorID()));
     }
 
     int defIndex = getDefaultMonitor();
@@ -159,13 +162,62 @@ public class ScreenPrefView extends AbstractItemDialogPage {
     panel.add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, enabled));
     panel.add(
         GuiUtils.getFlowLayoutPanel(
-            new JLabel(Messages.getString("ScreenPrefView.display_profile") + StringUtil.COLON),
+            new JLabel(
+                Messages.getString("ScreenPrefView.default_display_profile") + StringUtil.COLON),
             profileLabel,
             choose,
             srgb));
     panel.setBorder(
         GuiUtils.getTitledBorder(Messages.getString("ScreenPrefView.color_management")));
     return panel;
+  }
+
+  /**
+   * The profile of one monitor: the default one of the workstation, or a file of its own, kept in
+   * the local settings and applied at once.
+   */
+  private static JPanel screenProfilePanel(String monitorId) {
+    JLabel label =
+        new JLabel(Messages.getString("ScreenPrefView.display_profile") + StringUtil.COLON);
+    label.setBorder(GuiUtils.getEmptyBorderLeading(0, ITEM_SEPARATOR_LARGE, 0, 0));
+    JLabel profileLabel = new JLabel(screenProfileText(monitorId));
+    JButton choose = new JButton(Messages.getString("ScreenPrefView.choose_profile"));
+    JButton useDefault = new JButton(Messages.getString("ScreenPrefView.profile_use_default"));
+    useDefault.setEnabled(ColorManagement.screenProfileFile(monitorId).isPresent());
+    choose.addActionListener(
+        e -> {
+          Path file =
+              chooseProfileFile(
+                  (Component) e.getSource(),
+                  ColorManagement.screenProfileFile(monitorId)
+                      .or(ColorManagement::displayProfileFile));
+          if (file != null) {
+            try {
+              DisplayColor.setScreenProfile(monitorId, file);
+            } catch (IOException ex) {
+              showProfileError((Component) e.getSource(), ex);
+            }
+            profileLabel.setText(screenProfileText(monitorId));
+            useDefault.setEnabled(ColorManagement.screenProfileFile(monitorId).isPresent());
+          }
+        });
+    useDefault.addActionListener(
+        e -> {
+          DisplayColor.resetScreenProfile(monitorId);
+          profileLabel.setText(screenProfileText(monitorId));
+          useDefault.setEnabled(false);
+        });
+    return GuiUtils.getFlowLayoutPanel(label, profileLabel, choose, useDefault);
+  }
+
+  private static String screenProfileText(String monitorId) {
+    Optional<Path> file = ColorManagement.screenProfileFile(monitorId);
+    if (file.isEmpty()) {
+      return Messages.getString("ScreenPrefView.profile_default");
+    }
+    return ColorManagement.displayProfile(monitorId)
+        .description()
+        .orElseGet(() -> file.get().getFileName().toString());
   }
 
   private static String displayProfileText() {
@@ -183,23 +235,34 @@ public class ScreenPrefView extends AbstractItemDialogPage {
   }
 
   private static void chooseDisplayProfile(Component parent) {
-    SystemFileChooser chooser =
-        new SystemFileChooser(
-            ColorManagement.displayProfileFile().map(p -> p.getParent().toString()).orElse(""));
-    chooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
-    chooser.setFileFilter(new FileNameExtensionFilter("ICC profile", "icc", "icm")); // NON-NLS
-    if (chooser.showOpenDialog(parent) == SystemFileChooser.APPROVE_OPTION
-        && chooser.getSelectedFile() != null) {
+    Path file = chooseProfileFile(parent, ColorManagement.displayProfileFile());
+    if (file != null) {
       try {
-        DisplayColor.setDisplayProfile(chooser.getSelectedFile().toPath());
+        DisplayColor.setDisplayProfile(file);
       } catch (IOException ex) {
-        JOptionPane.showMessageDialog(
-            WinUtil.getValidComponent(parent),
-            ex.getMessage(),
-            Messages.getString("ScreenPrefView.display_profile"),
-            JOptionPane.ERROR_MESSAGE);
+        showProfileError(parent, ex);
       }
     }
+  }
+
+  /** Asks for an ICC profile file, starting in the folder of {@code current}; null when none. */
+  private static Path chooseProfileFile(Component parent, Optional<Path> current) {
+    SystemFileChooser chooser =
+        new SystemFileChooser(current.map(Path::getParent).map(Path::toString).orElse(""));
+    chooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
+    chooser.setFileFilter(new FileNameExtensionFilter("ICC profile", "icc", "icm")); // NON-NLS
+    return chooser.showOpenDialog(parent) == SystemFileChooser.APPROVE_OPTION
+            && chooser.getSelectedFile() != null
+        ? chooser.getSelectedFile().toPath()
+        : null;
+  }
+
+  private static void showProfileError(Component parent, IOException ex) {
+    JOptionPane.showMessageDialog(
+        WinUtil.getValidComponent(parent),
+        ex.getMessage(),
+        Messages.getString("ScreenPrefView.display_profile"),
+        JOptionPane.ERROR_MESSAGE);
   }
 
   private static JLabel roleLabel() {

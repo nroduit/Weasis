@@ -25,7 +25,9 @@ import javax.imageio.ImageIO;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.color.IccImageFiles;
 import org.weasis.core.api.image.color.IccProfile;
+import org.weasis.core.ui.docking.ws.WorkspaceManager;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.DisplayColor;
 import org.weasis.core.ui.editor.image.DisplayProfile;
 import org.weasis.core.ui.editor.image.LiveCaptureView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -229,9 +231,23 @@ public final class ViewCapture {
     };
   }
 
-  /** Writes a capture; a color capture carries the display profile when the format can embed it. */
+  /**
+   * Writes a capture; a color capture carries the display profile when the format can embed it: the
+   * one of the monitor of the main window.
+   */
   public static void write(BufferedImage image, String format, Path file) throws IOException {
-    IccProfile profile = IccImageFiles.displayedProfile().orElse(null);
+    WorkspaceManager manager = GuiUtils.getUICore().getWorkspaceManager();
+    write(image, format, file, manager == null ? null : manager.mainWindow());
+  }
+
+  /**
+   * Writes a capture; a color capture carries the profile of the monitor {@code shownOn} is
+   * displayed on, when the format can embed it.
+   */
+  public static void write(BufferedImage image, String format, Path file, Component shownOn)
+      throws IOException {
+    IccProfile profile =
+        IccImageFiles.displayedProfile(DisplayColor.screenId(shownOn)).orElse(null);
     if (profile != null
         && image.getRaster().getNumBands() == 3
         && IccImageFiles.canEmbed(file, profile)) {

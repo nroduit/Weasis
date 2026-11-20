@@ -82,7 +82,7 @@ Each file states the colors of its pixels once, and the declaration matches the 
 | File | Pixels | Profile |
 |---|---|---|
 | Image rendered off-screen (the original image of the screenshot dialog, image export of DICOM) | converted to sRGB by a `ColorProfileOp` targeting sRGB at the end of `buildSimpleOpManager` | none: an untagged file is sRGB |
-| Capture of what is displayed (view of the screenshot dialog, `view2d:capture`) | the values sent to the display | the display profile, when one other than sRGB is set, in PNG, and in JPEG when it fits in one `APP2` segment |
+| Capture of what is displayed (view of the screenshot dialog, `view2d:capture`) | the values sent to the display | the profile of the monitor of the view (of the main window for a layout or a window), when one other than sRGB is set, in PNG, and in JPEG when it fits in one `APP2` segment |
 | DICOM object made by the dicomizer (Acquire) | the values of the original file | ICC Profile (0028,2000) of the original file, with the Input Device class the module requires; the sRGB Input Device profile and Color Space `SRGB` when the file has none or is sRGB |
 | Color Palette exported from the color map editor | — | the sRGB Input Device profile |
 
@@ -91,8 +91,21 @@ Each file states the colors of its pixels once, and the declaration matches the 
 | Setting | Meaning |
 |---|---|
 | `weasis.color.management` | convert the displayed color images (default on) |
-| `weasis.color.display.profile` | ICC profile file of the display of this workstation (machine scope; empty: sRGB) |
+| `weasis.color.display.profile` | ICC profile file of the display of this workstation (machine scope; empty: sRGB): the default of every monitor |
+| `weasis.screen.<id>.profile` | ICC profile file of one monitor, by device id; a local setting like the screen roles, never in the remote preferences |
 
-Both are in the Monitors page of the preferences. The `color:` namespace reads and changes them:
-`color:status` gives the switch, the display profile and, for a view, its source profile and the
-kind of conversion applied; `color:set` switches the conversion or sets the display profile.
+All are in the Monitors page of the preferences. The `color:` namespace reads and changes them:
+`color:status` gives the switch, the display profile, the monitors with a profile of their own
+and, for a view, its source profile, its monitor and the kind of conversion applied; `color:set`
+switches the conversion, sets the display profile, or with `--screen <id>` gives a monitor its own
+profile (`--display-profile`) or takes it back (`--auto`).
+
+## A profile per monitor
+
+A view converts to the profile of the monitor it is on. `DefaultView2d` listens to the
+`graphicsConfiguration` property of its component and gives the device id to its `ColorProfileOp`
+(`P_DISPLAY_ID`) when the view lands on another monitor, which renders the image again; the lens
+copies the id of its view. `ColorManagement.displayProfile(id)` answers the file of that monitor,
+or the display profile of the workstation when it has none. A change of any profile moves
+`ColorManagement.generation()`, so every color operation is computed again.
+A window that spans two monitors is converted for the one Java reports as its screen.
