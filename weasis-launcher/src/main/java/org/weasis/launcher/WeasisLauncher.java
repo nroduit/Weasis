@@ -1265,11 +1265,11 @@ Starting PF4J Plugins...
   }
 
   static void cleanImageCache() {
-    // Clean temp folder.
+    // Remove the temp folder of this instance (its own directory, see InstanceTempDirectory)
     String dir = System.getProperty("weasis.tmp.dir");
     if (Utils.hasText(dir)) {
       long startTime = System.currentTimeMillis();
-      FileUtil.deleteDirectoryContents(Path.of(dir), 3, 0);
+      FileUtil.recursiveDelete(Path.of(dir), true);
       LOGGER.info(
           "*PERF* Clean temp folder, type:CLOSE time:{}", System.currentTimeMillis() - startTime);
     }

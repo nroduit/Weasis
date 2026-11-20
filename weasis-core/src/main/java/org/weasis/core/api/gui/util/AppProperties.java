@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 import org.semver4j.Semver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 
 /** The Class AppProperties provides application-wide configuration and utility methods. */
@@ -95,22 +94,25 @@ public final class AppProperties {
     Path tempDir = getTempDirectoryPath();
     /*
      * Set the username and the id (weasis source instance on web) to avoid mixing files by several users (Linux)
-     * or by running multiple instances of Weasis from different sources.
+     * or by running multiple instances of Weasis from different sources. Each running instance works in its
+     * own locked directory: the startup cleaning only removes the directories of the instances that are gone
+     * (crashed), never the files another running instance still has in its model.
      */
-    Path appTempDir =
-        tempDir.resolve(
-            "weasis-"
-                + toSafePathElement(System.getProperty("user.name"), "tmp") // NON-NLS
-                + "."
-                + toSafePathElement(System.getProperty("weasis.source.id"), UNKNOWN));
+    String baseName =
+        "weasis-"
+            + toSafePathElement(System.getProperty("user.name"), "tmp") // NON-NLS
+            + "."
+            + toSafePathElement(System.getProperty("weasis.source.id"), UNKNOWN);
+    Path appTempDir;
+    try {
+      Files.createDirectories(tempDir);
+      appTempDir = InstanceTempDirectory.create(tempDir, baseName);
+    } catch (Exception e) {
+      LOGGER.error("Error preparing the temporary directory", e);
+      appTempDir = tempDir.resolve(baseName);
+    }
 
     System.setProperty("weasis.tmp.dir", appTempDir.toAbsolutePath().toString());
-    try {
-      // Clean temp folder, necessary when the application has crashed.
-      FileUtil.deleteDirectoryContents(appTempDir, 3, 0);
-    } catch (Exception e) {
-      LOGGER.error("Error cleaning temporary files", e);
-    }
     return appTempDir;
   }
 
