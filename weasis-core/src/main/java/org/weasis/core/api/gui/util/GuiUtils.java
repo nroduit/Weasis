@@ -1042,11 +1042,12 @@ public class GuiUtils {
    */
   private static void openCommand(Component parent, String cmd, String target) {
     try {
-      Process process =
+      ProcessBuilder builder =
           new ProcessBuilder(cmd, target)
               .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-              .redirectError(ProcessBuilder.Redirect.DISCARD)
-              .start();
+              .redirectError(ProcessBuilder.Redirect.DISCARD);
+      StartupActivation.prepare(builder);
+      Process process = builder.start();
       process.getOutputStream().close();
       if (process.waitFor(5, TimeUnit.SECONDS) && process.exitValue() != 0) {
         LOGGER.error("'{}' failed (exit {}) for {}", cmd, process.exitValue(), target);

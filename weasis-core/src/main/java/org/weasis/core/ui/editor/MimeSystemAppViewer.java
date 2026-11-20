@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JMenu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.StartupActivation;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -41,11 +42,12 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
   public static void startAssociatedProgramFromLinux(Path path) {
     if (path != null && Files.isReadable(path)) {
       try {
-        Process process =
+        ProcessBuilder builder =
             new ProcessBuilder("xdg-open", path.toString()) // NON-NLS
                 .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                .redirectError(ProcessBuilder.Redirect.DISCARD)
-                .start();
+                .redirectError(ProcessBuilder.Redirect.DISCARD);
+        StartupActivation.prepare(builder);
+        Process process = builder.start();
         process.getOutputStream().close();
         if (process.waitFor(5, TimeUnit.SECONDS) && process.exitValue() != 0) {
           LOGGER.error("'xdg-open' failed (exit {}) for {}", process.exitValue(), path); // NON-NLS
