@@ -9,18 +9,33 @@
  */
 package org.weasis.core.api.gui.util;
 
-import com.formdev.flatlaf.util.SystemInfo;
 import javax.swing.Action;
 import javax.swing.JMenu;
-import javax.swing.JPopupMenu;
 import javax.swing.Timer;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 
+/**
+ * A menu whose items are built each time it opens, from the state of the application at that
+ * moment.
+ *
+ * <p>It is filled when the menu is selected and emptied shortly after it is deselected, through the
+ * {@link MenuListener} of Swing: the one notification every look and feel sends, the screen menu
+ * bar of macOS included (which never sends the popup events a {@code PopupMenuListener} waits for).
+ * The same code therefore runs on every system. A menu is always filled from nothing, so its items
+ * cannot be listed twice, and a reader of the menu bar (the action catalog of the command palette)
+ * gets the items in a menu of its own with {@link #detached()}: the menu of the menu bar, native on
+ * macOS, is only touched when the user opens it, and no item stays in it with a live accelerator.
+ */
 public abstract class DynamicMenu extends JMenu {
+
+  /** Delay before a closed menu is emptied, so the action of the item chosen fires first. */
+  private static final int CLEAR_DELAY_MS = 250;
 
   /** The delayed clearing started when the menu closed, null when none is waiting. */
   private transient Timer pendingClear;
+
+  private boolean listening;
 
   protected DynamicMenu() {
     super();
@@ -38,37 +53,47 @@ public abstract class DynamicMenu extends JMenu {
     super(s);
   }
 
-  /** Adds the items of the menu; called on an empty menu, see {@link #refill()}. */
-  public abstract void popupMenuWillBecomeVisible();
+  /**
+   * Adds the items to a menu that is empty: this menu when the user opens it, or another one for a
+   * reader ({@link #detached()}). Only add to {@code menu}; never to {@code this}.
+   */
+  protected abstract void fill(JMenu menu);
 
   /**
-   * Fills the menu from nothing: a clearing still pending from the last time it closed is dropped
-   * and what is left in the menu is removed first. Without it a menu shown again within the delay
-   * of its clearing, or filled by a reader of the menu bar, listed its items twice.
+   * Fills this menu from nothing: a clearing still pending from the last time it closed is dropped
+   * and what is left in the menu is removed first.
    */
   public final void refill() {
-    if (pendingClear != null) {
-      pendingClear.stop();
-      pendingClear = null;
-    }
+    cancelPendingClear();
     removeAll();
-    popupMenuWillBecomeVisible();
+    fill(this);
   }
 
-  public void popupMenuWillBecomeInvisible() {
-    // Delay removeAll() so the selected JMenuItem action can fire first (Bug on Mac menu bar).
-    // Use a Swing Timer so removeAll() runs on the EDT: mutating the (native, on macOS screen menu
-    // bar) component tree from a background thread can freeze the UI.
-    if (pendingClear != null) {
-      pendingClear.stop();
-    }
-    Timer timer = new Timer(250, null);
+  /**
+   * The items this menu would show now, in a menu that is not in the menu bar. Running an item of
+   * it acts as the one of the menu bar would.
+   */
+  public final JMenu detached() {
+    JMenu copy = new JMenu(getText());
+    fill(copy);
+    return copy;
+  }
+
+  /** Empties the menu a moment after it closed. */
+  private void clearLater() {
+    cancelPendingClear();
+    // A Swing timer, so the removal runs on the event thread: the items of the screen menu bar of
+    // macOS are native, and changing them from another thread can freeze the interface. The delay
+    // lets the action of the chosen item fire before its item leaves the menu.
+    Timer timer = new Timer(CLEAR_DELAY_MS, null);
     timer.addActionListener(
         e -> {
-          // only the clearing of the last closing empties the menu
+          // only the clearing of the last closing empties the menu, and never an open one
           if (pendingClear == timer) {
             pendingClear = null;
-            removeAll();
+            if (!isSelected()) {
+              removeAll();
+            }
           }
         });
     timer.setRepeats(false);
@@ -76,44 +101,38 @@ public abstract class DynamicMenu extends JMenu {
     timer.start();
   }
 
-  public void popupMenuCanceled() {}
-
-  public void addPopupMenuListener() {
-    // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar
-    if (SystemInfo.isMacOS
-        && Boolean.TRUE
-            .toString()
-            .equals(
-                System.getProperty(
-                    "apple.laf.useScreenMenuBar", Boolean.FALSE.toString()))) { // NON-NLS
-      this.addChangeListener(
-          e -> {
-            if (DynamicMenu.this.isSelected()) {
-              DynamicMenu.this.refill();
-            } else {
-              DynamicMenu.this.popupMenuWillBecomeInvisible();
-            }
-          });
-    } else {
-      JPopupMenu menuExport = this.getPopupMenu();
-      menuExport.addPopupMenuListener(
-          new PopupMenuListener() {
-
-            @Override
-            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-              DynamicMenu.this.refill();
-            }
-
-            @Override
-            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-              DynamicMenu.this.popupMenuWillBecomeInvisible();
-            }
-
-            @Override
-            public void popupMenuCanceled(PopupMenuEvent e) {
-              DynamicMenu.this.popupMenuCanceled();
-            }
-          });
+  private void cancelPendingClear() {
+    if (pendingClear != null) {
+      pendingClear.stop();
+      pendingClear = null;
     }
+  }
+
+  /**
+   * Starts filling the menu when it opens and emptying it when it closes. Call it once, when the
+   * menu is created.
+   */
+  public void addPopupMenuListener() {
+    if (listening) {
+      return;
+    }
+    listening = true;
+    addMenuListener(
+        new MenuListener() {
+          @Override
+          public void menuSelected(MenuEvent e) {
+            refill();
+          }
+
+          @Override
+          public void menuDeselected(MenuEvent e) {
+            clearLater();
+          }
+
+          @Override
+          public void menuCanceled(MenuEvent e) {
+            clearLater();
+          }
+        });
   }
 }

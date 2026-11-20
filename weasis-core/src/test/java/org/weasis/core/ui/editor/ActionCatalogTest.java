@@ -33,6 +33,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,9 +90,8 @@ class ActionCatalogTest {
     DynamicMenu view =
         new DynamicMenu("View") {
           @Override
-          public void popupMenuWillBecomeVisible() {
-            removeAll();
-            add(item("Toolbars"));
+          protected void fill(JMenu menu) {
+            menu.add(item("Toolbars"));
           }
         };
     bar.add(view);
@@ -116,46 +116,60 @@ class ActionCatalogTest {
   }
 
   /**
-   * Reading the catalog leaves a dynamic menu empty, as the user finds it closed: items left in the
-   * menu bar keep their accelerators alive (the cine started again right after C stopped it), and
-   * the entry of such an item still runs.
+   * The catalog reads a dynamic menu without touching the one of the menu bar: items left there
+   * keep their accelerators alive (the cine started again right after C stopped it), and adding to
+   * a closed menu of the screen menu bar of macOS is avoided. The entry still runs.
    */
   @Test
-  void aDynamicMenuIsLeftEmptyAndItsEntryStillRuns() {
+  void theCatalogLeavesADynamicMenuOfTheMenuBarUntouched() {
     JMenuBar bar = menuBar();
-    List<ActionEntry> entries = ActionCatalog.ofMenuBar(bar);
     JMenu view = bar.getMenu(1);
+    List<ActionEntry> entries = ActionCatalog.ofMenuBar(bar);
     ActionEntry toolbars =
         entries.stream().filter(e -> e.id().equals("menu/view/toolbars")).findFirst().orElseThrow();
-    assertEquals(0, view.getMenuComponentCount(), "the dynamic menu is emptied after the read");
+    assertEquals(0, view.getMenuComponentCount(), "the menu of the menu bar was not filled");
     toolbars.run().run();
     assertEquals(List.of("Toolbars"), ran);
   }
 
   /**
-   * A dynamic menu is filled from nothing each time: one whose builder only adds (as the Toolbars
-   * and Explorer menus do) listed its items twice when it was shown again before its delayed
-   * clearing, or after the catalog had read it.
+   * A dynamic menu is filled from nothing each time and emptied once closed: shown again before its
+   * delayed clearing, or after the catalog read it, it lists its items once; the clearing never
+   * empties a menu that is open again.
    */
   @Test
-  void aDynamicMenuNeverListsItsItemsTwice() {
+  void aDynamicMenuListsItsItemsOnceAndIsEmptiedWhenClosed() throws Exception {
     DynamicMenu menu =
         new DynamicMenu("Toolbars") {
           @Override
-          public void popupMenuWillBecomeVisible() {
-            add(item("Cine"));
-            add(item("Zoom"));
+          protected void fill(JMenu target) {
+            target.add(item("Cine"));
+            target.add(item("Zoom"));
           }
         };
-    menu.refill();
-    menu.popupMenuWillBecomeInvisible(); // starts the delayed clearing
-    menu.refill(); // shown again before it ran
-    assertEquals(2, menu.getMenuComponentCount());
+    menu.addPopupMenuListener();
+    menu.addPopupMenuListener(); // registering twice must not fill twice
     JMenuBar bar = new JMenuBar();
     bar.add(menu);
-    assertEquals(2, ActionCatalog.ofMenuBar(bar).size());
-    menu.refill(); // the user opens it after the catalog read it
-    assertEquals(2, menu.getMenuComponentCount());
+
+    SwingUtilities.invokeAndWait(
+        () -> {
+          menu.setSelected(true); // what every look and feel does when the menu opens
+          assertEquals(2, menu.getMenuComponentCount());
+          menu.setSelected(false);
+          menu.setSelected(true); // opened again before the delayed clearing
+          assertEquals(2, menu.getMenuComponentCount());
+          assertEquals(2, ActionCatalog.ofMenuBar(bar).size());
+          assertEquals(2, menu.getMenuComponentCount(), "the catalog did not add to it");
+        });
+    Thread.sleep(500); // the clearing of the first closing must not empty the open menu
+    SwingUtilities.invokeAndWait(
+        () -> {
+          assertEquals(2, menu.getMenuComponentCount());
+          menu.setSelected(false);
+        });
+    Thread.sleep(500);
+    SwingUtilities.invokeAndWait(() -> assertEquals(0, menu.getMenuComponentCount()));
   }
 
   /** A toolbar with a predicate. */

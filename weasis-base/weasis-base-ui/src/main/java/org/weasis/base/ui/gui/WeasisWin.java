@@ -205,8 +205,8 @@ public class WeasisWin {
       new DynamicMenu(Messages.common("edit")) {
 
         @Override
-        public void popupMenuWillBecomeVisible() {
-          buildMenuEdit(this);
+        protected void fill(JMenu menu) {
+          buildMenuEdit(menu);
         }
       };
   private final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display"));
@@ -215,8 +215,8 @@ public class WeasisWin {
       new DynamicMenu(Messages.getString("WeasisWin.window")) {
 
         @Override
-        public void popupMenuWillBecomeVisible() {
-          buildMenuWindow(this);
+        protected void fill(JMenu menu) {
+          buildMenuWindow(menu);
         }
       };
   private JCheckBoxMenuItem anonymizeMenuItem;
@@ -224,8 +224,8 @@ public class WeasisWin {
       new DynamicMenu("") {
 
         @Override
-        public void popupMenuWillBecomeVisible() {
-          buildSelectedPluginMenu(this);
+        protected void fill(JMenu menu) {
+          buildSelectedPluginMenu(menu);
         }
       };
   private ViewerPlugin<?> selectedPlugin = null;
@@ -1486,8 +1486,8 @@ public class WeasisWin {
         new DynamicMenu(Messages.getString("WeasisWin.toolbar")) {
 
           @Override
-          public void popupMenuWillBecomeVisible() {
-            buildToolBarSubMenu(this);
+          protected void fill(JMenu menu) {
+            buildToolBarSubMenu(menu);
           }
         };
     toolBarMenu.addPopupMenuListener();
@@ -1497,8 +1497,8 @@ public class WeasisWin {
         new DynamicMenu(Messages.common("tools")) {
 
           @Override
-          public void popupMenuWillBecomeVisible() {
-            buildToolSubMenu(this);
+          protected void fill(JMenu menu) {
+            buildToolSubMenu(menu);
           }
         };
     toolMenu.addPopupMenuListener();
@@ -1507,8 +1507,8 @@ public class WeasisWin {
     DynamicMenu explorerMenu = new DynamicMenu("Explorer") { // NON-NLS
 
           @Override
-          public void popupMenuWillBecomeVisible() {
-            buildExplorerSubMenu(this);
+          protected void fill(JMenu menu) {
+            buildExplorerSubMenu(menu);
           }
         };
     explorerMenu.addPopupMenuListener();
@@ -1793,8 +1793,8 @@ public class WeasisWin {
         new DynamicMenu(Messages.common("import")) {
 
           @Override
-          public void popupMenuWillBecomeVisible() {
-            buildImportSubMenu(this);
+          protected void fill(JMenu menu) {
+            buildImportSubMenu(menu);
           }
         };
     importMenu.addPopupMenuListener();
@@ -1804,8 +1804,8 @@ public class WeasisWin {
         new DynamicMenu(Messages.common("export")) {
 
           @Override
-          public void popupMenuWillBecomeVisible() {
-            buildExportSubMenu(this);
+          protected void fill(JMenu menu) {
+            buildExportSubMenu(menu);
           }
         };
     exportMenu.addPopupMenuListener();
@@ -1816,8 +1816,8 @@ public class WeasisWin {
         new DynamicMenu(Messages.getString("launcher")) {
 
           @Override
-          public void popupMenuWillBecomeVisible() {
-            buildLauncherSubMenu(this);
+          protected void fill(JMenu menu) {
+            buildLauncherSubMenu(menu);
           }
         };
     launcherMenu.addPopupMenuListener();
@@ -1829,8 +1829,8 @@ public class WeasisWin {
         new DynamicMenu(Messages.common("print")) {
 
           @Override
-          public void popupMenuWillBecomeVisible() {
-            buildPrintSubMenu(this);
+          protected void fill(JMenu menu) {
+            buildPrintSubMenu(menu);
           }
         };
     printMenu.addPopupMenuListener();
