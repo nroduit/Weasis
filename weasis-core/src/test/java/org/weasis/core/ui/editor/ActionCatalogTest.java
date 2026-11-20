@@ -115,6 +115,49 @@ class ActionCatalogTest {
     assertEquals(List.of("Image"), ran);
   }
 
+  /**
+   * Reading the catalog leaves a dynamic menu empty, as the user finds it closed: items left in the
+   * menu bar keep their accelerators alive (the cine started again right after C stopped it), and
+   * the entry of such an item still runs.
+   */
+  @Test
+  void aDynamicMenuIsLeftEmptyAndItsEntryStillRuns() {
+    JMenuBar bar = menuBar();
+    List<ActionEntry> entries = ActionCatalog.ofMenuBar(bar);
+    JMenu view = bar.getMenu(1);
+    ActionEntry toolbars =
+        entries.stream().filter(e -> e.id().equals("menu/view/toolbars")).findFirst().orElseThrow();
+    assertEquals(0, view.getMenuComponentCount(), "the dynamic menu is emptied after the read");
+    toolbars.run().run();
+    assertEquals(List.of("Toolbars"), ran);
+  }
+
+  /**
+   * A dynamic menu is filled from nothing each time: one whose builder only adds (as the Toolbars
+   * and Explorer menus do) listed its items twice when it was shown again before its delayed
+   * clearing, or after the catalog had read it.
+   */
+  @Test
+  void aDynamicMenuNeverListsItsItemsTwice() {
+    DynamicMenu menu =
+        new DynamicMenu("Toolbars") {
+          @Override
+          public void popupMenuWillBecomeVisible() {
+            add(item("Cine"));
+            add(item("Zoom"));
+          }
+        };
+    menu.refill();
+    menu.popupMenuWillBecomeInvisible(); // starts the delayed clearing
+    menu.refill(); // shown again before it ran
+    assertEquals(2, menu.getMenuComponentCount());
+    JMenuBar bar = new JMenuBar();
+    bar.add(menu);
+    assertEquals(2, ActionCatalog.ofMenuBar(bar).size());
+    menu.refill(); // the user opens it after the catalog read it
+    assertEquals(2, menu.getMenuComponentCount());
+  }
+
   /** A toolbar with a predicate. */
   private static final class VolumeBar extends WtoolBar {
     VolumeBar() {

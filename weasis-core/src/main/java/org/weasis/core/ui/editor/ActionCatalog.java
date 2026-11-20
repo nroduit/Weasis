@@ -152,7 +152,7 @@ public final class ActionCatalog {
   private static void collect(
       JMenu menu, String group, String path, String id, List<ActionEntry> entries) {
     if (menu instanceof DynamicMenu dynamic) {
-      dynamic.popupMenuWillBecomeVisible();
+      dynamic.refill();
     }
     for (Component component : menu.getMenuComponents()) {
       if (!(component instanceof JMenuItem item) || item.getText() == null) {
@@ -167,6 +167,13 @@ public final class ActionCatalog {
             new ActionEntry(
                 itemId, label, group, text(item.getAccelerator()), "", true, item::doClick));
       }
+    }
+    if (menu instanceof DynamicMenu dynamic) {
+      // A menu filled for the catalog is emptied again, as when the user closes it: left in the
+      // menu bar, its items keep their accelerators alive, and a key the selected view handles
+      // itself would act twice (C stopped the cine, then the Start item started it again). An
+      // entry still runs: its item keeps its listeners out of the menu.
+      dynamic.removeAll();
     }
   }
 

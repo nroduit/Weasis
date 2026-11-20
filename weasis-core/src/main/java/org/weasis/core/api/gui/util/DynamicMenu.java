@@ -19,6 +19,9 @@ import javax.swing.event.PopupMenuListener;
 
 public abstract class DynamicMenu extends JMenu {
 
+  /** The delayed clearing started when the menu closed, null when none is waiting. */
+  private transient Timer pendingClear;
+
   protected DynamicMenu() {
     super();
   }
@@ -35,14 +38,41 @@ public abstract class DynamicMenu extends JMenu {
     super(s);
   }
 
+  /** Adds the items of the menu; called on an empty menu, see {@link #refill()}. */
   public abstract void popupMenuWillBecomeVisible();
+
+  /**
+   * Fills the menu from nothing: a clearing still pending from the last time it closed is dropped
+   * and what is left in the menu is removed first. Without it a menu shown again within the delay
+   * of its clearing, or filled by a reader of the menu bar, listed its items twice.
+   */
+  public final void refill() {
+    if (pendingClear != null) {
+      pendingClear.stop();
+      pendingClear = null;
+    }
+    removeAll();
+    popupMenuWillBecomeVisible();
+  }
 
   public void popupMenuWillBecomeInvisible() {
     // Delay removeAll() so the selected JMenuItem action can fire first (Bug on Mac menu bar).
     // Use a Swing Timer so removeAll() runs on the EDT: mutating the (native, on macOS screen menu
     // bar) component tree from a background thread can freeze the UI.
-    Timer timer = new Timer(250, e -> removeAll());
+    if (pendingClear != null) {
+      pendingClear.stop();
+    }
+    Timer timer = new Timer(250, null);
+    timer.addActionListener(
+        e -> {
+          // only the clearing of the last closing empties the menu
+          if (pendingClear == timer) {
+            pendingClear = null;
+            removeAll();
+          }
+        });
     timer.setRepeats(false);
+    pendingClear = timer;
     timer.start();
   }
 
@@ -59,8 +89,7 @@ public abstract class DynamicMenu extends JMenu {
       this.addChangeListener(
           e -> {
             if (DynamicMenu.this.isSelected()) {
-              DynamicMenu.this.removeAll();
-              DynamicMenu.this.popupMenuWillBecomeVisible();
+              DynamicMenu.this.refill();
             } else {
               DynamicMenu.this.popupMenuWillBecomeInvisible();
             }
@@ -72,7 +101,7 @@ public abstract class DynamicMenu extends JMenu {
 
             @Override
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-              DynamicMenu.this.popupMenuWillBecomeVisible();
+              DynamicMenu.this.refill();
             }
 
             @Override
