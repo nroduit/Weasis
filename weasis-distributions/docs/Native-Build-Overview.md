@@ -108,8 +108,9 @@ They are not part of the public distribution; when absent, the stock installers 
 
 A version with a suffix in the pom (`<changelist>-beta.1</changelist>`, so `5.0.0-beta.1`; a
 `-SNAPSHOT` counts too) is a **pre-release**. Both build paths read the suffix from the version
-and apply the same rules, so a preview can be installed beside the 4.x release and is replaced by
-the 5.0.0 release on every platform:
+and apply the same rules. A preview has the identity of a release (application name, package name,
+MSI upgrade code, bundle identifier): its installer replaces an installed 4.x release, and it is
+itself replaced by the next preview and by the 5.0.0 release on every platform:
 
 | Rule | Why |
 |------|-----|

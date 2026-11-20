@@ -128,7 +128,7 @@ java -cp weasis-launcher.jar org.weasis.plugin.manager.PluginTool publisher-reco
 
 What a workstation accepts is the **site policy**, read by the launcher from the served configuration before any plugin class loads (`weasis.plugins.policy`): `core-only` (the package only, the default of the installers), `site` (plugins signed by a publisher the site lists in `weasis.plugins.publishers`), `any` (every jar after the user's confirmation), `off` (the user folder is ignored).
 A site can also lock the loaded set (`weasis.plugins.lock`) and deny capabilities (`weasis.plugins.deny`).
-`plugins:list` reports the tier of every loaded plugin (`core`, `site`, `unverified`) and `plugins:verify` re-runs the checks of a jar without importing it.
+`plugins:list` reports the tier of every loaded plugin (`core`, `site`, `unverified`) and `plugins:verify` re-checks the imported plugins (digest and signature).
 
 ## What changed from 4.x
 

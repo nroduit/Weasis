@@ -123,10 +123,12 @@ which it re-reads for the purpose. A `FileChannel` lock serialises concurrent st
 `READY`. The client launcher (`weasis-cli`) fetches nothing and runs the set the application ran
 last, else the embedded one.
 
-On **macOS** stage 1 loads the set in its own process, in a class loader whose parent is the
-platform loader, and calls the entry class: LaunchServices keeps one process for the open-file
-events. The JVM options of the application are therefore native there, and no AOT cache is
-used. In a development launch nothing of this exists: the IDE starts `AppLauncher` directly.
+On **macOS** stage 1 runs the set in its own process and calls the entry class: the native
+launcher is the only executable AppKit hands the open-file and `weasis://` events to. The
+embedded set is on the class path of the launcher, so the system class loader runs it; a set
+from the hub runs in a child loader. The JVM options of the application are native there, and
+the bootstrap replaces itself once (same executable and process id) to add the per-user AOT
+cache flags. In a development launch nothing of this exists: the IDE starts `AppLauncher` directly.
 
 Every decision is one line in `<state>/log/bootstrap.log` (set, id, digest, reason, JDK,
 options, AOT mode, restart, exit), echoed to stderr with `-Dweasis.bootstrap.trace=true`.
@@ -151,8 +153,10 @@ How code reaches the JVM differs between development and the packaged applicatio
   image (`<cache>/aot/<entry>-<set>-<runtime>.aot`). Nothing is persisted in the launcher
   `.cfg`. A cache that crashes stage 2 before `READY` is deleted and disabled for its key. The
   client trains its own cache in a detached process after a call. Disable with
-  `-Dweasis.aot.cache=false` (the Dicomizer launcher does); macOS runs in one process and uses
-  none.
+  `-Dweasis.aot.cache=false` (the Dicomizer launcher does). On macOS, which runs in one
+  process, the bootstrap re-executes itself once with the same flags in `JAVA_TOOL_OPTIONS`; a
+  marker deleted at `READY` lets the next start discard a cache that never got there. The
+  cache covers the embedded set only, and `weasis-cli` keeps none on macOS.
 - **PERF markers** — `*PERF*` lines in `boot.log` (JVM start, AOT cache mode, bootstrap
   overhead, plugin start, global starting) measure the pipeline across cold and warm launches.
 
@@ -164,8 +168,9 @@ AppClassLoader          the launcher set: weasis-launcher.jar + its libraries (e
         └── WeasisPluginClassLoader   one per pf4j plugin (parent-last: plugin → deps → parent)
 ```
 
-On macOS the set is loaded by a `URLClassLoader` of stage 1 whose parent is the platform
-loader, which takes the place of the `AppClassLoader` in this picture; the rest is unchanged.
+On macOS the embedded set is on the class path of the native launcher, so the picture is the
+same; only a set fetched from the hub is loaded by a `URLClassLoader` of stage 1, which then
+takes the place of the `AppClassLoader`.
 `WeasisPluginManager.loadCommonLibraries()` is called once, after `AutoProcessor` has
 downloaded the jars and before `loadPlugins()`. It adds every jar of `<cache>/common-lib/` to
 `CommonLibClassLoader` — skipping the file names already on the launcher's class path, so a

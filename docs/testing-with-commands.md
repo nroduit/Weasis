@@ -19,7 +19,7 @@ $info = dicom:info --series ${ct}
 The script runs against a running instance through `script:run --file <script> --set key=value --report <junit.xml>`; `--keep-going` runs every step and reports all failures, `script:check --file` parses a script without running it, reports the quotes, verbs and references that would fail and lists the parameters it expects.
 A refusal is pinned like an answer: `$bad = @fails <command>` passes when the command is refused and keeps its error (`${bad.code}`, `${bad.message}`), so a bug that was a missing check becomes a one-line test.
 The report is a JUnit XML file, one test case per `@expect`, so a CI reads it like any other suite.
-A script runs inside a checkpoint: `--rollback` restores the display at the end, `--keep` leaves it, and the summary names the checkpoint it created.
+A script runs inside a checkpoint: `--rollback` restores the display when a step fails, `--keep` leaves it, and the summary names the checkpoint it created.
 
 ## The smoke suite
 
