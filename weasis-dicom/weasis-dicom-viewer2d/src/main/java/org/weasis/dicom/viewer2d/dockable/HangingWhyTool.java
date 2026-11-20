@@ -9,21 +9,31 @@
  */
 package org.weasis.dicom.viewer2d.dockable;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
+import javax.swing.DefaultListSelectionModel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.Scrollable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -73,7 +83,11 @@ public class HangingWhyTool extends PluginTool implements SeriesViewerListener {
   private final JLabel match = new JLabel();
   private final DefaultListModel<String> reasons = new DefaultListModel<>();
   private final DefaultListModel<Choice> alternatives = new DefaultListModel<>();
-  private final JList<Choice> alternativeList = new JList<>(alternatives);
+  private final JList<String> ruleList = new TipList<>(reasons);
+  private final JList<Choice> alternativeList = new TipList<>(alternatives);
+  private final JLabel rulesTitle = section(Messages.getString("HangingWhyTool.rules"));
+  private final JLabel alternativesTitle =
+      section(Messages.getString("HangingWhyTool.alternatives"));
   private final JButton use = new JButton(Messages.getString("HangingWhyTool.use"));
   private final JLabel proposal = new JLabel();
   private final JButton applyRule = new JButton(Messages.getString("HangingWhyTool.apply"));
@@ -83,48 +97,138 @@ public class HangingWhyTool extends PluginTool implements SeriesViewerListener {
 
   public HangingWhyTool() {
     super("hp-why", BUTTON_NAME, Type.TOOL_EXT, 40); // NON-NLS
-    setIcon(ResourceUtil.getIcon(OtherIcon.VIEW_SETTING));
+    setIcon(ResourceUtil.getIcon(OtherIcon.HANGING_WHY));
     setDockableWidth(300);
     setLayout(new BorderLayout());
-    JPanel content = new JPanel();
+    JPanel content = new WidthTrackingPanel();
     content.setLayout(new BoxLayout(content, BoxLayout.PAGE_AXIS));
-    content.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    header.setAlignmentX(Component.LEFT_ALIGNMENT);
-    match.setAlignmentX(Component.LEFT_ALIGNMENT);
-    content.add(header);
-    content.add(match);
-    content.add(Box.createVerticalStrut(5));
+    content.setBorder(GuiUtils.getEmptyBorder(4, 6, 4, 6));
+    header.putClientProperty(FlatClientProperties.STYLE_CLASS, "semibold"); // NON-NLS
+    small(match);
+    match.setForeground(GuiUtils.getMenuHintColor());
+    content.add(left(header));
+    content.add(left(match));
     // the rules are written in the notation of the protocols (field, operator, values),
-    // untranslated
-    // like the commands: they read left to right in every language
-    JList<String> ruleList = GuiUtils.fixOrientation(new JList<>(reasons));
-    content.add(titled(Messages.getString("HangingWhyTool.rules"), ruleList));
+    // untranslated like the commands: they read left to right in every language
+    GuiUtils.fixOrientation(ruleList);
+    ruleList.setFocusable(false);
+    ruleList.setSelectionModel(new NoSelection());
+    content.add(left(rulesTitle));
+    content.add(left(small(ruleList)));
     alternativeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     alternativeList.addListSelectionListener(
         e -> use.setEnabled(alternativeList.getSelectedValue() != null));
-    content.add(titled(Messages.getString("HangingWhyTool.alternatives"), alternativeList));
+    alternativeList.addMouseListener(
+        new MouseAdapter() {
+          @Override
+          public void mouseClicked(MouseEvent e) {
+            if (e.getClickCount() == 2 && alternativeList.getSelectedValue() != null) {
+              useAlternative();
+            }
+          }
+        });
+    content.add(left(alternativesTitle));
+    content.add(left(small(alternativeList)));
     use.setEnabled(false);
-    use.setAlignmentX(Component.LEFT_ALIGNMENT);
+    use.putClientProperty(FlatClientProperties.STYLE_CLASS, "small"); // NON-NLS
     use.addActionListener(e -> useAlternative());
-    content.add(use);
-    content.add(Box.createVerticalStrut(8));
-    proposal.setAlignmentX(Component.LEFT_ALIGNMENT);
-    content.add(proposal);
-    applyRule.setAlignmentX(Component.LEFT_ALIGNMENT);
+    content.add(Box.createVerticalStrut(GuiUtils.getScaleLength(3)));
+    content.add(left(use));
+    content.add(Box.createVerticalStrut(GuiUtils.getScaleLength(4)));
+    content.add(left(small(proposal)));
     applyRule.setEnabled(false);
+    applyRule.setVisible(false);
+    applyRule.putClientProperty(FlatClientProperties.STYLE_CLASS, "small"); // NON-NLS
     applyRule.addActionListener(e -> applyProposal());
-    content.add(applyRule);
-    add(new JScrollPane(content), BorderLayout.CENTER);
+    content.add(left(applyRule));
+    JScrollPane scroll = new JScrollPane(content);
+    scroll.setBorder(BorderFactory.createEmptyBorder());
+    scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    add(scroll, BorderLayout.CENTER);
     HangingPlanApplier.addListener(applied -> GuiExecutor.execute(this::refreshSelected));
     refresh(null, null);
   }
 
-  private static JPanel titled(String title, Component component) {
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createTitledBorder(title));
-    panel.add(component, BorderLayout.CENTER);
-    panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    return panel;
+  private static <T extends JComponent> T left(T component) {
+    component.setAlignmentX(Component.LEFT_ALIGNMENT);
+    return component;
+  }
+
+  private static <T extends JComponent> T small(T component) {
+    component.putClientProperty(FlatClientProperties.STYLE_CLASS, "small"); // NON-NLS
+    return component;
+  }
+
+  /** The title of a group of lines: small and dimmed, as the sections of a menu. */
+  private static JLabel section(String title) {
+    JLabel label = small(new JLabel(title));
+    label.setForeground(GuiUtils.getMenuHintColor());
+    label.setBorder(GuiUtils.getEmptyBorder(6, 0, 1, 0));
+    return label;
+  }
+
+  /** As wide as the tool: a long line is cut with an ellipsis instead of scrolling sideways. */
+  private static final class WidthTrackingPanel extends JPanel implements Scrollable {
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+      return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle visible, int orientation, int direction) {
+      return GuiUtils.getScaleLength(16);
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle visible, int orientation, int direction) {
+      return visible.height;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+      return true;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+      return false;
+    }
+  }
+
+  /** A list without a frame whose lines say in a tooltip what the width cuts. */
+  private static final class TipList<E> extends JList<E> {
+    TipList(DefaultListModel<E> model) {
+      super(model);
+      setOpaque(false);
+      ((DefaultListCellRenderer) getCellRenderer()).setOpaque(false);
+      setToolTipText("");
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+      int index = locationToIndex(event.getPoint());
+      return index >= 0 && getCellBounds(index, index).contains(event.getPoint())
+          ? String.valueOf(getModel().getElementAt(index))
+          : null;
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+    }
+  }
+
+  /** The rules are read, not picked. */
+  private static final class NoSelection extends DefaultListSelectionModel {
+    @Override
+    public void setSelectionInterval(int index0, int index1) {
+      // nothing is selected
+    }
+
+    @Override
+    public void addSelectionInterval(int index0, int index1) {
+      // nothing is selected
+    }
   }
 
   @Override
@@ -151,11 +255,20 @@ public class HangingWhyTool extends PluginTool implements SeriesViewerListener {
     Optional<Applied> active = container == null ? Optional.empty() : ActiveHanging.of(container);
     int position = container == null ? -1 : container.cellPositionOf(canvas);
     Optional<CellPlan> plan = active.flatMap(a -> a.cellAt(container, position));
-    if (active.isEmpty() || plan.isEmpty()) {
+    boolean hung = active.isPresent() && plan.isPresent();
+    match.setVisible(hung);
+    rulesTitle.setVisible(hung);
+    ruleList.setVisible(hung);
+    if (!hung) {
       viewer = null;
       cell = -1;
-      header.setText(Messages.getString("HangingWhyTool.none"));
-      match.setText("");
+      header.setText(
+          GuiUtils.HTML_START + Messages.getString("HangingWhyTool.none") + GuiUtils.HTML_END);
+      alternativesTitle.setVisible(false);
+      alternativeList.setVisible(false);
+      use.setVisible(false);
+      proposal.setText("");
+      applyRule.setVisible(false);
       return;
     }
     viewer = container;
@@ -164,12 +277,17 @@ public class HangingWhyTool extends PluginTool implements SeriesViewerListener {
     CellPlan c = plan.get();
     String name =
         applied.plan().name() == null ? applied.plan().protocolId() : applied.plan().name();
-    header.setText(
-        Messages.format(
-            "HangingWhyTool.header", name, position + 1, c.label() == null ? "" : c.label()));
+    header.setText(c.label() == null || c.label().isBlank() ? name : name + " \u00B7 " + c.label());
     match.setText(
         Messages.format(
-            "HangingWhyTool.match", c.match().name().toLowerCase(Locale.ROOT), c.score()));
+            "HangingWhyTool.cell",
+            position + 1,
+            Messages.getString("InfoLayer.hp." + c.match().name().toLowerCase(Locale.ROOT)),
+            c.score()));
+    boolean choices = !c.alternatives().isEmpty();
+    alternativesTitle.setVisible(choices);
+    alternativeList.setVisible(choices);
+    use.setVisible(choices);
     SeriesFeatures features = ActiveHanging.featuresOf(applied, c.series()).orElse(null);
     c.reasons().forEach(r -> reasons.addElement(ReasonProvenance.annotate(r, features)));
     for (Alternative a : c.alternatives()) {
@@ -182,6 +300,7 @@ public class HangingWhyTool extends PluginTool implements SeriesViewerListener {
     if (lastCorrection == null || !lastCorrection.protocol().equals(applied.plan().protocolId())) {
       proposal.setText("");
       applyRule.setEnabled(false);
+      applyRule.setVisible(false);
     }
   }
 
@@ -207,6 +326,7 @@ public class HangingWhyTool extends PluginTool implements SeriesViewerListener {
               + String.join("<br>", rule) // NON-NLS
               + "</html>"); // NON-NLS
       applyRule.setEnabled(corrected.userProtocol() && !rule.isEmpty());
+      applyRule.setVisible(applyRule.isEnabled());
     } catch (RuntimeException e) {
       LOGGER.warn("Cannot correct the cell", e);
       proposal.setText(e.getMessage());

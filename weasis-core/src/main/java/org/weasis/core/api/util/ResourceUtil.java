@@ -149,6 +149,7 @@ public class ResourceUtil {
     REDACT("svg/action/redact.svg"), // NON-NLS
     REDACT_DEVICE("svg/action/redactDevice.svg"), // NON-NLS
     REDACT_SAVE("svg/action/redactSave.svg"), // NON-NLS
+    HANGING_PROTOCOL("svg/action/hangingProtocol.svg"), // NON-NLS
     KEEP_DISPLAY("svg/action/keepDisplay.svg"), // NON-NLS
     RESET("svg/action/reset.svg"), // NON-NLS
     ROTATE_CLOCKWISE("svg/action/rotateClockwise.svg"), // NON-NLS
@@ -196,6 +197,7 @@ public class ResourceUtil {
     CDROM("svg/other/cdrom.svg"), // NON-NLS
     CLOCK("svg/other/clock.svg"), // NON-NLS
     ECG("svg/other/ecg.svg"), // NON-NLS
+    HANGING_WHY("svg/other/hangingWhy.svg"), // NON-NLS
     HISTOGRAM("svg/other/histogram.svg"), // NON-NLS
     IMAGE_EDIT("svg/other/imageEdit.svg"), // NON-NLS
     IMAGE_PRESENTATION("svg/other/imagePresentation.svg"), // NON-NLS

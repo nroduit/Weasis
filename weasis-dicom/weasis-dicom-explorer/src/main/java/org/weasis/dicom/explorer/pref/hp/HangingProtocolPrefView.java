@@ -18,6 +18,7 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -26,9 +27,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.UIManager;
 import javax.swing.table.AbstractTableModel;
+import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -37,6 +41,7 @@ import org.weasis.core.api.hp.HangingProtocolDocuments;
 import org.weasis.core.api.setting.Settings;
 import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.pref.PreferenceDialog;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.hp.HangingEngine;
 import org.weasis.dicom.codec.hp.ProtocolExchange;
 import org.weasis.dicom.codec.hp.ProtocolJson;
@@ -79,40 +84,24 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
   }
 
   private void initGUI() {
-    JPanel behaviour = GuiUtils.getVerticalBoxLayoutPanel();
-    behaviour.setBorder(
-        GuiUtils.getTitledBorder(Messages.getString("HangingProtocolPrefView.behaviour")));
-    behaviour.add(
-        GuiUtils.getFlowLayoutPanel(
-            new JLabel(Messages.getString("HangingProtocolPrefView.opening") + StringUtilColon()),
-            opening));
-    behaviour.add(
-        GuiUtils.getFlowLayoutPanel(
-            new JLabel(Messages.getString("HangingProtocolPrefView.restore") + StringUtilColon()),
-            restore));
-    behaviour.add(GuiUtils.getFlowLayoutPanel(keepOnClose));
-    behaviour.add(GuiUtils.getFlowLayoutPanel(remoteNotice));
-    behaviour.add(
-        GuiUtils.getFlowLayoutPanel(
-            new JLabel(
-                Messages.getString("HangingProtocolPrefView.sessions_max") + StringUtilColon()),
-            sessionsMax,
-            new JLabel(
-                Messages.getString("HangingProtocolPrefView.sessions_days") + StringUtilColon()),
-            sessionsDays));
-    add(behaviour);
-    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
+    // One column: every section takes the width of the page and its explanations wrap to it
+    setLayout(new MigLayout("ins 0, fillx, wrap 1", "[grow,fill]")); // NON-NLS
 
-    JPanel protocols = GuiUtils.getVerticalBoxLayoutPanel();
-    protocols.setBorder(
-        GuiUtils.getTitledBorder(Messages.getString("HangingProtocolPrefView.protocols")));
+    JPanel open = section("HangingProtocolPrefView.behaviour"); // NON-NLS
+    open.add(label("HangingProtocolPrefView.opening")); // NON-NLS
+    open.add(opening, "wrap"); // NON-NLS
+    open.add(hint("HangingProtocolPrefView.opening.hint"), HINT); // NON-NLS
+    add(open);
+
+    JPanel protocols = section("HangingProtocolPrefView.protocols"); // NON-NLS
+    protocols.add(hint("HangingProtocolPrefView.protocols.hint"), HINT); // NON-NLS
     JTable view = new JTable(table);
     view.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     view.setAutoCreateRowSorter(true);
     JScrollPane scroll = new JScrollPane(view);
     scroll.setPreferredSize(
-        new Dimension(GuiUtils.getScaleLength(520), GuiUtils.getScaleLength(220)));
-    protocols.add(scroll);
+        new Dimension(GuiUtils.getScaleLength(520), GuiUtils.getScaleLength(170)));
+    protocols.add(scroll, "span, growx, wmin 0, wrap"); // NON-NLS
     JButton duplicate = new JButton(Messages.getString("HangingProtocolPrefView.duplicate"));
     duplicate.addActionListener(e -> selected(view).ifPresent(this::duplicate));
     JButton delete = new JButton(Messages.common("delete"));
@@ -121,9 +110,36 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
     importButton.addActionListener(e -> importProtocols());
     JButton export = new JButton(Messages.getString("HangingProtocolPrefView.export"));
     export.addActionListener(e -> selected(view).ifPresent(this::export));
-    protocols.add(GuiUtils.getFlowLayoutPanel(duplicate, delete, importButton, export));
+    protocols.add(
+        GuiUtils.getFlowLayoutPanel(
+            0, 0, duplicate, gap(), delete, gap(), importButton, gap(), export),
+        "span"); // NON-NLS
     add(protocols);
-    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
+
+    JPanel sessions = section("HangingProtocolPrefView.sessions"); // NON-NLS
+    sessions.add(hint("HangingProtocolPrefView.sessions.hint"), HINT); // NON-NLS
+    sessions.add(label("HangingProtocolPrefView.restore"), "gaptop rel"); // NON-NLS
+    sessions.add(restore, "wrap"); // NON-NLS
+    sessions.add(hint("HangingProtocolPrefView.restore.hint"), HINT); // NON-NLS
+    sessions.add(keepOnClose, "span, wrap, gaptop rel"); // NON-NLS
+    sessions.add(label("HangingProtocolPrefView.sessions_max"), "gaptop rel"); // NON-NLS
+    sessions.add(
+        GuiUtils.getFlowLayoutPanel(
+            0,
+            0,
+            sessionsMax,
+            GuiUtils.boxHorizontalStrut(15),
+            label("HangingProtocolPrefView.sessions_days"), // NON-NLS
+            GuiUtils.boxHorizontalStrut(5),
+            sessionsDays),
+        "wrap"); // NON-NLS
+    sessions.add(hint("HangingProtocolPrefView.retention.hint"), HINT); // NON-NLS
+    add(sessions);
+
+    JPanel remote = section("HangingProtocolPrefView.remote"); // NON-NLS
+    remote.add(remoteNotice, "span, wrap"); // NON-NLS
+    remote.add(hint("HangingProtocolPrefView.remote.hint"), HINT); // NON-NLS
+    add(remote);
 
     load();
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
@@ -133,8 +149,34 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
             PreferenceDialog.KEY_HELP, "read-studies/open-browse/hanging-protocols/"); // NON-NLS
   }
 
-  private static String StringUtilColon() {
-    return ": ";
+  /** The constraints of an explanation: the whole row, wrapped to the width of the section. */
+  private static final String HINT = "span, growx, wmin 0, wrap"; // NON-NLS
+
+  private static JPanel section(String titleKey) {
+    JPanel panel = new JPanel(new MigLayout("ins 2 6 6 6, fillx", "[][grow]")); // NON-NLS
+    panel.setBorder(GuiUtils.getTitledBorder(Messages.getString(titleKey)));
+    return panel;
+  }
+
+  private static JLabel label(String key) {
+    return new JLabel(Messages.getString(key) + StringUtil.COLON);
+  }
+
+  private static JComponent gap() {
+    return GuiUtils.boxHorizontalStrut(8);
+  }
+
+  /** What an item does, in small text that wraps to the width it is given. */
+  private static JTextArea hint(String key) {
+    JTextArea area = new JTextArea(Messages.getString(key));
+    area.setEditable(false);
+    area.setFocusable(false);
+    area.setOpaque(false);
+    area.setLineWrap(true);
+    area.setWrapStyleWord(true);
+    area.setBorder(null);
+    area.setFont(UIManager.getFont("small.font")); // NON-NLS
+    return area;
   }
 
   private void load() {
