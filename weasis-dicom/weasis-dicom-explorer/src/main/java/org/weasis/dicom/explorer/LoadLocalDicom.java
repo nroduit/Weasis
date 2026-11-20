@@ -32,9 +32,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,6 +88,11 @@ public class LoadLocalDicom extends LoadDicom {
   private final boolean recursive;
   private final boolean cacheNetworkFiles;
 
+  /** The given files and folders in which a DICOM file or a ZIP archive was found. */
+  private final Set<Path> sourcesWithDicom = ConcurrentHashMap.newKeySet();
+
+  private Consumer<List<File>> withoutDicomListener;
+
   public LoadLocalDicom(
       File[] files, boolean recursive, DataExplorerModel explorerModel, OpeningViewer openingMode) {
     this(files, recursive, explorerModel, new PluginOpeningStrategy(openingMode));
@@ -101,6 +108,32 @@ public class LoadLocalDicom extends LoadDicom {
     this.recursive = recursive;
     this.cacheNetworkFiles =
         GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(NETWORK_CACHE, true);
+  }
+
+  /**
+   * Sets what receives, on the event thread at the end of the import, the given files and folders
+   * in which no DICOM file nor ZIP archive was found. It is not called when all of them hold some,
+   * nor when the import is canceled.
+   */
+  public LoadLocalDicom onSourcesWithoutDicom(Consumer<List<File>> listener) {
+    this.withoutDicomListener = listener;
+    return this;
+  }
+
+  @Override
+  protected void done() {
+    super.done();
+    if (withoutDicomListener != null && !isCancelled()) {
+      List<File> without = new ArrayList<>();
+      for (File file : files) {
+        if (file != null && !sourcesWithDicom.contains(file.toPath())) {
+          without.add(file);
+        }
+      }
+      if (!without.isEmpty()) {
+        withoutDicomListener.accept(without);
+      }
+    }
   }
 
   @Override
@@ -124,7 +157,9 @@ public class LoadLocalDicom extends LoadDicom {
     static final ReadResult NONE = new ReadResult(null, null, null, false);
   }
 
-  private record PendingFile(Path file, Future<ReadResult> result, DirectoryState directory) {}
+  /** {@code source} is the given file or folder the file comes from. */
+  private record PendingFile(
+      Path file, Future<ReadResult> result, DirectoryState directory, Path source) {}
 
   /** Per-directory state: series to refresh and presentation sidecars matched by name. */
   private static final class DirectoryState {
@@ -147,6 +182,7 @@ public class LoadLocalDicom extends LoadDicom {
     private final Deque<PendingFile> pending = new ArrayDeque<>();
     private final Deque<DirectoryState> directories = new ArrayDeque<>();
     private final Set<DirectoryState> dirty = new LinkedHashSet<>();
+    private Path source;
 
     Importer(ExecutorService executor, int window) {
       this.executor = executor;
@@ -170,6 +206,7 @@ public class LoadLocalDicom extends LoadDicom {
         if (attrs.isDirectory()) {
           folders.add(path);
         } else {
+          source = path;
           submit(path, attrs, new DirectoryState(shouldCopy(path.getParent()), false));
         }
       }
@@ -179,6 +216,7 @@ public class LoadLocalDicom extends LoadDicom {
         if (isCancelled()) {
           return;
         }
+        source = folder;
         Files.walkFileTree(
             folder,
             EnumSet.of(FileVisitOption.FOLLOW_LINKS),
@@ -247,7 +285,7 @@ public class LoadLocalDicom extends LoadDicom {
         return;
       }
       Future<ReadResult> future = executor.submit(() -> readFile(file, directory.copyToCache));
-      pending.add(new PendingFile(file, future, directory));
+      pending.add(new PendingFile(file, future, directory, source));
       while (pending.size() > window && !isCancelled()) {
         integrate(pending.poll());
       }
@@ -283,6 +321,7 @@ public class LoadLocalDicom extends LoadDicom {
         return;
       }
       if (result.zip()) {
+        sourcesWithDicom.add(pendingFile.source());
         new DicomZipMediaIO(result.file().toUri(), null).delegate(dicomModel);
         return;
       }
@@ -292,13 +331,17 @@ public class LoadLocalDicom extends LoadDicom {
       }
       switch (result.status()) {
         case READABLE -> {
+          sourcesWithDicom.add(pendingFile.source());
           DirectoryState directory = pendingFile.directory();
           directory.series.add(buildDicomStructure(reader));
           dirty.add(directory);
           attachSidecar(reader, result.file(), directory);
         }
         case ERROR -> errors.incrementAndGet();
-        case UNSUPPORTED -> unsupported.incrementAndGet();
+        case UNSUPPORTED -> {
+          sourcesWithDicom.add(pendingFile.source());
+          unsupported.incrementAndGet();
+        }
         default -> {
           // Excluded objects (DICOMDIR) are ignored
         }

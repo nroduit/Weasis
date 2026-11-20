@@ -12,19 +12,19 @@ package org.weasis.dicom.explorer.imp;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.util.SystemFileChooser;
 import java.awt.BasicStroke;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 import java.net.URI;
@@ -34,19 +34,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.TooManyListenersException;
-import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
+import javax.swing.text.View;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -56,6 +56,7 @@ import org.weasis.core.api.gui.util.WrapLayout;
 import org.weasis.core.api.net.URIUtils;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.util.LangUtil;
@@ -117,20 +118,24 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
             importDICOM(model, null);
           }
         });
-    GuiUtils.shrinkable(pathCombo);
+    // the field fills its row: the page is not as wide as the path it holds
+    GuiUtils.setPreferredWidth(pathCombo, 150, GuiUtils.MIN_SHRUNK_COMBO_WIDTH);
 
-    DropZone dropZone = new DropZone();
-    dropZone.setAlignmentX(CENTER_ALIGNMENT);
-    add(dropZone);
-    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
     JLabel label = new JLabel(Messages.getString("LocalImport.path") + StringUtil.COLON);
     label.setLabelFor(pathCombo);
-    add(
-        GuiUtils.getHorizontalBoxLayoutPanel(
-            label, GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL), pathCombo));
-    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_SMALL));
-    add(GuiUtils.getFlowLayoutPanel(0, 0, GuiUtils.shrinkable(recursive)));
-    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
+    JPanel options =
+        GuiUtils.getVerticalBoxLayoutPanel(
+            GuiUtils.boxVerticalStrut(ITEM_SEPARATOR),
+            GuiUtils.getHorizontalBoxLayoutPanel(
+                label, GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL), pathCombo),
+            GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_SMALL),
+            GuiUtils.getFlowLayoutPanel(0, 0, GuiUtils.shrinkable(recursive)));
+
+    // the zone takes the free height, so the path stays next to the Import button of the tool
+    DropZone dropZone = new DropZone();
+    setLayout(new BorderLayout());
+    add(dropZone, BorderLayout.CENTER);
+    add(options, BorderLayout.SOUTH);
 
     // The whole page takes drops, the zone shows them
     setTransferHandler(new FileDropHandler());
@@ -141,23 +146,35 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     }
   }
 
-  /** The dashed zone at the top of the page: drop target, Files, Folder and disc buttons. */
+  /**
+   * The dashed zone of the page: drop target, Files, Folder and disc buttons. Its width follows the
+   * title alone: the text under it and the row of buttons wrap, and the whole is centered in the
+   * height the page leaves.
+   */
   private final class DropZone extends JPanel implements DropTargetListener {
+    private final JLabel title;
+    private final JLabel kinds;
+    private final JPanel buttons;
     private boolean dragOver;
 
     DropZone() {
-      setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+      super(null);
       setOpaque(false);
       setBorder(GuiUtils.getEmptyBorder(ITEM_SEPARATOR, ITEM_SEPARATOR_SMALL));
 
-      JLabel title =
+      title =
           new JLabel(
               Messages.getString("LocalImport.drop"),
               ResourceUtil.getIcon(ActionIcon.IMPORT_DICOM),
               JLabel.CENTER);
       title.setIconTextGap(GuiUtils.getScaleLength(ITEM_SEPARATOR_SMALL));
       title.putClientProperty(FlatClientProperties.STYLE_CLASS, "h4"); // NON-NLS
-      JLabel kinds = new JLabel(Messages.getString("LocalImport.drop_kinds"), JLabel.CENTER);
+      kinds =
+          new JLabel(
+              "<html><div style='text-align:center'>" // NON-NLS
+                  + Messages.getString("LocalImport.drop_kinds")
+                  + "</div></html>", // NON-NLS
+              JLabel.CENTER);
       kinds.putClientProperty(FlatClientProperties.STYLE_CLASS, "small"); // NON-NLS
       kinds.setForeground(UIManager.getColor("Label.disabledForeground"));
 
@@ -167,13 +184,13 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
               ResourceUtil.getIcon(OtherIcon.CDROM),
               _ -> importDisc());
       disc.setToolTipText(Messages.getString("LocalImport.media_tip"));
-      JPanel buttons =
+      buttons =
           new JPanel(new WrapLayout(FlowLayout.CENTER, ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_SMALL));
       buttons.setOpaque(false);
       buttons.add(
           button(
               Messages.getString("LocalImport.browse_files"),
-              ResourceUtil.getIcon(OtherIcon.RASTER_IMAGE),
+              ResourceUtil.getIcon(FileIcon.DICOM),
               _ -> browse(SystemFileChooser.FILES_ONLY)));
       buttons.add(
           button(
@@ -181,27 +198,41 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
               ResourceUtil.getIcon(OtherIcon.FOLDER),
               _ -> browse(SystemFileChooser.DIRECTORIES_ONLY)));
       buttons.add(disc);
-      // the wrapped height is known once the row has its width: lay out again when it changes
-      buttons.addComponentListener(
-          new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-              if (buttons.getPreferredSize().height != buttons.getHeight()) {
-                SwingUtilities.invokeLater(buttons::revalidate);
-              }
-            }
-          });
 
-      for (JComponent c : List.of(title, kinds, buttons)) {
-        c.setAlignmentX(CENTER_ALIGNMENT);
-        add(c);
-      }
+      add(title);
+      add(kinds);
+      add(buttons);
     }
 
     private static JButton button(String text, Icon icon, ActionListener action) {
       JButton button = new JButton(text, icon);
       button.addActionListener(action);
       return button;
+    }
+
+    /** The height of the wrapped text for that width. */
+    private int kindsHeight(int width) {
+      if (kinds.getClientProperty(BasicHTML.propertyKey) instanceof View view) {
+        view.setSize(width, 0);
+        return (int) Math.ceil(view.getPreferredSpan(View.Y_AXIS));
+      }
+      return kinds.getPreferredSize().height;
+    }
+
+    /** The height of the title, the text and the rows of buttons, the last two wrapped. */
+    private int contentHeight(int width) {
+      return title.getPreferredSize().height
+          + kindsHeight(width)
+          + buttons.getLayout().preferredLayoutSize(buttons).height;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Insets insets = getInsets();
+      int sides = insets.left + insets.right;
+      int width = title.getPreferredSize().width + sides;
+      int inner = Math.max(getWidth(), width) - sides;
+      return new Dimension(width, contentHeight(inner) + insets.top + insets.bottom);
     }
 
     /** Narrow enough to follow the side: the texts are cut, the buttons wrap. */
@@ -211,8 +242,26 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     }
 
     @Override
-    public Dimension getMaximumSize() {
-      return new Dimension(Short.MAX_VALUE, getPreferredSize().height);
+    public void doLayout() {
+      Insets insets = getInsets();
+      int width = getWidth() - insets.left - insets.right;
+      // the rows of buttons depend on the width they get
+      buttons.setSize(width, buttons.getHeight());
+      int content = contentHeight(width);
+      int y = insets.top + Math.max(0, (getHeight() - insets.top - insets.bottom - content) / 2);
+      int[] heights = {
+        title.getPreferredSize().height,
+        kindsHeight(width),
+        buttons.getLayout().preferredLayoutSize(buttons).height
+      };
+      for (int i = 0; i < heights.length; i++) {
+        getComponent(i).setBounds(insets.left, y, width, heights[i]);
+        y += heights[i];
+      }
+      if (content + insets.top + insets.bottom > getHeight()) {
+        // wrapped on more rows than the page planned: the page has to grow, and scroll if needed
+        SwingUtilities.invokeLater(this::revalidate);
+      }
     }
 
     @Override
@@ -323,7 +372,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
       return;
     }
     remember(files);
-    DicomDirImport.importFiles(files, model, recursive.isSelected());
+    DicomDirImport.importFiles(files, model, recursive.isSelected(), this::forget);
   }
 
   private String initialDirectory() {
@@ -364,6 +413,30 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     pathCombo.removeAllItems();
     recent.forEach(pathCombo::addItem);
     pathCombo.setSelectedItem(recent.getFirst());
+  }
+
+  /**
+   * Takes out of the path history the sources in which nothing to import was found. The path stays
+   * in the field, so it can be corrected.
+   */
+  private void forget(List<File> files) {
+    Properties props = LocalPersistence.getProperties();
+    List<String> known = recentPaths(props);
+    List<String> recent = withoutPaths(known, files.stream().map(File::getPath).toList());
+    if (recent.size() == known.size()) {
+      return;
+    }
+    props.setProperty(RECENT_IMPORT_PATHS, String.join("\n", recent));
+    props.setProperty(LAST_IMPORT_PATH, recent.isEmpty() ? "" : recent.getFirst());
+    String typed = typedPath();
+    pathCombo.removeAllItems();
+    recent.forEach(pathCombo::addItem);
+    pathCombo.setSelectedItem(typed);
+  }
+
+  /** The recent sources without the removed ones, in the same order. */
+  static List<String> withoutPaths(List<String> recent, List<String> removed) {
+    return recent.stream().filter(path -> !removed.contains(path)).toList();
   }
 
   /**
@@ -439,7 +512,10 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     }
     remember(List.of(file));
     DicomDirImport.importFiles(
-        List.of(file), dicomModel != null ? dicomModel : model, recursive.isSelected());
+        List.of(file),
+        dicomModel != null ? dicomModel : model,
+        recursive.isSelected(),
+        this::forget);
   }
 
   @Override

@@ -16,8 +16,11 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
@@ -62,6 +65,15 @@ public final class DicomDirImport {
    * @param recursive whether folders are scanned with their subfolders
    */
   public static void importFiles(List<File> files, DicomModel model, boolean recursive) {
+    importFiles(files, model, recursive, null);
+  }
+
+  /**
+   * Imports the files and folders; {@code withoutDicom}, when given, receives on the event thread
+   * the ones in which nothing to import was found.
+   */
+  public static void importFiles(
+      List<File> files, DicomModel model, boolean recursive, Consumer<List<File>> withoutDicom) {
     List<File> dicomDirs = new ArrayList<>();
     List<File> toScan = new ArrayList<>();
     for (File file : files) {
@@ -71,7 +83,7 @@ public final class DicomDirImport {
         toScan.add(file);
       }
     }
-    scan(toScan, model, recursive);
+    scan(toScan, model, recursive, withoutDicom);
     if (dicomDirs.isEmpty()) {
       return;
     }
@@ -84,16 +96,24 @@ public final class DicomDirImport {
                   dicomDirs.stream().map(f -> isOnRemovableMedium(f.toPath())).toList();
               SwingUtilities.invokeLater(
                   () -> {
-                    List<File> fallback = new ArrayList<>();
+                    // the folder scanned in place of a DICOMDIR, and that DICOMDIR
+                    Map<File, File> fallback = new LinkedHashMap<>();
                     for (int i = 0; i < dicomDirs.size(); i++) {
                       File file = dicomDirs.get(i);
                       if (!openDicomDir(file, model, removable.get(i))) {
                         LOGGER.warn("No series in {}, scanning its folder", file);
                         File parent = file.getParentFile();
-                        fallback.add(parent != null ? parent : file);
+                        fallback.put(parent != null ? parent : file, file);
                       }
                     }
-                    scan(fallback, model, true);
+                    scan(
+                        List.copyOf(fallback.keySet()),
+                        model,
+                        true,
+                        withoutDicom == null
+                            ? null
+                            : folders ->
+                                withoutDicom.accept(folders.stream().map(fallback::get).toList()));
                   });
             });
   }
@@ -109,11 +129,13 @@ public final class DicomDirImport {
     return true;
   }
 
-  private static void scan(List<File> files, DicomModel model, boolean recursive) {
+  private static void scan(
+      List<File> files, DicomModel model, boolean recursive, Consumer<List<File>> withoutDicom) {
     if (!files.isEmpty()) {
       DicomModel.LOADING_EXECUTOR.execute(
           new LoadLocalDicom(
-              files.toArray(File[]::new), recursive, model, OpeningViewer.ALL_PATIENTS));
+                  files.toArray(File[]::new), recursive, model, OpeningViewer.ALL_PATIENTS)
+              .onSourcesWithoutDicom(withoutDicom));
     }
   }
 

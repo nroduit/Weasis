@@ -48,4 +48,11 @@ class LocalImportTest {
     props.setProperty(LocalImport.RECENT_IMPORT_PATHS, "/a\n/b\n/a");
     assertEquals(List.of("/a", "/b"), LocalImport.recentPaths(props));
   }
+
+  @Test
+  void sources_without_dicom_leave_the_history() {
+    assertEquals(
+        List.of("/a", "/c"),
+        LocalImport.withoutPaths(List.of("/a", "/b", "/c"), List.of("/b", "/other")));
+  }
 }
