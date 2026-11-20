@@ -434,8 +434,8 @@
     },
     {
       "code": "weasis.help.online",
-      "value": "https://nroduit.github.io/en/tutorials/",
-      "description": "The online tutorial",
+      "value": "https://nroduit.github.io/en/",
+      "description": "The base of the online documentation; a help button adds the path of its page (section/page/#anchor)",
       "type": "A",
       "category": "DOC"
     },

@@ -129,7 +129,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
     """
             .formatted(
                 message,
-                GuiUtils.getOnlineHelpUrl("logging"), // NON-NLS
+                GuiUtils.getOnlineHelpUrl("administer/logging/"), // NON-NLS
                 logOutput);
     JTextPane jTextPane1 = GuiUtils.getPanelWithHyperlink(html);
     jTextPane1.setBorder(new EmptyBorder(5, 5, 15, 5));

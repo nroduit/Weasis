@@ -105,7 +105,7 @@ public class DicomWebNodeDialog extends JDialog {
     okButton.addActionListener(e -> okButtonActionPerformed());
     JButton cancelButton = new JButton(Messages.common("cancel"));
     cancelButton.addActionListener(e -> dispose());
-    JButton helpButton = GuiUtils.createHelpButton("dicomweb-config"); // NON-NLS
+    JButton helpButton = GuiUtils.createHelpButton("administer/dicomweb-config/"); // NON-NLS
 
     panel.add(
         GuiUtils.getFlowLayoutPanel(

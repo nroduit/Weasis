@@ -75,7 +75,7 @@ public class CineSourceBuilder extends PullSourceBuilder {
 
   @Override
   public String helpTopic() {
-    return "capture/#cine"; // NON-NLS
+    return "share-export/capture/#cine"; // NON-NLS
   }
 
   @Override

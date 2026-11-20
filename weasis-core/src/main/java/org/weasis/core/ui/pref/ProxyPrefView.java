@@ -89,7 +89,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     add(GuiUtils.boxYLastElement(5));
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "proxy"); // NON-NLS
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "administer/proxy/"); // NON-NLS
   }
 
   private void initState() {

@@ -55,7 +55,7 @@ public class CommandsPrefView extends AbstractItemDialogPage {
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     load();
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "commands"); // NON-NLS
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "automate/commands/"); // NON-NLS
   }
 
   private static JComboBox<String> choices() {

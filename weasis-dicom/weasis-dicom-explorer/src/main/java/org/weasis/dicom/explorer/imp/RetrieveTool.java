@@ -36,7 +36,7 @@ public class RetrieveTool extends TransferTool {
         ResourceUtil.getIcon(ActionIcon.RETRIEVE),
         0.65,
         Messages.common("retrieve"),
-        "dicom-import", // NON-NLS
+        "read-studies/open-browse/dicom-import/#dicom-queryretrieve", // NON-NLS
         model);
   }
 

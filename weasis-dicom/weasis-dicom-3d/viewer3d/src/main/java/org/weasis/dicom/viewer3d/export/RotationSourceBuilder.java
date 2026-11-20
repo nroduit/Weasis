@@ -100,7 +100,7 @@ public class RotationSourceBuilder extends PullSourceBuilder {
 
   @Override
   public String helpTopic() {
-    return "capture/#rotation"; // NON-NLS
+    return "share-export/capture/#rotation"; // NON-NLS
   }
 
   @Override

@@ -88,7 +88,7 @@ public class PluginsPrefView extends AbstractItemDialogPage {
     toggle.addActionListener(e -> selected(view).ifPresent(this::togglePlugin));
     view.getSelectionModel().addListSelectionListener(e -> updateButtons(selected(view)));
     load();
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "plugins"); // NON-NLS
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "administer/plugins/"); // NON-NLS
   }
 
   private static WeasisPluginManager manager() {

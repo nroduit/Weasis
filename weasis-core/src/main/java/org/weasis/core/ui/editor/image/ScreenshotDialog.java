@@ -308,7 +308,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
             FlowLayout.TRAILING,
             BLOCK_SEPARATOR,
             ITEM_SEPARATOR_LARGE,
-            GuiUtils.createHelpButton("capture/#screenshot"), // NON-NLS
+            GuiUtils.createHelpButton("share-export/capture/#screenshot"), // NON-NLS
             saveButton,
             clipButton));
     panel.add(GuiUtils.boxYLastElement(ITEM_SEPARATOR));

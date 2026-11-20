@@ -128,7 +128,9 @@ public class ProfilePrefView extends AbstractItemDialogPage implements Scrollabl
     fillProfiles(registry.selectedId());
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
     getProperties()
-        .setProperty(PreferenceDialog.KEY_HELP, "draw-measure/#tool-profiles"); // NON-NLS
+        .setProperty(
+            PreferenceDialog.KEY_HELP,
+            "read-studies/measure/draw-measure/#tool-profiles"); // NON-NLS
   }
 
   private void jbInit() {

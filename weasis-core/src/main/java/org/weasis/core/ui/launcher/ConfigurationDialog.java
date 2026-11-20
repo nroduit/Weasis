@@ -91,7 +91,7 @@ public class ConfigurationDialog extends JDialog {
 
     JButton saveButton = new JButton(Messages.common("save"));
     saveButton.addActionListener(_ -> saveConfiguration());
-    JButton jButtonHelp = GuiUtils.createHelpButton("launcher-external"); // NON-NLS
+    JButton jButtonHelp = GuiUtils.createHelpButton("administer/launcher-external/"); // NON-NLS
     add(jButtonHelp, "cell 1 3, split 3, align trailing, gapafter 15, gaptop 15"); // NON-NLS
     add(saveButton, "align trailing, gaptop 15"); // NON-NLS
     JButton cancelButton = new JButton(Messages.common("cancel"));

@@ -38,7 +38,7 @@ public class ExportTool extends ExportHostTool {
         ResourceUtil.getIcon(ActionIcon.EXPORT),
         0.6,
         Messages.common("export"),
-        "dicom-export/#exporting", // NON-NLS
+        "share-export/dicom-export/#exporting", // NON-NLS
         model,
         TransferKind.LOCAL);
   }

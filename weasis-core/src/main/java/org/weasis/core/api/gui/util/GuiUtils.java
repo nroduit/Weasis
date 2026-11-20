@@ -798,7 +798,7 @@ public class GuiUtils {
    * onto, so a query string placed on it would end up before the topic and be lost.
    *
    * <p>The parameter is inserted before any fragment, because topics may carry one (for instance
-   * {@code dicom-3d-viewer/#lut-editor}).
+   * {@code read-studies/volumes/dicom-3d-viewer/#volume-rendering}).
    *
    * @param topic the documentation topic to open, or {@code null} for the documentation root
    * @return the URL to open in a browser
@@ -807,8 +807,7 @@ public class GuiUtils {
     String url =
         getUICore()
                 .getSystemPreferences()
-                .getProperty(
-                    "weasis.help.online", "https://nroduit.github.io/en/tutorials/") // NON-NLS
+                .getProperty("weasis.help.online", "https://nroduit.github.io/en/") // NON-NLS
             + (topic == null ? "" : topic);
     String version = AppProperties.WEASIS_VERSION;
     if (!StringUtil.hasText(version) || "0.0.0".equals(version)) { // NON-NLS

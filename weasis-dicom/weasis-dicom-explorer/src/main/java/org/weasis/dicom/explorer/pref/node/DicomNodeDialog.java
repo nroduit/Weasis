@@ -263,8 +263,8 @@ public class DicomNodeDialog extends JDialog {
     JButton helpButton =
         GuiUtils.createHelpButton(
             typeNode == AbstractDicomNode.Type.PRINTER
-                ? "print/#dicom-printer" // NON-NLS
-                : "dicom-import/#dicom-queryretrieve"); // NON-NLS
+                ? "share-export/print/#dicom-printer" // NON-NLS
+                : "read-studies/open-browse/dicom-import/#dicom-queryretrieve"); // NON-NLS
 
     panel.add(
         GuiUtils.getFlowLayoutPanel(

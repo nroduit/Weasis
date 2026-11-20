@@ -345,7 +345,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     panel.add(preview, "grow"); // NON-NLS
     panel.add(side, "aligny top, growy 0"); // NON-NLS
 
-    JButton helpButton = GuiUtils.createHelpButton("print"); // NON-NLS
+    JButton helpButton = GuiUtils.createHelpButton("share-export/print/"); // NON-NLS
     JButton cancelButton = new JButton(Messages.common("cancel"));
     cancelButton.addActionListener(e -> cancel());
     printButton.addActionListener(e -> printAction());

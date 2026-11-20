@@ -175,7 +175,7 @@ public class ThemeSetting extends AbstractItemDialogPage {
     add(textPane);
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "theme"); // NON-NLS
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "workstation/theme/"); // NON-NLS
   }
 
   protected void initialize(boolean firstTime) {

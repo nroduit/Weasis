@@ -33,7 +33,8 @@ public class LauncherPrefView extends AbstractItemDialogPage {
     buildPanel(Launcher.Type.OTHER);
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "launcher-external"); // NON-NLS
+    getProperties()
+        .setProperty(PreferenceDialog.KEY_HELP, "administer/launcher-external/"); // NON-NLS
   }
 
   private void buildPanel(Launcher.Type type) {

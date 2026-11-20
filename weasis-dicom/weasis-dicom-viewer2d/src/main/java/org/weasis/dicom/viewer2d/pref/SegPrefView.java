@@ -103,7 +103,9 @@ public class SegPrefView extends AbstractItemDialogPage {
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "dicom-segmentation"); // NON-NLS
+    getProperties()
+        .setProperty(
+            PreferenceDialog.KEY_HELP, "read-studies/objects/dicom-segmentation/"); // NON-NLS
   }
 
   private void setRulesEnabled(boolean enabled, JLabel lblKeywords, JLabel lblCount) {

@@ -1450,7 +1450,7 @@ public final class ShortcutManager {
         .append(escapeHtml(Messages.getString("ShortcutManager.html.subtitle")))
         .append("</div>\n");
     html.append("<div class=\"doc-bar\"><a href=\"")
-        .append(escapeHtml(GuiUtils.getOnlineHelpUrl("index.html"))) // NON-NLS
+        .append(escapeHtml(GuiUtils.getOnlineHelpUrl("workstation/shortcuts/"))) // NON-NLS
         .append("\" target=\"_blank\">↗ ")
         .append(escapeHtml(Messages.getString("ShortcutManager.html.online_doc")))
         .append("</a></div>\n");
@@ -1587,7 +1587,7 @@ public final class ShortcutManager {
 
     html.append("<h3>")
         .append(escapeHtml(Messages.getString("ShortcutManager.html.dicom_2d_viewer")));
-    appendDocLink(html, "dicom-2d-viewer"); // NON-NLS
+    appendDocLink(html, "read-studies/open-browse/dicom-2d-viewer/"); // NON-NLS
     html.append("</h3>\n");
     html.append("<table>\n");
     html.append("<tr><th>")
@@ -1626,7 +1626,7 @@ public final class ShortcutManager {
     html.append("</table>\n");
 
     html.append("<h3>").append(escapeHtml(Messages.getString("ShortcutManager.html.mpr_viewer")));
-    appendDocLink(html, "mpr"); // NON-NLS
+    appendDocLink(html, "read-studies/volumes/mpr/"); // NON-NLS
     html.append("</h3>\n");
     html.append("<table>\n");
     html.append("<tr><th>")
@@ -1641,7 +1641,7 @@ public final class ShortcutManager {
     html.append("</table>\n");
 
     html.append("<h3>").append(escapeHtml(Messages.getString("ShortcutManager.html.graphics")));
-    appendDocLink(html, "draw-measure"); // NON-NLS
+    appendDocLink(html, "read-studies/measure/draw-measure/"); // NON-NLS
     html.append("</h3>\n");
     html.append("<table>\n");
     html.append("<tr><th>")
@@ -1669,7 +1669,7 @@ public final class ShortcutManager {
 
     html.append("<h3>")
         .append(escapeHtml(Messages.getString("ShortcutManager.ctx.dicom_explorer")));
-    appendDocLink(html, "dicom-explorer"); // NON-NLS
+    appendDocLink(html, "read-studies/open-browse/dicom-explorer/"); // NON-NLS
     html.append("</h3>\n");
     html.append("<table>\n");
     html.append("<tr><th>")
@@ -1757,16 +1757,16 @@ public final class ShortcutManager {
    */
   private static Map<String, String> buildCategoryDocTopics() {
     Map<String, String> topics = new LinkedHashMap<>();
-    topics.put(CATEGORY_MOUSE_ACTIONS, "dicom-2d-viewer"); // NON-NLS
-    topics.put(CATEGORY_VIEWER, "dicom-2d-viewer"); // NON-NLS
-    topics.put(CATEGORY_NAVIGATION, "dicom-2d-viewer"); // NON-NLS
-    topics.put(CATEGORY_MEASURES, "draw-measure"); // NON-NLS
-    topics.put(CATEGORY_DRAWINGS, "draw-measure"); // NON-NLS
-    topics.put(CATEGORY_DISPLAY, "dicom-2d-viewer"); // NON-NLS
-    topics.put(CATEGORY_DICOM_NAV, "dicom-2d-viewer"); // NON-NLS
-    topics.put(CATEGORY_MPR, "mpr"); // NON-NLS
-    topics.put(CATEGORY_PAN, "dicom-2d-viewer"); // NON-NLS
-    topics.put(CATEGORY_DICOM_EXPLORER, "dicom-explorer"); // NON-NLS
+    topics.put(CATEGORY_MOUSE_ACTIONS, "read-studies/open-browse/dicom-2d-viewer/"); // NON-NLS
+    topics.put(CATEGORY_VIEWER, "read-studies/open-browse/dicom-2d-viewer/"); // NON-NLS
+    topics.put(CATEGORY_NAVIGATION, "read-studies/open-browse/dicom-2d-viewer/"); // NON-NLS
+    topics.put(CATEGORY_MEASURES, "read-studies/measure/draw-measure/"); // NON-NLS
+    topics.put(CATEGORY_DRAWINGS, "read-studies/measure/draw-measure/"); // NON-NLS
+    topics.put(CATEGORY_DISPLAY, "read-studies/open-browse/dicom-2d-viewer/"); // NON-NLS
+    topics.put(CATEGORY_DICOM_NAV, "read-studies/open-browse/dicom-2d-viewer/"); // NON-NLS
+    topics.put(CATEGORY_MPR, "read-studies/volumes/mpr/"); // NON-NLS
+    topics.put(CATEGORY_PAN, "read-studies/open-browse/dicom-2d-viewer/"); // NON-NLS
+    topics.put(CATEGORY_DICOM_EXPLORER, "read-studies/open-browse/dicom-explorer/"); // NON-NLS
     return topics;
   }
 

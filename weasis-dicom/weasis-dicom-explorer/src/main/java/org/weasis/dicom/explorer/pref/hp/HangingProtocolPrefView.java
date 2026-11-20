@@ -118,7 +118,9 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
     load();
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "hanging-protocols"); // NON-NLS
+    getProperties()
+        .setProperty(
+            PreferenceDialog.KEY_HELP, "read-studies/open-browse/hanging-protocols/"); // NON-NLS
   }
 
   private static String StringUtilColon() {

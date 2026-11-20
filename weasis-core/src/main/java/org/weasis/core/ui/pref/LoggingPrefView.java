@@ -89,7 +89,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
     checkboxFileLog.addActionListener(e -> checkRollingLog());
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "logging"); // NON-NLS
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "administer/logging/"); // NON-NLS
   }
 
   private void checkRollingLog() {

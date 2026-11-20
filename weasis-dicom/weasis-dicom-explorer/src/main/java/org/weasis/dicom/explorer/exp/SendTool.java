@@ -32,7 +32,7 @@ public class SendTool extends ExportHostTool {
         ResourceUtil.getIcon(ActionIcon.SEND),
         0.6,
         Messages.common("send"),
-        "dicom-export", // NON-NLS
+        "share-export/dicom-export/#send", // NON-NLS
         model,
         TransferKind.NETWORK);
   }

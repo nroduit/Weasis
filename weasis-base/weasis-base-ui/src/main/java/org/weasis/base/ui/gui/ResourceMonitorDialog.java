@@ -118,7 +118,7 @@ public class ResourceMonitorDialog extends JDialog {
     addRow(content, "ResourceMonitor.diskFallbacks", diskFallbackValue);
     addRow(content, "ResourceMonitor.gcOverhead", gcValue);
 
-    JButton helpButton = GuiUtils.createHelpButton("../basics/system-resources/"); // NON-NLS
+    JButton helpButton = GuiUtils.createHelpButton("administer/system-resources/"); // NON-NLS
     JButton resetButton = new JButton(Messages.getString("ResourceMonitor.reset"));
     resetButton.setToolTipText(Messages.getString("ResourceMonitor.reset.tooltip"));
     resetButton.addActionListener(e -> resetStatistics());

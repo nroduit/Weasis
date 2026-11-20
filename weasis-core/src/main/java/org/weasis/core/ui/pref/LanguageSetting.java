@@ -121,7 +121,7 @@ public class LanguageSetting extends AbstractItemDialogPage {
 
     // Do not add an element for margin, this lets the text pane grow
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "locale"); // NON-NLS
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "workstation/locale/"); // NON-NLS
   }
 
   private String getText() {

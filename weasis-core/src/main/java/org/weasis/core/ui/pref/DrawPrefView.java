@@ -91,7 +91,8 @@ public class DrawPrefView extends AbstractItemDialogPage {
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "draw-measure"); // NON-NLS
+    getProperties()
+        .setProperty(PreferenceDialog.KEY_HELP, "read-studies/measure/draw-measure/"); // NON-NLS
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
 
     initialize();

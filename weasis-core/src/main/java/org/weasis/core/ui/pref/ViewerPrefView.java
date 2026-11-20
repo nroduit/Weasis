@@ -24,8 +24,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     super(Messages.getString("viewer"), 500);
     getProperties()
         .setProperty(
-            PreferenceDialog.KEY_HELP,
-            "gui/#list-of-other-viewersplayers-in-the-dicom-workspace"); // NON-NLS
+            PreferenceDialog.KEY_HELP, "getting-started/gui/#other-viewers-and-players"); // NON-NLS
 
     menuPanel.setLayout(new GridLayout(0, 2));
     add(menuPanel);

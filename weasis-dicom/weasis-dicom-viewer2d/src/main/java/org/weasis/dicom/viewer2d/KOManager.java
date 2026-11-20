@@ -45,7 +45,8 @@ import org.weasis.dicom.macro.KODocumentModule;
 
 public final class KOManager {
 
-  private static final String KO_HELP_TOPIC = "build-ko-pr/#key-object-selection-ko"; // NON-NLS
+  private static final String KO_HELP_TOPIC =
+      "read-studies/measure/build-ko-pr/#key-object-selection-ko"; // NON-NLS
 
   public static List<Object> getKOElementListWithNone(ViewCanvas<DicomImageElement> currentView) {
 

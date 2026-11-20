@@ -101,7 +101,8 @@ public class DicomExportPR extends AbstractWizardDialog {
         });
     JButton exportButton = new JButton(Messages.common("export"));
     exportButton.addActionListener(_ -> exportSelection());
-    JButton jButtonHelp = GuiUtils.createHelpButton("dicom-export/#exporting"); // NON-NLS
+    JButton jButtonHelp =
+        GuiUtils.createHelpButton("share-export/dicom-export/#exporting"); // NON-NLS
     jPanelBottom.removeAll();
     jPanelBottom.add(
         GuiUtils.getFlowLayoutPanel(

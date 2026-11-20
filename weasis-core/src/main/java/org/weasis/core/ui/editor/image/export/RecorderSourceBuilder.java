@@ -83,7 +83,7 @@ public class RecorderSourceBuilder implements FrameSourceBuilder {
 
   @Override
   public String helpTopic() {
-    return "capture/#record"; // NON-NLS
+    return "share-export/capture/#record"; // NON-NLS
   }
 
   @Override

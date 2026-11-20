@@ -58,7 +58,7 @@ public class ImportTool extends TransferTool {
         ResourceUtil.getIcon(ActionIcon.IMPORT),
         0.4,
         Messages.common("import"),
-        "dicom-import", // NON-NLS
+        "read-studies/open-browse/dicom-import/", // NON-NLS
         model);
   }
 

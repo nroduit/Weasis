@@ -123,7 +123,8 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
     jbInit();
     fillPresets(null);
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "lut/#window-level-presets");
+    getProperties()
+        .setProperty(PreferenceDialog.KEY_HELP, "read-studies/adjust/lut/#window-level-presets");
   }
 
   private void jbInit() {

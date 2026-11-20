@@ -142,7 +142,9 @@ public class ShadingPrefDialog extends JDialog {
           apply(Row::initialValue, initialEnvironment);
           dispose();
         });
-    JButton helpButton = GuiUtils.createHelpButton("dicom-3d-viewer/#volume-rendering"); // NON-NLS
+    JButton helpButton =
+        GuiUtils.createHelpButton(
+            "read-studies/volumes/dicom-3d-viewer/#volume-rendering"); // NON-NLS
 
     JPanel panel =
         GuiUtils.getFlowLayoutPanel(

@@ -33,7 +33,7 @@ public class DiscExportTool extends ExportHostTool {
         ResourceUtil.getIcon(ActionIcon.EXPORT_CD),
         0.6,
         Messages.common("export"),
-        "dicom-export/#exporting", // NON-NLS
+        "share-export/dicom-export/#cddvd-image", // NON-NLS
         model,
         TransferKind.DISC);
   }

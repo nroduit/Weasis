@@ -128,7 +128,9 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "draw-measure/#preferences"); // NON-NLS
+    getProperties()
+        .setProperty(
+            PreferenceDialog.KEY_HELP, "read-studies/measure/draw-measure/#preferences"); // NON-NLS
   }
 
   private static List<Graphic> measurementTools() {

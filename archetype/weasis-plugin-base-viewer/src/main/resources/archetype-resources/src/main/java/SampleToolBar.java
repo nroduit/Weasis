@@ -23,7 +23,7 @@ public class SampleToolBar extends WtoolBar {
                 if (e.getSource() instanceof Component component) {
                     URL url;
                     try {
-                        url = new URL("https://nroduit.github.io/en/tutorials/");
+                        url = new URL("https://nroduit.github.io/en/");
                         GuiUtils.openInDefaultBrowser(component, url);
                     } catch (MalformedURLException e1) {
                         e1.printStackTrace();

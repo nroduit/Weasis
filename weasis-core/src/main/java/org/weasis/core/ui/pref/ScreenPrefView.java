@@ -60,7 +60,9 @@ public class ScreenPrefView extends AbstractItemDialogPage {
   public ScreenPrefView() {
     super(Messages.getString("ScreenPrefView.monitors"), 108);
     getProperties()
-        .setProperty(PreferenceDialog.KEY_HELP, "zoom/#real-world-size-display"); // NON-NLS
+        .setProperty(
+            PreferenceDialog.KEY_HELP,
+            "read-studies/adjust/zoom/#real-world-size-display"); // NON-NLS
 
     final JComboBox<String> defMonitorComboBox = new JComboBox<>();
     List<Monitor> monitors = MeasureTool.viewSetting.getMonitors();

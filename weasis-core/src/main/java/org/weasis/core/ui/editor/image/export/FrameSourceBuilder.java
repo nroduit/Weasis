@@ -47,7 +47,7 @@ public interface FrameSourceBuilder {
 
   /** Topic of the online documentation opened by the help button of the dialog. */
   default String helpTopic() {
-    return "capture/#options"; // NON-NLS
+    return "share-export/capture/#options"; // NON-NLS
   }
 
   default AnimationFormat preferredFormat() {

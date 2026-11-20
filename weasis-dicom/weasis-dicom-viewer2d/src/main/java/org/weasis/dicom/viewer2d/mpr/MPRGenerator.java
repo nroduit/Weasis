@@ -103,6 +103,7 @@ public class MPRGenerator {
 
   private static JPanel buildMessagePanel(String message) {
     return GuiUtils.buildHelpMessagePanel(
-        message + Messages.getString("warn.rectify.limitation"), "mpr/#volume-geometry"); // NON-NLS
+        message + Messages.getString("warn.rectify.limitation"),
+        "read-studies/volumes/mpr/#volume-geometry"); // NON-NLS
   }
 }

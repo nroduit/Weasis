@@ -117,7 +117,7 @@ public class MprPrefView extends AbstractItemDialogPage {
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "mpr"); // NON-NLS
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "read-studies/volumes/mpr/"); // NON-NLS
   }
 
   private void setDefaultLayout() {
