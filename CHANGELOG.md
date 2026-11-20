@@ -1,5 +1,32 @@
 # Changelog
 
+## [v4.8.1](https://github.com/nroduit/Weasis/tree/v4.8.1) (2026-11-20)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.8.0...v4.8.1)
+
+**Implemented enhancements:**
+
+- `weasis-cli`: drive a running Weasis from the command line [\#955](https://github.com/nroduit/Weasis/issues/955)
+- 3D viewer: OpenGL through the Foreign Function & Memory API, JOGL removed [\#954](https://github.com/nroduit/Weasis/issues/954)
+- Replace DockingFrames with a built-in workspace docking engine [\#953](https://github.com/nroduit/Weasis/issues/953)
+- Faster startup: common libraries on the classpath and a per-user AOT cache [\#952](https://github.com/nroduit/Weasis/issues/952)
+- Replace the OSGi framework \(Apache Felix\) with pf4j [\#951](https://github.com/nroduit/Weasis/issues/951)
+
+**Fixed bugs:**
+
+- PseudoColor process ignores 3-channel images [\#977](https://github.com/nroduit/Weasis/issues/977)
+- Hints to keyboard shortcuts of measurement tools [\#976](https://github.com/nroduit/Weasis/issues/976)
+- Oblique MPR Bugs [\#972](https://github.com/nroduit/Weasis/issues/972)
+- Enhanced multiframe images: window presets and rescale from Shared Functional Groups only applied to the first frame [\#971](https://github.com/nroduit/Weasis/issues/971)
+- MIP doesn't activate [\#967](https://github.com/nroduit/Weasis/issues/967)
+- UnsupportedOperationException in RsQueryResult.buildFromPatientID – DICOMweb launch by patientID opens nothing \(4.8.0 regression\) [\#965](https://github.com/nroduit/Weasis/issues/965)
+- DICOM printing does not work in version 4.8.0. [\#964](https://github.com/nroduit/Weasis/issues/964)
+
+**Merged pull requests:**
+
+- build: bump the maven group with 31 updates [\#974](https://github.com/nroduit/Weasis/pull/974) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: bump the actions group across 1 directory with 5 updates [\#963](https://github.com/nroduit/Weasis/pull/963) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v4.8.0](https://github.com/nroduit/Weasis/tree/v4.8.0) (2026-10-31)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.3...v4.8.0)
@@ -46,7 +73,7 @@
 **Merged pull requests:**
 
 - Fix binary SEG overlays to follow pixel boundaries [\#945](https://github.com/nroduit/Weasis/pull/945) ([tiboloysel](https://github.com/tiboloysel))
-- docs: offer private vulnerability reporting in the issue chooser [\#939](https://github.com/nroduit/Weasis/pull/939) ([MrBeldum](https://github.com/MrBeldum))
+- docs: offer private vulnerability reporting in the issue chooser [\#939](https://github.com/nroduit/Weasis/pull/939) ([rune-gh](https://github.com/rune-gh))
 - ci: bump the actions group with 3 updates [\#934](https://github.com/nroduit/Weasis/pull/934) ([dependabot[bot]](https://github.com/apps/dependabot))
 - ci: bump the actions group with 2 updates [\#908](https://github.com/nroduit/Weasis/pull/908) ([dependabot[bot]](https://github.com/apps/dependabot))
 
