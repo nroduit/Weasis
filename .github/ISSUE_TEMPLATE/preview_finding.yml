@@ -71,5 +71,5 @@ body:
     id: logs
     attributes:
       label: Relevant log output
-      description: From *Help > Open the logging folder* (`weasis.log`, `boot.log`), with the identity removed
+      description: From *Help > Open the logging folder* (`default.log`, `boot.log`), with the identity removed
       render: shell
