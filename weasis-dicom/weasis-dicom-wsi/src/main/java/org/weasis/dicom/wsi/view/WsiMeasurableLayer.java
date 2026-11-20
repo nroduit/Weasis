@@ -12,14 +12,18 @@ package org.weasis.dicom.wsi.view;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.wsi.model.PixelSpacing;
 import org.weasis.dicom.wsi.model.Slide;
+import org.weasis.dicom.wsi.source.TileSource;
 import org.weasis.opencv.data.PlanarImage;
 
 /**
@@ -28,16 +32,44 @@ import org.weasis.opencv.data.PlanarImage;
  * statistics, which a gigapixel matrix does not allow.
  */
 public final class WsiMeasurableLayer implements MeasurableLayer {
+  private static final Logger LOGGER = LoggerFactory.getLogger(WsiMeasurableLayer.class);
 
   private final Slide slide;
   private final Function<TagW, Object> tags;
+  private final TileSource source;
+  private final int focalPlane;
+  private final int opticalPath;
+  private final PlanarImage image;
+  private final AffineTransform shapeTransform;
 
   /**
    * @param tags the attribute values shown with the measurements (those of the series)
+   * @param source the tiles the statistics of a region are read from, null for none
    */
-  public WsiMeasurableLayer(Slide slide, Function<TagW, Object> tags) {
+  public WsiMeasurableLayer(
+      Slide slide,
+      Function<TagW, Object> tags,
+      TileSource source,
+      int focalPlane,
+      int opticalPath) {
+    this(slide, tags, source, focalPlane, opticalPath, null, null);
+  }
+
+  private WsiMeasurableLayer(
+      Slide slide,
+      Function<TagW, Object> tags,
+      TileSource source,
+      int focalPlane,
+      int opticalPath,
+      PlanarImage image,
+      AffineTransform shapeTransform) {
     this.slide = slide;
     this.tags = tags;
+    this.source = source;
+    this.focalPlane = focalPlane;
+    this.opticalPath = opticalPath;
+    this.image = image;
+    this.shapeTransform = shapeTransform;
   }
 
   @Override
@@ -48,6 +80,26 @@ public final class WsiMeasurableLayer implements MeasurableLayer {
   @Override
   public Optional<Rectangle2D> getContentBounds() {
     return Optional.of(new Rectangle2D.Double(0, 0, slide.width(), slide.height()));
+  }
+
+  // The pixels of a region are read from the tiles at the finest level that keeps them few enough:
+  // the statistics of a large region are those of a coarser level of the pyramid
+  @Override
+  public MeasurableLayer forRegion(Rectangle2D bounds) {
+    if (source == null || bounds == null) {
+      return this;
+    }
+    try {
+      return SlidePixels.read(source, bounds, focalPlane, opticalPath)
+          .<MeasurableLayer>map(
+              r ->
+                  new WsiMeasurableLayer(
+                      slide, tags, null, focalPlane, opticalPath, r.image(), r.baseToImage()))
+          .orElse(this);
+    } catch (IOException | RuntimeException e) {
+      LOGGER.warn("Cannot read the pixels of the region", e);
+      return this;
+    }
   }
 
   @Override
@@ -65,7 +117,7 @@ public final class WsiMeasurableLayer implements MeasurableLayer {
 
   @Override
   public AffineTransform getShapeTransform() {
-    return null;
+    return shapeTransform == null ? null : new AffineTransform(shapeTransform);
   }
 
   @Override
@@ -88,9 +140,10 @@ public final class WsiMeasurableLayer implements MeasurableLayer {
     // A slide is never cropped
   }
 
+  /** The pixels of the region this layer was made for, null for the layer of the whole slide. */
   @Override
   public PlanarImage getSourceRenderedImage() {
-    return null;
+    return image;
   }
 
   @Override
@@ -98,6 +151,7 @@ public final class WsiMeasurableLayer implements MeasurableLayer {
     return pixelValue.doubleValue();
   }
 
+  // The samples of a slide are stored on 8 bits
   @Override
   public double getPixelMin() {
     return 0;
@@ -105,6 +159,6 @@ public final class WsiMeasurableLayer implements MeasurableLayer {
 
   @Override
   public double getPixelMax() {
-    return 0;
+    return 255;
   }
 }

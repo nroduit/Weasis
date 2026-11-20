@@ -11,10 +11,9 @@ package org.weasis.dicom.wsi;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
@@ -24,7 +23,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
 import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -61,7 +62,7 @@ import org.weasis.core.ui.editor.image.DisplayColor;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
-import org.weasis.core.ui.model.layer.LayerItem;
+import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -69,24 +70,22 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.SpecialElementOverlay;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.sr.SRSpecialElement;
-import org.weasis.dicom.viewer2d.InfoLayer;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.wsi.ann.AnnSpecialElement;
 import org.weasis.dicom.wsi.ann.AnnSpecialElement.SlideAnnotations;
 import org.weasis.dicom.wsi.ann.AnnotationIndex;
 import org.weasis.dicom.wsi.ann.BulkAnnotations.Group;
-import org.weasis.dicom.wsi.model.PixelSpacing;
 import org.weasis.dicom.wsi.model.Slide;
+import org.weasis.dicom.wsi.model.TileId;
 import org.weasis.dicom.wsi.model.WsiImageType;
 import org.weasis.dicom.wsi.source.DicomTileSource;
 import org.weasis.dicom.wsi.sr.SlideReportOverlay;
-import org.weasis.dicom.wsi.tile.TilePlan;
 import org.weasis.dicom.wsi.view.AnnotationOverlay;
 import org.weasis.dicom.wsi.view.OverviewMap;
 import org.weasis.dicom.wsi.view.PanBounds;
 import org.weasis.dicom.wsi.view.PanInertia;
-import org.weasis.dicom.wsi.view.ScaleBar;
 import org.weasis.dicom.wsi.view.ScaleSnap;
+import org.weasis.dicom.wsi.view.SlidePixels;
 import org.weasis.dicom.wsi.view.TiledImageLayer;
 import org.weasis.dicom.wsi.view.TiledImageLayer.PlanTarget;
 import org.weasis.dicom.wsi.view.WsiMeasurableLayer;
@@ -97,22 +96,25 @@ import org.weasis.opencv.op.ImageConversion;
  * A 2D view of the DICOM viewer that shows a slide from its tiles: the model space is the base
  * level of the slide, so the zoom, pan, rotation and flip of the 2D view, its graphics and its
  * measurement tools apply as for an image, and the measurements are calibrated by the base level
- * pixel spacing. The image layer of the view stays hidden; the overview, the magnification and a
- * scale bar are drawn over the tiles. A pan glides on when released with some speed and the slide
- * never leaves the view (see {@link PanBounds}); keys 1 – 9 zoom to the magnification presets and
- * the wheel snaps to the scales where a level is shown pixel for pixel. The zoom and the pan follow
- * {@link WsiSettings}.
+ * pixel spacing. The image layer of the view stays hidden; the overview is drawn over the tiles and
+ * the corner text is the one of a slide ({@link WsiInfoLayer}). The value under the pointer and the
+ * statistics of a region are read from the tiles ({@link SlidePixels}). A pan glides on when
+ * released with some speed and the slide never leaves the view (see {@link PanBounds}); keys 1 – 9
+ * zoom to the magnification presets and the wheel snaps to the scales where a level is shown pixel
+ * for pixel. The zoom and the pan follow {@link WsiSettings}.
  */
 public class WsiView2d extends View2d {
   private static final Logger LOGGER = LoggerFactory.getLogger(WsiView2d.class);
 
   private static final int OVERVIEW_SIDE = 200;
   private static final int LABEL_SIDE = 600;
-  private static final int SCALE_BAR_MAX = 160;
-  private static final int BOX_MARGIN = 10;
-  private static final int BOX_PADDING = 6;
-  private static final int BAR_THICKNESS = 4;
-  private static final Color BOX_BACKGROUND = new Color(0, 0, 0, 160);
+  private static final Color OVERVIEW_FRAME = new Color(0, 0, 0, 160);
+  private static final Color OVERVIEW_VEIL = new Color(0, 0, 0, 45);
+
+  /** The outline of the area in view: dark with a light edge, read on a white or a dark slide. */
+  private static final Color OUTLINE_CORE = new Color(0x10, 0x10, 0x10);
+
+  private static final Color OUTLINE_EDGE = new Color(255, 255, 255, 230);
 
   private final SlideSession session = new SlideSession(this::repaint, this::slideOpened);
 
@@ -139,13 +141,15 @@ public class WsiView2d extends View2d {
           });
   private final Consumer<Boolean> animationListener = _ -> applyZoomSettings();
   private final Consumer<Integer> stepListener = _ -> applyZoomSettings();
+  private final Consumer<Boolean> overlayListener = _ -> repaint();
   private OverviewMap overview;
   private volatile List<AnnSpecialElement> annotationElements; // null when stale
   private int focalPlane;
   private int opticalPath;
-  private boolean overviewVisible = true;
-  private boolean diagnosticsVisible = true;
   private double paintMs;
+  // The tile last read for the value under the pointer
+  private TileId probeTile;
+  private PlanarImage probeImage;
   private int slideWidth;
 
   public WsiView2d(ImageViewerEventManager<DicomImageElement> eventManager) {
@@ -154,16 +158,16 @@ public class WsiView2d extends View2d {
     imageLayer.setVisible(false);
     // The tiles are converted for the monitor of the view: painted again on another one
     addPropertyChangeListener("graphicsConfiguration", _ -> repaint()); // NON-NLS
-    // The ruler of the 2D view takes the pixel size of the thumbnail: the scale bar of the slide
-    // replaces it, so this view keeps its own annotation settings
-    infoLayer = new InfoLayer(this, false);
-    infoLayer.setDisplayPreferencesValue(LayerItem.SCALE, false);
+    // The corner text of a slide: the ruler, the window and the frame of an image do not apply
+    infoLayer = new WsiInfoLayer(this, this, true);
     addSlideListeners();
     // A zoom out at the edge may leave the slide out of the bounds
     getZoomAnimator().setIdleAction(inertia::settle);
     applyZoomSettings();
     Settings.addListener(WsiSettings.ZOOM_ANIMATION, animationListener);
     Settings.addListener(WsiSettings.ZOOM_STEP, stepListener);
+    Settings.addListener(WsiSettings.OVERVIEW, overlayListener);
+    Settings.addListener(WsiSettings.RENDERING_INFO, overlayListener);
   }
 
   private void applyZoomSettings() {
@@ -324,6 +328,9 @@ public class WsiView2d extends View2d {
   public void disposeView() {
     Settings.removeListener(WsiSettings.ZOOM_ANIMATION, animationListener);
     Settings.removeListener(WsiSettings.ZOOM_STEP, stepListener);
+    Settings.removeListener(WsiSettings.OVERVIEW, overlayListener);
+    Settings.removeListener(WsiSettings.RENDERING_INFO, overlayListener);
+    releaseProbe();
     inertia.stop();
     session.close();
     super.disposeView();
@@ -339,6 +346,7 @@ public class WsiView2d extends View2d {
 
   private void slideOpened(Slide slide) {
     build.complete();
+    releaseProbe();
     boolean resized = slide.width() != slideWidth;
     slideWidth = slide.width();
     // A slide read again may have fewer planes or paths than the ones shown
@@ -642,7 +650,14 @@ public class WsiView2d extends View2d {
   public MeasurableLayer getMeasurableLayer() {
     return session
         .slide()
-        .<MeasurableLayer>map(s -> new WsiMeasurableLayer(s, imageLayer::getSourceTagValue))
+        .<MeasurableLayer>map(
+            s ->
+                new WsiMeasurableLayer(
+                    s,
+                    imageLayer::getSourceTagValue,
+                    session.source().orElse(null),
+                    focalPlane,
+                    opticalPath))
         .orElseGet(super::getMeasurableLayer);
   }
 
@@ -659,9 +674,7 @@ public class WsiView2d extends View2d {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g.setRenderingHint(
           RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-      drawInfo(g, layer.get());
-      drawScaleBar(g, layer.get().slide());
-      overview = overviewVisible ? drawOverview(g, layer.get()) : null;
+      overview = Settings.get(WsiSettings.OVERVIEW) ? drawOverview(g, layer.get()) : null;
     } finally {
       g.dispose();
     }
@@ -720,16 +733,6 @@ public class WsiView2d extends View2d {
         .thenAccept(image -> SwingUtilities.invokeLater(() -> showLabelDialog(image)));
   }
 
-  public void toggleOverview() {
-    overviewVisible = !overviewVisible;
-    repaint();
-  }
-
-  public void toggleDiagnostics() {
-    diagnosticsVisible = !diagnosticsVisible;
-    repaint();
-  }
-
   private static BufferedImage readLabel(DicomTileSource source) {
     try {
       PlanarImage image = source.readAssociatedImage(WsiImageType.LABEL).orElse(null);
@@ -770,94 +773,85 @@ public class WsiView2d extends View2d {
     return getViewModel().getViewScale();
   }
 
-  private void drawInfo(Graphics2D g, TiledImageLayer layer) {
-    Slide slide = layer.slide();
-    TilePlan plan = layer.plan();
-    List<String> lines = new ArrayList<>();
+  /** Where the overview is drawn in the view, empty when it is not shown. */
+  public Optional<Rectangle> overviewBox() {
+    if (!Settings.get(WsiSettings.OVERVIEW)) {
+      return Optional.empty();
+    }
+    return session
+        .layer()
+        .filter(l -> l.thumbnail().isPresent())
+        .map(TiledImageLayer::slide)
+        .map(sl -> OverviewMap.of(getWidth(), sl.width(), sl.height(), OVERVIEW_SIDE).box());
+  }
+
+  /** The time the tiles took to paint, in milliseconds, smoothed over the last paints. */
+  public double paintMillis() {
+    return paintMs;
+  }
+
+  // The value of the stored pixel under the pointer, read from the tile of the level shown: the
+  // slide has no image in memory. The tile last read is kept, the pointer mostly moves within it
+  @Override
+  public PixelInfo getPixelInfo(Point p) {
+    Optional<TiledImageLayer> layer = session.layer();
+    Optional<DicomTileSource> source = session.source();
+    if (layer.isEmpty() || source.isEmpty()) {
+      return super.getPixelInfo(p);
+    }
+    PixelInfo info = new PixelInfo();
+    Slide slide = layer.get().slide();
+    int level = layer.get().plan().level();
+    Optional<SlidePixels.Location> location =
+        SlidePixels.locate(
+            slide,
+            level < 0 ? slide.levels().size() - 1 : level,
+            focalPlane,
+            opticalPath,
+            p.getX(),
+            p.getY());
+    if (location.isEmpty()) {
+      return info;
+    }
+    info.setPosition(new Point(p.x, p.y));
     slide
-        .magnification()
-        .ifPresent(m -> lines.add(Messages.format("WsiView.magnification", m * viewScale())));
-    if (slide.base().focalPlanes() > 1 || slide.base().opticalPaths().size() > 1) {
-      lines.add(
-          Messages.format(
-              "WsiView.plane",
-              focalPlane + 1,
-              slide.base().focalPlanes(),
-              slide.base().opticalPaths().get(opticalPath)));
+        .base()
+        .pixelSpacing()
+        .ifPresent(
+            spacing -> {
+              info.setPixelSpacingUnit(Unit.MILLIMETER);
+              info.setPixelSize(spacing.column());
+            });
+    try {
+      PlanarImage tile = probe(source.get(), location.get().tile());
+      if (tile != null && location.get().x() < tile.width() && location.get().y() < tile.height()) {
+        double[] values = tile.get(location.get().y(), location.get().x());
+        if (values != null && values.length > 0) {
+          info.setValues(values);
+          info.setChannelNames(getChannelNames(tile));
+        }
+      }
+    } catch (IOException | RuntimeException e) {
+      LOGGER.debug("Cannot read the pixel under the pointer", e);
     }
-    if (diagnosticsVisible) {
-      String diagnostics =
-          Messages.format(
-              "WsiView.diagnostics",
-              plan.level(),
-              slide.levels().size(),
-              1.0 / viewScale(),
-              layer.readyTiles(),
-              plan.painted().size(),
-              paintMs);
-      lines.add(
-          plan.truncated()
-              ? diagnostics + " · " + Messages.getString("WsiView.truncated")
-              : diagnostics);
-    }
-    // Above the bottom left corner annotations of the 2D view
-    drawTextBox(g, lines, BOX_MARGIN, getHeight() / 2);
+    return info;
   }
 
-  private void drawScaleBar(Graphics2D g, Slide slide) {
-    Optional<PixelSpacing> spacing = slide.base().pixelSpacing();
-    if (spacing.isEmpty()) {
-      return;
+  private PlanarImage probe(DicomTileSource source, TileId tile) throws IOException {
+    if (!tile.equals(probeTile)) {
+      releaseProbe();
+      probeTile = tile;
+      probeImage = source.readTile(tile).orElse(null);
     }
-    Optional<ScaleBar> bar = ScaleBar.of(spacing.get().column() / viewScale(), SCALE_BAR_MAX);
-    if (bar.isEmpty()) {
-      return;
-    }
-    FontMetrics fm = g.getFontMetrics();
-    int length = (int) Math.round(bar.get().lengthPx());
-    int width = Math.max(length, fm.stringWidth(bar.get().label())) + 2 * BOX_PADDING;
-    int height = fm.getHeight() + BAR_THICKNESS + 3 * BOX_PADDING;
-    int x = getWidth() - width - BOX_MARGIN;
-    int y = getHeight() / 2 - height / 2;
-    g.setColor(BOX_BACKGROUND);
-    g.fillRoundRect(x, y, width, height, 6, 6);
-    g.setColor(Color.WHITE);
-    g.fillRect(
-        x + (width - length) / 2, y + height - BOX_PADDING - BAR_THICKNESS, length, BAR_THICKNESS);
-    g.drawString(
-        bar.get().label(),
-        x + (width - fm.stringWidth(bar.get().label())) / 2,
-        y + BOX_PADDING + fm.getAscent());
+    return probeImage;
   }
 
-  // The first line in a larger bold font, the box centred vertically on y
-  private void drawTextBox(Graphics2D g, List<String> lines, int x, int y) {
-    if (lines.isEmpty()) {
-      return;
+  private void releaseProbe() {
+    if (probeImage != null) {
+      probeImage.release();
     }
-    Font base = g.getFont();
-    Font first = base.deriveFont(Font.BOLD, base.getSize2D() * 1.4f);
-    int width = 0;
-    int height = 2 * BOX_PADDING;
-    for (int i = 0; i < lines.size(); i++) {
-      FontMetrics fm = g.getFontMetrics(i == 0 ? first : base);
-      width = Math.max(width, fm.stringWidth(lines.get(i)));
-      height += fm.getHeight();
-    }
-    width += 2 * BOX_PADDING;
-    int top = y - height / 2;
-    g.setColor(BOX_BACKGROUND);
-    g.fillRoundRect(x, top, width, height, 6, 6);
-    g.setColor(Color.WHITE);
-    int baseline = top + BOX_PADDING;
-    for (int i = 0; i < lines.size(); i++) {
-      g.setFont(i == 0 ? first : base);
-      FontMetrics fm = g.getFontMetrics();
-      baseline += fm.getAscent();
-      g.drawString(lines.get(i), x + BOX_PADDING, baseline);
-      baseline += fm.getDescent() + fm.getLeading();
-    }
-    g.setFont(base);
+    probeImage = null;
+    probeTile = null;
   }
 
   private OverviewMap drawOverview(Graphics2D g, TiledImageLayer layer) {
@@ -868,20 +862,29 @@ public class WsiView2d extends View2d {
     Slide slide = layer.slide();
     OverviewMap map = OverviewMap.of(getWidth(), slide.width(), slide.height(), OVERVIEW_SIDE);
     Rectangle box = map.box();
-    g.setColor(BOX_BACKGROUND);
-    g.fillRect(box.x - 3, box.y - 3, box.width + 6, box.height + 6);
+    g.setColor(OVERVIEW_FRAME);
+    g.fillRect(box.x - 2, box.y - 2, box.width + 4, box.height + 4);
     g.setRenderingHint(
         RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
     g.drawImage(thumbnail.get(), box.x, box.y, box.width, box.height, null);
     double w = getWidth();
     double h = getHeight();
-    g.setColor(Color.YELLOW);
-    g.setStroke(new BasicStroke(2f));
     // Zoomed out, the view shows more than the slide: the outline stops at the overview
     g.clip(new Rectangle(box.x - 1, box.y - 1, box.width + 2, box.height + 2));
-    g.draw(
+    Path2D outline =
         map.outline(
-            viewToModel(0.0, 0.0), viewToModel(w, 0.0), viewToModel(w, h), viewToModel(0.0, h)));
+            viewToModel(0.0, 0.0), viewToModel(w, 0.0), viewToModel(w, h), viewToModel(0.0, h));
+    // The rest of the slide is dimmed, so the area in view stands out whatever the stain
+    Area rest = new Area(box);
+    rest.subtract(new Area(outline));
+    g.setColor(OVERVIEW_VEIL);
+    g.fill(rest);
+    g.setStroke(new BasicStroke(3.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
+    g.setColor(OUTLINE_EDGE);
+    g.draw(outline);
+    g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
+    g.setColor(OUTLINE_CORE);
+    g.draw(outline);
     return map;
   }
 

@@ -92,6 +92,60 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   private final List<DefaultMutableTreeNode> layerTypeNodes = new ArrayList<>();
   private DefaultMutableTreeNode minAnnotations;
 
+  /**
+   * The items of the image node, none for a viewer whose image has no overlay, shutter or padding
+   * to hide. Called by the constructor, as the other hooks of the tree: an override must not read a
+   * field of its class.
+   */
+  protected boolean hasImageNode() {
+    return true;
+  }
+
+  /** The items of the corner text a viewer shows, in the order of the tree. */
+  protected List<LayerItem> annotationItems() {
+    return List.of(
+        LayerItem.ANNOTATIONS,
+        LayerItem.MIN_ANNOTATIONS,
+        LayerItem.SCALE,
+        LayerItem.LUT,
+        LayerItem.FUSION_LUT,
+        LayerItem.IMAGE_ORIENTATION,
+        LayerItem.WINDOW_LEVEL,
+        LayerItem.ZOOM,
+        LayerItem.ROTATION,
+        LayerItem.FRAME,
+        LayerItem.PIXEL);
+  }
+
+  /** Whether the viewer draws the lines of the other views over an image. */
+  protected boolean hasCrosslines() {
+    return true;
+  }
+
+  /** Adds the nodes of a viewer of its own between the corner text and the graphics. */
+  protected void addViewerNodes(DefaultMutableTreeNode root) {
+    // None for the 2D viewer
+  }
+
+  /**
+   * A node added by {@link #addViewerNodes} was checked or unchecked.
+   *
+   * @return whether the node was one of them
+   */
+  protected boolean viewerNodeChanged(Object node, boolean selected) {
+    return false;
+  }
+
+  /** Checks the nodes added by {@link #addViewerNodes} as the view shows them. */
+  protected void initViewerNodes(ViewCanvas<?> view) {
+    // None for the 2D viewer
+  }
+
+  /** Checks or unchecks a node without telling the views. */
+  protected final void setNodeChecked(TreeNode node, boolean checked) {
+    TreeBuilder.setPathSelection(tree, getTreePath(node), checked);
+  }
+
   public DisplayTool(String pluginName) {
     super("display", pluginName, Insertable.Type.TOOL, 10); // NON-NLS
     setIcon(ResourceUtil.getIcon(OtherIcon.VIEW_SETTING));
@@ -105,29 +159,29 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
   public void iniTree() {
     tree.getCheckingModel().setCheckingMode(CheckingMode.SIMPLE);
-    imageNode = new DefaultMutableTreeNode(IMAGE, true);
-    imageNode.add(new DefaultMutableTreeNode(DICOM_IMAGE_OVERLAY, false));
-    imageNode.add(new DefaultMutableTreeNode(DICOM_SHUTTER, false));
-    imageNode.add(new DefaultMutableTreeNode(DICOM_PIXEL_PADDING, false));
-    rootNode.add(imageNode);
+    if (hasImageNode()) {
+      imageNode = new DefaultMutableTreeNode(IMAGE, true);
+      imageNode.add(new DefaultMutableTreeNode(DICOM_IMAGE_OVERLAY, false));
+      imageNode.add(new DefaultMutableTreeNode(DICOM_SHUTTER, false));
+      imageNode.add(new DefaultMutableTreeNode(DICOM_PIXEL_PADDING, false));
+      rootNode.add(imageNode);
+    }
     dicomInfo = new DefaultMutableTreeNode(DICOM_ANNOTATIONS, true);
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ANNOTATIONS, true));
-    minAnnotations = new DefaultMutableTreeNode(LayerItem.MIN_ANNOTATIONS, false);
-    dicomInfo.add(minAnnotations);
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.SCALE, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.LUT, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.FUSION_LUT, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.IMAGE_ORIENTATION, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.WINDOW_LEVEL, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ZOOM, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ROTATION, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.FRAME, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.PIXEL, true));
+    for (LayerItem item : annotationItems()) {
+      DefaultMutableTreeNode node = new DefaultMutableTreeNode(item, false);
+      if (item == LayerItem.MIN_ANNOTATIONS) {
+        minAnnotations = node;
+      }
+      dicomInfo.add(node);
+    }
     rootNode.add(dicomInfo);
+    addViewerNodes(rootNode);
     drawings = new DefaultMutableTreeNode(GRAPHICS, true);
     rootNode.add(drawings);
-    crosslines = new DefaultMutableTreeNode(LayerType.CROSSLINES, false);
-    drawings.add(crosslines);
+    if (hasCrosslines()) {
+      crosslines = new DefaultMutableTreeNode(LayerType.CROSSLINES, false);
+      drawings.add(crosslines);
+    }
     for (LayerType type : LAYER_TYPES) {
       DefaultMutableTreeNode node = new DefaultMutableTreeNode(type, false);
       layerTypeNodes.add(node);
@@ -186,8 +240,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
       ImageViewerPlugin<?> container = EventManager.getInstance().getSelectedView2dContainer();
       List<ViewCanvas<?>> views = getViews(applyAllViews.isSelected());
 
+      if (viewerNodeChanged(selObject, selected)) {
+        return;
+      }
       if (rootNode.equals(parent)) {
-        if (imageNode.equals(selObject)) {
+        if (selObject.equals(imageNode)) {
           for (ViewCanvas<?> v : views) {
             if (selected != Boolean.TRUE.equals(v.getImageLayer().getVisible())) {
               v.getImageLayer().setVisible(selected);
@@ -207,7 +264,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             v.setDrawingsVisibility(selected);
           }
         }
-      } else if (imageNode.equals(parent)) {
+      } else if (parent != null && parent.equals(imageNode)) {
         if (selObject != null) {
           if (DICOM_IMAGE_OVERLAY.equals(selObject.toString())) {
             sendPropertyChangeEvent(views, ActionW.IMAGE_OVERLAY.cmd(), selected);
@@ -251,7 +308,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         for (ViewCanvas<?> v : views) {
           v.setLayerTypeVisibility(type, selected);
         }
-      } else if (drawings.equals(parent) && selObject == crosslines) {
+      } else if (drawings.equals(parent) && crosslines != null && selObject == crosslines) {
         for (ViewCanvas<?> v : views) {
           if (Boolean.TRUE.equals(v.getActionValue(LayerType.CROSSLINES.name())) != selected) {
             v.setActionsInView(LayerType.CROSSLINES.name(), selected);
@@ -289,11 +346,15 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     if (view != null) {
       initPathSelection = true;
       // Image node
-      OpManager disOp = view.getDisplayOpManager();
-      TreeBuilder.setPathSelection(tree, getTreePath(imageNode), view.getImageLayer().getVisible());
-      iniDicomView(disOp, OverlayOp.OP_NAME, OverlayOp.P_SHOW, 0);
-      iniDicomView(disOp, ShutterOp.OP_NAME, ShutterOp.P_SHOW, 1);
-      iniDicomView(disOp, WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), 2);
+      if (imageNode != null) {
+        OpManager disOp = view.getDisplayOpManager();
+        TreeBuilder.setPathSelection(
+            tree, getTreePath(imageNode), view.getImageLayer().getVisible());
+        iniDicomView(disOp, OverlayOp.OP_NAME, OverlayOp.P_SHOW, 0);
+        iniDicomView(disOp, ShutterOp.OP_NAME, ShutterOp.P_SHOW, 1);
+        iniDicomView(disOp, WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), 2);
+      }
+      initViewerNodes(view);
 
       // Annotations node
       LayerAnnotation layer = view.getInfoLayer();
@@ -325,10 +386,12 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         tree,
         getTreePath(drawings),
         LangUtil.nullToTrue((Boolean) view.getActionValue(ActionW.DRAWINGS.cmd())));
-    TreeBuilder.setPathSelection(
-        tree,
-        getTreePath(crosslines),
-        LangUtil.nullToTrue((Boolean) view.getActionValue(LayerType.CROSSLINES.name())));
+    if (crosslines != null) {
+      TreeBuilder.setPathSelection(
+          tree,
+          getTreePath(crosslines),
+          LangUtil.nullToTrue((Boolean) view.getActionValue(LayerType.CROSSLINES.name())));
+    }
     for (DefaultMutableTreeNode node : layerTypeNodes) {
       if (node.getUserObject() instanceof LayerType type) {
         TreeBuilder.setPathSelection(tree, getTreePath(node), view.isLayerTypeVisible(type));
@@ -357,6 +420,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   public void changingViewContentEvent(SeriesViewerEvent event) {
     // TODO should received layer changes
     EVENT e = event.getEventType();
+    // A viewer with a display tool of its own shares the event manager of this one
+    if (event.getSeriesViewer() instanceof ViewerPlugin<?> viewer
+        && !viewer.getSeriesViewerUI().tools.contains(this)) {
+      return;
+    }
     if (EVENT.SELECT_VIEW.equals(e) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
       iniTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedViewCanvas());
     } else if (EVENT.TOGGLE_INFO.equals(e)) {

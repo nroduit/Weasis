@@ -65,6 +65,9 @@ public class ImageRegionStatistics {
         }
         shape = graphic.getShape();
       }
+      if (shape != null) {
+        layer = layer.forRegion(shape.getBounds2D());
+      }
 
       PlanarImage image = layer.getSourceRenderedImage();
       if (image == null) {

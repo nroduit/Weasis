@@ -19,11 +19,16 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.View2dContainer;
+import org.weasis.dicom.viewer2d.dockable.DisplayTool;
+import org.weasis.dicom.viewer2d.dockable.ImageTool;
+import org.weasis.dicom.wsi.dockable.WsiDisplayTool;
+import org.weasis.dicom.wsi.dockable.WsiImageTool;
 
 /**
  * The slide viewer: a 2D viewer of the DICOM viewer whose single view paints a slide from its tiles
@@ -62,7 +67,18 @@ public class WsiContainer extends View2dContainer {
     if (!WSI_UI.init.getAndSet(true)) {
       WSI_UI.toolBars.addAll(View2dContainer.UI.toolBars);
       WSI_UI.toolBars.add(new WsiToolBar(25));
-      WSI_UI.tools.addAll(View2dContainer.UI.tools);
+      // The display and image tools of a slide take the place of those of the 2D viewer
+      for (DockableTool tool : View2dContainer.UI.tools) {
+        if (tool instanceof DisplayTool) {
+          WsiDisplayTool display = new WsiDisplayTool(DisplayTool.BUTTON_NAME);
+          WSI_UI.tools.add(display);
+          eventManager.addSeriesViewerListener(display);
+        } else if (tool instanceof ImageTool) {
+          WSI_UI.tools.add(new WsiImageTool(ImageTool.BUTTON_NAME));
+        } else {
+          WSI_UI.tools.add(tool);
+        }
+      }
     }
   }
 

@@ -97,6 +97,20 @@ public final class WsiSettings {
           .description("Most bulk annotation items drawn in a slide view at once")
           .declare();
 
+  /** Whether a slide view shows the overview of the slide with the area in view. */
+  public static final Setting<Boolean> OVERVIEW =
+      Setting.builder(SettingType.BOOLEAN, GROUP, "weasis.wsi.overview", true) // NON-NLS
+          .since("5.0") // NON-NLS
+          .description("Show the overview of the slide in a slide view")
+          .declare();
+
+  /** Whether a slide view shows the level, the tiles and the paint time of what it draws. */
+  public static final Setting<Boolean> RENDERING_INFO =
+      Setting.builder(SettingType.BOOLEAN, GROUP, "weasis.wsi.rendering.info", false) // NON-NLS
+          .since("5.0") // NON-NLS
+          .description("Show the pyramid level, the tiles and the paint time in a slide view")
+          .declare();
+
   private WsiSettings() {}
 
   /** The zoom factor of one wheel notch. */

@@ -68,6 +68,17 @@ public interface MeasurableLayer {
   }
 
   /**
+   * The layer to read the pixels of a region from: this layer for an image held in memory. A layer
+   * of an image too large for that (a slide shown by tiles) answers a layer holding the region
+   * alone, whose source image and shape transform are those of the region.
+   *
+   * @param bounds the region in the coordinates of the graphics
+   */
+  default MeasurableLayer forRegion(Rectangle2D bounds) {
+    return this;
+  }
+
+  /**
    * Returns the transform applied to shapes for statistics calculations.
    *
    * @return shape transform for image coordinate conversion, or null if none

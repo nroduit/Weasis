@@ -122,7 +122,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     return layer;
   }
 
-  private void copyLayerValues(Map<LayerItem, Boolean> prefMap) {
+  protected void copyLayerValues(Map<LayerItem, Boolean> prefMap) {
     setLayerValue(prefMap, LayerItem.ANNOTATIONS);
     setLayerValue(prefMap, LayerItem.IMAGE_ORIENTATION);
     setLayerValue(prefMap, LayerItem.SCALE);
@@ -241,7 +241,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     drawExtendedActions(g2);
   }
 
-  private void drawImageInfo(
+  /** The scale and the color bars along the edges of the view. */
+  protected void drawImageInfo(
       Graphics2D g2,
       DicomImageElement image,
       Rectangle bound,
@@ -275,7 +276,12 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         image.getPixelSizeCalibrationDescription());
   }
 
-  private float paintBottomLeftInfo(
+  /**
+   * The lines of the bottom leading corner, from {@code drawY} upwards.
+   *
+   * @return the baseline above the last line painted
+   */
+  protected float paintBottomLeftInfo(
       Graphics2D g2,
       DicomImageElement image,
       OpManager disOp,
@@ -456,7 +462,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     return drawY;
   }
 
-  private float paintPixelInfo(Graphics2D g2, float drawY, int fontHeight) {
+  protected float paintPixelInfo(Graphics2D g2, float drawY, int fontHeight) {
     String pixelText = buildPixelInfoText();
     FontTools.paintFontOutline(g2, pixelText, border, drawY);
     FontMetrics fontMetrics = g2.getFontMetrics();
@@ -540,7 +546,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     return sb.toString();
   }
 
-  private float paintZoom(Graphics2D g2, float drawY, int fontHeight) {
+  protected float paintZoom(Graphics2D g2, float drawY, int fontHeight) {
     String prefix = Messages.common("zoom") + StringUtil.COLON_AND_SPACE;
     String zoomText =
         prefix + DecFormatter.percentTwoDecimal(view2DPane.getViewModel().getViewScale());
@@ -558,7 +564,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     return drawY - fontHeight;
   }
 
-  private float paintRotation(Graphics2D g2, float drawY, int fontHeight) {
+  protected float paintRotation(Graphics2D g2, float drawY, int fontHeight) {
     String prefix = Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE;
     String rotationText = prefix + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " °";
     paintInfoValue(
@@ -786,6 +792,11 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     return drawY + fontHeight;
   }
 
+  /** The baseline of the first line of the top trailing corner: below what a view draws there. */
+  protected float topTrailingStart(Graphics2D g2, Rectangle bound, int fontHeight) {
+    return fontHeight;
+  }
+
   private float paintTopRightCorner(
       Graphics2D g2,
       ModalityInfoData modality,
@@ -797,7 +808,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       int fontHeight,
       boolean hideMin) {
     CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_RIGHT);
-    float drawY = fontHeight;
+    float drawY = topTrailingStart(g2, bound, fontHeight);
 
     for (TagView info : corner.getInfos()) {
       if (info != null && (hideMin || info.containsTag(TagD.get(Tag.SeriesDate)))) {
@@ -860,7 +871,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     return StringUtil.hasText(text) ? text : null;
   }
 
-  private void paintBottomLeftAnnotations(
+  /** The last line of the bottom leading corner and the orientation labels. */
+  protected void paintBottomLeftAnnotations(
       Graphics2D g2,
       DicomImageElement image,
       Series series,
