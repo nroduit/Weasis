@@ -17,6 +17,7 @@ import org.weasis.core.ui.docking.ExtToolFactory;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.plugin.SingletonExtension;
 
@@ -30,6 +31,12 @@ public class RtDisplayToolFactory extends ExtToolFactory<DicomImageElement> {
 
   public RtDisplayToolFactory() {
     super(DisplayTool.BUTTON_NAME);
+  }
+
+  /** The tool draws on the views of the 2D viewer. */
+  @Override
+  public boolean supportsViewer(Class<?> viewerClass) {
+    return viewerClass == View2dContainer.class;
   }
 
   @Override

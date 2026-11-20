@@ -23,6 +23,7 @@ import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.plugin.SingletonExtension;
 
 @Extension
@@ -36,6 +37,12 @@ public class SegmentationToolFactory extends ExtToolFactory<DicomImageElement> {
   @Override
   public boolean isComponentCreatedByThisFactory(Insertable component) {
     return component instanceof SegmentationTool;
+  }
+
+  /** The tool follows the 2D viewer: the 3D viewer has its own segmentation tool. */
+  @Override
+  public boolean supportsViewer(Class<?> viewerClass) {
+    return viewerClass == View2dContainer.class;
   }
 
   @Override

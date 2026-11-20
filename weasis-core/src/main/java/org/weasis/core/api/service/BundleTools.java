@@ -89,7 +89,7 @@ public class BundleTools {
   }
 
   public static void registerInsertableFactory(InsertableFactory factory, SeriesViewerUI ui) {
-    if (factory == null) {
+    if (factory == null || (ui != null && !factory.supportsViewer(ui.clazz))) {
       return;
     }
 

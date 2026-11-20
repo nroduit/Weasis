@@ -22,4 +22,15 @@ public interface InsertableFactory extends ExtensionPoint {
   boolean isComponentCreatedByThisFactory(Insertable component);
 
   Type getType();
+
+  /**
+   * Whether the components of this factory are made for that type of viewer. Every viewer registers
+   * the factories of all the plugins, so a factory whose tool reads the state of one viewer names
+   * it here; by default a factory serves every viewer.
+   *
+   * @param viewerClass the class of the viewer that registers the factory
+   */
+  default boolean supportsViewer(Class<?> viewerClass) {
+    return true;
+  }
 }
