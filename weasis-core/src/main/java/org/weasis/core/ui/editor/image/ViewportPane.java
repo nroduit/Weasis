@@ -10,8 +10,10 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.BorderLayout;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 
@@ -437,6 +440,68 @@ public class ViewportPane<E extends ImageElement> extends JPanel {
       for (ViewCanvas<E> c : tiledLayout.canvases()) {
         c.setSeries(series, null);
       }
+    }
+  }
+
+  /**
+   * Assigns a series to this pane and shows {@code media} in {@code anchor}.
+   *
+   * <ul>
+   *   <li>STACK mode: the stack canvas shows {@code media}.
+   *   <li>TILED mode: the tiles scroll together so that {@code anchor} (one of the tiles, else the
+   *       first one) shows {@code media}, within the scroll range of the pane: the first tile never
+   *       goes before the first image, nor the last tile past the last image.
+   * </ul>
+   *
+   * @param series the series to display (may be {@code null} to clear)
+   * @param anchor the canvas that must show {@code media}
+   * @param media the image to show, {@code null} for the default position
+   */
+  @SuppressWarnings("unchecked")
+  public void setSeries(MediaSeries<E> series, ViewCanvas<E> anchor, E media) {
+    if (tiledLayout == null) {
+      stackCanvas.setSeries(series, media);
+      return;
+    }
+    List<ViewCanvas<E>> tiles = tiledLayout.canvases();
+    for (ViewCanvas<E> c : tiles) {
+      c.setSeries(series, null);
+    }
+    if (series == null || media == null) {
+      return;
+    }
+    // Read the order after setSeries: a new series starts with the default sort and no filter
+    ViewCanvas<E> first = tiledLayout.firstCanvas();
+    Filter<E> filter = (Filter<E>) first.getActionValue(ActionW.FILTERED_SERIES.cmd());
+    Comparator<E> sort = first.getCurrentSortComparator();
+    List<E> images = series.copyOfMedias(filter, sort);
+    int index = -1;
+    for (int i = 0; i < images.size(); i++) {
+      if (images.get(i) == media) {
+        index = i;
+        break;
+      }
+    }
+    if (index < 0) {
+      return;
+    }
+    int offset = tiles.contains(anchor) ? anchor.getTileOffset() : 0;
+    int max = ImageViewerEventManager.tiledScrollMax(images.size(), tiles.size());
+    int base = Math.clamp(index - offset, 0, max - 1);
+    if (base == 0) {
+      return; // where setSeries already put the tiles
+    }
+    for (ViewCanvas<E> c : tiles) {
+      E shown = series.getMedia(base + c.getTileOffset(), filter, sort);
+      if (shown != null) {
+        c.propertyChange(
+            new PropertyChangeEvent(
+                c, ActionW.SYNCH.cmd(), null, new SynchCineEvent(c, shown, base)));
+      }
+    }
+    if (eventManager != null) {
+      // The scroll slider follows the selected tile
+      eventManager.updateComponentsListener(getSelectedCanvas());
     }
   }
 

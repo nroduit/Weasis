@@ -100,7 +100,7 @@ public record ReformatGrid(Plane plane, Vector3d min, Vector3d max, double spaci
         tlhc(index),
         new Vector3d(spacing, spacing, spacing),
         spacing,
-        new Vector3d(width(), height(), 1));
+        new Vector3d(height(), width(), 1)); // rows, then columns
   }
 
   /** Image Orientation (Patient) of every slice. */

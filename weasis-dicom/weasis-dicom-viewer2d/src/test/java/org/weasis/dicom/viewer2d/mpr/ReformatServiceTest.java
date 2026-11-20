@@ -23,6 +23,7 @@ import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.dicom.viewer2d.subtraction.SyntheticSeries;
 
@@ -36,7 +37,9 @@ class ReformatServiceTest {
     List<DicomImageElement> slices = series.copyOfMedias(null, null);
     Vector3d centre = ReformatService.centerOf(slices.get(3));
     assertAll(
-        () -> assertEquals(new Vector3d(28, 28, 16), centre, "TLHC -100 + 128 px of 1 mm, z 10+6"),
+        () ->
+            assertEquals(
+                new Vector3d(27.5, 27.5, 16), centre, "TLHC -100 + 127.5 px of 1 mm, z 10+6"),
         () -> assertSame(slices.get(3), ReformatService.sliceThrough(series, centre)),
         () ->
             assertSame(
@@ -53,6 +56,21 @@ class ReformatServiceTest {
             assertFalse(
                 ReformatService.canReformat(SyntheticSeries.mr("1.2.3.61", 3, 0)),
                 "too few slices"),
-        () -> assertNull(ReformatService.centerOf(null)));
+        () -> assertNull(ReformatService.centerOf((DicomImageElement) null)));
+  }
+
+  @Test
+  void the_center_of_a_wide_slice_takes_the_columns_along_the_rows() {
+    // 512 rows x 583 columns, pixels 0.5 mm across and 0.25 mm down, from the origin
+    GeometryOfSlice geometry =
+        new GeometryOfSlice(
+            new Vector3d(1, 0, 0),
+            new Vector3d(0, 1, 0),
+            new Vector3d(0, 0, 0),
+            new Vector3d(0.5, 0.25, 1),
+            1,
+            new Vector3d(512, 583, 1));
+    assertEquals(
+        new Vector3d(582 / 2.0 * 0.5, 511 / 2.0 * 0.25, 0), ReformatService.centerOf(geometry));
   }
 }

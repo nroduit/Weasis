@@ -244,9 +244,9 @@ public final class ReformatService {
   }
 
   /**
-   * Shows the pane's series in another plane, on the slice through the point at the centre of the
-   * slice shown: the acquired series when the plane is its own, else its reformat, built in the
-   * background when the service has none yet. EDT only.
+   * Shows the pane's series in another plane, on the slice through the point at the center of the
+   * slice shown (in a tiled pane, the tile shown moves there): the acquired series when the plane
+   * is its own, else its reformat, built in the background when the service has none yet. EDT only.
    */
   public static void switchPlane(
       ImageViewerPlugin<DicomImageElement> container,
@@ -307,26 +307,35 @@ public final class ReformatService {
       ViewCanvas<DicomImageElement> view,
       MediaSeries<DicomImageElement> series,
       Vector3d point) {
+    DicomImageElement slice = point == null ? null : sliceThrough(series, point);
     ViewportPane<DicomImageElement> pane = container.getOwningPane(view);
     if (pane != null && pane.isTiled()) {
-      pane.setSeries(series);
+      pane.setSeries(series, view, slice);
     } else {
-      view.setSeries(series, point == null ? null : sliceThrough(series, point));
+      view.setSeries(series, slice);
     }
     series.setOpen(true);
   }
 
-  /** The patient-space point at the centre of an image, null without geometry. */
+  /** The patient-space point at the center of an image, null without geometry. */
   public static Vector3d centerOf(DicomImageElement image) {
-    GeometryOfSlice geometry = image == null ? null : image.getSliceGeometry();
+    return centerOf(image == null ? null : image.getSliceGeometry());
+  }
+
+  /**
+   * The patient-space point at the center of a slice, null without geometry. The dimensions are
+   * rows then columns, and the TLHC is the center of the first pixel: the center lies (columns - 1)
+   * / 2 pixels along the rows and (rows - 1) / 2 pixels along the columns.
+   */
+  public static Vector3d centerOf(GeometryOfSlice geometry) {
     if (geometry == null) {
       return null;
     }
     Vector3d size = geometry.getDimensions();
     Vector3d spacing = geometry.getVoxelSpacing();
     Vector3d center = new Vector3d(geometry.getTLHC());
-    center.fma(size.x / 2 * spacing.x, geometry.getRow());
-    center.fma(size.y / 2 * spacing.y, geometry.getColumn());
+    center.fma((size.y - 1) / 2 * spacing.x, geometry.getRow());
+    center.fma((size.x - 1) / 2 * spacing.y, geometry.getColumn());
     return center;
   }
 
