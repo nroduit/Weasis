@@ -4,7 +4,8 @@ How the platform installers are produced by `.github/workflows/build-installer.y
 
 > TL;DR — `jpackage` only *assembles and packages* prebuilt binaries (Temurin JDK, OpenCV, JogAmp);
 > it never compiles against the build host's libc. The **glibc floor of the Linux packages is
-> `GLIBC_2.17`**, fixed by the bundled natives, **independent of the build OS**.
+> `GLIBC_2.17`** on x86-64 and the **aarch64 floor is `GLIBC_2.27`**, fixed by the bundled natives,
+> **independent of the build OS**.
 
 ## 1. Build jobs
 
@@ -34,10 +35,16 @@ Docker provides the aarch64 build (through QEMU) and a pinned toolchain (JDK, `r
 ### Linux: glibc floor
 
 `jpackage` does not compile or link anything against the host libc: it copies the JDK launcher and runtime and the third-party native libraries, then calls `dpkg-deb` / `rpmbuild`.
-The glibc required at run time is therefore the highest symbol version referenced by those prebuilt binaries: JogAmp (`GLIBC_2.17`), OpenCV (`2.16`), the JDK launcher and runtime (`2.14`–`2.15`).
+The glibc required at run time is therefore the highest symbol version referenced by those prebuilt binaries:
 
-`GLIBC_2.17` (December 2012) covers RHEL/CentOS 7, Ubuntu 14.04 and later.
-On aarch64 it is the floor by construction (glibc gained AArch64 support in 2.17).
+| Binary | x86-64 | aarch64 |
+|---|---|---|
+| OpenCV 5.0.0-dcm | `GLIBC_2.16` | `GLIBC_2.27` |
+| JogAmp | `GLIBC_2.17` | none |
+| JDK launcher and runtime | `2.14`–`2.17` | `2.17` |
+
+On x86-64, `GLIBC_2.17` (December 2012) covers RHEL/CentOS 7, Ubuntu 14.04 and later.
+On aarch64, the OpenCV library sets the floor to `GLIBC_2.27` (February 2018): Ubuntu 18.04, Debian 10, RHEL 8 and later.
 
 Rules:
 
