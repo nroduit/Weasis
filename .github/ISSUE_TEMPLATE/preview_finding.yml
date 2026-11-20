@@ -1,0 +1,75 @@
+name: 5.0 preview finding
+description: A finding of the Weasis 5.0 preview (beta), by an invited tester or a developer
+labels: ["5.0-preview", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing the preview. One finding per issue; questions and opinions go to the
+        [5.0 preview](https://github.com/nroduit/Weasis/discussions/categories/5-0-preview) category of the Discussions.
+        *Help > Send feedback on the preview* in the application opens this form with the version and the platform filled in.
+  - type: dropdown
+    id: feature
+    attributes:
+      label: Feature
+      description: The feature of the scenario sheet, or the area of the finding
+      options:
+        - Hanging protocols
+        - Windows, screens and workspace
+        - DICOM explorer
+        - Measurement tools
+        - Identity masking and redaction
+        - Printing
+        - Subtraction
+        - 3D, zoom and color
+        - ECG / waveform viewer
+        - Whole slide imaging viewer
+        - Settings and site layers
+        - Security and audit
+        - Commands, scripts and weasis-cli
+        - Plugins and developer kit
+        - Installation and coexistence with 4.x
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: scenario
+    attributes:
+      label: Scenario
+      description: The number or the title of the scenario of the sheet, if the finding comes from one
+      placeholder: ex. HP-3, "save the current display as a protocol"
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What you saw
+      description: Steps, and a screenshot or a capture with the identity masked (no patient data).
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: From the About box or `weasis-cli weasis:info`
+      placeholder: ex. 5.0.0-beta.1
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: Operating system, monitors (number and resolution), graphics card for 3D findings
+      placeholder: ex. Windows 11 x86-64, 2 monitors 2560x1440
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: From *Help > Open the logging folder* (`default.log`, `boot.log`), with the identity removed
+      render: shell

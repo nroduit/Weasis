@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
+  - name: 5.0 preview — questions and opinions
+    url: https://github.com/nroduit/Weasis/discussions/categories/5-0-preview
+    about: For the testers of the 5.0 preview; a defect goes to the "5.0 preview finding" template
   - name: Report a security vulnerability
     url: https://github.com/nroduit/Weasis/security/advisories/new
     about: Do not report security issues publicly. Use the private advisory form (preferred). See SECURITY.md.
