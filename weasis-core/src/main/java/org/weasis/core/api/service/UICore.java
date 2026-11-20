@@ -60,6 +60,7 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.SeriesBadgeProvider;
 import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.net.URLParameters;
@@ -96,6 +97,7 @@ public final class UICore {
   private final List<DataExplorerView> explorerPlugins;
   private final List<Toolbar> explorerPluginToolbars;
   private final List<SeriesViewerFactory> seriesViewerFactories;
+  private final List<SeriesBadgeProvider> seriesBadgeProviders;
   private final CVetoFocusListener dockingVetoFocus;
   private final CControl dockingControl;
   private final CContentArea baseArea;
@@ -135,6 +137,7 @@ public final class UICore {
     this.explorerPlugins = Collections.synchronizedList(new ArrayList<>());
     this.explorerPluginToolbars = Collections.synchronizedList(new ArrayList<>());
     this.seriesViewerFactories = Collections.synchronizedList(new ArrayList<>());
+    this.seriesBadgeProviders = Collections.synchronizedList(new ArrayList<>());
     this.dockingVetoFocus =
         new CVetoFocusListener() {
 
@@ -480,6 +483,11 @@ public final class UICore {
 
   public List<SeriesViewerFactory> getSeriesViewerFactories() {
     return seriesViewerFactories;
+  }
+
+  /** The plugins adding icons on the series thumbnails, in registration order. */
+  public List<SeriesBadgeProvider> getSeriesBadgeProviders() {
+    return seriesBadgeProviders;
   }
 
   public CVetoFocusListener getDockingVetoFocus() {

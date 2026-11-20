@@ -34,6 +34,7 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.codec.utils.SeriesInstanceList;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomWebOrigin;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode.WebType;
@@ -231,6 +232,7 @@ final class ManifestModelBuilder {
       dicomSeries.setTag(SERIES_INSTANCE_UID, seriesUID);
       dicomSeries.setTag(TagW.ExplorerModel, model);
       dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
+      DicomWebOrigin.attach(study, DicomWebOrigin.of(wadoParameters));
 
       for (TagW tag : SERIES_TAGS) {
         tag.readValue(source, dicomSeries);
@@ -252,6 +254,7 @@ final class ManifestModelBuilder {
       if (wado == null) {
         // Should not happen
         dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
+        DicomWebOrigin.attach(study, DicomWebOrigin.of(wadoParameters));
       } else if (!wado.getBaseURL().equals(wadoParameters.getBaseURL())) {
         LOGGER.error("Wado parameters must be unique within a DICOM Series: {}", dicomSeries);
         return null;
@@ -274,6 +277,7 @@ final class ManifestModelBuilder {
       dicomSeries.setTag(SERIES_INSTANCE_UID, seriesUID);
       dicomSeries.setTag(TagW.ExplorerModel, model);
       dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
+      DicomWebOrigin.attach(study, DicomWebOrigin.of(wadoParameters));
 
       for (TagW tag : SERIES_TAGS) {
         tag.readValue(dataset, dicomSeries);

@@ -38,6 +38,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.SeriesBadgeProvider;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
@@ -108,10 +109,18 @@ public class Activator implements BundleActivator, ServiceListener {
       registry.register(bundleContext.getService(service));
     }
 
+    for (ServiceReference<SeriesBadgeProvider> service :
+        bundleContext.getServiceReferences(SeriesBadgeProvider.class, null)) {
+      registerSeriesBadgeProvider(bundleContext.getService(service));
+    }
+
     bundleContext.addServiceListener(
         this,
         BundleTools.createServiceFilter(
-            Codec.class, SeriesViewerFactory.class, GraphicToolProvider.class));
+            Codec.class,
+            SeriesViewerFactory.class,
+            GraphicToolProvider.class,
+            SeriesBadgeProvider.class));
   }
 
   @Override
@@ -173,6 +182,15 @@ public class Activator implements BundleActivator, ServiceListener {
         GraphicRegistry.getInstance().unregister(provider);
         context.ungetService(sRef);
       }
+    } else if (service instanceof SeriesBadgeProvider provider) {
+      if (event.getType() == ServiceEvent.REGISTERED) {
+        registerSeriesBadgeProvider(provider);
+      } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+        if (GuiUtils.getUICore().getSeriesBadgeProviders().remove(provider)) {
+          LOGGER.info("Unregister series badge provider: {}", provider.getClass().getName());
+        }
+        context.ungetService(sRef);
+      }
     } else if (service instanceof SeriesViewerFactory viewerFactory) {
       // Must be instantiated in EDT
       GuiExecutor.execute(
@@ -197,6 +215,14 @@ public class Activator implements BundleActivator, ServiceListener {
     if (codec != null && !codecs.contains(codec)) {
       codecs.add((Codec<MediaElement>) codec);
       LOGGER.info("Register Image Codec Plug-in: {}", codec.getCodecName());
+    }
+  }
+
+  private static void registerSeriesBadgeProvider(SeriesBadgeProvider provider) {
+    List<SeriesBadgeProvider> providers = GuiUtils.getUICore().getSeriesBadgeProviders();
+    if (provider != null && !providers.contains(provider)) {
+      providers.add(provider);
+      LOGGER.info("Register series badge provider: {}", provider.getClass().getName());
     }
   }
 

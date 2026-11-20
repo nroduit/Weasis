@@ -13,13 +13,20 @@ import org.osgi.annotation.bundle.Header;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.ServiceEvent;
+import org.osgi.framework.ServiceListener;
+import org.osgi.framework.ServiceReference;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.LegacyConverters;
 import org.weasis.core.util.PropertiesUtil;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.ExplorerMenuContributor;
+import org.weasis.dicom.explorer.ExplorerMenuContributors;
 import org.weasis.dicom.explorer.LocalPersistence;
 import org.weasis.dicom.explorer.UISegmentationVolumeBuildExecutor;
 import org.weasis.dicom.explorer.main.DicomExplorer;
@@ -28,10 +35,10 @@ import org.weasis.dicom.explorer.pref.node.AuthenticationPersistence;
 import org.weasis.dicom.explorer.wado.DicomManager;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
-public class Activator implements BundleActivator {
+public class Activator implements BundleActivator, ServiceListener {
 
   @Override
-  public void start(final BundleContext context) {
+  public void start(final BundleContext context) throws Exception {
     String cache = context.getProperty("weasis.portable.dicom.cache");
     DicomManager.getInstance()
         .setPortableDirCache(
@@ -46,6 +53,30 @@ public class Activator implements BundleActivator {
     // Surface canonical segmentation volume builds in the explorer's bottom loading panel,
     // so the user can monitor and cancel long-running SEG volume builds.
     SegSpecialElement.setVolumeBuildExecutor(new UISegmentationVolumeBuildExecutor());
+
+    for (ServiceReference<ExplorerMenuContributor> ref :
+        context.getServiceReferences(ExplorerMenuContributor.class, null)) {
+      ExplorerMenuContributors.register(context.getService(ref));
+    }
+    context.addServiceListener(
+        this, BundleTools.createServiceFilter(ExplorerMenuContributor.class));
+  }
+
+  @Override
+  public void serviceChanged(ServiceEvent event) {
+    ServiceReference<?> ref = event.getServiceReference();
+    BundleContext context = AppProperties.getBundleContext(ref);
+    if (context == null) {
+      return;
+    }
+    if (context.getService(ref) instanceof ExplorerMenuContributor contributor) {
+      if (event.getType() == ServiceEvent.REGISTERED) {
+        ExplorerMenuContributors.register(contributor);
+      } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+        ExplorerMenuContributors.unregister(contributor);
+        context.ungetService(ref);
+      }
+    }
   }
 
   @Override
