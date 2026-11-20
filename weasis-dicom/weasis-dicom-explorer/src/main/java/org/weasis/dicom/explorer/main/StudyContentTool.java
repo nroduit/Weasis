@@ -11,12 +11,16 @@ package org.weasis.dicom.explorer.main;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Rectangle;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeListener;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -26,13 +30,18 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
+import javax.swing.UIManager;
 import net.miginfocom.swing.MigLayout;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WrapFlowLayout;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
@@ -73,14 +82,20 @@ public class StudyContentTool extends PluginTool {
 
   private final DicomExplorer explorer;
   private final DicomModel model;
-  private final JLabel title = new JLabel();
-  private final JLabel empty = new JLabel(Messages.getString("StudyContentTool.nothing"));
-  private final JPanel attributes =
-      new JPanel(new MigLayout("insets 0, wrap 2, gapx 10, gapy 2", "[trailing]10[grow,fill]"));
-  private final JPanel references = new JPanel(new MigLayout("insets 0, wrap 1, gapy 1", "[grow]"));
-  private final JLabel referencesTitle = new JLabel();
-  private final JPanel actions =
-      GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, Insertable.ITEM_SEPARATOR_SMALL, 2);
+  private final JLabel titleIcon = new JLabel();
+  private final JTextArea title = wrappingText();
+  private final JPanel header = new JPanel(new BorderLayout(6, 0));
+  private final JTextArea empty = wrappingText();
+  private final JPanel attributes = new JPanel();
+  // the name and the value of each attribute shown, laid out side by side or stacked
+  private final List<JComponent[]> attributeRows = new ArrayList<>();
+  private boolean stacked;
+  private final JPanel references =
+      new JPanel(new MigLayout("insets 0, wrap 1, gapy 1", "[grow,fill]"));
+  private final JTextArea referencesTitle = wrappingText();
+  // the study line, then the actions: they flow on as many lines as the width asks for
+  private final JPanel footer = new JPanel(new WrapFlowLayout(Insertable.ITEM_SEPARATOR_SMALL, 3));
+  private final List<JComponent> actions = new ArrayList<>();
   private final JLabel studyLine = new JLabel();
   private final JButton downloadAll =
       new JButton(Messages.getString("StudyContentTool.download_all"));
@@ -120,28 +135,38 @@ public class StudyContentTool extends PluginTool {
 
   private void buildLayout() {
     title.setFont(title.getFont().deriveFont(Font.BOLD));
-    title.setBorder(BorderFactory.createEmptyBorder(5, 8, 2, 8));
-    empty.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
+    titleIcon.setVerticalAlignment(SwingConstants.TOP);
+    header.setBorder(BorderFactory.createEmptyBorder(5, 8, 2, 8));
+    header.add(titleIcon, BorderLayout.LINE_START);
+    header.add(title, BorderLayout.CENTER);
+    empty.setText(Messages.getString("StudyContentTool.nothing"));
     referencesTitle.setFont(referencesTitle.getFont().deriveFont(Font.BOLD));
     downloadAll.addActionListener(_ -> downloadAll());
 
-    JPanel body = new JPanel(new MigLayout("insets 5 8 5 8, wrap 1, gapy 6", "[grow,fill]"));
-    body.add(empty);
-    body.add(attributes);
-    body.add(referencesTitle);
-    body.add(references);
+    // as wide as the tool: the values wrap and the links are cut instead of scrolling sideways
+    JPanel body = new WidthTrackingPanel();
+    body.setLayout(new MigLayout("insets 5 8 5 8, wrap 1, gapy 6, hidemode 3", "[grow,fill]"));
+    body.add(empty, "wmin 0"); // NON-NLS
+    body.add(attributes, "wmin 0"); // NON-NLS
+    body.add(referencesTitle, "wmin 0"); // NON-NLS
+    body.add(references, "wmin 0"); // NON-NLS
     JScrollPane scroll = new JScrollPane(body);
     scroll.setBorder(BorderFactory.createEmptyBorder());
+    scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-    JPanel footer = new JPanel(new BorderLayout());
-    JPanel studyRow =
-        GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, Insertable.ITEM_SEPARATOR_SMALL, 2);
-    studyRow.add(studyLine);
-    studyRow.add(downloadAll);
-    footer.add(studyRow, BorderLayout.LINE_START);
-    footer.add(actions, BorderLayout.LINE_END);
+    // a wrapped text is as tall as its width makes it: the layout is done again when it changes
+    addComponentListener(
+        new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent e) {
+            layoutAttributes();
+            header.revalidate();
+            body.revalidate();
+          }
+        });
 
-    add(title, BorderLayout.NORTH);
+    footer.setBorder(BorderFactory.createEmptyBorder(2, 8, 4, 8));
+    add(header, BorderLayout.NORTH);
     add(scroll, BorderLayout.CENTER);
     add(footer, BorderLayout.SOUTH);
     rebuild();
@@ -207,18 +232,19 @@ public class StudyContentTool extends PluginTool {
   }
 
   private void rebuild() {
-    attributes.removeAll();
+    attributeRows.clear();
     references.removeAll();
-    actions.removeAll();
+    actions.clear();
+    footer.removeAll();
     ExplorerItem current = stillLoaded(item);
     item = current;
     boolean hasItem = current != null;
     empty.setVisible(!hasItem);
     referencesTitle.setVisible(hasItem);
-    title.setVisible(hasItem);
+    header.setVisible(hasItem);
     if (current == null) {
       title.setText("");
-      title.setIcon(null);
+      titleIcon.setIcon(null);
       studyLine.setText("");
       downloadAll.setVisible(false);
     } else {
@@ -232,7 +258,13 @@ public class StudyContentTool extends PluginTool {
       studyLine.setText(
           Messages.format("StudyContentTool.downloaded", summary.complete(), summary.total()));
       downloadAll.setVisible(summary.hasPending());
+      footer.add(studyLine, downloadAll.isVisible() ? WrapFlowLayout.KEEP_WITH_NEXT : null);
+      footer.add(downloadAll);
+      actions.forEach(footer::add);
     }
+    titleIcon.setVisible(titleIcon.getIcon() != null);
+    stacked = !stacked; // forces the layout of the new rows
+    layoutAttributes();
     revalidate();
     repaint();
   }
@@ -257,7 +289,7 @@ public class StudyContentTool extends PluginTool {
 
   private void showSeries(SeriesItem series, StudyContents contents) {
     DicomSeries dicom = series.series();
-    title.setIcon(null);
+    titleIcon.setIcon(null);
     title.setText(seriesTitle(series));
     attribute(Messages.common("modality"), series.modality());
     attribute(
@@ -307,10 +339,11 @@ public class StudyContentTool extends PluginTool {
             .filter(o -> listed || o.kind() != ObjectKind.REJECTION_NOTE)
             .toList();
     if (referencing.isEmpty()) {
-      references.add(new JLabel(Messages.common("none")));
+      references.add(new JLabel(Messages.common("none")), "wmin 0"); // NON-NLS
     }
     for (ObjectItem object : referencing) {
-      references.add(link(objectTitle(object), icon(object), () -> show(object)));
+      references.add(
+          link(objectTitle(object), icon(object), () -> show(object)), "wmin 0"); // NON-NLS
     }
 
     JButton open = new JButton(Messages.common("open"));
@@ -336,7 +369,7 @@ public class StudyContentTool extends PluginTool {
 
   private void showObject(ObjectItem object, StudyContents contents) {
     ObjectDescriptor d = object.descriptor();
-    title.setIcon(icon(object));
+    titleIcon.setIcon(icon(object));
     title.setText(objectTitle(object));
     attribute(Messages.common("type"), d.kind().getId().toUpperCase());
     attribute(Messages.common("description"), d.label());
@@ -359,16 +392,18 @@ public class StudyContentTool extends PluginTool {
 
     referencesTitle.setText(Messages.getString("StudyContentTool.references"));
     if (d.referencedSeriesUIDs().isEmpty()) {
-      references.add(new JLabel(Messages.common("none")));
+      references.add(new JLabel(Messages.common("none")), "wmin 0"); // NON-NLS
     }
     for (String uid : d.referencedSeriesUIDs()) {
       if (model.getSeriesNode(uid) instanceof DicomSeries series) {
         SeriesItem referenced = SeriesItem.of(series, model.getParent(series, DicomModel.study));
-        references.add(link(seriesTitle(referenced), null, () -> explorer.reveal(series)));
+        references.add(
+            link(seriesTitle(referenced), null, () -> explorer.reveal(series)),
+            "wmin 0"); // NON-NLS
       } else {
         JLabel missing = new JLabel(Messages.getString("StudyContentTool.not_loaded"));
         missing.setEnabled(false);
-        references.add(missing);
+        references.add(missing, "wmin 0"); // NON-NLS
       }
     }
     boolean openable = !ItemActions.referencedLoadedSeries(object, model).isEmpty();
@@ -376,10 +411,6 @@ public class StudyContentTool extends PluginTool {
     open.setEnabled(openable);
     open.addActionListener(_ -> ItemActions.open(object, model));
     actions.add(open);
-    if (!contents.series().isEmpty()) {
-      // the series the object describes are of this study: the list and the thumbnails show them
-      actions.add(GuiUtils.boxHorizontalStrut(0));
-    }
   }
 
   private static String openLabel(ObjectKind kind) {
@@ -404,8 +435,78 @@ public class StudyContentTool extends PluginTool {
     JLabel name = new JLabel(label == null ? "" : label + StringUtil.COLON);
     name.setEnabled(false);
     attributes.add(name);
-    JLabel text = new JLabel(value);
-    attributes.add(text);
+    JTextArea text = wrappingText();
+    text.setText(value);
+    attributeRows.add(new JComponent[] {name, text});
+  }
+
+  /**
+   * Puts the attributes in two columns, or each name above its value when the names would leave the
+   * values less than a few words of width.
+   */
+  private void layoutAttributes() {
+    int names = 0;
+    for (JComponent[] row : attributeRows) {
+      names = Math.max(names, row[0].getPreferredSize().width);
+    }
+    int width = getWidth() - GuiUtils.getScaleLength(16);
+    boolean narrow = width > 0 && width - names < GuiUtils.getScaleLength(110);
+    if (narrow == stacked && attributes.getComponentCount() == attributeRows.size() * 2) {
+      return;
+    }
+    stacked = narrow;
+    attributes.removeAll();
+    attributes.setLayout(
+        narrow
+            ? new MigLayout("insets 0, wrap 1, gap 0", "[grow,fill]") // NON-NLS
+            : new MigLayout(
+                "insets 0, wrap 2, gapx 8, gapy 2", "[trailing][grow,fill]")); // NON-NLS
+    for (JComponent[] row : attributeRows) {
+      attributes.add(row[0], narrow ? "wmin 0, gaptop 3" : "aligny top"); // NON-NLS
+      attributes.add(row[1], "growx, wmin 0"); // NON-NLS
+    }
+    attributes.revalidate();
+    attributes.repaint();
+  }
+
+  /** A text shown like a label that wraps to the width it is given and can be copied. */
+  private static JTextArea wrappingText() {
+    JTextArea area = new JTextArea();
+    area.setEditable(false);
+    area.setOpaque(false);
+    area.setLineWrap(true);
+    area.setWrapStyleWord(true);
+    area.setBorder(null);
+    area.setFont(UIManager.getFont("Label.font")); // NON-NLS
+    return area;
+  }
+
+  /** A panel that takes the width of its scroll pane, whatever its content would like. */
+  private static final class WidthTrackingPanel extends JPanel implements Scrollable {
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+      return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle visible, int orientation, int direction) {
+      return GuiUtils.getScaleLength(16);
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle visible, int orientation, int direction) {
+      return visible.height;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+      return true;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+      return false;
+    }
   }
 
   private static JComponent link(String text, javax.swing.Icon icon, Runnable action) {
@@ -414,6 +515,8 @@ public class StudyContentTool extends PluginTool {
         FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
     button.setHorizontalAlignment(SwingConstants.LEADING);
     button.setFocusable(false);
+    button.setToolTipText(text); // the width may cut it
+    button.setMinimumSize(new Dimension(0, button.getPreferredSize().height));
     button.addActionListener(_ -> action.run());
     return button;
   }
