@@ -9,13 +9,17 @@
  */
 package org.weasis.dicom.explorer.print;
 
+import java.awt.Component;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -38,6 +42,8 @@ public class DicomPrintOptionPane extends JPanel {
   }
 
   private final Scope scope;
+  private final JLabel jobLabel;
+  private final JComponent jobField;
 
   final JComboBox<String> mediumTypeComboBox = new JComboBox<>();
   final JComboBox<String> priorityComboBox =
@@ -53,8 +59,6 @@ public class DicomPrintOptionPane extends JPanel {
           new String[] {DicomPrintOptions.DEF_FILM_ORIENTATION, "LANDSCAPE"}); // NON-NLS
   final JComboBox<Paper> filmSizeIdComboBox =
       new JComboBox<>(DicomPrintOptions.filmSizes().toArray(Paper[]::new));
-  final JComboBox<String> imageDisplayFormatComboBox =
-      new JComboBox<>(new String[] {DicomPrintOptions.DEF_IMG_DISP_FORMAT});
   final JComboBox<String> magnificationTypeComboBox =
       new JComboBox<>(
           new String[] {
@@ -62,7 +66,12 @@ public class DicomPrintOptionPane extends JPanel {
           }); // NON-NLS
   final JComboBox<String> smoothingTypeComboBox =
       new JComboBox<>(
-          new String[] {DicomPrintOptions.DEF_SMOOTHING_TYPE, "SHARP", "SMOOTH"}); // NON-NLS
+          new String[] {
+            DicomPrintOptions.PRINTER_DEFAULT,
+            DicomPrintOptions.DEF_SMOOTHING_TYPE,
+            "SHARP",
+            "SMOOTH"
+          }); // NON-NLS
   final JComboBox<String> borderDensityComboBox =
       new JComboBox<>(new String[] {"BLACK", DicomPrintOptions.DEF_BORDER_DENSITY}); // NON-NLS
   final JComboBox<String> trimComboBox =
@@ -73,14 +82,30 @@ public class DicomPrintOptionPane extends JPanel {
       new JCheckBox(Messages.getString("PrintDialog.annotate"));
   final JComboBox<Integer> filmResolutionComboBox =
       new JComboBox<>(DicomPrintOptions.FILM_RESOLUTIONS.toArray(Integer[]::new));
+  final JComboBox<String> requestedResolutionComboBox =
+      new JComboBox<>(DicomPrintOptions.REQUESTED_RESOLUTIONS.toArray(String[]::new));
+  final JSpinner minDensitySpinner = new JSpinner(new SpinnerNumberModel(0, 0, 500, 5));
+  final JSpinner maxDensitySpinner = new JSpinner(new SpinnerNumberModel(0, 0, 500, 5));
+  final JTextField configurationField = new JTextField();
 
   public DicomPrintOptionPane() {
     this(Scope.NODE);
   }
 
   public DicomPrintOptionPane(Scope scope) {
+    this(scope, null, null);
+  }
+
+  /**
+   * @param jobLabel the label of a setting of the job that is not a print option, shown in the cell
+   *     the job scope leaves free, or {@code null}
+   * @param jobField its field
+   */
+  public DicomPrintOptionPane(Scope scope, JLabel jobLabel, JComponent jobField) {
     super();
     this.scope = scope;
+    this.jobLabel = jobLabel;
+    this.jobField = jobField;
     mediumTypeComboBox.setModel(
         new DefaultComboBoxModel<>(
             new String[] {
@@ -90,57 +115,94 @@ public class DicomPrintOptionPane extends JPanel {
               "MAMMO BLUE FILM", // NON-NLS
               "PAPER" // NON-NLS
             }));
-    imageDisplayFormatComboBox.setMaximumRowCount(10);
-    printAnnotationsCheckBox.setSelected(true);
+    // Values of the printer: the usual ones are offered, another one can be typed
+    smoothingTypeComboBox.setEditable(true);
+    smoothingTypeComboBox.setToolTipText(Messages.getString("DicomPrintDialog.smooth_tip"));
+    filmResolutionComboBox.setEditable(true);
+    filmResolutionComboBox.setToolTipText(
+        Messages.getString("DicomPrintDialog.film_resolution_tip"));
+    requestedResolutionComboBox.setRenderer(
+        new DefaultListCellRenderer() {
+          @Override
+          public Component getListCellRendererComponent(
+              JList<?> list, Object value, int index, boolean selected, boolean focus) {
+            Object text =
+                DicomPrintOptions.PRINTER_DEFAULT.equals(value)
+                    ? Messages.getString("DicomPrintDialog.printer_default")
+                    : value;
+            return super.getListCellRendererComponent(list, text, index, selected, focus);
+          }
+        });
+    String densityTip = Messages.getString("DicomPrintDialog.density_tip");
+    minDensitySpinner.setToolTipText(densityTip);
+    maxDensitySpinner.setToolTipText(densityTip);
+    configurationField.setToolTipText(Messages.getString("DicomPrintDialog.configuration_tip"));
+    magnificationTypeComboBox.addActionListener(e -> updateSmoothing());
     initComponents();
+    // A new node starts from the default of each setting, not from the first item of each list
+    applyOptions(new DicomPrintOptions());
   }
 
   private void initComponents() {
+    // Two columns of label and field; the fields share the width, so the combos line up
     setLayout(
-        new MigLayout("fillx", "[trailing]rel[leading]15lp[trailing]rel[leading]")); // NON-NLS
+        new MigLayout(
+            "fillx, wrap 4, insets 5lp 10lp 10lp 10lp", // NON-NLS
+            "[trailing]rel[grow,fill,110lp::]unrel[trailing]rel[grow,fill,110lp::]")); // NON-NLS
     setBorder(GuiUtils.getTitledBorder(Messages.getString("DicomPrintDialog.option_title")));
+    boolean node = scope == Scope.NODE;
 
-    add(label("DicomPrintDialog.med_type"), GuiUtils.NEWLINE);
+    add(label("DicomPrintDialog.med_type"));
     add(mediumTypeComboBox);
     add(label("DicomPrintDialog.priority"));
     add(priorityComboBox);
 
-    add(label("DicomPrintDialog.film_dest"), GuiUtils.NEWLINE);
-    add(filmDestinationComboBox);
-    if (scope == Scope.NODE) {
-      add(label("DicomPrintDialog.copies"));
-      add(numOfCopiesSpinner);
+    add(label("DicomPrintDialog.film_dest"));
+    add(filmDestinationComboBox, node || jobField != null ? "" : "wrap"); // NON-NLS
+    if (!node && jobField != null) {
+      add(jobLabel == null ? new JLabel() : jobLabel);
+      add(jobField);
     }
+    if (node) {
+      add(label("DicomPrintDialog.copies"));
+      add(numOfCopiesSpinner, "growx 0, width 70lp"); // NON-NLS
 
-    add(colorPrintCheckBox, "newline, alignx leading, spanx 2"); // NON-NLS
-    add(new JSeparator(), "newline, spanx"); // NON-NLS
-
-    if (scope == Scope.NODE) {
-      add(label("DicomPrintDialog.film_orientation"), GuiUtils.NEWLINE);
+      add(label("DicomPrintDialog.film_orientation"));
       add(filmOrientationComboBox);
       add(label("DicomPrintDialog.size_id"));
       add(filmSizeIdComboBox);
 
-      add(label("DicomPrintDialog.disp_format"), GuiUtils.NEWLINE);
-      add(imageDisplayFormatComboBox);
       add(label("DicomPrintDialog.film_resolution"));
       add(filmResolutionComboBox);
+      add(label("DicomPrintDialog.requested_resolution"));
+      add(requestedResolutionComboBox);
     }
 
-    add(label("DicomPrintDialog.magn_type"), GuiUtils.NEWLINE);
+    add(label("DicomPrintDialog.magn_type"));
     add(magnificationTypeComboBox);
     add(label("DicomPrintDialog.smooth"));
     add(smoothingTypeComboBox);
 
-    add(label("DicomPrintDialog.border"), GuiUtils.NEWLINE);
+    add(label("DicomPrintDialog.border"));
     add(borderDensityComboBox);
     add(label("DicomPrintDialog.trim"));
     add(trimComboBox);
 
-    if (scope == Scope.NODE) {
-      add(label("DicomPrintDialog.empty_density"), GuiUtils.NEWLINE);
-      add(emptyDensityComboBox);
-      add(printAnnotationsCheckBox, "newline, alignx leading, spanx 2"); // NON-NLS
+    if (node) {
+      add(label("DicomPrintDialog.empty_density"));
+      add(emptyDensityComboBox, "wrap"); // NON-NLS
+
+      add(label("DicomPrintDialog.min_density"));
+      add(minDensitySpinner, "growx 0, width 70lp"); // NON-NLS
+      add(label("DicomPrintDialog.max_density"));
+      add(maxDensitySpinner, "growx 0, width 70lp"); // NON-NLS
+
+      add(label("DicomPrintDialog.configuration"));
+      add(configurationField, "span 3"); // NON-NLS
+    }
+    add(colorPrintCheckBox, "skip 1, growx 0, gaptop rel"); // NON-NLS
+    if (node) {
+      add(printAnnotationsCheckBox, "skip 1, growx 0, gaptop rel"); // NON-NLS
     }
   }
 
@@ -157,17 +219,20 @@ public class DicomPrintOptionPane extends JPanel {
           filmDestinationComboBox,
           filmOrientationComboBox,
           filmSizeIdComboBox,
-          imageDisplayFormatComboBox,
           magnificationTypeComboBox,
           smoothingTypeComboBox,
           borderDensityComboBox,
           trimComboBox,
           emptyDensityComboBox,
-          filmResolutionComboBox
+          filmResolutionComboBox,
+          requestedResolutionComboBox
         }) {
       combo.addActionListener(e -> listener.run());
     }
     numOfCopiesSpinner.addChangeListener(e -> listener.run());
+    minDensitySpinner.addChangeListener(e -> listener.run());
+    maxDensitySpinner.addChangeListener(e -> listener.run());
+    configurationField.addActionListener(e -> listener.run());
     colorPrintCheckBox.addActionListener(e -> listener.run());
     printAnnotationsCheckBox.addActionListener(e -> listener.run());
   }
@@ -181,7 +246,6 @@ public class DicomPrintOptionPane extends JPanel {
       colorPrintCheckBox.setSelected(options.isColorPrint());
       filmOrientationComboBox.setSelectedItem(options.getFilmOrientation());
       filmSizeIdComboBox.setSelectedItem(options.getFilmSizeId());
-      imageDisplayFormatComboBox.setSelectedItem(options.getImageDisplayFormat());
       magnificationTypeComboBox.setSelectedItem(options.getMagnificationType());
       smoothingTypeComboBox.setSelectedItem(options.getSmoothingType());
       borderDensityComboBox.setSelectedItem(options.getBorderDensity());
@@ -189,7 +253,18 @@ public class DicomPrintOptionPane extends JPanel {
       emptyDensityComboBox.setSelectedItem(options.getEmptyDensity());
       printAnnotationsCheckBox.setSelected(options.isShowingAnnotations());
       filmResolutionComboBox.setSelectedItem(options.getFilmResolution());
+      requestedResolutionComboBox.setSelectedItem(options.getRequestedResolution());
+      minDensitySpinner.setValue(options.getMinDensity());
+      maxDensitySpinner.setValue(options.getMaxDensity());
+      configurationField.setText(options.getConfigurationInformation());
+      updateSmoothing();
     }
+  }
+
+  /** The smoothing type is defined for the cubic magnification only. */
+  private void updateSmoothing() {
+    smoothingTypeComboBox.setEnabled(
+        DicomPrintOptions.CUBIC.equals(magnificationTypeComboBox.getSelectedItem()));
   }
 
   public void saveOptions(DicomPrintOptions options) {
@@ -200,15 +275,20 @@ public class DicomPrintOptionPane extends JPanel {
     options.setColorPrint(colorPrintCheckBox.isSelected());
     options.setFilmOrientation((String) filmOrientationComboBox.getSelectedItem());
     options.setFilmSizeId((Paper) filmSizeIdComboBox.getSelectedItem());
-    options.setImageDisplayFormat((String) imageDisplayFormatComboBox.getSelectedItem());
     options.setMagnificationType((String) magnificationTypeComboBox.getSelectedItem());
-    options.setSmoothingType((String) smoothingTypeComboBox.getSelectedItem());
+    Object smoothing = smoothingTypeComboBox.getSelectedItem();
+    options.setSmoothingType(smoothing == null ? null : smoothing.toString());
     options.setBorderDensity((String) borderDensityComboBox.getSelectedItem());
     options.setTrim((String) trimComboBox.getSelectedItem());
     options.setEmptyDensity((String) emptyDensityComboBox.getSelectedItem());
     options.setShowingAnnotations(printAnnotationsCheckBox.isSelected());
-    if (filmResolutionComboBox.getSelectedItem() instanceof Integer dpi) {
-      options.setFilmResolution(dpi);
-    }
+    // A typed value comes as text
+    options.setFilmResolution(
+        DicomPrintOptions.filmResolutionOf(
+            String.valueOf(filmResolutionComboBox.getSelectedItem()), options.getFilmResolution()));
+    options.setRequestedResolution((String) requestedResolutionComboBox.getSelectedItem());
+    options.setMinDensity((Integer) minDensitySpinner.getValue());
+    options.setMaxDensity((Integer) maxDensitySpinner.getValue());
+    options.setConfigurationInformation(configurationField.getText());
   }
 }

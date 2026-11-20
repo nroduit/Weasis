@@ -52,7 +52,7 @@ class DicomPrintOptionsTest {
         () -> assertEquals("NO", opts.getTrim()),
         () -> assertEquals("BLACK", opts.getEmptyDensity()),
         () -> assertEquals(0, opts.getMinDensity()),
-        () -> assertEquals(255, opts.getMaxDensity()),
+        () -> assertEquals(0, opts.getMaxDensity(), "unset: the printer default"),
         () -> assertEquals(150, opts.getFilmResolution()),
         () -> assertTrue(opts.isShowingAnnotations()),
         () -> assertFalse(opts.isColorPrint(), "film is gray unless asked"));

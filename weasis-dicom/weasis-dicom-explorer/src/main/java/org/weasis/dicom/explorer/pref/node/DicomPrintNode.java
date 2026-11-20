@@ -41,6 +41,10 @@ public class DicomPrintNode extends DefaultDicomNode {
   private static final String T_EMPTY_DENSITY = "emptyDensity";
   private static final String T_SHOW_ANNOTATIONS = "showingAnnotations";
   private static final String T_FILM_RESOLUTION = "filmResolution";
+  private static final String T_REQUESTED_RESOLUTION = "requestedResolution";
+  private static final String T_CONFIGURATION = "configurationInformation";
+  private static final String T_MIN_DENSITY = "minDensity";
+  private static final String T_MAX_DENSITY = "maxDensity";
 
   /** The 4.x name of the film resolution, an enum constant such as {@code DPI_150}. */
   private static final String T_DPI = "dpi"; // NON-NLS
@@ -84,12 +88,21 @@ public class DicomPrintNode extends DefaultDicomNode {
     JsonUtil.addIfPresent(p, T_FILM_SIZE, printOptions.getFilmSizeId().filmSizeId());
     JsonUtil.addIfPresent(p, T_IMG_DISP_FORMAT, printOptions.getImageDisplayFormat());
     JsonUtil.addIfPresent(p, T_MAGNIFICATION_TYPE, printOptions.getMagnificationType());
-    JsonUtil.addIfPresent(p, T_SMOOTHING_TYPE, printOptions.getSmoothingType());
+    // Kept when empty: it then means the printer default, not the default of Weasis
+    p.add(T_SMOOTHING_TYPE, printOptions.getSmoothingType());
     JsonUtil.addIfPresent(p, T_BORDER_DENSITY, printOptions.getBorderDensity());
     JsonUtil.addIfPresent(p, T_TRIM, printOptions.getTrim());
     JsonUtil.addIfPresent(p, T_EMPTY_DENSITY, printOptions.getEmptyDensity());
     p.add(T_SHOW_ANNOTATIONS, printOptions.isShowingAnnotations());
     p.add(T_FILM_RESOLUTION, printOptions.getFilmResolution());
+    JsonUtil.addIfPresent(p, T_REQUESTED_RESOLUTION, printOptions.getRequestedResolution());
+    JsonUtil.addIfPresent(p, T_CONFIGURATION, printOptions.getConfigurationInformation());
+    if (printOptions.getMinDensity() > 0) {
+      p.add(T_MIN_DENSITY, printOptions.getMinDensity());
+    }
+    if (printOptions.getMaxDensity() > 0) {
+      p.add(T_MAX_DENSITY, printOptions.getMaxDensity());
+    }
     b.add(T_PRINT, p);
   }
 
@@ -130,6 +143,11 @@ public class DicomPrintNode extends DefaultDicomNode {
             T_FILM_RESOLUTION,
             DicomPrintOptions.filmResolutionOf(
                 p.getString(T_DPI, null), DicomPrintOptions.DEF_FILM_RESOLUTION)));
+    options.setRequestedResolution(
+        p.getString(T_REQUESTED_RESOLUTION, DicomPrintOptions.PRINTER_DEFAULT));
+    options.setConfigurationInformation(p.getString(T_CONFIGURATION, ""));
+    options.setMinDensity(JsonUtil.getInt(p, T_MIN_DENSITY, 0));
+    options.setMaxDensity(JsonUtil.getInt(p, T_MAX_DENSITY, 0));
     return node;
   }
 

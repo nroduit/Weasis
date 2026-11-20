@@ -40,10 +40,26 @@ public class DicomPrintOptions extends PrintOptions {
   public static final String DEF_EMPTY_DENSITY = "BLACK";
   public static final boolean DEF_SHOW_ANNOTATIONS = true;
 
-  /** The resolution of the film raster sent to the printer, which scales it to its own matrix. */
+  /**
+   * The resolution of the film raster Weasis renders, in dots per inch. Not a DICOM attribute: the
+   * printer receives a pixel matrix and scales it to its own with the magnification type; a value
+   * close to the native resolution of the printer avoids that resampling.
+   */
   public static final int DEF_FILM_RESOLUTION = 150;
 
-  public static final List<Integer> FILM_RESOLUTIONS = List.of(100, 150, 200, 250, 300, 400, 600);
+  /** Common values, the native resolution of the usual dry imagers (320, 508) among them. */
+  public static final List<Integer> FILM_RESOLUTIONS =
+      List.of(100, 150, 200, 250, 300, 320, 400, 508, 600);
+
+  /** Unset: the attribute is not sent and the printer applies its own default. */
+  public static final String PRINTER_DEFAULT = "";
+
+  /** The values of Requested Resolution ID (2020,0050), after the printer default. */
+  public static final List<String> REQUESTED_RESOLUTIONS =
+      List.of(PRINTER_DEFAULT, "STANDARD", "HIGH"); // NON-NLS
+
+  /** The only magnification type the smoothing type applies to (PS3.3 C.13.3). */
+  public static final String CUBIC = "CUBIC";
 
   /** The film sizes of the 4.x enum, such as {@code IN8_5X11} or {@code CM24X30}. */
   private static final Pattern LEGACY_INCH = Pattern.compile("IN(\\d+(?:_\\d+)?)X(\\d+)");
@@ -66,6 +82,8 @@ public class DicomPrintOptions extends PrintOptions {
   private int minDensity;
   private int maxDensity;
   private int filmResolution;
+  private String requestedResolution = PRINTER_DEFAULT;
+  private String configurationInformation = "";
 
   public DicomPrintOptions() {
     super();
@@ -82,8 +100,9 @@ public class DicomPrintOptions extends PrintOptions {
     this.borderDensity = DEF_BORDER_DENSITY;
     this.trim = DEF_TRIM;
     this.emptyDensity = DEF_EMPTY_DENSITY;
+    // 0: not sent, the printer applies its own densities
     this.minDensity = 0;
-    this.maxDensity = 255;
+    this.maxDensity = 0;
     setShowingAnnotations(DEF_SHOW_ANNOTATIONS);
     this.filmResolution = DEF_FILM_RESOLUTION;
   }
@@ -148,6 +167,8 @@ public class DicomPrintOptions extends PrintOptions {
     c.minDensity = minDensity;
     c.maxDensity = maxDensity;
     c.filmResolution = filmResolution;
+    c.requestedResolution = requestedResolution;
+    c.configurationInformation = configurationInformation;
     return c;
   }
 
@@ -208,12 +229,36 @@ public class DicomPrintOptions extends PrintOptions {
     this.magnificationType = magnificationType;
   }
 
+  /** The maximum density in hundredths of optical density, or 0 for the printer default. */
   public int getMaxDensity() {
     return maxDensity;
   }
 
   public void setMaxDensity(int maxDensity) {
-    this.maxDensity = maxDensity;
+    this.maxDensity = Math.max(0, maxDensity);
+  }
+
+  /** Requested Resolution ID (2020,0050): STANDARD, HIGH, or empty for the printer default. */
+  public String getRequestedResolution() {
+    return requestedResolution;
+  }
+
+  public void setRequestedResolution(String requestedResolution) {
+    this.requestedResolution =
+        requestedResolution == null ? PRINTER_DEFAULT : requestedResolution.trim();
+  }
+
+  /**
+   * Configuration Information (2010,0150): the character string the conformance statement of the
+   * printer defines for its own settings, or empty for none.
+   */
+  public String getConfigurationInformation() {
+    return configurationInformation;
+  }
+
+  public void setConfigurationInformation(String configurationInformation) {
+    this.configurationInformation =
+        configurationInformation == null ? "" : configurationInformation.trim();
   }
 
   public String getMediumType() {
@@ -224,12 +269,13 @@ public class DicomPrintOptions extends PrintOptions {
     this.mediumType = mediumType;
   }
 
+  /** The minimum density in hundredths of optical density, or 0 for the printer default. */
   public int getMinDensity() {
     return minDensity;
   }
 
   public void setMinDensity(int minDensity) {
-    this.minDensity = minDensity;
+    this.minDensity = Math.max(0, minDensity);
   }
 
   public int getNumOfCopies() {
@@ -252,8 +298,9 @@ public class DicomPrintOptions extends PrintOptions {
     return smoothingType;
   }
 
+  /** The smoothing type, a value of the printer, or empty for its default. */
   public void setSmoothingType(String smoothingType) {
-    this.smoothingType = smoothingType;
+    this.smoothingType = smoothingType == null ? PRINTER_DEFAULT : smoothingType.trim();
   }
 
   public String getTrim() {

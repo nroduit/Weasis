@@ -48,6 +48,7 @@ import org.weasis.core.ui.print.Paper;
 import org.weasis.core.ui.print.PrintResolution;
 import org.weasis.core.ui.util.ExportLayout;
 import org.weasis.core.ui.util.PrintOptions;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomPrintNode;
 import org.weasis.dicom.param.DeviceOpService;
@@ -123,17 +124,33 @@ public class DicomPrint {
     Attributes attrs = new Attributes();
     attrs.setString(Tag.FilmSizeID, VR.CS, filmSizeIdOf(spec.paper()));
     attrs.setString(Tag.FilmOrientation, VR.CS, spec.orientation().name());
-    attrs.setString(Tag.ImageDisplayFormat, VR.ST, options.getImageDisplayFormat());
+    // Weasis composes the page itself: the film always holds one image box
+    attrs.setString(Tag.ImageDisplayFormat, VR.ST, DicomPrintOptions.DEF_IMG_DISP_FORMAT);
     attrs.setString(Tag.MagnificationType, VR.CS, options.getMagnificationType());
-    attrs.setString(Tag.SmoothingType, VR.CS, options.getSmoothingType());
+    // Only defined for the cubic magnification, with values of the printer
+    if (DicomPrintOptions.CUBIC.equals(options.getMagnificationType())
+        && StringUtil.hasText(options.getSmoothingType())) {
+      attrs.setString(Tag.SmoothingType, VR.CS, options.getSmoothingType());
+    }
     attrs.setString(Tag.Trim, VR.CS, options.getTrim());
     attrs.setString(Tag.BorderDensity, VR.CS, options.getBorderDensity());
     attrs.setString(
         Tag.EmptyImageDensity,
         VR.CS,
         Color.WHITE.equals(spec.background()) ? "WHITE" : "BLACK"); // NON-NLS
-    attrs.setInt(Tag.MinDensity, VR.US, options.getMinDensity());
-    attrs.setInt(Tag.MaxDensity, VR.US, options.getMaxDensity());
+    // What is unset is left out, so that the printer applies its own default
+    if (options.getMinDensity() > 0) {
+      attrs.setInt(Tag.MinDensity, VR.US, options.getMinDensity());
+    }
+    if (options.getMaxDensity() > 0) {
+      attrs.setInt(Tag.MaxDensity, VR.US, options.getMaxDensity());
+    }
+    if (StringUtil.hasText(options.getRequestedResolution())) {
+      attrs.setString(Tag.RequestedResolutionID, VR.CS, options.getRequestedResolution());
+    }
+    if (StringUtil.hasText(options.getConfigurationInformation())) {
+      attrs.setString(Tag.ConfigurationInformation, VR.ST, options.getConfigurationInformation());
+    }
     return attrs;
   }
 

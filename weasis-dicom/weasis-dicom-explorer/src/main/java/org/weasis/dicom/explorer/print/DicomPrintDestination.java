@@ -18,8 +18,6 @@ import java.util.OptionalInt;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
-import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.print.PageSource;
@@ -124,17 +122,9 @@ public final class DicomPrintDestination implements PrintDestination {
 
   @Override
   public Optional<JComponent> optionsComponent(Runnable onChange) {
-    DicomPrintOptionPane pane = new DicomPrintOptionPane(DicomPrintOptionPane.Scope.JOB);
-    pane.applyOptions(options);
-    pane.addChangeListener(
-        () -> {
-          pane.saveOptions(options);
-          onChange.run();
-        });
-
     JComboBox<AbstractDicomNode> callingCombo = new JComboBox<>();
     AbstractDicomNode.loadDicomNodes(callingCombo, Type.DICOM_CALLING, UsageType.STORAGE);
-    GuiUtils.setPreferredWidth(callingCombo, 185, 150);
+    GuiUtils.setPreferredWidth(callingCombo, 150, 110);
     AbstractDicomNode.addTooltipToComboList(callingCombo);
     AbstractDicomNode.restoreNodeSelection(
         persistence(), callingCombo.getModel(), LAST_CALLING_NODE);
@@ -145,12 +135,19 @@ public final class DicomPrintDestination implements PrintDestination {
           AbstractDicomNode.nodeSelectionPersistence(persistence(), callingNode, LAST_CALLING_NODE);
         });
 
-    JPanel panel =
-        new JPanel(new MigLayout("insets 0, fillx, wrap 2", "[trailing]rel[leading]")); // NON-NLS
-    panel.add(pane, "span 2, growx"); // NON-NLS
-    panel.add(new JLabel(Messages.common("calling_node") + StringUtil.COLON));
-    panel.add(callingCombo);
-    return Optional.of(panel);
+    // The calling node takes the cell the job options leave free, so the box stays one grid
+    DicomPrintOptionPane pane =
+        new DicomPrintOptionPane(
+            DicomPrintOptionPane.Scope.JOB,
+            new JLabel(Messages.common("calling_node") + StringUtil.COLON),
+            callingCombo);
+    pane.applyOptions(options);
+    pane.addChangeListener(
+        () -> {
+          pane.saveOptions(options);
+          onChange.run();
+        });
+    return Optional.of(pane);
   }
 
   private static DefaultDicomNode callingNodeOf(JComboBox<AbstractDicomNode> combo) {

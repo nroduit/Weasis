@@ -12,6 +12,7 @@ package org.weasis.dicom.explorer.print;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -32,10 +33,34 @@ class DicomPrintTest {
   }
 
   @Test
-  void the_film_box_takes_size_orientation_and_empty_density_from_the_page() {
+  void what_is_unset_or_does_not_apply_is_left_to_the_printer() {
     DicomPrintOptions options = new DicomPrintOptions();
     options.setMagnificationType("BILINEAR");
     options.setSmoothingType("SHARP");
+    options.setImageDisplayFormat("STANDARD\\2,3");
+    Attributes box =
+        DicomPrint.filmBoxAttributes(options, film(Paper.A4, Orientation.PORTRAIT, Color.BLACK));
+    assertAll(
+        () -> assertFalse(box.contains(Tag.SmoothingType), "cubic magnification only"),
+        () -> assertFalse(box.contains(Tag.MinDensity)),
+        () -> assertFalse(box.contains(Tag.MaxDensity)),
+        () -> assertFalse(box.contains(Tag.RequestedResolutionID)),
+        () -> assertFalse(box.contains(Tag.ConfigurationInformation)),
+        () ->
+            assertEquals(
+                "STANDARD\\1,1",
+                box.getString(Tag.ImageDisplayFormat),
+                "the page is composed by Weasis: one image box"));
+  }
+
+  @Test
+  void the_film_box_takes_size_orientation_and_empty_density_from_the_page() {
+    DicomPrintOptions options = new DicomPrintOptions();
+    options.setMagnificationType("CUBIC");
+    options.setSmoothingType("SHARP");
+    options.setMaxDensity(300);
+    options.setRequestedResolution("HIGH");
+    options.setConfigurationInformation("LUT=m,1");
     options.setTrim("YES");
     options.setBorderDensity("BLACK");
     Attributes box =
@@ -45,13 +70,15 @@ class DicomPrintTest {
         () -> assertEquals("14INX17IN", box.getString(Tag.FilmSizeID)),
         () -> assertEquals("LANDSCAPE", box.getString(Tag.FilmOrientation)),
         () -> assertEquals("STANDARD\\1,1", box.getString(Tag.ImageDisplayFormat)),
-        () -> assertEquals("BILINEAR", box.getString(Tag.MagnificationType)),
+        () -> assertEquals("CUBIC", box.getString(Tag.MagnificationType)),
         () -> assertEquals("SHARP", box.getString(Tag.SmoothingType)),
         () -> assertEquals("YES", box.getString(Tag.Trim)),
         () -> assertEquals("BLACK", box.getString(Tag.BorderDensity)),
         () -> assertEquals("WHITE", box.getString(Tag.EmptyImageDensity)),
-        () -> assertEquals(0, box.getInt(Tag.MinDensity, -1)),
-        () -> assertEquals(255, box.getInt(Tag.MaxDensity, -1)));
+        () -> assertEquals(-1, box.getInt(Tag.MinDensity, -1), "unset: left to the printer"),
+        () -> assertEquals(300, box.getInt(Tag.MaxDensity, -1)),
+        () -> assertEquals("HIGH", box.getString(Tag.RequestedResolutionID)),
+        () -> assertEquals("LUT=m,1", box.getString(Tag.ConfigurationInformation)));
     Attributes black =
         DicomPrint.filmBoxAttributes(options, film(Paper.A4, Orientation.PORTRAIT, Color.BLACK));
     assertAll(
