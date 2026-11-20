@@ -82,6 +82,23 @@ class PageSpecTest {
   }
 
   @Test
+  void a_printable_area_up_to_the_edge_keeps_a_margin() {
+    PageFormat format = new PageFormat();
+    java.awt.print.Paper paper = new java.awt.print.Paper();
+    paper.setSize(Paper.mmToPoints(210), Paper.mmToPoints(297));
+    paper.setImageableArea(0, 0, Paper.mmToPoints(210), Paper.mmToPoints(297));
+    format.setPaper(paper);
+
+    Rectangle2D area = PageSpec.of(format, Color.WHITE, null).printableArea();
+    double margin = PageSpec.MIN_MARGIN_MM;
+    assertAll(
+        () -> assertEquals(margin, area.getX(), 0.01),
+        () -> assertEquals(margin, area.getY(), 0.01),
+        () -> assertEquals(210 - 2 * margin, area.getWidth(), 0.01),
+        () -> assertEquals(297 - 2 * margin, area.getHeight(), 0.01));
+  }
+
+  @Test
   void the_header_band_takes_its_height_from_the_printable_area() {
     PageSpec plain = PageSpec.of(Paper.A4, PageSpec.Orientation.PORTRAIT, java.awt.Color.WHITE);
     PageSpec header = plain.withHeader(true);

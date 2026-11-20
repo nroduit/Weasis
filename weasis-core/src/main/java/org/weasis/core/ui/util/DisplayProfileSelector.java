@@ -66,6 +66,7 @@ public class DisplayProfileSelector extends JComboBox<DisplayProfileSelector.Mod
   private final JButton editButton = new JButton(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));
   private DisplayProfile custom = lastCustom;
   private Mode previous;
+  private Runnable onChange = () -> {};
 
   /**
    * @param reference the view a custom choice starts from when there is none yet
@@ -78,7 +79,12 @@ public class DisplayProfileSelector extends JComboBox<DisplayProfileSelector.Mod
     setSelectedItem(start);
     previous = start;
     editButton.setToolTipText(Messages.getString("capture.display.edit"));
-    editButton.addActionListener(_ -> editCustom());
+    editButton.addActionListener(
+        _ -> {
+          if (editCustom()) {
+            onChange.run();
+          }
+        });
     addActionListener(_ -> modeChanged());
     updateEditButton();
   }
@@ -123,6 +129,12 @@ public class DisplayProfileSelector extends JComboBox<DisplayProfileSelector.Mod
     previous = mode;
     lastMode = mode;
     updateEditButton();
+    onChange.run();
+  }
+
+  /** Runs {@code onChange} once a choice is settled: another mode, or an edited custom choice. */
+  public void setOnChange(Runnable onChange) {
+    this.onChange = onChange == null ? () -> {} : onChange;
   }
 
   private void updateEditButton() {
@@ -165,8 +177,10 @@ public class DisplayProfileSelector extends JComboBox<DisplayProfileSelector.Mod
     private final JCheckBox padding = dicom(ActionW.IMAGE_PIX_PADDING.getTitle());
     private final JCheckBox annotations = new JCheckBox(Messages.common("annotations"));
     private final Map<LayerItem, JCheckBox> items = new LinkedHashMap<>();
-    private final JCheckBox drawings = new JCheckBox(ActionW.DRAWINGS.getTitle());
+    private final JCheckBox drawings =
+        new JCheckBox(Messages.getString("capture.display.graphics"));
     private final JCheckBox crosslines = new JCheckBox(LayerType.CROSSLINES.toString());
+    private final Map<LayerType, JCheckBox> layers = new LinkedHashMap<>();
 
     private final DisplayProfile start;
 
@@ -186,6 +200,11 @@ public class DisplayProfileSelector extends JComboBox<DisplayProfileSelector.Mod
       }
       drawings.setSelected(start.drawings());
       crosslines.setSelected(start.crosslines());
+      for (LayerType type : DisplayProfile.GRAPHIC_LAYERS) {
+        JCheckBox box = new JCheckBox(type.toString());
+        box.setSelected(!start.hiddenGraphicLayers().contains(type));
+        layers.put(type, box);
+      }
 
       boolean live = view instanceof LiveCaptureView;
       if (!live) {
@@ -194,7 +213,10 @@ public class DisplayProfileSelector extends JComboBox<DisplayProfileSelector.Mod
       }
       group(annotations, new ArrayList<>(items.values()));
       if (!live) {
-        group(drawings, List.of(crosslines));
+        List<JCheckBox> kinds = new ArrayList<>();
+        kinds.add(crosslines);
+        kinds.addAll(layers.values());
+        group(drawings, kinds);
       }
     }
 
@@ -219,6 +241,13 @@ public class DisplayProfileSelector extends JComboBox<DisplayProfileSelector.Mod
               shown.add(item);
             }
           });
+      Set<LayerType> hidden = EnumSet.noneOf(LayerType.class);
+      layers.forEach(
+          (type, box) -> {
+            if (!box.isSelected()) {
+              hidden.add(type);
+            }
+          });
       return new DisplayProfile(
           image.isSelected(),
           overlay.isSelected(),
@@ -227,7 +256,8 @@ public class DisplayProfileSelector extends JComboBox<DisplayProfileSelector.Mod
           annotations.isSelected(),
           shown,
           drawings.isSelected(),
-          crosslines.isSelected());
+          crosslines.isSelected(),
+          hidden);
     }
   }
 

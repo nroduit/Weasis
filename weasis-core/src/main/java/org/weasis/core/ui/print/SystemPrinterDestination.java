@@ -182,9 +182,14 @@ public final class SystemPrinterDestination implements PrintDestination {
         : OptionalInt.empty();
   }
 
+  /** The page format a job on this paper gets: what a document lays itself out on. */
+  public PageFormat pageFormat(Paper paper, Orientation orientation) {
+    return job().getPageFormat(attributes(paper, orientation, 1));
+  }
+
   @Override
   public PageSpec pageSpec(Paper paper, Orientation orientation, Color background, Color border) {
-    PageFormat format = job().getPageFormat(attributes(paper, orientation, 1));
+    PageFormat format = pageFormat(paper, orientation);
     PageSpec spec = PageSpec.of(format, background, border);
     return new PageSpec(
         paper, spec.orientation(), spec.margins(), spec.gutterMm(), background, border);

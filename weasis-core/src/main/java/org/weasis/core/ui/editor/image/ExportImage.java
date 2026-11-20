@@ -20,9 +20,12 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.ToolTipManager;
@@ -38,6 +41,7 @@ import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -47,6 +51,7 @@ import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.print.CellFit;
+import org.weasis.core.ui.print.PrintFonts;
 import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -77,9 +82,12 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
   private double renderScale = 1.0;
 
-  private final boolean sourceAnnotations;
+  private boolean annotations;
+  private DisplayProfile appliedProfile;
   private boolean fixedLayerFont;
   private boolean crosslines = true;
+  // The kinds of drawings a display profile leaves out; null follows the layers of the source
+  private Set<LayerType> hiddenGraphicLayers;
 
   /**
    * Creates an export view that captures the visual state of the given {@code sourceView}.
@@ -105,8 +113,8 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
     // Copy info layer settings (without global preferences so export is independent)
     this.infoLayer = sourceView.getInfoLayer().getLayerCopy(this, false);
-    this.sourceAnnotations = sourceView.getInfoLayer().getVisible();
-    infoLayer.setVisible(sourceAnnotations);
+    this.annotations = sourceView.getInfoLayer().getVisible();
+    infoLayer.setVisible(annotations);
     infoLayer.setShowBottomScale(false);
     // Suppress interactive-only items in the export overlay
     infoLayer.setDisplayPreferencesValue(LayerItem.PIXEL, false);
@@ -158,7 +166,29 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     }
   }
 
+  /**
+   * Shows what {@code profile} selects, or what the source view shows when it is {@code null}. It
+   * can be changed between two renderings, as the print dialog does for its preview.
+   */
+  public void setDisplayProfile(DisplayProfile profile) {
+    if (profile == null && appliedProfile == null) {
+      return;
+    }
+    DisplayProfile next = profile == null ? DisplayProfile.of(sourceView) : profile;
+    if (!next.equals(appliedProfile)) {
+      // The display operations run with the next rendering
+      applyProfile(next);
+    }
+  }
+
+  /** Shows what {@code selection} gives for the source view; see {@link #setDisplayProfile}. */
+  public void applyDisplay(Function<ViewCanvas<?>, DisplayProfile> selection) {
+    setDisplayProfile(selection == null ? null : selection.apply(sourceView));
+  }
+
   private void applyProfile(DisplayProfile profile) {
+    appliedProfile = profile;
+    annotations = profile.annotations();
     imageLayer.setVisible(profile.image());
     SimpleOpManager operations = imageLayer.getDisplayOpManager();
     operations.setParamValue(
@@ -173,21 +203,57 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     }
     actionsInView.put(ActionW.DRAWINGS.cmd(), profile.drawings());
     crosslines = profile.crosslines();
+    hiddenGraphicLayers = profile.hiddenGraphicLayers();
   }
 
   /**
    * The graphics of the source view are copied into a model of this view: labels are laid out for
    * this geometry without moving those of the source, and nothing is registered on the source
-   * model. Graphics on hidden layers are left out.
+   * model. Graphics on hidden layers are copied on a hidden layer.
+   *
+   * <p>Another image than the one the source shows, as a frame of a printed series, takes its own
+   * drawings and what the source view derives for it (segmentation contours), not those of the
+   * displayed image.
    */
   @Override
   public void updateGraphicManager(E img, boolean updateGraphics) {
-    if (updateGraphics) {
+    if (!updateGraphics) {
+      return;
+    }
+    if (img == null || img == sourceView.getImage()) {
       graphicManager = copyForRendering(sourceView.getGraphicManager());
+    } else {
+      // The derived graphics kept in the model date from the last display of the image
+      GraphicModel own =
+          copyForRendering(
+              (GraphicModel) img.getTagValue(TagW.PresentationModel),
+              sourceView.getGraphicManager(),
+              LayerType.DICOM_SEG);
+      List<Graphic> graphics = new ArrayList<>(own.getModels());
+      Map<LayerType, GraphicLayer> layers = new EnumMap<>(LayerType.class);
+      for (Graphic derived : sourceView.getDerivedGraphics(img)) {
+        if (hidden(sourceView.getGraphicManager(), derived.getLayerType())) {
+          continue;
+        }
+        derived.setLayer(layers.computeIfAbsent(derived.getLayerType(), DefaultLayer::new));
+        graphics.add(derived);
+      }
+      own.setModels(graphics);
+      graphicManager = own;
     }
   }
 
   static GraphicModel copyForRendering(GraphicModel source) {
+    return copyForRendering(source, source, null);
+  }
+
+  /**
+   * @param visibility the model whose layers say what is shown: a layer of {@code source} hidden in
+   *     it, by its type, is left out
+   * @param skipped a layer type to leave out, or {@code null}
+   */
+  static GraphicModel copyForRendering(
+      GraphicModel source, GraphicModel visibility, LayerType skipped) {
     XmlGraphicModel copy = new XmlGraphicModel();
     if (source == null) {
       return copy;
@@ -196,21 +262,38 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     List<Graphic> graphics = new ArrayList<>();
     for (Graphic graphic : source.getModels()) {
       GraphicLayer layer = graphic.getLayer();
-      if (layer == null || !LangUtil.nullToTrue(layer.getVisible())) {
+      if (layer == null || layer.getType() == skipped) {
         continue;
       }
       Graphic copied = graphic.copy();
-      copied.setLayer(layers.computeIfAbsent(layer, ExportImage::copyLayer));
+      // A hidden layer is copied hidden: a display profile may show its kind of drawing
+      copied.setLayer(
+          layers.computeIfAbsent(
+              layer,
+              l -> {
+                GraphicLayer c = copyLayer(l);
+                if (visibility != source && hidden(visibility, l.getType())) {
+                  c.setVisible(false);
+                }
+                return c;
+              }));
       graphics.add(copied);
     }
     copy.setModels(graphics);
     return copy;
   }
 
+  private static boolean hidden(GraphicModel model, LayerType type) {
+    return model != null
+        && model.getLayers().stream()
+            .anyMatch(l -> l.getType() == type && !LangUtil.nullToTrue(l.getVisible()));
+  }
+
   private static GraphicLayer copyLayer(GraphicLayer layer) {
     DefaultLayer copy = new DefaultLayer(layer.getType());
     copy.setName(layer.getName());
     copy.setLevel(layer.getLevel());
+    copy.setVisible(LangUtil.nullToTrue(layer.getVisible()));
     copy.setLocked(layer.getLocked());
     copy.setSelectable(layer.getSelectable());
     copy.setSerializable(layer.getSerializable());
@@ -236,9 +319,9 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
         rotation == null ? 0 : rotation);
   }
 
-  /** Shows the overlay when asked for and the source view showed it. */
+  /** Shows the overlay when asked for and the source view, or the display profile, shows it. */
   public void showAnnotations(boolean show) {
-    infoLayer.setVisible(show && sourceAnnotations);
+    infoLayer.setVisible(show && annotations);
   }
 
   /**
@@ -294,30 +377,42 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
   @Override
   public Font getLayerFont() {
-    return fixedLayerFont ? FontItem.DEFAULT_SEMIBOLD.getFont() : super.getLayerFont();
+    return fixedLayerFont
+        ? PrintFonts.of(FontItem.DEFAULT_SEMIBOLD.getFont())
+        : super.getLayerFont();
   }
 
   @Override
   public void drawLayers(
       Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
-    if (crosslines) {
+    if (crosslines && hiddenGraphicLayers == null) {
       super.drawLayers(g2d, transform, inverseTransform);
       return;
     }
-    // The cross-lines were copied with the other graphics, so they are skipped here, not removed
+    // Every graphic was copied, so what the profile leaves out is skipped here, not removed
     if (LangUtil.nullToTrue((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()))) {
       Object[] oldRenderingHints =
           GuiUtils.setRenderingHints(g2d, true, false, requiredTextAntialiasing());
       g2d.translate(0.5, 0.5);
       for (Graphic graphic : graphicManager.getAllGraphics()) {
-        if (graphic.getLayer().getVisible()
-            && graphic.getLayer().getType() != LayerType.CROSSLINES) {
+        if (isShown(graphic.getLayer())) {
           graphic.paint(g2d, transform);
         }
       }
       g2d.translate(-0.5, -0.5);
       GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
     }
+  }
+
+  private boolean isShown(GraphicLayer layer) {
+    LayerType type = layer.getType();
+    if (type == LayerType.CROSSLINES && !crosslines) {
+      return false;
+    }
+    if (hiddenGraphicLayers != null && DisplayProfile.GRAPHIC_LAYERS.contains(type)) {
+      return !hiddenGraphicLayers.contains(type);
+    }
+    return LangUtil.nullToTrue(layer.getVisible());
   }
 
   @Override

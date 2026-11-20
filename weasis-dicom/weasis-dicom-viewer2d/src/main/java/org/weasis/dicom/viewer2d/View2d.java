@@ -918,39 +918,59 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     return list;
   }
 
+  /** The contours the visible segmentations and structure sets hold for {@code img}. */
+  private Set<SegContour> segContours(DicomImageElement img, List<SpecialElementRegion> building) {
+    Set<SegContour> contours = new LinkedHashSet<>();
+    String patientPseudoUID = DicomModel.getPatientPseudoUID(series);
+    List<SpecialElementRegion> segList =
+        HiddenSeriesManager.getHiddenElementsFromPatient(
+            SpecialElementRegion.class, patientPseudoUID);
+    for (SpecialElementRegion seg : segList) {
+      if (seg.isVisible() && seg.containsSopInstanceUIDReference(img)) {
+        // Checked after getContours(): that call may itself schedule the volume build
+        Set<LazyContourLoader> loaders = seg.getContours(img);
+        if (seg.isSegmentationVolumeBuilding()) {
+          building.add(seg);
+        }
+        if (loaders != null && !loaders.isEmpty()) {
+          for (LazyContourLoader lazyLoader : loaders) {
+            try {
+              Set<SegContour> c = lazyLoader.getLazyContours();
+              if (c != null && !c.isEmpty()) {
+                contours.addAll(c);
+              }
+            } catch (Exception e) {
+              LOGGER.error("Error loading contours", e);
+            }
+          }
+        }
+      }
+    }
+    return contours;
+  }
+
+  /** The vector contours of the segmentations on {@code image}, as for the displayed one. */
+  @Override
+  public List<Graphic> getDerivedGraphics(DicomImageElement image) {
+    List<Graphic> graphics = new ArrayList<>();
+    if (series != null && image != null) {
+      for (SegContour c : segContours(image, new ArrayList<>())) {
+        Graphic graphic = c.isFractional() ? null : c.getSegGraphic();
+        if (graphic != null) {
+          graphics.add(graphic);
+        }
+      }
+    }
+    return graphics;
+  }
+
   private void updateSegmentation(DicomImageElement img) {
     graphicManager.deleteByLayerType(LayerType.DICOM_SEG);
     segOverlayImage = null;
     List<SpecialElementRegion> building = new ArrayList<>();
     if (series != null && img != null) {
-      String patientPseudoUID = DicomModel.getPatientPseudoUID(series);
-      List<SpecialElementRegion> segList =
-          HiddenSeriesManager.getHiddenElementsFromPatient(
-              SpecialElementRegion.class, patientPseudoUID);
-      if (!segList.isEmpty()) {
-        Set<SegContour> contours = new LinkedHashSet<>();
-        for (SpecialElementRegion seg : segList) {
-          if (seg.isVisible() && seg.containsSopInstanceUIDReference(img)) {
-            // Checked after getContours(): that call may itself schedule the volume build
-            Set<LazyContourLoader> loaders = seg.getContours(img);
-            if (seg.isSegmentationVolumeBuilding()) {
-              building.add(seg);
-            }
-            if (loaders != null && !loaders.isEmpty()) {
-              for (LazyContourLoader lazyLoader : loaders) {
-                try {
-                  Set<SegContour> c = lazyLoader.getLazyContours();
-                  if (c != null && !c.isEmpty()) {
-                    contours.addAll(c);
-                  }
-                } catch (Exception e) {
-                  LOGGER.error("Error loading contours", e);
-                }
-              }
-            }
-          }
-        }
-
+      Set<SegContour> contours = segContours(img, building);
+      if (!contours.isEmpty()) {
         // Separate fractional (raster overlay) and binary (vector contour) segmentations
         List<SegContour> fractionalContours = new ArrayList<>();
         for (SegContour c : contours) {

@@ -94,6 +94,7 @@ public final class PageRenderer {
     double cellHeight = device.getHeight() * budget / scale;
     CellFit fit = CellFit.fit(view.getSourceGeometry(), cellWidth, cellHeight, options.isCenter());
 
+    view.applyDisplay(options.getDisplay());
     view.showAnnotations(options.isShowingAnnotations());
     view.configureForPrint(fit, scale);
     LOGGER.debug(

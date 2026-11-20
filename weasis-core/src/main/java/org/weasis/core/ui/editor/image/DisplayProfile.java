@@ -26,6 +26,8 @@ import org.weasis.core.util.LangUtil;
  * annotation items, the drawings and cross-lines).
  *
  * @param annotationItems the annotation items shown when {@code annotations} is on
+ * @param hiddenGraphicLayers the kinds of drawings left out when {@code drawings} is on, among
+ *     {@link #GRAPHIC_LAYERS}
  */
 public record DisplayProfile(
     boolean image,
@@ -35,7 +37,8 @@ public record DisplayProfile(
     boolean annotations,
     Set<LayerItem> annotationItems,
     boolean drawings,
-    boolean crosslines) {
+    boolean crosslines,
+    Set<LayerType> hiddenGraphicLayers) {
 
   /**
    * The annotation items a capture of a 2D view can show; pixel value and loading bar are
@@ -61,11 +64,48 @@ public record DisplayProfile(
   static final String SHUTTER_OP = ActionW.IMAGE_SHUTTER.getTitle();
   static final String SHUTTER_SHOW = "show"; // NON-NLS
 
+  /**
+   * The kinds of drawings the Display tool lists under its drawings node, after the cross-lines.
+   */
+  public static final List<LayerType> GRAPHIC_LAYERS =
+      List.of(
+          LayerType.MEASURE,
+          LayerType.DRAW,
+          LayerType.ANNOTATION,
+          LayerType.DICOM_PR,
+          LayerType.DICOM_SR);
+
   public DisplayProfile {
     annotationItems =
         annotationItems.isEmpty()
             ? EnumSet.noneOf(LayerItem.class)
             : EnumSet.copyOf(annotationItems);
+    hiddenGraphicLayers =
+        hiddenGraphicLayers == null || hiddenGraphicLayers.isEmpty()
+            ? EnumSet.noneOf(LayerType.class)
+            : EnumSet.copyOf(hiddenGraphicLayers);
+  }
+
+  /** A profile that leaves out no kind of drawing. */
+  public DisplayProfile(
+      boolean image,
+      boolean overlay,
+      boolean shutter,
+      boolean pixelPadding,
+      boolean annotations,
+      Set<LayerItem> annotationItems,
+      boolean drawings,
+      boolean crosslines) {
+    this(
+        image,
+        overlay,
+        shutter,
+        pixelPadding,
+        annotations,
+        annotationItems,
+        drawings,
+        crosslines,
+        Set.of());
   }
 
   /** Whether a capture of {@code view} can show something else than the screen. */
@@ -86,6 +126,8 @@ public record DisplayProfile(
     if (info != null) {
       itemsFor(view).stream().filter(info::getDisplayPreferences).forEach(items::add);
     }
+    Set<LayerType> hidden = EnumSet.noneOf(LayerType.class);
+    GRAPHIC_LAYERS.stream().filter(t -> !view.isLayerTypeVisible(t)).forEach(hidden::add);
     // A view rendered by other means (3D) has neither an image layer nor display operations
     return new DisplayProfile(
         view.getImageLayer() == null || LangUtil.nullToTrue(view.getImageLayer().getVisible()),
@@ -95,13 +137,22 @@ public record DisplayProfile(
         info != null && LangUtil.nullToTrue(info.getVisible()),
         items,
         LangUtil.nullToTrue((Boolean) view.getActionValue(ActionW.DRAWINGS.cmd())),
-        LangUtil.nullToTrue((Boolean) view.getActionValue(LayerType.CROSSLINES.name())));
+        LangUtil.nullToTrue((Boolean) view.getActionValue(LayerType.CROSSLINES.name())),
+        hidden);
   }
 
   /** The image as displayed, without annotations, drawings or cross-lines. */
   public DisplayProfile imageOnly() {
     return new DisplayProfile(
-        image, overlay, shutter, pixelPadding, false, annotationItems, false, false);
+        image,
+        overlay,
+        shutter,
+        pixelPadding,
+        false,
+        annotationItems,
+        false,
+        false,
+        hiddenGraphicLayers);
   }
 
   /** Whether {@code view} has the DICOM image options: overlay, shutter and pixel padding. */

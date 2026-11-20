@@ -157,9 +157,15 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
     return new JPanel();
   }
 
+  /**
+   * Space between the edge of a cell and its annotations, in logical pixels: a little over 1 mm on
+   * paper at the normal text size.
+   */
+  public static final int INFO_BORDER = 9;
+
   private static <E extends ImageElement> ExportImage<E> exportImage(ViewCanvas<E> viewCanvas) {
     ExportImage<E> export = new ExportImage<>(viewCanvas);
-    export.getInfoLayer().setBorder(3);
+    export.getInfoLayer().setBorder(INFO_BORDER);
     return export;
   }
 

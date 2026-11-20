@@ -128,7 +128,7 @@ public final class SeriesPages<E extends ImageElement> implements PageSource {
 
   private ExportImage<E> cellOf(E frame) {
     ExportImage<E> export = new ExportImage<>(view);
-    export.getInfoLayer().setBorder(3);
+    export.getInfoLayer().setBorder(ExportLayout.INFO_BORDER);
     export.setActionsInView(ORIGIN_ZOOM, 0.0, false);
     export.setImage(frame);
     // The export view does not listen to its own image changes: the operations that depend on

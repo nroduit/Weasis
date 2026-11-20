@@ -47,8 +47,7 @@ public class PagePrintable implements Printable {
 
   /**
    * Prints the pages on {@code service} with these job attributes (media, orientation, copies and
-   * whatever the native dialog returned). A printer that refuses jobs is retried once with the
-   * user's consent.
+   * whatever the native dialog returned).
    */
   public void print(PrintService service, PrintRequestAttributeSet attributes)
       throws PrinterException {
@@ -59,8 +58,17 @@ public class PagePrintable implements Printable {
       job.setPrintService(service);
     }
     job.setPrintable(this);
+    print(job, this.attributes);
+  }
+
+  /**
+   * Runs {@code job} with these attributes. A printer that refuses jobs is retried once with the
+   * user's consent.
+   */
+  public static void print(PrinterJob job, PrintRequestAttributeSet attributes)
+      throws PrinterException {
     try {
-      job.print(this.attributes);
+      job.print(attributes);
     } catch (PrinterException e) {
       if (e.getMessage() == null || !e.getMessage().contains("accepting job")) { // NON-NLS
         throw e;
@@ -75,7 +83,7 @@ public class PagePrintable implements Printable {
       if (response == JOptionPane.YES_OPTION) {
         // Print again, ignoring the not-accepting-jobs attribute of the service
         ForcedAcceptPrintService.setupPrintJob(job);
-        job.print(this.attributes);
+        job.print(attributes);
         LOGGER.info("Bypass Printer is not accepting job");
       }
     }

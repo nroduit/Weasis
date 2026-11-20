@@ -331,6 +331,15 @@ public interface ViewCanvas<E extends ImageElement>
 
   LayerAnnotation getInfoLayer();
 
+  /**
+   * The graphics this view computes for {@code image} rather than keeps in its model, such as the
+   * contours of a segmentation: new instances, for a rendering of another image than the displayed
+   * one.
+   */
+  default List<Graphic> getDerivedGraphics(E image) {
+    return List.of();
+  }
+
   int getTileOffset();
 
   void setTileOffset(int tileOffset);

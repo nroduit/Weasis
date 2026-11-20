@@ -40,9 +40,16 @@ public record PageSpec(
   }
 
   public static final double DEFAULT_MARGIN_MM = 6.0;
+
+  /**
+   * The least margin of a page sent to a printer: a device that reports a printable area up to the
+   * edge of the paper, as a PDF printer does, still gets a page with a frame.
+   */
+  public static final double MIN_MARGIN_MM = DEFAULT_MARGIN_MM;
+
   public static final double DEFAULT_GUTTER_MM = 2.0;
 
-  /** Height of the header band: one line of normal text and its spacing. */
+  /** Height of the header band: one line of normal text and the space under it. */
   public static final double HEADER_MM = 6.0;
 
   public PageSpec {
@@ -73,7 +80,7 @@ public record PageSpec(
 
   /**
    * The page a Java print job describes: the paper from its size, the orientation it reports and
-   * its imageable area as margins.
+   * its imageable area as margins, none of them under {@link #MIN_MARGIN_MM}.
    */
   public static PageSpec of(PageFormat format, Color background, Color border) {
     double width = Paper.pointsToMm(format.getWidth());
@@ -89,7 +96,11 @@ public record PageSpec(
     return new PageSpec(
         Paper.fromMm(width, height),
         orientation,
-        new Margins(Math.max(0, top), Math.max(0, left), Math.max(0, bottom), Math.max(0, right)),
+        new Margins(
+            Math.max(MIN_MARGIN_MM, top),
+            Math.max(MIN_MARGIN_MM, left),
+            Math.max(MIN_MARGIN_MM, bottom),
+            Math.max(MIN_MARGIN_MM, right)),
         DEFAULT_GUTTER_MM,
         background,
         border);

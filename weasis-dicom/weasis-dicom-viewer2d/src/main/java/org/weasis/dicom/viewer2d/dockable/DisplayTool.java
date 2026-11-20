@@ -35,6 +35,7 @@ import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.image.DisplayProfile;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -86,13 +87,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
    * viewer itself (image annotations, temporary drawings, footprints), the unused POINTS and BLOB
    * types, and DICOM SEG and RT whose visibility is managed per structure by their own tools.
    */
-  static final List<LayerType> LAYER_TYPES =
-      List.of(
-          LayerType.MEASURE,
-          LayerType.DRAW,
-          LayerType.ANNOTATION,
-          LayerType.DICOM_PR,
-          LayerType.DICOM_SR);
+  static final List<LayerType> LAYER_TYPES = DisplayProfile.GRAPHIC_LAYERS;
 
   private final List<DefaultMutableTreeNode> layerTypeNodes = new ArrayList<>();
   private DefaultMutableTreeNode minAnnotations;

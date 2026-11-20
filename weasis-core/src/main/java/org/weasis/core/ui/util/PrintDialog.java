@@ -85,7 +85,6 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
   private static final Logger LOGGER = LoggerFactory.getLogger(PrintDialog.class);
 
   private static final String PREF_DESTINATION = "print.destination"; // NON-NLS
-  private static final String PREF_ANNOTATIONS = "print.annotations"; // NON-NLS
   private static final String PREF_CENTER = "print.center"; // NON-NLS
   private static final String PREF_HEADER = "print.header"; // NON-NLS
   private static final String PREF_GRID = "print.series.grid"; // NON-NLS
@@ -131,8 +130,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
           new String[] {
             Messages.getString("PrintDialog.center"), Messages.getString("PrintDialog.top")
           });
-  private final JCheckBox annotationsCheckBox =
-      new JCheckBox(Messages.getString("PrintDialog.annotate"));
+  private final DisplayProfileSelector displayProfile;
   private final JCheckBox headerCheckBox = new JCheckBox(Messages.getString("PrintDialog.header"));
   private final MaskingProfileSelector maskingProfile = new MaskingProfileSelector();
   private final PagePreview preview = new PagePreview();
@@ -182,6 +180,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
 
     ImageViewerPlugin<I> container = eventManager.getSelectedView2dContainer();
     selectedView = eventManager.getSelectedViewPane();
+    displayProfile = new DisplayProfileSelector(() -> selectedView);
     if (container != null && !container.getImagePanels().isEmpty()) {
       layoutAll = new ExportLayout<>(container);
     }
@@ -265,10 +264,11 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     selectedViewRadio.setVisible(severalPanes);
     seriesRadio.setEnabled(frameCount > 1);
     settings.add(label("PrintDialog.content"));
-    settings.add(
-        GuiUtils.getFlowLayoutPanel(
-            FlowLayout.LEADING, 0, 0, currentLayoutRadio, selectedViewRadio, seriesRadio),
-        "span 3, growx 0"); // NON-NLS
+    JPanel contentRow = new JPanel(new MigLayout("insets 0, gapx 15lp, hidemode 3")); // NON-NLS
+    contentRow.add(currentLayoutRadio);
+    contentRow.add(selectedViewRadio);
+    contentRow.add(seriesRadio);
+    settings.add(contentRow, "span 3, growx 0"); // NON-NLS
 
     ((SpinnerNumberModel) firstSpinner.getModel()).setMaximum(Math.max(1, frameCount));
     ((SpinnerNumberModel) lastSpinner.getModel()).setMaximum(Math.max(1, frameCount));
@@ -288,8 +288,11 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     seriesRow.setVisible(false);
     settings.add(seriesRow, "skip 1, span 3, growx 0"); // NON-NLS
 
-    annotationsCheckBox.setSelected(true);
-    settings.add(annotationsCheckBox, "skip 1, span 3, growx 0"); // NON-NLS
+    settings.add(displayProfile.createLabel());
+    JPanel displayRow = new JPanel(new MigLayout("insets 0")); // NON-NLS
+    displayRow.add(displayProfile);
+    displayRow.add(displayProfile.getEditButton());
+    settings.add(displayRow, "span 3, growx 0"); // NON-NLS
     settings.add(headerCheckBox, "skip 1, span 3, growx 0"); // NON-NLS
     settings.add(maskingProfile.createLabel());
     settings.add(maskingProfile, "span 3, growx 0"); // NON-NLS
@@ -310,7 +313,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
       combo.addActionListener(e -> updatePreview());
     }
     copiesSpinner.addChangeListener(e -> updatePreview());
-    annotationsCheckBox.addActionListener(e -> updatePreview());
+    displayProfile.setOnChange(this::updatePreview);
     headerCheckBox.addActionListener(e -> updatePreview());
     currentLayoutRadio.addActionListener(e -> contentChanged());
     selectedViewRadio.addActionListener(e -> contentChanged());
@@ -445,7 +448,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
 
   private PrintOptions currentOptions() {
     PrintOptions options = new PrintOptions();
-    options.setShowingAnnotations(annotationsCheckBox.isSelected());
+    options.setDisplay(displayProfile.getSelection());
     options.setTextSize(textSizeComboBox.getSelectedItem() instanceof TextSize s ? s : null);
     options.setBackground(selectedBackground());
     options.setCenter(positionComboBox.getSelectedIndex() == 0);
@@ -460,7 +463,6 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
 
   private void restorePreferences() {
     WProperties prefs = preferences();
-    annotationsCheckBox.setSelected(prefs.getBooleanProperty(PREF_ANNOTATIONS, true));
     headerCheckBox.setSelected(prefs.getBooleanProperty(PREF_HEADER, false));
     positionComboBox.setSelectedIndex(prefs.getBooleanProperty(PREF_CENTER, true) ? 0 : 1);
     String grid = prefs.getProperty(PREF_GRID);
@@ -490,7 +492,6 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
   private void savePreferences() {
     PrintDestination destination = selectedDestination();
     WProperties prefs = preferences();
-    prefs.putBooleanProperty(PREF_ANNOTATIONS, annotationsCheckBox.isSelected());
     prefs.putBooleanProperty(PREF_HEADER, headerCheckBox.isSelected());
     prefs.putBooleanProperty(PREF_CENTER, positionComboBox.getSelectedIndex() == 0);
     prefs.setProperty(PREF_GRID, String.valueOf(gridComboBox.getSelectedItem()));

@@ -10,6 +10,9 @@
 package org.weasis.core.ui.util;
 
 import java.awt.Color;
+import java.util.function.Function;
+import org.weasis.core.ui.editor.image.DisplayProfile;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.print.TextSize;
 
 /**
@@ -25,6 +28,7 @@ public class PrintOptions {
   private Color background;
   private Color border;
   private boolean header;
+  private Function<ViewCanvas<?>, DisplayProfile> display = _ -> null;
 
   public PrintOptions() {
     this.showingAnnotations = true;
@@ -39,6 +43,18 @@ public class PrintOptions {
 
   public void setShowingAnnotations(boolean showingAnnotations) {
     this.showingAnnotations = showingAnnotations;
+  }
+
+  /**
+   * What the print of a view shows, resolved from its source view: {@code null} means as displayed.
+   * The annotations are still left out when {@link #isShowingAnnotations()} is off.
+   */
+  public Function<ViewCanvas<?>, DisplayProfile> getDisplay() {
+    return display;
+  }
+
+  public void setDisplay(Function<ViewCanvas<?>, DisplayProfile> display) {
+    this.display = display == null ? _ -> null : display;
   }
 
   public boolean isCenter() {
