@@ -13,11 +13,12 @@ import javax.accessibility.AccessibilityProvider;
 
 /**
  * The assistive technology named by the native options of the macOS launchers, where the launcher
- * set runs in the bootstrap process. AWT resolves {@code javax.accessibility.assistive_technologies}
- * through the system class loader, which holds {@code weasis-bootstrap.jar} only there: the
- * launcher's own {@code org.weasis.launcher.EmptyAccessibilityProvider} sits in the {@code
- * URLClassLoader} of the set and fails the toolkit with an {@code AWTError}. A separate stage-2
- * process (Linux, Windows) names the launcher's class, which is on its class path.
+ * set runs in the bootstrap process. AWT resolves {@code
+ * javax.accessibility.assistive_technologies} through the system class loader, which holds {@code
+ * weasis-bootstrap.jar} only there: the launcher's own {@code
+ * org.weasis.launcher.EmptyAccessibilityProvider} sits in the {@code URLClassLoader} of the set and
+ * fails the toolkit with an {@code AWTError}. A separate stage-2 process (Linux, Windows) names the
+ * launcher's class, which is on its class path.
  */
 public class EmptyAccessibilityProvider extends AccessibilityProvider {
   @Override

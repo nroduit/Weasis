@@ -32,8 +32,7 @@ class UriRelaunchTest {
         Optional.of(bundle),
         WeasisLauncher.appBundle(null, bundle + "/Contents/MacOS/Weasis")); // NON-NLS
     assertEquals(
-        Optional.of(bundle),
-        WeasisLauncher.appBundle("", bundle + "/Contents/app")); // NON-NLS
+        Optional.of(bundle), WeasisLauncher.appBundle("", bundle + "/Contents/app")); // NON-NLS
     assertTrue(WeasisLauncher.appBundle("/opt/weasis/bin/Weasis", null).isEmpty()); // NON-NLS
     assertTrue(WeasisLauncher.appBundle().isEmpty());
 

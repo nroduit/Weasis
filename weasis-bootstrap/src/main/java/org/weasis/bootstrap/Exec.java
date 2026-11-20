@@ -26,10 +26,10 @@ import java.util.Map;
  * Replaces this process by a program ({@code execv}), keeping its PID.
  *
  * <p>On macOS the bootstrap runs the launcher set in its own process: LaunchServices delivers the
- * open-file and open-URI events to the process it started, and AppKit hands them to the
- * application only when the executable is the launcher of the bundle. The JVM options of that
- * process come from the read-only {@code .cfg}; to add per-user ones (the AOT cache), stage 1
- * replaces itself by the same launcher with them in {@code JAVA_TOOL_OPTIONS}.
+ * open-file and open-URI events to the process it started, and AppKit hands them to the application
+ * only when the executable is the launcher of the bundle. The JVM options of that process come from
+ * the read-only {@code .cfg}; to add per-user ones (the AOT cache), stage 1 replaces itself by the
+ * same launcher with them in {@code JAVA_TOOL_OPTIONS}.
  */
 final class Exec {
 
@@ -57,8 +57,7 @@ final class Exec {
       MethodHandle execv =
           linker.downcallHandle(
               libc.find("execv").orElseThrow(), // NON-NLS
-              FunctionDescriptor.of(
-                  ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS),
+              FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS),
               Linker.Option.captureCallState("errno")); // NON-NLS
       try (Arena arena = Arena.ofConfined()) {
         for (Map.Entry<String, String> e : env.entrySet()) {

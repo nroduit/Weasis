@@ -10,6 +10,7 @@
 package org.weasis.bootstrap;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
@@ -17,7 +18,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

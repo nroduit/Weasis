@@ -161,8 +161,7 @@ public final class Bootstrap {
     List<String> command = new ArrayList<>();
     command.add(executable.get());
     command.addAll(plan.args());
-    String toolOptions =
-        Exec.toolOptions(System.getenv(Contract.JAVA_TOOL_OPTIONS), options);
+    String toolOptions = Exec.toolOptions(System.getenv(Contract.JAVA_TOOL_OPTIONS), options);
     decision.put("launch", "reexec"); // NON-NLS
     writeDecision();
     String failure = Exec.replace(command, Map.of(Contract.JAVA_TOOL_OPTIONS, toolOptions));
@@ -587,8 +586,8 @@ public final class Bootstrap {
         System.getProperty(Contract.P_ENTRY, "org.weasis.launcher.CommandClient"); // NON-NLS
     Choice choice = new Choice(set, options, !set.embedded(), false, null);
     // macOS: no client cache. The client runs in the launcher process with the set on its class
-    // path; the AOT flags would need a second JVM start (the re-execution of the application), which
-    // costs more than the cache saves on a call of about 130 ms.
+    // path; the AOT flags would need a second JVM start (the re-execution of the application),
+    // which costs more than the cache saves on a call of about 130 ms.
     AotCache aot =
         PlatformDirs.isMacOS()
             ? null

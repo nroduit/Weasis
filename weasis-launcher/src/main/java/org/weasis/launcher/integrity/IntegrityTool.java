@@ -46,8 +46,8 @@ import org.tukaani.xz.XZInputStream;
  * (X.509, base64, the file a site drops in {@code integrity-keys/} or the release ships in {@code
  * release-keys.json}); {@code digest} rewrites the {@code integrity} object of {@code base.json}
  * from the jars found (a packed {@code .jar.xz} is digested decompressed, under the jar name, which
- * is what the launcher checks); {@code sign}
- * writes {@code base.json.sig} as {@code <id>:<base64 signature>}.
+ * is what the launcher checks); {@code sign} writes {@code base.json.sig} as {@code <id>:<base64
+ * signature>}.
  */
 public final class IntegrityTool {
 

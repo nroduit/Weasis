@@ -97,7 +97,8 @@ class IntegrityTest {
         "core bytes written again without compression".getBytes(StandardCharsets.UTF_8); // NON-NLS
     try (OutputStream out =
         new XZOutputStream(
-            Files.newOutputStream(bundle.resolve("weasis-core-5.0.0.jar.xz")), new LZMA2Options())) {
+            Files.newOutputStream(bundle.resolve("weasis-core-5.0.0.jar.xz")),
+            new LZMA2Options())) {
       out.write(packed);
     }
 

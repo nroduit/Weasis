@@ -1121,8 +1121,8 @@ Starting PF4J Plugins...
 
   /**
    * The {@code .app} directory holding one of these paths (the native launcher, {@code
-   * jpackage.app-path}, or the application directory of the image); empty outside a bundle, as in
-   * a development launch.
+   * jpackage.app-path}, or the application directory of the image); empty outside a bundle, as in a
+   * development launch.
    */
   static Optional<Path> appBundle(String... paths) {
     for (String p : paths) {
