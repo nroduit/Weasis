@@ -117,4 +117,20 @@ class TranslationChecksTest {
         () ->
             assertEquals("B.c", findings.get(1).key(), "the pattern is checked without a source"));
   }
+
+  /** Transifex names some locales with digits or a charset: es_419, zh_CN.GB2312. */
+  @Test
+  void aLocaleNamedWithDigitsOrACharsetIsCheckedToo(@TempDir Path dir) throws IOException {
+    Files.writeString(dir.resolve("messages.properties"), "A.b={0} files\n");
+    for (String name : List.of("messages_es_419.properties", "messages_zh_CN.GB2312.properties")) {
+      Files.writeString(dir.resolve(name), "A.b=%s files\n", StandardCharsets.UTF_8);
+    }
+    List<String> files =
+        TranslationChecks.checkDirectories(List.of(dir)).stream()
+            .map(f -> f.file().getFileName().toString())
+            .distinct()
+            .sorted()
+            .toList();
+    assertEquals(List.of("messages_es_419.properties", "messages_zh_CN.GB2312.properties"), files);
+  }
 }

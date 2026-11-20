@@ -45,7 +45,8 @@ public final class TranslationChecks {
   private static final Pattern PRINTF =
       Pattern.compile("%(?:\\d+\\$)?[-#+ 0,(]*\\d*(?:\\.\\d+)?[sdfn]");
   private static final Pattern LONE_APOSTROPHE = Pattern.compile("(?<!')'(?!')");
-  private static final Pattern TRANSLATION = Pattern.compile("messages_([A-Za-z_]+)\\.properties");
+  private static final Pattern TRANSLATION =
+      Pattern.compile("messages_([A-Za-z0-9_.]+)\\.properties");
 
   private TranslationChecks() {}
 
