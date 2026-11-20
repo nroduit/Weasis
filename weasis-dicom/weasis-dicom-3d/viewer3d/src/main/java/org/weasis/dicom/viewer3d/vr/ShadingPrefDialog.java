@@ -78,7 +78,9 @@ public class ShadingPrefDialog extends JDialog {
     this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     this.setIconImage(ResourceUtil.getIcon(ActionIcon.VOLUME).getImage());
     init();
-    GuiUtils.setPreferredWidth(this, 550);
+    // Sized on the content pane: the dialog has no insets yet, so its own size would leave out the
+    // title bar and cut the bottom of the content.
+    GuiUtils.setPreferredWidth(getContentPane(), 550);
     pack();
   }
 

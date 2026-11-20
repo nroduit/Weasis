@@ -37,11 +37,31 @@ public class SynchOptionsCheckBoxGroup extends GroupCheckBoxMenu {
    * A user-visible synchronization option. May target several action commands (e.g. Window/Level
    * targets both {@link ActionW#WINDOW} and {@link ActionW#LEVEL}). The {@link #primary()} feature
    * drives the displayed label and the menu item's {@link
-   * javax.swing.JMenuItem#getActionCommand()}.
+   * javax.swing.JMenuItem#getActionCommand()}. The optional {@code label} replaces the feature
+   * title in the popup when that title is ambiguous out of its tool (e.g. two actions named
+   * "Type").
    */
-  public record SyncOption(Feature<?> primary, List<String> commands) {
+  public record SyncOption(Feature<?> primary, List<String> commands, String label) {
     public SyncOption(Feature<?> feature) {
-      this(feature, List.of(feature.cmd()));
+      this(feature, List.of(feature.cmd()), null);
+    }
+
+    public SyncOption(Feature<?> primary, List<String> commands) {
+      this(primary, commands, null);
+    }
+
+    public SyncOption(Feature<?> feature, String label) {
+      this(feature, List.of(feature.cmd()), label);
+    }
+
+    /** Returns the label shown in the popup: the explicit label, or the feature title. */
+    public String title() {
+      return label == null ? primary.getTitle() : label;
+    }
+
+    @Override
+    public String toString() {
+      return title();
     }
   }
 
@@ -92,9 +112,8 @@ public class SynchOptionsCheckBoxGroup extends GroupCheckBoxMenu {
     this.syncOptions = Objects.requireNonNullElse(options, DEFAULT_SYNC_OPTIONS);
     List<CheckBoxModel> items = new ArrayList<>();
     for (SyncOption option : this.syncOptions) {
-      // Store the Feature object — Feature.toString() returns getTitle(), so the display is
-      // correct.
-      items.add(new CheckBoxModel(option.primary(), true));
+      // SyncOption.toString() returns the displayed label.
+      items.add(new CheckBoxModel(option, true));
     }
     this.setModel(items);
   }
@@ -130,7 +149,7 @@ public class SynchOptionsCheckBoxGroup extends GroupCheckBoxMenu {
           break;
         }
       }
-      JCheckBoxMenuItem item = new JCheckBoxMenuItem(option.primary().getTitle(), selected);
+      JCheckBoxMenuItem item = new JCheckBoxMenuItem(option.title(), selected);
       item.setActionCommand(option.primary().cmd());
       result.add(item);
     }

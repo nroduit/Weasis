@@ -165,13 +165,13 @@ public class View3DContainer extends DicomViewerPlugin
           new SyncOption(ActionW.LUT_SHAPE),
           new SyncOption(ActionW.INVERT_LUT),
           new SyncOption(ActionVol.VOL_PRESET),
-          new SyncOption(ActionVol.RENDERING_TYPE),
+          new SyncOption(ActionVol.RENDERING_TYPE, Messages.getString("sync.rendering.type")),
           new SyncOption(ActionVol.VOL_OPACITY),
           new SyncOption(ActionVol.VOL_SHADING),
           new SyncOption(ActionVol.VOL_CINEMATIC),
           new SyncOption(ActionVol.VOL_PROJECTION),
           new SyncOption(ActionVol.CROSSHAIR_CUT_MODE),
-          new SyncOption(ActionVol.SEG_TYPE));
+          new SyncOption(ActionVol.SEG_TYPE, Messages.getString("sync.segmentation.type")));
 
   public static final SeriesViewerUI UI = new SeriesViewerUI(View3DContainer.class);
 

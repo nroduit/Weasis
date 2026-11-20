@@ -2,3 +2,4 @@ enhancement-labels=Type: Enhancement,Type: Feature
 exclude-labels=duplicate,question,invalid,wontfix,Type: Help Needed,Type: Idea,Type: Question,Status: Invalid,Status: Wontfix
 # a pre-release tag (v5.0.0-beta.1) has its own tester notes; the changelog of the issues is written at the release
 exclude-tags-regex=-(alpha|beta|rc)[.-]?[0-9]*$
+issues-of-open-milestones=false
