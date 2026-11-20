@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
@@ -329,10 +330,15 @@ public final class CommandClient implements Callable<Integer> {
   private Optional<SingletonFiles.Instance> resolveInstance() {
     Optional<SingletonFiles.Instance> found = select(instances.get());
     if (found.isPresent()) {
+      // A Weasis that was killed leaves its file behind: with --launch, a file nobody listens
+      // behind is not an instance, and the one started now replaces it.
+      if (launch && !listening(found.get())) {
+        return launchAndWait(found.get());
+      }
       return found;
     }
     if (launch) {
-      return launchAndWait();
+      return launchAndWait(null);
     }
     if (instance != null && !instances.get().isEmpty()) {
       err.println("No running instance matches '" + instance + "'");
@@ -356,7 +362,18 @@ public final class CommandClient implements Callable<Integer> {
     return candidates.stream().findFirst();
   }
 
-  private Optional<SingletonFiles.Instance> launchAndWait() {
+  /** True when something accepts a connection on the port the file of {@code target} names. */
+  private static boolean listening(SingletonFiles.Instance target) {
+    try (Socket socket = new Socket()) {
+      socket.connect(new InetSocketAddress(LOCALHOST, target.port()), 2000);
+      return true;
+    } catch (IOException e) {
+      return false;
+    }
+  }
+
+  /** Starts Weasis and waits for its file; {@code stale} is the file of a dead instance, if any. */
+  private Optional<SingletonFiles.Instance> launchAndWait(SingletonFiles.Instance stale) {
     List<String> launcher = launchCommand();
     if (launcher.isEmpty()) {
       err.println(
@@ -381,7 +398,7 @@ public final class CommandClient implements Callable<Integer> {
     long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(LAUNCH_WAIT_SECONDS);
     while (System.nanoTime() < deadline) {
       Optional<SingletonFiles.Instance> found = select(instances.get());
-      if (found.isPresent()) {
+      if (found.isPresent() && !found.get().equals(stale)) {
         return found;
       }
       try {
