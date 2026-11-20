@@ -34,6 +34,7 @@ import org.weasis.dicom.codec.hp.ProtocolNames;
 import org.weasis.dicom.explorer.hp.ActiveHanging;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier.Applied;
+import org.weasis.dicom.explorer.hp.Session;
 import org.weasis.dicom.explorer.hp.SessionActions;
 
 /**
@@ -62,6 +63,7 @@ public class HangingProtocolBar extends WtoolBar {
   private final JButton previous = new JButton();
   private final JButton next = new JButton();
   private final JButton again = new JButton();
+  private final JButton keep = new JButton();
   private final JButton save = new JButton();
   private boolean updating;
 
@@ -101,6 +103,11 @@ public class HangingProtocolBar extends WtoolBar {
     again.addActionListener(e -> act(current -> ActiveHanging.step(current, current.step())));
     add(again);
 
+    keep.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.KEEP_DISPLAY));
+    keep.setToolTipText(Messages.getString("HangingProtocolBar.keep"));
+    keep.addActionListener(e -> keepDisplay());
+    add(keep);
+
     save.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.REDACT_SAVE));
     save.setToolTipText(Messages.getString("HangingProtocolBar.save"));
     save.addActionListener(
@@ -133,6 +140,18 @@ public class HangingProtocolBar extends WtoolBar {
     refresh(GuiUtils.getUICore().getSelectedPlugin().orElse(null));
   }
 
+  /** Keeps the display as a session and says so on the button, which the next refresh resets. */
+  private void keepDisplay() {
+    Optional<Session> kept = SessionActions.keepDisplay();
+    refresh(GuiUtils.getUICore().getSelectedPlugin().orElse(null));
+    if (kept.isPresent()) {
+      keep.setToolTipText(
+          Messages.format("HangingProtocolBar.kept", SessionActions.label(kept.get())));
+    } else {
+      java.awt.Toolkit.getDefaultToolkit().beep();
+    }
+  }
+
   private void act(java.util.function.UnaryOperator<Applied> action) {
     Optional<Applied> current = ActiveHanging.of(null);
     if (current.isEmpty()) {
@@ -153,6 +172,7 @@ public class HangingProtocolBar extends WtoolBar {
   public void refresh(ViewerPlugin<?> viewer) {
     Optional<Applied> active = viewer == null ? Optional.empty() : ActiveHanging.of(viewer);
     updating = true;
+    keep.setToolTipText(Messages.getString("HangingProtocolBar.keep"));
     try {
       if (active.isEmpty()) {
         protocols.setModel(
@@ -165,6 +185,7 @@ public class HangingProtocolBar extends WtoolBar {
         again.setEnabled(false);
         save.setEnabled(
             viewer instanceof ImageViewerPlugin<?> image && image.supportsViewportPanes());
+        keep.setEnabled(viewer != null);
         return;
       }
       Applied applied = active.get();
@@ -205,6 +226,7 @@ public class HangingProtocolBar extends WtoolBar {
       next.setEnabled(steps > 1);
       again.setEnabled(true);
       save.setEnabled(true);
+      keep.setEnabled(true);
     } finally {
       updating = false;
     }

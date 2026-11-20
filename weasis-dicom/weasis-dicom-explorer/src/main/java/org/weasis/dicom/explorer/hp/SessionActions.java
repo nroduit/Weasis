@@ -236,6 +236,36 @@ public final class SessionActions {
     return restore(session.id());
   }
 
+  /**
+   * Keeps the display as a session of the user, what the <i>Keep this display</i> button and {@code
+   * state:keep} do. On the event dispatch thread.
+   *
+   * @return the session kept, or empty when the display shows no loaded study or cannot be stored
+   */
+  public static Optional<Session> keepDisplay() {
+    DicomModel model = HpCommands.findModel();
+    WorkspaceManager manager = GuiUtils.getUICore().getWorkspaceManager();
+    if (model == null || manager == null) {
+      return Optional.empty();
+    }
+    try {
+      Session session = capture(model, manager, null, false);
+      List<String> forbidden = Session.forbiddenKeys(session.toJson());
+      if (!forbidden.isEmpty()) {
+        LOGGER.warn("The session would hold {}, not kept", forbidden);
+        return Optional.empty();
+      }
+      store().keep(session);
+      LOGGER.info("Display kept as session {}", session.id());
+      return Optional.of(session);
+    } catch (IllegalStateException e) {
+      LOGGER.info("Nothing to keep: {}", e.getMessage());
+    } catch (RuntimeException | IOException e) {
+      LOGGER.warn("Cannot keep the display", e);
+    }
+    return Optional.empty();
+  }
+
   /** Keeps the display as a session when the setting asks for it; nothing stops the close. */
   public static void keepOnClose() {
     if (!Settings.get(HpSettings.KEEP_ON_CLOSE)) {
