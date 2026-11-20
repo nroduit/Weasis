@@ -176,6 +176,19 @@ line naming the current spelling. Use the current one everywhere.
    and still have no usable 3D. `view3d:capture --out <file>` renders a 3D view as displayed, with
    the same `--scope` and `--max-pixels` as the 2D capture.
 <!--endif-->
+11. **Animations are verbs too.** `view2d:export-cine --out <file> [--first n --last m --step k
+   --rate fps --scope --scale]` writes the images of a pane as the pane shows them, frame by frame;
+   `view3d:export-rotation --out <file> [--frames n --axis x|y|z --sweep deg --ping-pong --rate]`
+   writes a turn of the volume; `weasis:record start --out <file> [--scope layout|window --rate
+   --max-seconds]` samples the display until `weasis:record stop`, which answers the frames written.
+   The extension of `--out` picks the format (`.apng` or `.png`, `.gif`, `.dcm` for a DICOM
+   Secondary Capture file of the cine or the rotation); every frame is masked as a capture from
+   the same caller would be, and a pane whose pixels need a review is refused the same way.
+12. **Anatomy is one notation.** `dicom:info` answers an `anatomy` object (the coded region, its
+   `groups` such as `CHEST` or `HEAD`, the Body Part Examined it stands for, the laterality) and
+   `dicom:list --anatomy <notation>` keeps the series of a region group (`CHEST`), a coded value
+   (`SCT:816094009`) or a Body Part Examined term (`THORAX`); the hanging-protocol features and the
+   window presets use the same words.
 
 ## Several commands in one call
 
@@ -191,10 +204,12 @@ $line = view2d:measure --view ${open.target.view} --type line --points 316,272,3
 One command per line, `#` comments, `$name = <command>` keeps the body of a step, `${name.path}`
 reads inside it (`[2]` indexes an array, `[key=length]` picks the entry whose `key` is `length`),
 `--set name=value` passes a parameter, and `@expect <value> <op> <value>` checks a value
-(`==`, `!=`, `<`, `<=`, `>`, `>=`, `~ <n> +-<tolerance>`, `matches <regex>`). The answer is one
-JSON object per step, then a summary; a failing step stops the run unless `--keep-going`.
-`script:check --file <file>` parses a plan without running it, which is the cheapest way to
-validate one before proposing it.
+(`==`, `!=`, `<`, `<=`, `>`, `>=`, `~ <n> +-<tolerance>`, `matches <regex>`). `$bad = @fails
+<command>` expects a refusal: the step passes when the command fails and `${bad.code}`,
+`${bad.message}` read its error. The answer is one JSON object per step, then a summary; a failing
+step stops the run unless `--keep-going`. `script:check --file <file>` parses a plan without running
+it (unknown verbs and options, unterminated quotes, a reference used before its step) and lists the
+parameters it expects, which is the cheapest way to validate one before proposing it.
 
 ## Watching for changes
 
