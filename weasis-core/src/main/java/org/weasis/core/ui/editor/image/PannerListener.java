@@ -23,6 +23,8 @@ import org.weasis.core.api.gui.util.ShortcutActions;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.setting.CoreSettings;
+import org.weasis.core.api.setting.Settings;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 
 public abstract class PannerListener extends MouseActionAdapter
@@ -133,7 +135,11 @@ public abstract class PannerListener extends MouseActionAdapter
                 PanPoint.State.DRAGGING,
                 -((e.getX() - pickPoint.getX()) / scale),
                 -((e.getY() - pickPoint.getY()) / scale)));
-        panner.addPointerType(ViewCanvas.CENTER_POINTER);
+        // The cross marks the center the zoom keeps in place; with the zoom at the pointer the
+        // place kept is under the pointer, and the cross says nothing
+        if (!Settings.get(CoreSettings.ZOOM_AT_CURSOR)) {
+          panner.addPointerType(ViewCanvas.CENTER_POINTER);
+        }
       }
     }
   }

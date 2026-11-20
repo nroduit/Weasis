@@ -15,7 +15,10 @@ import java.util.Objects;
 public class PanPoint extends Point2D {
   public enum State {
     MOVE,
+    /** Centers the view on the image point given. */
     CENTER,
+    /** Puts the image back where the view places it by default: the reset of the pan. */
+    RESET,
     DRAGSTART,
     DRAGGING,
     DRAGEND

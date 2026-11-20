@@ -1498,12 +1498,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       resetWindowLevel();
     } else if (ResetTools.PAN.equals(action)) {
       // Broadcast so the selected view and every PAN-synchronized view re-center through the
-      // per-action gate. A CENTER pan point is the reset signal (see DefaultView2d PAN handling).
+      // per-action gate. A CENTER point would center the view on the image point (0,0), its
+      // corner, which only went unnoticed while the next scroll centered the image again.
       firePropertyChange(
           ActionW.SYNCH.cmd(),
           null,
           new SynchEvent(
-              getSelectedViewPane(), ActionW.PAN.cmd(), new PanPoint(PanPoint.State.CENTER)));
+              getSelectedViewPane(), ActionW.PAN.cmd(), new PanPoint(PanPoint.State.RESET)));
     }
   }
 

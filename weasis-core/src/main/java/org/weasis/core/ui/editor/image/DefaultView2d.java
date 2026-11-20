@@ -1165,11 +1165,26 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
+        // Where the user panned the image, kept through a scroll when the next image has the
+        // same geometry: a zoom type other than "current" fits the scale again and centers
+        Rectangle2D area = getViewModel().getModelArea();
+        Rectangle2D areaBefore = area == null ? null : area.getBounds2D(); // a copy
+        double panX = getViewModel().getModelOffsetX();
+        double panY = getViewModel().getModelOffsetY();
+        boolean hadImage = oldImage != null;
+
         updateCanvas(img, false);
 
         imageLayer.fireOpEvent(
             new ImageOpEvent(ImageOpEvent.OpEvent.IMAGE_CHANGE, series, img, null));
         resetZoom();
+        if (hadImage
+            && areaBefore != null
+            && areaBefore.equals(getViewModel().getModelArea())
+            && (MathUtil.isDifferent(panX, getViewModel().getModelOffsetX())
+                || MathUtil.isDifferent(panY, getViewModel().getModelOffsetY()))) {
+          setCenter(panX, panY);
+        }
 
         imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
 
@@ -1536,6 +1551,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         highlightedPosition.setLocation(point);
         Rectangle2D area = getViewModel().getModelArea();
         setCenter(area.getWidth() * 0.5 - point.getX(), area.getHeight() * 0.5 - point.getY());
+      } else if (PanPoint.State.RESET.equals(point.getState())) {
+        center();
       } else if (PanPoint.State.MOVE.equals(point.getState())) {
         moveOrigin(point.getX(), point.getY());
       } else if (PanPoint.State.DRAGSTART.equals(point.getState())) {
