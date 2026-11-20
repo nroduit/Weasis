@@ -23,10 +23,12 @@ import static org.weasis.pref.ConfigData.P_WEASIS_SOURCE_ID;
 import static org.weasis.pref.ConfigData.P_WEASIS_VERSION;
 
 import com.formdev.flatlaf.FlatSystemProperties;
+import com.formdev.flatlaf.ui.FlatNativeLinuxLibrary;
 import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Desktop;
 import java.awt.Desktop.Action;
 import java.awt.EventQueue;
+import java.awt.GraphicsEnvironment;
 import java.awt.desktop.OpenFilesEvent;
 import java.awt.desktop.OpenURIEvent;
 import java.io.File;
@@ -542,6 +544,29 @@ Starting PF4J Plugins...
     }
   }
 
+  /**
+   * Tells whether the windows get the FlatLaf title bar on Linux, which holds the menu bar.
+   *
+   * <p>The system title bar is kept when the FlatLaf native library is missing, as moving and
+   * resizing would not go through the window manager (no snapping, no window menu). With the
+   * Wayland toolkit FlatLaf itself keeps the system title bar. The property {@code
+   * weasis.linux.windows.decoration=false}, from the system or the server configuration, forces the
+   * system title bar.
+   */
+  private static boolean useLinuxWindowDecorations(Map<String, String> serverProp) {
+    String key = "weasis.linux.windows.decoration";
+    String forced = System.getProperty(key, serverProp.get(key));
+    if (forced != null && !Utils.emptyToFalse(forced)) {
+      return false;
+    }
+    try {
+      return !GraphicsEnvironment.isHeadless() && FlatNativeLinuxLibrary.isLoaded();
+    } catch (LinkageError | RuntimeException e) {
+      LOGGER.warn("Cannot check the FlatLaf native library, keeping the system title bar", e);
+      return false;
+    }
+  }
+
   private static String getGeneralProperty(
       String key,
       String defaultValue,
@@ -725,18 +750,9 @@ Starting PF4J Plugins...
     final ReadableLookAndFeelInfo lookAndFeelInfo =
         lookAndFeels.getAvailableLookAndFeel(look, profileName);
 
-    // See https://github.com/JFormDesigner/FlatLaf/issues/482
     if (SystemInfo.isLinux) {
-      String decoration =
-          getGeneralProperty(
-              "weasis.linux.windows.decoration",
-              Boolean.FALSE.toString(),
-              serverProp,
-              currentProps,
-              true,
-              true);
-      if (Utils.emptyToFalse(decoration)) {
-        // enable custom window decorations
+      if (useLinuxWindowDecorations(serverProp)) {
+        // The menu bar goes into the title bar, as on Windows
         JFrame.setDefaultLookAndFeelDecorated(true);
         JDialog.setDefaultLookAndFeelDecorated(true);
       }

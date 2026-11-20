@@ -11,7 +11,6 @@ package org.weasis.core.ui.pref;
 
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatSystemProperties;
-import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Window;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -58,9 +57,6 @@ public class ThemeSetting extends AbstractItemDialogPage {
       new JRadioButton(Messages.getString("use.a.custom.scale.factor"));
   private final ButtonGroup buttonGroup = new ButtonGroup();
   private final JSpinner spinner1 = new JSpinner();
-
-  private final JCheckBox checkboxDecoration =
-      new JCheckBox(Messages.getString("menu.integrated.into.title.bar"));
 
   private final JCheckBox checkboxFileChooser =
       new JCheckBox(Messages.getString("use.system.file.chooser"));
@@ -149,12 +145,6 @@ public class ThemeSetting extends AbstractItemDialogPage {
             new JLabel(Messages.getString("side.bar.icon.size") + StringUtil.COLON),
             comboIconSize));
 
-    if (SystemInfo.isLinux) {
-      add(
-          GuiUtils.getFlowLayoutPanel(
-              ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, checkboxDecoration));
-    }
-
     add(
         GuiUtils.getFlowLayoutPanel(
             ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, checkboxFileChooser));
@@ -214,10 +204,6 @@ public class ThemeSetting extends AbstractItemDialogPage {
     }
     spinner1.setValue(Math.round(scale * 100));
 
-    if (SystemInfo.isLinux) {
-      checkboxDecoration.setSelected(
-          preferences.getBooleanProperty(UICore.LINUX_WINDOWS_DECORATION, false));
-    }
     checkboxFileChooser.setSelected(
         preferences.getBooleanProperty(UICore.USE_SYSTEM_FILE_CHOOSER, true));
 
@@ -304,11 +290,6 @@ public class ThemeSetting extends AbstractItemDialogPage {
     }
     preferences.setProperty(FlatSystemProperties.UI_SCALE, scale);
 
-    if (SystemInfo.isLinux) {
-      preferences.putBooleanProperty(
-          UICore.LINUX_WINDOWS_DECORATION, checkboxDecoration.isSelected());
-    }
-
     if (comboIconSize.getSelectedItem() instanceof IconSize iconSize
         && iconSize.size() != Settings.get(CoreSettings.SIDE_PANEL_ICON_SIZE)) {
       Settings.set(CoreSettings.SIDE_PANEL_ICON_SIZE, iconSize.size());
@@ -325,9 +306,6 @@ public class ThemeSetting extends AbstractItemDialogPage {
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     preferences.setProperty("weasis.theme", "org.weasis.launcher.FlatWeasisTheme");
     preferences.setProperty(FlatSystemProperties.UI_SCALE, "-1");
-    if (SystemInfo.isLinux) {
-      preferences.setProperty(UICore.LINUX_WINDOWS_DECORATION, Boolean.FALSE.toString());
-    }
     preferences.putBooleanProperty(UICore.USE_SYSTEM_FILE_CHOOSER, true);
     Settings.reset(CoreSettings.SIDE_PANEL_ICON_SIZE);
     initialize(false);

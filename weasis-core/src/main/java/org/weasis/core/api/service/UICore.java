@@ -107,7 +107,6 @@ public final class UICore {
 
   public static final String CONFIRM_CLOSE = "weasis.confirm.closing";
   public static final String CONFIRM_DELETE_MEASUREMENT = "weasis.confirm.delete.measurement";
-  public static final String LINUX_WINDOWS_DECORATION = "weasis.linux.windows.decoration";
   public static final String USE_SYSTEM_FILE_CHOOSER = "weasis.use.system.file.chooser";
 
   /** Whether the user documents are mirrored to the remote preference service. */
