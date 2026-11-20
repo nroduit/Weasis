@@ -64,13 +64,15 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.*;
 import org.weasis.dicom.codec.ObjectKind;
 import org.weasis.dicom.explorer.*;
-import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.TransferKind;
 import org.weasis.dicom.explorer.TransferTool;
 import org.weasis.dicom.explorer.exp.DiscExportTool;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
+import org.weasis.dicom.explorer.exp.ExportHostTool;
 import org.weasis.dicom.explorer.exp.ExportTool;
 import org.weasis.dicom.explorer.exp.SendTool;
+import org.weasis.dicom.explorer.imp.DicomDirImport;
 import org.weasis.dicom.explorer.imp.ImportTool;
 import org.weasis.dicom.explorer.imp.RetrieveTool;
 import org.weasis.dicom.explorer.items.ExplorerItem;
@@ -2008,23 +2010,57 @@ public class DicomExplorer extends PluginTool
     super.closeDockable();
   }
 
+  /**
+   * The entries of File › Import, one per import tool of the explorer side and named after where
+   * the data comes from: files or a folder, a disc, an archive.
+   */
   @Override
   public List<Action> getOpenImportDialogAction() {
-    ArrayList<Action> actions = new ArrayList<>(2);
-    actions.add(ImportTool.buildImportAction(BUTTON_NAME));
-    DefaultAction importCDAction =
+    ArrayList<Action> actions = new ArrayList<>(3);
+    actions.add(
+        ImportTool.buildImportAction(
+            org.weasis.dicom.explorer.Messages.getString("DicomExplorer.import_files")));
+    actions.add(
         new DefaultAction(
-            Messages.getString("DicomExplorer.dcmCD"),
+            org.weasis.dicom.explorer.Messages.getString("DicomExplorer.import_disc"),
             ResourceUtil.getIcon(ResourceUtil.OtherIcon.CDROM),
-            event -> ImportTool.importDisc(this, model));
-    actions.add(importCDAction);
+            event -> ImportTool.importDisc(this, model)));
+    if (ImportTool.isAllowed() && !ImportTool.factories(TransferKind.NETWORK).isEmpty()) {
+      actions.add(
+          new DefaultAction(
+              org.weasis.dicom.explorer.Messages.getString("DicomExplorer.import_archive"),
+              ResourceUtil.getIcon(ResourceUtil.ActionIcon.RETRIEVE),
+              event -> RetrieveTool.open(null)));
+    }
     return actions;
   }
 
+  /**
+   * The entries of File › Export, one per export tool of the explorer side: a folder, a CD/DVD
+   * image, an archive.
+   */
   @Override
   public List<Action> getOpenExportDialogAction() {
-    List<Action> actions = new ArrayList<>(2);
-    actions.add(ExportTool.buildExportAction(BUTTON_NAME));
+    List<Action> actions = new ArrayList<>(4);
+    actions.add(
+        ExportTool.buildExportAction(
+            org.weasis.dicom.explorer.Messages.getString("DicomExplorer.export_folder")));
+    if (ExportHostTool.isAllowed()) {
+      if (!ExportHostTool.factories(TransferKind.DISC).isEmpty()) {
+        actions.add(
+            new DefaultAction(
+                org.weasis.dicom.explorer.Messages.getString("DicomExplorer.export_disc"),
+                ResourceUtil.getIcon(ResourceUtil.ActionIcon.EXPORT_CD),
+                event -> DiscExportTool.open(null)));
+      }
+      if (!ExportHostTool.factories(TransferKind.NETWORK).isEmpty()) {
+        actions.add(
+            new DefaultAction(
+                org.weasis.dicom.explorer.Messages.getString("DicomExplorer.export_archive"),
+                ResourceUtil.getIcon(ResourceUtil.ActionIcon.SEND),
+                event -> SendTool.open(null)));
+      }
+    }
     if (GuiUtils.getUICore()
         .getSystemPreferences()
         .getBooleanProperty("weasis.export.annotations", false)) {
@@ -2033,17 +2069,21 @@ public class DicomExplorer extends PluginTool
     return actions;
   }
 
+  /**
+   * Files and folders of any kind, mixed, as the import tool takes them: a DICOMDIR is read through
+   * its records, everything else is scanned.
+   */
   @Override
   public void importFiles(File[] files, boolean recursive) {
-    if (files != null) {
-      DicomModel.LOADING_EXECUTOR.execute(
-          new LoadLocalDicom(files, recursive, model, OpeningViewer.ALL_PATIENTS));
+    if (files != null && files.length > 0) {
+      DicomDirImport.importFiles(List.of(files), model, recursive);
     }
   }
 
+  /** Whether the site allows importing local files, as for the import tool. */
   @Override
   public boolean canImportFiles() {
-    return true;
+    return ImportTool.isAllowed();
   }
 
   /** DICOM files found by another explorer (the file explorer) are imported here. */

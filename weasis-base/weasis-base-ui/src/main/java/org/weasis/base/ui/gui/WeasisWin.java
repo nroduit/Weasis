@@ -13,6 +13,7 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.formdev.flatlaf.util.SystemFileChooser;
 import com.formdev.flatlaf.util.SystemInfo;
 import jakarta.json.JsonException;
 import java.awt.BorderLayout;
@@ -55,9 +56,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -1382,10 +1385,41 @@ public class WeasisWin {
     }
   }
 
-  private static void buildOpenSubMenu(final JMenu importMenu) {
-    GuiUtils.getUICore()
-        .getSeriesViewerFactories()
-        .forEach(d -> fillMenu(importMenu, d.getOpenActions()));
+  /** The setting that keeps the folder of the last files or folder opened from the File menu. */
+  private static final String LAST_OPEN_DIR = "lastOpenDir"; // NON-NLS
+
+  private static final int MENU_SHORTCUT_MASK =
+      Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+
+  /**
+   * File › Open files… and Open folder…: what is picked is opened as if it were dropped on the
+   * window, DICOM files, folders and archives through the explorer that imports them, an image in
+   * the viewer of its type.
+   */
+  private void openFromChooser(boolean folders) {
+    WProperties persistence = GuiUtils.getUICore().getLocalPersistence();
+    SystemFileChooser chooser = new SystemFileChooser(persistence.getProperty(LAST_OPEN_DIR, ""));
+    chooser.setFileSelectionMode(
+        folders ? SystemFileChooser.DIRECTORIES_ONLY : SystemFileChooser.FILES_ONLY);
+    chooser.setMultiSelectionEnabled(true);
+    if (chooser.showOpenDialog(getFrame()) != SystemFileChooser.APPROVE_OPTION) {
+      return;
+    }
+    File[] selected = chooser.getSelectedFiles();
+    if (selected == null || selected.length == 0) {
+      return;
+    }
+    File first = selected[0];
+    File directory = first.isDirectory() && !folders ? first : first.getParentFile();
+    if (directory != null) {
+      persistence.setProperty(LAST_OPEN_DIR, directory.getPath());
+    }
+    openPaths(Arrays.stream(selected).map(File::toPath).toList());
+  }
+
+  /** Opens files and folders as a drop on the window does. */
+  void openPaths(List<Path> paths) {
+    new SeriesHandler().dropFiles(paths);
   }
 
   private static void buildImportSubMenu(final JMenu importMenu) {
@@ -1395,12 +1429,18 @@ public class WeasisWin {
   }
 
   private void buildExportSubMenu(final JMenu exportMenu) {
-    if (selectedPlugin != null) {
-      fillMenu(exportMenu, selectedPlugin.getExportActions());
-    }
+    // The export tools of the explorers first (a folder, a disc image, an archive), then, apart,
+    // what captures the selected viewer (a screenshot, a cine loop, a recording)
     GuiUtils.getUICore()
         .getExplorerPlugins()
         .forEach(d -> fillMenu(exportMenu, d.getOpenExportDialogAction()));
+    if (selectedPlugin != null) {
+      List<Action> captures = selectedPlugin.getExportActions();
+      if (captures != null && !captures.isEmpty() && exportMenu.getMenuComponentCount() > 0) {
+        exportMenu.add(new JSeparator());
+      }
+      fillMenu(exportMenu, captures);
+    }
   }
 
   private void buildLauncherSubMenu(final JMenu exportMenu) {
@@ -1734,16 +1774,20 @@ public class WeasisWin {
 
   private void buildMenuFile() {
     menuFile.removeAll();
-    DynamicMenu openMenu =
-        new DynamicMenu(Messages.common("open")) {
-
-          @Override
-          public void popupMenuWillBecomeVisible() {
-            buildOpenSubMenu(this);
-          }
-        };
-    openMenu.addPopupMenuListener();
-    menuFile.add(openMenu);
+    // The quick path: pick files or a folder and see them, with the default options. The native
+    // dialogs of Windows and Linux cannot pick files and folders together, hence two entries, as
+    // the two buttons of the import tool. Import and Export below open the tools with options.
+    DefaultAction openFiles =
+        new DefaultAction(Messages.getString("WeasisWin.open_files"), e -> openFromChooser(false));
+    openFiles.putValue(
+        Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, MENU_SHORTCUT_MASK));
+    menuFile.add(new JMenuItem(openFiles));
+    DefaultAction openFolder =
+        new DefaultAction(Messages.getString("WeasisWin.open_folder"), e -> openFromChooser(true));
+    openFolder.putValue(
+        Action.ACCELERATOR_KEY,
+        KeyStroke.getKeyStroke(KeyEvent.VK_O, MENU_SHORTCUT_MASK | InputEvent.SHIFT_DOWN_MASK));
+    menuFile.add(new JMenuItem(openFolder));
 
     DynamicMenu importMenu =
         new DynamicMenu(Messages.common("import")) {
@@ -1888,12 +1932,18 @@ public class WeasisWin {
     private void categorizeFiles(
         List<Path> files, List<Path> dirs, Map<Codec, List<Path>> codecFiles) {
       for (Path file : files) {
-        if (Files.isDirectory(file)) {
+        // an archive is scanned by the explorer as a folder is: no codec reads it as one media
+        if (Files.isDirectory(file) || isArchive(file)) {
           dirs.add(file);
         } else {
           categorizeMediaFile(file, codecFiles);
         }
       }
+    }
+
+    private static boolean isArchive(Path file) {
+      Path name = file.getFileName();
+      return name != null && name.toString().toLowerCase(Locale.ROOT).endsWith(".zip"); // NON-NLS
     }
 
     private void categorizeMediaFile(Path file, Map<Codec, List<Path>> codecFiles) {
