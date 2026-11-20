@@ -140,6 +140,7 @@ public final class ReformatBuilder {
       DicomSeries derived = new DicomSeries(seriesUid);
       derived.addAll(images);
       images.getFirst().getMediaReader().writeMetaData(derived);
+      derived.setTagNoNull(TagD.get(Tag.FrameOfReferenceUID), middle.getFrameOfReferenceUID());
       derived.setTag(TagW.Derivation, DERIVATION);
       derived.setTag(
           TagW.Provenance,
@@ -245,7 +246,6 @@ public final class ReformatBuilder {
     DerivedStack.copyMandatoryTags(reference, rawIO);
     rawIO.copyTags(
         TagD.getTagFromIDs(
-            Tag.FrameOfReferenceUID,
             Tag.RescaleSlope,
             Tag.RescaleIntercept,
             Tag.RescaleType,
@@ -253,6 +253,8 @@ public final class ReformatBuilder {
             Tag.PhotometricInterpretation),
         reference,
         false);
+    // A tag of the series for an acquired image: read where the image finds it
+    rawIO.setTagNoNull(TagD.get(Tag.FrameOfReferenceUID), reference.getFrameOfReferenceUID());
     SeriesBuilder.writePixelDataAttributes(1, cvType, rawIO);
     Vector3d tlhc = grid.tlhc(index);
     rawIO.setTag(TagD.get(Tag.Rows), grid.height());

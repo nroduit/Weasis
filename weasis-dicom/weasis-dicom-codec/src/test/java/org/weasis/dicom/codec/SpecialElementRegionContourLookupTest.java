@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.dicom.codec.seg.LazyContourLoader;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.codec.seg.SegmentationVolume;
 import org.weasis.opencv.seg.RegionAttributes;
 
@@ -121,6 +123,50 @@ class SpecialElementRegionContourLookupTest {
     // Exact tie resolves upwards, matching Math.round() in the volume reslice.
     assertSame(high, SpecialElementRegion.findNearest(map, 0.5, 1.0));
     assertNull(SpecialElementRegion.findNearest(map, 5.0, 1.0));
+  }
+
+  @Test
+  void aReformatWithoutSeriesBehindItsReaderMatchesByItsOwnFrameOfReference() {
+    // A coronal reformat of the series an axial segmentation was made on
+    SegSpecialElement seg = segmentation("1.2.9", new Vector3d(0, 0, 1));
+    when(seg.getOrBuildSegmentationVolume()).thenReturn(mock(SegmentationVolume.class));
+
+    assertTrue(seg.containsSopInstanceUIDReference(reformat("1.2.9")));
+    assertFalse(seg.containsSopInstanceUIDReference(reformat("1.2.10")));
+  }
+
+  @Test
+  void aReformatIsNotMatchedByAnObjectThatDoesNotKnowItsPlane() {
+    // Slice positions alone do not tell an acquired slice from a reformatted one
+    SegSpecialElement seg = segmentation("1.2.9", null);
+
+    assertFalse(seg.containsSopInstanceUIDReference(reformat("1.2.9")));
+  }
+
+  private static SegSpecialElement segmentation(String frameOfReference, Vector3d normal) {
+    DicomSeries series = mock(DicomSeries.class);
+    when(series.getTagValue(TagD.get(Tag.FrameOfReferenceUID))).thenReturn(frameOfReference);
+    DicomMediaIO reader = mock(DicomMediaIO.class);
+    when(reader.getMediaSeries()).thenReturn(series);
+    SegSpecialElement seg = mock(SegSpecialElement.class);
+    when(seg.getMediaReader()).thenReturn(reader);
+    when(seg.isReady()).thenReturn(true);
+    when(seg.getPositionMap()).thenReturn(new TreeMap<>(positionMap(POSITION)));
+    when(seg.getRefMap()).thenReturn(Map.of());
+    when(seg.getReferenceNormal()).thenReturn(normal);
+    when(seg.containsSopInstanceUIDReference(any(DicomImageElement.class))).thenCallRealMethod();
+    return seg;
+  }
+
+  /** Coronal slice whose reader has no series, as the reformats Weasis builds. */
+  private static DicomImageElement reformat(String frameOfReference) {
+    DicomImageElement img = mock(DicomImageElement.class);
+    when(img.getMediaReader()).thenReturn(mock(DicomMediaIO.class));
+    when(img.getTagValue(TagD.get(Tag.SeriesInstanceUID))).thenReturn("1.2.3.4");
+    when(img.getTagValue(TagD.get(Tag.ImageOrientationPatient)))
+        .thenReturn(new double[] {1, 0, 0, 0, 0, -1});
+    when(img.getFrameOfReferenceUID()).thenReturn(frameOfReference);
+    return img;
   }
 
   private static NavigableMap<Double, Set<LazyContourLoader>> positionMap(double position) {

@@ -237,8 +237,8 @@ public interface SpecialElementRegion {
         // Prefer spatial position-based matching (positionMap) over SOP UID-based (refMap).
         NavigableMap<Double, Set<LazyContourLoader>> positionMap = getPositionMap();
         if (!positionMap.isEmpty()) {
-          Series<?> series = img.getMediaReader().getMediaSeries();
-          String frameOfRef = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
+          Vector3d segNormal = getReferenceNormal();
+          String frameOfRef = frameOfReference(img, segNormal != null);
           if (frameOfRef != null && this instanceof DicomElement group) {
             String frameOfRef2 =
                 TagD.getTagValue(
@@ -247,7 +247,6 @@ public interface SpecialElementRegion {
               // Same patient frame; additionally verify the orientations are at least nearly
               // parallel when a reference normal is known, otherwise the segmentation cannot be
               // overlaid as 2D contours on this image.
-              Vector3d segNormal = getReferenceNormal();
               if (segNormal == null) {
                 return true;
               }
@@ -270,6 +269,21 @@ public interface SpecialElementRegion {
       }
     }
     return false;
+  }
+
+  /**
+   * The frame of reference of an image: the one of the series behind its reader, else its own when
+   * {@code ownAllowed}. A reformat Weasis built has no series behind its reader and carries the
+   * frame of reference of its source; it is only matched by a segmentation that knows its plane, as
+   * the slice position alone does not tell an acquired slice from a reformatted one.
+   */
+  private static String frameOfReference(DicomImageElement img, boolean ownAllowed) {
+    Series<?> series = img.getMediaReader().getMediaSeries();
+    String uid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
+    if (uid == null && ownAllowed) {
+      uid = img.getFrameOfReferenceUID();
+    }
+    return uid;
   }
 
   default Set<LazyContourLoader> getContours(DicomImageElement img) {
