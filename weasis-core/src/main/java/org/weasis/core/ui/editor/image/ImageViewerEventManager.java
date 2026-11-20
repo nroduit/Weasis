@@ -780,15 +780,16 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     menu.add(stackItem);
     menu.add(new JSeparator());
 
+    // Rows then columns, as the names of the layouts (1x2 is one row of two views)
     int[][] presets = {{1, 2}, {2, 1}, {2, 2}, {2, 3}, {3, 2}, {3, 3}, {4, 4}};
     for (int[] preset : presets) {
-      int cols = preset[0];
-      int rows = preset[1];
+      int rows = preset[0];
+      int cols = preset[1];
       boolean isCurrent = isTiled && pane.getTiledCols() == cols && pane.getTiledRows() == rows;
 
       String label =
           MessageFormat.format(
-              Messages.getString("ImageViewerEventManager.viewport_tiled"), cols, rows);
+              Messages.getString("ImageViewerEventManager.viewport_tiled"), rows, cols);
       JCheckBoxMenuItem item = new JCheckBoxMenuItem(label, isCurrent);
       item.addActionListener(
           e -> {
