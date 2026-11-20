@@ -212,6 +212,10 @@ public class View3d extends VolumeCanvas
   /** Samples per pixel a path-traced scene accumulates before the view stops refining itself. */
   public static final int PATH_TRACING_FRAMES = 512;
 
+  // Lighting options that path tracing switched on by itself, to give them back when leaving it.
+  private boolean lightingForcedByPathTracing;
+  private boolean shadingForcedByPathTracing;
+
   /** Interval at which a frame checks whether the driver has finished linking the tracer. */
   private static final int TRACER_LINK_POLL_MS = 50;
 
@@ -2603,12 +2607,16 @@ public class View3d extends VolumeCanvas
             if (type != oldType) {
               renderingLayer.setEnableRepaint(false);
               renderingLayer.setRenderingType(type);
-              if (type == RenderingType.PATH_TRACING && !renderingLayer.isCinematic()) {
+              if (type == RenderingType.PATH_TRACING) {
                 // Path tracing is the cinematic lighting taken to its end, so it turns it on.
-                setCinematic(true);
-                eventManager
-                    .getAction(ActionVol.VOL_CINEMATIC)
-                    .ifPresent(a -> a.setSelectedWithoutTriggerAction(true));
+                lightingForcedByPathTracing = !renderingLayer.isCinematic();
+                shadingForcedByPathTracing = !renderingLayer.isShading();
+                if (lightingForcedByPathTracing) {
+                  setCinematic(true);
+                  selectAction(ActionVol.VOL_CINEMATIC, true);
+                }
+              } else if (oldType == RenderingType.PATH_TRACING) {
+                restoreLightingAfterPathTracing();
               }
               renderingLayer.setEnableRepaint(true);
               display();
@@ -2628,10 +2636,12 @@ public class View3d extends VolumeCanvas
           }
         } else if (command.equals(ActionVol.VOL_SHADING.cmd())) {
           if (val instanceof Boolean shading) {
+            shadingForcedByPathTracing = false;
             renderingLayer.setShading(shading);
           }
         } else if (command.equals(ActionVol.VOL_CINEMATIC.cmd())) {
           if (val instanceof Boolean cinematic) {
+            lightingForcedByPathTracing = false;
             setCinematic(cinematic);
           }
         } else if (command.equals(ActionVol.SEG_TYPE.cmd())) {
@@ -2670,12 +2680,31 @@ public class View3d extends VolumeCanvas
     renderingLayer.setCinematic(cinematic);
     if (cinematic && !renderingLayer.isShading()) {
       renderingLayer.setShading(true);
-      eventManager
-          .getAction(ActionVol.VOL_SHADING)
-          .ifPresent(a -> a.setSelectedWithoutTriggerAction(true));
+      selectAction(ActionVol.VOL_SHADING, true);
     }
     renderingLayer.setEnableRepaint(true);
     renderingLayer.fireLayerChanged();
+  }
+
+  /**
+   * Leaving path tracing gives back the lighting it switched on, unless the user changed that
+   * option in the meantime. The caller repaints.
+   */
+  private void restoreLightingAfterPathTracing() {
+    if (lightingForcedByPathTracing) {
+      renderingLayer.setCinematic(false);
+      selectAction(ActionVol.VOL_CINEMATIC, false);
+      if (shadingForcedByPathTracing) {
+        renderingLayer.setShading(false);
+        selectAction(ActionVol.VOL_SHADING, false);
+      }
+    }
+    lightingForcedByPathTracing = false;
+    shadingForcedByPathTracing = false;
+  }
+
+  private void selectAction(Feature.ToggleButtonListenerValue action, boolean selected) {
+    eventManager.getAction(action).ifPresent(a -> a.setSelectedWithoutTriggerAction(selected));
   }
 
   private void ensureMprIsOpen() {
