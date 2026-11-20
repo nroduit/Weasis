@@ -9,10 +9,12 @@
  */
 package org.weasis.core.api.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.formdev.flatlaf.util.SystemInfo;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -66,5 +68,23 @@ class HardwareInfoTest {
     assertFalse(HardwareInfo.isRemovable("/", "ext4", "Local Disk"));
     assertFalse(HardwareInfo.isRemovable("/home/user/data", "ext4", "Local Disk"));
     assertFalse(HardwareInfo.isRemovable("", "ext4", "Local Disk"));
+  }
+
+  @Test
+  void the_linux_mount_table_keeps_the_mount_in_use_and_decodes_escapes() {
+    List<HardwareInfo.Volume> volumes =
+        HardwareInfo.parseLinuxMounts(
+            List.of(
+                "/dev/nvme0n1p2 / ext4 rw,relatime 0 0",
+                "systemd-1 /mnt/nas autofs rw,relatime,fd=60 0 0",
+                "//nas/share /mnt/nas cifs rw,relatime,vers=3.1.1 0 0",
+                "/dev/loop87 /run/media/user/My\\040Disc iso9660 ro,nosuid 0 0",
+                "broken"));
+
+    assertEquals(3, volumes.size());
+    assertEquals(new HardwareInfo.Volume("/mnt/nas", "cifs", "", true), volumes.get(1));
+    assertEquals("/run/media/user/My Disc", volumes.get(2).mount());
+    assertTrue(HardwareInfo.isOptical(volumes.get(2).type(), volumes.get(2).description()));
+    assertEquals("a\\b", HardwareInfo.unescapeMountField("a\\b"));
   }
 }

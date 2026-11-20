@@ -10,9 +10,14 @@
 package org.weasis.core.api.util;
 
 import com.formdev.flatlaf.util.SystemInfo;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -278,6 +283,14 @@ public final class HardwareInfo {
    * @return the mounted volumes, empty when the probe is unavailable.
    */
   public static List<Volume> mountedVolumes() {
+    if (SystemInfo.isLinux) {
+      // OSHI asks every mount for its free space: statfs blocks without end on an unreachable
+      // network share (an automounted SMB/NFS server that is down), and the caller with it
+      List<Volume> volumes = readLinuxMounts();
+      if (volumes != null) {
+        return volumes;
+      }
+    }
     List<OSFileStore> stores =
         probe(
             system -> system.getOperatingSystem().getFileSystem().getFileStores(false), List.of());
@@ -289,6 +302,67 @@ public final class HardwareInfo {
       }
     }
     return volumes;
+  }
+
+  /** The Linux mount table, read without touching the mounts; null when it cannot be read. */
+  private static List<Volume> readLinuxMounts() {
+    try {
+      return parseLinuxMounts(Files.readAllLines(Path.of("/proc/self/mounts"))); // NON-NLS
+    } catch (IOException | RuntimeException e) {
+      LOGGER.debug("Cannot read the mount table", e);
+      return null;
+    }
+  }
+
+  /**
+   * Parses {@code /proc/self/mounts} lines ({@code device mount type options dump pass}). A mount
+   * point listed twice (an automount point and what is mounted over it) keeps its last entry, the
+   * one in use. Network types are classified by {@link NetworkFileSystems} from the type.
+   */
+  static List<Volume> parseLinuxMounts(List<String> lines) {
+    Map<String, Volume> byMount = new LinkedHashMap<>();
+    for (String line : lines) {
+      String[] fields = line.trim().split("\\s+");
+      if (fields.length < 3) {
+        continue;
+      }
+      String mount = unescapeMountField(fields[1]);
+      String type = fields[2];
+      byMount.remove(mount);
+      byMount.put(mount, new Volume(mount, type, "", true));
+    }
+    return new ArrayList<>(byMount.values());
+  }
+
+  /** Decodes the octal escapes of the kernel ({@code \040} for a space, ...). */
+  static String unescapeMountField(String field) {
+    if (field.indexOf('\\') < 0) {
+      return field;
+    }
+    StringBuilder sb = new StringBuilder(field.length());
+    for (int i = 0; i < field.length(); i++) {
+      char c = field.charAt(i);
+      if (c == '\\' && isOctal(field, i + 1)) {
+        sb.append((char) Integer.parseInt(field.substring(i + 1, i + 4), 8));
+        i += 3;
+      } else {
+        sb.append(c);
+      }
+    }
+    return sb.toString();
+  }
+
+  private static boolean isOctal(String s, int start) {
+    if (start + 3 > s.length()) {
+      return false;
+    }
+    for (int i = start; i < start + 3; i++) {
+      char c = s.charAt(i);
+      if (c < '0' || c > '7') {
+        return false;
+      }
+    }
+    return true;
   }
 
   /** Applies the removability rule of {@link #removableDrives()} to one mounted volume. */
