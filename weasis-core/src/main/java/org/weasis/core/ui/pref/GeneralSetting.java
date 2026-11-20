@@ -9,16 +9,12 @@
  */
 package org.weasis.core.ui.pref;
 
-import java.awt.GridLayout;
-import java.util.List;
 import javax.swing.JCheckBox;
-import javax.swing.JPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.PageItem;
 import org.weasis.core.api.setting.CoreSettings;
 import org.weasis.core.api.setting.Settings;
 
@@ -30,34 +26,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
   private final JCheckBox checkboxConfirmClosing =
       new JCheckBox(Messages.getString("GeneralSetting.closingConfirmation"));
 
-  private final JPanel menuPanel = new JPanel();
-
-  public GeneralSetting(PreferenceDialog dialog) {
+  public GeneralSetting() {
     super(PAGE_NAME, 100);
-
-    try {
-      menuPanel.setLayout(new GridLayout(0, 2));
-      add(menuPanel);
-      add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
-
-      jbInit();
-      initialize();
-    } catch (Exception e) {
-      LOGGER.error("Cannot initialize GeneralSetting", e);
-    }
-
-    List<AbstractItemDialogPage> childPages =
-        List.of(
-            new LanguageSetting(),
-            new ThemeSetting(),
-            new ShortcutPrefView(),
-            new ScreenPrefView(),
-            new ProxyPrefView(),
-            new MaskingPrefView(),
-            new CommandsPrefView(),
-            new LoggingPrefView(),
-            new LauncherPrefView());
-    childPages.forEach(p -> addSubPage(p, a -> dialog.showPage(p.getTitle()), menuPanel));
+    jbInit();
+    initialize();
   }
 
   private void jbInit() {
@@ -68,21 +40,12 @@ public class GeneralSetting extends AbstractItemDialogPage {
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
   }
 
-  @Override
-  public JPanel getMenuPanel() {
-    return menuPanel;
-  }
-
   protected void initialize() {
     checkboxConfirmClosing.setSelected(Settings.get(CoreSettings.CONFIRM_CLOSING));
   }
 
   @Override
   public void closeAdditionalWindow() {
-    for (PageItem subpage : getSubPages()) {
-      subpage.closeAdditionalWindow();
-    }
-
     Settings.set(CoreSettings.CONFIRM_CLOSING, checkboxConfirmClosing.isSelected());
   }
 

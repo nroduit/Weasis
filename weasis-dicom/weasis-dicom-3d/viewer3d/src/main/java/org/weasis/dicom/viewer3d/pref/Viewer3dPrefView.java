@@ -45,6 +45,11 @@ import org.weasis.dicom.viewer3d.vr.CinematicQuality;
 import org.weasis.dicom.viewer3d.vr.RenderingLayer;
 
 public class Viewer3dPrefView extends AbstractItemDialogPage {
+
+  /** The title and the position of the page in the preference tree, known before it is built. */
+  public static final String PAGE_TITLE = View3DFactory.NAME;
+
+  public static final int PAGE_POSITION = 503;
   private final JCheckBox enableOpenGL = new JCheckBox(Messages.common("enable"));
   private final JButton bckColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
   private final JButton lightColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
@@ -60,7 +65,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
   private final JSpinner spinnerMaxZ;
 
   public Viewer3dPrefView() {
-    super(View3DFactory.NAME, 503);
+    super(PAGE_TITLE, PAGE_POSITION);
     List<Integer> list = new ArrayList<>();
     int maxSize = View3DFactory.getMax3dTextureSize();
     list.add(64);

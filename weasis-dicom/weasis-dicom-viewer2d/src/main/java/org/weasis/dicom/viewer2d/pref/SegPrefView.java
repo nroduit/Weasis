@@ -34,6 +34,11 @@ import org.weasis.dicom.viewer2d.Messages;
  */
 public class SegPrefView extends AbstractItemDialogPage {
 
+  /** The title and the position of the page in the preference tree, known before it is built. */
+  public static final String PAGE_TITLE = Messages.getString("segmentation");
+
+  public static final int PAGE_POSITION = 508;
+
   private final JCheckBox checkBoxHideAll = new JCheckBox();
 
   /**
@@ -47,7 +52,7 @@ public class SegPrefView extends AbstractItemDialogPage {
       new JSpinner(new SpinnerNumberModel(SegVisibilityPolicy.DEFAULT_HIDE_COUNT, 0, 999, 1));
 
   public SegPrefView() {
-    super(Messages.getString("segmentation"), 508);
+    super(PAGE_TITLE, PAGE_POSITION);
     initGUI();
   }
 

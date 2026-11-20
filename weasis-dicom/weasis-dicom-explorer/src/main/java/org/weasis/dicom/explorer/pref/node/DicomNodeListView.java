@@ -23,8 +23,13 @@ import org.weasis.dicom.explorer.Messages;
 
 public class DicomNodeListView extends AbstractItemDialogPage {
 
+  /** The title and the position of the page in the preference tree, known before it is built. */
+  public static final String PAGE_TITLE = Messages.getString("DicomNodeListView.node_list");
+
+  public static final int PAGE_POSITION = 605;
+
   public DicomNodeListView() {
-    super(Messages.getString("DicomNodeListView.node_list"), 605);
+    super(PAGE_TITLE, PAGE_POSITION);
     getProperties()
         .setProperty(AbstractItemDialogPage.KEY_SCOPE, AbstractItemDialogPage.SCOPE_USER);
     initGUI();

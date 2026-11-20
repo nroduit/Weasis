@@ -9,44 +9,26 @@
  */
 package org.weasis.core.ui.pref;
 
-import java.awt.GridLayout;
-import javax.swing.JPanel;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.PageItem;
 
+/** A category of the preference tree: its sub-pages are offered by the dialog. */
 public class ViewerPrefView extends AbstractItemDialogPage {
-
-  private final JPanel menuPanel = new JPanel();
 
   public ViewerPrefView() {
     super(Messages.getString("viewer"), 500);
     getProperties()
         .setProperty(
             PreferenceDialog.KEY_HELP, "getting-started/gui/#other-viewers-and-players"); // NON-NLS
-
-    menuPanel.setLayout(new GridLayout(0, 2));
-    add(menuPanel);
-    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
-
-    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
-  }
-
-  @Override
-  public JPanel getMenuPanel() {
-    return menuPanel;
   }
 
   @Override
   public void closeAdditionalWindow() {
-    for (PageItem subpage : getSubPages()) {
-      subpage.closeAdditionalWindow();
-    }
+    // No setting of its own
   }
 
   @Override
   public void resetToDefaultValues() {
-    // Do nothing
+    // No setting of its own
   }
 }

@@ -61,6 +61,11 @@ import org.weasis.dicom.viewer2d.Messages;
  * renamed, disabled, deleted, imported and exported, to Karnak among others.
  */
 public class DeviceMaskPrefView extends AbstractItemDialogPage {
+
+  /** The title and the position of the page in the preference tree, known before it is built. */
+  public static final String PAGE_TITLE = Messages.getString("DeviceMaskPrefView.title");
+
+  public static final int PAGE_POSITION = 506;
   private static final Logger LOGGER = LoggerFactory.getLogger(DeviceMaskPrefView.class);
 
   private final MaskingModelRegistry registry;
@@ -77,7 +82,7 @@ public class DeviceMaskPrefView extends AbstractItemDialogPage {
   }
 
   DeviceMaskPrefView(MaskingModelRegistry registry) {
-    super(Messages.getString("DeviceMaskPrefView.title"), 506);
+    super(PAGE_TITLE, PAGE_POSITION);
     getProperties()
         .setProperty(AbstractItemDialogPage.KEY_SCOPE, AbstractItemDialogPage.SCOPE_USER);
     this.registry = registry;

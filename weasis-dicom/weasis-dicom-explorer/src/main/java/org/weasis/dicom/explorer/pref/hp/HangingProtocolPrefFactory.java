@@ -21,6 +21,12 @@ import org.weasis.plugin.SingletonExtension;
 public class HangingProtocolPrefFactory implements PreferencesPageFactory {
 
   @Override
+  public PageDescriptor describe() {
+    return new PageDescriptor(
+        HangingProtocolPrefView.PAGE_TITLE, HangingProtocolPrefView.PAGE_POSITION);
+  }
+
+  @Override
   public AbstractItemDialogPage createInstance(Map<String, Object> properties) {
     return new HangingProtocolPrefView();
   }

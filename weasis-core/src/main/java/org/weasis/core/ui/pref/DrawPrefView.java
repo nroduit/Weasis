@@ -10,20 +10,16 @@
 package org.weasis.core.ui.pref;
 
 import java.awt.Component;
-import java.awt.GridLayout;
-import java.util.List;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.PageItem;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
@@ -33,8 +29,6 @@ import org.weasis.core.ui.model.utils.bean.GraphicClipboard;
 import org.weasis.core.ui.model.utils.bean.GraphicClipboard.PasteMode;
 
 public class DrawPrefView extends AbstractItemDialogPage {
-
-  private final JPanel menuPanel = new JPanel();
 
   private final JCheckBox checkboxConfirmDeleteMeasurement =
       new JCheckBox(Messages.getString("DrawPrefView.confirm_delete"));
@@ -50,7 +44,7 @@ public class DrawPrefView extends AbstractItemDialogPage {
   private final JSpinner spinnerUndoLimit =
       new JSpinner(new SpinnerNumberModel(GraphicUndoHistory.DEFAULT_LIMIT, 0, 500, 10));
 
-  public DrawPrefView(PreferenceDialog dialog) {
+  public DrawPrefView() {
     super(MeasureTool.BUTTON_NAME, 700);
 
     comboPasteMode.setRenderer(
@@ -63,10 +57,6 @@ public class DrawPrefView extends AbstractItemDialogPage {
             return this;
           }
         });
-
-    menuPanel.setLayout(new GridLayout(0, 2));
-    add(menuPanel);
-    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     add(GuiUtils.getFlowLayoutPanel(0, ITEM_SEPARATOR_LARGE, checkboxConfirmDeleteMeasurement));
     add(GuiUtils.getFlowLayoutPanel(0, ITEM_SEPARATOR_LARGE, checkboxMidpointHandles));
@@ -96,10 +86,6 @@ public class DrawPrefView extends AbstractItemDialogPage {
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
 
     initialize();
-
-    List<AbstractItemDialogPage> childPages =
-        List.of(new GraphicPrefView(), new ProfilePrefView(), new LabelsPrefView());
-    childPages.forEach(p -> addSubPage(p, _ -> dialog.showPage(p.getTitle()), menuPanel));
   }
 
   protected void initialize() {
@@ -124,15 +110,7 @@ public class DrawPrefView extends AbstractItemDialogPage {
   }
 
   @Override
-  public JPanel getMenuPanel() {
-    return menuPanel;
-  }
-
-  @Override
   public void closeAdditionalWindow() {
-    for (PageItem subpage : getSubPages()) {
-      subpage.closeAdditionalWindow();
-    }
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     preferences.putBooleanProperty(
         UICore.CONFIRM_DELETE_MEASUREMENT, checkboxConfirmDeleteMeasurement.isSelected());

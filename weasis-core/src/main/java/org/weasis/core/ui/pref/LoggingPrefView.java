@@ -10,9 +10,12 @@
 package org.weasis.core.ui.pref;
 
 import ch.qos.logback.classic.LoggerContext;
+import java.awt.Component;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import org.slf4j.Logger;
@@ -48,6 +51,19 @@ public class LoggingPrefView extends AbstractItemDialogPage {
 
   public LoggingPrefView() {
     super(PAGE_NAME, 115);
+    // The empty value keeps the whole stack trace: shown as a word, not as an empty list
+    comboBoxStackLimit.setRenderer(
+        new DefaultListCellRenderer() {
+          @Override
+          public Component getListCellRendererComponent(
+              JList<?> list, Object value, int index, boolean selected, boolean focus) {
+            super.getListCellRendererComponent(list, value, index, selected, focus);
+            if (!StringUtil.hasText((String) value)) {
+              setText(Messages.getString("LoggingPrefView.no_limit"));
+            }
+            return this;
+          }
+        });
 
     try {
       GuiUtils.setNumberModel(

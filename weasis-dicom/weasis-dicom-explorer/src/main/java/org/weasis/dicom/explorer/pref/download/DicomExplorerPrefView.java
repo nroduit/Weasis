@@ -32,6 +32,11 @@ import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.main.SeriesFilter;
 
 public class DicomExplorerPrefView extends AbstractItemDialogPage {
+
+  /** The title and the position of the page in the preference tree, known before it is built. */
+  public static final String PAGE_TITLE = Messages.getString("DicomExplorer.title");
+
+  public static final int PAGE_POSITION = 607;
   public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately";
   public static final String STUDY_DATE_SORTING = "weasis.sorting.study.date";
   public static final String FILTER_DEFAULT_MODE = "weasis.dicom.explorer.filter.mode";
@@ -69,7 +74,7 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
       new JCheckBox(Messages.getString("dicom.unsupported.sop.notify"));
 
   public DicomExplorerPrefView() {
-    super(Messages.getString("DicomExplorer.title"), 607);
+    super(PAGE_TITLE, PAGE_POSITION);
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
     JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();

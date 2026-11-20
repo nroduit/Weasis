@@ -21,6 +21,11 @@ import org.weasis.plugin.SingletonExtension;
 public class MprPrefFactory implements PreferencesPageFactory {
 
   @Override
+  public PageDescriptor describe() {
+    return new PageDescriptor(MprPrefView.PAGE_TITLE, MprPrefView.PAGE_POSITION);
+  }
+
+  @Override
   public AbstractItemDialogPage createInstance(Map<String, Object> properties) {
     return new MprPrefView();
   }

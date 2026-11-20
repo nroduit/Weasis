@@ -30,6 +30,11 @@ import org.weasis.dicom.viewer2d.mpr.MprView;
 
 public class MprPrefView extends AbstractItemDialogPage {
 
+  /** The title and the position of the page in the preference tree, known before it is built. */
+  public static final String PAGE_TITLE = Messages.getString("MPRFactory.title");
+
+  public static final int PAGE_POSITION = 507;
+
   private final JComboBox<String> comboBox3DCursorMode;
   private final JComboBox<String> comboBoxScrollDirection;
   private final JSpinner spinnerCrossGapSize;
@@ -37,7 +42,7 @@ public class MprPrefView extends AbstractItemDialogPage {
       new JComboBox<>(MprContainer.LAYOUT_LIST.toArray(new MigLayoutModel[0]));
 
   public MprPrefView() {
-    super(Messages.getString("MPRFactory.title"), 507);
+    super(PAGE_TITLE, PAGE_POSITION);
     this.comboBox3DCursorMode = new JComboBox<>();
     this.comboBoxScrollDirection =
         new JComboBox<>(

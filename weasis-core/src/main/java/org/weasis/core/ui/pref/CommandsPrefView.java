@@ -9,21 +9,21 @@
  */
 package org.weasis.core.ui.pref;
 
-import java.awt.FlowLayout;
 import java.util.List;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import net.miginfocom.swing.MigLayout;
 import org.weasis.core.Messages;
 import org.weasis.core.api.command.CommandManager;
 import org.weasis.core.api.command.CommandPolicy;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.setting.CommandPolicyLayers;
 import org.weasis.core.api.setting.CoreSettings;
 import org.weasis.core.api.setting.Setting;
 import org.weasis.core.api.setting.Settings;
+import org.weasis.core.util.StringUtil;
 
 /**
  * The *Commands* page: what a remote caller (a script, an agent) may do on this instance, as the
@@ -34,25 +34,24 @@ public class CommandsPrefView extends AbstractItemDialogPage {
 
   public static final String PAGE_NAME = Messages.getString("CommandsPrefView.title");
 
-  private final JLabel summary = new JLabel();
+  private final JTextArea summary = wrappingText();
   private final JComboBox<String> read = choices();
   private final JTextField readHosts = new JTextField(24);
   private final JComboBox<String> write = choices();
   private final JTextField writeHosts = new JTextField(24);
   private final JTextField roots = new JTextField(32);
-  private final JLabel note = new JLabel();
+  private final JTextArea note = wrappingText();
 
   public CommandsPrefView() {
     super(PAGE_NAME, 125);
-    setBorder(GuiUtils.getEmptyBorder(15, 10, 10, 10));
-    add(summary);
-    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
-    add(row(Messages.getString("CommandsPrefView.network.read"), read, readHosts));
-    add(row(Messages.getString("CommandsPrefView.network.write"), write, writeHosts));
-    add(row(Messages.getString("CommandsPrefView.files.roots"), roots, null));
-    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
-    add(note);
-    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
+    // One grid: the texts wrap to the width of the page, the fields take what is left
+    setLayout(new MigLayout("ins 0, fillx, wrap 4", "[][][][grow,fill]")); // NON-NLS
+    add(summary, "span, growx, wmin 0, gapbottom unrel"); // NON-NLS
+    addRow(Messages.getString("CommandsPrefView.network.read"), read, readHosts);
+    addRow(Messages.getString("CommandsPrefView.network.write"), write, writeHosts);
+    add(new JLabel(Messages.getString("CommandsPrefView.files.roots") + StringUtil.COLON));
+    add(roots, "span 3, growx, wmin 80lp"); // NON-NLS
+    add(note, "span, growx, wmin 0, gaptop unrel"); // NON-NLS
     load();
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "automate/commands/"); // NON-NLS
@@ -67,19 +66,29 @@ public class CommandsPrefView extends AbstractItemDialogPage {
         });
   }
 
-  private static JPanel row(
-      String label, javax.swing.JComponent first, javax.swing.JComponent second) {
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING, ITEM_SEPARATOR_SMALL, 0));
-    panel.add(new JLabel(label + org.weasis.core.util.StringUtil.COLON));
-    panel.add(first);
-    if (second != null) {
-      panel.add(
-          new JLabel(
-              Messages.getString("CommandsPrefView.hosts")
-                  + org.weasis.core.util.StringUtil.COLON));
-      panel.add(second);
-    }
-    return panel;
+  private void addRow(String label, JComboBox<String> choice, JTextField hosts) {
+    add(new JLabel(label + StringUtil.COLON));
+    add(choice);
+    add(new JLabel(Messages.getString("CommandsPrefView.hosts") + StringUtil.COLON));
+    add(hosts, "wmin 80lp"); // NON-NLS
+  }
+
+  /** A text shown like a label that wraps to the width it is given. */
+  private static JTextArea wrappingText() {
+    JTextArea area = new JTextArea();
+    area.setEditable(false);
+    area.setFocusable(false);
+    area.setOpaque(false);
+    area.setLineWrap(true);
+    area.setWrapStyleWord(true);
+    area.setBorder(null);
+    area.setFont(javax.swing.UIManager.getFont("Label.font")); // NON-NLS
+    return area;
+  }
+
+  // The summary message is written in HTML, one line per sentence
+  private static String plainText(String html) {
+    return html.replaceAll("(?i)<br\\s*/?>", "\n").replaceAll("<[^>]*>", "").strip(); // NON-NLS
   }
 
   private void load() {
@@ -87,21 +96,22 @@ public class CommandsPrefView extends AbstractItemDialogPage {
     CommandPolicy policy = manager == null ? CommandPolicy.defaults() : manager.policy();
     boolean locked = manager != null && manager.basePolicy().locked();
     summary.setText(
-        Messages.format(
-            "CommandsPrefView.summary",
-            manager == null ? "?" : manager.policySource(),
-            policy.remote().enabled()
-                ? String.join(", ", policy.remote().namespaces())
-                : Messages.getString("CommandsPrefView.closed"),
-            policy.files().writeRoots().stream()
-                .map(Object::toString)
-                .reduce((a, b) -> a + ", " + b)
-                .orElse(""),
-            word(policy.network().read()),
-            word(policy.network().write()),
-            word(policy.assumeYesAllowed()),
-            word(policy.shutdownAllowed()),
-            word(policy.events().enabled())));
+        plainText(
+            Messages.format(
+                "CommandsPrefView.summary",
+                manager == null ? "?" : manager.policySource(),
+                policy.remote().enabled()
+                    ? String.join(", ", policy.remote().namespaces())
+                    : Messages.getString("CommandsPrefView.closed"),
+                policy.files().writeRoots().stream()
+                    .map(Object::toString)
+                    .reduce((a, b) -> a + ", " + b)
+                    .orElse(""),
+                word(policy.network().read()),
+                word(policy.network().write()),
+                word(policy.assumeYesAllowed()),
+                word(policy.shutdownAllowed()),
+                word(policy.events().enabled()))));
     select(read, Settings.get(CoreSettings.COMMANDS_NETWORK_READ));
     readHosts.setText(Settings.get(CoreSettings.COMMANDS_NETWORK_READ_HOSTS));
     select(write, Settings.get(CoreSettings.COMMANDS_NETWORK_WRITE));

@@ -21,6 +21,11 @@ import org.weasis.plugin.SingletonExtension;
 public class Viewer3dPrefFactory implements PreferencesPageFactory {
 
   @Override
+  public PageDescriptor describe() {
+    return new PageDescriptor(Viewer3dPrefView.PAGE_TITLE, Viewer3dPrefView.PAGE_POSITION);
+  }
+
+  @Override
   public AbstractItemDialogPage createInstance(Map<String, Object> properties) {
     return new Viewer3dPrefView();
   }

@@ -203,3 +203,12 @@ Preference UI pages are pf4j extensions: a `PreferencesPageFactory` annotated wi
 `@Extension` (and `@SingletonExtension`) is discovered through the plugin manager by
 `PreferenceDialog`, which places each page according to the factory's component position
 band and honours the per-factory enable flag from the system preferences.
+
+A page is built when it is first shown, not when the dialog opens. A factory makes that possible by
+overriding `describe()` to return the title and the position of its page (`PageDescriptor`) without
+building it; the title must be the one the page gives itself, since `showPage(title)` finds a page
+by it. A factory without a description still works: its page is built when the dialog opens.
+The first search in the dialog builds the remaining pages, to look into their labels, group
+titles and tooltips. Closing the dialog saves the pages that were built
+(`closeAdditionalWindow()`); the categories (General, Viewer, DICOM, Draw & Measure) no longer
+own their sub-pages, the dialog lists them.

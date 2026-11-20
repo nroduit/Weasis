@@ -9,15 +9,18 @@
  */
 package org.weasis.dicom.explorer.pref.hp;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -49,6 +52,11 @@ import org.weasis.dicom.explorer.hp.ProtocolEntries.Row;
  */
 public class HangingProtocolPrefView extends AbstractItemDialogPage {
 
+  /** The title and the position of the page in the preference tree, known before it is built. */
+  public static final String PAGE_TITLE = Messages.getString("HangingProtocolPrefView.title");
+
+  public static final int PAGE_POSITION = 608;
+
   private static final Logger LOGGER = LoggerFactory.getLogger(HangingProtocolPrefView.class);
 
   private final JComboBox<HpSettings.Opening> opening =
@@ -64,7 +72,9 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
   private final ProtocolTable table = new ProtocolTable();
 
   public HangingProtocolPrefView() {
-    super(Messages.getString("HangingProtocolPrefView.title"), 608);
+    super(PAGE_TITLE, PAGE_POSITION);
+    opening.setRenderer(named());
+    restore.setRenderer(named());
     initGUI();
   }
 
@@ -306,5 +316,32 @@ public class HangingProtocolPrefView extends AbstractItemDialogPage {
         reload();
       }
     }
+  }
+
+  // The values of a setting are shown by their name in the language of the interface
+  private static DefaultListCellRenderer named() {
+    return new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(
+          JList<?> list, Object value, int index, boolean selected, boolean focus) {
+        super.getListCellRendererComponent(list, value, index, selected, focus);
+        if (value instanceof HpSettings.Opening o) {
+          setText(
+              Messages.getString(
+                  o == HpSettings.Opening.PROTOCOL
+                      ? "HangingProtocolPrefView.opening.protocol"
+                      : "HangingProtocolPrefView.opening.first_series"));
+        } else if (value instanceof HpSettings.Restore r) {
+          setText(
+              Messages.getString(
+                  switch (r) {
+                    case AUTO -> "HangingProtocolPrefView.restore.auto";
+                    case OFFER -> "HangingProtocolPrefView.restore.offer";
+                    case NEVER -> "HangingProtocolPrefView.restore.never";
+                  }));
+        }
+        return this;
+      }
+    };
   }
 }

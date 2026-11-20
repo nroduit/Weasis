@@ -21,6 +21,11 @@ import org.weasis.plugin.SingletonExtension;
 public class DeviceMaskPrefFactory implements PreferencesPageFactory {
 
   @Override
+  public PageDescriptor describe() {
+    return new PageDescriptor(DeviceMaskPrefView.PAGE_TITLE, DeviceMaskPrefView.PAGE_POSITION);
+  }
+
+  @Override
   public AbstractItemDialogPage createInstance(Map<String, Object> properties) {
     return new DeviceMaskPrefView();
   }

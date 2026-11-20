@@ -32,6 +32,11 @@ import org.weasis.dicom.wsi.tile.TileCache;
 /** The zoom, the pan and the tile loading of the slide viewer. */
 public class WsiPrefView extends AbstractItemDialogPage {
 
+  /** The title and the position of the page in the preference tree, known before it is built. */
+  public static final String PAGE_TITLE = WsiFactory.NAME;
+
+  public static final int PAGE_POSITION = 509;
+
   private static final long MEGABYTE = 1L << 20;
 
   private final JCheckBox animation = new JCheckBox(Messages.getString("WsiPrefView.animation"));
@@ -46,7 +51,7 @@ public class WsiPrefView extends AbstractItemDialogPage {
       new JSpinner(new SpinnerNumberModel(20000, 100, 1_000_000, 1000));
 
   public WsiPrefView() {
-    super(WsiFactory.NAME, 509);
+    super(PAGE_TITLE, PAGE_POSITION);
     GuiUtils.setSpinnerWidth(step, 4);
     GuiUtils.setSpinnerWidth(memory, 6);
     GuiUtils.setSpinnerWidth(threads, 3);

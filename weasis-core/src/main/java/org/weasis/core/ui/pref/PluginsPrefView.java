@@ -65,7 +65,6 @@ public class PluginsPrefView extends AbstractItemDialogPage {
 
   public PluginsPrefView() {
     super(PAGE_NAME, 130);
-    setBorder(GuiUtils.getEmptyBorder(15, 10, 10, 10));
     JTable view = new JTable(table);
     view.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     view.setAutoCreateRowSorter(true);
@@ -73,7 +72,11 @@ public class PluginsPrefView extends AbstractItemDialogPage {
     JScrollPane scroll = new JScrollPane(view);
     scroll.setPreferredSize(
         new Dimension(GuiUtils.getScaleLength(640), GuiUtils.getScaleLength(260)));
-    add(policyLabel);
+    // The names are what the list is read by: the plugin and its version get the room
+    view.getColumnModel().getColumn(0).setPreferredWidth(GuiUtils.getScaleLength(190));
+    view.getColumnModel().getColumn(1).setPreferredWidth(GuiUtils.getScaleLength(120));
+    // In a panel as the other blocks: a bare label would be placed from the middle of the page
+    add(GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, 0, policyLabel));
     add(GuiUtils.boxVerticalStrut(5));
     add(scroll);
     JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEADING, 5, 5));
@@ -81,7 +84,7 @@ public class PluginsPrefView extends AbstractItemDialogPage {
     buttons.add(toggle);
     buttons.add(remove);
     add(buttons);
-    add(noticeLabel);
+    add(GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, 0, noticeLabel));
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     add.addActionListener(e -> importPlugin());
     remove.addActionListener(e -> selected(view).ifPresent(this::removePlugin));

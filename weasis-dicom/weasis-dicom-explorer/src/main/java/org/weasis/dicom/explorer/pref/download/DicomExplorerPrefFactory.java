@@ -21,6 +21,12 @@ import org.weasis.plugin.SingletonExtension;
 public class DicomExplorerPrefFactory implements PreferencesPageFactory {
 
   @Override
+  public PageDescriptor describe() {
+    return new PageDescriptor(
+        DicomExplorerPrefView.PAGE_TITLE, DicomExplorerPrefView.PAGE_POSITION);
+  }
+
+  @Override
   public AbstractItemDialogPage createInstance(Map<String, Object> properties) {
     return new DicomExplorerPrefView();
   }

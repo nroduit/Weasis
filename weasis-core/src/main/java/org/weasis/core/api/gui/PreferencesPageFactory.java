@@ -15,6 +15,25 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
 public interface PreferencesPageFactory extends InsertableFactory {
 
+  /**
+   * The title of a preference page and its place in the tree, known without building the page.
+   *
+   * @param title the title the page will have: the two must be the same, since a page is found by
+   *     its title
+   * @param position the position of the page; 501–599 puts it under Viewer, 601–699 under DICOM,
+   *     701–799 under Draw &amp; Measure, another value below 1000 under General, 1000 and more at
+   *     the root
+   */
+  record PageDescriptor(String title, int position) {}
+
+  /**
+   * Describes the page so that the preference dialog builds it only when it is shown. Without a
+   * description (the default) the page is built when the dialog opens.
+   */
+  default PageDescriptor describe() {
+    return null;
+  }
+
   @Override
   AbstractItemDialogPage createInstance(Map<String, Object> properties);
 

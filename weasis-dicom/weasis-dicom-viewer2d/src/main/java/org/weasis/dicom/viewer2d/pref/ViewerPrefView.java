@@ -53,6 +53,11 @@ import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 
 public class ViewerPrefView extends AbstractItemDialogPage {
+
+  /** The title and the position of the page in the preference tree, known before it is built. */
+  public static final String PAGE_TITLE = View2dFactory.NAME;
+
+  public static final int PAGE_POSITION = 501;
   private final Hashtable<Integer, JLabel> labels = new Hashtable<>();
   private final List<Feature<? extends SliderChangeListener>> actions =
       List.of(ActionW.WINDOW, ActionW.LEVEL, ActionW.ZOOM, ActionW.ROTATION, ActionW.SCROLL_SERIES);
@@ -67,7 +72,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
   private final JButton overlayColor;
 
   public ViewerPrefView() {
-    super(View2dFactory.NAME, 501);
+    super(PAGE_TITLE, PAGE_POSITION);
     this.overlayColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
     initGUI();
   }

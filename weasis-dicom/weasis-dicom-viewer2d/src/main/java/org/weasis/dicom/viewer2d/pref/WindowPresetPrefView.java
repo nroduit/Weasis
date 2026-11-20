@@ -61,6 +61,11 @@ import org.weasis.opencv.op.lut.LutShape;
  * be created, changed, deleted, imported and exported.
  */
 public class WindowPresetPrefView extends AbstractItemDialogPage {
+
+  /** The title and the position of the page in the preference tree, known before it is built. */
+  public static final String PAGE_TITLE = Messages.getString("WindowPresetPrefView.title");
+
+  public static final int PAGE_POSITION = 502;
   private static final Logger LOGGER = LoggerFactory.getLogger(WindowPresetPrefView.class);
 
   private static final String[] KEYS = {"", "3", "4", "5", "6", "7", "8", "9"}; // NON-NLS
@@ -116,7 +121,7 @@ public class WindowPresetPrefView extends AbstractItemDialogPage {
   }
 
   WindowPresetPrefView(WindowPresetRegistry registry) {
-    super(Messages.getString("WindowPresetPrefView.title"), 502);
+    super(PAGE_TITLE, PAGE_POSITION);
     getProperties()
         .setProperty(AbstractItemDialogPage.KEY_SCOPE, AbstractItemDialogPage.SCOPE_USER);
     this.registry = registry;
