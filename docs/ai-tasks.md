@@ -21,7 +21,8 @@ A series whose images are not downloaded yet cannot be an input: a workitem name
 
 ## Which servers take tasks
 
-Nothing is shown until a server is enabled in the document `upsNodes.json` of the user (next to the other documents of the profile).
+Nothing is shown until a server is enabled on the page *DICOM › AI Tasks* of the preferences, which writes the document `upsNodes.json` of the user (next to the other documents of the profile).
+The page lists the servers, with *Enabled* and *Create tasks* per server, and for the selected one the requester AE title, the reading interval and the tasks offered.
 A server is named by the id of its DICOMweb node of the preferences, or by its URL for a study loaded without a node (a `$dicom:rs` launch).
 
 ```json

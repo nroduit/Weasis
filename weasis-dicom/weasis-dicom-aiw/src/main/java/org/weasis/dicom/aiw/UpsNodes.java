@@ -9,13 +9,19 @@
  */
 package org.weasis.dicom.aiw;
 
+import jakarta.json.Json;
 import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonValue;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.dcm4che3.data.Code;
 import org.weasis.core.api.setting.Scope;
 import org.weasis.core.api.util.DocumentStore;
@@ -108,6 +114,28 @@ public final class UpsNodes {
           codes);
     }
 
+    JsonObject toJson() {
+      JsonArrayBuilder codes = Json.createArrayBuilder();
+      for (Code code : catalog) {
+        codes.add(
+            Json.createObjectBuilder()
+                .add("value", code.getCodeValue()) // NON-NLS
+                .add("scheme", code.getCodingSchemeDesignator()) // NON-NLS
+                .add("meaning", String.valueOf(code.getCodeMeaning()))); // NON-NLS
+      }
+      JsonObjectBuilder json = Json.createObjectBuilder().add("id", id); // NON-NLS
+      if (url != null) {
+        json.add("url", url); // NON-NLS
+      }
+      return json.add("enabled", enabled) // NON-NLS
+          .add("writeAllowed", writeAllowed) // NON-NLS
+          .add("requesterAet", requesterAet) // NON-NLS
+          .add("requesterInPath", requesterInPath) // NON-NLS
+          .add("pollSeconds", pollSeconds) // NON-NLS
+          .add("catalog", codes) // NON-NLS
+          .build();
+    }
+
     boolean serves(DicomWebOrigin origin, String nodeId) {
       if (id != null && id.equals(nodeId)) {
         return true;
@@ -134,6 +162,26 @@ public final class UpsNodes {
   /** Every server of the document, enabled or not. */
   public static List<Node> all() {
     return document().entries().stream().map(e -> Node.of(e.json())).toList();
+  }
+
+  /**
+   * Writes the servers of the user: the entries given replace the document, an entry that is no
+   * longer in the list is removed.
+   */
+  public static void save(List<Node> nodes) throws IOException {
+    LayeredDocument document = document();
+    Set<String> kept = new HashSet<>();
+    for (Node node : nodes) {
+      if (StringUtil.hasText(node.id()) && kept.add(node.id())) {
+        document.put(node.toJson());
+      }
+    }
+    for (JsonObject entry : document.userEntries()) {
+      String id = entry.getString("id", null); // NON-NLS
+      if (id != null && !kept.contains(id)) {
+        document.remove(id);
+      }
+    }
   }
 
   /**
