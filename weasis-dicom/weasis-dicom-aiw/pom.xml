@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>weasis-dicom-parent</artifactId>
+    <groupId>org.weasis.dicom</groupId>
+    <!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
+    <relativePath>../weasis-dicom-parent/pom.xml</relativePath>
+  </parent>
+  <artifactId>weasis-dicom-aiw</artifactId>
+  <packaging>jar</packaging>
+  <name>DICOM - AI Workflow (UPS-RS Task Requestor) [${project.artifactId}]</name>
+  <description>AI workflow: tasks requested from the DICOM explorer as UPS-RS workitems (IHE AIW-I Task Requestor and Watcher), their state on the series and their results opened when ready</description>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Plugin-Class>org.weasis.dicom.aiw.internal.Activator</Plugin-Class>
+              <Plugin-Dependencies>weasis-dicom-explorer</Plugin-Dependencies>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <!-- The UPS-RS client (PS3.18 §11) of weasis-dicom-tools comes with the codec -->
+    <dependency>
+      <groupId>org.weasis.dicom</groupId>
+      <artifactId>weasis-dicom-codec</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.dicom</groupId>
+      <artifactId>weasis-dicom-explorer</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- The model classes of the tests load the codec, which names JOML types -->
+    <dependency>
+      <groupId>org.joml</groupId>
+      <artifactId>joml</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

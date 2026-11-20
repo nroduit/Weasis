@@ -23,6 +23,7 @@ Every feature is a `namespace:verb` command first, and the user interface, `weas
 | `weasis-dicom/weasis-dicom-3d/viewer3d` | volume rendering on OpenGL through the FFM API |
 | `weasis-dicom/weasis-dicom-sr`, `-rt`, `-au`, `-wave`, `-wsi` | the viewers of structured reports, radiotherapy objects, audio, waveforms (ECG) and whole slide images |
 | `weasis-dicom/weasis-dicom-qr`, `-send`, `-isowriter`, `-audit` | query/retrieve, DICOM and DICOMweb send, ISO export, the audit trail (PS3.15 messages) |
+| `weasis-dicom/weasis-dicom-aiw` | AI tasks: UPS-RS workitems requested and watched from the DICOM explorer (IHE AIW-I Task Requestor), the `ups:` namespace ([AI tasks](ai-tasks.md)) |
 | `weasis-acquire` | image acquisition and editing before a DICOM export |
 | `weasis-distributions` | the configuration served to the application (`etc/config/base.json`), the native distribution and the installer scripts |
 | `tests` | the scripted smoke suite ([tests/smoke](../tests/smoke/README.md)) and the coverage aggregate |

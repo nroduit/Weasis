@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.40, protocol 2, application development.
+Command API 2.41, protocol 2, application development.
 
 ## color
 
@@ -1897,6 +1897,177 @@ Usage: `ui:reveal [-h] [--json] [--tool=<tool-id>] [--toolbar=<toolbar-id>]`
 | --toolbar | string |  | Toolbar id from 'hidden.toolbars'. |
 
 
+## ups
+
+AI tasks as UPS-RS workitems (IHE AIW-I Task Requestor and Watcher): search the tasks of a study, run one, cancel a queued one, watch the states, read and open the results. The server is the one a loaded study came from, or --url.
+
+### ups:cancel (since 5.0)
+
+Requests the cancellation of a queued workitem (PS3.18 §11.8).
+
+Usage: `ups:cancel [-h] [--json] [--aet=<aet>] [--auth=<auth-id>] [--reason=<text>] [--study=<study-uid>] [--url=<url>] --workitem=<workitem-uid>`
+
+Needs: network write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --aet | string |  | With --url: requester AE title of this user agent (default: WEASIS). |
+| --auth | string |  | With --url: uid of an authentication method of the user. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --reason | string |  | Reason for cancellation. |
+| --study | string |  | Without --url: the loaded study of the workitem. |
+| --url | string |  | DICOMweb root of the server; without it the server is the one the loaded --study came from. |
+| --workitem | string |  | Workitem UID from 'search'. |
+
+| Result | Type | Description |
+|---|---|---|
+| workitem | string | workitem UID |
+| canceled | boolean | always true: the request was accepted |
+
+### ups:nodes (since 5.0)
+
+The servers of the document upsNodes.json of the user: which DICOMweb nodes take AI tasks, whether tasks may be created there, and their catalog.
+
+Usage: `ups:nodes [-h] [--json]`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+
+| Result | Type | Description |
+|---|---|---|
+| nodes | object[] | one entry per server of the document |
+| nodes[].id | string | id of the DICOMweb node, or entry name |
+| nodes[].url | string | root URL, when the entry gives one |
+| nodes[].enabled | boolean | whether the entry is used |
+| nodes[].writable | boolean | tasks may be created |
+| nodes[].requesterAet | string | AE title of this user agent |
+| nodes[].pollSeconds | integer | interval of the reads, 0 for never |
+| nodes[].catalog | object[] | value, scheme and meaning of each task |
+
+### ups:open (since 5.0)
+
+Loads the result series of a completed workitem of a loaded study into the explorer, through the DICOMweb service of the study.
+
+Usage: `ups:open [-h] [--json] --study=<study-uid> --workitem=<workitem-uid>`
+
+Needs: network read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --study | string |  | The loaded study of the workitem. |
+| --workitem | string |  | Workitem UID from 'search'. |
+
+| Result | Type | Description |
+|---|---|---|
+| workitem | string | workitem UID |
+| series | string[] | the result series being loaded |
+
+### ups:outputs (since 5.0)
+
+The result instances a workitem names in its Output Information Sequence (PS3.18 §11.5, RAD-83).
+
+Usage: `ups:outputs [-h] [--json] [--aet=<aet>] [--auth=<auth-id>] [--study=<study-uid>] [--url=<url>] --workitem=<workitem-uid>`
+
+Needs: network read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --aet | string |  | With --url: requester AE title of this user agent (default: WEASIS). |
+| --auth | string |  | With --url: uid of an authentication method of the user. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --study | string |  | Without --url: the loaded study of the workitem. |
+| --url | string |  | DICOMweb root of the server; without it the server is the one the loaded --study came from. |
+| --workitem | string |  | Workitem UID from 'search'. |
+
+| Result | Type | Description |
+|---|---|---|
+| workitem | string | workitem UID |
+| instances | object[] | series, sop and sopClass of each result |
+
+### ups:run (since 5.0)
+
+Creates the workitem of a task unless the study has a pending one of that code (PS3.18 §11.4, RAD-80). On a loaded study the patient, the request and the input instances come from the model, for the whole study or the --series given; with --url they come from the options.
+
+Usage: `ups:run [-h] [--json] [--accession=<accession>] [--aet=<aet>] [--auth=<auth-id>] --code=<code> [--meaning=<text>] [--patient=<patient-id>] --scheme=<scheme> --study=<study-uid> [--url=<url>] [--instance=<series-uid/sop-class-uid/sop-uid>]... [--series=<series-uid>]...`
+
+Needs: network write
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --accession | string |  | With --url: Accession Number of the study. |
+| --aet | string |  | With --url: requester AE title of this user agent (default: WEASIS). |
+| --auth | string |  | With --url: uid of an authentication method of the user. |
+| --code | string |  | Scheduled Workitem Code value. |
+| --instance | string | [] | With --url: an input instance. Repeatable. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --meaning | string |  | Code meaning (default: the code value). |
+| --patient | string |  | With --url: Patient ID of the study. |
+| --scheme | string |  | Coding scheme designator of the code. |
+| --series | string | [] | On a loaded study: run on these series only. Repeatable. |
+| --study | string |  | Study Instance UID. |
+| --url | string |  | DICOMweb root of the server; without it the server is the one the loaded --study came from. |
+
+| Result | Type | Description |
+|---|---|---|
+| workitem | string | UID of the workitem, created or pending |
+| study | string | Study Instance UID |
+| code | string | the code value |
+
+### ups:search (since 5.0)
+
+The workitems of a study (PS3.18 §11.9, RAD-81), with their state and task.
+
+Usage: `ups:search [-h] [--json] [--accession=<accession>] [--aet=<aet>] [--auth=<auth-id>] [--patient=<patient-id>] --study=<study-uid> [--url=<url>]`
+
+Needs: network read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --accession | string |  | Accession Number key. |
+| --aet | string |  | With --url: requester AE title of this user agent (default: WEASIS). |
+| --auth | string |  | With --url: uid of an authentication method of the user. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --patient | string |  | Patient ID key. |
+| --study | string |  | Study Instance UID. |
+| --url | string |  | DICOMweb root of the server; without it the server is the one the loaded --study came from. |
+
+| Result | Type | Description |
+|---|---|---|
+| study | string | Study Instance UID |
+| workitems | object[] | one entry per workitem |
+| workitems[].workitem | string | workitem UID |
+| workitems[].state | string | Procedure Step State |
+| workitems[].task | object | value, scheme and meaning of the code |
+| workitems[].ready | boolean | completed with results to open |
+
+### ups:watch (since 5.0)
+
+Waits for news of the workitems of a study: the first event report of the notification channel (PS3.18 §11.10 and §11.13), or, when the server has no channel, the first change of state seen by reading the tasks every --poll seconds. Ends at the first news or at --timeout.
+
+Usage: `ups:watch [-h] [--json] [--aet=<aet>] [--auth=<auth-id>] [--poll=<seconds>] --study=<study-uid> [--timeout=<seconds>] [--url=<url>]`
+
+Needs: network read
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| --aet | string |  | With --url: requester AE title of this user agent (default: WEASIS). |
+| --auth | string |  | With --url: uid of an authentication method of the user. |
+| --json | boolean |  | Structured JSON output (default for remote calls). |
+| --poll | integer | 2 | Interval of the reads when the server has no channel, 0 to never poll (default: 2). |
+| --study | string |  | Study Instance UID. |
+| --timeout | integer | 60 | Stop after that many seconds (default: 60). |
+| --url | string |  | DICOMweb root of the server; without it the server is the one the loaded --study came from. |
+
+| Result | Type | Description |
+|---|---|---|
+| study | string | Study Instance UID |
+| channel | boolean | true when the notification channel answered |
+| events | object[] | event reports: eventType and workitem |
+| workitems | object[] | without a channel: the rows that changed |
+
+
 ## view2d
 
 Display of a 2D DICOM view: zoom, window/level, pan, scrolling, grid, mouse action, and the agent verbs capture, stats and measure. Every verb works on the pane given by --view and --pane, the selected one by default, and returns its display state.
@@ -3034,13 +3205,17 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | anatomy | the anatomic region of a series as one notation: a region group (CHEST), a coded value (SCT:816094009) or a Body Part Examined term (THORAX); answered as the coded region with its groups |  |
 | anchor | the view a new split or stack is placed against |  |
 | annotation | a text graphic |  |
+| canceled | a cancellation request was accepted |  |
 | candidate | a protocol that matches a study, with its match quality |  |
 | canvas | the pixel space of a pane after zoom, pan, rotation and flip |  |
 | capture | the pixels of a pane, a layout or a window written to an image file |  |
+| catalog | the tasks a server offers |  |
 | cell | one image place of a printed page or of a protocol layout |  |
+| channel | the notification channel of a UPS-RS server |  |
 | checkpoint | a saved display state a transaction can roll back to |  |
 | checkpoint id | the handle of a checkpoint, from state:checkpoints |  |
 | close | remove a view, a study or a patient from the workspace |  |
+| code | the value of a task code |  |
 | color map | a named mapping of the pixel values to colors applied to a pane |  |
 | companion | a tool or action that serves an explorer and is shown with its family |  |
 | current | the study being read, as opposed to a prior |  |
@@ -3067,27 +3242,33 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | mask | the series or frames subtracted from another in a subtraction |  |
 | masking | identity values hidden in text, lists and events; redaction is reserved for pixels |  |
 | masking profile | a named set of rules of the configuration that decides which identity values are hidden |  |
+| meaning | the text of a task code |  |
 | measurement | a named value with a unit computed from a graphic or a region | metric |
 | mip | a maximum intensity projection through a stack of images |  |
 | motion correction | the per-image translation that aligns the mask with the series before subtracting |  |
 | object | a non-image DICOM object of a study (key object selection, presentation state, segmentation, RT object), listed by dicom:objects and named by its SOP Instance UID |  |
 | open | show a series in a view |  |
+| outputs | the result instances a completed workitem names |  |
 | page | one printed page, with its cells |  |
 | pane | one image canvas inside the grid of a view, addressed by its index within the view | canvas index |
 | patient | the DICOM patient as loaded in the explorer model | exam |
 | phase | one time point of a dynamic series |  |
 | plugin | a module loaded by the plugin manager, with its id, version and signature |  |
 | policy | what the instance allows a caller to do: files, network, remote verbs, masking |  |
+| poll | reading the tasks again at an interval |  |
 | position | where an image sits in its cell: center or top-left |  |
 | preset | a named window width and window center pair |  |
 | prior | an earlier study of the same patient hung beside the current one |  |
 | protocol | a hanging protocol: the rules that hang a study, with its display sets and steps |  |
 | provenance | where a derived value comes from: the providers, objects and calibration behind it |  |
+| ready | a workitem completed with results to open |  |
 | reason | why something was done or refused, as the why panel and the refusals say it |  |
 | recording | the display sampled into an animation file between 'weasis:record start' and 'stop'; its handle is the file it writes |  |
 | redaction | pixels hidden over an image; masking is reserved for identity values in text |  |
 | region | a geometric area given by the caller (rect, ellipse, polygon) in a stated space | roi, zone |
 | requested | how many series a download request covered |  |
+| requester | this user agent, as the server names who asks |  |
+| scheme | the coding scheme designator of a task code |  |
 | scope | what an action covers: for a redaction the image, the series or the study; for a capture the view, the layout or the window |  |
 | screen | a physical display of the workstation, with a role in the window model |  |
 | script | a file of commands run in one call, with variables and expectations |  |
@@ -3101,6 +3282,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | study | the DICOM study as loaded in the explorer model |  |
 | tab group | a set of views shown as tabs in one area of a window | container, dock |
 | target | the view and pane a command resolved, echoed in every result bound to a view |  |
+| task | what a workitem asks for: a code, its scheme and its meaning |  |
 | tid offset | time interval differencing: the number of frames between a frame and its mask |  |
 | tile | one square of a level of a slide |  |
 | tool | a panel of the workspace (explorer, image tool, measurements…), shown in a slot or as a view |  |
@@ -3114,4 +3296,6 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | window center | DICOM Window Center (0028,1050), the middle of the range of pixel values shown | window centre |
 | window level | the window width and window center pair of a pane, always these words |  |
 | window width | DICOM Window Width (0028,1051), the range of the pixel values shown |  |
+| workitem | a task on a UPS-RS server, by its SOP Instance UID |  |
+| writable | tasks may be created and canceled on the server |  |
 

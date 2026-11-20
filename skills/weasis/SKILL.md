@@ -24,8 +24,8 @@ answers that the command is unknown, try the path of the platform:
 | Windows | `C:\Program Files\Weasis\weasis-cli.exe` |
 | Development | `java -cp weasis-launcher.jar org.weasis.launcher.CommandClient` |
 
-This instance runs Weasis development with command API 2.40 and protocol
-2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, measure, mpr, plugins, print, redact, script, state, subtraction, ui, view2d, view3d, weasis, workspace, wsi.
+This instance runs Weasis development with command API 2.41 and protocol
+2, and answers these namespaces: color, config, dicom, events, explorer, hp, image, measure, mpr, plugins, print, redact, script, state, subtraction, ui, ups, view2d, view3d, weasis, workspace, wsi.
 
 Check the connection first:
 
@@ -58,7 +58,7 @@ reading the whole reference: `help` to pick a namespace, `help <namespace>` to p
 `help <namespace>:<verb>` before running it. (In a terminal the same levels are browsed
 interactively; from an agent they print.)
 
-The command API is versioned (`major.minor`, 2.40 here): new verbs and options only add, and a
+The command API is versioned (`major.minor`, 2.41 here): new verbs and options only add, and a
 verb or option is never removed within a major. Verbs marked *since 5.0* need Weasis 5;
 `weasis:info` reports `commandApiVersion` when you have to check. The spellings of Weasis 4 were
 dropped by this major, except the six lines a hospital portal writes (`dicom:get`, `dicom:rs`,

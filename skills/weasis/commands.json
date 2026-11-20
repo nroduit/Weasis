@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.40",
+  "apiVersion": "2.41",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -7232,6 +7232,691 @@
       ]
     },
     {
+      "name": "ups",
+      "description": "AI tasks as UPS-RS workitems (IHE AIW-I Task Requestor and Watcher): search the tasks of a study, run one, cancel a queued one, watch the states, read and open the results. The server is the one a loaded study came from, or --url.",
+      "since": "5.0",
+      "verbs": [
+        {
+          "name": "cancel",
+          "description": "Requests the cancellation of a queued workitem (PS3.18 §11.8).",
+          "since": "5.0",
+          "usage": "ups:cancel [-h] [--json] [--aet=<aet>] [--auth=<auth-id>] [--reason=<text>] [--study=<study-uid>] [--url=<url>] --workitem=<workitem-uid>",
+          "needs": [
+            "network-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--aet"
+              ],
+              "label": "<aet>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --url: requester AE title of this user agent (default: WEASIS)."
+            },
+            {
+              "names": [
+                "--auth"
+              ],
+              "label": "<auth-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --url: uid of an authentication method of the user."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--reason"
+              ],
+              "label": "<text>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Reason for cancellation."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Without --url: the loaded study of the workitem."
+            },
+            {
+              "names": [
+                "--url"
+              ],
+              "label": "<url>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "DICOMweb root of the server; without it the server is the one the loaded --study came from."
+            },
+            {
+              "names": [
+                "--workitem"
+              ],
+              "label": "<workitem-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Workitem UID from 'search'."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "workitem",
+                "type": "string",
+                "description": "workitem UID"
+              },
+              {
+                "name": "canceled",
+                "type": "boolean",
+                "description": "always true: the request was accepted"
+              }
+            ]
+          }
+        },
+        {
+          "name": "nodes",
+          "description": "The servers of the document upsNodes.json of the user: which DICOMweb nodes take AI tasks, whether tasks may be created there, and their catalog.",
+          "since": "5.0",
+          "usage": "ups:nodes [-h] [--json]",
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "nodes",
+                "type": "object[]",
+                "description": "one entry per server of the document"
+              },
+              {
+                "name": "nodes[].id",
+                "type": "string",
+                "description": "id of the DICOMweb node, or entry name"
+              },
+              {
+                "name": "nodes[].url",
+                "type": "string",
+                "description": "root URL, when the entry gives one"
+              },
+              {
+                "name": "nodes[].enabled",
+                "type": "boolean",
+                "description": "whether the entry is used"
+              },
+              {
+                "name": "nodes[].writable",
+                "type": "boolean",
+                "description": "tasks may be created"
+              },
+              {
+                "name": "nodes[].requesterAet",
+                "type": "string",
+                "description": "AE title of this user agent"
+              },
+              {
+                "name": "nodes[].pollSeconds",
+                "type": "integer",
+                "description": "interval of the reads, 0 for never"
+              },
+              {
+                "name": "nodes[].catalog",
+                "type": "object[]",
+                "description": "value, scheme and meaning of each task"
+              }
+            ]
+          }
+        },
+        {
+          "name": "open",
+          "description": "Loads the result series of a completed workitem of a loaded study into the explorer, through the DICOMweb service of the study.",
+          "since": "5.0",
+          "usage": "ups:open [-h] [--json] --study=<study-uid> --workitem=<workitem-uid>",
+          "needs": [
+            "network-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "The loaded study of the workitem."
+            },
+            {
+              "names": [
+                "--workitem"
+              ],
+              "label": "<workitem-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Workitem UID from 'search'."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "workitem",
+                "type": "string",
+                "description": "workitem UID"
+              },
+              {
+                "name": "series",
+                "type": "string[]",
+                "description": "the result series being loaded"
+              }
+            ]
+          }
+        },
+        {
+          "name": "outputs",
+          "description": "The result instances a workitem names in its Output Information Sequence (PS3.18 §11.5, RAD-83).",
+          "since": "5.0",
+          "usage": "ups:outputs [-h] [--json] [--aet=<aet>] [--auth=<auth-id>] [--study=<study-uid>] [--url=<url>] --workitem=<workitem-uid>",
+          "needs": [
+            "network-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--aet"
+              ],
+              "label": "<aet>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --url: requester AE title of this user agent (default: WEASIS)."
+            },
+            {
+              "names": [
+                "--auth"
+              ],
+              "label": "<auth-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --url: uid of an authentication method of the user."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Without --url: the loaded study of the workitem."
+            },
+            {
+              "names": [
+                "--url"
+              ],
+              "label": "<url>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "DICOMweb root of the server; without it the server is the one the loaded --study came from."
+            },
+            {
+              "names": [
+                "--workitem"
+              ],
+              "label": "<workitem-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Workitem UID from 'search'."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "workitem",
+                "type": "string",
+                "description": "workitem UID"
+              },
+              {
+                "name": "instances",
+                "type": "object[]",
+                "description": "series, sop and sopClass of each result"
+              }
+            ]
+          }
+        },
+        {
+          "name": "run",
+          "description": "Creates the workitem of a task unless the study has a pending one of that code (PS3.18 §11.4, RAD-80). On a loaded study the patient, the request and the input instances come from the model, for the whole study or the --series given; with --url they come from the options.",
+          "since": "5.0",
+          "usage": "ups:run [-h] [--json] [--accession=<accession>] [--aet=<aet>] [--auth=<auth-id>] --code=<code> [--meaning=<text>] [--patient=<patient-id>] --scheme=<scheme> --study=<study-uid> [--url=<url>] [--instance=<series-uid/sop-class-uid/sop-uid>]... [--series=<series-uid>]...",
+          "needs": [
+            "network-write"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--accession"
+              ],
+              "label": "<accession>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --url: Accession Number of the study."
+            },
+            {
+              "names": [
+                "--aet"
+              ],
+              "label": "<aet>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --url: requester AE title of this user agent (default: WEASIS)."
+            },
+            {
+              "names": [
+                "--auth"
+              ],
+              "label": "<auth-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --url: uid of an authentication method of the user."
+            },
+            {
+              "names": [
+                "--code"
+              ],
+              "label": "<code>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Scheduled Workitem Code value."
+            },
+            {
+              "names": [
+                "--instance"
+              ],
+              "label": "<series-uid/sop-class-uid/sop-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "With --url: an input instance. Repeatable."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--meaning"
+              ],
+              "label": "<text>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Code meaning (default: the code value)."
+            },
+            {
+              "names": [
+                "--patient"
+              ],
+              "label": "<patient-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --url: Patient ID of the study."
+            },
+            {
+              "names": [
+                "--scheme"
+              ],
+              "label": "<scheme>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Coding scheme designator of the code."
+            },
+            {
+              "names": [
+                "--series"
+              ],
+              "label": "<series-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "On a loaded study: run on these series only. Repeatable."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Study Instance UID."
+            },
+            {
+              "names": [
+                "--url"
+              ],
+              "label": "<url>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "DICOMweb root of the server; without it the server is the one the loaded --study came from."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "workitem",
+                "type": "string",
+                "description": "UID of the workitem, created or pending"
+              },
+              {
+                "name": "study",
+                "type": "string",
+                "description": "Study Instance UID"
+              },
+              {
+                "name": "code",
+                "type": "string",
+                "description": "the code value"
+              }
+            ]
+          }
+        },
+        {
+          "name": "search",
+          "description": "The workitems of a study (PS3.18 §11.9, RAD-81), with their state and task.",
+          "since": "5.0",
+          "usage": "ups:search [-h] [--json] [--accession=<accession>] [--aet=<aet>] [--auth=<auth-id>] [--patient=<patient-id>] --study=<study-uid> [--url=<url>]",
+          "needs": [
+            "network-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--accession"
+              ],
+              "label": "<accession>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Accession Number key."
+            },
+            {
+              "names": [
+                "--aet"
+              ],
+              "label": "<aet>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --url: requester AE title of this user agent (default: WEASIS)."
+            },
+            {
+              "names": [
+                "--auth"
+              ],
+              "label": "<auth-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --url: uid of an authentication method of the user."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--patient"
+              ],
+              "label": "<patient-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "Patient ID key."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Study Instance UID."
+            },
+            {
+              "names": [
+                "--url"
+              ],
+              "label": "<url>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "DICOMweb root of the server; without it the server is the one the loaded --study came from."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "study",
+                "type": "string",
+                "description": "Study Instance UID"
+              },
+              {
+                "name": "workitems",
+                "type": "object[]",
+                "description": "one entry per workitem"
+              },
+              {
+                "name": "workitems[].workitem",
+                "type": "string",
+                "description": "workitem UID"
+              },
+              {
+                "name": "workitems[].state",
+                "type": "string",
+                "description": "Procedure Step State"
+              },
+              {
+                "name": "workitems[].task",
+                "type": "object",
+                "description": "value, scheme and meaning of the code"
+              },
+              {
+                "name": "workitems[].ready",
+                "type": "boolean",
+                "description": "completed with results to open"
+              }
+            ]
+          }
+        },
+        {
+          "name": "watch",
+          "description": "Waits for news of the workitems of a study: the first event report of the notification channel (PS3.18 §11.10 and §11.13), or, when the server has no channel, the first change of state seen by reading the tasks every --poll seconds. Ends at the first news or at --timeout.",
+          "since": "5.0",
+          "usage": "ups:watch [-h] [--json] [--aet=<aet>] [--auth=<auth-id>] [--poll=<seconds>] --study=<study-uid> [--timeout=<seconds>] [--url=<url>]",
+          "needs": [
+            "network-read"
+          ],
+          "parameters": [],
+          "options": [
+            {
+              "names": [
+                "--aet"
+              ],
+              "label": "<aet>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --url: requester AE title of this user agent (default: WEASIS)."
+            },
+            {
+              "names": [
+                "--auth"
+              ],
+              "label": "<auth-id>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "With --url: uid of an authentication method of the user."
+            },
+            {
+              "names": [
+                "--json"
+              ],
+              "label": "",
+              "type": "boolean",
+              "arity": "0",
+              "required": false,
+              "description": "Structured JSON output (default for remote calls)."
+            },
+            {
+              "names": [
+                "--poll"
+              ],
+              "label": "<seconds>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "2",
+              "description": "Interval of the reads when the server has no channel, 0 to never poll (default: 2)."
+            },
+            {
+              "names": [
+                "--study"
+              ],
+              "label": "<study-uid>",
+              "type": "string",
+              "arity": "1",
+              "required": true,
+              "description": "Study Instance UID."
+            },
+            {
+              "names": [
+                "--timeout"
+              ],
+              "label": "<seconds>",
+              "type": "integer",
+              "arity": "1",
+              "required": false,
+              "default": "60",
+              "description": "Stop after that many seconds (default: 60)."
+            },
+            {
+              "names": [
+                "--url"
+              ],
+              "label": "<url>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "description": "DICOMweb root of the server; without it the server is the one the loaded --study came from."
+            }
+          ],
+          "result": {
+            "fields": [
+              {
+                "name": "study",
+                "type": "string",
+                "description": "Study Instance UID"
+              },
+              {
+                "name": "channel",
+                "type": "boolean",
+                "description": "true when the notification channel answered"
+              },
+              {
+                "name": "events",
+                "type": "object[]",
+                "description": "event reports: eventType and workitem"
+              },
+              {
+                "name": "workitems",
+                "type": "object[]",
+                "description": "without a channel: the rows that changed"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "view2d",
       "description": "Display of a 2D DICOM view: zoom, window/level, pan, scrolling, grid, mouse action, and the agent verbs capture, stats and measure. Every verb works on the pane given by --view and --pane, the selected one by default, and returns its display state.",
       "verbs": [
@@ -13007,6 +13692,10 @@
       "definition": "a text graphic"
     },
     {
+      "term": "canceled",
+      "definition": "a cancellation request was accepted"
+    },
+    {
       "term": "candidate",
       "definition": "a protocol that matches a study, with its match quality"
     },
@@ -13019,8 +13708,16 @@
       "definition": "the pixels of a pane, a layout or a window written to an image file"
     },
     {
+      "term": "catalog",
+      "definition": "the tasks a server offers"
+    },
+    {
       "term": "cell",
       "definition": "one image place of a printed page or of a protocol layout"
+    },
+    {
+      "term": "channel",
+      "definition": "the notification channel of a UPS-RS server"
     },
     {
       "term": "checkpoint",
@@ -13033,6 +13730,10 @@
     {
       "term": "close",
       "definition": "remove a view, a study or a patient from the workspace"
+    },
+    {
+      "term": "code",
+      "definition": "the value of a task code"
     },
     {
       "term": "color map",
@@ -13148,6 +13849,10 @@
       "definition": "a named set of rules of the configuration that decides which identity values are hidden"
     },
     {
+      "term": "meaning",
+      "definition": "the text of a task code"
+    },
+    {
       "term": "measurement",
       "definition": "a named value with a unit computed from a graphic or a region",
       "avoid": [
@@ -13169,6 +13874,10 @@
     {
       "term": "open",
       "definition": "show a series in a view"
+    },
+    {
+      "term": "outputs",
+      "definition": "the result instances a completed workitem names"
     },
     {
       "term": "page",
@@ -13201,6 +13910,10 @@
       "definition": "what the instance allows a caller to do: files, network, remote verbs, masking"
     },
     {
+      "term": "poll",
+      "definition": "reading the tasks again at an interval"
+    },
+    {
       "term": "position",
       "definition": "where an image sits in its cell: center or top-left"
     },
@@ -13219,6 +13932,10 @@
     {
       "term": "provenance",
       "definition": "where a derived value comes from: the providers, objects and calibration behind it"
+    },
+    {
+      "term": "ready",
+      "definition": "a workitem completed with results to open"
     },
     {
       "term": "reason",
@@ -13243,6 +13960,14 @@
     {
       "term": "requested",
       "definition": "how many series a download request covered"
+    },
+    {
+      "term": "requester",
+      "definition": "this user agent, as the server names who asks"
+    },
+    {
+      "term": "scheme",
+      "definition": "the coding scheme designator of a task code"
     },
     {
       "term": "scope",
@@ -13308,6 +14033,10 @@
       "definition": "the view and pane a command resolved, echoed in every result bound to a view"
     },
     {
+      "term": "task",
+      "definition": "what a workitem asks for: a code, its scheme and its meaning"
+    },
+    {
       "term": "tid offset",
       "definition": "time interval differencing: the number of frames between a frame and its mask"
     },
@@ -13364,6 +14093,14 @@
     {
       "term": "window width",
       "definition": "DICOM Window Width (0028,1051), the range of the pixel values shown"
+    },
+    {
+      "term": "workitem",
+      "definition": "a task on a UPS-RS server, by its SOP Instance UID"
+    },
+    {
+      "term": "writable",
+      "definition": "tasks may be created and canceled on the server"
     }
   ]
 }
