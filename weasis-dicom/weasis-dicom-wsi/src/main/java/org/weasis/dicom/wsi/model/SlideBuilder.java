@@ -10,6 +10,7 @@
 package org.weasis.dicom.wsi.model;
 
 import java.awt.Color;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -28,6 +29,7 @@ import org.dcm4che3.data.UID;
 import org.dcm4che3.img.data.CIELab;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.dicom.wsi.model.PyramidLevel.TileKey;
 
 /**
@@ -119,7 +121,39 @@ public final class SlideBuilder {
             .findFirst()
             .orElse(null);
     return new Slide(
-        first.getString(Tag.PyramidUID), levels, associated, power, background(instances));
+        first.getString(Tag.PyramidUID),
+        levels,
+        associated,
+        power,
+        background(instances),
+        iccProfiles(instances));
+  }
+
+  // ICC Profile (0028,2000) of each optical path (PS3.3 C.8.12.5), from the first instance that
+  // carries a valid one: the levels of a pyramid repeat it
+  private static Map<String, IccProfile> iccProfiles(List<Attributes> instances) {
+    Map<String, IccProfile> profiles = new HashMap<>();
+    for (Attributes dcm : instances) {
+      Sequence seq = dcm.getSequence(Tag.OpticalPathSequence);
+      if (seq == null) {
+        continue;
+      }
+      for (Attributes item : seq) {
+        String id =
+            Objects.requireNonNullElse(
+                item.getString(Tag.OpticalPathIdentifier), DEFAULT_OPTICAL_PATH);
+        if (profiles.containsKey(id) || !item.containsValue(Tag.ICCProfile)) {
+          continue;
+        }
+        try {
+          byte[] bytes = item.getBytes(Tag.ICCProfile);
+          IccProfile.of(bytes).filter(IccProfile::isRgb).ifPresent(p -> profiles.put(id, p));
+        } catch (IOException | RuntimeException e) {
+          LOGGER.warn("Cannot read the ICC profile of the optical path {}", id, e);
+        }
+      }
+    }
+    return profiles;
   }
 
   private static PyramidLevel buildLevel(int index, List<Attributes> instances, MatrixSize base) {

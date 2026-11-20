@@ -43,6 +43,8 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.image.color.ColorManagement;
+import org.weasis.core.api.image.color.ColorTransform;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.IdentityMask;
@@ -55,6 +57,7 @@ import org.weasis.core.ui.editor.OpenTracker;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.DisplayColor;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
@@ -149,6 +152,8 @@ public class WsiView2d extends View2d {
     super(eventManager);
     // The image of the series is the thumbnail: the tiles are painted instead (drawImage)
     imageLayer.setVisible(false);
+    // The tiles are converted for the monitor of the view: painted again on another one
+    addPropertyChangeListener("graphicsConfiguration", _ -> repaint()); // NON-NLS
     // The ruler of the 2D view takes the pixel size of the thumbnail: the scale bar of the slide
     // replaces it, so this view keeps its own annotation settings
     infoLayer = new InfoLayer(this, false);
@@ -324,6 +329,14 @@ public class WsiView2d extends View2d {
     super.disposeView();
   }
 
+  // The tiles are converted from the profile of the optical path shown to the profile of the
+  // monitor of the view, as the color operation does for the images of the other viewers
+  private ColorTransform displayColor() {
+    return ColorManagement.toDisplay(
+        session.slide().flatMap(s -> s.iccProfile(opticalPath)).orElse(null),
+        DisplayColor.screenId(this));
+  }
+
   private void slideOpened(Slide slide) {
     build.complete();
     boolean resized = slide.width() != slideWidth;
@@ -332,6 +345,7 @@ public class WsiView2d extends View2d {
     focalPlane = Math.min(focalPlane, slide.base().focalPlanes() - 1);
     opticalPath = Math.min(opticalPath, slide.base().opticalPaths().size() - 1);
     session.layer().ifPresent(l -> l.setPlane(focalPlane, opticalPath));
+    session.layer().ifPresent(l -> l.setColor(this::displayColor));
     if (slide.base().pixelSpacing().isPresent()) {
       actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.MICROMETER);
     }

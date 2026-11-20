@@ -100,6 +100,17 @@ and, for a view, its source profile, its monitor and the kind of conversion appl
 switches the conversion, sets the display profile, or with `--screen <id>` gives a monitor its own
 profile (`--display-profile`) or takes it back (`--auto`).
 
+## Whole slide images
+
+The slide viewer paints tiles, not the image of the display chain, so it converts by itself
+(`weasis-dicom-wsi`). `SlideBuilder` reads the ICC Profile (0028,2000) of each item of the Optical
+Path Sequence, and `Slide.iccProfile(path)` answers the profile of an optical path. At each paint
+`TiledImageLayer` asks the view for the conversion of the path shown to the monitor of the view
+(`ColorManagement.toDisplay(profile, screenId)`) and applies it when it builds the paint image of
+a tile, the thumbnail and the background color. The tiles of the cache keep their stored values;
+when the conversion changes (switch, profile, monitor, optical path) the paint images are dropped
+and built again. Gray tiles are not converted.
+
 ## A profile per monitor
 
 A view converts to the profile of the monitor it is on. `DefaultView2d` listens to the

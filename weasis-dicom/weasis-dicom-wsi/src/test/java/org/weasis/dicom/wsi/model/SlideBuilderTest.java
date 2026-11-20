@@ -21,12 +21,14 @@ import static org.weasis.dicom.wsi.model.SyntheticSlides.tiledFull;
 import java.util.List;
 import java.util.Optional;
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
+import org.weasis.core.api.image.color.IccProfile;
 
 /** The slide model built from synthetic whole slide headers. */
 @DisplayNameGeneration(ReplaceUnderscores.class)
@@ -159,6 +161,22 @@ class SlideBuilderTest {
         () -> assertEquals(ref("P", 25), level.frame(0, 0, 0, 1)), // NON-NLS
         () -> assertEquals(ref("P", 48), level.frame(3, 2, 1, 1)), // NON-NLS
         () -> assertEquals(Optional.empty(), level.frame(0, 0, 0, 2)));
+  }
+
+  @Test
+  void each_optical_path_has_the_icc_profile_it_declares() {
+    Attributes dcm = tiledFull("P", 1000, 700, 256); // NON-NLS
+    opticalPaths(dcm, "BRIGHT", "DAPI", "BAD"); // NON-NLS
+    dcm.setInt(Tag.NumberOfFrames, VR.IS, 12 * 3);
+    Sequence paths = dcm.getSequence(Tag.OpticalPathSequence);
+    paths.get(0).setBytes(Tag.ICCProfile, VR.OB, IccProfile.SRGB.data());
+    paths.get(2).setBytes(Tag.ICCProfile, VR.OB, new byte[] {1, 2, 3});
+    Slide slide = single(dcm);
+    assertAll(
+        () -> assertEquals(Optional.of(IccProfile.SRGB), slide.iccProfile(0)),
+        () -> assertEquals(Optional.empty(), slide.iccProfile(1), "none declared: sRGB"),
+        () -> assertEquals(Optional.empty(), slide.iccProfile(2), "an invalid profile is ignored"),
+        () -> assertEquals(Optional.empty(), slide.iccProfile(7)));
   }
 
   @Test

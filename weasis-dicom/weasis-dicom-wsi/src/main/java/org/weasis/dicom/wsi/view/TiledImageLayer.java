@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.wsi.view;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -29,17 +30,20 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.swing.Timer;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.image.color.ColorTransform;
 import org.weasis.dicom.wsi.model.PyramidLevel;
 import org.weasis.dicom.wsi.model.Slide;
 import org.weasis.dicom.wsi.model.TileId;
 import org.weasis.dicom.wsi.model.WsiImageType;
 import org.weasis.dicom.wsi.tile.TilePlan;
 import org.weasis.dicom.wsi.tile.TileScheduler;
+import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 
@@ -118,6 +122,8 @@ public final class TiledImageLayer implements AutoCloseable {
   private final Timer settleTimer;
   private boolean thumbnailRequested;
   private volatile BufferedImage thumbnail;
+  private Supplier<ColorTransform> color = () -> ColorTransform.IDENTITY;
+  private volatile ColorTransform transform = ColorTransform.IDENTITY;
 
   /**
    * @param scheduler the tile loading of the view, closed with this layer; its listener should call
@@ -151,6 +157,15 @@ public final class TiledImageLayer implements AutoCloseable {
     this.focalPlane = focalPlane;
     this.opticalPath = opticalPath;
     plannedViewport = null;
+  }
+
+  /**
+   * The conversion of the colors of the tiles to the display, asked at each paint: from the profile
+   * of the optical path shown to the profile of the monitor. When it changes, the paint images and
+   * the thumbnail are built again; the tiles of the cache keep their stored values.
+   */
+  public void setColor(Supplier<ColorTransform> color) {
+    this.color = Objects.requireNonNull(color);
   }
 
   /** The tiles planned by the last paint. */
@@ -212,6 +227,7 @@ public final class TiledImageLayer implements AutoCloseable {
   public void paint(
       Graphics2D g2d, AffineTransform modelToView, Rectangle2D viewBounds, PlanTarget target) {
     Slide slide = slide();
+    updateColor();
     Rectangle2D slideBounds = new Rectangle2D.Double(0, 0, slide.width(), slide.height());
     AffineTransform viewToModel;
     try {
@@ -238,7 +254,7 @@ public final class TiledImageLayer implements AutoCloseable {
     try {
       g.transform(modelToView);
       g.clip(slideBounds);
-      g.setColor(slide.background());
+      g.setColor(managed(slide.background(), transform));
       g.fill(slideBounds);
       // Once every visible tile is there (pinned, they stay) and the view is still, they are the
       // only thing to draw; otherwise the cached tiles of every level fill in under them, the
@@ -270,6 +286,41 @@ public final class TiledImageLayer implements AutoCloseable {
     scheduler.close();
     paintBuffers.clear();
     thumbnail = null;
+  }
+
+  // The paint images hold display values: they are dropped when the conversion changes
+  private void updateColor() {
+    ColorTransform now = Objects.requireNonNullElse(color.get(), ColorTransform.IDENTITY);
+    if (now != transform) {
+      transform = now;
+      paintBuffers.clear();
+      thumbnail = null;
+      thumbnailRequested = false;
+    }
+  }
+
+  // The paint image of a tile in display colors; gray tiles are not color-managed
+  private BufferedImage toDisplay(PlanarImage image, ColorTransform conversion) {
+    if (conversion.isIdentity() || image.type() != CvType.CV_8UC3) {
+      return converter.apply(image);
+    }
+    ImageCV converted = new ImageCV(image.size(), CvType.CV_8UC3);
+    try {
+      conversion.apply(image.toMat(), converted);
+      return converter.apply(converted);
+    } finally {
+      converted.release();
+    }
+  }
+
+  private static Color managed(Color color, ColorTransform conversion) {
+    if (conversion.isIdentity()) {
+      return color;
+    }
+    byte[] bgr = {(byte) color.getBlue(), (byte) color.getGreen(), (byte) color.getRed()};
+    byte[] out = new byte[3];
+    conversion.convertRow(bgr, out, 3);
+    return new Color(out[2] & 0xFF, out[1] & 0xFF, out[0] & 0xFF);
   }
 
   /** Disables the delay between two plans, for the tests. */
@@ -441,7 +492,8 @@ public final class TiledImageLayer implements AutoCloseable {
   private PaintBuffer paintBuffer(TileId tile, PlanarImage image, Rectangle bounds) {
     PaintBuffer buffer = paintBuffers.get(tile);
     if (buffer == null || buffer.source != image) {
-      buffer = new PaintBuffer(image, crop(converter.apply(image), bounds.width, bounds.height));
+      buffer =
+          new PaintBuffer(image, crop(toDisplay(image, transform), bounds.width, bounds.height));
       paintBuffers.put(tile, buffer);
     }
     return buffer;
@@ -559,13 +611,17 @@ public final class TiledImageLayer implements AutoCloseable {
       return;
     }
     thumbnailRequested = true;
+    ColorTransform conversion = transform;
     executor.execute(
         () -> {
           try {
             var image = scheduler.source().readAssociatedImage(WsiImageType.THUMBNAIL);
             if (image.isPresent()) {
-              thumbnail = converter.apply(image.get());
+              BufferedImage converted = toDisplay(image.get(), conversion);
               image.get().release();
+              if (conversion == transform) { // else read again by the paint that changed it
+                thumbnail = converted;
+              }
               repaint.run();
             }
           } catch (Exception e) {

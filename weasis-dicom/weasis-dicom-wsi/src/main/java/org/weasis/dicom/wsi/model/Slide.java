@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import org.weasis.core.api.image.color.IccProfile;
 
 /**
  * One pyramid of a whole slide series: its levels from the base (largest) to the top, and the
@@ -34,6 +35,7 @@ public final class Slide {
   private final Map<WsiImageType, AssociatedImage> associatedImages;
   private final Double objectiveLensPower;
   private final Color background;
+  private final Map<String, IccProfile> iccProfiles;
 
   Slide(
       String pyramidUID,
@@ -41,6 +43,16 @@ public final class Slide {
       Collection<AssociatedImage> associatedImages,
       Double objectiveLensPower,
       Color background) {
+    this(pyramidUID, levels, associatedImages, objectiveLensPower, background, Map.of());
+  }
+
+  Slide(
+      String pyramidUID,
+      List<PyramidLevel> levels,
+      Collection<AssociatedImage> associatedImages,
+      Double objectiveLensPower,
+      Color background,
+      Map<String, IccProfile> iccProfiles) {
     if (levels.isEmpty()) {
       throw new IllegalArgumentException("A slide needs at least one level");
     }
@@ -48,6 +60,7 @@ public final class Slide {
     this.levels = List.copyOf(levels);
     this.objectiveLensPower = objectiveLensPower;
     this.background = background;
+    this.iccProfiles = Map.copyOf(iccProfiles);
     Map<WsiImageType, AssociatedImage> map = new EnumMap<>(WsiImageType.class);
     associatedImages.forEach(a -> map.putIfAbsent(a.type(), a));
     this.associatedImages = map;
@@ -56,6 +69,17 @@ public final class Slide {
   /** The colour of the slide where no tile covers it, also the colour of empty tiles. */
   public Color background() {
     return background;
+  }
+
+  /**
+   * ICC Profile (0028,2000) of an optical path, by its index in the paths of the base level: the
+   * colors of the tiles of that path. Empty when the path declares none, which reads as sRGB.
+   */
+  public Optional<IccProfile> iccProfile(int opticalPath) {
+    List<String> paths = base().opticalPaths();
+    return opticalPath < 0 || opticalPath >= paths.size()
+        ? Optional.empty()
+        : Optional.ofNullable(iccProfiles.get(paths.get(opticalPath)));
   }
 
   public Optional<String> pyramidUID() {

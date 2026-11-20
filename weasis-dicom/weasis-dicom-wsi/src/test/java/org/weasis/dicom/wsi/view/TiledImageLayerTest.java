@@ -12,6 +12,7 @@ package org.weasis.dicom.wsi.view;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -23,9 +24,11 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.color.ICC_Profile;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,6 +44,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
+import org.weasis.core.api.image.color.ColorManagement;
+import org.weasis.core.api.image.color.ColorTransform;
+import org.weasis.core.api.image.color.IccProfile;
 import org.weasis.dicom.wsi.model.Slide;
 import org.weasis.dicom.wsi.model.SlideBuilder;
 import org.weasis.dicom.wsi.model.SyntheticSlides;
@@ -221,6 +227,67 @@ class TiledImageLayerTest {
     assertAll(
         () -> assertEquals(L0_EVEN, at(image, 100, 100)),
         () -> assertEquals(Color.WHITE, at(image, 700, 700)));
+  }
+
+  // From a wider gamut than sRGB to sRGB: a conversion that moves every saturated color
+  private static ColorTransform wideToSrgb() {
+    ICC_Profile profile = ICC_Profile.getInstance(IccProfile.SRGB.data());
+    profile.setData(ICC_Profile.icSigRedColorantTag, xyz(0.6097, 0.3111, 0.0195));
+    profile.setData(ICC_Profile.icSigGreenColorantTag, xyz(0.2053, 0.6257, 0.0609));
+    profile.setData(ICC_Profile.icSigBlueColorantTag, xyz(0.1492, 0.0632, 0.7446));
+    return ColorManagement.to(IccProfile.of(profile.getData()).orElseThrow(), IccProfile.SRGB);
+  }
+
+  private static Color converted(Color color, ColorTransform conversion) {
+    byte[] in = {(byte) color.getBlue(), (byte) color.getGreen(), (byte) color.getRed()};
+    byte[] out = new byte[3];
+    conversion.convertRow(in, out, 3);
+    return new Color(out[2] & 0xFF, out[1] & 0xFF, out[0] & 0xFF);
+  }
+
+  private static byte[] xyz(double x, double y, double z) {
+    ByteBuffer buf = ByteBuffer.allocate(20);
+    buf.put(new byte[] {'X', 'Y', 'Z', ' '}).putInt(0);
+    buf.putInt((int) Math.round(x * 65536)).putInt((int) Math.round(y * 65536));
+    buf.putInt((int) Math.round(z * 65536));
+    return buf.array();
+  }
+
+  @Test
+  void the_background_is_converted_and_a_new_conversion_rebuilds_the_paint_images() {
+    Attributes dcm = sparse("S", 1024, 1024, 512, new double[] {1, 1}); // NON-NLS
+    dcm.setInt(Tag.RecommendedAbsentPixelCIELabValue, VR.US, 0x8000, 0xC000, 0xC000);
+    ColorTransform conversion = wideToSrgb();
+    FakeSource source = new FakeSource(dcm);
+    Color background = source.slide.background();
+    AtomicInteger conversions = new AtomicInteger();
+    TileScheduler scheduler =
+        new TileScheduler(
+            source, TileCache.getInstance(), Runnable::run, 1, t -> repaints.incrementAndGet());
+    TiledImageLayer layer =
+        new TiledImageLayer(
+            scheduler,
+            repaints::incrementAndGet,
+            Runnable::run,
+            i -> {
+              conversions.incrementAndGet();
+              return paintOf(source, i);
+            });
+    layer.setPlanDelay(0);
+    layers.add(layer);
+
+    BufferedImage plain = paint(layer, new AffineTransform(), 1024, 1024);
+    paint(layer, new AffineTransform(), 1024, 1024);
+    int built = conversions.get();
+    layer.setColor(() -> conversion);
+    BufferedImage managed = paint(layer, new AffineTransform(), 1024, 1024);
+
+    assertAll(
+        () -> assertEquals(background, at(plain, 700, 700)),
+        () -> assertFalse(conversion.isIdentity()),
+        () -> assertEquals(converted(background, conversion), at(managed, 700, 700)),
+        () -> assertNotEquals(background, at(managed, 700, 700)),
+        () -> assertTrue(conversions.get() > built, "the paint images are built again"));
   }
 
   @Test
