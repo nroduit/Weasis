@@ -52,7 +52,7 @@ class PrintCommandsTest {
               + " --background black --annotations off --position top-left --masking teaching",
           "print:render --job job-1 --out /tmp/page.png",
           "print:render --job job-1 --to Fake --dpi 300 --gray --page 2 --out /tmp/page.png",
-          "print:page --series --grid 4x3 --step 2 --frames 1-40 --header on",
+          "print:page --series --grid 3x4 --step 2 --frames 1-40 --header on",
           "print:send --job job-1 --to Fake --copies 2",
           "print:send --job job-1 --to file:pdf --out /tmp/pages.pdf --dpi 200");
 
@@ -203,7 +203,7 @@ class PrintCommandsTest {
   @Test
   void grid_and_frame_range_are_parsed_and_checked() {
     assertAll(
-        () -> assertArrayEquals(new int[] {4, 3}, PrintCommands.Page.gridSize("4x3")),
+        () -> assertArrayEquals(new int[] {3, 4}, PrintCommands.Page.gridSize("3x4")),
         () -> assertArrayEquals(new int[] {2, 2}, PrintCommands.Page.gridSize("2X2")),
         () -> assertArrayEquals(new int[] {1, 0}, PrintCommands.Page.frameRange(null)),
         () -> assertArrayEquals(new int[] {5, 40}, PrintCommands.Page.frameRange("5-40")),

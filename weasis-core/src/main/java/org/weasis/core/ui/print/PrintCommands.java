@@ -278,7 +278,7 @@ public class PrintCommands implements CommandExtension {
     if (job.pages() instanceof SeriesPages<?> series) {
       json.add("content", "series") // NON-NLS
           .add("frames", series.frameCount()) // NON-NLS
-          .add("grid", series.cols() + "x" + series.rows()); // NON-NLS
+          .add("grid", series.rows() + "x" + series.cols()); // NON-NLS
     } else {
       json.add("content", job.cellCount() == 1 ? "pane" : "layout"); // NON-NLS
     }
@@ -421,10 +421,12 @@ public class PrintCommands implements CommandExtension {
 
     @Option(
         names = "--grid",
-        paramLabel = "<cols>x<rows>",
-        description = "Cells per page with --series (default: 4x3).")
+        paramLabel = "<rows>x<cols>",
+        description =
+            "Cells per page with --series, rows then columns as the grids of a viewer (default: "
+                + "3x4, three rows of four).")
     @Since("5.0")
-    String grid = "4x3"; // NON-NLS
+    String grid = "3x4"; // NON-NLS
 
     @Option(
         names = "--step",
@@ -517,7 +519,7 @@ public class PrintCommands implements CommandExtension {
       }
       int[] size = gridSize(grid);
       int[] range = frameRange(frames);
-      return seriesOf(canvas, size[0], size[1], range[0], range[1], step);
+      return seriesOf(canvas, size[1], size[0], range[0], range[1], step);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -542,22 +544,27 @@ public class PrintCommands implements CommandExtension {
       return exportOf(panes.get(pane.toOffset()));
     }
 
-    /** {@code <cols>x<rows>}, both at least 1. */
+    /**
+     * {@code <rows>x<cols>}, both at least 1, as the grids of a viewer; the DICOM film format is
+     * written the other way round ({@code STANDARD\C,R}) by the print request.
+     *
+     * @return the rows, then the columns
+     */
     static int[] gridSize(String text) {
       String[] parts =
           text == null ? new String[0] : text.toLowerCase(Locale.ROOT).split("x"); // NON-NLS
       try {
         if (parts.length == 2) {
-          int cols = Integer.parseInt(parts[0].trim());
-          int rows = Integer.parseInt(parts[1].trim());
+          int rows = Integer.parseInt(parts[0].trim());
+          int cols = Integer.parseInt(parts[1].trim());
           if (cols >= 1 && rows >= 1 && cols * rows <= 64) {
-            return new int[] {cols, rows};
+            return new int[] {rows, cols};
           }
         }
       } catch (NumberFormatException e) {
         // reported below
       }
-      throw new IllegalArgumentException("--grid must be <cols>x<rows>, such as 4x3: " + text);
+      throw new IllegalArgumentException("--grid must be <rows>x<cols>, such as 3x4: " + text);
     }
 
     /** {@code <first>-<last>} counting from 1; {@code null} or empty means every frame. */

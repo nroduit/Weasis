@@ -87,6 +87,10 @@ line naming the current spelling. Use the current one everywhere.
   (and `--pane <n>`), and they **return the display state of that pane**: zoom, window/level,
   rotation, flip, pan, image, grid and synchronization. Called with no argument at all, they
   return that state without changing anything, which is how you read the display.
+- A grid size is always **rows then columns**, `<rows>x<cols>`: `2x3` is two rows of three, for
+  the grid ids of `view2d:grid`, the tiles of `--tiled` and the cells of `print:page --grid`. A
+  size in pixels is the other way round, width then height. When unsure, read the `rows` and
+  `cols` fields of the JSON answer instead of the text form.
 - Values go on options, so nothing needs quoting tricks and no `--` is ever required:
   `view2d:pan --dx 10 --dy -5`, `view2d:window-level --window-by 200 --level-by -100`,
   `view2d:scroll --by -3`, `view2d:reset --tool window-level --tool zoom`.
@@ -136,7 +140,7 @@ line naming the current spelling. Use the current one everywhere.
    `workspace:load --file layout.json`. `workspace:list` shows, for each view, its grid, its
    synchronization and what every pane holds.
 8. **Print** a layout, a pane or a series: `print:page` (the selected viewer, or `--view <id>`,
-   `--pane 2` for one pane; `--series --grid 4x3 --step 2 --frames 1-40` for the frames of the
+   `--pane 2` for one pane; `--series --grid 3x4 --step 2 --frames 1-40` for the frames of the
    pane's series, a page per grid; `--to <destination>`, `--paper A4 --orientation landscape
    --text normal --background white --header on`) returns a job handle, the number of pages, the
    page in millimeters and the figures of a cell (size, image pixels per inch of paper, magnified
@@ -299,7 +303,7 @@ prints the definitions, `help types` the value types with the verbs that hand th
 - **format**: the file format of an export or a capture: png, jpg, xml, csv, or what a plugin adds
 - **frame**: one frame of a multiframe DICOM instance
 - **graphic**: any drawn object on a pane (measurement, annotation, region) with a graphic id (not shape)
-- **grid**: the arrangement of panes inside a view
+- **grid**: the arrangement of panes inside a view; a grid size is written <rows>x<cols> everywhere (2x3 is two rows of three): grid ids, tiles of a viewport, cells of a printed page
 - **handle**: an id a verb returns and another verb accepts; never invented by the caller
 - **image**: one displayable item of a series: an instance, or one frame of a multiframe instance
 - **job**: a print job: the pages prepared for a destination

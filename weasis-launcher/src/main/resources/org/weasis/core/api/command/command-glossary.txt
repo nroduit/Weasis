@@ -7,7 +7,7 @@ view | one tab of the workspace, an instance of a viewer type showing series; it
 viewer type | a kind of view (2d, mpr, 3d, sr, …) able to open a given series
 pane | one image canvas inside the grid of a view, addressed by its index within the view | canvas index
 viewport | a pane that shows one series as a stack or as tiles of successive images, the stack and tiled modes of 4.8
-grid | the arrangement of panes inside a view
+grid | the arrangement of panes inside a view; a grid size is written <rows>x<cols> everywhere (2x3 is two rows of three): grid ids, tiles of a viewport, cells of a printed page
 anchor | the view a new split or stack is placed against
 layout | the arrangement of windows, tab groups and views, saved as a snapshot
 selected | the view, pane or series that receives a command when no handle is given | current view, active view, current pane, active pane, focused view

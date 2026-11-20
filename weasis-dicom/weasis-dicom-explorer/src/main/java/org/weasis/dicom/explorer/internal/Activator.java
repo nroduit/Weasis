@@ -51,6 +51,8 @@ public class Activator extends WeasisPlugin {
 
     AbstractDicomNode.registerLegacyConversions();
     SettingCatalog.declare(HpSettings.class);
+    // the attributes of the image as a cell of the layouts of the user
+    org.weasis.dicom.explorer.tag.DicomFieldsView.registerAsLayoutComponent();
     GuiUtils.getUICore().addClosingHook(SessionActions::keepOnClose);
     // The transaction boundary of the display: checkpoints before a script or a remote batch
     CommandManager.setStateBoundary(CheckpointService.global());

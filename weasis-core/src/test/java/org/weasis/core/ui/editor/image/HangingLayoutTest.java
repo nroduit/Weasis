@@ -69,9 +69,9 @@ class HangingLayoutTest {
   @Test
   void aTilingIsReadFromColsByRowsAndNeverBelowOne() {
     assertAll(
-        () -> assertEquals(new Tiling(2, 3), Tiling.parse("2x3")), // NON-NLS
+        () -> assertEquals(new Tiling(3, 2), Tiling.parse("2x3")), // NON-NLS
         () -> assertEquals(new Tiling(1, 1), Tiling.parse("0X0")), // NON-NLS
-        () -> assertEquals("2x3", new Tiling(2, 3).toString()), // NON-NLS
+        () -> assertEquals("2x3", new Tiling(3, 2).toString()), // NON-NLS
         () -> assertThrows(IllegalArgumentException.class, () -> Tiling.parse("2")), // NON-NLS
         () -> assertThrows(NumberFormatException.class, () -> Tiling.parse("axb"))); // NON-NLS
   }

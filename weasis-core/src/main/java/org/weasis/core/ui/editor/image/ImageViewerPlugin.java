@@ -31,6 +31,7 @@ import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.Messages;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.layout.CustomLayouts;
 import org.weasis.core.api.gui.layout.LayoutCellManager;
 import org.weasis.core.api.gui.layout.MergedCellsBuilder;
 import org.weasis.core.api.gui.layout.MigCell;
@@ -132,6 +133,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
           2,
           4,
           VIEWPORT_CLASS.getName());
+
+  /** Largest side of a grid resolved from its id or fitted to a number of series. */
+  public static final int MAX_GRID_SIDE = 20;
+
+  private static final java.util.regex.Pattern GRID_ID =
+      java.util.regex.Pattern.compile("(\\d{1,2})x(\\d{1,2})"); // NON-NLS
 
   public record LayoutModel(String uid, MigLayoutModel model) {}
 
@@ -701,7 +708,63 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     if (id == null) {
       return Optional.empty();
     }
-    return getLayoutList().stream().filter(m -> id.equals(m.getId())).findFirst();
+    Optional<MigLayoutModel> listed =
+        getLayoutList().stream().filter(m -> id.equals(m.getId())).findFirst();
+    return listed.isPresent() || !offersAnyGrid() ? listed : gridOf(id);
+  }
+
+  /**
+   * Whether this viewer shows any uniform grid of viewports, so that an id {@code <rows>x<cols>} is
+   * valid for a command, a hanging protocol or a kept session even when the layout menu does not
+   * list it. Viewers with a fixed set of specialized layouts return {@code false}.
+   */
+  protected boolean offersAnyGrid() {
+    return false;
+  }
+
+  /**
+   * The uniform grid of viewports of that id, {@code <rows>x<cols>} with both sides from 1 to
+   * {@value #MAX_GRID_SIDE}.
+   */
+  public static Optional<MigLayoutModel> gridOf(String id) {
+    java.util.regex.Matcher m = id == null ? null : GRID_ID.matcher(id);
+    if (m == null || !m.matches()) {
+      return Optional.empty();
+    }
+    int rows = Integer.parseInt(m.group(1));
+    int cols = Integer.parseInt(m.group(2));
+    if (rows < 1 || cols < 1 || rows > MAX_GRID_SIDE || cols > MAX_GRID_SIDE) {
+      return Optional.empty();
+    }
+    return Optional.of(buildMigLayoutModel(rows, cols, VIEWPORT_CLASS.getName()));
+  }
+
+  /**
+   * The uniform grid that shows that many series in an area of that shape: the fewest empty cells
+   * with panes as close to a square as the area allows.
+   *
+   * @param ratio width of the area divided by its height
+   */
+  public static MigLayoutModel fittingGrid(int cells, double ratio) {
+    int count = Math.clamp(cells, 1, MAX_GRID_SIDE * MAX_GRID_SIDE);
+    double shape = ratio > 0 && Double.isFinite(ratio) ? ratio : 1.6;
+    int bestRows = 1;
+    int bestCols = count;
+    double bestScore = Double.MAX_VALUE;
+    for (int rows = 1; rows <= Math.min(count, MAX_GRID_SIDE); rows++) {
+      int cols = (int) Math.ceil(count / (double) rows);
+      if (cols > MAX_GRID_SIDE) {
+        continue;
+      }
+      double pane = shape * rows / cols; // width / height of one pane
+      double score = Math.abs(Math.log(pane)) + 0.25 * (rows * cols - count);
+      if (score < bestScore - 1e-9) {
+        bestScore = score;
+        bestRows = rows;
+        bestCols = cols;
+      }
+    }
+    return buildMigLayoutModel(bestRows, bestCols, VIEWPORT_CLASS.getName());
   }
 
   /** The synchronization of that command among the ones the event manager offers. */
@@ -939,9 +1002,19 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     return viewCanvas;
   }
 
+  /** A declared component of a layout, created by its kind and following the selected view. */
+  private Component createLayoutComponent(LayoutComponents.Kind kind) {
+    LayoutComponent component = kind.factory().apply(this);
+    eventManager.addSeriesViewerListener(component);
+    return component.asComponent();
+  }
+
   /** Creates a non-ViewCanvas component for the given cell. */
   private Component createNonViewComponent(MigCell cell) {
-    Component component = createComponent(cell.type());
+    Component component =
+        LayoutComponents.ofType(cell.type())
+            .<Component>map(this::createLayoutComponent)
+            .orElseGet(() -> createComponent(cell.type()));
     if (component != null) {
       if (component instanceof JComponent jComponent) {
         jComponent.setOpaque(true);
@@ -1448,10 +1521,17 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       return getDefaultLayoutModel();
     }
 
-    return eventManager
-        .getAction(ActionW.LAYOUT)
-        .map(layout -> findBestLayoutForSize(layout.getAllItem(), size))
-        .orElse(getDefaultLayoutModel());
+    MigLayoutModel best =
+        eventManager
+            .getAction(ActionW.LAYOUT)
+            .map(layout -> findBestLayoutForSize(layout.getAllItem(), size))
+            .orElse(getDefaultLayoutModel());
+    if (offersAnyGrid() && getViewTypeNumber(best, getSeriesViewerClass()) < size) {
+      // more series than the largest grid of the menu: a grid fitted to the viewer area
+      int height = getHeight();
+      return fittingGrid(size, height > 0 ? getWidth() / (double) height : 0);
+    }
+    return best;
   }
 
   /** Finds the best layout model for the specified size from available layouts. */
@@ -1487,10 +1567,17 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       return defaultModel;
     }
 
+    MigLayoutModel best = defaultModel;
     if (layout instanceof ComboItemListener<?> comboItemListener) {
-      return findBestStaticLayoutForSize(comboItemListener.getAllItem(), size, defaultModel);
+      best = findBestStaticLayoutForSize(comboItemListener.getAllItem(), size, defaultModel);
     }
-    return defaultModel;
+    if (defaultModel != null
+        && VIEWS_1x1.getId().equals(defaultModel.getId())
+        && getViewTypeNumber(best) < size) {
+      // more series than the largest grid of the menu, before the viewer has a size
+      return fittingGrid(size, 0);
+    }
+    return best;
   }
 
   /** Static version of findBestLayoutForSize for use in static context. */
@@ -1529,84 +1616,31 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         .orElse(defaultModel);
   }
 
-  /** Generates a list of layout models based on viewer dimensions and base models. */
+  /**
+   * The grids a viewer offers in its layout menu: its own, in the order given, then the layouts of
+   * the user. The list is the same on every screen; a grid that is not in it is still reached by
+   * its id, see {@link #findLayout}.
+   */
   protected static ArrayList<MigLayoutModel> getLayoutList(
       ImageViewerPlugin<?> viewerPlugin, List<MigLayoutModel> baseLayoutModels) {
-    LayoutDimensions dims = calculateLayoutDimensions(viewerPlugin, baseLayoutModels);
     ArrayList<MigLayoutModel> layouts = new ArrayList<>(baseLayoutModels);
-
-    // Exclude 1x1 when generating dynamic layouts
-    if (dims.shouldGenerateDynamicLayouts()) {
-      generateDynamicLayouts(layouts, dims);
-    }
-
-    layouts.sort(Comparator.comparingInt(MigLayoutModel::getCellCount));
+    List<LayoutComponents.Kind> kinds = LayoutComponents.kindsFor(viewerPlugin);
+    layouts.addAll(
+        CustomLayouts.models(
+            VIEWPORT_CLASS.getName(),
+            id ->
+                kinds.stream()
+                    .filter(k -> k.id().equals(id))
+                    .map(LayoutComponents.Kind::type)
+                    .findFirst()
+                    .orElse(null),
+            id ->
+                kinds.stream()
+                    .filter(k -> k.id().equals(id))
+                    .map(LayoutComponents.Kind::toString)
+                    .findFirst()
+                    .orElse(null)));
     return layouts;
-  }
-
-  /** Calculates layout dimensions based on viewer aspect ratio. */
-  private static LayoutDimensions calculateLayoutDimensions(
-      ImageViewerPlugin<?> viewerPlugin, List<MigLayoutModel> baseModels) {
-    int width = viewerPlugin.getWidth();
-    int height = viewerPlugin.getHeight();
-    double ratio = width / (double) height;
-
-    int cols = ratio >= 1.0 ? (int) Math.round(ratio * 1.5) : 1;
-    int rows = ratio < 1.0 ? (int) Math.round((1.0 / ratio) * 1.5) : 1;
-
-    // Calculate minimum dimensions from existing models
-    int minCols = cols;
-    int minRows = rows;
-    for (MigLayoutModel model : baseModels) {
-      Dimension dim = model.getGridSize();
-      minCols = Math.max(minCols, dim.width);
-      minRows = Math.max(minRows, dim.height);
-    }
-
-    int factorLimit =
-        cols == 1 ? (int) Math.round(width / 512.0) : (int) Math.round(height / 512.0);
-    factorLimit = Math.max(1, factorLimit);
-
-    return new LayoutDimensions(cols, rows, minCols, minRows, factorLimit);
-  }
-
-  /** Generates dynamic layout models based on calculated dimensions. */
-  private static void generateDynamicLayouts(
-      ArrayList<MigLayoutModel> layouts, LayoutDimensions dims) {
-    if (dims.cols > dims.rows) {
-      int step = 1 + (dims.cols / 20);
-      for (int i = dims.cols / 2; i < dims.cols; i += step) {
-        addDynamicLayout(layouts, dims.factorLimit, i, dims.rows, dims.minCols, dims.minRows);
-      }
-    } else {
-      int step = 1 + (dims.rows / 20);
-      for (int i = dims.rows / 2; i < dims.rows; i += step) {
-        addDynamicLayout(layouts, dims.factorLimit, dims.cols, i, dims.minCols, dims.minRows);
-      }
-    }
-    addDynamicLayout(layouts, dims.factorLimit, dims.cols, dims.rows, dims.minCols, dims.minRows);
-  }
-
-  /** Adds dynamic layout variations based on factor scaling. */
-  private static void addDynamicLayout(
-      List<MigLayoutModel> layouts, int factorLimit, int cols, int rows, int minCols, int minRows) {
-    for (int factor = 1; factor <= factorLimit; factor++) {
-      if (factor > 2 || factor * rows > minRows || factor * cols > minCols) {
-        int scaledRows = factor * rows;
-        int scaledCols = factor * cols;
-        if (scaledRows < 50 && scaledCols < 50) {
-          layouts.add(buildMigLayoutModel(scaledRows, scaledCols, VIEWPORT_CLASS.getName()));
-        }
-      }
-    }
-  }
-
-  /** Helper record for layout dimension calculations. */
-  private record LayoutDimensions(int cols, int rows, int minCols, int minRows, int factorLimit) {
-
-    boolean shouldGenerateDynamicLayouts() {
-      return cols != rows && cols != 0 && rows != 0;
-    }
   }
 
   public MigLayoutModel getViewLayout(String title) {

@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -25,10 +26,12 @@ import java.util.Optional;
 import javax.swing.BoundedRangeModel;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 import javax.swing.event.SwingPropertyChangeSupport;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.layout.CustomLayouts;
 import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -802,24 +805,127 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     menu.add(stackItem);
     menu.add(new JSeparator());
 
-    int[][] presets = {{1, 2}, {2, 1}, {2, 2}, {2, 3}, {3, 2}, {3, 3}, {4, 4}};
-    for (int[] preset : presets) {
-      int cols = preset[0];
-      int rows = preset[1];
-      boolean isCurrent = isTiled && pane.getTiledCols() == cols && pane.getTiledRows() == rows;
-
-      String label = Messages.format("ImageViewerEventManager.viewport_tiled", cols, rows);
+    // Rows then columns, as the ids of the grids of views (1x2 is one row of two)
+    List<CustomLayouts.Tiles> grids = new ArrayList<>();
+    for (int[] preset : new int[][] {{1, 2}, {2, 2}, {2, 3}, {3, 3}}) {
+      grids.add(new CustomLayouts.Tiles(preset[0], preset[1]));
+    }
+    int presets = grids.size();
+    for (CustomLayouts.Tiles custom : CustomLayouts.tiles()) {
+      if (!grids.contains(custom)) {
+        grids.add(custom);
+      }
+    }
+    if (isTiled) {
+      // a grid applied by a command or a protocol stays visible as the current one
+      CustomLayouts.Tiles current =
+          new CustomLayouts.Tiles(pane.getTiledRows(), pane.getTiledCols());
+      if (!grids.contains(current)) {
+        grids.add(current);
+      }
+    }
+    for (int i = 0; i < grids.size(); i++) {
+      CustomLayouts.Tiles grid = grids.get(i);
+      boolean isCurrent =
+          isTiled && pane.getTiledCols() == grid.cols() && pane.getTiledRows() == grid.rows();
+      if (i == presets) {
+        menu.add(new JSeparator());
+      }
+      String label =
+          Messages.format("ImageViewerEventManager.viewport_tiled", grid.rows(), grid.cols());
       JCheckBoxMenuItem item = new JCheckBoxMenuItem(label, isCurrent);
+      // the picture of the grid, so the order of rows and columns needs no reading
+      item.setIcon(
+          ImageViewerPlugin.buildMigLayoutModel(
+                  grid.rows(), grid.cols(), ImageViewerPlugin.VIEWPORT_CLASS.getName())
+              .getIcon());
       item.addActionListener(
           e -> {
             if (!isCurrent) {
-              pane.switchToTiled(cols, rows, () -> container.createDefaultView(null));
-              updateComponentsListener(pane.getSelectedCanvas());
+              applyTiles(grid);
             }
           });
       menu.add(item);
     }
+    menu.add(new JSeparator());
+    JMenuItem customItem =
+        new JMenuItem(Messages.getString("ImageViewerEventManager.viewport_custom"));
+    customItem.addActionListener(e -> openCustomLayouts(container, true));
+    menu.add(customItem);
     return menu;
+  }
+
+  /** Shows the selected viewport on that grid of tiles. */
+  public void applyTiles(CustomLayouts.Tiles grid) {
+    ImageViewerPlugin<E> container = getSelectedView2dContainer();
+    ViewportPane<E> pane = getSelectedViewPortPane();
+    if (container == null || pane == null || !container.supportsViewportPanes()) {
+      return;
+    }
+    if (grid.rows() == 1 && grid.cols() == 1) {
+      pane.switchToStack();
+    } else {
+      pane.switchToTiled(grid.cols(), grid.rows(), () -> container.createDefaultView(null));
+    }
+    updateComponentsListener(pane.getSelectedCanvas());
+  }
+
+  /** Gives the layout action the grids of the selected viewer again, after the user's changed. */
+  public void refreshLayouts() {
+    ImageViewerPlugin<E> container = getSelectedView2dContainer();
+    Optional<ComboItemListener<MigLayoutModel>> layout = getAction(ActionW.LAYOUT);
+    if (container == null || layout.isEmpty()) {
+      return;
+    }
+    layout
+        .get()
+        .setDataListWithoutTriggerAction(container.getLayoutList().toArray(new MigLayoutModel[0]));
+    layout.get().setSelectedItemWithoutTriggerAction(container.getOriginalLayoutModel());
+  }
+
+  /**
+   * Opens the editor of the layouts of the user; what it saves reaches the layout menu, and its
+   * Apply button shows the selected grid in the selected viewer.
+   *
+   * @param tiled opens on the grids of tiles
+   */
+  public void openCustomLayouts(Component parent, boolean tiled) {
+    ImageViewerPlugin<E> container = getSelectedView2dContainer();
+    CustomLayoutDialog dialog =
+        new CustomLayoutDialog(
+            parent == null ? null : SwingUtilities.getWindowAncestor(parent),
+            grid -> showCustomLayout(grid.id()),
+            this::applyTiles,
+            tiled,
+            LayoutComponents.kindsFor(container));
+    GuiUtils.showCenterScreen(dialog, parent);
+    refreshLayouts();
+    // the layout on screen may be one that was edited: show it as it is now
+    if (container != null && CustomLayouts.isCustom(container.getLayoutModel().getId())) {
+      showCustomLayout(container.getLayoutModel().getId());
+    }
+  }
+
+  /**
+   * Shows the layout of the user of that id in the selected viewer, as it is now saved. The layout
+   * on screen is compared, not the entry of the menu: the menu already holds the edited layout
+   * under the same id, so going through its selection alone would change nothing.
+   */
+  private void showCustomLayout(String id) {
+    refreshLayouts();
+    ImageViewerPlugin<E> container = getSelectedView2dContainer();
+    Optional<ComboItemListener<MigLayoutModel>> layout = getAction(ActionW.LAYOUT);
+    if (container == null || layout.isEmpty()) {
+      return;
+    }
+    container
+        .findLayout(id)
+        .filter(model -> !model.equals(container.getLayoutModel()))
+        .ifPresent(
+            model -> {
+              layout.get().setSelectedItemWithoutTriggerAction(null);
+              layout.get().setSelectedItem(model);
+            });
   }
 
   public ImageViewerPlugin<E> getSelectedView2dContainer() {

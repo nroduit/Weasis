@@ -43,7 +43,6 @@ import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
-import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.HistogramData.Model;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphicArea;
@@ -59,8 +58,7 @@ import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.WlParams;
 
-public class HistogramView extends JComponent
-    implements SeriesViewerListener, GraphicSelectionListener {
+public class HistogramView extends JComponent implements LayoutComponent, GraphicSelectionListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HistogramView.class);
 

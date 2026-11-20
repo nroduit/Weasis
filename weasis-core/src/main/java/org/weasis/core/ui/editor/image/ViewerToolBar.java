@@ -40,6 +40,7 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.layout.CustomLayouts;
 import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -203,8 +204,26 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
       JMenu menu = layout.get().createUnregisteredRadioMenu("layout"); // NON-NLS
       popupMouseButtons.setInvoker(dropDownButton);
       Component[] cps = menu.getMenuComponents();
-      for (Component cp : cps) {
-        popupMouseButtons.add(cp);
+      // The layouts of the user are the last ones of the list, apart from the built-in ones
+      long custom =
+          java.util.Arrays.stream(layout.get().getAllItem())
+              .filter(MigLayoutModel.class::isInstance)
+              .map(MigLayoutModel.class::cast)
+              .filter(m -> CustomLayouts.isCustom(m.getId()))
+              .count();
+      for (int i = 0; i < cps.length; i++) {
+        if (custom > 0 && i == cps.length - custom) {
+          popupMouseButtons.addSeparator();
+        }
+        popupMouseButtons.add(cps[i]);
+      }
+      if (eventManager.getSelectedView2dContainer() != null
+          && eventManager.getSelectedView2dContainer().supportsViewportPanes()) {
+        popupMouseButtons.addSeparator();
+        JMenuItem customLayouts =
+            new JMenuItem(Messages.getString("ImageViewerEventManager.custom_layouts"));
+        customLayouts.addActionListener(e -> eventManager.openCustomLayouts(dropDownButton, false));
+        popupMouseButtons.add(customLayouts);
       }
     }
     // The inner layout of the selected viewport (STACK or tiled grid)

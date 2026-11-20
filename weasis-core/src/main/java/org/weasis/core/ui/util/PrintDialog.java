@@ -95,8 +95,11 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
   private static final String KEY_BACKGROUND = ".background"; // NON-NLS
 
   /** The grids offered for the frames of a series, columns by rows. */
+  /** Three rows of four: rows then columns, as the grids of a viewer. */
+  private static final String DEFAULT_GRID = "3x4"; // NON-NLS
+
   private static final List<String> GRIDS =
-      List.of("1x1", "2x1", "2x2", "3x2", "3x3", "4x3", "4x4", "5x4", "6x5"); // NON-NLS
+      List.of("1x1", "1x2", "2x2", "2x3", "3x3", "3x4", "4x4", "4x5", "5x6"); // NON-NLS
 
   private final ImageViewerEventManager<I> eventManager;
   private final List<PrintDestination> destinations = PrintDestinations.all();
@@ -271,6 +274,8 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     ((SpinnerNumberModel) lastSpinner.getModel()).setMaximum(Math.max(1, frameCount));
     lastSpinner.setValue(Math.max(1, frameCount));
     seriesRow.add(new JLabel(Messages.getString("PrintDialog.grid") + StringUtil.COLON));
+    gridComboBox.setRenderer(new GridRenderer());
+    gridComboBox.setToolTipText(Messages.getString("PrintDialog.grid_tip"));
     seriesRow.add(gridComboBox);
     seriesRow.add(GuiUtils.boxHorizontalStrut(10));
     seriesRow.add(new JLabel(Messages.getString("PrintDialog.frames") + StringUtil.COLON));
@@ -411,8 +416,8 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
         seriesPages =
             new SeriesPages<>(
                 selectedView,
-                Integer.parseInt(grid[0]),
                 Integer.parseInt(grid[1]),
+                Integer.parseInt(grid[0]),
                 spinner(firstSpinner),
                 spinner(lastSpinner),
                 spinner(stepSpinner));
@@ -462,7 +467,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     if (grid != null && GRIDS.contains(grid)) {
       gridComboBox.setSelectedItem(grid);
     } else {
-      gridComboBox.setSelectedItem("4x3"); // NON-NLS
+      gridComboBox.setSelectedItem(DEFAULT_GRID);
     }
     Optional<PrintDestination> last =
         PrintDestinations.find(destinations, prefs.getProperty(PREF_DESTINATION, ""));
@@ -787,6 +792,25 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     if (layoutSelected != null) {
       layoutSelected.dispose();
       layoutSelected = null;
+    }
+  }
+
+  /** A grid of the list with its picture, so the order of rows and columns needs no reading. */
+  private static final class GridRenderer extends DefaultListCellRenderer {
+    @Override
+    public Component getListCellRendererComponent(
+        JList<?> list, Object value, int index, boolean selected, boolean focus) {
+      super.getListCellRendererComponent(list, value, index, selected, focus);
+      String[] grid = String.valueOf(value).split("x"); // NON-NLS
+      if (grid.length == 2) {
+        int rows = Integer.parseInt(grid[0]);
+        int cols = Integer.parseInt(grid[1]);
+        setText(rows + "×" + cols); // NON-NLS
+        setIcon(
+            ImageViewerPlugin.buildMigLayoutModel(rows, cols, ViewCanvas.class.getName())
+                .getIcon());
+      }
+      return this;
     }
   }
 }

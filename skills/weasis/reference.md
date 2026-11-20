@@ -1222,14 +1222,14 @@ Usage: `print:destinations [-h] [--json]`
 
 Builds a print job from a viewer, the selected one by default: its whole layout, or one pane. Returns the job handle, the page and the cell figures.
 
-Usage: `print:page [-h] [--json] [--series] [--annotations=<on|off>] [--background=<white|black>] [--frames=<first>-<last>] [--grid=<cols>x<rows>] [--header=<on|off>] [--masking=<profile-id>] [--orientation=<portrait|landscape>] [--pane=<pane-index>] [--paper=<paper>] [--position=<center|top-left>] [--step=<n>] [--text=<auto|small|normal|large>] [--to=<destination>] [--view=<view-id>]`
+Usage: `print:page [-h] [--json] [--series] [--annotations=<on|off>] [--background=<white|black>] [--frames=<first>-<last>] [--grid=<rows>x<cols>] [--header=<on|off>] [--masking=<profile-id>] [--orientation=<portrait|landscape>] [--pane=<pane-index>] [--paper=<paper>] [--position=<center|top-left>] [--step=<n>] [--text=<auto|small|normal|large>] [--to=<destination>] [--view=<view-id>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --annotations | enum | on | Print the overlay and the graphics (default: on). |
 | --background | enum |  | Page background (default: the destination's, white for paper). |
 | --frames | string |  | With --series, the range of frames, counting from 1 (default: all). (since 5.0) |
-| --grid | string | 4x3 | Cells per page with --series (default: 4x3). (since 5.0) |
+| --grid | string | 3x4 | Cells per page with --series, rows then columns as the grids of a viewer (default: 3x4, three rows of four). (since 5.0) |
 | --header | enum | off | Header line with patient, study and page number above the cells (default: off). (since 5.0) |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --masking | string |  | Identity masking profile applied to the page (default: none). |
@@ -2068,7 +2068,7 @@ Produces: `graphic-id`
 
 ### view2d:grid
 
-Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.
+Grid of panes of a viewer: with no argument it lists the grids of its layout menu, the same on every screen, with the layouts of the user (user.<n>); --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. A 2D viewer also takes any uniform grid <rows>x<cols>, such as 3x4, that the menu does not list. An unknown grid id fails.
 
 Usage: `view2d:grid [-h] [--json] [--view=<view-id>] [--best-for=<n> | --grid=<grid-id> | --panes=<n>]`
 
@@ -2095,7 +2095,7 @@ Produces: `grid-id`
 
 Hangs series in the cells of a viewer in one call: --grid picks the grid, each --cell puts a series in a cell (an empty value clears it), --tiled tiles a cell, --sync and --select set the synchronization and the selected cell; --file applies a layout saved by 'workspace:save'. The state of the viewer is returned. With no argument the current layout is returned, in the form --file takes.
 
-Usage: `view2d:hang [-h] [--json] [--file=<input-path>] [--grid=<grid-id>] [--select=<cell>] [--sync=<sync-mode>] [--view=<view-id>] [--cell=<cell>=<series-uid>]... [--tiled=<cell>=<cols>x<rows>]...`
+Usage: `view2d:hang [-h] [--json] [--file=<input-path>] [--grid=<grid-id>] [--select=<cell>] [--sync=<sync-mode>] [--view=<view-id>] [--cell=<cell>=<series-uid>]... [--tiled=<cell>=<rows>x<cols>]...`
 
 Needs: file read
 
@@ -2312,14 +2312,14 @@ Usage: `view2d:undo [-h] [--json] [--pane=<pane-index>] [--view=<view-id>]`
 
 Viewport of a pane: --tiled shows its series on a grid of tiles, --stack returns it to one image; the state of the viewer, with its cells, is returned. With no argument the state is returned unchanged.
 
-Usage: `view2d:viewport [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--stack | --tiled=<cols>x<rows>]`
+Usage: `view2d:viewport [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--stack | --tiled=<rows>x<cols>]`
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --pane | pane-index |  | Pane index in the grid of the view, from 1 (default: the selected pane). |
 | --stack | boolean |  | Returns the pane to a single image. (since 5.0) |
-| --tiled | string |  | Shows the series of the pane on this grid of tiles, successive images. (since 5.0) |
+| --tiled | string |  | Shows the series of the pane on this grid of tiles, successive images; rows then columns, as in the grid ids (1x2 is one row of two). (since 5.0) |
 | --view | view-id |  | View id from 'workspace:list' (default: the selected view). |
 
 ### view2d:window-level
@@ -3053,7 +3053,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | format | the file format of an export or a capture: png, jpg, xml, csv, or what a plugin adds |  |
 | frame | one frame of a multiframe DICOM instance |  |
 | graphic | any drawn object on a pane (measurement, annotation, region) with a graphic id | shape |
-| grid | the arrangement of panes inside a view |  |
+| grid | the arrangement of panes inside a view; a grid size is written <rows>x<cols> everywhere (2x3 is two rows of three): grid ids, tiles of a viewport, cells of a printed page |  |
 | handle | an id a verb returns and another verb accepts; never invented by the caller |  |
 | image | one displayable item of a series: an instance, or one frame of a multiframe instance |  |
 | job | a print job: the pages prepared for a destination |  |

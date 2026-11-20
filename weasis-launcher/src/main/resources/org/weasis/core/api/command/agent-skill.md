@@ -81,6 +81,10 @@ line naming the current spelling. Use the current one everywhere.
   (and `--pane <n>`), and they **return the display state of that pane**: zoom, window/level,
   rotation, flip, pan, image, grid and synchronization. Called with no argument at all, they
   return that state without changing anything, which is how you read the display.
+- A grid size is always **rows then columns**, `<rows>x<cols>`: `2x3` is two rows of three, for
+  the grid ids of `view2d:grid`, the tiles of `--tiled` and the cells of `print:page --grid`. A
+  size in pixels is the other way round, width then height. When unsure, read the `rows` and
+  `cols` fields of the JSON answer instead of the text form.
 - Values go on options, so nothing needs quoting tricks and no `--` is ever required:
   `view2d:pan --dx 10 --dy -5`, `view2d:window-level --window-by 200 --level-by -100`,
   `view2d:scroll --by -3`, `view2d:reset --tool window-level --tool zoom`.
@@ -130,7 +134,7 @@ line naming the current spelling. Use the current one everywhere.
    `workspace:load --file layout.json`. `workspace:list` shows, for each view, its grid, its
    synchronization and what every pane holds.
 8. **Print** a layout, a pane or a series: `print:page` (the selected viewer, or `--view <id>`,
-   `--pane 2` for one pane; `--series --grid 4x3 --step 2 --frames 1-40` for the frames of the
+   `--pane 2` for one pane; `--series --grid 3x4 --step 2 --frames 1-40` for the frames of the
    pane's series, a page per grid; `--to <destination>`, `--paper A4 --orientation landscape
    --text normal --background white --header on`) returns a job handle, the number of pages, the
    page in millimeters and the figures of a cell (size, image pixels per inch of paper, magnified

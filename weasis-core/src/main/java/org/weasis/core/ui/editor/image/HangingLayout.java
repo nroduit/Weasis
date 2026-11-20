@@ -49,18 +49,21 @@ public record HangingLayout(String grid, String synch, int selected, List<Cell> 
       rows = Math.max(1, rows);
     }
 
-    /** Reads {@code <cols>x<rows>}. */
+    /**
+     * Reads {@code <rows>x<cols>}, the order of the grid ids of a viewer ({@code 1x2} is one row of
+     * two).
+     */
     public static Tiling parse(String text) {
       String[] parts = text == null ? new String[0] : text.trim().split("[xX]"); // NON-NLS
       if (parts.length != 2) {
-        throw new IllegalArgumentException("Expected <cols>x<rows>, got: " + text);
+        throw new IllegalArgumentException("Expected <rows>x<cols>, got: " + text);
       }
-      return new Tiling(Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()));
+      return new Tiling(Integer.parseInt(parts[1].trim()), Integer.parseInt(parts[0].trim()));
     }
 
     @Override
     public String toString() {
-      return cols + "x" + rows; // NON-NLS
+      return rows + "x" + cols; // NON-NLS
     }
   }
 

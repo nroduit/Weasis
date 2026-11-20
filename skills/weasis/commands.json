@@ -4513,7 +4513,7 @@
         {
           "name": "page",
           "description": "Builds a print job from a viewer, the selected one by default: its whole layout, or one pane. Returns the job handle, the page and the cell figures.",
-          "usage": "print:page [-h] [--json] [--series] [--annotations=<on|off>] [--background=<white|black>] [--frames=<first>-<last>] [--grid=<cols>x<rows>] [--header=<on|off>] [--masking=<profile-id>] [--orientation=<portrait|landscape>] [--pane=<pane-index>] [--paper=<paper>] [--position=<center|top-left>] [--step=<n>] [--text=<auto|small|normal|large>] [--to=<destination>] [--view=<view-id>]",
+          "usage": "print:page [-h] [--json] [--series] [--annotations=<on|off>] [--background=<white|black>] [--frames=<first>-<last>] [--grid=<rows>x<cols>] [--header=<on|off>] [--masking=<profile-id>] [--orientation=<portrait|landscape>] [--pane=<pane-index>] [--paper=<paper>] [--position=<center|top-left>] [--step=<n>] [--text=<auto|small|normal|large>] [--to=<destination>] [--view=<view-id>]",
           "parameters": [],
           "options": [
             {
@@ -4560,12 +4560,12 @@
               "names": [
                 "--grid"
               ],
-              "label": "<cols>x<rows>",
+              "label": "<rows>x<cols>",
               "type": "string",
               "arity": "1",
               "required": false,
-              "default": "4x3",
-              "description": "Cells per page with --series (default: 4x3).",
+              "default": "3x4",
+              "description": "Cells per page with --series, rows then columns as the grids of a viewer (default: 3x4, three rows of four).",
               "since": "5.0"
             },
             {
@@ -8035,7 +8035,7 @@
         },
         {
           "name": "grid",
-          "description": "Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. An unknown grid id fails.",
+          "description": "Grid of panes of a viewer: with no argument it lists the grids of its layout menu, the same on every screen, with the layouts of the user (user.<n>); --panes and --grid apply one and return the state of the viewer, --best-for answers without changing anything. A 2D viewer also takes any uniform grid <rows>x<cols>, such as 3x4, that the menu does not list. An unknown grid id fails.",
           "usage": "view2d:grid [-h] [--json] [--view=<view-id>] [--best-for=<n> | --grid=<grid-id> | --panes=<n>]",
           "produces": [
             "grid-id"
@@ -8145,7 +8145,7 @@
           "name": "hang",
           "description": "Hangs series in the cells of a viewer in one call: --grid picks the grid, each --cell puts a series in a cell (an empty value clears it), --tiled tiles a cell, --sync and --select set the synchronization and the selected cell; --file applies a layout saved by 'workspace:save'. The state of the viewer is returned. With no argument the current layout is returned, in the form --file takes.",
           "since": "5.0",
-          "usage": "view2d:hang [-h] [--json] [--file=<input-path>] [--grid=<grid-id>] [--select=<cell>] [--sync=<sync-mode>] [--view=<view-id>] [--cell=<cell>=<series-uid>]... [--tiled=<cell>=<cols>x<rows>]...",
+          "usage": "view2d:hang [-h] [--json] [--file=<input-path>] [--grid=<grid-id>] [--select=<cell>] [--sync=<sync-mode>] [--view=<view-id>] [--cell=<cell>=<series-uid>]... [--tiled=<cell>=<rows>x<cols>]...",
           "needs": [
             "file-read"
           ],
@@ -8223,7 +8223,7 @@
               "names": [
                 "--tiled"
               ],
-              "label": "<cell>=<cols>x<rows>",
+              "label": "<cell>=<rows>x<cols>",
               "type": "string",
               "arity": "1",
               "required": false,
@@ -9114,7 +9114,7 @@
           "name": "viewport",
           "description": "Viewport of a pane: --tiled shows its series on a grid of tiles, --stack returns it to one image; the state of the viewer, with its cells, is returned. With no argument the state is returned unchanged.",
           "since": "5.0",
-          "usage": "view2d:viewport [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--stack | --tiled=<cols>x<rows>]",
+          "usage": "view2d:viewport [-h] [--json] [--pane=<pane-index>] [--view=<view-id>] [--stack | --tiled=<rows>x<cols>]",
           "parameters": [],
           "options": [
             {
@@ -9156,11 +9156,11 @@
               "names": [
                 "--tiled"
               ],
-              "label": "<cols>x<rows>",
+              "label": "<rows>x<cols>",
               "type": "string",
               "arity": "1",
               "required": true,
-              "description": "Shows the series of the pane on this grid of tiles, successive images.",
+              "description": "Shows the series of the pane on this grid of tiles, successive images; rows then columns, as in the grid ids (1x2 is one row of two).",
               "since": "5.0",
               "group": {
                 "exclusive": true,
@@ -13081,7 +13081,7 @@
     },
     {
       "term": "grid",
-      "definition": "the arrangement of panes inside a view"
+      "definition": "the arrangement of panes inside a view; a grid size is written <rows>x<cols> everywhere (2x3 is two rows of three): grid ids, tiles of a viewport, cells of a printed page"
     },
     {
       "term": "handle",

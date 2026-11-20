@@ -81,20 +81,19 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           View2dContainer.class.getResourceAsStream("/config/layoutModelHisto.properties"),
           "layout_histo", // NON-NLS
           Messages.common("histogram"));
+
   // Unmodifiable list of the default layout elements
+  /** The grids of the layout menu, the same on every screen. */
   public static final List<MigLayoutModel> DEFAULT_LAYOUT_LIST =
       List.of(
           VIEWS_1x1,
           VIEWS_1x2,
-          VIEWS_1x3,
-          VIEWS_1x4,
           VIEWS_2x1,
-          VIEWS_2x1_r1xc2_histo,
+          VIEWS_1x3,
           VIEWS_2x2_f2,
-          VIEWS_2_f1x2,
           VIEWS_2x2,
           VIEWS_2x3,
-          VIEWS_2x4);
+          VIEWS_2x1_r1xc2_histo);
 
   public static final SeriesViewerUI UI = new SeriesViewerUI(View2dContainer.class);
 
@@ -460,5 +459,10 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
   @Override
   public List<MigLayoutModel> getLayoutList() {
     return getLayoutList(this, DEFAULT_LAYOUT_LIST);
+  }
+
+  @Override
+  protected boolean offersAnyGrid() {
+    return true;
   }
 }

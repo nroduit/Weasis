@@ -712,9 +712,11 @@ public class View2dCommands implements CommandExtension {
   @Command(
       name = "grid",
       description =
-          "Grid of panes of a viewer: with no argument it lists the grids it offers, --panes and "
-              + "--grid apply one and return the state of the viewer, --best-for answers without "
-              + "changing anything. An unknown grid id fails.")
+          "Grid of panes of a viewer: with no argument it lists the grids of its layout menu, the "
+              + "same on every screen, with the layouts of the user (user.<n>); --panes and --grid "
+              + "apply one and return the state of the viewer, --best-for answers without changing "
+              + "anything. A 2D viewer also takes any uniform grid <rows>x<cols>, such as 3x4, that "
+              + "the menu does not list. An unknown grid id fails.")
   @Produces({GridId.class})
   static class Grid extends AbstractVerb implements Returns {
     @Override
@@ -789,19 +791,22 @@ public class View2dCommands implements CommandExtension {
       return isJson() ? body.toString() : body.getString("grid"); // NON-NLS
     }
 
-    /** The grid of that id, or an error naming the ids the viewer offers (it used to fall back). */
+    /**
+     * The grid of that id: one of the layout menu of the viewer, or any uniform grid {@code
+     * <rows>x<cols>} where the viewer takes one; otherwise an error naming the ids of the menu (it
+     * used to fall back).
+     */
     static MigLayoutModel requireGrid(ImageViewerPlugin<DicomImageElement> container, GridId id) {
-      List<MigLayoutModel> layouts = layouts(container);
-      return layouts.stream()
-          .filter(layout -> id.value().equals(layout.getId()))
-          .findFirst()
+      return container
+          .findLayout(id.value())
           .orElseThrow(
               () ->
                   new IllegalArgumentException(
                       "Unknown grid '"
                           + id
                           + "', available: "
-                          + layouts.stream().map(MigLayoutModel::getId).toList()));
+                          + layouts(container).stream().map(MigLayoutModel::getId).toList()
+                          + ", or <rows>x<cols> in a 2D viewer"));
     }
 
     /**
@@ -1775,8 +1780,10 @@ public class View2dCommands implements CommandExtension {
   static class ViewportMode {
     @Option(
         names = "--tiled",
-        paramLabel = "<cols>x<rows>",
-        description = "Shows the series of the pane on this grid of tiles, successive images.")
+        paramLabel = "<rows>x<cols>",
+        description =
+            "Shows the series of the pane on this grid of tiles, successive images; rows then "
+                + "columns, as in the grid ids (1x2 is one row of two).")
     @Since("5.0")
     String tiled;
 
@@ -1852,7 +1859,7 @@ public class View2dCommands implements CommandExtension {
 
     @Option(
         names = "--tiled",
-        paramLabel = "<cell>=<cols>x<rows>",
+        paramLabel = "<cell>=<rows>x<cols>",
         description = "Tiles of that cell; 1x1 returns it to a single image.")
     Map<Integer, String> tiled;
 

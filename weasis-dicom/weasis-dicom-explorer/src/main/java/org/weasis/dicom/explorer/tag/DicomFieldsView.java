@@ -64,8 +64,9 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
-import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.LayoutComponent;
+import org.weasis.core.ui.editor.image.LayoutComponents;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.TableColumnAdjuster;
@@ -76,10 +77,11 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.wado.DicomManager;
 
-public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener {
+public class DicomFieldsView extends JTabbedPane implements LayoutComponent {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomFieldsView.class);
 
@@ -124,6 +126,21 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       };
   private final TagSearchTablePanel tagSearchTablePanel;
   private final TagSearchDocumentPanel tagSearchDocumentPanel;
+
+  /** The id of this component among the {@link LayoutComponents}. */
+  public static final String COMPONENT_ID = "dicom-information"; // NON-NLS
+
+  /** Declares the attributes of the image as a component of the layouts of the DICOM viewers. */
+  public static void registerAsLayoutComponent() {
+    LayoutComponents.register(
+        new LayoutComponents.Kind(
+            COMPONENT_ID,
+            DicomFieldsView.class.getName(),
+            () -> Messages.getString("DicomFieldsView.component"),
+            () -> ResourceUtil.getIcon("svg/action/metadata.svg"), // NON-NLS
+            DicomFieldsView::new,
+            DicomViewerPlugin.class::isInstance));
+  }
 
   public DicomFieldsView(SeriesViewer<?> viewer) {
     this.viewer = viewer;
