@@ -261,6 +261,10 @@ public class StudyContentTool extends PluginTool {
       footer.add(studyLine, downloadAll.isVisible() ? WrapFlowLayout.KEEP_WITH_NEXT : null);
       footer.add(downloadAll);
       actions.forEach(footer::add);
+      // what the plugins offer on the selected series and on the study, one button per plugin
+      ExplorerActionMenus.buttons(
+              model, current.study(), () -> List.copyOf(explorer.getSelectionList()), true)
+          .forEach(footer::add);
     }
     titleIcon.setVisible(titleIcon.getIcon() != null);
     stacked = !stacked; // forces the layout of the new rows

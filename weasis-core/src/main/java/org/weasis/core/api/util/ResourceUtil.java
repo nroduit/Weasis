@@ -192,6 +192,8 @@ public class ResourceUtil {
   }
 
   public enum OtherIcon implements ResourceIconPath {
+    AI_RESULT("svg/other/aiResult.svg"), // NON-NLS
+    AI_TASK("svg/other/aiTask.svg"), // NON-NLS
     AUDIO("svg/other/audio.svg"), // NON-NLS
     CALENDAR("svg/other/calendar.svg"), // NON-NLS
     CDROM("svg/other/cdrom.svg"), // NON-NLS

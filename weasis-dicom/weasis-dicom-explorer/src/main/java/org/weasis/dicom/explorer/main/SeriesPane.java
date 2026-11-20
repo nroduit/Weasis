@@ -38,6 +38,7 @@ import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.Redaction;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.items.ExplorerActions;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class SeriesPane extends JPanel {
@@ -282,8 +283,9 @@ public class SeriesPane extends JPanel {
 
   private static SeriesThumbnail createThumbnailInternal(
       DicomSeries series, DicomModel dicomModel, int thumbnailSize) {
+    // the icons of the objects that reference the series, then the marks of the plugins
     Function<String, Set<ResourceUtil.ResourceIconPath>> drawIcons =
-        HiddenSeriesManager::getRelatedIcons;
+        uid -> ExplorerActions.withBadgeIcons(HiddenSeriesManager.getRelatedIcons(uid), series);
     SeriesThumbnail thumb =
         new SeriesThumbnail(series, thumbnailSize, drawIcons, Redaction.thumbnailOps(series));
 

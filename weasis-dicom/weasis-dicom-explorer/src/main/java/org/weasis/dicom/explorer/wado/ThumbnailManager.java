@@ -47,6 +47,7 @@ import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.Redaction;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.items.ExplorerActions;
 import org.weasis.dicom.explorer.main.InterestBadge;
 import org.weasis.dicom.explorer.main.ThumbnailMouseAndKeyAdapter;
 import org.weasis.dicom.explorer.rs.RsQueryResult;
@@ -501,7 +502,9 @@ public record ThumbnailManager(
     SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
     if (thumbnail == null) {
       int thumbnailSize = SeriesThumbnail.getThumbnailSizeFromPreferences();
-      Function<String, Set<ResourceIconPath>> drawIcons = HiddenSeriesManager::getRelatedIcons;
+      Function<String, Set<ResourceIconPath>> drawIcons =
+          uid ->
+              ExplorerActions.withBadgeIcons(HiddenSeriesManager.getRelatedIcons(uid), dicomSeries);
       thumbnail =
           new SeriesThumbnail(
               dicomSeries, thumbnailSize, drawIcons, Redaction.thumbnailOps(dicomSeries));

@@ -69,8 +69,10 @@ import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.items.DownloadState;
 import org.weasis.dicom.explorer.items.DownloadSummary;
+import org.weasis.dicom.explorer.items.ExplorerActions;
 import org.weasis.dicom.explorer.items.Interest;
 import org.weasis.dicom.explorer.items.ObjectItem;
+import org.weasis.dicom.explorer.items.SeriesBadge;
 import org.weasis.dicom.explorer.items.SeriesItem;
 import org.weasis.dicom.explorer.items.StudyContents;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -673,6 +675,11 @@ public class SeriesListPane extends JPanel implements Scrollable {
     String seriesUID = item.seriesUID();
     for (ObjectKind kind : StudyContents.kindsReferencing(seriesUID)) {
       flags.add(kind.getId().toUpperCase());
+    }
+    for (SeriesBadge badge : ExplorerActions.badges(item.series())) {
+      if (StringUtil.hasText(badge.label())) {
+        flags.add(badge.label());
+      }
     }
     return String.join(" ", flags);
   }

@@ -155,6 +155,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
     addProtocolMenuItems(popupMenu);
     addInterestMenuItem(popupMenu);
     addContributedMenuItems(popupMenu);
+    addProviderMenus(popupMenu, selList);
     addSelectionMenuItems(popupMenu, selList);
     addLoadSeriesMenuItems(popupMenu, selList);
     addMergeMenuItem(popupMenu, selList, seriesList);
@@ -163,6 +164,14 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
     addThumbnailMenuItems(popupMenu, selList);
 
     popupMenu.show(e.getComponent(), e.getX() - 5, e.getY() - 5);
+  }
+
+  /** The actions of the plugins on the selected series and on the study of this series. */
+  private void addProviderMenus(JPopupMenu popupMenu, SeriesSelectionModel selList) {
+    MediaSeriesGroup study = dicomModel.getParent(series, DicomModel.study);
+    if (study != null) {
+      ExplorerActionMenus.addTo(popupMenu, dicomModel, study, List.copyOf(selList));
+    }
   }
 
   /** What the plugins can do with this series, each one adding its own items. */

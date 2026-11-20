@@ -32,6 +32,7 @@ Every extension point is an interface that extends `org.pf4j.ExtensionPoint`; an
 | `org.weasis.core.ui.docking.ToolContribution` | adds a tool to the shell with a relevance predicate on the `ViewContext` of the selected viewer, shown and hidden without the viewer knowing it |
 | `org.weasis.core.ui.editor.ViewContextContributor` | publishes facts about what is displayed under dotted names, so the tools and menus of every plugin decide their relevance on the same facts |
 | `org.weasis.core.ui.editor.SeriesMenuContributor` | adds items to the context menu of a series in an explorer |
+| `org.weasis.dicom.explorer.items.ExplorerActionProvider` | offers a named group of actions on the studies and series of the DICOM explorer (for instance sending them to an analysis service), with a mark on the series; the explorer shows the group in the context menu of a series, in the header of a study and in the study content panel, each time for the selected series and for the whole study (`ExplorerTarget`, which also gives the DICOMweb server the study came from) |
 | `org.weasis.core.ui.editor.DerivedSeriesProvider` | derives series from loaded ones and rebuilds them from a small spec when a session is restored |
 | `org.weasis.core.ui.editor.VolumePrefetcher` | builds the volume of a series ahead of its use |
 | `org.weasis.core.ui.model.graphic.GraphicToolProvider` | adds graphic (measurement and annotation) tools to the registry |

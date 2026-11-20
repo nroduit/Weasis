@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -28,6 +29,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.util.FontItem;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.ObjectKind;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.Messages;
@@ -57,8 +59,12 @@ public class StudyPane extends JPanel {
   // Header under the title: one chip per kind of object with its count, then, while series of the
   // study are not downloaded, "n of N series downloaded" and Download all
   private final JPanel downloadHeader =
-      new JPanel(new MigLayout("insets 0 3 0 3, fillx, gapx 4", "[][grow][]"));
+      new JPanel(new MigLayout("insets 0 3 0 3, fillx, gapx 4", "[][grow][][]"));
   private final JPanel chips = new JPanel(new MigLayout("insets 0, gapx 3"));
+  // one button per plugin that offers actions on this study (ExplorerActionProvider)
+  private final JPanel providers = new JPanel(new MigLayout("insets 0, gapx 1"));
+  private List<String> shownProviders = List.of();
+  private Supplier<List<DicomSeries>> selection = List::of;
   private final JLabel downloadLabel = new JLabel();
   private final JButton downloadAll =
       new JButton(Messages.getString("StudyContentTool.download_all"));
@@ -109,10 +115,17 @@ public class StudyPane extends JPanel {
     downloadHeader.add(chips);
     downloadHeader.add(downloadLabel, "growx");
     downloadHeader.add(downloadAll);
+    providers.setOpaque(false);
+    downloadHeader.add(providers);
     downloadHeader.setVisible(false);
     add(downloadHeader, "hidemode 3, growx");
     add(subPanel, SUB_PANEL_CONSTRAINTS);
     addComponentListener(resizeHandler);
+  }
+
+  /** The series selected in the explorer, read when a plugin button of the header is clicked. */
+  public void setSelectionSupplier(Supplier<List<DicomSeries>> selection) {
+    this.selection = selection == null ? List::of : selection;
   }
 
   /** What a click on an object chip does: filter the series referenced by that kind of object. */
@@ -146,7 +159,14 @@ public class StudyPane extends JPanel {
     } else {
       downloadAction = null;
     }
-    boolean shown = partial || !counts.isEmpty();
+    List<JButton> buttons = ExplorerActionMenus.buttons(model, dicomStudy, selection, false);
+    List<String> ids = buttons.stream().map(JButton::getName).toList();
+    if (!ids.equals(shownProviders)) {
+      shownProviders = ids;
+      providers.removeAll();
+      buttons.forEach(providers::add);
+    }
+    boolean shown = partial || !counts.isEmpty() || !ids.isEmpty();
     if (downloadHeader.isVisible() != shown) {
       downloadHeader.setVisible(shown);
     }

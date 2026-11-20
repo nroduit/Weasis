@@ -81,6 +81,7 @@ public class DicomPaneManager {
     if (studyPane == null) {
       studyPane = new StudyPane(study);
       studyPane.setObjectKindAction(explorer::filterObjectKind);
+      studyPane.setSelectionSupplier(() -> java.util.List.copyOf(explorer.getSelectionList()));
       MediaSeriesGroup patient = getPatientForStudy(study);
       if (patient != null) {
         List<StudyPane> studies = patient2study.computeIfAbsent(patient, _ -> new ArrayList<>());
