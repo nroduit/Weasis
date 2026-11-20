@@ -35,6 +35,7 @@ import javax.swing.text.Position;
 import javax.swing.text.View;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
+import org.weasis.core.ui.print.PrintFonts;
 
 public class EditorPanePrinter extends JPanel implements Pageable, Printable {
   public static final int PAGE_SHIFT = 20;
@@ -49,25 +50,49 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
   PageFormat pageFormat;
 
   public EditorPanePrinter(JEditorPane pane, PageFormat pageFormat, Insets margins) {
+    this(pane.getText(), pageFormat, margins);
+  }
+
+  /**
+   * @param html the document to print
+   */
+  public EditorPanePrinter(String html, PageFormat pageFormat, Insets margins) {
 
     JEditorPane tmpPane = new JEditorPane();
     tmpPane.setUI(new BasicEditorPaneUI());
-    tmpPane.setContentType(pane.getContentType());
-    HTMLEditorKit kit = new HTMLEditorKit();
-    StyleSheet ss = kit.getStyleSheet();
+    tmpPane.setContentType("text/html"); // NON-NLS
+    // A sheet of its own: the one a kit returns by default is shared by every HTML component of
+    // the application, which would all turn black on white
+    StyleSheet ss = new StyleSheet();
+    ss.addStyleSheet(new HTMLEditorKit().getStyleSheet());
+    // The font of the application, not a logical one: a print job replaces "sans-serif" by a
+    // printer font while keeping the glyph positions of the screen font, which spaces the
+    // letters unevenly
+    String family = PrintFonts.family();
     ss.addRule(
-        "body {font-family:sans-serif;font-size:12pt;background-color:white;color:black;margin:3;font-weight:normal;}");
+        "body {font-family:'"
+            + family
+            + "';font-size:12pt;background-color:white;color:black;margin:3;font-weight:normal;}"); // NON-NLS
+    ss.addRule("a {color:#0645AD;}");
+    HTMLEditorKit kit =
+        new HTMLEditorKit() {
+          @Override
+          public StyleSheet getStyleSheet() {
+            return ss;
+          }
+        };
     tmpPane.setEditorKit(kit);
     tmpPane.setBorder(null);
-    tmpPane.setText(pane.getText());
+    tmpPane.setText(html);
 
     this.sourcePane = tmpPane;
 
     this.pageFormat = pageFormat;
     Paper paper = pageFormat.getPaper();
     this.margins = margins;
-    this.pageWidth = (int) paper.getWidth();
-    this.pageHeight = (int) paper.getHeight();
+    // The oriented page: a landscape format is wider than high
+    this.pageWidth = (int) pageFormat.getWidth();
+    this.pageHeight = (int) pageFormat.getHeight();
     paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
     pageFormat.setPaper(paper);
 

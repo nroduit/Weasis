@@ -11,20 +11,14 @@ package org.weasis.dicom.sr;
 
 import java.awt.Insets;
 import java.awt.event.KeyEvent;
-import java.awt.print.PageFormat;
-import java.awt.print.PrinterException;
-import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
-import javax.print.attribute.HashPrintRequestAttributeSet;
-import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -45,7 +39,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.pref.LauncherToolBar;
 import org.weasis.core.ui.util.DefaultAction;
-import org.weasis.core.ui.util.ForcedAcceptPrintService;
+import org.weasis.core.ui.util.DocumentPrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSpecialElement;
@@ -304,46 +298,11 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
 
   void printCurrentView() {
     if (srview != null) {
-      PrintRequestAttributeSet aset = new HashPrintRequestAttributeSet();
-      PrinterJob pj = PrinterJob.getPrinterJob();
-
-      // Get page format from the printer
-      if (pj.printDialog(aset)) {
-        PageFormat pageFormat = pj.defaultPage();
-        // Force printing in black and white
-        EditorPanePrinter pnlPreview =
-            new EditorPanePrinter(srview.getHtmlPanel(), pageFormat, new Insets(18, 18, 18, 18));
-        pj.setPageable(pnlPreview);
-        try {
-          pj.print();
-        } catch (PrinterException e) {
-          // check for the annoying 'Printer is not accepting job' error.
-          if (e.getMessage().contains("accepting job")) { // NON-NLS
-            // recommend prompting the user at this point if they want to force it,
-            // so they'll know there may be a problem.
-            int response =
-                JOptionPane.showConfirmDialog(
-                    GuiUtils.getUICore().getApplicationWindow(),
-                    org.weasis.core.Messages.getString("ImagePrint.issue_desc"),
-                    org.weasis.core.Messages.getString("ImagePrint.status"),
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
-
-            if (response == 0) {
-              try {
-                // try printing again but ignore the not-accepting-jobs attribute
-                ForcedAcceptPrintService.setupPrintJob(pj); // add secret ingredient
-                pj.print(aset);
-                LOGGER.info("Bypass Printer is not accepting job");
-              } catch (PrinterException ex) {
-                LOGGER.error("Printer exception", ex);
-              }
-            }
-          } else {
-            LOGGER.error("Print exception", e);
-          }
-        }
-      }
+      DocumentPrintDialog.show(
+          this,
+          Messages.getString("SRContainer.print_layout"),
+          format ->
+              new EditorPanePrinter(srview.buildReportHtml(), format, new Insets(18, 18, 18, 18)));
     }
   }
 

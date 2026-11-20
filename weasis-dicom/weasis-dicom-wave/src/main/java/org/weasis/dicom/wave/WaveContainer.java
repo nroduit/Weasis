@@ -13,10 +13,9 @@ import com.formdev.flatlaf.util.SystemFileChooser;
 import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.print.Book;
 import java.awt.print.PageFormat;
-import java.awt.print.Paper;
-import java.awt.print.PrinterException;
-import java.awt.print.PrinterJob;
+import java.awt.print.Pageable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -24,8 +23,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import javax.print.attribute.HashPrintRequestAttributeSet;
-import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JComponent;
@@ -65,7 +62,8 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.pref.LauncherToolBar;
-import org.weasis.core.ui.util.ForcedAcceptPrintService;
+import org.weasis.core.ui.print.PageSpec;
+import org.weasis.core.ui.util.DocumentPrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -572,50 +570,29 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
 
   void printCurrentView() {
     if (ecgView != null) {
-      PrintRequestAttributeSet aset = new HashPrintRequestAttributeSet();
-      PrinterJob pj = PrinterJob.getPrinterJob();
-      pj.setJobName(ecgView.getSeries().toString());
-
-      // Get page format from the printer
-      if (pj.printDialog(aset)) {
-        PageFormat pageFormat = pj.getPageFormat(aset);
-        Paper paper = pageFormat.getPaper();
-        double margin = 12;
-        paper.setImageableArea(
-            margin, margin, paper.getWidth() - margin * 2, paper.getHeight() - margin * 2);
-        pageFormat.setPaper(paper);
-        DefaultPrinter pnlPreview = new DefaultPrinter(ecgView, pageFormat);
-        pj.setPrintable(pnlPreview, pageFormat);
-        try {
-          pj.print();
-        } catch (PrinterException e) {
-          // check for the annoying 'Printer is not accepting job' error.
-          if (e.getMessage().contains("accepting job")) { // NON-NLS
-            // recommend prompting the user at this point if they want to force it,
-            // so they'll know there may be a problem.
-            int response =
-                JOptionPane.showConfirmDialog(
-                    GuiUtils.getUICore().getApplicationWindow(),
-                    org.weasis.core.Messages.getString("ImagePrint.issue_desc"),
-                    org.weasis.core.Messages.getString("ImagePrint.status"),
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
-
-            if (response == 0) {
-              try {
-                // try printing again but ignore the not-accepting-jobs attribute
-                ForcedAcceptPrintService.setupPrintJob(pj); // add secret ingredient
-                pj.print(aset);
-                LOGGER.info("Bypass Printer is not accepting job");
-              } catch (PrinterException ex) {
-                LOGGER.error("Printer exception", ex);
-              }
+      DocumentPrintDialog.show(
+          this,
+          Messages.getString("WaveContainer.print_layout"),
+          new DocumentPrintDialog.Document() {
+            @Override
+            public Pageable paginate(PageFormat format) {
+              Book book = new Book();
+              book.append(new DefaultPrinter(ecgView, format), format);
+              return book;
             }
-          } else {
-            LOGGER.error("Print exception", e);
-          }
-        }
-      }
+
+            @Override
+            public PageSpec.Orientation defaultOrientation() {
+              return ecgView.getPageWidth() > ecgView.getPageHeight()
+                  ? PageSpec.Orientation.LANDSCAPE
+                  : PageSpec.Orientation.PORTRAIT;
+            }
+
+            @Override
+            public String jobName() {
+              return String.valueOf(ecgView.getSeries());
+            }
+          });
     }
   }
 }

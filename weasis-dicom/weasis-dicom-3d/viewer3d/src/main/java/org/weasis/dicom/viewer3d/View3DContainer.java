@@ -12,6 +12,9 @@ package org.weasis.dicom.viewer3d;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import java.awt.Component;
+import java.awt.image.BufferedImage;
+import java.awt.print.PageFormat;
+import java.awt.print.Pageable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -20,14 +23,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.prefs.Preferences;
 import java.util.stream.Stream;
 import javax.swing.Action;
+import javax.swing.ButtonGroup;
 import javax.swing.Icon;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
+import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -53,6 +63,8 @@ import org.weasis.core.ui.editor.PromptPolicy;
 import org.weasis.core.ui.editor.SeriesResolver;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.SeriesViewerUI;
+import org.weasis.core.ui.editor.image.DisplayProfile;
+import org.weasis.core.ui.editor.image.LiveCaptureView;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchOptionsCheckBoxGroup.SyncOption;
@@ -61,9 +73,17 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.editor.image.export.CaptureScope;
+import org.weasis.core.ui.editor.image.export.FrameGrabber;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
+import org.weasis.core.ui.print.PageHeader;
+import org.weasis.core.ui.print.PageSpec;
+import org.weasis.core.ui.util.DefaultAction;
+import org.weasis.core.ui.util.DisplayProfileSelector;
+import org.weasis.core.ui.util.DocumentPrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
@@ -729,7 +749,116 @@ public class View3DContainer extends DicomViewerPlugin
 
   @Override
   public List<Action> getPrintActions() {
-    return null;
+    String title = Messages.getString("View3DContainer.print_layout");
+    return List.of(
+        new DefaultAction(
+            title,
+            ResourceUtil.getIcon(ActionIcon.PRINT),
+            _ -> DocumentPrintDialog.show(this, title, printDocument(title))));
+  }
+
+  /**
+   * The layout, or its selected view, as a one-page document. Its settings: the content, what the
+   * views show (the display choice of the screenshot dialog) and an optional header line.
+   */
+  private DocumentPrintDialog.Document printDocument(String title) {
+    JRadioButton layoutRadio =
+        new JRadioButton(org.weasis.core.Messages.getString("PrintDialog.current_layout"), true);
+    JRadioButton viewRadio =
+        new JRadioButton(org.weasis.core.Messages.getString("PrintDialog.selected_view"));
+    ButtonGroup content = new ButtonGroup();
+    content.add(layoutRadio);
+    content.add(viewRadio);
+    DisplayProfileSelector display = new DisplayProfileSelector(this::getSelectedViewCanvas);
+    JCheckBox header = new JCheckBox(org.weasis.core.Messages.getString("PrintDialog.header"));
+    DocumentPrintDialog.Document image =
+        DocumentPrintDialog.ofImage(
+            () -> captureForPrint(viewRadio.isSelected(), display.getSelection()),
+            () -> header.isSelected() ? headerText() : null,
+            title);
+    boolean severalViews = getImagePanels().size() > 1;
+    return new DocumentPrintDialog.Document() {
+      @Override
+      public Pageable paginate(PageFormat format) {
+        return image.paginate(format);
+      }
+
+      @Override
+      public PageSpec.Orientation defaultOrientation() {
+        return getWidth() > getHeight()
+            ? PageSpec.Orientation.LANDSCAPE
+            : PageSpec.Orientation.PORTRAIT;
+      }
+
+      @Override
+      public String jobName() {
+        return title;
+      }
+
+      @Override
+      public List<DocumentPrintDialog.Option> options(Runnable onChange) {
+        layoutRadio.addActionListener(_ -> onChange.run());
+        viewRadio.addActionListener(_ -> onChange.run());
+        display.setOnChange(onChange);
+        header.addActionListener(_ -> onChange.run());
+        List<DocumentPrintDialog.Option> options = new ArrayList<>();
+        if (severalViews) {
+          JPanel contentRow = new JPanel(new MigLayout("insets 0, gapx 15lp")); // NON-NLS
+          contentRow.add(layoutRadio);
+          contentRow.add(viewRadio);
+          options.add(
+              new DocumentPrintDialog.Option(
+                  new JLabel(
+                      org.weasis.core.Messages.getString("PrintDialog.content") + StringUtil.COLON),
+                  contentRow));
+        }
+        JPanel displayRow = new JPanel(new MigLayout("insets 0")); // NON-NLS
+        displayRow.add(display);
+        displayRow.add(display.getEditButton());
+        options.add(new DocumentPrintDialog.Option(display.createLabel(), displayRow));
+        options.add(new DocumentPrintDialog.Option(null, header));
+        return options;
+      }
+    };
+  }
+
+  private String headerText() {
+    ViewCanvas<DicomImageElement> view = getSelectedViewCanvas();
+    return view == null ? "" : PageHeader.describe(view.getImage(), view.getSeries());
+  }
+
+  /**
+   * The layout, or the selected view alone, as displayed: a rendered view has no print pipeline, so
+   * the page holds the pixels of the screen. Each view shows what {@code display} gives for it, for
+   * the time of the paint. Runs under the identity mask bound by the caller.
+   */
+  private BufferedImage captureForPrint(
+      boolean selectedView, Function<ViewCanvas<?>, DisplayProfile> display) {
+    ViewCanvas<DicomImageElement> selected = getSelectedViewCanvas();
+    if (getWidth() <= 0 || getHeight() <= 0 || (selectedView && selected == null)) {
+      return null;
+    }
+    List<Runnable> restores = new ArrayList<>();
+    FrameGrabber grabber;
+    if (selectedView) {
+      // A single view applies the display choice itself
+      grabber = new FrameGrabber(CaptureScope.VIEW, selected, this, null, 1.0);
+      grabber.setDisplayProfile(display);
+    } else {
+      for (ViewCanvas<DicomImageElement> view : getImagePanels()) {
+        if (view instanceof LiveCaptureView live) {
+          restores.add(live.beginCapture(display.apply(view)));
+        }
+      }
+      grabber = new FrameGrabber(CaptureScope.CONTAINER, selected, this, null, 1.0);
+    }
+    grabber.prepare();
+    try {
+      return grabber.grab();
+    } finally {
+      grabber.release();
+      restores.forEach(Runnable::run);
+    }
   }
 
   @Override

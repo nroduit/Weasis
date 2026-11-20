@@ -61,6 +61,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.print.PrintFonts;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
@@ -98,8 +99,11 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   /** Baseline in millimetres drawn before and after the calibration pulse. */
   static final double PULSE_MARGIN_MM = 0.5;
 
-  /** Height in pixels of the patient header of an exported or printed page. */
-  static final int HEADER_HEIGHT = 50;
+  /**
+   * Height in pixels of the patient header of an exported or printed page: three lines of text and
+   * a small space above the waveform.
+   */
+  static final int HEADER_HEIGHT = 64;
 
   private Series<?> series;
 
@@ -107,6 +111,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   private JPanel pane;
   private JScrollPane scrollPane;
   private OverviewPanel overviewPanel;
+  private boolean paperRendering;
 
   private int mvCells;
   private double seconds;
@@ -1249,8 +1254,22 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     AffineTransform originalTransform = g2d.getTransform();
     g2d.translate(f.getImageableX(), f.getImageableY());
     g2d.scale(scale, scale);
-    paintPage(g2d);
-    g2d.setTransform(originalTransform);
+    // On paper the grid sits on the white of the sheet: neither the panel nor the leads fill
+    boolean opaque = pane.isOpaque();
+    paperRendering = true;
+    pane.setOpaque(false);
+    try {
+      paintPage(g2d);
+    } finally {
+      pane.setOpaque(opaque);
+      paperRendering = false;
+      g2d.setTransform(originalTransform);
+    }
+  }
+
+  /** Whether the leads are being drawn for a printed page; see {@link #printWave}. */
+  boolean isPaperRendering() {
+    return paperRendering;
   }
 
   private void printHeader(Graphics2D g2, int midWidth) {
@@ -1267,7 +1286,9 @@ public class WaveView extends JPanel implements SeriesViewerListener {
           DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
       if (dcm != null && patient != null && study != null) {
         g2.setColor(Color.black);
-        g2.setFont(new Font("SanSerif", Font.PLAIN, 11));
+        // The application font, a real one: a print job spaces the letters of a logical font
+        // unevenly
+        g2.setFont(PrintFonts.font(Font.PLAIN, 11f));
         FontMetrics fontMetrics = g2.getFontMetrics();
         final int fontHeight = fontMetrics.getHeight();
         float drawY = fontHeight;

@@ -42,6 +42,7 @@ import javax.swing.KeyStroke;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.print.PrintFonts;
 
 /**
  * One lead of the waveform: the millimetre grid, the calibration pulse, the signal (filtered when
@@ -140,8 +141,9 @@ public class LeadPanel extends JPanel {
 
   private int lastHandle = 1;
 
-  private final Font fontTitle = new Font("SanSerif", Font.BOLD, 11);
-  private final Font fontLabel = new Font("SanSerif", Font.PLAIN, 10);
+  // The application font, a real one: a print job spaces the letters of a logical font unevenly
+  private final Font fontTitle = PrintFonts.font(Font.BOLD, 11f);
+  private final Font fontLabel = PrintFonts.font(Font.PLAIN, 10f);
 
   private int[] rawBuffer = new int[0];
   private final int[] range = new int[2];
@@ -839,14 +841,17 @@ public class LeadPanel extends JPanel {
     updateScale();
 
     boolean overlay = isOverlay();
-    if (!overlay) {
+    boolean paper = isPaper();
+    if (!overlay && !paper) {
       g2d.setBackground(this.getBackground());
       g2d.clearRect(clip.x, clip.y, clip.width, clip.height);
     }
 
     if (!clip.isEmpty()) {
       if (!overlay) {
-        drawSelectedBackground(g2d, dim);
+        if (!paper) {
+          drawSelectedBackground(g2d, dim);
+        }
         drawGrid(g2d, dim, clip);
         drawCalibrationPulse(g2d, dim);
       }
@@ -864,6 +869,27 @@ public class LeadPanel extends JPanel {
   }
 
   /**
+   * Whether the lead is drawn for paper: on white, without its background, the selection or any
+   * translucent fill. One translucent color makes Java send the whole page of a print job as a
+   * raster at the resolution of the printer, text included, so the colors are made opaque.
+   */
+  private boolean isPaper() {
+    return view.isPaperRendering();
+  }
+
+  /** {@code color} as it shows over white paper when drawn for it, unchanged otherwise. */
+  private Color forDevice(Color color) {
+    if (!isPaper() || color.getAlpha() == 255) {
+      return color;
+    }
+    double a = color.getAlpha() / 255.0;
+    return new Color(
+        (int) Math.round(255 + (color.getRed() - 255) * a),
+        (int) Math.round(255 + (color.getGreen() - 255) * a),
+        (int) Math.round(255 + (color.getBlue() - 255) * a));
+  }
+
+  /**
    * Draws the millimetre grid of the clip: every line is appended to one of two paths (thin and
    * thick) so that a repaint costs two draw calls whatever the width of the lead.
    */
@@ -872,7 +898,7 @@ public class LeadPanel extends JPanel {
     if (pixelPerMm <= 0) {
       return;
     }
-    g2.setColor(GRID_COLOR);
+    g2.setColor(forDevice(GRID_COLOR));
 
     Path2D thin = new Path2D.Float();
     Path2D thick = new Path2D.Float();
@@ -1128,10 +1154,12 @@ public class LeadPanel extends JPanel {
         g2.draw(new Line2D.Double(x0, 0, x0, dim.height));
       } else {
         double x1 = xOf(Math.min(sampleNumber - 1, end));
-        Composite composite = g2.getComposite();
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.12f));
-        g2.fill(new Rectangle2D.Double(x0, 0, Math.max(1, x1 - x0), dim.height));
-        g2.setComposite(composite);
+        if (!isPaper()) {
+          Composite composite = g2.getComposite();
+          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.12f));
+          g2.fill(new Rectangle2D.Double(x0, 0, Math.max(1, x1 - x0), dim.height));
+          g2.setComposite(composite);
+        }
         g2.draw(new Line2D.Double(x0, 0, x0, dim.height));
         g2.draw(new Line2D.Double(x1, 0, x1, dim.height));
       }
@@ -1153,7 +1181,7 @@ public class LeadPanel extends JPanel {
     drawMarker(g2, selectedPosition - sampleOffset, dim);
 
     if (view.isCalipersOnAllLeads()) {
-      g2.setColor(CALIPER_GHOST);
+      g2.setColor(forDevice(CALIPER_GHOST));
       g2.setStroke(GHOST_STROKE);
       for (Caliper c : view.getTimeCalipersOfOtherLeads(this)) {
         drawMarker(g2, c.getStart() - sampleOffset, dim);
@@ -1210,7 +1238,7 @@ public class LeadPanel extends JPanel {
     double anchor = xOf(c.getAnchor() - sampleOffset);
     double left = Math.max(gutter, anchor - AMPLITUDE_HALF_WIDTH);
     double right = Math.min(dim.width, anchor + AMPLITUDE_HALF_WIDTH);
-    if (!c.isEmpty()) {
+    if (!c.isEmpty() && !isPaper()) {
       g2.setColor(AMPLITUDE_FILL);
       g2.fill(new Rectangle2D.Double(left, top, right - left, bottom - top));
     }
@@ -1344,7 +1372,7 @@ public class LeadPanel extends JPanel {
     }
     placed.add(box);
 
-    g2.setColor(new Color(255, 255, 255, 215));
+    g2.setColor(forDevice(new Color(255, 255, 255, 215)));
     g2.fillRoundRect(box.x, box.y, box.width, box.height, 6, 6);
     g2.setColor(border);
     g2.setStroke(MARKER_STROKE);

@@ -197,6 +197,23 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     }
   }
 
+  /**
+   * The report as HTML, built again: under an identity mask bound to the calling thread it holds
+   * the masked values, which the text on screen does not.
+   */
+  public String buildReportHtml() {
+    StringBuilder html = new StringBuilder();
+    Series<?> current = getSeries();
+    DicomSpecialElement media =
+        current == null
+            ? null
+            : DicomModel.getFirstSpecialElement(current, DicomSpecialElement.class);
+    if (media != null) {
+      new SRReader(current, media).readDocumentGeneralModule(html, new HashMap<>());
+    }
+    return html.toString();
+  }
+
   private void displayLimitedDicomInfo(DicomSpecialElement media) {
     StringBuilder html = new StringBuilder();
     map.clear();
