@@ -275,6 +275,12 @@ public final class TabGroup extends JTabbedPane {
     if (title != null) {
       style.append(" selectedForeground: ").append(hex(title)).append(';'); // NON-NLS
     }
+    // the selection color belongs to the group that holds the selected view: elsewhere the
+    // selected tab is filled as a selection that is not the active one
+    Color fill = active ? null : UIManager.getColor("Tree.selectionInactiveBackground"); // NON-NLS
+    if (fill != null) {
+      style.append(" selectedBackground: ").append(hex(fill)).append(';'); // NON-NLS
+    }
     putClientProperty(FlatClientProperties.STYLE, style.toString());
     // framed as the slots of the sides, a small margin apart from the neighbor groups
     setBorder(new RoundedTopBorder(GROUP_MARGIN));

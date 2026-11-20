@@ -11,7 +11,6 @@ package org.weasis.core.ui.pref;
 
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatSystemProperties;
-import java.awt.Window;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -26,7 +25,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTextPane;
 import javax.swing.LookAndFeel;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import org.slf4j.Logger;
@@ -41,6 +39,7 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.setting.CoreSettings;
 import org.weasis.core.api.setting.Settings;
 import org.weasis.core.util.StringUtil;
+import org.weasis.launcher.LookAndFeels;
 
 public class ThemeSetting extends AbstractItemDialogPage {
   private static final Logger LOGGER = LoggerFactory.getLogger(ThemeSetting.class);
@@ -127,10 +126,9 @@ public class ThemeSetting extends AbstractItemDialogPage {
           Runnable runnable =
               () -> {
                 try {
-                  UIManager.setLookAndFeel(finalLafClassName);
-                  for (final Window w : Window.getWindows()) {
-                    SwingUtilities.updateComponentTreeUI(w);
-                  }
+                  // as at start-up, with what Weasis adds to every theme
+                  LookAndFeels.install(finalLafClassName);
+                  FlatLaf.updateUI();
                 } catch (Exception e1) {
                   LOGGER.error("Can't change look and feel", e1);
                 }

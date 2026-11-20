@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.UnsupportedLookAndFeelException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,22 +98,38 @@ public final class LookAndFeels {
   /** Changes the look and feel for the whole GUI */
   public String setLookAndFeel(ReadableLookAndFeelInfo look) {
     ReadableLookAndFeelInfo info = look == null ? defaultDarkTheme : look;
-    boolean dark = info.isDark();
     try {
-      UIManager.setLookAndFeel(info.getClassName());
-      increaseToolbarSeparatorContrast(dark);
-
-      // TODO set as preference: preserve the default color action
-      applyDefaultColor(FlatIconColors.ACTIONS_RED, dark);
-      applyDefaultColor(FlatIconColors.ACTIONS_YELLOW, dark);
-      applyDefaultColor(FlatIconColors.ACTIONS_GREEN, dark);
-      applyDefaultColor(FlatIconColors.ACTIONS_BLUE, dark);
-      applyDefaultColor(FlatIconColors.ACTIONS_GREY, dark);
-      applyDefaultColor(FlatIconColors.ACTIONS_GREYINLINE, dark);
+      install(info.getClassName());
     } catch (Exception e) {
       LOGGER.error("Unable to set the Look&Feel", e);
     }
     return info.getClassName();
+  }
+
+  /**
+   * Sets a look and feel with what Weasis adds to every theme: a toolbar separator that stands out,
+   * a selected tab that keeps its color under the pointer, and the standard colors of the action
+   * icons, whose red, yellow and green carry a meaning (stop, warning, go) that the palette of a
+   * theme must not change. The start-up and the preview of the preferences both go through here, so
+   * that a preview shows what the next start gives.
+   */
+  public static void install(String className)
+      throws ClassNotFoundException,
+          InstantiationException,
+          IllegalAccessException,
+          UnsupportedLookAndFeelException {
+    UIManager.setLookAndFeel(className);
+    boolean dark = FlatLaf.isLafDark();
+    // a selected tab keeps its selection color under the pointer, as a selected button does
+    UIManager.put("TabbedPaneUI", SelectedTabUI.class.getName()); // NON-NLS
+    UIManager.put(SelectedTabUI.class.getName(), SelectedTabUI.class);
+    increaseToolbarSeparatorContrast(dark);
+    applyDefaultColor(FlatIconColors.ACTIONS_RED, dark);
+    applyDefaultColor(FlatIconColors.ACTIONS_YELLOW, dark);
+    applyDefaultColor(FlatIconColors.ACTIONS_GREEN, dark);
+    applyDefaultColor(FlatIconColors.ACTIONS_BLUE, dark);
+    applyDefaultColor(FlatIconColors.ACTIONS_GREY, dark);
+    applyDefaultColor(FlatIconColors.ACTIONS_GREYINLINE, dark);
   }
 
   private static void increaseToolbarSeparatorContrast(boolean dark) {

@@ -442,7 +442,7 @@
     {
       "code": "weasis.theme",
       "value": "org.weasis.launcher.FlatWeasisTheme",
-      "description": "FaltLaf Look and feel, see https://www.formdev.com/flatlaf/themes/",
+      "description": "FlatLaf look and feel, see https://www.formdev.com/flatlaf/themes/",
       "type": "F",
       "category": "GENERAL"
     },
