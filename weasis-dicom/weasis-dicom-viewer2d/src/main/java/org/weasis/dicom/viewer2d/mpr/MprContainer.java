@@ -83,6 +83,7 @@ import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionState;
+import org.weasis.dicom.viewer2d.mip.SlabEditor;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.dicom.viewer2d.mpr.cmpr.CrossSectionParams;
 import org.weasis.dicom.viewer2d.mpr.cmpr.CurvedMprBuilder;
@@ -252,6 +253,15 @@ public class MprContainer extends DicomViewerPlugin
         GuiUtils.addItemToMenu(menuRoot, manager.getZoomMenu("weasis.pluginMenu.zoom"));
         GuiUtils.addItemToMenu(
             menuRoot, manager.getOrientationMenu("weasis.pluginMenu.orientation"));
+        // As in the context menu of an MPR view: the slab of the selected view and the settings
+        // of the MPR; the editor of the slab opens in the middle of that view
+        MprView mprView = getSelectedViewCanvas() instanceof MprView v ? v : null;
+        if (mprView != null) {
+          GuiUtils.addItemToMenu(
+              menuRoot,
+              SlabEditor.menu(mprView, mprView, mprView.getWidth() / 2, mprView.getHeight() / 2));
+          menuRoot.add(mprView.buildMprMenu());
+        }
 
         if (count < menuRoot.getItemCount()) {
           menuRoot.add(new JSeparator());

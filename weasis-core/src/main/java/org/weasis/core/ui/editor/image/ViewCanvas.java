@@ -503,8 +503,12 @@ public interface ViewCanvas<E extends ImageElement>
   }
 
   default int addSeparatorToPopupMenu(JPopupMenu popupMenu, int count) {
-    if (count < popupMenu.getComponentCount()) {
-      popupMenu.add(new JSeparator());
+    int size = popupMenu.getComponentCount();
+    if (count < size) {
+      // what was added may already end with a separator: one line between two groups, not two
+      if (!(popupMenu.getComponent(size - 1) instanceof JSeparator)) {
+        popupMenu.add(new JSeparator());
+      }
       return popupMenu.getComponentCount();
     }
     return count;

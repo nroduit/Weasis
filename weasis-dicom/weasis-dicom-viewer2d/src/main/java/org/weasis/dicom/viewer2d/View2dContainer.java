@@ -34,7 +34,6 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -99,7 +98,6 @@ import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.HangingWhyTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
 import org.weasis.dicom.viewer2d.fusion.FusionController;
-import org.weasis.dicom.viewer2d.mip.MipMenu;
 import org.weasis.dicom.viewer2d.subtraction.SubtractionController;
 
 public class View2dContainer extends DicomViewerPlugin implements PropertyChangeListener {
@@ -421,34 +419,20 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             }
           }
 
-          BasicActionState mipState =
-              EventManager.getInstance().getAction(MipMenu.AVAILABLE).orElse(null);
-          if (mipState != null && mipState.isActionEnabled()) {
-            JMenuItem mip =
-                new JMenuItem(
-                    Messages.getString("View2dContainer.mip"),
-                    ResourceUtil.getIcon(OtherIcon.VIEW_MIP));
-            GuiUtils.applySelectedIconEffect(mip);
-            mip.addActionListener(Basic3DToolBar.getMipAction());
-            menu.add(mip);
-          }
           menuRoot.add(menu);
         }
-        menuRoot.add(new JSeparator());
-        GuiUtils.addItemToMenu(menuRoot, manager.getPresetMenu(null));
-        GuiUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu(null));
-        GuiUtils.addItemToMenu(menuRoot, manager.getLutMenu(null));
-        GuiUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu(null));
-        GuiUtils.addItemToMenu(menuRoot, manager.getFilterMenu(null));
-        menuRoot.add(new JSeparator());
-        GuiUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
-        GuiUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));
-        GuiUtils.addItemToMenu(menuRoot, manager.getCineMenu(null));
-        GuiUtils.addItemToMenu(menuRoot, manager.getSortStackMenu(null));
-        menuRoot.add(new JSeparator());
-        GuiUtils.addItemToMenu(menuRoot, manager.getViewportLayoutMenu(null));
-        menuRoot.add(new JSeparator());
-        menuRoot.add(manager.getResetMenu(null));
+        // The same menus as the context menu of the selected view (View2d.displayMenus), always
+        // shown here; the editor of the slab opens in the middle of that view
+        View2d view = getSelectedViewCanvas() instanceof View2d v ? v : null;
+        int x = view == null ? 0 : view.getWidth() / 2;
+        int y = view == null ? 0 : view.getHeight() / 2;
+        for (List<JMenuItem> group :
+            View2d.displayMenus(manager, view, name -> null, false, x, y)) {
+          if (menuRoot.getMenuComponentCount() > 0) {
+            menuRoot.add(new JSeparator());
+          }
+          group.forEach(menuRoot::add);
+        }
       }
     }
     return menuRoot;

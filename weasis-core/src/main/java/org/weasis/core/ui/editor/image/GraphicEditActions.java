@@ -74,7 +74,11 @@ public final class GraphicEditActions {
     JPopupMenu popupMenu = new JPopupMenu();
     popupMenu.add(new TitleMenuItem(Messages.common("selection")));
     popupMenu.addSeparator();
+    int beforeUndo = popupMenu.getComponentCount();
     addUndoItems(popupMenu, view);
+    if (popupMenu.getComponentCount() > beforeUndo) {
+      popupMenu.addSeparator();
+    }
 
     JMenu selectMenu = buildSelectUnderCursorMenu(popupMenu, view, evt);
     if (selectMenu != null) {
@@ -119,21 +123,27 @@ public final class GraphicEditActions {
     return popupMenu;
   }
 
-  /** Adds *Undo* and *Redo* for the graphics of the view, when the view keeps a history. */
+  /**
+   * Adds *Undo* and *Redo* for the graphics of the view, each only when there is something to undo
+   * or to redo: a context menu lists what can be done now, and the Edit menu of the main window
+   * keeps both entries, disabled when they do not apply. The caller separates them from what
+   * follows.
+   */
   public static void addUndoItems(JPopupMenu popupMenu, ViewCanvas<?> view) {
     GraphicUndoHistory history = view.getGraphicUndo();
     if (history == null || !history.isEnabled()) {
       return;
     }
-    JMenuItem undo = new JMenuItem(Messages.common("undo"));
-    undo.setEnabled(history.canUndo());
-    undo.addActionListener(_ -> undo(view));
-    popupMenu.add(undo);
-    JMenuItem redo = new JMenuItem(Messages.common("redo"));
-    redo.setEnabled(history.canRedo());
-    redo.addActionListener(_ -> redo(view));
-    popupMenu.add(redo);
-    popupMenu.addSeparator();
+    if (history.canUndo()) {
+      JMenuItem undo = new JMenuItem(Messages.common("undo"));
+      undo.addActionListener(_ -> undo(view));
+      popupMenu.add(undo);
+    }
+    if (history.canRedo()) {
+      JMenuItem redo = new JMenuItem(Messages.common("redo"));
+      redo.addActionListener(_ -> redo(view));
+      popupMenu.add(redo);
+    }
   }
 
   /** Undoes the last change of the graphics of the view; false when there is none. */

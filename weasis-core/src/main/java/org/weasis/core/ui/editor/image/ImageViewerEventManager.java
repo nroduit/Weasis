@@ -10,6 +10,8 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.BoundedRangeModel;
+import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -52,6 +55,8 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -802,7 +807,12 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
           pane.switchToStack();
           updateComponentsListener(pane.getSelectedCanvas());
         });
+    // the icon of scrolling a series, at the size of the other icons of a menu
+    Icon stackIcon = ResourceUtil.getIcon(ActionIcon.SEQUENCE).derive(MENU_ICON, MENU_ICON);
+    stackItem.setIcon(stackIcon);
     menu.add(stackItem);
+    // The entry itself shows the mode of the selected viewport, without opening the submenu
+    menu.setIcon(isTiled ? tilesIcon(pane.getTiledRows(), pane.getTiledCols()) : stackIcon);
     menu.add(new JSeparator());
 
     // Rows then columns, as the ids of the grids of views (1x2 is one row of two)
@@ -835,10 +845,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
           Messages.format("ImageViewerEventManager.viewport_tiled", grid.rows(), grid.cols());
       JCheckBoxMenuItem item = new JCheckBoxMenuItem(label, isCurrent);
       // the picture of the grid, so the order of rows and columns needs no reading
-      item.setIcon(
-          ImageViewerPlugin.buildMigLayoutModel(
-                  grid.rows(), grid.cols(), ImageViewerPlugin.VIEWPORT_CLASS.getName())
-              .getIcon());
+      item.setIcon(tilesIcon(grid.rows(), grid.cols()));
       item.addActionListener(
           e -> {
             if (!isCurrent) {
@@ -853,6 +860,42 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     customItem.addActionListener(e -> openCustomLayouts(container, true));
     menu.add(customItem);
     return menu;
+  }
+
+  /** Side of an icon of a menu, in logical pixels. */
+  private static final int MENU_ICON = 16;
+
+  /**
+   * The picture of a grid of tiles at the size of the icons of a menu: the picture of a layout is
+   * drawn larger, for the layout list, and stood out among the other entries of a menu.
+   */
+  private static Icon tilesIcon(int rows, int cols) {
+    Icon picture =
+        ImageViewerPlugin.buildMigLayoutModel(
+                rows, cols, ImageViewerPlugin.VIEWPORT_CLASS.getName())
+            .getIcon();
+    // as the other icons, the side follows the scale of the interface
+    int side = GuiUtils.getScaleLength(MENU_ICON);
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.scale(side / (double) picture.getIconWidth(), side / (double) picture.getIconHeight());
+        picture.paintIcon(c, g2, 0, 0);
+        g2.dispose();
+      }
+
+      @Override
+      public int getIconWidth() {
+        return side;
+      }
+
+      @Override
+      public int getIconHeight() {
+        return side;
+      }
+    };
   }
 
   /** Shows the selected viewport on that grid of tiles. */

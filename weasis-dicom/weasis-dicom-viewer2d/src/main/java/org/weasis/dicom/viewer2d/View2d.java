@@ -37,6 +37,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -1414,33 +1415,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     count = popupMenu.getComponentCount();
 
     if (eventManager instanceof EventManager manager) {
-      GuiUtils.addItemToMenu(popupMenu, manager.getPresetMenu("weasis.contextmenu.presets"));
-      GuiUtils.addItemToMenu(popupMenu, manager.getLutShapeMenu("weasis.contextmenu.lutShape"));
-      GuiUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
-      GuiUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut"));
-      GuiUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter"));
-      count = addSeparatorToPopupMenu(popupMenu, count);
-
-      GuiUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
-      GuiUtils.addItemToMenu(
-          popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
-      if (ReformatMenu.applies(this)) {
-        GuiUtils.addItemToMenu(
-            popupMenu, ReformatMenu.menu(manager.getSelectedView2dContainer(), this));
+      List<List<JMenuItem>> groups =
+          displayMenus(
+              manager, this, name -> "weasis.contextmenu." + name, true, evt.getX(), evt.getY());
+      for (List<JMenuItem> group : groups) {
+        count = addSeparatorToPopupMenu(popupMenu, count);
+        group.forEach(popupMenu::add);
       }
-      GuiUtils.addItemToMenu(popupMenu, SlabEditor.menu(this, this, evt.getX(), evt.getY()));
-      if (Relevance.applies(
-          Relevance.TEMPORAL, ViewContexts.of(manager.getSelectedView2dContainer(), getSeries()))) {
-        GuiUtils.addItemToMenu(popupMenu, manager.getCineMenu("weasis.contextmenu.cine"));
-      }
-      GuiUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
-      count = addSeparatorToPopupMenu(popupMenu, count);
-
-      GuiUtils.addItemToMenu(
-          popupMenu, manager.getViewportLayoutMenu("weasis.contextmenu.viewport"));
-      addSeparatorToPopupMenu(popupMenu, count);
-
-      GuiUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));
     }
 
     String pClose = "weasis.contextmenu.close";
@@ -1451,6 +1432,67 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       popupMenu.add(close);
     }
     return popupMenu;
+  }
+
+  /**
+   * The menus about how a view shows its series, in groups to separate: the rendering (preset, LUT,
+   * filter), the geometry and the stack (zoom, orientation, reformat, slab, cine, sort), the
+   * viewport layout and the reset. The context menu of a view and the menu of the viewer in the
+   * menu bar are both built from this list, so an entry of one is in the other.
+   *
+   * @param prop the preference that shows or hides a menu, from its name ({@code presets}, {@code
+   *     zoom}…); gives null for a menu that is always shown
+   * @param contextual leaves out what does not apply to the series of the view (the cine of a
+   *     series without a time dimension), as a context menu does; the menu of the viewer lists
+   *     everything
+   * @param x where the editor of the slab opens in the view
+   * @param y where the editor of the slab opens in the view
+   */
+  static List<List<JMenuItem>> displayMenus(
+      EventManager manager,
+      View2d view,
+      UnaryOperator<String> prop,
+      boolean contextual,
+      int x,
+      int y) {
+    List<JMenuItem> rendering = new ArrayList<>();
+    rendering.add(manager.getPresetMenu(prop.apply("presets"))); // NON-NLS
+    rendering.add(manager.getLutShapeMenu(prop.apply("lutShape"))); // NON-NLS
+    rendering.add(manager.getLutMenu(prop.apply("lut"))); // NON-NLS
+    rendering.add(manager.getLutInverseMenu(prop.apply("invertLut"))); // NON-NLS
+    rendering.add(manager.getFilterMenu(prop.apply("filter"))); // NON-NLS
+
+    List<JMenuItem> stack = new ArrayList<>();
+    stack.add(manager.getZoomMenu(prop.apply("zoom"))); // NON-NLS
+    stack.add(manager.getOrientationMenu(prop.apply("orientation"))); // NON-NLS
+    if (view != null) {
+      if (ReformatMenu.applies(view)) {
+        stack.add(ReformatMenu.menu(manager.getSelectedView2dContainer(), view));
+      }
+      stack.add(SlabEditor.menu(view, view, x, y));
+    }
+    if (!contextual
+        || view == null
+        || Relevance.applies(
+            Relevance.TEMPORAL,
+            ViewContexts.of(manager.getSelectedView2dContainer(), view.getSeries()))) {
+      stack.add(manager.getCineMenu(prop.apply("cine"))); // NON-NLS
+    }
+    stack.add(manager.getSortStackMenu(prop.apply("sortstack"))); // NON-NLS
+
+    List<JMenuItem> viewport = new ArrayList<>();
+    viewport.add(manager.getViewportLayoutMenu(prop.apply("viewport"))); // NON-NLS
+    List<JMenuItem> reset = new ArrayList<>();
+    reset.add(manager.getResetMenu(prop.apply("reset"))); // NON-NLS
+
+    List<List<JMenuItem>> groups = new ArrayList<>();
+    for (List<JMenuItem> group : List.of(rendering, stack, viewport, reset)) {
+      List<JMenuItem> shown = group.stream().filter(Objects::nonNull).toList();
+      if (!shown.isEmpty()) {
+        groups.add(shown);
+      }
+    }
+    return groups;
   }
 
   @Override
