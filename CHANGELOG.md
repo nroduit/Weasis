@@ -4,14 +4,6 @@
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.8.0...v4.8.1)
 
-**Implemented enhancements:**
-
-- `weasis-cli`: drive a running Weasis from the command line [\#955](https://github.com/nroduit/Weasis/issues/955)
-- 3D viewer: OpenGL through the Foreign Function & Memory API, JOGL removed [\#954](https://github.com/nroduit/Weasis/issues/954)
-- Replace DockingFrames with a built-in workspace docking engine [\#953](https://github.com/nroduit/Weasis/issues/953)
-- Faster startup: common libraries on the classpath and a per-user AOT cache [\#952](https://github.com/nroduit/Weasis/issues/952)
-- Replace the OSGi framework \(Apache Felix\) with pf4j [\#951](https://github.com/nroduit/Weasis/issues/951)
-
 **Fixed bugs:**
 
 - PseudoColor process ignores 3-channel images [\#977](https://github.com/nroduit/Weasis/issues/977)
