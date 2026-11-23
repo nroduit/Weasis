@@ -596,6 +596,16 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         selectQuietly(slots.get(selected - 1));
       }
     }
+    if (selectedContainer) {
+      // The panes went to their images by sync events of their own, which the controls of the
+      // event manager do not follow: the scroll slider would keep the image the selected pane
+      // showed before (setSelectedImagePane refreshes it only for another pane) and move the pane
+      // back there on its next change
+      ViewCanvas<E> canvas = getSelectedViewCanvas();
+      if (canvas != null) {
+        eventManager.updateComponentsListener(canvas);
+      }
+    }
     String synch = layout.synch();
     if (synch != null) {
       boolean none = NO_SYNCH.equalsIgnoreCase(synch);
