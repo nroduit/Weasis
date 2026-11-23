@@ -183,7 +183,10 @@ class ProtocolJsonTest {
                     null,
                     "ct-chest", // NON-NLS
                     "BEST_FIT", // NON-NLS
-                    "stack"), // NON-NLS
+                    "stack", // NON-NLS
+                    null,
+                    null,
+                    WeasisExtensions.Start.MIDDLE),
                 List.of(new Cell("INFO", 1)), // NON-NLS
                 null),
             2,

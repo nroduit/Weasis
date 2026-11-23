@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.json.JsonObject;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -113,6 +114,92 @@ class BuiltInProtocolsTest {
         () -> assertEquals(Match.FALLBACK, second.cells().get(1).match()),
         () -> assertEquals("B", second.cells().get(1).series(), "reformatted from the thin soft"),
         () -> assertEquals("SAGITTAL", second.cells().get(1).derivation().plane())); // NON-NLS
+  }
+
+  @Test
+  void theCtAxialStepStartsOnTheFirstImageAndTheCoronalAndSagittalOnTheMiddleOne() {
+    HangingPlan plan = HangingEngine.match(library(), HangingEngineTest.STUDY).orElseThrow();
+    HangingPlan.Step first = plan.steps().get(0);
+    HangingPlan.Step second = plan.steps().get(1);
+    assertAll(
+        () -> assertEquals(0.0, relativePosition(first, 0), "axial soft tissue"),
+        () -> assertEquals(0.0, relativePosition(first, 1), "axial lung or bone"),
+        () -> assertEquals(0.5, relativePosition(second, 0), "acquired coronal"),
+        () -> assertEquals(0.5, relativePosition(second, 1), "reformatted sagittal"));
+  }
+
+  @Test
+  void theMrCellsStartOnTheFirstAxialImageAndOnTheMiddleSagittalImage() {
+    StudySeries axial = mrStack("M1", "T2 TSE AX", 1, 0, 0, 0, 1, 0); // NON-NLS
+    StudySeries sagittal = mrStack("M2", "T1 SE SAG", 0, 1, 0, 0, 0, -1); // NON-NLS
+    HangingPlan plan = HangingEngine.match(library(), List.of(axial, sagittal)).orElseThrow();
+    List<Executable> checks = new ArrayList<>();
+    checks.add(() -> assertEquals("weasis.mr", plan.protocolId())); // NON-NLS
+    Set<String> seen = new HashSet<>();
+    for (HangingPlan.Step step : plan.steps()) {
+      for (HangingPlan.CellPlan cell : step.cells()) {
+        if (cell.series() == null) {
+          continue;
+        }
+        seen.add(cell.series());
+        double expected = "M2".equals(cell.series()) ? 0.5 : 0.0; // NON-NLS
+        checks.add(
+            () ->
+                assertEquals(
+                    expected,
+                    relativePosition(step, cell.cell()),
+                    cell.label() + " " + cell.series()));
+      }
+    }
+    checks.add(() -> assertEquals(Set.of("M1", "M2"), seen, "both series are hung")); // NON-NLS
+    assertAll(checks);
+  }
+
+  @Test
+  void anAutoStartIsTheFirstImageOfAnAxialStackAndTheMiddleOfTheOtherPlanes() {
+    WeasisExtensions.Start auto = WeasisExtensions.Start.AUTO;
+    assertAll(
+        () -> assertEquals(0.0, auto.relativeFor(SeriesFeatures.Orientation.AXIAL)),
+        () -> assertEquals(0.5, auto.relativeFor(SeriesFeatures.Orientation.SAGITTAL)),
+        () -> assertEquals(0.5, auto.relativeFor(SeriesFeatures.Orientation.CORONAL)),
+        () -> assertEquals(0.5, auto.relativeFor(SeriesFeatures.Orientation.OBLIQUE)),
+        () -> assertEquals(0.0, auto.relativeFor(SeriesFeatures.Orientation.MIXED)),
+        () -> assertEquals(0.0, auto.relativeFor(null)),
+        () -> assertEquals(0.5, WeasisExtensions.Start.MIDDLE.relativeFor(null)),
+        () -> assertEquals(auto, WeasisExtensions.Start.fromJson(auto.toJson())),
+        () ->
+            assertEquals(
+                new WeasisExtensions.Start(0.25),
+                WeasisExtensions.Start.fromJson(new WeasisExtensions.Start(0.25).toJson())));
+  }
+
+  /** An MR stack of 12 slices in the plane of the two direction cosines. */
+  private static StudySeries mrStack(String uid, String description, double... orientation) {
+    double[] normal = {
+      orientation[1] * orientation[5] - orientation[2] * orientation[4],
+      orientation[2] * orientation[3] - orientation[0] * orientation[5],
+      orientation[0] * orientation[4] - orientation[1] * orientation[3]
+    };
+    Attributes[] slices = new Attributes[12];
+    for (int i = 0; i < slices.length; i++) {
+      Attributes a = TestSeries.image("MR", "1.2.840.10008.5.1.4.1.1.4", i + 1); // NON-NLS
+      a.setString(Tag.SeriesInstanceUID, VR.UI, uid);
+      a.setString(Tag.SeriesDescription, VR.LO, description);
+      a.setString(Tag.ImageType, VR.CS, "ORIGINAL", "PRIMARY", "M"); // NON-NLS
+      a.setDouble(Tag.ImageOrientationPatient, VR.DS, orientation);
+      a.setDouble(
+          Tag.ImagePositionPatient, VR.DS, normal[0] * i * 4, normal[1] * i * 4, normal[2] * i * 4);
+      a.setDouble(Tag.SliceThickness, VR.DS, 4);
+      a.setDouble(Tag.PixelSpacing, VR.DS, 0.5, 0.5);
+      a.setString(Tag.FrameOfReferenceUID, VR.UI, "1.2.3.4.6"); // NON-NLS
+      slices[i] = a;
+    }
+    return StudySeries.of(List.of(TestSeries.series(slices)), new SeriesFeatureExtractor())
+        .getFirst();
+  }
+
+  private static double relativePosition(HangingPlan.Step step, int cell) {
+    return step.layout().cells().get(cell).panes().getFirst().view().position().relative();
   }
 
   @Test

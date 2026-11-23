@@ -329,6 +329,9 @@
               "imageSet": 1,
               "plane": "CORONAL",
               "fallback": true
+            },
+            "display": {
+              "position": "middle"
             }
           },
           "4": {
@@ -337,6 +340,9 @@
               "imageSet": 1,
               "plane": "SAGITTAL",
               "fallback": true
+            },
+            "display": {
+              "position": "middle"
             }
           }
         }
@@ -892,8 +898,41 @@
           }
         },
         "displaySets": {
+          "1": {
+            "display": {
+              "position": "auto"
+            }
+          },
+          "2": {
+            "display": {
+              "position": "auto"
+            }
+          },
+          "3": {
+            "display": {
+              "position": "auto"
+            }
+          },
+          "4": {
+            "display": {
+              "position": "auto"
+            }
+          },
+          "5": {
+            "display": {
+              "position": "auto"
+            }
+          },
+          "6": {
+            "display": {
+              "position": "auto"
+            }
+          },
           "7": {
-            "repeat": 4
+            "repeat": 4,
+            "display": {
+              "position": "auto"
+            }
           }
         }
       }
@@ -2912,6 +2951,18 @@
                 "weight": 1
               }
             ]
+          }
+        },
+        "displaySets": {
+          "2": {
+            "display": {
+              "position": "auto"
+            }
+          },
+          "3": {
+            "display": {
+              "position": "auto"
+            }
           }
         }
       }

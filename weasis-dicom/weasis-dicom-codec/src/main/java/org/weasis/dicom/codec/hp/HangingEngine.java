@@ -981,8 +981,26 @@ public final class HangingEngine {
         new HangingLayout.Cell(
             cell.cell(),
             tiling(displaySet),
-            List.of(viewState(cell.series(), series, displaySet, extension))));
+            List.of(
+                viewState(
+                    cell.series(), series, planeOf(cell, series), displaySet, extension))));
     cells.add(cell);
+  }
+
+  /**
+   * The plane the cell shows: the plane of its reformat, else the orientation of its series; null
+   * when unknown.
+   */
+  private static SeriesFeatures.Orientation planeOf(CellPlan cell, StudySeries series) {
+    Derivation derivation = cell.derivation();
+    if (derivation != null && derivation.plane() != null) {
+      try {
+        return SeriesFeatures.Orientation.valueOf(derivation.plane().toUpperCase(Locale.ROOT));
+      } catch (IllegalArgumentException e) {
+        return null;
+      }
+    }
+    return series == null || series.features() == null ? null : series.features().orientation();
   }
 
   /** The Study Instance UID of a cell's series, from its dataset or the prior it comes from. */
@@ -1045,7 +1063,7 @@ public final class HangingEngine {
 
   /** The presentation of a cell: the display state by reference and the DICOM intent. */
   static ViewState viewState(String seriesUid, HPDisplaySet displaySet, DisplaySet extension) {
-    return viewState(seriesUid, null, displaySet, extension);
+    return viewState(seriesUid, null, null, displaySet, extension);
   }
 
   /**
@@ -1054,7 +1072,11 @@ public final class HangingEngine {
    * its own image.
    */
   static ViewState viewState(
-      String seriesUid, StudySeries series, HPDisplaySet displaySet, DisplaySet extension) {
+      String seriesUid,
+      StudySeries series,
+      SeriesFeatures.Orientation plane,
+      HPDisplaySet displaySet,
+      DisplaySet extension) {
     Attributes dataset = series == null ? null : series.dataset();
     Display display = extension == null ? null : extension.display();
     String sort = null;
@@ -1095,7 +1117,9 @@ public final class HangingEngine {
                 displaySet.getAttributes().getStrings(Tag.DisplaySetPatientOrientation));
     ViewPresentation view =
         new ViewPresentation(
-            null,
+            display == null || display.position() == null
+                ? null
+                : new ViewState.Position(display.position().relativeFor(plane), null),
             null,
             zoomType,
             0,

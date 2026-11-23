@@ -19,6 +19,7 @@ import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -209,6 +210,7 @@ public record WeasisExtensions(
    * @param scaleGroup the cells of a step sharing it show their images at the same physical scale
    *     (e.g. current and prior mammograms), the largest that fits all of them
    * @param projection the slab projection a 2D cell shows instead of its images
+   * @param position the image the cell starts on, null for the first image
    */
   public record Display(
       String preset,
@@ -221,7 +223,35 @@ public record WeasisExtensions(
       String zoomMode,
       String synch,
       String scaleGroup,
-      Projection projection) {
+      Projection projection,
+      Start position) {
+
+    public Display(
+        String preset,
+        String colorMap,
+        String lutShape,
+        String preset3d,
+        Fusion fusion,
+        Mpr mpr,
+        String measurementProfile,
+        String zoomMode,
+        String synch,
+        String scaleGroup,
+        Projection projection) {
+      this(
+          preset,
+          colorMap,
+          lutShape,
+          preset3d,
+          fusion,
+          mpr,
+          measurementProfile,
+          zoomMode,
+          synch,
+          scaleGroup,
+          projection,
+          null);
+    }
 
     public Display(
         String preset,
@@ -269,6 +299,83 @@ public record WeasisExtensions(
           zoomMode,
           synch,
           null);
+    }
+  }
+
+  /**
+   * The image a cell starts on: a relative position in its stack, from 0 (the first image) to 1
+   * (the last), or {@link #AUTO} to choose it from the plane of the series. In JSON, a number or
+   * {@code first}, {@code middle}, {@code last}, {@code auto}.
+   *
+   * @param relative the relative position, null for {@link #AUTO}
+   */
+  public record Start(Double relative) {
+    public static final Start FIRST = new Start(0.0);
+    public static final Start MIDDLE = new Start(0.5);
+    public static final Start LAST = new Start(1.0);
+
+    /**
+     * The first image of an axial stack, which starts at one end of the volume as readers expect,
+     * and the middle one of a sagittal, coronal or oblique stack, whose ends show little anatomy;
+     * the first image when the plane is unknown or mixed.
+     */
+    public static final Start AUTO = new Start(null);
+
+    public Start {
+      if (relative != null) {
+        relative = Math.clamp(relative, 0.0, 1.0);
+      }
+    }
+
+    public boolean isAuto() {
+      return relative == null;
+    }
+
+    /** The relative position for a series in that plane, which may be null when unknown. */
+    public double relativeFor(SeriesFeatures.Orientation plane) {
+      if (relative != null) {
+        return relative;
+      }
+      if (plane == null) {
+        return 0.0;
+      }
+      return switch (plane) {
+        case CORONAL, SAGITTAL, OBLIQUE -> 0.5;
+        case AXIAL, MIXED, UNKNOWN -> 0.0;
+      };
+    }
+
+    public JsonValue toJson() {
+      if (relative == null) {
+        return Json.createValue("auto"); // NON-NLS
+      }
+      if (relative == 0.0) {
+        return Json.createValue("first"); // NON-NLS
+      }
+      if (relative == 0.5) {
+        return Json.createValue("middle"); // NON-NLS
+      }
+      if (relative == 1.0) {
+        return Json.createValue("last"); // NON-NLS
+      }
+      return Json.createValue(relative);
+    }
+
+    /** Reads a number or a name; null or an unknown name gives null. */
+    public static Start fromJson(JsonValue value) {
+      if (value instanceof JsonNumber n) {
+        return new Start(n.doubleValue());
+      }
+      if (value instanceof JsonString s) {
+        return switch (s.getString().trim().toLowerCase(Locale.ROOT)) {
+          case "first", "start" -> FIRST; // NON-NLS
+          case "middle", "center", "centre" -> MIDDLE; // NON-NLS
+          case "last", "end" -> LAST; // NON-NLS
+          case "auto" -> AUTO; // NON-NLS
+          default -> null;
+        };
+      }
+      return null;
     }
   }
 
@@ -540,6 +647,9 @@ public record WeasisExtensions(
       }
       json.add("projection", p); // NON-NLS
     }
+    if (d.position() != null) {
+      json.add("position", d.position().toJson()); // NON-NLS
+    }
     return json;
   }
 
@@ -582,7 +692,8 @@ public record WeasisExtensions(
                 p.containsKey("thickness")
                     ? p.getJsonNumber("thickness").doubleValue()
                     : null) // NON-NLS
-            : null);
+            : null,
+        Start.fromJson(json.get("position"))); // NON-NLS
   }
 
   private static JsonObjectBuilder loading(Loading l) {
