@@ -49,6 +49,7 @@ import org.weasis.dicom.codec.hp.SeriesFeatures.Contrast;
 import org.weasis.dicom.codec.hp.SeriesFeatures.CtKernel;
 import org.weasis.dicom.codec.hp.SeriesFeatures.Interest;
 import org.weasis.dicom.codec.hp.SeriesFeatures.MrWeighting;
+import org.weasis.dicom.codec.hp.SeriesFeatures.NmImage;
 import org.weasis.dicom.codec.hp.SeriesFeatures.Orientation;
 import org.weasis.dicom.codec.hp.SeriesFeatures.PetCorrection;
 import org.weasis.dicom.codec.hp.SeriesFeatures.Role;
@@ -270,6 +271,7 @@ public final class SeriesFeatureExtractor {
     Double thickness = image ? sliceThickness(sample, shared) : null;
     Double spacing = image ? spacing(sample) : null;
     PetCorrection pet = "PT".equals(modality) ? petCorrection(dcm) : null; // NON-NLS
+    NmImage nm = "NM".equals(modality) ? nmImage(dcm) : null; // NON-NLS
     Temporal temporal = temporal(series, first, dcm);
     Map<String, Provenance> provenance = new LinkedHashMap<>();
     provenance.put(Key.ROLE.id(), roleProvenance(role, sopClass, imageType, tokens));
@@ -320,6 +322,17 @@ public final class SeriesFeatureExtractor {
           Key.PET_SUV_CAPABLE.id(),
           header(Tag.CorrectedImage, "Corrected Image, Units and Decay Correction"));
     }
+    if (nm != null) {
+      Provenance type = header(Tag.ImageType, String.join("\\", imageType));
+      if (nm.imageType() != null) {
+        provenance.put(Key.NM_IMAGE_TYPE.id(), type);
+      }
+      if (nm.emission() != null) {
+        provenance.put(Key.NM_EMISSION.id(), type);
+      }
+      provenance.put(
+          Key.NM_ATTENUATION_CORRECTED.id(), header(Tag.CorrectedImage, "Corrected Image"));
+    }
     Provenance temporalProvenance = temporalProvenance(series, first, dcm, temporal);
     if (temporalProvenance != null) {
       provenance.put(Key.TEMPORAL.id(), temporalProvenance);
@@ -338,6 +351,7 @@ public final class SeriesFeatureExtractor {
         thickness,
         spacing,
         pet,
+        nm,
         temporal,
         text(series, first, Tag.FrameOfReferenceUID),
         tokens,
@@ -681,6 +695,26 @@ public final class SeriesFeatureExtractor {
     }
     Double root = decimal(dcm, shared, Tag.DiffusionBValue, Tag.MRDiffusionSequence);
     return root;
+  }
+
+  /** Image Type values 3 and 4 and Corrected Image of the NM Image module (PS3.3 C.8.4.9). */
+  static NmImage nmImage(Attributes dcm) {
+    if (dcm == null) {
+      return null;
+    }
+    List<String> imageType = strings(dcm, Tag.ImageType);
+    return new NmImage(
+        imageTypeValue(imageType, 3),
+        imageTypeValue(imageType, 4),
+        upper(strings(dcm, Tag.CorrectedImage)).contains("ATTN")); // NON-NLS
+  }
+
+  private static String imageTypeValue(List<String> imageType, int number) {
+    if (imageType.size() < number || imageType.get(number - 1) == null) {
+      return null;
+    }
+    String value = imageType.get(number - 1).trim().toUpperCase(Locale.ROOT);
+    return value.isEmpty() ? null : value;
   }
 
   static PetCorrection petCorrection(Attributes dcm) {

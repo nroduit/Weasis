@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
+import java.io.StringReader;
 import org.junit.jupiter.api.Test;
 
 class WeasisExtensionsTest {
@@ -108,6 +109,38 @@ class WeasisExtensionsTest {
         () -> assertFalse(back.getJsonObject("derive").containsKey("maskImageSet")),
         () -> assertEquals(extensions, WeasisExtensions.fromJson(extensions.toJson())),
         () -> assertNull(new WeasisExtensions.Derive("subtraction", 1, null).plane()));
+  }
+
+  @Test
+  void aRequiredImageSetAndAFusedDisplaySetSurviveTheJsonRoundTrip() {
+    WeasisExtensions extensions =
+        WeasisExtensions.fromJson(
+            Json.createReader(
+                    new StringReader(
+                        """
+                        {"imageSets": {"1": {"selectors": [], "required": true},
+                                       "2": {"selectors": []}},
+                         "displaySets": {"3": {"display": {"fusion":
+                             {"overlay": 2, "colorMap": "weasis.turbo", "opacity": 0.5}}}}}
+                        """))
+                .readObject());
+    WeasisExtensions back = WeasisExtensions.fromJson(extensions.toJson());
+    WeasisExtensions.Fusion fusion = back.displaySets().get(3).display().fusion();
+    assertAll(
+        () -> assertTrue(back.imageSets().get(1).required()),
+        () -> assertFalse(back.imageSets().get(2).required()),
+        () ->
+            assertFalse(
+                extensions
+                    .toJson()
+                    .getJsonObject("imageSets")
+                    .getJsonObject("2")
+                    .containsKey("required"), // NON-NLS
+                "written only when set"),
+        () -> assertEquals(2, fusion.overlay()),
+        () -> assertNull(fusion.base()),
+        () -> assertEquals("weasis.turbo", fusion.colorMap()), // NON-NLS
+        () -> assertEquals(0.5, fusion.opacity()));
   }
 
   @Test

@@ -86,6 +86,11 @@ public record FeatureSelector(
     PET_SUV_CAPABLE( // NON-NLS
         "petCorrection.suvCapable", // NON-NLS
         f -> f.petCorrection() == null ? null : f.petCorrection().suvCapable()),
+    NM_IMAGE_TYPE("nm.imageType", f -> f.nm() == null ? null : f.nm().imageType()), // NON-NLS
+    NM_EMISSION("nm.emission", f -> f.nm() == null ? null : f.nm().emission()), // NON-NLS
+    NM_ATTENUATION_CORRECTED( // NON-NLS
+        "nm.attenuationCorrected", // NON-NLS
+        f -> f.nm() == null ? null : f.nm().attenuationCorrected()),
     TEMPORAL("temporal", f -> name(f.temporal())), // NON-NLS
     FRAME_OF_REFERENCE("frameOfReference", f -> f.frameOfReference()), // NON-NLS
     DESCRIPTION("description", f -> f.descriptionTokens()), // NON-NLS

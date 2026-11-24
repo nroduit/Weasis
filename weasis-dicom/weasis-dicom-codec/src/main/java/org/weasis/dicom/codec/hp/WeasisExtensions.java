@@ -93,10 +93,17 @@ public record WeasisExtensions(
    *
    * @param label a label for the why panel, null for the DICOM label
    * @param selectors the feature selectors, in order
+   * @param required whether the protocol applies only to a study that fills this image set, which
+   *     is how a protocol asks for two kinds of series at once (a SPECT and a CT)
    */
-  public record ImageSet(String label, List<FeatureSelector> selectors) {
+  public record ImageSet(String label, List<FeatureSelector> selectors, boolean required) {
     public ImageSet {
       selectors = selectors == null ? List.of() : List.copyOf(selectors);
+    }
+
+    /** An image set the protocol does not require. */
+    public ImageSet(String label, List<FeatureSelector> selectors) {
+      this(label, selectors, false);
     }
   }
 
@@ -380,10 +387,13 @@ public record WeasisExtensions(
   }
 
   /**
-   * @param base image set number of the base series
+   * A fused cell: the best series of another image set blended over the series of the cell.
+   *
+   * @param base image set number of the base series, null for the display set's own: the cell
+   *     always shows the series of its display set as the base
    * @param overlay image set number of the overlay series
-   * @param colorMap color map id of the overlay
-   * @param opacity opacity of the overlay, 0 to 1
+   * @param colorMap color map id of the overlay, null for the default of the viewer
+   * @param opacity opacity of the overlay, 0 to 1, null for the default of the viewer
    */
   public record Fusion(Integer base, Integer overlay, String colorMap, Double opacity) {}
 
@@ -509,7 +519,11 @@ public record WeasisExtensions(
     JsonUtil.addIfPresent(json, "label", is.label()); // NON-NLS
     JsonArrayBuilder selectors = Json.createArrayBuilder();
     is.selectors().forEach(sel -> selectors.add(sel.toJson()));
-    return json.add("selectors", selectors); // NON-NLS
+    json.add("selectors", selectors); // NON-NLS
+    if (is.required()) {
+      json.add("required", true); // NON-NLS
+    }
+    return json;
   }
 
   private static ImageSet imageSet(JsonObject json) {
@@ -520,7 +534,8 @@ public record WeasisExtensions(
                 .flatMap(Optional::stream)
                 .toList()
             : List.of();
-    return new ImageSet(json.getString("label", null), selectors); // NON-NLS
+    return new ImageSet(
+        json.getString("label", null), selectors, json.getBoolean("required", false)); // NON-NLS
   }
 
   private static JsonObjectBuilder displaySet(DisplaySet ds) {

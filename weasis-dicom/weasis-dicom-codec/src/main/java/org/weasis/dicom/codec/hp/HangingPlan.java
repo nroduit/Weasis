@@ -161,6 +161,11 @@ public record HangingPlan(
           derivation);
     }
 
+    /** The same cell with more reasons. */
+    public CellPlan withReasons(List<String> moreReasons) {
+      return withDerivation(derivation, moreReasons);
+    }
+
     /** The same cell with a derivation to do, and the reasons that explain it. */
     public CellPlan withDerivation(Derivation derivation, List<String> moreReasons) {
       List<String> all = new ArrayList<>(reasons);

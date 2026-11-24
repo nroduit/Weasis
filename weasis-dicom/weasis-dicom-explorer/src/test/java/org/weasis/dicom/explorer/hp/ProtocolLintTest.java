@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -39,6 +40,55 @@ class ProtocolLintTest {
                                 ProtocolLint.check(ProtocolJson.fromJson(e)),
                                 e.getString("id"))) // NON-NLS
             .toList());
+  }
+
+  private static List<String> fusionErrors(String fusion) {
+    String entry =
+        """
+        {"id": "fused", "schema": 1,
+         "dicom": {"HangingProtocolName": "Fused",
+           "ImageSetsSequence": [
+             {"ImageSetSelectorSequence": [],
+              "TimeBasedImageSetsSequence": [{"ImageSetNumber": 1, "ImageSetSelectorCategory": "RELATIVE_TIME", "RelativeTime": [0, 0], "RelativeTimeUnits": "DAYS"}]},
+             {"ImageSetSelectorSequence": [],
+              "TimeBasedImageSetsSequence": [{"ImageSetNumber": 2, "ImageSetSelectorCategory": "RELATIVE_TIME", "RelativeTime": [0, 0], "RelativeTimeUnits": "DAYS"}]}],
+           "DisplaySetsSequence": [
+             {"ImageSetNumber": 1, "DisplaySetNumber": 1, "DisplaySetPresentationGroup": 1, "ImageBoxesSequence": [{"ImageBoxNumber": 1}]}]},
+         "weasis": {
+           "imageSets": {
+             "1": {"selectors": [{"feature": "modality", "usage": "MATCH", "values": ["CT"]}]},
+             "2": {"selectors": [{"feature": "modality", "usage": "MATCH", "values": ["PT"]}]}},
+           "displaySets": {"1": {"display": {"fusion": %s}}}}}
+        """
+            .formatted(fusion);
+    try (var reader = Json.createReader(new StringReader(entry))) {
+      return ProtocolLint.check(ProtocolJson.fromJson(reader.readObject()));
+    }
+  }
+
+  @Test
+  void anImageSetUsedOnlyAsAFusionOverlayIsShownAndAWrongFusionIsReported() {
+    List<String> unknown = fusionErrors("{\"overlay\": 7}"); // NON-NLS
+    List<String> wrongBase = fusionErrors("{\"base\": 2, \"overlay\": 2}"); // NON-NLS
+    assertAll(
+        () -> assertEquals(List.of(), fusionErrors("{\"overlay\": 2}")), // NON-NLS
+        () -> assertEquals(List.of(), fusionErrors("{\"base\": 1, \"overlay\": 2}")),
+        () ->
+            assertTrue(
+                unknown.stream().anyMatch(e -> e.contains("unknown image set 7")),
+                String.valueOf(unknown)),
+        () ->
+            assertTrue(
+                unknown.stream().anyMatch(e -> e.contains("image set 2 is shown by no")),
+                String.valueOf(unknown)),
+        () ->
+            assertTrue(
+                wrongBase.stream().anyMatch(e -> e.contains("fusion base")),
+                String.valueOf(wrongBase)),
+        () ->
+            assertTrue(
+                fusionErrors("{}").stream()
+                    .anyMatch(e -> e.contains("needs an overlay")))); // NON-NLS
   }
 
   @Test

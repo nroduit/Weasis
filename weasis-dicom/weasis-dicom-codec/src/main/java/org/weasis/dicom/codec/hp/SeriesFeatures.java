@@ -44,6 +44,7 @@ import org.weasis.dicom.codec.hp.FeatureSelector.Key;
  * @param sliceThickness the median Slice Thickness in mm, null when unknown
  * @param spacing the median distance between consecutive slices in mm, null when unknown
  * @param petCorrection the corrections of a PET series, null for other modalities
+ * @param nm what an NM series holds, null for other modalities
  * @param temporal whether the series is a static stack, a dynamic acquisition or a cine
  * @param frameOfReference Frame of Reference UID (0020,0052)
  * @param descriptionTokens the normalized tokens of the series description and protocol name
@@ -64,6 +65,7 @@ public record SeriesFeatures(
     Double sliceThickness,
     Double spacing,
     PetCorrection petCorrection,
+    NmImage nm,
     Temporal temporal,
     String frameOfReference,
     List<String> descriptionTokens,
@@ -92,6 +94,7 @@ public record SeriesFeatures(
       Double sliceThickness,
       Double spacing,
       PetCorrection petCorrection,
+      NmImage nm,
       Temporal temporal,
       String frameOfReference,
       List<String> descriptionTokens,
@@ -112,6 +115,7 @@ public record SeriesFeatures(
         sliceThickness,
         spacing,
         petCorrection,
+        nm,
         temporal,
         frameOfReference,
         descriptionTokens,
@@ -136,6 +140,7 @@ public record SeriesFeatures(
       Double sliceThickness,
       Double spacing,
       PetCorrection petCorrection,
+      NmImage nm,
       Temporal temporal,
       String frameOfReference,
       List<String> descriptionTokens,
@@ -155,6 +160,7 @@ public record SeriesFeatures(
         sliceThickness,
         spacing,
         petCorrection,
+        nm,
         temporal,
         frameOfReference,
         descriptionTokens,
@@ -249,6 +255,16 @@ public record SeriesFeatures(
   /** The corrections of a PET series and whether SUV can be computed from it. */
   public record PetCorrection(boolean attenuationCorrected, boolean suvCapable) {}
 
+  /**
+   * What an NM series holds, from the NM Image module.
+   *
+   * @param imageType Image Type value 3 ({@code STATIC}, {@code WHOLE BODY}, {@code TOMO}, {@code
+   *     RECON TOMO}...), null when absent
+   * @param emission Image Type value 4 ({@code EMISSION} or {@code TRANSMISSION}), null when absent
+   * @param attenuationCorrected whether Corrected Image names the attenuation
+   */
+  public record NmImage(String imageType, String emission, boolean attenuationCorrected) {}
+
   /** Static stack, dynamic acquisition (temporal positions) or cine. */
   public enum Temporal {
     STATIC,
@@ -293,6 +309,7 @@ public record SeriesFeatures(
         sliceThickness,
         spacing,
         petCorrection,
+        nm,
         temporal,
         frameOfReference,
         descriptionTokens,
@@ -465,6 +482,7 @@ public record SeriesFeatures(
           f.sliceThickness,
           f.spacing,
           f.petCorrection,
+          f.nm,
           temporal,
           f.frameOfReference,
           f.descriptionTokens,

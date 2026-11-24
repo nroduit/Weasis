@@ -44,6 +44,7 @@ class ReasonProvenanceTest {
         2.5,
         2.5,
         null,
+        null,
         Temporal.STATIC,
         "1.2.3",
         List.of("THORAX"), // NON-NLS

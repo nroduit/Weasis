@@ -2968,6 +2968,1620 @@
       }
     },
     {
+      "id": "weasis.nm.ct",
+      "schema": 1,
+      "dicom": {
+        "HangingProtocolName": "SPECT with CT",
+        "HangingProtocolLevel": "MANUFACTURER",
+        "HangingProtocolCreator": "Weasis",
+        "HangingProtocolDefinitionSequence": [
+          {
+            "Modality": "NM"
+          }
+        ],
+        "ImageSetsSequence": [
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "CT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 1,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "NM"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 2,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "CT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 3,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "CT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 4,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "NM"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 5,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "NM"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 6,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          }
+        ],
+        "DisplaySetsSequence": [
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 1,
+            "DisplaySetLabel": "CT",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 2,
+            "DisplaySetLabel": "SPECT",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 3,
+            "DisplaySetLabel": "Fusion",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 4,
+            "DisplaySetLabel": "CT",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 5,
+            "DisplaySetLabel": "CT coronal",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 4,
+            "DisplaySetNumber": 6,
+            "DisplaySetLabel": "CT sagittal",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 7,
+            "DisplaySetLabel": "Fusion",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 8,
+            "DisplaySetLabel": "Fusion coronal",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 4,
+            "DisplaySetNumber": 9,
+            "DisplaySetLabel": "Fusion sagittal",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 10,
+            "DisplaySetLabel": "CT",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 11,
+            "DisplaySetLabel": "CT coronal",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 4,
+            "DisplaySetNumber": 12,
+            "DisplaySetLabel": "CT sagittal",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 13,
+            "DisplaySetLabel": "SPECT",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 5,
+            "DisplaySetNumber": 14,
+            "DisplaySetLabel": "SPECT coronal",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 6,
+            "DisplaySetNumber": 15,
+            "DisplaySetLabel": "SPECT sagittal",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 16,
+            "DisplaySetLabel": "Fusion",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 17,
+            "DisplaySetLabel": "Fusion coronal",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 4,
+            "DisplaySetNumber": 18,
+            "DisplaySetLabel": "Fusion sagittal",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          }
+        ],
+        "PartialDataDisplayHandling": "MAINTAIN_LAYOUT",
+        "SynchronizedScrollingSequence": [
+          {
+            "DisplaySetScrollingGroup": [
+              1,
+              2,
+              3
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              4,
+              7
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              5,
+              8
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              6,
+              9
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              10,
+              13,
+              16
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              11,
+              14,
+              17
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              12,
+              15,
+              18
+            ]
+          }
+        ]
+      },
+      "weasis": {
+        "uiProfile": "weasis.pt",
+        "imageSets": {
+          "1": {
+            "label": "Axial CT",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "AXIAL"
+                ]
+              },
+              {
+                "feature": "ctKernel.family",
+                "usage": "PREFER",
+                "values": [
+                  "SOFT"
+                ],
+                "weight": 1
+              },
+              {
+                "feature": "role",
+                "usage": "PREFER",
+                "values": [
+                  "ORIGINAL"
+                ],
+                "weight": 0.5
+              }
+            ],
+            "required": true
+          },
+          "2": {
+            "label": "SPECT",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT",
+                  "MIP"
+                ]
+              },
+              {
+                "feature": "nm.imageType",
+                "usage": "MATCH",
+                "values": [
+                  "RECON TOMO"
+                ]
+              },
+              {
+                "feature": "nm.emission",
+                "usage": "MATCH",
+                "values": [
+                  "EMISSION"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "NO_MATCH",
+                "values": [
+                  "CORONAL",
+                  "SAGITTAL"
+                ]
+              },
+              {
+                "feature": "nm.attenuationCorrected",
+                "usage": "PREFER",
+                "values": [
+                  "TRUE"
+                ],
+                "weight": 2
+              },
+              {
+                "feature": "orientation",
+                "usage": "PREFER",
+                "values": [
+                  "AXIAL"
+                ],
+                "weight": 0.5
+              }
+            ],
+            "required": true
+          },
+          "3": {
+            "label": "Coronal CT",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "CORONAL"
+                ]
+              }
+            ]
+          },
+          "4": {
+            "label": "Sagittal CT",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "SAGITTAL"
+                ]
+              }
+            ]
+          },
+          "5": {
+            "label": "Coronal SPECT",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT",
+                  "MIP"
+                ]
+              },
+              {
+                "feature": "nm.imageType",
+                "usage": "MATCH",
+                "values": [
+                  "RECON TOMO"
+                ]
+              },
+              {
+                "feature": "nm.emission",
+                "usage": "MATCH",
+                "values": [
+                  "EMISSION"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "CORONAL"
+                ]
+              },
+              {
+                "feature": "nm.attenuationCorrected",
+                "usage": "PREFER",
+                "values": [
+                  "TRUE"
+                ],
+                "weight": 2
+              }
+            ]
+          },
+          "6": {
+            "label": "Sagittal SPECT",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT",
+                  "MIP"
+                ]
+              },
+              {
+                "feature": "nm.imageType",
+                "usage": "MATCH",
+                "values": [
+                  "RECON TOMO"
+                ]
+              },
+              {
+                "feature": "nm.emission",
+                "usage": "MATCH",
+                "values": [
+                  "EMISSION"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "SAGITTAL"
+                ]
+              },
+              {
+                "feature": "nm.attenuationCorrected",
+                "usage": "PREFER",
+                "values": [
+                  "TRUE"
+                ],
+                "weight": 2
+              }
+            ]
+          }
+        },
+        "displaySets": {
+          "1": {
+            "display": {
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "2": {
+            "display": {
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "3": {
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.turbo"
+              },
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "4": {
+            "display": {
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "5": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "CORONAL",
+              "fallback": true
+            },
+            "display": {
+              "scaleGroup": "coronal",
+              "position": "auto"
+            }
+          },
+          "6": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "SAGITTAL",
+              "fallback": true
+            },
+            "display": {
+              "scaleGroup": "sagittal",
+              "position": "auto"
+            }
+          },
+          "7": {
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.turbo"
+              },
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "8": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "CORONAL",
+              "fallback": true
+            },
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.turbo"
+              },
+              "scaleGroup": "coronal",
+              "position": "auto"
+            }
+          },
+          "9": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "SAGITTAL",
+              "fallback": true
+            },
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.turbo"
+              },
+              "scaleGroup": "sagittal",
+              "position": "auto"
+            }
+          },
+          "10": {
+            "display": {
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "11": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "CORONAL",
+              "fallback": true
+            },
+            "display": {
+              "scaleGroup": "coronal",
+              "position": "auto"
+            }
+          },
+          "12": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "SAGITTAL",
+              "fallback": true
+            },
+            "display": {
+              "scaleGroup": "sagittal",
+              "position": "auto"
+            }
+          },
+          "13": {
+            "display": {
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "14": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 2,
+              "plane": "CORONAL",
+              "fallback": true
+            },
+            "display": {
+              "scaleGroup": "coronal",
+              "position": "auto"
+            }
+          },
+          "15": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 2,
+              "plane": "SAGITTAL",
+              "fallback": true
+            },
+            "display": {
+              "scaleGroup": "sagittal",
+              "position": "auto"
+            }
+          },
+          "16": {
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.turbo"
+              },
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "17": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "CORONAL",
+              "fallback": true
+            },
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.turbo"
+              },
+              "scaleGroup": "coronal",
+              "position": "auto"
+            }
+          },
+          "18": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "SAGITTAL",
+              "fallback": true
+            },
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.turbo"
+              },
+              "scaleGroup": "sagittal",
+              "position": "auto"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "weasis.pt.ct",
+      "schema": 1,
+      "dicom": {
+        "HangingProtocolName": "PET with CT",
+        "HangingProtocolLevel": "MANUFACTURER",
+        "HangingProtocolCreator": "Weasis",
+        "HangingProtocolDefinitionSequence": [
+          {
+            "Modality": "PT"
+          }
+        ],
+        "ImageSetsSequence": [
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "CT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 1,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "PT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 2,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "CT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 3,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "CT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 4,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "PT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 5,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          },
+          {
+            "ImageSetSelectorSequence": [
+              {
+                "ImageSetSelectorUsageFlag": "MATCH",
+                "SelectorAttribute": "00080060",
+                "SelectorValueNumber": 1,
+                "SelectorAttributeVR": "CS",
+                "SelectorCSValue": "PT"
+              }
+            ],
+            "TimeBasedImageSetsSequence": [
+              {
+                "ImageSetNumber": 6,
+                "ImageSetSelectorCategory": "RELATIVE_TIME",
+                "RelativeTime": [
+                  0,
+                  0
+                ],
+                "RelativeTimeUnits": "DAYS"
+              }
+            ]
+          }
+        ],
+        "DisplaySetsSequence": [
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 1,
+            "DisplaySetLabel": "CT",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 2,
+            "DisplaySetLabel": "PET",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 3,
+            "DisplaySetLabel": "Fusion",
+            "DisplaySetPresentationGroup": 1,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 4,
+            "DisplaySetLabel": "CT",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 5,
+            "DisplaySetLabel": "CT coronal",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 4,
+            "DisplaySetNumber": 6,
+            "DisplaySetLabel": "CT sagittal",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 7,
+            "DisplaySetLabel": "Fusion",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 8,
+            "DisplaySetLabel": "Fusion coronal",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 4,
+            "DisplaySetNumber": 9,
+            "DisplaySetLabel": "Fusion sagittal",
+            "DisplaySetPresentationGroup": 2,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 10,
+            "DisplaySetLabel": "CT",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 11,
+            "DisplaySetLabel": "CT coronal",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 4,
+            "DisplaySetNumber": 12,
+            "DisplaySetLabel": "CT sagittal",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 2,
+            "DisplaySetNumber": 13,
+            "DisplaySetLabel": "PET",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 5,
+            "DisplaySetNumber": 14,
+            "DisplaySetLabel": "PET coronal",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 6,
+            "DisplaySetNumber": 15,
+            "DisplaySetLabel": "PET sagittal",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 1,
+            "DisplaySetNumber": 16,
+            "DisplaySetLabel": "Fusion",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 3,
+            "DisplaySetNumber": 17,
+            "DisplaySetLabel": "Fusion coronal",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          },
+          {
+            "ImageSetNumber": 4,
+            "DisplaySetNumber": 18,
+            "DisplaySetLabel": "Fusion sagittal",
+            "DisplaySetPresentationGroup": 3,
+            "ImageBoxesSequence": [
+              {
+                "ImageBoxNumber": 1
+              }
+            ]
+          }
+        ],
+        "PartialDataDisplayHandling": "MAINTAIN_LAYOUT",
+        "SynchronizedScrollingSequence": [
+          {
+            "DisplaySetScrollingGroup": [
+              1,
+              2,
+              3
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              4,
+              7
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              5,
+              8
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              6,
+              9
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              10,
+              13,
+              16
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              11,
+              14,
+              17
+            ]
+          },
+          {
+            "DisplaySetScrollingGroup": [
+              12,
+              15,
+              18
+            ]
+          }
+        ]
+      },
+      "weasis": {
+        "uiProfile": "weasis.pt",
+        "imageSets": {
+          "1": {
+            "label": "Axial CT",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "AXIAL"
+                ]
+              },
+              {
+                "feature": "ctKernel.family",
+                "usage": "PREFER",
+                "values": [
+                  "SOFT"
+                ],
+                "weight": 1
+              },
+              {
+                "feature": "role",
+                "usage": "PREFER",
+                "values": [
+                  "ORIGINAL"
+                ],
+                "weight": 0.5
+              }
+            ],
+            "required": true
+          },
+          "2": {
+            "label": "PET",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT",
+                  "MIP"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "NO_MATCH",
+                "values": [
+                  "CORONAL",
+                  "SAGITTAL"
+                ]
+              },
+              {
+                "feature": "petCorrection.attenuationCorrected",
+                "usage": "PREFER",
+                "values": [
+                  "TRUE"
+                ],
+                "weight": 2
+              },
+              {
+                "feature": "orientation",
+                "usage": "PREFER",
+                "values": [
+                  "AXIAL"
+                ],
+                "weight": 0.5
+              }
+            ],
+            "required": true
+          },
+          "3": {
+            "label": "Coronal CT",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "CORONAL"
+                ]
+              }
+            ]
+          },
+          "4": {
+            "label": "Sagittal CT",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "SAGITTAL"
+                ]
+              }
+            ]
+          },
+          "5": {
+            "label": "Coronal PET",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT",
+                  "MIP"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "CORONAL"
+                ]
+              },
+              {
+                "feature": "petCorrection.attenuationCorrected",
+                "usage": "PREFER",
+                "values": [
+                  "TRUE"
+                ],
+                "weight": 2
+              }
+            ]
+          },
+          "6": {
+            "label": "Sagittal PET",
+            "selectors": [
+              {
+                "feature": "role",
+                "usage": "NO_MATCH",
+                "values": [
+                  "LOCALIZER",
+                  "DOSE_REPORT",
+                  "SCREENSHOT",
+                  "DOCUMENT",
+                  "MIP"
+                ]
+              },
+              {
+                "feature": "orientation",
+                "usage": "MATCH",
+                "values": [
+                  "SAGITTAL"
+                ]
+              },
+              {
+                "feature": "petCorrection.attenuationCorrected",
+                "usage": "PREFER",
+                "values": [
+                  "TRUE"
+                ],
+                "weight": 2
+              }
+            ]
+          }
+        },
+        "displaySets": {
+          "1": {
+            "display": {
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "2": {
+            "display": {
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "3": {
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.dicom.hot-iron"
+              },
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "4": {
+            "display": {
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "5": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "CORONAL",
+              "fallback": true
+            },
+            "display": {
+              "scaleGroup": "coronal",
+              "position": "auto"
+            }
+          },
+          "6": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "SAGITTAL",
+              "fallback": true
+            },
+            "display": {
+              "scaleGroup": "sagittal",
+              "position": "auto"
+            }
+          },
+          "7": {
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.dicom.hot-iron"
+              },
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "8": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "CORONAL",
+              "fallback": true
+            },
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.dicom.hot-iron"
+              },
+              "scaleGroup": "coronal",
+              "position": "auto"
+            }
+          },
+          "9": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "SAGITTAL",
+              "fallback": true
+            },
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.dicom.hot-iron"
+              },
+              "scaleGroup": "sagittal",
+              "position": "auto"
+            }
+          },
+          "10": {
+            "display": {
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "11": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "CORONAL",
+              "fallback": true
+            },
+            "display": {
+              "scaleGroup": "coronal",
+              "position": "auto"
+            }
+          },
+          "12": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "SAGITTAL",
+              "fallback": true
+            },
+            "display": {
+              "scaleGroup": "sagittal",
+              "position": "auto"
+            }
+          },
+          "13": {
+            "display": {
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "14": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 2,
+              "plane": "CORONAL",
+              "fallback": true
+            },
+            "display": {
+              "scaleGroup": "coronal",
+              "position": "auto"
+            }
+          },
+          "15": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 2,
+              "plane": "SAGITTAL",
+              "fallback": true
+            },
+            "display": {
+              "scaleGroup": "sagittal",
+              "position": "auto"
+            }
+          },
+          "16": {
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.dicom.hot-iron"
+              },
+              "scaleGroup": "transaxial",
+              "position": "auto"
+            }
+          },
+          "17": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "CORONAL",
+              "fallback": true
+            },
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.dicom.hot-iron"
+              },
+              "scaleGroup": "coronal",
+              "position": "auto"
+            }
+          },
+          "18": {
+            "derive": {
+              "kind": "mpr",
+              "imageSet": 1,
+              "plane": "SAGITTAL",
+              "fallback": true
+            },
+            "display": {
+              "fusion": {
+                "overlay": 2,
+                "colorMap": "weasis.dicom.hot-iron"
+              },
+              "scaleGroup": "sagittal",
+              "position": "auto"
+            }
+          }
+        }
+      }
+    },
+    {
       "id": "weasis.default",
       "schema": 1,
       "dicom": {

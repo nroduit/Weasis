@@ -9,7 +9,9 @@
  */
 package org.weasis.dicom.codec.hp;
 
+import jakarta.json.Json;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -48,6 +50,7 @@ import org.weasis.dicom.codec.hp.ProtocolJson.Document;
 import org.weasis.dicom.codec.hp.WeasisExtensions.Derive;
 import org.weasis.dicom.codec.hp.WeasisExtensions.Display;
 import org.weasis.dicom.codec.hp.WeasisExtensions.DisplaySet;
+import org.weasis.dicom.codec.hp.WeasisExtensions.Fusion;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ImageSet;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ViewerType;
 import org.weasis.dicom.hp.AbstractPriorValue;
@@ -236,6 +239,21 @@ public final class HangingEngine {
     if (current > 0 && resolved == 0) {
       return Optional.empty(); // it would hang nothing
     }
+    long required = 0;
+    for (Map.Entry<Integer, Resolution> entry : resolutions.entrySet()) {
+      ImageSet extension = candidate.document().weasis().imageSets().get(entry.getKey());
+      if (extension == null || !extension.required()) {
+        continue;
+      }
+      if (!entry.getValue().isResolved()) {
+        return Optional.empty(); // the study lacks a kind of series the protocol is made for
+      }
+      required++;
+    }
+    if (required > 0 && !lastResort) {
+      specificity += REQUIRED_WEIGHT * required;
+      reasons.add(required + " required image sets resolve"); // NON-NLS
+    }
     double share = current == 0 ? 1 : (double) resolved / current;
     reasons.add(resolved + " of " + current + " image sets resolve"); // NON-NLS
     // available priors favour a comparison protocol; missing ones cost nothing
@@ -256,6 +274,9 @@ public final class HangingEngine {
             - (screens != null && screens > 1 ? 0.05 : 0);
     return Optional.of(new ProtocolScore(candidate, score, reasons));
   }
+
+  /** What a required image set that resolves adds to the specificity: as much as a modality. */
+  static final double REQUIRED_WEIGHT = 2;
 
   /** Modality and anatomy weigh two, laterality and procedure codes one. */
   static double specificity(HPDefinition definition) {
@@ -708,6 +729,7 @@ public final class HangingEngine {
       if (synch == null) {
         synch = synchOf(displaySet, extension, scrolled);
       }
+      Fused fused = fusedWith(extension, resolutions);
 
       if (resolution == null || !resolution.isResolved()) {
         String expected = resolution == null ? "no image set" : resolution.unresolved(); // NON-NLS
@@ -728,7 +750,8 @@ public final class HangingEngine {
               displaySet,
               extension,
               fallback,
-              resolutions.get(extension.derive().imageSet()).candidates().getFirst().series());
+              resolutions.get(extension.derive().imageSet()).candidates().getFirst().series(),
+              fused);
           continue;
         }
         if (adapt) {
@@ -752,13 +775,20 @@ public final class HangingEngine {
                 List.of(),
                 null,
                 0),
+            null,
             null);
         continue;
       }
 
-      if (extension != null && extension.derive() != null && !extension.derive().fallback()) {
-        // A deriving cell works on the best series of its image set, shown or not by another cell
-        Scored best = sourceOf(extension.derive(), resolution, resolutions);
+      boolean derives =
+          extension != null && extension.derive() != null && !extension.derive().fallback();
+      if (derives || fused != null) {
+        // A deriving or fused cell works on the best series of its image set, shown or not by
+        // another cell
+        Scored best =
+            derives
+                ? sourceOf(extension.derive(), resolution, resolutions)
+                : resolution.candidates().getFirst();
         addCell(
             cells,
             layout,
@@ -780,7 +810,8 @@ public final class HangingEngine {
                     rankOf(resolution)),
                 extension,
                 resolutions),
-            best.series());
+            best.series(),
+            fused);
         continue;
       }
       List<Scored> fresh =
@@ -817,7 +848,8 @@ public final class HangingEngine {
                     rankOf(resolution)),
                 extension,
                 resolutions),
-            shared.series());
+            shared.series(),
+            null);
         continue;
       }
       int shown = 0;
@@ -847,7 +879,8 @@ public final class HangingEngine {
                     rankOf(resolution)),
                 extension,
                 resolutions),
-            chosen.series());
+            chosen.series(),
+            null);
       }
     }
     layout.grid(gridFor(cells.size())).synch(synch).select(cells.isEmpty() ? 0 : 1);
@@ -970,21 +1003,74 @@ public final class HangingEngine {
                 + derive.maskImageSet()));
   }
 
+  /**
+   * What a fused cell blends over its series.
+   *
+   * @param blend the overlay series and how it is blended, null when the cell stays alone
+   * @param reason what the plan says of the fusion
+   */
+  record Fused(ViewState.Blend blend, String reason) {}
+
+  /**
+   * The fusion a display set asks for, null when it asks for none: the overlay is the best series
+   * of the image set it names; without one the base is shown alone and the reason says why.
+   */
+  private static Fused fusedWith(DisplaySet extension, Map<Integer, Resolution> resolutions) {
+    Fusion fusion =
+        extension == null || extension.display() == null ? null : extension.display().fusion();
+    if (fusion == null || fusion.overlay() == null) {
+      return null;
+    }
+    Resolution overlay = resolutions.get(fusion.overlay());
+    if (overlay == null || !overlay.isResolved()) {
+      return new Fused(
+          null,
+          "fusion skipped: image set " // NON-NLS
+              + fusion.overlay()
+              + " gives no overlay, the base is shown alone"); // NON-NLS
+    }
+    JsonObjectBuilder params = Json.createObjectBuilder();
+    if (hasText(fusion.colorMap())) {
+      params.add("colorMap", fusion.colorMap()); // NON-NLS
+    }
+    if (fusion.opacity() != null) {
+      params.add("overlayOpacity", Math.clamp(fusion.opacity(), 0.0, 1.0)); // NON-NLS
+    }
+    return new Fused(
+        new ViewState.Blend(overlay.candidates().getFirst().series().uid(), params.build()),
+        "fused: the series of image set " + fusion.overlay() + " as overlay"); // NON-NLS
+  }
+
   private static void addCell(
       List<CellPlan> cells,
       HangingLayout.Builder layout,
       HPDisplaySet displaySet,
       DisplaySet extension,
       CellPlan cell,
-      StudySeries series) {
+      StudySeries series,
+      Fused fused) {
+    ViewState.Blend blend = fused == null ? null : fused.blend();
+    CellPlan planned = cell;
+    if (fused != null) {
+      boolean same = blend != null && blend.overlay().equals(cell.series());
+      if (same) {
+        blend = null;
+      }
+      planned =
+          cell.withReasons(
+              List.of(
+                  same
+                      ? "fusion skipped: the overlay image set gives the same series" // NON-NLS
+                      : fused.reason()));
+    }
+    ViewState state =
+        viewState(cell.series(), series, planeOf(cell, series), displaySet, extension);
     layout.cell(
         new HangingLayout.Cell(
             cell.cell(),
             tiling(displaySet),
-            List.of(
-                viewState(
-                    cell.series(), series, planeOf(cell, series), displaySet, extension))));
-    cells.add(cell);
+            List.of(blend == null ? state : new ViewState(state.data(), state.view(), blend))));
+    cells.add(planned);
   }
 
   /**

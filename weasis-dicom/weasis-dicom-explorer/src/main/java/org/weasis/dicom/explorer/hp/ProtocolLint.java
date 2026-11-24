@@ -148,6 +148,11 @@ public final class ProtocolLint {
       if (extension != null && extension.repeat() != null && extension.repeat() < 0) {
         problems.add(name + ": repeat is negative"); // NON-NLS
       }
+      WeasisExtensions.Fusion fusion =
+          extension == null || extension.display() == null ? null : extension.display().fusion();
+      if (fusion != null) {
+        checkFusion(name, fusion, ds, sets, referenced, problems);
+      }
     }
     for (int number : sets) {
       if (!referenced.contains(number)) {
@@ -182,6 +187,28 @@ public final class ProtocolLint {
       problems.add("no grid for " + cells + " cells"); // NON-NLS
     }
     return problems;
+  }
+
+  /** A fused cell names a known overlay image set, which counts as shown, and its own base. */
+  private static void checkFusion(
+      String name,
+      WeasisExtensions.Fusion fusion,
+      HPDisplaySet displaySet,
+      Set<Integer> sets,
+      Set<Integer> referenced,
+      List<String> problems) {
+    if (fusion.overlay() == null) {
+      problems.add(name + ": a fusion needs an overlay image set"); // NON-NLS
+    } else if (!sets.contains(fusion.overlay())) {
+      problems.add(name + ": fusion overlays the unknown image set " + fusion.overlay());
+    } else {
+      referenced.add(fusion.overlay());
+    }
+    HPImageSet own = displaySet.getImageSet();
+    if (fusion.base() != null && own != null && fusion.base() != own.getImageSetNumber()) {
+      problems.add(
+          name + ": the fusion base is the image set of the display set, not " + fusion.base());
+    }
   }
 
   public static String text(JsonObject report) {

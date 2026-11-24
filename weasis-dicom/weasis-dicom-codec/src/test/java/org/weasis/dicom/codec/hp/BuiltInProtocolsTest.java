@@ -21,11 +21,13 @@ import java.util.List;
 import java.util.Set;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.weasis.core.api.util.LayeredEntries.Origin;
 import org.weasis.core.ui.editor.UiProfile;
+import org.weasis.core.ui.editor.image.ViewState;
 import org.weasis.dicom.codec.hp.HangingEngine.Candidate;
 import org.weasis.dicom.codec.hp.HangingPlan.Match;
 import org.weasis.dicom.codec.hp.ProtocolJson.Document;
@@ -196,6 +198,136 @@ class BuiltInProtocolsTest {
     }
     return StudySeries.of(List.of(TestSeries.series(slices)), new SeriesFeatureExtractor())
         .getFirst();
+  }
+
+  /** An axial stack of 12 slices of an emission modality on the frame of reference of the CT. */
+  private static StudySeries emission(
+      String modality, String sopClass, String uid, String corrected, String... imageType) {
+    Attributes[] slices = new Attributes[12];
+    for (int i = 0; i < slices.length; i++) {
+      Attributes a = TestSeries.image(modality, sopClass, i + 1);
+      a.setString(Tag.SeriesInstanceUID, VR.UI, uid);
+      a.setString(Tag.ImageType, VR.CS, imageType);
+      if (corrected != null) {
+        a.setString(Tag.CorrectedImage, VR.CS, corrected);
+      }
+      a.setDouble(Tag.ImageOrientationPatient, VR.DS, 1, 0, 0, 0, 1, 0);
+      a.setDouble(Tag.ImagePositionPatient, VR.DS, -200, -200, i * 4.0);
+      a.setDouble(Tag.SliceThickness, VR.DS, 4);
+      a.setDouble(Tag.PixelSpacing, VR.DS, 4, 4);
+      a.setString(Tag.FrameOfReferenceUID, VR.UI, "1.2.3.4.5"); // NON-NLS
+      slices[i] = a;
+    }
+    return StudySeries.of(List.of(TestSeries.series(slices)), new SeriesFeatureExtractor())
+        .getFirst();
+  }
+
+  private static StudySeries spect(String uid, String corrected, String type) {
+    return emission(
+        "NM",
+        UID.NuclearMedicineImageStorage,
+        uid,
+        corrected,
+        "ORIGINAL",
+        "PRIMARY",
+        type,
+        "EMISSION"); // NON-NLS
+  }
+
+  private static StudySeries pet(String uid, String corrected) {
+    return emission(
+        "PT",
+        UID.PositronEmissionTomographyImageStorage,
+        uid,
+        corrected,
+        "ORIGINAL",
+        "PRIMARY"); // NON-NLS
+  }
+
+  private static ViewState pane(HangingPlan.Step step, int cell) {
+    return step.layout().cells().get(cell).panes().getFirst();
+  }
+
+  @Test
+  void aSpectWithCtHangsTheAxialTripleThenTheCtAndFusedPlanesThenTheNineCells() {
+    List<StudySeries> study =
+        List.of(
+            HangingEngineTest.SOFT_THIN,
+            HangingEngineTest.LUNG,
+            HangingEngineTest.SCOUT,
+            spect("P", null, "TOMO"), // NON-NLS
+            spect("N", null, "RECON TOMO"), // NON-NLS
+            spect("S", "ATTN", "RECON TOMO")); // NON-NLS
+    HangingPlan plan = HangingEngine.match(library(), study).orElseThrow();
+    HangingPlan.Step axial = plan.steps().get(0);
+    HangingPlan.Step planes = plan.steps().get(1);
+    HangingPlan.Step all = plan.steps().get(2);
+    assertAll(
+        () -> assertEquals("weasis.nm.ct", plan.protocolId()), // NON-NLS
+        () -> assertTrue(plan.score() >= 7, "above any CT protocol: " + plan.score()),
+        () -> assertEquals(3, plan.steps().size()),
+        () -> assertEquals("1x3", axial.layout().grid()), // NON-NLS
+        () -> assertEquals("B", axial.cells().get(0).series(), "soft kernel CT"), // NON-NLS
+        () -> assertEquals("S", axial.cells().get(1).series(), "attenuation corrected"), // NON-NLS
+        () -> assertEquals("B", axial.cells().get(2).series(), "the fused cell keeps the CT"),
+        () -> assertNull(pane(axial, 0).blend()),
+        () -> assertEquals("S", pane(axial, 2).blend().overlay()), // NON-NLS
+        () ->
+            assertEquals(
+                "weasis.turbo", pane(axial, 2).blend().params().getString("colorMap")), // NON-NLS
+        () -> assertEquals("2x3", planes.layout().grid()), // NON-NLS
+        () -> assertEquals(6, planes.cells().size()),
+        () -> assertEquals("CORONAL", planes.cells().get(1).derivation().plane()), // NON-NLS
+        () -> assertEquals("B", planes.cells().get(1).derivation().source()), // NON-NLS
+        () -> assertEquals("SAGITTAL", planes.cells().get(5).derivation().plane()), // NON-NLS
+        () -> assertEquals("S", pane(planes, 4).blend().overlay(), "fused coronal"), // NON-NLS
+        () -> assertEquals("S", pane(planes, 5).blend().overlay(), "fused sagittal"), // NON-NLS
+        () -> assertEquals("3x3", all.layout().grid()), // NON-NLS
+        () -> assertEquals(9, all.cells().size()),
+        () -> assertEquals("S", all.cells().get(4).derivation().source(), "SPECT reformat"),
+        () -> assertNull(pane(all, 4).blend(), "the emission row is not fused"),
+        () -> assertEquals(0.5, relativePosition(all, 7), "fused coronal starts in the middle"),
+        () ->
+            assertTrue(
+                plan.steps().stream()
+                    .flatMap(s -> s.cells().stream())
+                    .noneMatch(c -> Set.of("P", "N", "D").contains(c.series())),
+                "no projection, uncorrected reconstruction or localizer"));
+  }
+
+  @Test
+  void aPetWithCtHangsTheHybridProtocolAndAPetAloneOrWithMrKeepsThePetProtocol() {
+    StudySeries corrected = pet("AC", "ATTN"); // NON-NLS
+    StudySeries uncorrected = pet("NAC", "DECY"); // NON-NLS
+    HangingPlan hybrid =
+        HangingEngine.match(library(), List.of(HangingEngineTest.SOFT_THIN, uncorrected, corrected))
+            .orElseThrow();
+    HangingPlan alone = HangingEngine.match(library(), List.of(corrected)).orElseThrow();
+    HangingPlan withMr =
+        HangingEngine.match(library(), List.of(corrected, HangingEngineTest.MR)).orElseThrow();
+    assertAll(
+        () -> assertEquals("weasis.pt.ct", hybrid.protocolId()), // NON-NLS
+        () -> assertEquals("AC", hybrid.steps().getFirst().cells().get(1).series()), // NON-NLS
+        () -> assertEquals("AC", pane(hybrid.steps().getFirst(), 2).blend().overlay()), // NON-NLS
+        () ->
+            assertEquals(
+                "weasis.dicom.hot-iron", // NON-NLS
+                pane(hybrid.steps().getFirst(), 2).blend().params().getString("colorMap")),
+        () -> assertEquals("weasis.pt", alone.protocolId()), // NON-NLS
+        () -> assertEquals("weasis.pt", withMr.protocolId())); // NON-NLS
+  }
+
+  @Test
+  void projectionsWithCtHangAsACtAndASpectAloneAsAnyStudy() {
+    HangingPlan projections =
+        HangingEngine.match(
+                library(), List.of(HangingEngineTest.SOFT_THIN, spect("P", null, "TOMO")))
+            .orElseThrow();
+    HangingPlan alone =
+        HangingEngine.match(library(), List.of(spect("S", "ATTN", "RECON TOMO"))).orElseThrow();
+    assertAll(
+        () -> assertEquals("weasis.ct", projections.protocolId()), // NON-NLS
+        () -> assertEquals("weasis.default", alone.protocolId())); // NON-NLS
   }
 
   private static double relativePosition(HangingPlan.Step step, int cell) {

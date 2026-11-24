@@ -12,6 +12,7 @@ package org.weasis.dicom.codec.hp;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -205,6 +206,39 @@ class SeriesFeatureExtractorTest {
         () -> assertTrue(extractor.of(series(ac)).petCorrection().suvCapable()),
         () -> assertFalse(extractor.of(series(nac)).petCorrection().attenuationCorrected()),
         () -> assertFalse(extractor.of(series(nac)).petCorrection().suvCapable()));
+  }
+
+  @Test
+  void nm_image_type_emission_and_attenuation_correction_are_read() {
+    Attributes recon = image("NM", UID.NuclearMedicineImageStorage, 1); // NON-NLS
+    recon.setString(Tag.ImageType, VR.CS, "ORIGINAL", "PRIMARY", "RECON TOMO", "EMISSION");
+    recon.setString(Tag.CorrectedImage, VR.CS, "SCAT", "ATTN"); // NON-NLS
+    Attributes projections = image("NM", UID.NuclearMedicineImageStorage, 1); // NON-NLS
+    projections.setString(Tag.ImageType, VR.CS, "ORIGINAL", "PRIMARY", "TOMO", "EMISSION");
+    Attributes bare = image("NM", UID.NuclearMedicineImageStorage, 1); // NON-NLS
+    SeriesFeatures f = extractor.of(series(recon));
+    SeriesFeatures p = extractor.of(series(projections));
+    SeriesFeatures b = extractor.of(series(bare));
+
+    assertAll(
+        () -> assertEquals("RECON TOMO", f.nm().imageType()), // NON-NLS
+        () -> assertEquals("EMISSION", f.nm().emission()), // NON-NLS
+        () -> assertTrue(f.nm().attenuationCorrected()),
+        () -> assertEquals(Role.ORIGINAL, f.role(), "a reconstruction is not told by its role"),
+        () -> assertEquals("TOMO", p.nm().imageType()), // NON-NLS
+        () -> assertFalse(p.nm().attenuationCorrected()),
+        () -> assertNull(b.nm().imageType()),
+        () -> assertNull(b.nm().emission()),
+        () -> assertNull(extractor.of(series(ctSlice(1, 0))).nm(), "NM only"),
+        () -> assertEquals("RECON TOMO", FeatureSelector.Key.NM_IMAGE_TYPE.read(f)), // NON-NLS
+        () ->
+            assertTrue(
+                FeatureSelector.match(FeatureSelector.Key.NM_ATTENUATION_CORRECTED, "TRUE")
+                    .accepts(f)), // NON-NLS
+        () -> assertNotNull(f.provenanceOf(FeatureSelector.Key.NM_IMAGE_TYPE.id())),
+        () -> assertNotNull(f.provenanceOf(FeatureSelector.Key.NM_EMISSION.id())),
+        () -> assertNotNull(f.provenanceOf(FeatureSelector.Key.NM_ATTENUATION_CORRECTED.id())),
+        () -> assertNull(b.provenanceOf(FeatureSelector.Key.NM_IMAGE_TYPE.id())));
   }
 
   @Test

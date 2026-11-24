@@ -46,6 +46,15 @@ Weasis extension `projection` (mode `MIP`, `MINIP` or `MEAN`), gives the cell a
 hangs the pre-contrast and post-contrast T1, their subtraction and a MIP of the subtraction this
 way.
 
+A display set may blend a second series over its own: the Weasis extension `fusion` names the image set of the overlay, its color map and its opacity.
+The engine plans a fused cell as it plans a deriving one: the cell shows the best series of its image set, even when another cell of the step shows it, and its pane carries a `ViewState.Blend` with the best series of the overlay image set, which the viewer blends when it restores the pane.
+An overlay that does not resolve leaves the base alone, with the reason.
+A fused cell may also derive its base, in which case the overlay is blended over the reformat.
+
+An image set may be `required`: the protocol then applies only to a study that fills it, which is how a protocol asks for two kinds of series at once.
+The built-in *SPECT with CT* and *PET with CT* protocols require a CT and an emission series, and hang three steps: the axial CT, emission and fused cells, then the CT and the fused cells in the three planes, then the nine cells with the emission row.
+The first step needs no reformat, so it hangs at once.
+
 `ProtocolJson` is the working form: one entry `{id, schema, dicom, weasis}` where `dicom` is the
 dataset by keyword (`DicomJson`). The entries are a layered document, `hp.protocols.json`
 (`HangingProtocolDocuments`): the built-in library shipped by the codec (`BuiltInProtocols`, one
@@ -61,7 +70,8 @@ its DICOM selectors alone.
 The engine does not match on raw attributes only. `SeriesFeatureExtractor` derives once per series
 a `SeriesFeatures` value: modality, role (localizer, image, derived, secondary capture...), plane,
 coded anatomy, laterality, view, MR weighting, CT kernel family, slice thickness, temporal kind,
-contrast, and so on, read from the tags by the rules of PS3.3; nothing is guessed from a missing
+contrast, the corrections of a PET series, what an NM series holds (a reconstruction or its
+projections, emission or transmission, attenuation corrected or not), and so on, read from the tags by the rules of PS3.3; nothing is guessed from a missing
 attribute and every vendor reading is marked where it happens. A `FeatureSelector` matches on
 these features with three usages: `MATCH` and `NO_MATCH` are hard filters like the DICOM
 selectors, `PREFER` is a weighted preference that ranks the candidates instead of excluding them,
@@ -72,8 +82,9 @@ the extractor maps descriptions and codes to.
 
 `HangingEngine` matches the enabled protocols of every layer against the series of a study, in the
 three steps of the standard: protocol selection (a definition applies to a series of the study;
-the protocol is scored by the specificity of its definition, the share of its image sets that
-resolve and its level), image set resolution (filters, then preferences) and display set filling.
+the protocol is scored by the specificity of its definition, its required image sets, the share
+of its image sets that resolve and its level; it does not apply when a required image set
+resolves nothing), image set resolution (filters, then preferences) and display set filling.
 Time-based image sets bind to the priors of the patient (`PriorStudy`, ranked from the most
 recent). The result is a `HangingPlan`: per reading step a `HangingLayout` (the grid, its cells,
 the synchronization) and, per cell, the series chosen, how it matched (exact, preferred,

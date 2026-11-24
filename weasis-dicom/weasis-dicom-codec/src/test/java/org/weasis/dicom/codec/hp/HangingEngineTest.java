@@ -11,6 +11,7 @@ package org.weasis.dicom.codec.hp;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -36,6 +37,7 @@ import org.weasis.dicom.codec.hp.ProtocolJson.Document;
 import org.weasis.dicom.codec.hp.WeasisExtensions.Derive;
 import org.weasis.dicom.codec.hp.WeasisExtensions.Display;
 import org.weasis.dicom.codec.hp.WeasisExtensions.DisplaySet;
+import org.weasis.dicom.codec.hp.WeasisExtensions.Fusion;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ImageSet;
 import org.weasis.dicom.codec.hp.WeasisExtensions.ViewerType;
 import org.weasis.dicom.hp.HPComparatorFactory;
@@ -629,6 +631,116 @@ class HangingEngineTest {
             null,
             null);
     return new Document("ct-reformat", hp, weasis); // NON-NLS
+  }
+
+  /** CT alone, then the same CT with the MR series blended over it. */
+  private static Document fusionProtocol(boolean overlayRequired) {
+    HangingProtocol hp = new HangingProtocol();
+    hp.setHangingProtocolName("CT fused"); // NON-NLS
+    hp.setHangingProtocolLevel("SITE"); // NON-NLS
+    hp.setPartialDataDisplayHandling("ADAPT_LAYOUT"); // NON-NLS
+    HPDefinition def = new HPDefinition();
+    def.setModality("CT"); // NON-NLS
+    hp.addHangingProtocolDefinition(def);
+    HPImageSet base = hp.addNewImageSet(null);
+    HPImageSet overlay = hp.addNewImageSet(null);
+    Map<HPImageSet, String> modalities = Map.of(base, "CT", overlay, "MR"); // NON-NLS
+    for (HPImageSet set : List.of(base, overlay)) {
+      set.addImageSetSelector(
+          HPSelectorFactory.createAttributeValueSelector(
+              "MATCH", null, Tag.Modality, 1, VR.CS, new String[] {modalities.get(set)}));
+      HPTimeBasedImageSet now = new HPTimeBasedImageSet();
+      now.setRelativeTime(new RelativeTime(0, 0, RelativeTimeUnits.DAYS));
+      set.addTimeBasedImageSet(now);
+    }
+    hp.addDisplaySet(displaySet(1, "CT", base, 1)); // NON-NLS
+    hp.addDisplaySet(displaySet(2, "Fusion", base, 1)); // NON-NLS
+    Display fused =
+        new Display(
+            null,
+            null,
+            null,
+            null,
+            new Fusion(null, 2, "weasis.turbo", 0.4), // NON-NLS
+            null,
+            null,
+            null,
+            null);
+    WeasisExtensions weasis =
+        new WeasisExtensions(
+            Map.of(
+                1,
+                new ImageSet(
+                    "Axial CT", // NON-NLS
+                    List.of(
+                        FeatureSelector.match(Key.ORIENTATION, "AXIAL"), // NON-NLS
+                        FeatureSelector.noMatch(Key.ROLE, "LOCALIZER"), // NON-NLS
+                        FeatureSelector.prefer(Key.SLICE_THICKNESS, 1, Extreme.MIN))),
+                2,
+                new ImageSet("Overlay", List.of(), overlayRequired)), // NON-NLS
+            Map.of(2, new DisplaySet(null, fused, List.of(), null)),
+            Map.of(),
+            null,
+            null,
+            null,
+            null,
+            null);
+    return new Document("ct-fused", hp, weasis); // NON-NLS
+  }
+
+  @Test
+  void aFusedCellShowsTheBestSeriesOfItsImageSetAgainWithTheOverlayBlended() {
+    Step step = HangingEngine.plan(fusionProtocol(false), STUDY).steps().getFirst();
+    ViewState alone = step.layout().cells().get(0).panes().getFirst();
+    ViewState fused = step.layout().cells().get(1).panes().getFirst();
+    assertAll(
+        () -> assertEquals(2, step.cells().size(), "the fused cell is kept under ADAPT_LAYOUT"),
+        () -> assertEquals("B", step.cells().get(0).series()), // NON-NLS
+        () -> assertEquals("B", step.cells().get(1).series(), "not the next CT"), // NON-NLS
+        () -> assertNull(alone.blend()),
+        () -> assertNotNull(fused.blend()),
+        () -> assertEquals("F", fused.blend().overlay()), // NON-NLS
+        () -> assertEquals("B", fused.data().series()), // NON-NLS
+        () -> assertEquals("weasis.turbo", fused.blend().params().getString("colorMap")), // NON-NLS
+        () ->
+            assertEquals(0.4, fused.blend().params().getJsonNumber("overlayOpacity").doubleValue()),
+        () ->
+            assertTrue(
+                step.cells().get(1).reasons().stream().anyMatch(r -> r.startsWith("fused")),
+                String.valueOf(step.cells().get(1).reasons())));
+  }
+
+  @Test
+  void aFusedCellWithoutOverlayShowsItsBaseAloneAndSaysWhy() {
+    Step step =
+        HangingEngine.plan(fusionProtocol(false), List.of(SOFT_THICK, SOFT_THIN))
+            .steps()
+            .getFirst();
+    CellPlan cell = step.cells().get(1);
+    assertAll(
+        () -> assertEquals("B", cell.series()), // NON-NLS
+        () -> assertNull(step.layout().cells().get(1).panes().getFirst().blend()),
+        () ->
+            assertTrue(
+                cell.reasons().stream().anyMatch(r -> r.startsWith("fusion skipped")),
+                String.valueOf(cell.reasons())));
+  }
+
+  @Test
+  void aRequiredImageSetKeepsTheProtocolFromAStudyThatLacksItAndWeighsWhenItResolves() {
+    List<Candidate> optional = List.of(new Candidate(fusionProtocol(false), Origin.SITE, true));
+    List<Candidate> required = List.of(new Candidate(fusionProtocol(true), Origin.SITE, true));
+    List<StudySeries> ctOnly = List.of(SOFT_THICK, SOFT_THIN);
+    ProtocolScore loose = HangingEngine.select(optional, STUDY).getFirst();
+    ProtocolScore strict = HangingEngine.select(required, STUDY).getFirst();
+    assertAll(
+        () -> assertEquals(1, HangingEngine.select(optional, ctOnly).size()),
+        () -> assertTrue(HangingEngine.select(required, ctOnly).isEmpty(), "no MR in the study"),
+        () -> assertEquals(loose.score() + HangingEngine.REQUIRED_WEIGHT, strict.score(), 1e-9),
+        () ->
+            assertTrue(
+                strict.reasons().contains("1 required image sets resolve"), // NON-NLS
+                String.valueOf(strict.reasons())));
   }
 
   @Test

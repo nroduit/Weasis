@@ -46,6 +46,7 @@ class FeatureSelectorTest {
           1.25,
           1.25,
           null,
+          null,
           Temporal.STATIC,
           "1.2.3.4.5", // NON-NLS
           List.of("CHEST", "SOFT", "AXIAL"), // NON-NLS
