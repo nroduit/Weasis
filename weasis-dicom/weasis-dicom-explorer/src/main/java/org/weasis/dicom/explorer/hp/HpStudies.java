@@ -17,7 +17,6 @@ import java.util.Set;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.image.HangingLayout;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -87,12 +86,12 @@ public final class HpStudies {
   }
 
   /**
-   * Hangs the first step of a protocol on a loaded study, re-hanging the viewer of the patient; on
+   * The first step of a protocol on a loaded study, ready to re-hang the viewer of the patient; off
    * the event dispatch thread.
    *
    * @throws IllegalArgumentException when the protocol id is unknown
    */
-  public static HangingPlanApplier.Applied hang(
+  public static ActiveHanging.Ready ready(
       DicomModel model, MediaSeriesGroup study, String protocolId) {
     List<Candidate> candidates = HangingEngine.candidates();
     List<StudySeries> series = HpCommands.studySeries(model, study);
@@ -104,9 +103,7 @@ public final class HpStudies {
     HangingPlanApplier.Context context =
         new HangingPlanApplier.Context(
             model, model.getParent(study, DicomModel.patient), study, candidates, scores);
-    HangingPlan prepared = HangingPlanApplier.prepare(plan, 0);
-    return new HangingPlanApplier()
-        .apply(prepared, 0, context, ViewerPlacement.reuseViewer(), null);
+    return new ActiveHanging.Ready(HangingPlanApplier.prepare(plan, 0), 0, context, null);
   }
 
   /** The explorer's interest as a feature: the count and the source ids, upper case. */

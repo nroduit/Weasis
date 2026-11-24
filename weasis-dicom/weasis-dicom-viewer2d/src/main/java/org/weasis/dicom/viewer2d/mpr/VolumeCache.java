@@ -68,6 +68,11 @@ public final class VolumeCache<V> {
       return entry.future;
     }
 
+    /** What the requester that started the build passed, null once the build has ended. */
+    public Object hint() {
+      return entry.hint;
+    }
+
     /**
      * The value, waited for; a failed build throws its cause as an {@link IllegalStateException}.
      */
@@ -97,9 +102,11 @@ public final class VolumeCache<V> {
     final AtomicLong lastUse = new AtomicLong(System.nanoTime());
     volatile long bytes;
     volatile boolean doomed;
+    volatile Object hint;
 
-    Entry(Object key) {
+    Entry(Object key, Object hint) {
       this.key = key;
+      this.hint = hint;
     }
 
     boolean isBuilt() {
@@ -185,7 +192,12 @@ public final class VolumeCache<V> {
 
   /** Builds the value of the key in the background, after the requests, unless it exists. */
   public void prefetch(Object key) {
-    entryOf(key, null, 1);
+    prefetch(key, null);
+  }
+
+  /** A prefetch whose build gets the hint. */
+  public void prefetch(Object key, Object hint) {
+    entryOf(key, hint, 1);
   }
 
   private Entry entryOf(Object key, Object hint, int priority) {
@@ -194,7 +206,7 @@ public final class VolumeCache<V> {
         entries.computeIfAbsent(
             key,
             k -> {
-              Entry fresh = new Entry(k);
+              Entry fresh = new Entry(k, hint);
               started.set(fresh);
               return fresh;
             });
@@ -205,6 +217,14 @@ public final class VolumeCache<V> {
   }
 
   private void build(Entry entry, Object hint) {
+    try {
+      doBuild(entry, hint);
+    } finally {
+      entry.hint = null; // a progress bar must not stay with the cached volume
+    }
+  }
+
+  private void doBuild(Entry entry, Object hint) {
     if (entry.doomed) {
       entries.remove(entry.key, entry);
       entry.future.completeExceptionally(new IllegalStateException("The series was removed"));

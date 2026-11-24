@@ -55,6 +55,7 @@ import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
+import org.weasis.dicom.explorer.hp.ActiveHanging;
 import org.weasis.dicom.explorer.hp.HpStudies;
 import org.weasis.dicom.explorer.hp.SessionActions;
 import org.weasis.dicom.explorer.items.Interest;
@@ -200,7 +201,8 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
         String id = score.document().id();
         String name = ProtocolNames.name(id, score.document().protocol().getHangingProtocolName());
         JMenuItem item = new JMenuItem(name == null ? id : name);
-        item.addActionListener(_ -> HpStudies.hang(dicomModel, study, id));
+        item.addActionListener(
+            _ -> ActiveHanging.inBackground(() -> HpStudies.ready(dicomModel, study, id), _ -> {}));
         menu.add(item);
       }
       popupMenu.add(menu);

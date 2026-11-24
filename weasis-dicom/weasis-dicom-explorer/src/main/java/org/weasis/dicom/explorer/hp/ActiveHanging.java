@@ -17,6 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.hp.HangingProtocolDocuments;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -46,10 +51,14 @@ import org.weasis.dicom.explorer.hp.HangingPlanApplier.Context;
 
 /**
  * The hanging a viewer is part of, and what can be done with it: another reading step, another
- * candidate protocol, the same step again. Each re-hangs the 2D container of the hanging in place
- * and attaches the new hanging to the viewers. Must run on the event dispatch thread.
+ * candidate protocol, the same step again. Each comes in two parts: the step is made {@link Ready}
+ * off the event dispatch thread, since its derivations compute pixels, then {@link Ready#hang()}
+ * re-hangs the 2D container of the hanging in place and attaches the new hanging to the viewers, on
+ * the event dispatch thread.
  */
 public final class ActiveHanging {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ActiveHanging.class);
 
   private ActiveHanging() {}
 
@@ -78,30 +87,74 @@ public final class ActiveHanging {
   }
 
   /**
-   * Hangs another step of the same plan, from 0, on the same viewers. The derivations of the step
-   * (a reformat, a subtraction) are built first, as {@code hp:apply} does: a cell that derives its
-   * series must not fall back to the acquired one because the step was reached by navigation.
+   * A step whose derivations are built, ready to hang.
+   *
+   * @param container the 2D container to re-hang, may be null
    */
-  public static Applied step(Applied current, int step) {
-    // On the event thread: a derivation already built by the opener or a prefetch comes back at
-    // once
-    HangingPlan prepared = HangingPlanApplier.prepare(current.plan(), step);
-    return new HangingPlanApplier()
-        .apply(
-            prepared,
-            step,
-            current.context(),
-            ViewerPlacement.reuseViewer(),
-            current.container().orElse(null));
+  public record Ready(HangingPlan plan, int step, Context context, ViewerPlugin<?> container) {
+
+    /** Re-hangs the viewers with the step; on the event dispatch thread. */
+    public Applied hang() {
+      return new HangingPlanApplier()
+          .apply(plan, step, context, ViewerPlacement.reuseViewer(), container);
+    }
+  }
+
+  /**
+   * Makes a step ready on a background thread, then hangs it on the event dispatch thread.
+   *
+   * @param done gets the hanging on the event dispatch thread, null when the step failed
+   */
+  public static void inBackground(Supplier<Ready> step, Consumer<Applied> done) {
+    Thread.ofPlatform()
+        .daemon()
+        .name("hanging-step") // NON-NLS
+        .start(
+            () -> {
+              Ready ready = null;
+              try {
+                ready = step.get();
+              } catch (RuntimeException | Error e) { // NOSONAR the caller must hear of the end
+                LOGGER.warn("Cannot prepare the hanging", e);
+              }
+              Ready prepared = ready;
+              GuiExecutor.execute(() -> done.accept(hangOrNull(prepared)));
+            });
+  }
+
+  private static Applied hangOrNull(Ready ready) {
+    if (ready == null) {
+      return null;
+    }
+    try {
+      return ready.hang();
+    } catch (RuntimeException e) {
+      LOGGER.warn("Cannot change the hanging", e);
+      return null;
+    }
+  }
+
+  /**
+   * Another step of the same plan, from 0, on the same viewers. The derivations of the step (a
+   * reformat, a subtraction) are built here, as {@code hp:apply} does: a cell that derives its
+   * series must not fall back to the acquired one because the step was reached by navigation. Off
+   * the event dispatch thread.
+   */
+  public static Ready step(Applied current, int step) {
+    return new Ready(
+        HangingPlanApplier.prepare(current.plan(), step),
+        step,
+        current.context(),
+        current.container().orElse(null));
   }
 
   /** The next step, or the first one again after the last. */
-  public static Applied next(Applied current) {
+  public static Ready next(Applied current) {
     return step(current, (current.step() + 1) % current.plan().steps().size());
   }
 
   /** The previous step, or the last one before the first. */
-  public static Applied previous(Applied current) {
+  public static Ready previous(Applied current) {
     int count = current.plan().steps().size();
     return step(current, (current.step() + count - 1) % count);
   }
@@ -384,7 +437,7 @@ public final class ActiveHanging {
    *
    * @throws IllegalArgumentException when the id is not a candidate or the context has no study
    */
-  public static Applied protocol(Applied current, String protocolId) {
+  public static Ready protocol(Applied current, String protocolId) {
     Context context = current.context();
     if (!(context.model() instanceof DicomModel model) || context.study() == null) {
       throw new IllegalArgumentException("The hanging keeps no study to re-plan");
@@ -400,9 +453,7 @@ public final class ActiveHanging {
     }
     Context next =
         new Context(model, context.patient(), context.study(), context.candidates(), ranking);
-    // On the event thread: a derivation already built by the opener comes back at once
-    HangingPlan prepared = HangingPlanApplier.prepare(plan, 0);
-    return new HangingPlanApplier()
-        .apply(prepared, 0, next, ViewerPlacement.reuseViewer(), current.container().orElse(null));
+    return new Ready(
+        HangingPlanApplier.prepare(plan, 0), 0, next, current.container().orElse(null));
   }
 }

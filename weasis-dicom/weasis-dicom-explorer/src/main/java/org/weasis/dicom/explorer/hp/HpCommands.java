@@ -888,26 +888,29 @@ public class HpCommands implements CommandExtension {
         throw new IllegalArgumentException(
             "Give one of --next, --previous, --index <step> or --protocol <protocol-id>");
       }
-      HangingPlanApplier.Applied applied =
-          GuiExecutor.invokeAndRethrow(
-              () -> {
-                HangingPlanApplier.Applied current = activeHanging(target.viewId);
-                if (protocolId != null) {
-                  return ActiveHanging.protocol(current, protocolId);
-                }
-                if (next) {
-                  return ActiveHanging.next(current);
-                }
-                if (previous) {
-                  return ActiveHanging.previous(current);
-                }
-                if (index < 1 || index > current.plan().steps().size()) {
-                  throw new IllegalArgumentException(
-                      "The plan has " + current.plan().steps().size() + " steps, no step " + index);
-                }
-                return ActiveHanging.step(current, index - 1);
-              });
+      HangingPlanApplier.Applied current =
+          GuiExecutor.invokeAndRethrow(() -> activeHanging(target.viewId));
+      // The derivations compute pixels: done here, off the event thread, before the hanging
+      ActiveHanging.Ready ready = ready(current);
+      HangingPlanApplier.Applied applied = GuiExecutor.invokeAndRethrow(ready::hang);
       print(isJson() ? applied.toJson().toString() : applied.text());
+    }
+
+    private ActiveHanging.Ready ready(HangingPlanApplier.Applied current) {
+      if (protocolId != null) {
+        return ActiveHanging.protocol(current, protocolId);
+      }
+      if (next) {
+        return ActiveHanging.next(current);
+      }
+      if (previous) {
+        return ActiveHanging.previous(current);
+      }
+      if (index < 1 || index > current.plan().steps().size()) {
+        throw new IllegalArgumentException(
+            "The plan has " + current.plan().steps().size() + " steps, no step " + index);
+      }
+      return ActiveHanging.step(current, index - 1);
     }
   }
 

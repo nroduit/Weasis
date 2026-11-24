@@ -9,16 +9,19 @@
  */
 package org.weasis.dicom.viewer2d;
 
+import java.awt.Cursor;
 import java.awt.Window;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.UnaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
 import javax.swing.JRadioButtonMenuItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +49,7 @@ import org.weasis.dicom.codec.hp.HangingPlan;
 import org.weasis.dicom.codec.hp.ProtocolNames;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.hp.ActiveHanging;
+import org.weasis.dicom.explorer.hp.ActiveHanging.Ready;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier;
 import org.weasis.dicom.explorer.hp.HangingPlanApplier.Applied;
 import org.weasis.dicom.explorer.hp.HpSettings;
@@ -54,6 +58,7 @@ import org.weasis.dicom.explorer.hp.Session;
 import org.weasis.dicom.explorer.hp.SessionActions;
 import org.weasis.dicom.explorer.pref.hp.HangingProtocolPrefView;
 import org.weasis.dicom.viewer2d.dockable.HangingWhyTool;
+import org.weasis.dicom.viewer2d.mpr.VolumeProgress;
 
 /**
  * The protocol bar: one button that names the protocol of the selected viewer and opens the menu of
@@ -76,6 +81,8 @@ public class HangingProtocolBar extends WtoolBar {
   private final JButton previous = new JButton();
   private final JButton next = new JButton();
   private final JButton keep = new JButton();
+  private final JProgressBar preparing = new JProgressBar();
+  private boolean busy;
 
   public HangingProtocolBar(int index) {
     super(Messages.getString("HangingProtocolBar.title"), index);
@@ -102,6 +109,13 @@ public class HangingProtocolBar extends WtoolBar {
     add(previous);
 
     add(step);
+
+    preparing.setIndeterminate(true);
+    preparing.setToolTipText(Messages.getString("HangingProtocolBar.preparing"));
+    preparing.setPreferredSize(GuiUtils.getDimension(40, 8));
+    preparing.setMaximumSize(preparing.getPreferredSize());
+    preparing.setVisible(false);
+    add(preparing);
 
     next.setIcon(ResourceUtil.getDirectionToolBarIcon(ActionIcon.NEXT));
     next.setToolTipText(Messages.getString("HangingProtocolBar.next"));
@@ -299,14 +313,7 @@ public class HangingProtocolBar extends WtoolBar {
     if (ActiveHanging.of(null).isPresent()) {
       act(current -> ActiveHanging.protocol(current, protocolId));
     } else if (study != null) {
-      try {
-        Applied applied = HpStudies.hang(study.model(), study.study(), protocolId);
-        applied.container().ifPresent(ViewerPlugin::setSelectedAndGetFocus);
-        refresh(applied.container().orElse(null));
-      } catch (RuntimeException e) {
-        LOGGER.warn("Cannot hang the study", e);
-        refresh(GuiUtils.getUICore().getSelectedPlugin().orElse(null));
-      }
+      run(() -> HpStudies.ready(study.model(), study.study(), protocolId));
     }
   }
 
@@ -338,20 +345,52 @@ public class HangingProtocolBar extends WtoolBar {
     }
   }
 
-  private void act(UnaryOperator<Applied> action) {
+  /** Changes the hanging shown, see {@link #run}. */
+  private void act(Function<Applied, Ready> action) {
     Optional<Applied> current = ActiveHanging.of(null);
     if (current.isEmpty()) {
       refresh(null);
       return;
     }
-    try {
-      Applied applied = action.apply(current.get());
-      applied.container().ifPresent(ViewerPlugin::setSelectedAndGetFocus);
-      refresh(applied.container().orElse(null));
-    } catch (RuntimeException e) {
-      LOGGER.warn("Cannot change the hanging", e);
-      refresh(GuiUtils.getUICore().getSelectedPlugin().orElse(null));
+    run(() -> action.apply(current.get()));
+  }
+
+  /**
+   * Makes a step ready in the background, where its reformats are built, then hangs it; the bar
+   * takes no other change meanwhile.
+   */
+  private void run(Supplier<Ready> step) {
+    if (busy) {
+      return;
     }
+    busy = true;
+    protocols.setEnabled(false);
+    previous.setEnabled(false);
+    next.setEnabled(false);
+    setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+    showPreparing(true);
+    ActiveHanging.inBackground(
+        () -> VolumeProgress.during(preparing, step),
+        applied -> {
+          busy = false;
+          setCursor(Cursor.getDefaultCursor());
+          showPreparing(false);
+          if (applied == null) {
+            refresh(GuiUtils.getUICore().getSelectedPlugin().orElse(null));
+            return;
+          }
+          applied.container().ifPresent(ViewerPlugin::setSelectedAndGetFocus);
+          refresh(applied.container().orElse(null));
+        });
+  }
+
+  /** Puts the progress bar in the place of the step counter while a step is prepared. */
+  private void showPreparing(boolean on) {
+    step.setVisible(!on);
+    VolumeProgress.reset(preparing);
+    preparing.setVisible(on);
+    revalidate();
+    repaint();
   }
 
   /** Shows the hanging of a viewer: its protocol on the button and its reading step. */

@@ -42,7 +42,10 @@ public final class OwnedVolume implements AutoCloseable {
     VolumeService.Lease lease = null;
     try {
       lease = VolumeService.getInstance().acquire(series, true, null);
-      Volume<?, ?> volume = lease.volume();
+      Volume<?, ?> volume;
+      try (VolumeProgress.Shown shown = VolumeProgress.show(lease)) {
+        volume = lease.volume();
+      }
       if (volume.isBasic()) {
         lease.close();
         return null;

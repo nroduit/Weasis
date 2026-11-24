@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.swing.BoundedRangeModel;
 import javax.swing.JProgressBar;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
@@ -72,6 +73,13 @@ public final class VolumeService implements PropertyChangeListener {
       return (Key) lease.key();
     }
 
+    /** The progress of the build of the volume, empty when the volume is built or has failed. */
+    public Optional<BoundedRangeModel> progress() {
+      return lease.hint() instanceof JProgressBar bar && !lease.future().isDone()
+          ? Optional.of(bar.getModel())
+          : Optional.empty();
+    }
+
     @Override
     public void close() {
       lease.close();
@@ -107,7 +115,9 @@ public final class VolumeService implements PropertyChangeListener {
   public Lease acquire(MediaSeries<DicomImageElement> series, boolean rectified, JProgressBar bar) {
     MediaSeries<DicomImageElement> source = volumeSeriesOf(series);
     observe(source);
-    VolumeCache<Volume<?, ?>>.Lease lease = cache.acquire(new Key(source, rectified), bar);
+    Key key = new Key(source, rectified);
+    VolumeCache<Volume<?, ?>>.Lease lease =
+        cache.acquire(key, bar != null || cache.peek(key).isPresent() ? bar : progressOf(source));
     if (bar != null) {
       // A volume the service already holds, or builds for another requester, never moves this
       // bar: fill it when the volume is there, which is what hides it
@@ -159,7 +169,12 @@ public final class VolumeService implements PropertyChangeListener {
       return;
     }
     observe(series);
-    cache.prefetch(new Key(series, true));
+    cache.prefetch(new Key(series, true), progressOf(series));
+  }
+
+  /** The progress of a build nobody shows yet, for the consumers that come while it runs. */
+  private static JProgressBar progressOf(MediaSeries<DicomImageElement> series) {
+    return new JProgressBar(0, Math.max(1, series.size(null)));
   }
 
   /**

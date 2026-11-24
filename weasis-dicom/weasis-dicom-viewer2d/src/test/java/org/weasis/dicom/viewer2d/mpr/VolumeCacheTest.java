@@ -106,6 +106,18 @@ class VolumeCacheTest {
   }
 
   @Test
+  void the_hint_of_the_build_is_seen_by_every_lease_until_the_build_ends() {
+    VolumeCache<String> cache = cache(1000);
+    cache.prefetch("ct", "bar"); // NON-NLS
+    VolumeCache<String>.Lease later = cache.acquire("ct", "other"); // NON-NLS
+    assertEquals("bar", later.hint(), "the progress of the build that runs");
+    runQueued();
+    assertAll(
+        () -> assertEquals("ct-bar", later.join()),
+        () -> assertEquals(null, later.hint(), "nothing kept with the cached value"));
+  }
+
+  @Test
   void a_build_that_ends_on_any_error_fails_its_leases_instead_of_leaving_them_waiting() {
     VolumeCache<String> cache =
         new VolumeCache<>(
