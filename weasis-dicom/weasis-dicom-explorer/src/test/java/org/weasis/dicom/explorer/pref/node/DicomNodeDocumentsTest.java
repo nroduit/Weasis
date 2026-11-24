@@ -23,9 +23,11 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import javax.swing.DefaultComboBoxModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -529,6 +531,24 @@ class DicomNodeDocumentsTest {
         () ->
             assertEquals(List.of("user.node.ae-host-104", "user.node.ae-host-104#2"), ids(loaded)),
         () -> assertInstanceOf(DefaultDicomNode.class, loaded.getFirst()));
+  }
+
+  @Test
+  void a_save_notifies_the_listeners_with_the_type_until_removed() {
+    Path userJson = temp.resolve("dicomNodes.json");
+    DefaultDicomNode node = new DefaultDicomNode("First", "AE", "host", 104, UsageType.BOTH);
+    List<Type> received = new ArrayList<>();
+    Consumer<Type> listener = received::add;
+
+    AbstractDicomNode.addNodesChangeListener(listener);
+    try {
+      AbstractDicomNode.saveDicomNodes(List.of(node), Type.DICOM, userJson);
+    } finally {
+      AbstractDicomNode.removeNodesChangeListener(listener);
+    }
+    AbstractDicomNode.saveDicomNodes(List.of(node), Type.DICOM, userJson);
+
+    assertEquals(List.of(Type.DICOM), received);
   }
 
   // ---- Selection ----------------------------------------------------------------------------

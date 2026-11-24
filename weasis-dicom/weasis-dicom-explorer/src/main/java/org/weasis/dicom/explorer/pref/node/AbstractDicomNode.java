@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
@@ -72,6 +74,9 @@ import org.weasis.dicom.explorer.pref.node.DicomWebNode.WebType;
  */
 public abstract class AbstractDicomNode implements LayeredEntries.Entry {
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDicomNode.class);
+
+  private static final CopyOnWriteArrayList<Consumer<Type>> NODES_CHANGE_LISTENERS =
+      new CopyOnWriteArrayList<>();
 
   protected static final String T_NODES = "nodes"; // NON-NLS
   protected static final String T_NODE = "node"; // NON-NLS
@@ -635,6 +640,33 @@ public abstract class AbstractDicomNode implements LayeredEntries.Entry {
       ListDocument.write(userJson, T_NODES, entries);
     } catch (IOException e) {
       LOGGER.error("Error on writing DICOM node file {}", userJson, e);
+      return;
+    }
+    fireNodesChanged(type);
+  }
+
+  /**
+   * Notifies {@code listener} on the thread that saved, with the type of the list, each time a
+   * node list is written, so a view that keeps its own copy of the list (the Retrieve panel) can
+   * reload it.
+   */
+  public static void addNodesChangeListener(Consumer<Type> listener) {
+    if (listener != null) {
+      NODES_CHANGE_LISTENERS.addIfAbsent(listener);
+    }
+  }
+
+  public static void removeNodesChangeListener(Consumer<Type> listener) {
+    NODES_CHANGE_LISTENERS.remove(listener);
+  }
+
+  private static void fireNodesChanged(Type type) {
+    for (Consumer<Type> listener : NODES_CHANGE_LISTENERS) {
+      try {
+        listener.accept(type);
+      } catch (RuntimeException e) {
+        LOGGER.error("DICOM node list listener failed", e);
+      }
     }
   }
 

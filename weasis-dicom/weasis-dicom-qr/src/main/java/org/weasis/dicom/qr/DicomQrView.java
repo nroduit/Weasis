@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -293,6 +294,15 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       };
   private final DateSelectionListener dateChangeListener = a -> groupDate.setSelected(null);
   private final ActionListener destNodeListener = evt -> applySelectedArchive();
+  // A node list edited anywhere (the preferences, the node-list dialog) reaches the docked panel
+  private final Consumer<AbstractDicomNode.Type> nodesChangeListener =
+      type -> {
+        if (type == AbstractDicomNode.Type.DICOM
+            || type == AbstractDicomNode.Type.WEB
+            || type == AbstractDicomNode.Type.DICOM_CALLING) {
+          GuiExecutor.execute(this::refreshNodeList);
+        }
+      };
   private final ChangeListener queryListener = e -> dicomQuery();
   private final DatePicker startDatePicker = buildDatePicker();
   private final DatePicker endDatePicker = buildDatePicker();
@@ -319,6 +329,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     SearchParameters.loadSearchParameters(templateComboBox);
     initGUI();
     initialize(true);
+    AbstractDicomNode.addNodesChangeListener(nodesChangeListener);
 
     DicomListener dcmListener = null;
     try {
@@ -410,8 +421,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
           PreferenceDialog dialog = new PreferenceDialog(SwingUtilities.getWindowAncestor(this));
           dialog.showPage(
               org.weasis.dicom.explorer.Messages.getString("DicomNodeListView.node_list"));
+          // a saved change reloads the lists through nodesChangeListener
           GuiUtils.showCenterScreen(dialog);
-          initNodeList();
         });
     return GuiUtils.getFlowLayoutPanel(
         ITEM_SEPARATOR_SMALL,
@@ -934,21 +945,58 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     templateComboBox.setSelectedIndex(lastTemplate);
   }
 
-  private void initNodeList() {
+  private void loadCallingNodes() {
     comboCallingNode.removeAllItems();
     AbstractDicomNode.loadDicomNodes(
         comboCallingNode,
         AbstractDicomNode.Type.DICOM_CALLING,
         AbstractDicomNode.UsageType.RETRIEVE);
-    AbstractDicomNode.restoreNodeSelection(
-        getPersistence(), comboCallingNode.getModel(), LAST_CALLING_NODE);
+  }
 
-    comboDestinationNode.removeActionListener(destNodeListener);
+  /** Reloads the archives; the caller detaches {@link #destNodeListener} around it. */
+  private void loadArchiveNodes() {
     comboDestinationNode.removeAllItems();
     AbstractDicomNode.loadDicomNodes(
         comboDestinationNode, AbstractDicomNode.Type.DICOM, UsageType.RETRIEVE);
     AbstractDicomNode.loadDicomNodes(
         comboDestinationNode, AbstractDicomNode.Type.WEB, UsageType.RETRIEVE, WebType.QIDORS);
+  }
+
+  /**
+   * Reloads the node lists after they were saved elsewhere, keeping the current selections (by
+   * id, as they are persisted). The query results are cleared only when the selected archive is
+   * gone.
+   */
+  private void refreshNodeList() {
+    String calling = selectionKey(comboCallingNode);
+    String archive = selectionKey(comboDestinationNode);
+
+    loadCallingNodes();
+    AbstractDicomNode.selectDicomNode(comboCallingNode.getModel(), calling);
+
+    comboDestinationNode.removeActionListener(destNodeListener);
+    loadArchiveNodes();
+    AbstractDicomNode.selectDicomNode(comboDestinationNode.getModel(), archive);
+    if (!Objects.equals(archive, selectionKey(comboDestinationNode))) {
+      applySelectedArchive();
+    }
+    comboDestinationNode.addActionListener(destNodeListener);
+  }
+
+  private static String selectionKey(JComboBox<AbstractDicomNode> combo) {
+    if (combo.getSelectedItem() instanceof AbstractDicomNode node) {
+      return StringUtil.hasText(node.getId()) ? node.getId() : node.getDescription();
+    }
+    return null;
+  }
+
+  private void initNodeList() {
+    loadCallingNodes();
+    AbstractDicomNode.restoreNodeSelection(
+        getPersistence(), comboCallingNode.getModel(), LAST_CALLING_NODE);
+
+    comboDestinationNode.removeActionListener(destNodeListener);
+    loadArchiveNodes();
     AbstractDicomNode.restoreNodeSelection(
         getPersistence(), comboDestinationNode.getModel(), LAST_SEL_NODE);
     String lastType = getPersistence().getProperty(LAST_RETRIEVE_TYPE);
@@ -1079,6 +1127,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   @Override
   public void closeAdditionalWindow() {
+    AbstractDicomNode.removeNodesChangeListener(nodesChangeListener);
     applyChange();
     executor.shutdown();
   }
