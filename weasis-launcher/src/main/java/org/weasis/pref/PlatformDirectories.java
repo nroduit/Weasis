@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
@@ -129,9 +130,10 @@ public final class PlatformDirectories {
 
   /**
    * Migrates a legacy {@code ~/.weasis} installation to the resolved base directories. The bundle
-   * cache is regenerable, so it is deleted rather than moved. Runs at most once (a marker file is
-   * written in the legacy directory) and is a no-op when the legacy directory is already one of the
-   * targets (legacy layout) or has nothing to migrate.
+   * cache is regenerable, so it is deleted rather than moved; the {@code data/<sourceId>/resources}
+   * extracts stay in place for Weasis 4.x. Runs at most once (a marker file is written in the
+   * legacy directory) and is a no-op when the legacy directory is already one of the targets
+   * (legacy layout) or has nothing to migrate.
    */
   public static void migrateLegacyLayout(Path config, Path data, Path state) {
     migrateLegacyLayout(legacyDir(), config, data, state);
@@ -147,9 +149,15 @@ public final class PlatformDirectories {
       return;
     }
     try {
-      moveDirectory(legacy.resolve("preferences"), config.resolve("preferences")); // NON-NLS
-      moveDirectory(legacy.resolve("data"), data.resolve("data")); // NON-NLS
-      moveDirectory(legacy.resolve("log"), state.resolve("log")); // NON-NLS
+      moveDirectory(
+          legacy.resolve("preferences"), config.resolve("preferences"), _ -> false); // NON-NLS
+      // Weasis 4.x does not re-extract a missing data/<sourceId>/resources, so leave this
+      // regenerable extract in place to keep 4.x usable after going back to it.
+      moveDirectory(
+          legacy.resolve("data"), // NON-NLS
+          data.resolve("data"), // NON-NLS
+          PlatformDirectories::isLegacyResources);
+      moveDirectory(legacy.resolve("log"), state.resolve("log"), _ -> false); // NON-NLS
       deleteRecursively(legacy.resolve("cache")); // NON-NLS
       Files.writeString(marker, "Migrated to XDG base directories.\n"); // NON-NLS
       LOGGER.info(
@@ -159,14 +167,28 @@ public final class PlatformDirectories {
     }
   }
 
-  /** Recursively moves source into target, merging without overwriting existing files. */
-  private static void moveDirectory(Path source, Path target) throws IOException {
+  /** The 4.x resources extract {@code <sourceId>/resources}, relative to the data folder. */
+  private static boolean isLegacyResources(Path relative) {
+    return relative.getNameCount() >= 2
+        && "resources".equals(relative.getName(1).toString()); // NON-NLS
+  }
+
+  /**
+   * Recursively moves source into target, merging without overwriting existing files. Entries whose
+   * path relative to source matches {@code keep} stay in source.
+   */
+  private static void moveDirectory(Path source, Path target, Predicate<Path> keep)
+      throws IOException {
     if (!Files.isDirectory(source)) {
       return;
     }
     try (Stream<Path> walk = Files.walk(source)) {
       for (Path src : (Iterable<Path>) walk::iterator) {
-        Path dest = target.resolve(source.relativize(src));
+        Path relative = source.relativize(src);
+        if (keep.test(relative)) {
+          continue;
+        }
+        Path dest = target.resolve(relative);
         if (Files.isDirectory(src)) {
           Files.createDirectories(dest);
         } else if (!Files.exists(dest)) {
@@ -175,7 +197,7 @@ public final class PlatformDirectories {
         }
       }
     }
-    deleteRecursively(source);
+    deleteRecursively(source, keep);
   }
 
   private static void moveOrCopy(Path src, Path dest) throws IOException {
@@ -190,11 +212,26 @@ public final class PlatformDirectories {
   }
 
   private static void deleteRecursively(Path dir) throws IOException {
+    deleteRecursively(dir, _ -> false);
+  }
+
+  /** Deletes dir except the entries matching {@code keep} (relative to dir) and their parents. */
+  private static void deleteRecursively(Path dir, Predicate<Path> keep) throws IOException {
     if (!Files.exists(dir)) {
       return;
     }
     try (Stream<Path> walk = Files.walk(dir)) {
       for (Path p : (Iterable<Path>) walk.sorted(Comparator.reverseOrder())::iterator) {
+        if (keep.test(dir.relativize(p))) {
+          continue;
+        }
+        if (Files.isDirectory(p)) {
+          try (Stream<Path> entries = Files.list(p)) {
+            if (entries.findAny().isPresent()) {
+              continue; // still holds kept entries
+            }
+          }
+        }
         Files.deleteIfExists(p);
       }
     }

@@ -228,17 +228,14 @@ public class FileUtil {
     return fileDate;
   }
 
+  /** Returns true when the folder is missing or has no entries, i.e. it must be (re)populated. */
   public static boolean isFolderEmpty(Path path) throws IOException {
-    if (path == null || !Files.exists(path)) {
-      return false;
+    if (path == null || !Files.isDirectory(path)) {
+      return true;
     }
-
-    if (Files.isDirectory(path)) {
-      try (Stream<Path> entries = Files.list(path)) {
-        return entries.findAny().isEmpty();
-      }
+    try (Stream<Path> entries = Files.list(path)) {
+      return entries.findAny().isEmpty();
     }
-    return false;
   }
 
   public static URLConnection getAdaptedConnection(URL url, boolean useCaches) throws IOException {

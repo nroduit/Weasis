@@ -44,6 +44,23 @@ class PlatformDirectoriesMigrationTest {
   }
 
   @Test
+  void leavesLegacyResourcesInPlace(@TempDir Path root) throws IOException {
+    Path legacy = root.resolve(".weasis");
+    write(legacy.resolve("data/8EE82632/resources/svg/icon.svg"), "<svg/>");
+    write(legacy.resolve("data/8EE82632/other.properties"), "moved");
+    Path data = root.resolve("data/weasis");
+
+    PlatformDirectories.migrateLegacyLayout(
+        legacy, root.resolve("config/weasis"), data, root.resolve("state/weasis"));
+
+    assertEquals(
+        "<svg/>", Files.readString(legacy.resolve("data/8EE82632/resources/svg/icon.svg")));
+    assertFalse(Files.exists(data.resolve("data/8EE82632/resources")));
+    assertEquals("moved", Files.readString(data.resolve("data/8EE82632/other.properties")));
+    assertFalse(Files.exists(legacy.resolve("data/8EE82632/other.properties")));
+  }
+
+  @Test
   void isIdempotentAndDoesNotOverwriteNewerFiles(@TempDir Path root) throws IOException {
     Path legacy = root.resolve(".weasis");
     write(legacy.resolve("preferences/p.properties"), "old");

@@ -277,7 +277,9 @@ On the first launch with the new layout, `PlatformDirectories.migrateLegacyLayou
 a one-time migration when a legacy `~/.weasis` directory exists:
 
 - `~/.weasis/preferences` → config root
-- `~/.weasis/data` → data root
+- `~/.weasis/data` → data root, except the `data/<sourceId>/resources` extracts, which stay in
+  place: they are regenerable, and Weasis 4.x does not re-extract a missing folder, so moving
+  them would break a 4.x installation launched again afterward
 - `~/.weasis/log` → state root
 - `~/.weasis/cache` is **deleted** (it is regenerable, so it is not worth copying)
 
