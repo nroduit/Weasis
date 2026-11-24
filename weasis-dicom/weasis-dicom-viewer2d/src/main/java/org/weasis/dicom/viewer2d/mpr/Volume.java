@@ -198,6 +198,12 @@ public abstract sealed class Volume<T extends Number, A>
 
   private void createData(int sizeX, int sizeY, int sizeZ) {
     long totalElements = (long) sizeX * sizeY * sizeZ * channels;
+    if (!HeapRoom.fits(totalElements * byteDepth)) {
+      LOGGER.info("Not enough heap for {} voxels: the volume is mapped to a file", totalElements);
+      createDataFile(sizeX, sizeY, sizeZ);
+      initValueMappedBuffer(minValue);
+      return;
+    }
     try {
       this.data = createChunkedArray(totalElements);
     } catch (OutOfMemoryError e) {

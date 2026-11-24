@@ -145,7 +145,8 @@ public final class SplatContext implements AutoCloseable {
    * <p>Allocation strategy:
    *
    * <ol>
-   *   <li>Try {@link ChunkedArray}{@code <int[]>} on the heap (preferred — lock-free CAS).
+   *   <li>Try {@link ChunkedArray}{@code <int[]>} on the heap (preferred — lock-free CAS), when
+   *       {@link HeapRoom} says the two arrays leave room for the rest.
    *   <li>On {@link OutOfMemoryError}, run GC and retry once.
    *   <li>If still OOM, fall back to two memory-mapped temp files (disk path, striped locks).
    *   <li>If the disk fallback also fails, splatting is disabled (nearest-corner fallback).
@@ -159,7 +160,16 @@ public final class SplatContext implements AutoCloseable {
       return new SplatContext(null, null, null, null);
     }
 
-    // --- Attempt 1 & 2: heap-backed ChunkedArray<int[]> ---
+    SplatContext heap = heapAccumulators(totalVoxels);
+    return heap != null ? heap : mappedAccumulators(totalVoxels);
+  }
+
+  /** The heap-backed context, null when the heap has no room for it. */
+  private static SplatContext heapAccumulators(long totalVoxels) {
+    if (!HeapRoom.fits(2 * totalVoxels * Integer.BYTES)) {
+      LOGGER.info("Not enough heap for the accumulators of {} voxels", totalVoxels);
+      return null;
+    }
     ChunkedArray<int[]> wHeap;
     ChunkedArray<int[]> vHeap;
     try {
@@ -179,8 +189,11 @@ public final class SplatContext implements AutoCloseable {
             "OOM after GC — falling back to disk-backed accumulators for {} voxels", totalVoxels);
       }
     }
+    return null;
+  }
 
-    // --- Attempt 3: disk-backed mapped accumulators ---
+  /** The disk-backed context, without accumulators when the files cannot be mapped. */
+  private static SplatContext mappedAccumulators(long totalVoxels) {
     long totalBytes = totalVoxels * Float.BYTES; // 4 bytes per float element
     try {
       File wFile =
