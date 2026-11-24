@@ -17,14 +17,19 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import org.junit.jupiter.api.Test;
+import org.weasis.core.Messages;
 import org.weasis.core.ui.docking.ShellState.ShellSide;
 import org.weasis.core.ui.docking.SidePanel.Role;
 import org.weasis.core.ui.docking.SidePanel.Side;
@@ -881,5 +886,132 @@ class SidePanelTest {
     edt(() -> side.applyState(profile, false));
     flush();
     assertEquals(Optional.of("file-explorer"), side.toolIn(Slot.BOTTOM));
+  }
+
+  // ---- fit width ---------------------------------------------------------------------------
+
+  /** The item of that text in a menu, or empty. */
+  private static Optional<JMenuItem> item(JPopupMenu menu, String key) {
+    if (menu == null) {
+      return Optional.empty();
+    }
+    String text = Messages.getString(key);
+    return Arrays.stream(menu.getComponents())
+        .filter(JMenuItem.class::isInstance)
+        .map(JMenuItem.class::cast)
+        .filter(i -> text.equals(i.getText()))
+        .findFirst();
+  }
+
+  @Test
+  void fitWidthSetsTheWidthOfTheUserToTheToolWiderOrNarrower() throws Exception {
+    SidePanel explorer = new SidePanel(Role.EXPLORER, Side.LEFT);
+    edt(() -> explorer.show(new FakeTool("dicom-explorer", 10)));
+    edt(() -> explorer.show(new FakeTool("fitw-retrieve", 30, Slot.BOTTOM).widthToFit(520)));
+    edt(() -> explorer.show(new FakeTool("fitw-narrow", 31, Slot.BOTTOM).widthToFit(240)));
+    edt(() -> explorer.setContentWidth(300));
+    boolean[] fitted = new boolean[3];
+    edt(() -> fitted[0] = explorer.fitWidthTo("fitw-retrieve"));
+    int wider = explorer.getContentWidth();
+    int recorded = explorer.captureState().width();
+    edt(() -> fitted[1] = explorer.fitWidthTo("fitw-narrow"));
+    int narrower = explorer.getContentWidth();
+    edt(() -> fitted[2] = explorer.fitWidthTo("dicom-explorer"));
+    assertAll(
+        () -> assertTrue(fitted[0]),
+        () -> assertEquals(520, wider, "widened to the tool"),
+        () -> assertEquals(520, recorded, "kept as the width of the user"),
+        () -> assertTrue(fitted[1]),
+        () -> assertEquals(240, narrower, "a side wider than the tool narrows to it"),
+        () -> assertFalse(fitted[2], "a tool that does not tell its width"),
+        () -> assertEquals(240, explorer.getContentWidth()));
+  }
+
+  @Test
+  void aToolNotWidenedOnOpenKeepsTheWidthOfTheUserAndNarrowsBackWhenTurnedOff() throws Exception {
+    SidePanel explorer = new SidePanel(Role.EXPLORER, Side.LEFT);
+    edt(() -> explorer.show(new FakeTool("dicom-explorer", 10)));
+    edt(() -> explorer.show(new FakeTool("fitw-export", 30, Slot.BOTTOM).widthToFit(450)));
+    edt(() -> explorer.show(new FakeTool("fitw-send", 31, Slot.BOTTOM).widthToFit(460)));
+    edt(() -> explorer.setContentWidth(260));
+    try {
+      edt(() -> explorer.setWidenedOnOpen("fitw-export", false));
+      edt(() -> explorer.openByUser("fitw-export", Slot.BOTTOM));
+      flush();
+      int kept = explorer.getContentWidth();
+      edt(() -> explorer.openByUser("fitw-send", Slot.BOTTOM));
+      flush();
+      int widened = explorer.getContentWidth();
+      edt(() -> explorer.setWidenedOnOpen("fitw-send", false));
+      flush();
+      assertAll(
+          () -> assertFalse(explorer.isWidenedOnOpen("fitw-export")),
+          () -> assertEquals(260, kept, "not widened for a tool turned off"),
+          () -> assertEquals(460, widened, "still widened for another tool"),
+          () -> assertEquals(260, explorer.getContentWidth(), "turned off while widened"));
+    } finally {
+      edt(() -> explorer.setWidenedOnOpen("fitw-export", true));
+      edt(() -> explorer.setWidenedOnOpen("fitw-send", true));
+    }
+  }
+
+  @Test
+  void aDoubleClickOnTheDividerFitsTheSideToTheWidestToolShown() throws Exception {
+    SidePanel explorer = new SidePanel(Role.EXPLORER, Side.LEFT);
+    JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, explorer, new JPanel());
+    edt(
+        () -> {
+          split.setSize(2000, 800);
+          explorer.attachTo(split);
+          explorer.show(new FakeTool("dicom-explorer", 10).widthToFit(330));
+          explorer.show(new FakeTool("fitw-import", 30, Slot.BOTTOM).widthToFit(610));
+          explorer.setContentWidth(250);
+          explorer.open("fitw-import", Slot.BOTTOM);
+        });
+    flush();
+    edt(
+        () -> {
+          Component divider = explorer.splitDivider();
+          divider.dispatchEvent(
+              new MouseEvent(
+                  divider,
+                  MouseEvent.MOUSE_CLICKED,
+                  System.currentTimeMillis(),
+                  InputEvent.BUTTON1_DOWN_MASK,
+                  2,
+                  2,
+                  2,
+                  false,
+                  MouseEvent.BUTTON1));
+        });
+    flush();
+    assertEquals(610, explorer.getContentWidth());
+  }
+
+  @Test
+  void theWidthItemsAreOfferedOnlyForAToolThatTellsItsWidth() throws Exception {
+    SidePanel explorer = new SidePanel(Role.EXPLORER, Side.LEFT);
+    edt(() -> explorer.show(new FakeTool("dicom-explorer", 10)));
+    edt(() -> explorer.show(new FakeTool("fitw-qr", 30, Slot.BOTTOM).widthToFit(500)));
+    edt(() -> explorer.setContentWidth(250));
+    flush();
+    JPopupMenu[] menus = new JPopupMenu[4];
+    edt(
+        () -> {
+          menus[0] = explorer.slotMenu(Slot.TOP);
+          menus[1] = explorer.buttonMenu("dicom-explorer");
+          menus[2] = explorer.buttonMenu("fitw-qr");
+        });
+    // Fit width from the stripe shows the hidden tool, then fits
+    edt(() -> item(menus[2], "Docking.fit_width").orElseThrow().doClick());
+    flush();
+    edt(() -> menus[3] = explorer.slotMenu(Slot.BOTTOM));
+    assertAll(
+        () -> assertTrue(item(menus[0], "Docking.fit_width").isEmpty(), "slot menu, no width"),
+        () -> assertEquals(null, menus[1], "no stripe menu for a docked tool without width"),
+        () -> assertTrue(item(menus[2], "Docking.widen_on_open").orElseThrow().isSelected()),
+        () -> assertEquals(Optional.of("fitw-qr"), explorer.toolIn(Slot.BOTTOM)),
+        () -> assertEquals(500, explorer.getContentWidth()),
+        () -> assertTrue(item(menus[3], "Docking.fit_width").isPresent(), "slot menu, width"));
   }
 }

@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.BorderLayout;
 import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import javax.swing.BorderFactory;
@@ -121,6 +122,65 @@ class WrapFlowLayoutTest {
         () -> assertEquals(1, lineOf(panel, 2), "the spinner no longer fits beside the button"),
         () -> assertTrue(panel.getComponent(3).getWidth() <= 90, "never wider than the container"),
         () -> assertEquals(panel.getPreferredSize().height, panel.getHeight()));
+  }
+
+  /** "Archive:" + a combo that fills, its minimum 60, preferred 100 and maximum {@code max}. */
+  private static JPanel fillingRow(int width, int max) {
+    JPanel panel = new JPanel(new WrapFlowLayout(GAP, VGAP));
+    panel.add(box(30), WrapFlowLayout.KEEP_WITH_NEXT);
+    JPanel combo = box(100);
+    combo.setMinimumSize(new Dimension(60, HEIGHT));
+    combo.setMaximumSize(new Dimension(max, HEIGHT));
+    panel.add(combo, WrapFlowLayout.FILL);
+    panel.setSize(width, 10);
+    panel.setSize(width, panel.getPreferredSize().height);
+    panel.doLayout();
+    return panel;
+  }
+
+  @Test
+  void a_filling_component_takes_the_rest_of_its_line() {
+    JPanel panel = fillingRow(300, Integer.MAX_VALUE);
+    assertEquals(300 - 30 - GAP, panel.getComponent(1).getWidth());
+  }
+
+  @Test
+  void a_filling_component_stops_at_its_maximum_width_in_a_wide_container() {
+    JPanel panel = fillingRow(1000, 150);
+    assertAll(
+        () -> assertEquals(150, panel.getComponent(1).getWidth()),
+        () -> assertEquals(30 + GAP, panel.getComponent(1).getX(), "still beside its label"));
+  }
+
+  @Test
+  void a_filling_component_shrinks_to_its_minimum_in_a_narrow_container() {
+    JPanel panel = fillingRow(30 + GAP + 70, 150);
+    assertAll(
+        () -> assertEquals(0, lineOf(panel, 1)),
+        () -> assertEquals(70, panel.getComponent(1).getWidth()));
+  }
+
+  @Test
+  void the_widest_line_keeps_every_shown_row_on_one_line_with_the_insets_around_it() {
+    JPanel root = new JPanel(new BorderLayout());
+    root.setBorder(BorderFactory.createEmptyBorder(0, 7, 0, 3));
+    JPanel shown = new JPanel(new BorderLayout());
+    shown.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 6));
+    shown.add(options(), BorderLayout.CENTER);
+    root.add(shown, BorderLayout.NORTH);
+    JPanel folded = new JPanel(new WrapFlowLayout(GAP, VGAP));
+    folded.add(box(2000));
+    folded.setVisible(false);
+    root.add(folded, BorderLayout.SOUTH);
+    // laid out narrow, so the row wraps and its preferred width is only its widest component
+    root.setSize(150, 400);
+    root.doLayout();
+    shown.doLayout();
+
+    int line = 30 + 24 + 40 + 100 + 30 + 80 + 5 * GAP + 10;
+    assertAll(
+        () -> assertEquals(7 + 3 + 4 + 6 + line, WrapFlowLayout.widestLine(root)),
+        () -> assertEquals(0, WrapFlowLayout.widestLine(box(50)), "no wrapping row"));
   }
 
   @Test

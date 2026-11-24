@@ -25,9 +25,9 @@ import javax.swing.SwingUtilities;
  * width of the container and, unlike {@link java.awt.FlowLayout}, asks for the height its lines
  * need, so what follows is pushed down. A component added with {@link #KEEP_WITH_NEXT} stays on the
  * line of the next one, as a label with its field; such a group is only split when it is wider than
- * the container on its own. A component added with {@link #FILL} takes what is left of its line: it
- * stays beside the previous component while its minimum width fits there, and drops to a line of
- * its own otherwise.
+ * the container on its own. A component added with {@link #FILL} takes what is left of its line, up
+ * to its maximum width: it stays beside the previous component while its minimum width fits there,
+ * and drops to a line of its own otherwise.
  */
 public class WrapFlowLayout implements LayoutManager2 {
 
@@ -116,7 +116,7 @@ public class WrapFlowLayout implements LayoutManager2 {
 
   /**
    * Finishes a line: its components are centred on its height, which is returned, and the room left
-   * goes to the components that fill, those after them moving right.
+   * goes to the components that fill, up to their maximum width, those after them moving right.
    */
   private int closeLine(List<Component> line, List<Placement> placements, int y, int available) {
     int height = 0;
@@ -133,7 +133,11 @@ public class WrapFlowLayout implements LayoutManager2 {
     int shift = 0;
     for (int i = first; i < placements.size(); i++) {
       Placement p = placements.get(i);
-      int grow = filling.contains(p.component()) ? extra : 0;
+      // a filling component stops at its maximum width, the rest of the line staying empty
+      int grow =
+          filling.contains(p.component())
+              ? Math.min(extra, Math.max(0, p.component().getMaximumSize().width - p.width()))
+              : 0;
       placements.set(
           i,
           new Placement(
@@ -162,6 +166,46 @@ public class WrapFlowLayout implements LayoutManager2 {
     return parent.getWidth() <= 0
         ? Integer.MAX_VALUE
         : Math.max(1, parent.getWidth() - insets.left - insets.right);
+  }
+
+  /** The width of the components of {@code parent} on one line, at their preferred widths. */
+  private int lineWidth(Container parent) {
+    int width = 0;
+    for (Placement p : place(parent, Integer.MAX_VALUE)) {
+      width = Math.max(width, p.x() + p.width());
+    }
+    return width;
+  }
+
+  /**
+   * The width that keeps every visible row of this layout under {@code root} on one line: its
+   * components at their preferred widths, plus the insets of the containers around it up to and
+   * including {@code root}. A hidden subtree (a folded section) does not count. Once a row has a
+   * width, its preferred width only tells the widest component, so this is the width to ask for to
+   * show such a tool whole.
+   *
+   * @return 0 when there is no such row
+   */
+  public static int widestLine(Component root) {
+    synchronized (root.getTreeLock()) {
+      return widestLine(root, 0);
+    }
+  }
+
+  private static int widestLine(Component c, int outerInsets) {
+    if (!c.isVisible() || !(c instanceof Container container)) {
+      return 0;
+    }
+    Insets insets = container.getInsets();
+    int around = outerInsets + insets.left + insets.right;
+    int widest =
+        container.getLayout() instanceof WrapFlowLayout layout
+            ? around + layout.lineWidth(container)
+            : 0;
+    for (Component child : container.getComponents()) {
+      widest = Math.max(widest, widestLine(child, around));
+    }
+    return widest;
   }
 
   private int widestComponent(Container parent) {

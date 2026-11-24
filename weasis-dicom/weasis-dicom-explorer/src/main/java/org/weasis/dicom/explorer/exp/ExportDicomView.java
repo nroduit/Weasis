@@ -16,8 +16,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.UIManager;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import org.dcm4che3.data.Tag;
@@ -53,6 +55,7 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
   protected final DicomModel dicomModel;
   protected final ExportTree exportTree;
   protected final ExecutorService executor = ThreadUtil.newFixedThreadPool(3, "DicomSend");
+  private final JPanel header = new JPanel();
 
   public ExportDicomView(
       String title, int position, DicomModel dicomModel, CheckTreeModel treeModel) {
@@ -62,6 +65,7 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
   public ExportDicomView(
       String title, int position, DicomModel dicomModel, CheckTreeModel treeModel, File exportDir) {
     super(title, position);
+    header.setLayout(new BoxLayout(header, BoxLayout.PAGE_AXIS));
     this.dicomModel = dicomModel;
     this.exportTree = new ExportTree(treeModel);
     this.exportDir =
@@ -71,10 +75,19 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
             : exportDir;
   }
 
+  /**
+   * Lays out the rows added by {@link #addHeaderRow} above the tree, which scrolls on its own. A
+   * subclass adds its rows before calling this.
+   */
   public ExportDicomView initGUI() {
-    exportTree.setBorder(UIManager.getBorder("ScrollPane.border"));
-    add(exportTree);
+    setHeaderAndList(header, exportTree, LocalExport.TREE_MIN_HEIGHT);
     return this;
+  }
+
+  /** Adds a row that stays in place above the tree, stretched to the width of the page. */
+  protected void addHeaderRow(JComponent row) {
+    row.setAlignmentX(LEFT_ALIGNMENT);
+    header.add(row);
   }
 
   @Override

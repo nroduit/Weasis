@@ -10,7 +10,7 @@
 package org.weasis.dicom.qr;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import java.awt.FlowLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.io.File;
@@ -33,9 +33,11 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.BoxLayout;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -44,11 +46,9 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JSpinner;
-import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -65,12 +65,14 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.CheckBoxModel;
+import org.weasis.core.api.gui.util.CollapsiblePanel;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupCheckBoxMenu;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.gui.util.WrapFlowLayout;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -222,6 +224,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private static final String LAST_SEL_NODE = "lastSelNode";
   private static final String LAST_CALLING_NODE = "lastCallingNode";
+  private static final String SOURCE_EXPANDED = "dicom.qr.source.expanded"; // NON-NLS
+  private static final String CRITERIA_EXPANDED = "dicom.qr.criteria.expanded"; // NON-NLS
+  /** The height the result tree keeps (unscaled) before the whole page scrolls. */
+  private static final int TREE_MIN_HEIGHT = 100;
   private static final String LAST_DICOM_CHARSET = "lastRDicomCharset";
   private static final String LAST_RETRIEVE_TYPE = "lastRetrieveType";
   private static final String LAST_RETRIEVE_LIMIT = "lastRetrieveLimit";
@@ -372,46 +378,78 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         AppProperties.buildAccessibleTempDirectory("tmp", "qr")); // NON-NLS;
   }
 
+  /**
+   * The archive, then two folds (the DICOM options of the source and the search criteria), then
+   * the search row stay in place above the result tree, which scrolls on its own. The rows wrap
+   * when the side is narrow, and the folds keep their state across sessions.
+   */
   public void initGUI() {
     tree.setSeriesLoader(this::loadSeriesInTree);
-    JTabbedPane tabbedPane = new JTabbedPane();
-    tabbedPane.setBorder(GuiUtils.getEmptyBorder(5));
-    tabbedPane.putClientProperty(FlatClientProperties.TABBED_PANE_HAS_FULL_BORDER, true);
-    JPanel sourcePanel =
-        GuiUtils.getVerticalBoxLayoutPanel(
-            getArchivePanel(),
-            getCallingNodePanel(),
-            getCharsetPanel(),
-            GuiUtils.boxXLastElement(2));
-    sourcePanel.setBorder(GuiUtils.getEmptyBorder(ITEM_SEPARATOR));
-    tabbedPane.addTab(Messages.getString("dicom.source"), sourcePanel);
-    tabbedPane.addTab(Messages.getString("search.criteria"), getSearchPanel());
-    add(tabbedPane);
+    JPanel sourceOptions =
+        GuiUtils.getVerticalBoxLayoutPanel(getCallingNodePanel(), getCharsetPanel());
+    CollapsiblePanel sourceFold =
+        new CollapsiblePanel(
+            Messages.getString("dicom.source"), sourceOptions, true, SOURCE_EXPANDED);
+    CollapsiblePanel criteriaFold =
+        new CollapsiblePanel(
+            Messages.getString("search.criteria"), getSearchPanel(), true, CRITERIA_EXPANDED);
 
-    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_LARGE));
-    add(getCtrlSearchPanel());
-    tree.setBorder(UIManager.getBorder("ScrollPane.border"));
-    add(tree);
+    JPanel header = new JPanel();
+    header.setLayout(new BoxLayout(header, BoxLayout.PAGE_AXIS));
+    header.add(getArchivePanel());
+    header.add(sourceFold);
+    header.add(criteriaFold);
+    header.add(getCtrlSearchPanel());
+    setHeaderAndList(header, tree, TREE_MIN_HEIGHT);
+  }
+
+  /**
+   * A row that wraps to the width of the side ({@link WrapFlowLayout}), aligned on the leading edge
+   * of the vertical header.
+   */
+  private static JPanel wrapRow() {
+    JPanel row =
+        new JPanel(
+            new WrapFlowLayout(
+                GuiUtils.getScaleLength(ITEM_SEPARATOR),
+                GuiUtils.getScaleLength(ITEM_SEPARATOR_SMALL)));
+    row.setBorder(GuiUtils.getEmptyBorder(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_SMALL));
+    row.setAlignmentX(LEFT_ALIGNMENT);
+    return row;
+  }
+
+  /**
+   * Gives a field its preferred, minimum and maximum widths (unscaled): it shrinks in a narrow side
+   * and does not stretch across a wide workspace tab when it fills its line.
+   */
+  private static <C extends JComponent> C sized(C field, int preferred, int min, int max) {
+    GuiUtils.setPreferredWidth(field, preferred, min);
+    field.setMaximumSize(
+        new Dimension(GuiUtils.getScaleLength(max), field.getPreferredSize().height));
+    return field;
+  }
+
+  /** Adds a label and its field, kept on the same line. */
+  private static void addLabeled(JPanel row, JComponent label, JComponent field, boolean fill) {
+    row.add(label, WrapFlowLayout.KEEP_WITH_NEXT);
+    if (fill) {
+      row.add(field, WrapFlowLayout.FILL);
+    } else {
+      row.add(field);
+    }
   }
 
   public JPanel getArchivePanel() {
     JLabel lblDest = new JLabel(Messages.getString("DicomQrView.arc") + StringUtil.COLON);
     AbstractDicomNode.addTooltipToComboList(comboDestinationNode);
-    GuiUtils.setPreferredWidth(comboDestinationNode, 250, 150);
-
-    comboDicomRetrieveType.setToolTipText(Messages.getString("DicomQrView.msg_sel_type"));
-    return GuiUtils.getFlowLayoutPanel(
-        ITEM_SEPARATOR_SMALL,
-        ITEM_SEPARATOR,
-        lblDest,
-        comboDestinationNode,
-        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
-        lblRetrieve,
-        comboDicomRetrieveType);
+    sized(comboDestinationNode, 250, 120, 420);
+    JPanel row = wrapRow();
+    addLabeled(row, lblDest, comboDestinationNode, true);
+    return row;
   }
 
   public JPanel getCallingNodePanel() {
-    GuiUtils.setPreferredWidth(comboCallingNode, 230, 150);
+    sized(comboCallingNode, 200, 120, 300);
     AbstractDicomNode.addTooltipToComboList(comboCallingNode);
 
     final JButton btnGeneralOptions = new JButton(Messages.getString("DicomQrView.more_opt"));
@@ -424,19 +462,19 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
           // a saved change reloads the lists through nodesChangeListener
           GuiUtils.showCenterScreen(dialog);
         });
-    return GuiUtils.getFlowLayoutPanel(
-        ITEM_SEPARATOR_SMALL,
-        ITEM_SEPARATOR,
-        lblCalling,
-        comboCallingNode,
-        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
-        btnGeneralOptions);
+    comboDicomRetrieveType.setToolTipText(Messages.getString("DicomQrView.msg_sel_type"));
+    JPanel row = wrapRow();
+    addLabeled(row, lblCalling, comboCallingNode, false);
+    row.add(btnGeneralOptions);
+    addLabeled(row, lblRetrieve, comboDicomRetrieveType, false);
+    return row;
   }
 
   public JPanel getCharsetPanel() {
-    GuiUtils.setPreferredWidth(comboCharset, 350, 200);
-    return GuiUtils.getFlowLayoutPanel(
-        ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, lblCharset, comboCharset);
+    sized(comboCharset, 250, 120, 380);
+    JPanel row = wrapRow();
+    addLabeled(row, lblCharset, comboCharset, true);
+    return row;
   }
 
   public JPanel getCtrlSearchPanel() {
@@ -451,21 +489,13 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     searchBtn.setToolTipText(Messages.getString("DicomQrView.tips_dcm_query"));
     searchBtn.addActionListener(e -> dicomQuery());
 
-    return GuiUtils.getFlowLayoutPanel(
-        FlowLayout.LEADING,
-        ITEM_SEPARATOR_SMALL,
-        ITEM_SEPARATOR,
-        labelLimit,
-        limitSpinner,
-        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
-        labelPage,
-        pageSpinner,
-        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
-        progressBar,
-        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
-        searchBtn,
-        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
-        searchWarning);
+    JPanel row = wrapRow();
+    addLabeled(row, labelLimit, limitSpinner, false);
+    addLabeled(row, labelPage, pageSpinner, false);
+    row.add(progressBar);
+    row.add(searchBtn);
+    row.add(searchWarning);
+    return row;
   }
 
   public JPanel getSearchPanel() {
@@ -498,22 +528,16 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     JLabel labelFrom = new JLabel(Messages.getString("DicomQrView.from"));
     JLabel labelTo = new JLabel(Messages.getString("DicomQrView.to"));
 
-    JPanel panel1 =
-        GuiUtils.getFlowLayoutPanel(
-            ITEM_SEPARATOR_SMALL,
-            ITEM_SEPARATOR,
-            modButton,
-            GuiUtils.boxXLastElement(BLOCK_SEPARATOR),
-            dateButton,
-            GuiUtils.boxXLastElement(ITEM_SEPARATOR_LARGE),
-            labelFrom,
-            startDatePicker.getEditor(),
-            GuiUtils.boxXLastElement(ITEM_SEPARATOR),
-            labelTo,
-            endDatePicker.getEditor());
+    JPanel panel1 = wrapRow();
+    panel1.add(modButton);
+    panel1.add(dateButton);
+    addLabeled(panel1, labelFrom, startDatePicker.getEditor(), false);
+    addLabeled(panel1, labelTo, endDatePicker.getEditor(), false);
 
     comboTags.setMaximumRowCount(15);
-    GuiUtils.setPreferredWidth(comboTags, 230, 150);
+    sized(comboTags, 180, 110, 250);
+    sized(tfSearch, 200, 100, 420);
+    sized(templateComboBox, 180, 110, 320);
 
     String buf =
         """
@@ -537,8 +561,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     tfSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, fuzzyButton);
     comboTags.addItemListener(_ -> updateFuzzyOption());
     updateFuzzyOption();
-    JPanel panel2 =
-        GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, comboTags, tfSearch);
+    // the value takes the rest of the line beside its tag, or a line of its own when narrow
+    JPanel panel2 = wrapRow();
+    panel2.add(comboTags);
+    panel2.add(tfSearch, WrapFlowLayout.FILL);
 
     JButton clearBtn = new JButton(Messages.common("clear"));
     clearBtn.setToolTipText(Messages.getString("DicomQrView.clear_search"));
@@ -590,17 +616,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
           }
         });
 
-    JPanel panel3 =
-        GuiUtils.getFlowLayoutPanel(
-            ITEM_SEPARATOR_SMALL,
-            ITEM_SEPARATOR,
-            clearBtn,
-            addButton,
-            deleteButton,
-            templateComboBox);
-    JPanel searchPanel = GuiUtils.getVerticalBoxLayoutPanel(panel1, panel2, panel3);
-    searchPanel.setBorder(GuiUtils.getEmptyBorder(ITEM_SEPARATOR));
-    return searchPanel;
+    JPanel panel3 = wrapRow();
+    panel3.add(templateComboBox, WrapFlowLayout.FILL);
+    panel3.add(clearBtn, WrapFlowLayout.KEEP_WITH_NEXT);
+    panel3.add(addButton, WrapFlowLayout.KEEP_WITH_NEXT);
+    panel3.add(deleteButton);
+    return GuiUtils.getVerticalBoxLayoutPanel(panel1, panel2, panel3);
   }
 
   /** Fuzzy matching only applies to Person Name values (PS3.4 C.2.2.2.1.1). */

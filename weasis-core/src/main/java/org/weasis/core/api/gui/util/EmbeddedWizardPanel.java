@@ -114,12 +114,14 @@ public class EmbeddedWizardPanel extends JPanel {
 
   /**
    * The width that shows every page whole: the widest page with the vertical scroll bar the page
-   * area shows when the slot is short, or the selector row or the action bar when wider.
+   * area shows when the slot is short, or the selector row or the action bar when wider. A page
+   * with wrapping rows ({@link WrapFlowLayout}) asks for the width that keeps each unfolded row on
+   * one line.
    */
   public int getWidthToFit() {
     int page = 0;
     for (AbstractItemDialogPage p : pages) {
-      page = Math.max(page, p.getPreferredSize().width);
+      page = Math.max(page, Math.max(p.getPreferredSize().width, WrapFlowLayout.widestLine(p)));
     }
     Insets host = pageHost.getInsets();
     page += host.left + host.right + pageHost.getVerticalScrollBar().getPreferredSize().width;
@@ -142,13 +144,18 @@ public class EmbeddedWizardPanel extends JPanel {
 
   /**
    * Holds a page in the scroll pane: the page follows the width of the slot down to its minimum
-   * width, then scrolls, and fills the height of the slot when it is shorter.
+   * width, then scrolls, and fills the height of the slot when it is shorter. A page with its own
+   * scrolling list ({@link AbstractItemDialogPage#fillsHostHeight()}) follows the height down to
+   * its minimum height, so its list scrolls and its header stays in place.
    */
   private static final class PageView extends JPanel implements Scrollable {
     private static final int SCROLL_UNIT = 16;
 
-    PageView(JComponent page) {
+    private final boolean fillsHeight;
+
+    PageView(AbstractItemDialogPage page) {
       super(new BorderLayout());
+      this.fillsHeight = page.fillsHostHeight();
       add(page, BorderLayout.CENTER);
     }
 
@@ -176,8 +183,11 @@ public class EmbeddedWizardPanel extends JPanel {
 
     @Override
     public boolean getScrollableTracksViewportHeight() {
-      return getParent() instanceof JViewport viewport
-          && viewport.getHeight() >= getPreferredSize().height;
+      if (getParent() instanceof JViewport viewport) {
+        Dimension needed = fillsHeight ? getMinimumSize() : getPreferredSize();
+        return viewport.getHeight() >= needed.height;
+      }
+      return false;
     }
   }
 }

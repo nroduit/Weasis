@@ -110,9 +110,11 @@ import org.weasis.launcher.UiOrientation;
  * tool the user opens may ask for more width ({@link DockableTool#getWidthToFit()}): the side
  * widens for it while it is shown and returns to the width of the user afterwards; this width is
  * never persisted, and a divider drag meanwhile becomes the width of the user. Viewer switches and
- * applied states never widen the side. The expanded tools are sticky as well: when tools are
- * swapped, the slots re-open the remembered ids (or, on the explorer side, the first tool) unless
- * the user explicitly collapsed them.
+ * applied states never widen the side. The user can turn that widening off per tool, and set the
+ * width that shows a tool whole as the width of the user (Fit width, in the menu of the slot and of
+ * the stripe button, or a double click on the divider for the tools shown). The expanded tools are
+ * sticky as well: when tools are swapped, the slots re-open the remembered ids (or, on the explorer
+ * side, the first tool) unless the user explicitly collapsed them.
  *
  * <p>On the explorer side, an explorer heads a <em>family</em> of the tools and actions that serve
  * it ({@link DockableTool#getFamily()}). The stripe shows the explorers first, then only the
@@ -169,6 +171,7 @@ public class SidePanel extends JPanel {
   private static final double MAX_FIT_SHARE = 0.4;
 
   private static final Map<String, Setting<Double>> TOOL_RATIOS = new ConcurrentHashMap<>();
+  private static final Map<String, Setting<Boolean>> TOOL_WIDENS = new ConcurrentHashMap<>();
   private static final double MIN_RATIO = 0.1;
   private static final double MAX_RATIO = 0.9;
   private static final int MIN_ICON_SIZE = 12;
@@ -217,6 +220,20 @@ public class SidePanel extends JPanel {
         @Override
         public void mouseReleased(MouseEvent e) {
           recordDividerRatio();
+        }
+      };
+
+  /** Fits the side to the tools shown on a double click of the divider of the side split. */
+  private final MouseAdapter dividerFit =
+      new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          // a width, as a drag of the divider: saved with the width, not a change of the slots
+          if (SwingUtilities.isLeftMouseButton(e)
+              && e.getClickCount() == 2
+              && isShowingContent()) {
+            fitWidthToShown();
+          }
         }
       };
 
@@ -337,6 +354,18 @@ public class SidePanel extends JPanel {
     return side;
   }
 
+  private void listenToDivider(JSplitPane splitPane) {
+    if (splitPane.getUI() instanceof BasicSplitPaneUI ui && ui.getDivider() != null) {
+      ui.getDivider().removeMouseListener(dividerFit);
+      ui.getDivider().addMouseListener(dividerFit);
+    }
+  }
+
+  /** The divider of the side split, as a user double-clicks it, for tests. */
+  Component splitDivider() {
+    return split != null && split.getUI() instanceof BasicSplitPaneUI ui ? ui.getDivider() : null;
+  }
+
   /** The fixed vertical button stripe, to be placed on the window edge (not in the split pane). */
   public JPanel getStripe() {
     return stripe;
@@ -349,6 +378,10 @@ public class SidePanel extends JPanel {
   public void attachTo(JSplitPane splitPane) {
     this.split = splitPane;
     this.leftChild = side == Side.LEFT;
+    // a double click on the divider fits the side to the tools shown; a new look and feel builds
+    // a new divider
+    listenToDivider(splitPane);
+    splitPane.addPropertyChangeListener("UI", _ -> listenToDivider(splitPane)); // NON-NLS
     splitPane.addPropertyChangeListener(
         JSplitPane.DIVIDER_LOCATION_PROPERTY,
         e -> {
@@ -943,6 +976,83 @@ public class SidePanel extends JPanel {
       forgetFit();
       contentWidth = Math.max(width, minContentWidth());
       Settings.set(widthSetting(), contentWidth);
+      applyWidth();
+    }
+  }
+
+  /** Whether the tool of that id tells the width that shows it whole. */
+  public boolean canFitWidth(String toolId) {
+    return find(toolId).map(t -> t.getWidthToFit() > 0).orElse(false);
+  }
+
+  /**
+   * Sets the side to the width that shows the tool of that id whole, up to a share of the window,
+   * and keeps it as the width of the user: the Fit width action. A side wider than the tool needs
+   * narrows to it.
+   *
+   * @return false when the tool does not tell its width
+   */
+  public boolean fitWidthTo(String toolId) {
+    int target = find(toolId).map(this::fitTarget).orElse(0);
+    if (target <= 0) {
+      return false;
+    }
+    setContentWidth(target);
+    return true;
+  }
+
+  /**
+   * {@link #fitWidthTo} for the tools shown, the widest one winning: a double click on the divider.
+   *
+   * @return false when no tool shown tells its width
+   */
+  public boolean fitWidthToShown() {
+    int target = 0;
+    for (Slot slot : Slot.values()) {
+      if (isShown(slot)) {
+        target = Math.max(target, fitTarget(host(slot).tool));
+      }
+    }
+    if (target <= 0) {
+      return false;
+    }
+    setContentWidth(target);
+    return true;
+  }
+
+  /** The width that shows the tool whole, up to a share of the split; 0 when it does not tell. */
+  private int fitTarget(DockableTool tool) {
+    int needed = tool.getWidthToFit();
+    if (needed <= 0) {
+      return 0;
+    }
+    return Math.max(minContentWidth(), Math.min(needed, maxFitWidth()));
+  }
+
+  /** The widest a fit makes the side: a share of its split, unbounded before it has a size. */
+  private int maxFitWidth() {
+    return split != null && split.getWidth() > 0
+        ? (int) (split.getWidth() * MAX_FIT_SHARE)
+        : Integer.MAX_VALUE;
+  }
+
+  /**
+   * Whether opening the tool of that id from its stripe button widens the side for it while it is
+   * shown (the default); off, the tool takes the width of the user and wraps or scrolls.
+   */
+  public boolean isWidenedOnOpen(String toolId) {
+    return Settings.get(widenSetting(toolId));
+  }
+
+  /**
+   * Sets {@link #isWidenedOnOpen}; turned off while the side is widened for that tool, the side
+   * narrows back to the width of the user.
+   */
+  public void setWidenedOnOpen(String toolId, boolean widen) {
+    Settings.set(widenSetting(toolId), widen);
+    if (!widen && toolId.equals(fittedToolId)) {
+      contentWidth = widthBeforeFit;
+      forgetFit();
       applyWidth();
     }
   }
@@ -1547,12 +1657,64 @@ public class SidePanel extends JPanel {
   /** The client property of a stripe button whose tool is shown as a tab. */
   private static final String AS_TAB = "weasis.stripe.asTab"; // NON-NLS
 
-  /** The menu of the stripe button of a tool shown as a tab. */
-  private void showTabMenu(MouseEvent e, String toolId) {
-    if (!e.isPopupTrigger() || !views.containsKey(toolId)) {
+  /** Shows the menu of a stripe button on the popup trigger, when it has one. */
+  private void showButtonMenu(MouseEvent e, String toolId) {
+    if (!e.isPopupTrigger()) {
       return;
     }
+    JPopupMenu menu = buttonMenu(toolId);
+    if (menu != null) {
+      menu.applyComponentOrientation(e.getComponent().getComponentOrientation());
+      menu.show(e.getComponent(), e.getX(), e.getY());
+    }
+  }
+
+  /**
+   * The menu of a stripe button: show the tab or return to the side for a tool shown as a tab, the
+   * width items for a tool that tells its width; null for another tool.
+   */
+  JPopupMenu buttonMenu(String toolId) {
     JPopupMenu menu = new JPopupMenu();
+    if (views.containsKey(toolId)) {
+      addTabItems(menu, toolId);
+    } else {
+      addWidthItems(menu, toolId, true);
+    }
+    return menu.getComponentCount() == 0 ? null : menu;
+  }
+
+  /**
+   * Fit width and Widen when opened, for a tool that tells the width that shows it whole; nothing
+   * for another one. From the stripe, Fit width also shows the tool when it is hidden.
+   */
+  private void addWidthItems(JPopupMenu menu, String toolId, boolean fromStripe) {
+    if (!canFitWidth(toolId)) {
+      return;
+    }
+    JMenuItem fit = new JMenuItem(Messages.getString("Docking.fit_width"));
+    fit.addActionListener(_ -> fitFromMenu(toolId, fromStripe));
+    menu.add(fit);
+    JCheckBoxMenuItem widen =
+        new JCheckBoxMenuItem(
+            Messages.getString("Docking.widen_on_open"), isWidenedOnOpen(toolId));
+    widen.addActionListener(_ -> setWidenedOnOpen(toolId, widen.isSelected()));
+    menu.add(widen);
+  }
+
+  private void fitFromMenu(String toolId, boolean fromStripe) {
+    DockableTool tool = find(toolId).orElse(null);
+    if (tool == null) {
+      return;
+    }
+    boolean hidden = slotOf(tool).filter(this::isShown).isEmpty();
+    if (fromStripe && hidden) {
+      open(tool, slotOf(tool).orElseGet(() -> preferredSlot(tool)));
+      userChange.accept(this);
+    }
+    fitWidthTo(toolId);
+  }
+
+  private void addTabItems(JPopupMenu menu, String toolId) {
     JMenuItem show = new JMenuItem(Messages.getString("Docking.show_tab"));
     show.addActionListener(
         ev -> {
@@ -1566,8 +1728,6 @@ public class SidePanel extends JPanel {
     JMenuItem back = new JMenuItem(Messages.getString("Docking.return_side"));
     back.addActionListener(ev -> returnFromView(toolId));
     menu.add(back);
-    menu.applyComponentOrientation(e.getComponent().getComponentOrientation());
-    menu.show(e.getComponent(), e.getX(), e.getY());
   }
 
   /**
@@ -1672,12 +1832,12 @@ public class SidePanel extends JPanel {
         new MouseAdapter() {
           @Override
           public void mousePressed(MouseEvent e) {
-            showTabMenu(e, id);
+            showButtonMenu(e, id);
           }
 
           @Override
           public void mouseReleased(MouseEvent e) {
-            showTabMenu(e, id);
+            showButtonMenu(e, id);
           }
         });
     button.setFocusable(false);
@@ -1806,6 +1966,27 @@ public class SidePanel extends JPanel {
         role.key() + '/' + toolId, _ -> declareToolRatio(role, toolId));
   }
 
+  private Setting<Boolean> widenSetting(String toolId) {
+    return TOOL_WIDENS.computeIfAbsent(
+        role.key() + '/' + toolId, _ -> declareToolWiden(role, toolId));
+  }
+
+  /** Declares {@code weasis.sidepanel.<role>.widen.<toolId>} once; the catalog may know it. */
+  @SuppressWarnings("unchecked")
+  private static Setting<Boolean> declareToolWiden(Role role, String toolId) {
+    String key = "weasis.sidepanel." + role.key() + ".widen." + toolId; // NON-NLS
+    Optional<Setting<?>> known = SettingCatalog.find(key);
+    if (known.isPresent() && known.get().type() == SettingType.BOOLEAN) {
+      return (Setting<Boolean>) known.get();
+    }
+    return Setting.builder(SettingType.BOOLEAN, AppProperties.CORE_PLUGIN_ID, key, true)
+        .scope(Scope.MACHINE)
+        .description(
+            "Whether opening " + toolId + " widens the " + role.key() + " side while it is shown")
+        .since("5.0.0") // NON-NLS
+        .declare();
+  }
+
   /** Declares {@code weasis.sidepanel.<role>.ratio.<toolId>} once; the catalog may know it. */
   @SuppressWarnings("unchecked")
   private static Setting<Double> declareToolRatio(Role role, String toolId) {
@@ -1858,7 +2039,8 @@ public class SidePanel extends JPanel {
 
   /**
    * Restores the width of the user when the tool the side was widened for is no longer shown, then
-   * widens the side for the tool the user just opened when it needs more width.
+   * widens the side for the tool the user just opened when it needs more width and the user did
+   * not turn that off for it ({@link #isWidenedOnOpen}).
    */
   private void fitWidth() {
     String pending = fitPending;
@@ -1867,16 +2049,12 @@ public class SidePanel extends JPanel {
       contentWidth = widthBeforeFit;
       forgetFit();
     }
-    if (pending == null || !isToolShown(pending)) {
+    if (pending == null || !isToolShown(pending) || !isWidenedOnOpen(pending)) {
       return;
     }
     int needed = find(pending).map(DockableTool::getWidthToFit).orElse(0);
     int base = widthBeforeFit > 0 ? widthBeforeFit : getContentWidth();
-    int max =
-        split != null && split.getWidth() > 0
-            ? (int) (split.getWidth() * MAX_FIT_SHARE)
-            : Integer.MAX_VALUE;
-    int target = Math.min(needed, max);
+    int target = Math.min(needed, maxFitWidth());
     if (target > base && target > contentWidth) {
       widthBeforeFit = base;
       fittedToolId = pending;
@@ -2097,6 +2275,10 @@ public class SidePanel extends JPanel {
         JMenuItem tab = new JMenuItem(Messages.getString("Docking.open_tab"), asTabIcon);
         tab.addActionListener(e -> openAsView());
         menu.add(tab);
+      }
+      if (canFitWidth(toolId)) {
+        menu.addSeparator();
+        addWidthItems(menu, toolId, false);
       }
       menu.addSeparator();
       JMenuItem hide = new JMenuItem(Messages.getString("Docking.minimize"), minimize.getIcon());

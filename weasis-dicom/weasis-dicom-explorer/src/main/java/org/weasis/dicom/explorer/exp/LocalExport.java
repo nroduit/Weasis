@@ -38,7 +38,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JSlider;
-import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -181,6 +180,12 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
   /** The local persistence key of the fold state of the export options. */
   private static final String OPTIONS_EXPANDED = "dicom.export.options.expanded"; // NON-NLS
 
+  /** The height the tree keeps (unscaled) before the whole page scrolls in a short slot. */
+  static final int TREE_MIN_HEIGHT = 100;
+
+  /** The widest the quality slider gets (unscaled). */
+  private static final int SLIDER_MAX_WIDTH = 360;
+
   private final JPanel optionsHost = new JPanel(new BorderLayout());
   private final JPanel reviewHost = new JPanel(new BorderLayout());
   private List<JComponent> additionalOptions = List.of();
@@ -211,10 +216,13 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
   public void initGUI() {
     additionalOptions = getAdditionalOption();
+    // the format and the foldable options stay in place above the tree, which scrolls on its own
+    JPanel header = new JPanel();
+    header.setLayout(new BoxLayout(header, BoxLayout.PAGE_AXIS));
     if (comboBoxImgFormat.getItemCount() > 1) {
       JLabel formatLabel = new JLabel(Messages.getString("LocalExport.exp") + StringUtil.COLON);
-      add(row(formatLabel, fitted(GuiUtils.shrinkable(comboBoxImgFormat))));
-      add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_SMALL));
+      header.add(row(formatLabel, fitted(GuiUtils.shrinkable(comboBoxImgFormat))));
+      header.add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_SMALL));
     }
     comboBoxImgFormat.addItemListener(
         e -> {
@@ -224,7 +232,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         });
     CollapsiblePanel options =
         new CollapsiblePanel(Messages.common("options"), optionsHost, true, OPTIONS_EXPANDED);
-    add(options);
+    header.add(options);
     rebuildOptions();
     // the review warning of an image export follows what is checked
     exportTree
@@ -232,10 +240,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         .getCheckingModel()
         .addTreeCheckingListener(_ -> refreshReviewWarning());
 
-    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
-    exportTree.setBorder(UIManager.getBorder("ScrollPane.border"));
-    exportTree.setAlignmentX(LEFT_ALIGNMENT);
-    add(exportTree);
+    setHeaderAndList(header, exportTree, TREE_MIN_HEIGHT);
   }
 
   /**
@@ -309,7 +314,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     syntaxComboBox.setSelectedItem(tsuid);
     JPanel transcodingPanel =
         GuiUtils.getVerticalBoxLayoutPanel(
-            leftAligned(GuiUtils.shrinkable(syntaxComboBox)),
+            leftAligned(fitted(GuiUtils.shrinkable(syntaxComboBox))),
             leftAligned(GuiUtils.shrinkable(onlyUncompressed)),
             leftAligned(slider));
     transcodingPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("transcoding")));
@@ -530,6 +535,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     slider.setPaintTicks(true);
     slider.setSnapToTicks(false);
     slider.setMajorTickSpacing(10);
+    // shrinks with a narrow side but does not stretch across a wide workspace tab
+    slider.setMaximumSize(
+        new Dimension(GuiUtils.getScaleLength(SLIDER_MAX_WIDTH), slider.getPreferredSize().height));
     slider.addChangeListener(
         e -> {
           JSlider source = (JSlider) e.getSource();

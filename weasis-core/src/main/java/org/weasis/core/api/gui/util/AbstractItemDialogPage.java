@@ -9,6 +9,8 @@
  */
 package org.weasis.core.api.gui.util;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +19,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import org.weasis.core.api.gui.Insertable;
 
 public abstract class AbstractItemDialogPage extends JPanel implements PageItem, Insertable {
@@ -37,6 +40,12 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
   private int pagePosition;
 
   private final Properties properties = new Properties();
+
+  private static final int LIST_PREFERRED_HEIGHT = 300;
+  private static final int LIST_MIN_WIDTH = 120;
+  private static final int LIST_SCROLL_UNIT = 16;
+
+  private boolean fillsHostHeight;
 
   protected AbstractItemDialogPage(String title) {
     this(title, 1000);
@@ -155,5 +164,44 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
 
   public JComponent getMenuPanel() {
     return null;
+  }
+
+  /**
+   * Lays the page out as a header that keeps its natural height above a list that takes the rest
+   * of the height and scrolls on its own. In a short host the list scrolls while the header stays
+   * in place; the host scrolls the whole page only below {@code minListHeight} (unscaled) for the
+   * list. The page must hold nothing else.
+   *
+   * @return the scroll pane of the list
+   */
+  protected JScrollPane setHeaderAndList(JComponent header, JComponent list, int minListHeight) {
+    int minHeight = GuiUtils.getScaleLength(minListHeight);
+    // the list asks for a bounded height: its own scroll bar, not the page, absorbs a long list
+    int maxPreferred = Math.max(minHeight, GuiUtils.getScaleLength(LIST_PREFERRED_HEIGHT));
+    JScrollPane scroll =
+        new JScrollPane(list) {
+          @Override
+          public Dimension getPreferredSize() {
+            Dimension dim = super.getPreferredSize();
+            dim.height = Math.min(dim.height, maxPreferred);
+            return dim;
+          }
+        };
+    scroll.setMinimumSize(new Dimension(GuiUtils.getScaleLength(LIST_MIN_WIDTH), minHeight));
+    scroll.getVerticalScrollBar().setUnitIncrement(GuiUtils.getScaleLength(LIST_SCROLL_UNIT));
+    scroll.getHorizontalScrollBar().setUnitIncrement(GuiUtils.getScaleLength(LIST_SCROLL_UNIT));
+    setLayout(new BorderLayout(0, GuiUtils.getScaleLength(ITEM_SEPARATOR)));
+    add(header, BorderLayout.NORTH);
+    add(scroll, BorderLayout.CENTER);
+    fillsHostHeight = true;
+    return scroll;
+  }
+
+  /**
+   * Whether the page fills the height of its host down to its minimum height, its list scrolling
+   * on its own ({@link #setHeaderAndList}); otherwise the host gives it its preferred height.
+   */
+  public boolean fillsHostHeight() {
+    return fillsHostHeight;
   }
 }

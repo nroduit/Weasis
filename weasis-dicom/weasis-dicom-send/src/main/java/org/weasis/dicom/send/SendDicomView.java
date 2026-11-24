@@ -22,6 +22,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.gui.util.WrapFlowLayout;
 import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
 import org.weasis.core.util.StringUtil;
@@ -66,19 +67,22 @@ public class SendDicomView extends ExportDicomView {
     GuiUtils.setPreferredWidth(comboNode, 210, 185);
     AbstractDicomNode.addTooltipToComboList(comboNode);
 
-    JPanel panel = GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, lblDest, comboNode);
+    // the calling node wraps under the destination when the side is narrow
+    JPanel row =
+        new JPanel(
+            new WrapFlowLayout(
+                GuiUtils.getScaleLength(ITEM_SEPARATOR),
+                GuiUtils.getScaleLength(ITEM_SEPARATOR_SMALL)));
+    row.add(lblDest, WrapFlowLayout.KEEP_WITH_NEXT);
+    row.add(comboNode);
     if (comboCallingNode.getItemCount() > 0) {
       AbstractDicomNode.addTooltipToComboList(comboCallingNode);
       JLabel lblCalling = new JLabel(Messages.common("calling_node") + StringUtil.COLON);
       GuiUtils.setPreferredWidth(comboCallingNode, 160, 120);
-
-      panel.add(GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_LARGE));
-      panel.add(lblCalling);
-      panel.add(comboCallingNode);
+      row.add(lblCalling, WrapFlowLayout.KEEP_WITH_NEXT);
+      row.add(comboCallingNode);
     }
-
-    add(panel);
-    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
+    addHeaderRow(row);
 
     super.initGUI();
     return this;
