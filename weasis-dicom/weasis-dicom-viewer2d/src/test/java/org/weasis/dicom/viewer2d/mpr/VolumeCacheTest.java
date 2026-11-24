@@ -106,6 +106,25 @@ class VolumeCacheTest {
   }
 
   @Test
+  void a_build_that_ends_on_any_error_fails_its_leases_instead_of_leaving_them_waiting() {
+    VolumeCache<String> cache =
+        new VolumeCache<>(
+            (key, hint) -> {
+              throw new NoClassDefFoundError("after an out of memory"); // NON-NLS
+            },
+            released::add,
+            String::length,
+            1000,
+            queued::add);
+    VolumeCache<String>.Lease lease = cache.acquire("ct", null); // NON-NLS
+    runQueued();
+    assertAll(
+        () -> assertTrue(lease.future().isCompletedExceptionally()),
+        () -> assertThrows(IllegalStateException.class, lease::join),
+        () -> assertTrue(cache.snapshot().isEmpty()));
+  }
+
+  @Test
   void an_evicted_key_leaves_when_its_last_lease_closes_and_prefetches_queue_after_requests() {
     VolumeCache<String> cache = cache(1000);
     cache.prefetch("later"); // NON-NLS

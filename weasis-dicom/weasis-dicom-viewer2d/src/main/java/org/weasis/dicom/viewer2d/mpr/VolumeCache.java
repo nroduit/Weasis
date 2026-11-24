@@ -217,7 +217,7 @@ public final class VolumeCache<V> {
       }
       entry.bytes = size.applyAsLong(value);
       entry.future.complete(value);
-    } catch (Exception | OutOfMemoryError e) {
+    } catch (Throwable e) { // NOSONAR any error must reach the waiters, or they wait forever
       entries.remove(entry.key, entry);
       entry.future.completeExceptionally(e);
       LOGGER.warn("Cannot build the volume of {}", entry.key, e);
