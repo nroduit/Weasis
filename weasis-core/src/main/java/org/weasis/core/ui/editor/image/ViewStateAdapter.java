@@ -57,6 +57,11 @@ public interface ViewStateAdapter<E extends ImageElement> {
     return false;
   }
 
+  /** Shows the series alone again, when the view blends another one over it. */
+  default void clearBlend(ViewCanvas<E> view) {
+    // viewer types without a blend have none to clear
+  }
+
   /** Blends that series over the shown one with the stored parameters. */
   default void blend(ViewCanvas<E> view, MediaSeries<E> overlay, JsonObject params) {
     // viewer types without a blend ignore it

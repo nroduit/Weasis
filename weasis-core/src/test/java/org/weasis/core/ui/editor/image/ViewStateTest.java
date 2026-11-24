@@ -409,6 +409,24 @@ class ViewStateTest {
         () -> assertNull(ViewState.fromJson(Json.createObjectBuilder().build()).blend()));
     verify(adapter).blend(view, overlay, params);
     verify(adapter, never()).blend(eq(view), eq(series), any());
+    verify(adapter, never()).clearBlend(view);
+  }
+
+  /** A pane reused for a cell without fusion must not keep the fusion of the cell before. */
+  @Test
+  @SuppressWarnings("unchecked")
+  void aStateWithoutBlendClearsTheBlendOfThePane() {
+    ViewCanvas<ImageElement> view = mock(ViewCanvas.class);
+    ViewStateAdapter<ImageElement> adapter = mock(ViewStateAdapter.class);
+    when(view.getSeries()).thenReturn(mock(MediaSeries.class));
+    when(view.getViewModel()).thenReturn(mock(ViewModel.class));
+    when(view.getViewStateAdapter()).thenReturn(adapter);
+    when(view.getDisplayOpManager()).thenReturn(mock(OpManager.class));
+
+    ViewState.fromJson(Json.createObjectBuilder().build()).apply(view, id -> Optional.empty());
+
+    verify(adapter).clearBlend(view);
+    verify(adapter, never()).blend(eq(view), any(), any());
   }
 
   @Test

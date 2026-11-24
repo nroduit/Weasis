@@ -50,6 +50,7 @@ A display set may blend a second series over its own: the Weasis extension `fusi
 The engine plans a fused cell as it plans a deriving one: the cell shows the best series of its image set, even when another cell of the step shows it, and its pane carries a `ViewState.Blend` with the best series of the overlay image set, which the viewer blends when it restores the pane.
 An overlay that does not resolve leaves the base alone, with the reason.
 A fused cell may also derive its base, in which case the overlay is blended over the reformat.
+A cell without fusion clears the fusion its pane had from the step before, since a step reuses the panes of the viewer.
 
 An image set may be `required`: the protocol then applies only to a study that fills it, which is how a protocol asks for two kinds of series at once.
 The built-in *SPECT with CT* and *PET with CT* protocols require a CT and an emission series, and hang three steps: the axial CT, emission and fused cells, then the CT and the fused cells in the three planes, then the nine cells with the emission row.

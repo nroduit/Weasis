@@ -361,6 +361,19 @@ public final class FusionController {
     worker.start();
   }
 
+  /** Switches the fusion off on the pane, when it has one. */
+  public static void clear(ViewCanvas<DicomImageElement> view) {
+    if (snapshot(view) == null) {
+      return;
+    }
+    OpManager disOp = view.getDisplayOpManager();
+    disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_ENABLED, Boolean.FALSE);
+    disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES, null);
+    clearCache(disOp);
+    view.getImageLayer().updateDisplayOperations();
+    EventManager.getInstance().refreshFusionWindowControl();
+  }
+
   /** Switches the fusion off on the panes whose overlay is that series, gone from the explorer. */
   public static void dropOverlay(List<ViewCanvas<DicomImageElement>> views, Object series) {
     for (ViewCanvas<DicomImageElement> view : views) {

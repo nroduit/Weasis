@@ -121,6 +121,11 @@ final class DicomViewStateAdapter implements ViewStateAdapter<DicomImageElement>
     return Optional.of(new ViewState.Blend(id == null ? null : id.toString(), params.build()));
   }
 
+  @Override
+  public void clearBlend(ViewCanvas<DicomImageElement> view) {
+    FusionController.clear(view);
+  }
+
   /**
    * Blends the overlay with the stored map, window and opacities; the fusion volume is built again
    * for the pane, as when the user picks the overlay.

@@ -98,7 +98,8 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
 
   /**
    * Restores the pane exactly: the pane already shows {@link ViewData#series()}; the blended
-   * series, when there is one, is found through the resolver and blended by the adapter.
+   * series, when there is one, is found through the resolver and blended by the adapter, and a
+   * state without one clears the blend the pane had.
    */
   @SuppressWarnings("unchecked")
   public <E extends ImageElement> void apply(ViewCanvas<E> canvas, SeriesResolver resolver) {
@@ -108,7 +109,12 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
             ? canvas
             : canvas.getViewStateAdapter().project(canvas, view.projection());
     view.applyTo(target, data);
-    if (blend != null && blend.overlay() != null && target.getSeries() != null) {
+    if (target.getSeries() == null) {
+      return;
+    }
+    if (blend == null || blend.overlay() == null) {
+      target.getViewStateAdapter().clearBlend(target);
+    } else {
       resolver
           .resolve(blend.overlay())
           .ifPresent(
