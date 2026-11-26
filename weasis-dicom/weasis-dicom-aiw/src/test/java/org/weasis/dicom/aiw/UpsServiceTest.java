@@ -243,8 +243,8 @@ class UpsServiceTest {
 
     String body = createBodies.get(0);
     assertAll(
-        // The sequence is Type 3 (PS3.3 C.30.2) and carries one Content Item per value, so the
-        // body names (0074,1210) and the Value Type (0040,A040) twice.
+        // The sequence is Type 2 on Create (PS3.4 Table CC.2.5-3) and carries one Content Item
+        // per value, so the body names (0074,1210) and the Value Type (0040,A040) twice.
         () -> assertTrue(body.contains("\"00741210\""), body),
         () -> assertEquals(2, count(body, "\"0040A040\""), body),
         () -> assertTrue(body.contains("CLIP_LIMIT"), body),
@@ -255,13 +255,15 @@ class UpsServiceTest {
   }
 
   @Test
-  void run_omits_the_scheduled_processing_parameters_when_none_are_given() throws Exception {
+  void run_carries_an_empty_scheduled_processing_parameters_sequence_when_none_are_given()
+      throws Exception {
     searchBody = "[]";
     service().run(CODE, study(), List.of(instance()));
 
     assertAll(
         () -> assertEquals(1, createBodies.size(), "the Create body is captured"),
-        () -> assertFalse(createBodies.get(0).contains("\"00741210\""), createBodies.get(0)));
+        // (0074,1210) is Type 2 on Create (PS3.4 Table CC.2.5-3): present, possibly empty.
+        () -> assertTrue(createBodies.get(0).contains("\"00741210\""), createBodies.get(0)));
   }
 
   private static int count(String text, String token) {

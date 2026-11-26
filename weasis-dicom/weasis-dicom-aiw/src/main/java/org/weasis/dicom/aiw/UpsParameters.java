@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
@@ -26,13 +27,21 @@ import org.dcm4che3.data.VR;
  * (0040,A168) SQ.
  *
  * <p>Parameter names are locally defined, so their coding scheme designator uses the private 99
- * prefix (PS3.3 8.2): 99CLARUS, the designator the tasks already use. The sequence is Type 3, so a
- * workitem without parameters omits it rather than carrying an empty one.
+ * prefix (PS3.3 8.2): 99CLARUS, the designator the tasks already use. The sequence is Type 2 on
+ * Create (PS3.4 Table CC.2.5-3): required, so a workitem without parameters still carries it empty.
  */
 final class UpsParameters {
 
   /** The local coding scheme of the parameter names (PS3.3 8.2, private 99 prefix). */
   static final String SCHEME = "99CLARUS"; // NON-NLS
+
+  /**
+   * The Decimal String forms (PS3.5 6.2) a NUMERIC value may take: an integer, a fixed point or a
+   * scientific notation with an E/e exponent. The pattern is ASCII-only, so a matching value is
+   * one byte per character.
+   */
+  private static final Pattern NUMERIC =
+      Pattern.compile("[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?");
 
   private UpsParameters() {}
 
@@ -50,6 +59,13 @@ final class UpsParameters {
         throw new IllegalArgumentException(
             "A parameter type is NUMERIC, TEXT or CODE, not: " + type);
       }
+      // Validating at construction rather than at encode time makes a malformed value a command
+      // error the moment --param is read, before any request goes out.
+      if (type.equals("NUMERIC")) {
+        validateNumeric(value);
+      } else if (type.equals("CODE")) {
+        splitCode(value);
+      }
     }
   }
 
@@ -60,13 +76,20 @@ final class UpsParameters {
     // The Concept Name Code Sequence names the parameter with one Code; its meaning is the name
     // itself because a local parameter carries no separate display text yet.
     Attributes name = new Attributes();
-    name.setString(Tag.CodeValue, VR.SH, parameter.name());
+    setCodeValue(name, parameter.name());
     name.setString(Tag.CodingSchemeDesignator, VR.SH, SCHEME);
     name.setString(Tag.CodeMeaning, VR.LO, parameter.name());
     item.newSequence(Tag.ConceptNameCodeSequence, 1).add(name);
     switch (parameter.type()) {
       case "NUMERIC": // NON-NLS
         item.setString(Tag.NumericValue, VR.DS, parameter.value());
+        // Measurement Units Code Sequence is Type 1 for a NUMERIC item (PS3.3 Table 10-2): the
+        // unit of CLIP_LIMIT and TILE_GRID is dimensionless, so the UCUM "unity" code 1.
+        Attributes units = new Attributes();
+        units.setString(Tag.CodeValue, VR.SH, "1");
+        units.setString(Tag.CodingSchemeDesignator, VR.SH, "UCUM");
+        units.setString(Tag.CodeMeaning, VR.LO, "unity");
+        item.newSequence(Tag.MeasurementUnitsCodeSequence, 1).add(units);
         break;
       case "TEXT": // NON-NLS
         item.setString(Tag.TextValue, VR.UT, parameter.value());
@@ -74,7 +97,7 @@ final class UpsParameters {
       case "CODE": // NON-NLS
         String[] code = splitCode(parameter.value());
         Attributes value = new Attributes();
-        value.setString(Tag.CodeValue, VR.SH, code[1]);
+        setCodeValue(value, code[1]);
         value.setString(Tag.CodingSchemeDesignator, VR.SH, code[0]);
         // Code Meaning is Type 1 (PS3.3 Table 8.8-1); a local code carries its value as its
         // meaning, which is what a reader shows when it does not know the scheme.
@@ -97,14 +120,54 @@ final class UpsParameters {
   }
 
   /**
+   * Writes a code value to Code Value (0008,0100) SH when it fits 16 characters, and to Long Code
+   * Value (0008,0119) UC otherwise (PS3.3 Table 8.8-1): the two are alternatives, never both.
+   */
+  private static void setCodeValue(Attributes code, String value) {
+    if (value.length() <= 16) {
+      code.setString(Tag.CodeValue, VR.SH, value);
+    } else {
+      code.setString(Tag.LongCodeValue, VR.UC, value);
+    }
+  }
+
+  /**
+   * Validates a NUMERIC value against Decimal String (PS3.5 6.2): one value, a decimal or an
+   * exponent form, at most 16 bytes. dcm4che3's VR.DS setter stores whatever it is given, so the
+   * gate lives here instead of trusting the wire encoder.
+   */
+  private static void validateNumeric(String value) {
+    if (value.indexOf('\\') >= 0) {
+      throw new IllegalArgumentException(
+          "A NUMERIC parameter carries one value, not several: " + value);
+    }
+    if (!NUMERIC.matcher(value).matches()) {
+      throw new IllegalArgumentException("A NUMERIC parameter is a decimal number: " + value);
+    }
+    if (value.length() > 16) {
+      throw new IllegalArgumentException("A NUMERIC parameter is at most 16 bytes: " + value);
+    }
+  }
+
+  /**
    * Splits a CODE value, which is "value" or "scheme:value". Only the first colon separates them,
-   * so a value may itself carry colons; a bare value uses the local 99CLARUS scheme.
+   * so a value may itself carry colons; a bare value uses the local 99CLARUS scheme. Both
+   * components must be non-empty (PS3.3 8.8): an empty Code Value or scheme reads as no code.
    */
   private static String[] splitCode(String value) {
     int colon = value.indexOf(':');
     if (colon < 0) {
+      if (value.isEmpty()) {
+        throw new IllegalArgumentException("A CODE parameter has a non-empty value");
+      }
       return new String[] {SCHEME, value};
     }
-    return new String[] {value.substring(0, colon), value.substring(colon + 1)};
+    String scheme = value.substring(0, colon);
+    String codeValue = value.substring(colon + 1);
+    if (scheme.isEmpty() || codeValue.isEmpty()) {
+      throw new IllegalArgumentException(
+          "A CODE parameter is scheme:value, neither empty: " + value);
+    }
+    return new String[] {scheme, codeValue};
   }
 }

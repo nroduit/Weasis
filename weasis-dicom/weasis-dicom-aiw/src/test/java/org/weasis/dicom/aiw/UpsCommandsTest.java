@@ -480,6 +480,100 @@ class UpsCommandsTest {
   }
 
   @Test
+  void a_numeric_parameter_with_an_invalid_value_is_refused_before_any_request() {
+    CommandResult nonNumeric =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "X=NUMERIC=abc");
+    CommandResult multi =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "X=NUMERIC=2.0\\4.0");
+    CommandResult empty =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "X=NUMERIC=");
+
+    assertAll(
+        () -> assertNotEquals(CommandResult.OK, nonNumeric.status()),
+        () -> assertNotEquals(CommandResult.OK, multi.status()),
+        () -> assertNotEquals(CommandResult.OK, empty.status()),
+        () -> assertEquals(0, creates.get()));
+  }
+
+  @Test
+  void a_code_parameter_with_an_empty_component_is_refused_before_any_request() {
+    CommandResult emptyValue =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "MODE=CODE=99CLARUS:");
+    CommandResult emptyScheme =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "MODE=CODE=:FAST");
+
+    assertAll(
+        () -> assertNotEquals(CommandResult.OK, emptyValue.status()),
+        () -> assertNotEquals(CommandResult.OK, emptyScheme.status()),
+        () -> assertEquals(0, creates.get()));
+  }
+
+  @Test
   void run_without_a_scheme_or_a_code_is_refused_and_calls_nothing() {
     // The scheme is not a default: a code is its value and its designator (PS3.3 Table 8.8-1)
     CommandResult noScheme = run("run", "--url", url(), "--code", "X", "--study", STUDY_UID);

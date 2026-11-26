@@ -133,12 +133,10 @@ public class UpsService {
     }
     Attributes data =
         UpsWorkitem.of(catalogEntry).patient(study).request(study).inputs(instances).build();
-    // Scheduled Processing Parameters is Type 3 (PS3.3 C.30.2): a workitem without parameters
-    // omits the attribute. The workitem template carries an empty sequence even then, so drop it
-    // rather than sending a sequence that reads as an empty list.
-    if (parameters.isEmpty()) {
-      data.remove(Tag.ScheduledProcessingParametersSequence);
-    } else {
+    // Scheduled Processing Parameters (0074,1210) is Type 2 on Create (PS3.4 Table CC.2.5-3):
+    // it must be present and may be empty. The workitem template already carries an empty
+    // sequence, so keep it when there are no parameters and replace it with the items otherwise.
+    if (!parameters.isEmpty()) {
       // One Content Item per value (PS3.3 Table 10-2) keeps a multi-value parameter as repeated
       // items sharing the Concept Name, the shape the performer flattens back into a list of
       // values per name.

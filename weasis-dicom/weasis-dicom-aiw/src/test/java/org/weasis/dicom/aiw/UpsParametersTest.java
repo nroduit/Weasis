@@ -119,4 +119,98 @@ class UpsParametersTest {
                 IllegalArgumentException.class,
                 () -> new UpsParameters.Parameter("X", "BOOLEAN", "1")));
   }
+
+  @Test
+  void a_numeric_parameter_carries_its_measurement_units() {
+    Attributes item =
+        UpsParameters.item(new UpsParameters.Parameter("CLIP_LIMIT", "NUMERIC", "2.0"));
+
+    assertAll(
+        () -> assertEquals(VR.SQ, item.getVR(Tag.MeasurementUnitsCodeSequence)),
+        () -> assertEquals(1, item.getSequence(Tag.MeasurementUnitsCodeSequence).size()));
+    Attributes units = item.getSequence(Tag.MeasurementUnitsCodeSequence).get(0);
+    assertAll(
+        () -> assertEquals("1", units.getString(Tag.CodeValue)),
+        () -> assertEquals("UCUM", units.getString(Tag.CodingSchemeDesignator)),
+        () -> assertEquals("unity", units.getString(Tag.CodeMeaning)));
+  }
+
+  @Test
+  void a_name_longer_than_sixteen_characters_uses_the_long_code_value() {
+    String name = "CONFIDENCE_THRESHOLD"; // NON-NLS
+    Attributes item = UpsParameters.item(new UpsParameters.Parameter(name, "NUMERIC", "0.9"));
+
+    Attributes nameCode = item.getSequence(Tag.ConceptNameCodeSequence).get(0);
+    assertAll(
+        () -> assertFalse(nameCode.contains(Tag.CodeValue)),
+        () -> assertEquals(name, nameCode.getString(Tag.LongCodeValue)),
+        () -> assertEquals(VR.UC, nameCode.getVR(Tag.LongCodeValue)));
+  }
+
+  @Test
+  void a_code_value_longer_than_sixteen_characters_uses_the_long_code_value() {
+    String codeValue = "12345678901234567"; // NON-NLS 17 characters
+    Attributes item =
+        UpsParameters.item(new UpsParameters.Parameter("MODE", "CODE", "99CLARUS:" + codeValue));
+
+    Attributes code = item.getSequence(Tag.ConceptCodeSequence).get(0);
+    assertAll(
+        () -> assertFalse(code.contains(Tag.CodeValue)),
+        () -> assertEquals(codeValue, code.getString(Tag.LongCodeValue)),
+        () -> assertEquals(VR.UC, code.getVR(Tag.LongCodeValue)));
+  }
+
+  @Test
+  void a_numeric_value_is_a_single_decimal_of_at_most_sixteen_bytes() {
+    assertAll(
+        () -> assertEquals("2.0", new UpsParameters.Parameter("X", "NUMERIC", "2.0").value()),
+        () -> assertEquals("1e-3", new UpsParameters.Parameter("X", "NUMERIC", "1e-3").value()),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class,
+                () -> new UpsParameters.Parameter("X", "NUMERIC", "abc")),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class,
+                () -> new UpsParameters.Parameter("X", "NUMERIC", "")),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class,
+                () -> new UpsParameters.Parameter("X", "NUMERIC", "2.0\\4.0")),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class,
+                () -> new UpsParameters.Parameter("X", "NUMERIC", "1".repeat(17))));
+  }
+
+  @Test
+  void a_code_value_with_an_empty_component_is_rejected() {
+    assertAll(
+        () ->
+            assertThrows(
+                IllegalArgumentException.class,
+                () -> new UpsParameters.Parameter("MODE", "CODE", ":FAST")),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class,
+                () -> new UpsParameters.Parameter("MODE", "CODE", "99CLARUS:")));
+  }
+
+  @Test
+  void a_bare_code_value_and_a_colon_inside_the_value_are_kept() {
+    Attributes bare = UpsParameters.item(new UpsParameters.Parameter("MODE", "CODE", "FAST"));
+    Attributes bareCode = bare.getSequence(Tag.ConceptCodeSequence).get(0);
+    assertAll(
+        () -> assertEquals("FAST", bareCode.getString(Tag.CodeValue)),
+        () -> assertEquals(UpsParameters.SCHEME, bareCode.getString(Tag.CodingSchemeDesignator)));
+
+    Attributes coloned =
+        UpsParameters.item(new UpsParameters.Parameter("MODE", "CODE", "99CLARUS:A:B"));
+    Attributes colonedCode = coloned.getSequence(Tag.ConceptCodeSequence).get(0);
+    assertAll(
+        () -> assertEquals("A:B", colonedCode.getString(Tag.CodeValue)),
+        () ->
+            assertEquals(
+                "99CLARUS", colonedCode.getString(Tag.CodingSchemeDesignator)));
+  }
 }
