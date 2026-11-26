@@ -133,15 +133,27 @@ final class UpsParameters {
 
   /**
    * Validates a NUMERIC value against Decimal String (PS3.5 6.2): one value, a decimal or an
-   * exponent form, at most 16 bytes. dcm4che3's VR.DS setter stores whatever it is given, so the
-   * gate lives here instead of trusting the wire encoder.
+   * exponent form, at most 16 bytes. A Decimal String may be padded with leading and trailing
+   * spaces (PS3.5 Table 6.2-1), so those are stripped before the shape check; embedded spaces stay
+   * rejected. dcm4che3's VR.DS setter stores whatever it is given, so the gate lives here instead
+   * of trusting the wire encoder.
    */
   private static void validateNumeric(String value) {
     if (value.indexOf('\\') >= 0) {
       throw new IllegalArgumentException(
           "A NUMERIC parameter carries one value, not several: " + value);
     }
-    if (!NUMERIC.matcher(value).matches()) {
+    // PS3.5 6.2: padding is only the ASCII space (20H); the 16-byte budget (PS3.5 Table 6.2-1)
+    // counts the padding too, so the length check below runs on the value as given, not stripped.
+    int begin = 0;
+    int end = value.length();
+    while (begin < end && value.charAt(begin) == ' ') {
+      begin++;
+    }
+    while (end > begin && value.charAt(end - 1) == ' ') {
+      end--;
+    }
+    if (!NUMERIC.matcher(value.substring(begin, end)).matches()) {
       throw new IllegalArgumentException("A NUMERIC parameter is a decimal number: " + value);
     }
     if (value.length() > 16) {

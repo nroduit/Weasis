@@ -184,6 +184,21 @@ class UpsParametersTest {
   }
 
   @Test
+  void a_numeric_value_accepts_padding_spaces_but_not_embedded_ones() {
+    assertAll(
+        // PS3.5 6.2: leading and trailing spaces are permitted padding, so the value keeps them.
+        () -> assertEquals(" 2.0 ", new UpsParameters.Parameter("X", "NUMERIC", " 2.0 ").value()),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class,
+                () -> new UpsParameters.Parameter("X", "NUMERIC", "2 .0")),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class,
+                () -> new UpsParameters.Parameter("X", "NUMERIC", "2. 0")));
+  }
+
+  @Test
   void a_code_value_with_an_empty_component_is_rejected() {
     assertAll(
         () ->
