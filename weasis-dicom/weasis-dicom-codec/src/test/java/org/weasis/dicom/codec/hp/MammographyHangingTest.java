@@ -100,10 +100,31 @@ class MammographyHangingTest {
     Step first = plan.steps().getFirst();
     assertAll(
         () -> assertEquals("weasis.mg", plan.protocolId()), // NON-NLS
+        () -> assertEquals("2x4", first.layout().grid(), "the overview with the prior"), // NON-NLS
+        () ->
+            assertEquals(
+                List.of(
+                    "RCC", // NON-NLS
+                    "LCC", // NON-NLS
+                    "RMLO", // NON-NLS
+                    "LMLO", // NON-NLS
+                    "Prior RCC", // NON-NLS
+                    "Prior LCC", // NON-NLS
+                    "Prior RMLO", // NON-NLS
+                    "Prior LMLO"), // NON-NLS
+                first.cells().stream().map(CellPlan::label).toList()),
         () ->
             assertEquals(
                 List.of("RCC", "LCC", "RMLO", "LMLO"), // NON-NLS
-                first.cells().stream().map(CellPlan::label).toList()),
+                HangingEngine.match(library(), CURRENT)
+                    .orElseThrow()
+                    .steps()
+                    .getFirst()
+                    .cells()
+                    .stream()
+                    .map(CellPlan::label)
+                    .toList(),
+                "the four views alone without a prior"),
         () -> assertFalse(viewOf(first, 0).flip(), "RCC is stored P\\L"),
         () -> assertTrue(viewOf(first, 1).flip(), "LCC stored P\\R shows as A\\R"),
         () -> assertFalse(viewOf(first, 2).flip(), "RMLO is stored P\\FL"),

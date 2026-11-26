@@ -219,8 +219,17 @@ class HangingOpenerTest {
         () -> assertEquals("weasis.mg", plan.protocolId()), // NON-NLS
         () ->
             assertEquals(
-                Set.of("6.2.RCC", "6.2.LCC", "6.2.RMLO", "6.2.LMLO"), // NON-NLS
-                HangingOpener.firstStepSeries(plan)),
+                Set.of(
+                    "6.2.RCC", // NON-NLS
+                    "6.2.LCC", // NON-NLS
+                    "6.2.RMLO", // NON-NLS
+                    "6.2.LMLO", // NON-NLS
+                    "6.1.RCC", // NON-NLS
+                    "6.1.LCC", // NON-NLS
+                    "6.1.RMLO", // NON-NLS
+                    "6.1.LMLO"), // NON-NLS
+                HangingOpener.firstStepSeries(plan),
+                "the overview shows the current views and the prior ones"),
         () ->
             assertEquals(
                 List.of("6.2.RCC", "6.2.LCC", "6.1.RCC", "6.1.LCC"), // NON-NLS

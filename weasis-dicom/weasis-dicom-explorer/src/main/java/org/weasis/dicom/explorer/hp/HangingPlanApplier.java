@@ -173,7 +173,7 @@ public final class HangingPlanApplier {
       }
       HangingLayout.Builder layout =
           HangingLayout.builder().grid(old.layout().grid()).synch(old.layout().synch());
-      layout.select(old.layout().selected());
+      layout.select(old.layout().selected()).cine(old.layout().cine());
       for (HangingLayout.Cell cell : old.layout().cells()) {
         if (cell.position() == replaced.cell() && !cell.panes().isEmpty()) {
           ViewState pane = cell.panes().getFirst();
@@ -823,7 +823,10 @@ public final class HangingPlanApplier {
       return full;
     }
     HangingLayout.Builder builder =
-        HangingLayout.builder().grid(HangingEngine.gridFor(cells.size())).synch(full.synch());
+        HangingLayout.builder()
+            .grid(HangingEngine.gridFor(cells.size()))
+            .synch(full.synch())
+            .cine(full.cine());
     int position = 0;
     int selected = 0;
     for (CellPlan cell : cells) {

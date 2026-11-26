@@ -37,8 +37,8 @@ import javax.swing.BoxLayout;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -226,8 +226,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private static final String LAST_CALLING_NODE = "lastCallingNode";
   private static final String SOURCE_EXPANDED = "dicom.qr.source.expanded"; // NON-NLS
   private static final String CRITERIA_EXPANDED = "dicom.qr.criteria.expanded"; // NON-NLS
+
   /** The height the result tree keeps (unscaled) before the whole page scrolls. */
   private static final int TREE_MIN_HEIGHT = 100;
+
   private static final String LAST_DICOM_CHARSET = "lastRDicomCharset";
   private static final String LAST_RETRIEVE_TYPE = "lastRetrieveType";
   private static final String LAST_RETRIEVE_LIMIT = "lastRetrieveLimit";
@@ -379,9 +381,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   }
 
   /**
-   * The archive, then two folds (the DICOM options of the source and the search criteria), then
-   * the search row stay in place above the result tree, which scrolls on its own. The rows wrap
-   * when the side is narrow, and the folds keep their state across sessions.
+   * The archive, then two folds (the DICOM options of the source and the search criteria), then the
+   * search row stay in place above the result tree, which scrolls on its own. The rows wrap when
+   * the side is narrow, and the folds keep their state across sessions.
    */
   public void initGUI() {
     tree.setSeriesLoader(this::loadSeriesInTree);
@@ -984,9 +986,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   }
 
   /**
-   * Reloads the node lists after they were saved elsewhere, keeping the current selections (by
-   * id, as they are persisted). The query results are cleared only when the selected archive is
-   * gone.
+   * Reloads the node lists after they were saved elsewhere, keeping the current selections (by id,
+   * as they are persisted). The query results are cleared only when the selected archive is gone.
    */
   private void refreshNodeList() {
     String calling = selectionKey(comboCallingNode);

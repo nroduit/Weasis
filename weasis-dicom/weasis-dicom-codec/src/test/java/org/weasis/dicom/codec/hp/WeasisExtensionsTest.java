@@ -178,4 +178,30 @@ class WeasisExtensionsTest {
                     .getString("mode")),
         () -> assertEquals(extensions, WeasisExtensions.fromJson(back)));
   }
+
+  @Test
+  void theComparisonCatchAllSharedAndCineOptionsSurviveTheJsonRoundTrip() {
+    String text =
+        """
+        {"imageSets": {"5": {"selectors": [], "sameAnatomy": true}},
+         "displaySets": {
+           "1": {"onlyWith": 5},
+           "2": {"shared": true, "display": {"preset": "weasis.ct.lung"}},
+           "3": {"repeat": 6, "remaining": true, "display": {"cine": true}}}}
+        """;
+    WeasisExtensions extensions;
+    try (var reader = Json.createReader(new StringReader(text))) {
+      extensions = WeasisExtensions.fromJson(reader.readObject());
+    }
+    WeasisExtensions back = WeasisExtensions.fromJson(extensions.toJson());
+    assertAll(
+        () -> assertTrue(back.imageSets().get(5).sameAnatomy()),
+        () -> assertEquals(5, back.displaySets().get(1).onlyWith()),
+        () -> assertFalse(back.displaySets().get(1).remaining()),
+        () -> assertTrue(back.displaySets().get(2).shared()),
+        () -> assertNull(back.displaySets().get(2).display().cine()),
+        () -> assertTrue(back.displaySets().get(3).remaining()),
+        () -> assertEquals(Boolean.TRUE, back.displaySets().get(3).display().cine()),
+        () -> assertEquals(extensions, back));
+  }
 }

@@ -95,10 +95,19 @@ public record WeasisExtensions(
    * @param selectors the feature selectors, in order
    * @param required whether the protocol applies only to a study that fills this image set, which
    *     is how a protocol asks for two kinds of series at once (a SPECT and a CT)
+   * @param sameAnatomy whether a prior study fills this image set only with series of the anatomy
+   *     of the current study (the same region, or a region of the same group); a series or a
+   *     current study without known anatomy is not excluded
    */
-  public record ImageSet(String label, List<FeatureSelector> selectors, boolean required) {
+  public record ImageSet(
+      String label, List<FeatureSelector> selectors, boolean required, boolean sameAnatomy) {
     public ImageSet {
       selectors = selectors == null ? List.of() : List.copyOf(selectors);
+    }
+
+    /** An image set that takes its priors whatever their anatomy. */
+    public ImageSet(String label, List<FeatureSelector> selectors, boolean required) {
+      this(label, selectors, required, false);
     }
 
     /** An image set the protocol does not require. */
@@ -141,6 +150,16 @@ public record WeasisExtensions(
    * @param derive when set, the cell shows a series derived from the one its image set gives and
    *     the series of another image set, instead of the acquired one
    */
+  /**
+   * @param onlyWith the Image Set Number the cell depends on: the display set is left out of its
+   *     step when that image set resolves nothing, whatever the partial data handling, so a
+   *     comparison step (current beside prior) disappears without a prior; null for none
+   * @param remaining whether the display set shows only the series no earlier step of the protocol
+   *     shows, and continues over further steps when they exceed {@code repeat}: the catch-all of a
+   *     protocol
+   * @param shared whether the cell shows the best series of its image set even when another cell of
+   *     the step shows it, the way to hang one series twice with two windows
+   */
   public record DisplaySet(
       ViewerType viewerType,
       Display display,
@@ -148,7 +167,21 @@ public record WeasisExtensions(
       Loading loading,
       Integer repeat,
       String screen,
-      Derive derive) {
+      Derive derive,
+      Integer onlyWith,
+      boolean remaining,
+      boolean shared) {
+
+    public DisplaySet(
+        ViewerType viewerType,
+        Display display,
+        List<Cell> cells,
+        Loading loading,
+        Integer repeat,
+        String screen,
+        Derive derive) {
+      this(viewerType, display, cells, loading, repeat, screen, derive, null, false, false);
+    }
 
     public DisplaySet(
         ViewerType viewerType,
@@ -218,6 +251,8 @@ public record WeasisExtensions(
    *     (e.g. current and prior mammograms), the largest that fits all of them
    * @param projection the slab projection a 2D cell shows instead of its images
    * @param position the image the cell starts on, null for the first image
+   * @param cine whether the stack starts playing when its step is hung, which the first cell of the
+   *     step decides (a cine run, an ultrasound clip); null for no
    */
   public record Display(
       String preset,
@@ -231,7 +266,37 @@ public record WeasisExtensions(
       String synch,
       String scaleGroup,
       Projection projection,
-      Start position) {
+      Start position,
+      Boolean cine) {
+
+    public Display(
+        String preset,
+        String colorMap,
+        String lutShape,
+        String preset3d,
+        Fusion fusion,
+        Mpr mpr,
+        String measurementProfile,
+        String zoomMode,
+        String synch,
+        String scaleGroup,
+        Projection projection,
+        Start position) {
+      this(
+          preset,
+          colorMap,
+          lutShape,
+          preset3d,
+          fusion,
+          mpr,
+          measurementProfile,
+          zoomMode,
+          synch,
+          scaleGroup,
+          projection,
+          position,
+          null);
+    }
 
     public Display(
         String preset,
@@ -523,6 +588,9 @@ public record WeasisExtensions(
     if (is.required()) {
       json.add("required", true); // NON-NLS
     }
+    if (is.sameAnatomy()) {
+      json.add("sameAnatomy", true); // NON-NLS
+    }
     return json;
   }
 
@@ -535,7 +603,10 @@ public record WeasisExtensions(
                 .toList()
             : List.of();
     return new ImageSet(
-        json.getString("label", null), selectors, json.getBoolean("required", false)); // NON-NLS
+        json.getString("label", null), // NON-NLS
+        selectors,
+        json.getBoolean("required", false), // NON-NLS
+        json.getBoolean("sameAnatomy", false)); // NON-NLS
   }
 
   private static JsonObjectBuilder displaySet(DisplaySet ds) {
@@ -584,6 +655,15 @@ public record WeasisExtensions(
       }
       json.add("derive", derive); // NON-NLS
     }
+    if (ds.onlyWith() != null) {
+      json.add("onlyWith", ds.onlyWith()); // NON-NLS
+    }
+    if (ds.remaining()) {
+      json.add("remaining", true); // NON-NLS
+    }
+    if (ds.shared()) {
+      json.add("shared", true); // NON-NLS
+    }
     return json;
   }
 
@@ -603,7 +683,10 @@ public record WeasisExtensions(
         json.get("loading") instanceof JsonObject l ? loading(l) : null, // NON-NLS
         integer(json, "repeat"), // NON-NLS
         json.getString("screen", null), // NON-NLS
-        json.get("derive") instanceof JsonObject d ? derive(d) : null); // NON-NLS
+        json.get("derive") instanceof JsonObject d ? derive(d) : null, // NON-NLS
+        integer(json, "onlyWith"), // NON-NLS
+        json.getBoolean("remaining", false), // NON-NLS
+        json.getBoolean("shared", false)); // NON-NLS
   }
 
   private static Derive derive(JsonObject json) {
@@ -665,6 +748,9 @@ public record WeasisExtensions(
     if (d.position() != null) {
       json.add("position", d.position().toJson()); // NON-NLS
     }
+    if (d.cine() != null) {
+      json.add("cine", d.cine().booleanValue()); // NON-NLS
+    }
     return json;
   }
 
@@ -708,7 +794,8 @@ public record WeasisExtensions(
                     ? p.getJsonNumber("thickness").doubleValue()
                     : null) // NON-NLS
             : null,
-        Start.fromJson(json.get("position"))); // NON-NLS
+        Start.fromJson(json.get("position")), // NON-NLS
+        json.containsKey("cine") ? json.getBoolean("cine") : null); // NON-NLS
   }
 
   private static JsonObjectBuilder loading(Loading l) {

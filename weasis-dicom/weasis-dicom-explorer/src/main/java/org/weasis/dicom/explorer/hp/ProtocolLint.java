@@ -148,6 +148,14 @@ public final class ProtocolLint {
       if (extension != null && extension.repeat() != null && extension.repeat() < 0) {
         problems.add(name + ": repeat is negative"); // NON-NLS
       }
+      if (extension != null
+          && extension.onlyWith() != null
+          && !sets.contains(extension.onlyWith())) {
+        problems.add(name + ": onlyWith names the unknown image set " + extension.onlyWith());
+      }
+      if (extension != null && extension.remaining() && extension.repeat() == null) {
+        problems.add(name + ": remaining needs repeat, the cells of a step"); // NON-NLS
+      }
       WeasisExtensions.Fusion fusion =
           extension == null || extension.display() == null ? null : extension.display().fusion();
       if (fusion != null) {

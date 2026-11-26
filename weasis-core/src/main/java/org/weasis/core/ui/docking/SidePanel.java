@@ -229,9 +229,7 @@ public class SidePanel extends JPanel {
         @Override
         public void mouseClicked(MouseEvent e) {
           // a width, as a drag of the divider: saved with the width, not a change of the slots
-          if (SwingUtilities.isLeftMouseButton(e)
-              && e.getClickCount() == 2
-              && isShowingContent()) {
+          if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2 && isShowingContent()) {
             fitWidthToShown();
           }
         }
@@ -1695,8 +1693,7 @@ public class SidePanel extends JPanel {
     fit.addActionListener(_ -> fitFromMenu(toolId, fromStripe));
     menu.add(fit);
     JCheckBoxMenuItem widen =
-        new JCheckBoxMenuItem(
-            Messages.getString("Docking.widen_on_open"), isWidenedOnOpen(toolId));
+        new JCheckBoxMenuItem(Messages.getString("Docking.widen_on_open"), isWidenedOnOpen(toolId));
     widen.addActionListener(_ -> setWidenedOnOpen(toolId, widen.isSelected()));
     menu.add(widen);
   }
@@ -2039,8 +2036,8 @@ public class SidePanel extends JPanel {
 
   /**
    * Restores the width of the user when the tool the side was widened for is no longer shown, then
-   * widens the side for the tool the user just opened when it needs more width and the user did
-   * not turn that off for it ({@link #isWidenedOnOpen}).
+   * widens the side for the tool the user just opened when it needs more width and the user did not
+   * turn that off for it ({@link #isWidenedOnOpen}).
    */
   private void fitWidth() {
     String pending = fitPending;

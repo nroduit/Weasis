@@ -605,6 +605,19 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       if (canvas != null) {
         eventManager.updateComponentsListener(canvas);
       }
+      // a step of runs or clips starts playing, any other one stops what was playing
+      eventManager
+          .getAction(ActionW.SCROLL_SERIES)
+          .ifPresent(
+              cine -> {
+                if (!layout.cine()) {
+                  if (cine.isCining()) {
+                    cine.stop();
+                  }
+                } else if (cine.isActionEnabled() && !cine.isCining()) {
+                  cine.start();
+                }
+              });
     }
     String synch = layout.synch();
     if (synch != null) {

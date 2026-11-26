@@ -104,8 +104,11 @@ class BuiltInProtocolsTest {
     HangingPlan.Step first = plan.steps().get(0);
     HangingPlan.Step second = plan.steps().get(1);
     assertAll(
-        () -> assertEquals("weasis.ct", plan.protocolId()), // NON-NLS
+        () -> assertEquals("weasis.ct.chest", plan.protocolId(), "the study is a chest"),
+        () -> assertEquals(2, plan.steps().size(), "no prior, no comparison step"),
         () -> assertEquals(2, first.cells().size()),
+        () -> assertNull(pane(first, 0).view().preset(), "the window of the image"),
+        () -> assertEquals("weasis.ct.lung", pane(first, 1).view().preset()), // NON-NLS
         () -> assertEquals("B", first.cells().get(0).series(), "thin soft kernel"), // NON-NLS
         () -> assertEquals("C", first.cells().get(1).series(), "lung kernel"), // NON-NLS
         () -> assertEquals(Match.PREFERRED, first.cells().get(1).match(), "no lung in the name"),
@@ -266,15 +269,20 @@ class BuiltInProtocolsTest {
         () -> assertEquals("weasis.nm.ct", plan.protocolId()), // NON-NLS
         () -> assertTrue(plan.score() >= 7, "above any CT protocol: " + plan.score()),
         () -> assertEquals(3, plan.steps().size()),
-        () -> assertEquals("1x3", axial.layout().grid()), // NON-NLS
+        () -> assertEquals("2x2", axial.layout().grid()), // NON-NLS
         () -> assertEquals("B", axial.cells().get(0).series(), "soft kernel CT"), // NON-NLS
-        () -> assertEquals("S", axial.cells().get(1).series(), "attenuation corrected"), // NON-NLS
-        () -> assertEquals("B", axial.cells().get(2).series(), "the fused cell keeps the CT"),
+        () -> assertEquals("B", axial.cells().get(1).series(), "the fused cell keeps the CT"),
+        () -> assertEquals("S", axial.cells().get(2).series(), "attenuation corrected"), // NON-NLS
         () -> assertNull(pane(axial, 0).blend()),
-        () -> assertEquals("S", pane(axial, 2).blend().overlay()), // NON-NLS
+        () -> assertEquals("S", pane(axial, 1).blend().overlay()), // NON-NLS
         () ->
             assertEquals(
-                "weasis.turbo", pane(axial, 2).blend().params().getString("colorMap")), // NON-NLS
+                "weasis.turbo", pane(axial, 1).blend().params().getString("colorMap")), // NON-NLS
+        () -> assertEquals("S", axial.cells().get(3).series(), "the projection of the SPECT"),
+        () -> assertEquals("CORONAL", axial.cells().get(3).derivation().plane()), // NON-NLS
+        () -> assertEquals("MAX", pane(axial, 3).view().projection().type()), // NON-NLS
+        () -> assertEquals(2000.0, pane(axial, 3).view().projection().thickness()),
+        () -> assertNull(pane(axial, 3).blend(), "the projection is not fused"),
         () -> assertEquals("2x3", planes.layout().grid()), // NON-NLS
         () -> assertEquals(6, planes.cells().size()),
         () -> assertEquals("CORONAL", planes.cells().get(1).derivation().plane()), // NON-NLS
@@ -307,13 +315,18 @@ class BuiltInProtocolsTest {
         HangingEngine.match(library(), List.of(corrected, HangingEngineTest.MR)).orElseThrow();
     assertAll(
         () -> assertEquals("weasis.pt.ct", hybrid.protocolId()), // NON-NLS
-        () -> assertEquals("AC", hybrid.steps().getFirst().cells().get(1).series()), // NON-NLS
-        () -> assertEquals("AC", pane(hybrid.steps().getFirst(), 2).blend().overlay()), // NON-NLS
+        () -> assertEquals("AC", hybrid.steps().getFirst().cells().get(2).series()), // NON-NLS
+        () -> assertEquals("AC", pane(hybrid.steps().getFirst(), 1).blend().overlay()), // NON-NLS
         () ->
             assertEquals(
                 "weasis.dicom.hot-iron", // NON-NLS
-                pane(hybrid.steps().getFirst(), 2).blend().params().getString("colorMap")),
+                pane(hybrid.steps().getFirst(), 1).blend().params().getString("colorMap")),
         () -> assertEquals("weasis.pt", alone.protocolId()), // NON-NLS
+        () ->
+            assertEquals(
+                List.of("PET", "MIP"), // NON-NLS
+                alone.steps().getFirst().cells().stream().map(HangingPlan.CellPlan::label).toList(),
+                "a PET alone hangs beside its projection"),
         () -> assertEquals("weasis.pt", withMr.protocolId())); // NON-NLS
   }
 
@@ -326,7 +339,7 @@ class BuiltInProtocolsTest {
     HangingPlan alone =
         HangingEngine.match(library(), List.of(spect("S", "ATTN", "RECON TOMO"))).orElseThrow();
     assertAll(
-        () -> assertEquals("weasis.ct", projections.protocolId()), // NON-NLS
+        () -> assertEquals("weasis.ct.chest", projections.protocolId()), // NON-NLS
         () -> assertEquals("weasis.default", alone.protocolId())); // NON-NLS
   }
 

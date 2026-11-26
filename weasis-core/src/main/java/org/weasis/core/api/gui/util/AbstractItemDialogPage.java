@@ -167,9 +167,9 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
   }
 
   /**
-   * Lays the page out as a header that keeps its natural height above a list that takes the rest
-   * of the height and scrolls on its own. In a short host the list scrolls while the header stays
-   * in place; the host scrolls the whole page only below {@code minListHeight} (unscaled) for the
+   * Lays the page out as a header that keeps its natural height above a list that takes the rest of
+   * the height and scrolls on its own. In a short host the list scrolls while the header stays in
+   * place; the host scrolls the whole page only below {@code minListHeight} (unscaled) for the
    * list. The page must hold nothing else.
    *
    * @return the scroll pane of the list
@@ -198,8 +198,8 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
   }
 
   /**
-   * Whether the page fills the height of its host down to its minimum height, its list scrolling
-   * on its own ({@link #setHeaderAndList}); otherwise the host gives it its preferred height.
+   * Whether the page fills the height of its host down to its minimum height, its list scrolling on
+   * its own ({@link #setHeaderAndList}); otherwise the host gives it its preferred height.
    */
   public boolean fillsHostHeight() {
     return fillsHostHeight;

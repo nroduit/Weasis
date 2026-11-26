@@ -54,12 +54,27 @@ A cell without fusion clears the fusion its pane had from the step before, since
 
 An image set may be `required`: the protocol then applies only to a study that fills it, which is how a protocol asks for two kinds of series at once.
 The built-in *SPECT with CT* and *PET with CT* protocols require a CT and an emission series, and hang three steps: the axial CT, emission and fused cells, then the CT and the fused cells in the three planes, then the nine cells with the emission row.
-The first step needs no reformat, so it hangs at once.
+The first step is a 2x2 of the axial CT, the fused cell, the emission series and a coronal projection (MIP) of the whole emission volume, the one cell of the step that needs a reformat.
+
+Four more options of a display set shape the reading steps.
+`onlyWith` names an image set the cell depends on: the display set is left out when that image set resolves nothing, whatever the partial data handling, so a comparison step (current beside prior) disappears when the patient has no prior.
+`shared` lets a cell show the best series of its image set even when another cell of the step shows it, the way to hang one series twice with two windows.
+`remaining` makes a repeated display set the catch-all of the protocol: it shows only the series no earlier step shows, and the series beyond `repeat` continue over further steps of the same grid.
+The display option `cine` starts the stack of the selected pane when the step is hung (the first cell decides); a step that does not ask stops a cine left running.
+An image set of a prior may be `sameAnatomy`: a prior study fills it only with series of the anatomy of the current study (the same region or a region of the same group); a missing anatomy excludes nothing.
+
+The built-in library follows the conventions other viewers and the DICOM examples share.
+A CT hangs the soft-tissue series beside the lung or bone series, then the coronal and sagittal planes, then the current series beside the most recent prior of the same anatomy (current left, prior right, linked).
+*CT chest* and *CT head* apply by the anatomic region: the first cell keeps the window of the image, the second shows the lung (or bone) series, or the same series again, with the lung (or bone) preset.
+An MR hangs one matrix (T1, T1 after contrast, T2, FLAIR, diffusion, ADC), then the other series.
+A radiograph is paired with the same view of the prior (frontal with frontal, lateral with lateral), one step per view.
+A mammography opens on an overview of the four current views over the four prior ones, then compares CC and MLO.
+Ultrasound clips and angiography runs start playing, and the series beyond a grid of six continue over further steps, for the last-resort protocol too.
 
 `ProtocolJson` is the working form: one entry `{id, schema, dicom, weasis}` where `dicom` is the
 dataset by keyword (`DicomJson`). The entries are a layered document, `hp.protocols.json`
 (`HangingProtocolDocuments`): the built-in library shipped by the codec (`BuiltInProtocols`, one
-protocol per imaging type), the site folder `config/hanging-protocols/` (one protocol per file)
+protocol per imaging type, two more for the chest and head CT), the site folder `config/hanging-protocols/` (one protocol per file)
 and the user document. A protocol of a higher layer overrides the one of the same id below it.
 
 `ProtocolExchange` writes a protocol as a Hanging Protocol Storage object and reads one back; the

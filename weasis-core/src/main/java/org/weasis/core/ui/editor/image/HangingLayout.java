@@ -35,11 +35,19 @@ import java.util.TreeMap;
  * @param synch the command of the synchronization
  * @param selected the 1-based slot to select, 0 for none
  * @param cells the cells to hang, by grid position
+ * @param cine whether the selected pane starts playing its stack once hung (a cine run, an
+ *     ultrasound clip); a layout that does not ask stops the cine left running
  */
-public record HangingLayout(String grid, String synch, int selected, List<Cell> cells) {
+public record HangingLayout(
+    String grid, String synch, int selected, List<Cell> cells, boolean cine) {
 
   public HangingLayout {
     cells = cells == null ? List.of() : List.copyOf(cells);
+  }
+
+  /** A layout that does not start the cine. */
+  public HangingLayout(String grid, String synch, int selected, List<Cell> cells) {
+    this(grid, synch, selected, cells, false);
   }
 
   /** Side of a tiled viewport. */
@@ -149,6 +157,9 @@ public record HangingLayout(String grid, String synch, int selected, List<Cell> 
     if (selected > 0) {
       json.add("selected", selected); // NON-NLS
     }
+    if (cine) {
+      json.add("cine", true); // NON-NLS
+    }
     JsonArrayBuilder array = Json.createArrayBuilder();
     cells.forEach(c -> array.add(c.toJson()));
     return json.add("cells", array); // NON-NLS
@@ -169,7 +180,8 @@ public record HangingLayout(String grid, String synch, int selected, List<Cell> 
         json.getString("grid", null), // NON-NLS
         json.getString("synch", null), // NON-NLS
         json.getInt("selected", 0), // NON-NLS
-        cells);
+        cells,
+        json.getBoolean("cine", false)); // NON-NLS
   }
 
   /** The same layout with the cell at {@code position} showing another series. */
@@ -178,7 +190,7 @@ public record HangingLayout(String grid, String synch, int selected, List<Cell> 
         cells.stream()
             .map(cell -> cell.position() == position ? cell.withSeries(seriesId) : cell)
             .toList();
-    return new HangingLayout(grid, synch, selected, replaced);
+    return new HangingLayout(grid, synch, selected, replaced, cine);
   }
 
   public static Builder builder() {
@@ -190,6 +202,7 @@ public record HangingLayout(String grid, String synch, int selected, List<Cell> 
     private String grid;
     private String synch;
     private int selected;
+    private boolean cine;
     private final TreeMap<Integer, Cell> cells = new TreeMap<>();
 
     private Builder() {}
@@ -206,6 +219,11 @@ public record HangingLayout(String grid, String synch, int selected, List<Cell> 
 
     public Builder select(int slot) {
       this.selected = slot;
+      return this;
+    }
+
+    public Builder cine(boolean start) {
+      this.cine = start;
       return this;
     }
 
@@ -234,7 +252,7 @@ public record HangingLayout(String grid, String synch, int selected, List<Cell> 
     }
 
     public HangingLayout build() {
-      return new HangingLayout(grid, synch, selected, new ArrayList<>(cells.values()));
+      return new HangingLayout(grid, synch, selected, new ArrayList<>(cells.values()), cine);
     }
   }
 }

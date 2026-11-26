@@ -347,7 +347,17 @@ public final class HangingEngine {
       if (items.stream().noneMatch(i -> accepts(i, prior, priors.size(), now))) {
         continue;
       }
-      Resolution resolution = resolve(imageSet, extension, prior.series());
+      List<StudySeries> series = prior.series();
+      if (extension != null && extension.sameAnatomy()) {
+        series = sameAnatomy(series, study);
+        if (series.isEmpty()) {
+          unresolved =
+              "no series of the anatomy of the current study in the prior of " // NON-NLS
+                  + (prior.date() == null ? prior.uid() : prior.date().toLocalDate());
+          continue;
+        }
+      }
+      Resolution resolution = resolve(imageSet, extension, series);
       if (resolution.isResolved()) {
         return new Resolution(imageSet, resolution.candidates(), null, prior);
       }
@@ -357,6 +367,36 @@ public final class HangingEngine {
               + (prior.date() == null ? prior.uid() : prior.date().toLocalDate());
     }
     return new Resolution(imageSet, List.of(), unresolved);
+  }
+
+  /**
+   * The series of a prior whose anatomy is the one of the current study: the same region, or a
+   * region of the same group (a lung beside a chest). Nothing is excluded on a missing value: a
+   * series without known anatomy stays, and every series stays when the current study has none.
+   */
+  static List<StudySeries> sameAnatomy(List<StudySeries> prior, List<StudySeries> current) {
+    Set<String> regions = new HashSet<>();
+    for (StudySeries series : current) {
+      SeriesFeatures.Anatomy anatomy =
+          series.features() == null ? null : series.features().anatomy();
+      if (anatomy != null) {
+        regions.add(anatomy.notation());
+        regions.addAll(anatomy.groups());
+      }
+    }
+    if (regions.isEmpty()) {
+      return prior;
+    }
+    return prior.stream()
+        .filter(
+            series -> {
+              SeriesFeatures.Anatomy anatomy =
+                  series.features() == null ? null : series.features().anatomy();
+              return anatomy == null
+                  || regions.contains(anatomy.notation())
+                  || anatomy.groups().stream().anyMatch(regions::contains);
+            })
+        .toList();
   }
 
   /** Whether a time-based item accepts the current study (a window starting at 0). */
@@ -672,12 +712,37 @@ public final class HangingEngine {
     }
 
     List<Step> steps = new ArrayList<>();
+    Set<StudySeries> earlier = new HashSet<>();
     for (Map.Entry<Integer, List<HPDisplaySet>> entry : groups.entrySet()) {
-      Step step = step(document, entry.getKey(), entry.getValue(), resolutions, adapt, scrolled);
+      Set<StudySeries> shown = new HashSet<>();
+      Step step =
+          step(
+              document,
+              entry.getKey(),
+              entry.getValue(),
+              resolutions,
+              adapt,
+              scrolled,
+              earlier,
+              shown);
+      earlier.addAll(shown);
       if (adapt && step.cells().isEmpty()) {
         continue; // ADAPT_LAYOUT: a step with nothing to show is skipped
       }
       steps.add(step);
+      // the series a catch-all display set could not show continue over further steps
+      List<HPDisplaySet> remaining =
+          entry.getValue().stream().filter(d -> isRemaining(document, d)).toList();
+      for (int more = 0; !remaining.isEmpty() && more < MAX_CONTINUATION_STEPS; more++) {
+        shown.clear();
+        Step next =
+            step(document, entry.getKey(), remaining, resolutions, true, scrolled, earlier, shown);
+        if (next.cells().isEmpty()) {
+          break;
+        }
+        earlier.addAll(shown);
+        steps.add(next);
+      }
     }
 
     List<Unresolved> unresolved = new ArrayList<>();
@@ -701,15 +766,32 @@ public final class HangingEngine {
         unresolved);
   }
 
+  /** The steps a catch-all display set may add to show what its first step could not. */
+  static final int MAX_CONTINUATION_STEPS = 20;
+
+  private static boolean isRemaining(Document document, HPDisplaySet displaySet) {
+    Integer number = displaySet.getDisplaySetNumber();
+    DisplaySet extension = number == null ? null : document.weasis().displaySets().get(number);
+    return extension != null && extension.remaining();
+  }
+
+  /**
+   * Plans one step.
+   *
+   * @param earlier the series the earlier steps show, which a {@code remaining} display set leaves
+   *     out
+   * @param used receives the series this step shows
+   */
   private static Step step(
       Document document,
       int group,
       List<HPDisplaySet> displaySets,
       Map<Integer, Resolution> resolutions,
       boolean adapt,
-      Set<HPDisplaySet> scrolled) {
+      Set<HPDisplaySet> scrolled,
+      Set<StudySeries> earlier,
+      Set<StudySeries> used) {
     HangingProtocol protocol = document.protocol();
-    Set<StudySeries> used = new HashSet<>();
     List<CellPlan> cells = new ArrayList<>();
     HangingLayout.Builder layout = HangingLayout.builder();
     String synch = null;
@@ -730,6 +812,12 @@ public final class HangingEngine {
         synch = synchOf(displaySet, extension, scrolled);
       }
       Fused fused = fusedWith(extension, resolutions);
+      if (extension != null && extension.onlyWith() != null) {
+        Resolution needed = resolutions.get(extension.onlyWith());
+        if (needed == null || !needed.isResolved()) {
+          continue; // the cell has a meaning only beside the series of that image set
+        }
+      }
 
       if (resolution == null || !resolution.isResolved()) {
         String expected = resolution == null ? "no image set" : resolution.unresolved(); // NON-NLS
@@ -782,9 +870,10 @@ public final class HangingEngine {
 
       boolean derives =
           extension != null && extension.derive() != null && !extension.derive().fallback();
-      if (derives || fused != null) {
-        // A deriving or fused cell works on the best series of its image set, shown or not by
-        // another cell
+      boolean sharing = extension != null && extension.shared();
+      if (derives || fused != null || sharing) {
+        // A deriving, fused or shared cell works on the best series of its image set, shown or
+        // not by another cell
         Scored best =
             derives
                 ? sourceOf(extension.derive(), resolution, resolutions)
@@ -812,14 +901,21 @@ public final class HangingEngine {
                 resolutions),
             best.series(),
             fused);
+        if (sharing) {
+          used.add(best.series());
+        }
         continue;
       }
+      boolean remaining = extension != null && extension.remaining();
       List<Scored> fresh =
-          resolution.candidates().stream().filter(c -> !used.contains(c.series())).toList();
+          resolution.candidates().stream()
+              .filter(c -> !used.contains(c.series()))
+              .filter(c -> !remaining || !earlier.contains(c.series()))
+              .toList();
       Integer repeat = extension == null ? null : extension.repeat();
       int max = repeat == null ? 1 : repeat <= 0 ? Integer.MAX_VALUE : repeat;
       if (fresh.isEmpty()) {
-        if (adapt) {
+        if (adapt || remaining) {
           continue; // nothing new to show: ADAPT_LAYOUT drops the cell
         }
         // every candidate is already shown by this step: show the best one again
@@ -883,9 +979,21 @@ public final class HangingEngine {
             null);
       }
     }
-    layout.grid(gridFor(cells.size())).synch(synch).select(cells.isEmpty() ? 0 : 1);
+    layout
+        .grid(gridFor(cells.size()))
+        .synch(synch)
+        .select(cells.isEmpty() ? 0 : 1)
+        .cine(!cells.isEmpty() && startsCine(document, cells.getFirst()));
     return new Step(
         group, protocol.getDisplaySetPresentationGroupDescription(group), layout.build(), cells);
+  }
+
+  /** Whether the display set of a cell asks its stack to start playing. */
+  private static boolean startsCine(Document document, CellPlan cell) {
+    DisplaySet extension = document.weasis().displaySets().get(cell.displaySet());
+    return extension != null
+        && extension.display() != null
+        && Boolean.TRUE.equals(extension.display().cine());
   }
 
   /** Appends the plan of a cell and the matching layout cell with its presentation. */

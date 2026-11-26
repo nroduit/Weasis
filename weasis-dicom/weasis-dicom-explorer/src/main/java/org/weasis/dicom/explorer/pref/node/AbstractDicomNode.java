@@ -646,9 +646,9 @@ public abstract class AbstractDicomNode implements LayeredEntries.Entry {
   }
 
   /**
-   * Notifies {@code listener} on the thread that saved, with the type of the list, each time a
-   * node list is written, so a view that keeps its own copy of the list (the Retrieve panel) can
-   * reload it.
+   * Notifies {@code listener} on the thread that saved, with the type of the list, each time a node
+   * list is written, so a view that keeps its own copy of the list (the Retrieve panel) can reload
+   * it.
    */
   public static void addNodesChangeListener(Consumer<Type> listener) {
     if (listener != null) {
