@@ -59,6 +59,7 @@ class UpsServiceTest {
   private HttpServer server;
   private final AtomicInteger creates = new AtomicInteger();
   private final List<String> lastQuery = new ArrayList<>();
+  private final List<String> createBodies = new ArrayList<>();
   private volatile String searchBody = "[]";
   private volatile int searchStatus = 200;
   private volatile String createLocation = "/workitems/" + WORKITEM_UID;
@@ -95,11 +96,16 @@ class UpsServiceTest {
         return;
       }
       creates.incrementAndGet();
+      createBodies.add(readBody(exchange));
       exchange.getResponseHeaders().add("Content-Location", createLocation);
       respond(exchange, 201, "");
       return;
     }
     respond(exchange, 405, "");
+  }
+
+  private static String readBody(com.sun.net.httpserver.HttpExchange exchange) throws IOException {
+    return new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
   }
 
   private static void respond(com.sun.net.httpserver.HttpExchange exchange, int status, String body)
@@ -224,6 +230,46 @@ class UpsServiceTest {
     assertAll(
         () -> assertEquals(WORKITEM_UID, uid),
         () -> assertEquals(1, creates.get(), "the workitem is created once"));
+  }
+
+  @Test
+  void run_carries_the_scheduled_processing_parameters_as_content_items() throws Exception {
+    searchBody = "[]";
+    List<UpsParameters.Parameter> parameters =
+        List.of(
+            new UpsParameters.Parameter("CLIP_LIMIT", "NUMERIC", "2.0"),
+            new UpsParameters.Parameter("TILE_GRID", "NUMERIC", "8"));
+    service().run(CODE, study(), List.of(instance()), parameters);
+
+    String body = createBodies.get(0);
+    assertAll(
+        // The sequence is Type 3 (PS3.3 C.30.2) and carries one Content Item per value, so the
+        // body names (0074,1210) and the Value Type (0040,A040) twice.
+        () -> assertTrue(body.contains("\"00741210\""), body),
+        () -> assertEquals(2, count(body, "\"0040A040\""), body),
+        () -> assertTrue(body.contains("CLIP_LIMIT"), body),
+        () -> assertTrue(body.contains("TILE_GRID"), body),
+        () -> assertEquals(2, count(body, "\"NUMERIC\""), body),
+        () -> assertTrue(body.contains("\"2.0\""), body),
+        () -> assertTrue(body.contains("\"8\""), body));
+  }
+
+  @Test
+  void run_omits_the_scheduled_processing_parameters_when_none_are_given() throws Exception {
+    searchBody = "[]";
+    service().run(CODE, study(), List.of(instance()));
+
+    assertAll(
+        () -> assertEquals(1, createBodies.size(), "the Create body is captured"),
+        () -> assertFalse(createBodies.get(0).contains("\"00741210\""), createBodies.get(0)));
+  }
+
+  private static int count(String text, String token) {
+    int count = 0;
+    for (int index = text.indexOf(token); index >= 0; index = text.indexOf(token, index + 1)) {
+      count++;
+    }
+    return count;
   }
 
   @Test
