@@ -769,9 +769,13 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
           .add("pan", Json.createObjectBuilder().add("x", panX).add("y", panY)) // NON-NLS
           .add("rotation", rotation) // NON-NLS
           .add("flip", flip); // NON-NLS
-      if (window != null && level != null) {
-        JsonObjectBuilder wl =
-            Json.createObjectBuilder().add("window", window).add("level", level); // NON-NLS
+      boolean values = window != null && level != null;
+      if (values || preset != null || lutShape != null) {
+        // a protocol names a preset or a LUT shape without values: they come from the image
+        JsonObjectBuilder wl = Json.createObjectBuilder();
+        if (values) {
+          wl.add("window", window).add("level", level); // NON-NLS
+        }
         if (preset != null) {
           wl.add("preset", preset); // NON-NLS
         }
@@ -822,8 +826,8 @@ public record ViewState(ViewData data, ViewPresentation view, Blend blend) {
           pan == null ? 0 : number(pan, "y"), // NON-NLS
           json.getInt("rotation", 0), // NON-NLS
           json.getBoolean("flip", false), // NON-NLS
-          wl == null ? null : number(wl, "window"), // NON-NLS
-          wl == null ? null : number(wl, "level"), // NON-NLS
+          wl == null ? null : optionalNumber(wl, "window"), // NON-NLS
+          wl == null ? null : optionalNumber(wl, "level"), // NON-NLS
           wl == null ? null : wl.getString("preset", null), // NON-NLS
           wl == null ? null : wl.getString("shape", null), // NON-NLS
           json.getString("colorMap", null), // NON-NLS

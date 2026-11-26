@@ -210,6 +210,34 @@ class ViewStateTest {
   }
 
   @Test
+  void aPresetNamedWithoutWindowValuesTravelsInTheJson() {
+    ViewPresentation view =
+        new ViewPresentation(
+            null,
+            null,
+            ZoomType.BEST_FIT,
+            0,
+            0,
+            0,
+            0,
+            false,
+            null,
+            null,
+            "weasis.ct.lung", // NON-NLS
+            null,
+            null,
+            false,
+            null,
+            false);
+    ViewPresentation read = ViewPresentation.fromJson(view.toJson());
+    assertAll(
+        () -> assertEquals("weasis.ct.lung", read.preset(), "a protocol names the preset only"),
+        () -> assertNull(read.window()),
+        () -> assertNull(read.level()),
+        () -> assertNull(ViewPresentation.fromJson(ViewPresentation.DEFAULT.toJson()).preset()));
+  }
+
+  @Test
   void missingKeysTakeTheirDefaults() {
     ViewState state = ViewState.fromJson(Json.createObjectBuilder().build());
     assertAll(
