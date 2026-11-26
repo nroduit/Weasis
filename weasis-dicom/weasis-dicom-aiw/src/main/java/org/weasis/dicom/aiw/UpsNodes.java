@@ -153,10 +153,24 @@ public final class UpsNodes {
     return NODES;
   }
 
-  /** Uses another file, for tests. */
-  static synchronized void install(Path file) {
+  /**
+   * Uses another file, for tests; returns the file in force before, so the caller can put it back
+   * with {@link #restore}. The document is a process-wide static: a test that repoints it must
+   * restore it afterwards, or the next test keeps reading the file a finished test left behind.
+   */
+  static synchronized Path install(Path file) {
+    Path previous = NODES.userFile();
     NODES.configure(Optional.empty(), file);
     configured = true;
+    return previous;
+  }
+
+  /** Puts the document back on the file it used before a test install, for tests. */
+  static synchronized void restore(Path previous) {
+    NODES.configure(Optional.empty(), previous);
+    // A null previous means the default document was never located (install ran before any read):
+    // leave it unconfigured so the next read locates it again instead of staying memory-only.
+    configured = previous != null;
   }
 
   /** Every server of the document, enabled or not. */

@@ -245,16 +245,23 @@ public class AiTasksPrefView extends AbstractItemDialogPage {
     return nodes;
   }
 
+  /** The servers of the saved document, each with its label, in document order. */
+  static List<Server> serversFromNodes(List<Node> nodes) {
+    List<DicomWebNode> web = webNodes();
+    List<Server> result = new ArrayList<>();
+    for (Node node : nodes) {
+      Server server = Server.of(node);
+      server.label = label(server, web);
+      result.add(server);
+    }
+    return result;
+  }
+
   private void load() {
     storeShown();
     shown = null;
     servers.clear();
-    List<DicomWebNode> nodes = webNodes();
-    for (Node node : UpsNodes.all()) {
-      Server server = Server.of(node);
-      server.label = label(server, nodes);
-      servers.add(server);
-    }
+    servers.addAll(serversFromNodes(UpsNodes.all()));
     serverModel.fireTableDataChanged();
     if (!servers.isEmpty()) {
       serverTable.setRowSelectionInterval(0, 0);
@@ -395,6 +402,10 @@ public class AiTasksPrefView extends AbstractItemDialogPage {
   public void resetToDefaultValues() {
     shown = null;
     servers.clear();
+    // Restore undoes the unsaved edits of the page, so it repopulates the table from the saved
+    // document instead of emptying it. Weasis has no Cancel button (Close = save-and-close), so an
+    // emptied table would be persisted by closeAdditionalWindow() as a wipe of every server.
+    servers.addAll(serversFromNodes(UpsNodes.all()));
     serverModel.fireTableDataChanged();
     showSelected();
   }
