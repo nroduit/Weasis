@@ -16,8 +16,8 @@ import java.util.regex.Pattern;
 /**
  * What the version string says about the build: a release ({@code 5.0.0}), a preview ({@code
  * 5.0.0-beta.1}, {@code 5.0.0-rc.2}) or a development build ({@code 5.0.0-SNAPSHOT}). A preview and
- * a development build are not for clinical use: the application says so in its title, its About box
- * and once at start, {@code weasis:info} reports it, and the one-time migration of a 4.x
+ * a development build are not ready for production: the application says so in its title, its About
+ * box and once at start, {@code weasis:info} reports it, and the one-time migration of a 4.x
  * installation stays off so a preview never moves the settings of the release in use.
  *
  * @param version the full version string

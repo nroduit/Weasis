@@ -34,7 +34,7 @@ jobs:
               {
                 echo "prerelease=true"
                 echo "notes=docs/release-notes/$TAG.md"
-                echo "name=Weasis $label (preview, not for clinical use)"
+                echo "name=Weasis $label (preview, not ready for production)"
               } >> "$GITHUB_OUTPUT"
               ;;
             *)

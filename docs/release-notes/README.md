@@ -11,7 +11,7 @@ pre-release tags are excluded from it (`.github_changelog_generator`).
 One text per pre-release, the same structure every time, written for the testers:
 
 ```text
-Weasis 5.0 beta N — preview, not for clinical use
+Weasis 5.0 beta N — preview, not ready for production
 
 What this preview is
   - who it is for, what it is not, how it coexists with 4.x, how to remove it

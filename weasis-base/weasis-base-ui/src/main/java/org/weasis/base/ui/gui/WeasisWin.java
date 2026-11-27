@@ -975,7 +975,7 @@ public class WeasisWin {
   static final String P_PREVIEW_ACKNOWLEDGED = "weasis.preview.acknowledged"; // NON-NLS
 
   /**
-   * A preview or a development build says once per version that it is not for clinical use: a
+   * A preview or a development build says once per version that it is not ready for production: a
    * dialog at the first start of that version, acknowledged by the user, then the title and the
    * About box keep the mark. {@code weasis:info} reports the same.
    */
