@@ -14,6 +14,7 @@ to a finding; an observer runs them all on a candidate before a session.
 | `masking.weasis` | masked attributes, a region hidden before a capture, the device library | one ultrasound study |
 | `printing.weasis` | destinations, a layout page and its preview, a series on pages, a PDF | any study |
 | `subtraction.weasis` | phases, the live preview, the derived series and its sources | a loaded study: `--set series=<post-contrast uid> --set mask=<pre-contrast uid>` |
+| `dsa.weasis` | digital subtraction angiography: a mask from the frames of the run, averaged, shifted, time-interval differencing, the subtracted series of each plane | one X-ray angiography run, biplane, stored without subtraction |
 | `3d-zoom.weasis` | zoom, a reformat, the MPR and the 3D view on one volume, color management | one CT study, a graphics adapter the renderer accepts |
 | `ecg.weasis` | an ECG opens in the waveform viewer, the identity of the file | a folder of ECG files |
 | `whole-slide.weasis` | a slide from files, the pyramid, a magnification, a measurement, the SR export | one DICOM slide |

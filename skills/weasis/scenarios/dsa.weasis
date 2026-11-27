@@ -1,0 +1,75 @@
+# dsa.weasis — digital subtraction angiography of an X-ray run: the mask from its own frames, averaged, shifted, time-interval differencing, the subtracted series of each plane.
+# Run it with: weasis-cli script:run --file dsa.weasis --set data=<folder of one biplane XA run> --set out=<folder> --report <file.xml>
+# Validated on the BIR XA test study (Toshiba, protocol Neuro): two planes of 26 frames stored
+# without subtraction, frame 1 before the contrast. Both planes share one Series Instance UID, so
+# the explorer lists them as two series with their own id. The region of the statistics is the
+# center of a 1024x1024 frame, inside the circle of the intensifier.
+
+$cp = state:checkpoint --label "scenario dsa"
+@expect ${cp.taken} == true
+$load = dicom:load --path "${data}" --wait all
+@expect ${load.loaded} == true
+$list = dicom:list
+@expect ${list.patients[0].studies[0].series[0].modality} == XA
+@expect ${list.patients[0].studies[0].series[1].modality} == XA
+
+# the two planes side by side, on a frame where the arteries hold the contrast
+$a = dicom:open --series ${list.patients[0].studies[0].series[0].id} --wait
+@expect ${a.target.viewerType} == 2d
+$grid = view2d:grid --view ${a.target.view} --panes 2
+$b = dicom:open --series ${list.patients[0].studies[0].series[1].id} --view ${a.target.view} --pane 2 --wait
+@expect ${b.target.pane} == 2
+$fa = view2d:scroll --view ${a.target.view} --pane 1 --image 12
+$fb = view2d:scroll --view ${a.target.view} --pane 2 --image 12
+$raw = view2d:stats --view ${a.target.view} --pane 1 --rect 100,100,824,824
+@expect ${raw.statistics[key=stats.stdev].value} > 15
+
+# D1: the mask from the run itself, frame 1: bone and soft tissue go, the vessels stay dark
+$m1 = subtraction:mask --view ${a.target.view} --pane 1 --frames 1
+@expect ${m1.subtraction.dsa.maskFrames[0]} == 1
+$sub = view2d:stats --view ${a.target.view} --pane 1 --rect 100,100,824,824
+@expect ${sub.statistics[key=stats.stdev].value} < 10
+@expect ${sub.statistics[key=stats.min].value} < -30
+$m1b = subtraction:mask --view ${a.target.view} --pane 2 --frames 1
+$subb = view2d:stats --view ${a.target.view} --pane 2 --rect 100,100,824,824
+@expect ${subb.statistics[key=stats.stdev].value} < 10
+
+# D2: several frames averaged, a sub-pixel shift for the motion, back to no shift
+$m2 = subtraction:mask --view ${a.target.view} --pane 1 --frames 1-2
+@expect ${m2.subtraction.dsa.maskFrames[1]} == 2
+$shift = subtraction:shift --view ${a.target.view} --pane 1 --rows 0.3 --columns -0.5
+@expect ${shift.subtraction.dsa.shiftRows} == 0.3
+@expect ${shift.subtraction.dsa.shiftColumns} == -0.5
+$noshift = subtraction:shift --view ${a.target.view} --pane 1 --rows 0 --columns 0
+@expect ${noshift.subtraction.dsa.shiftRows} == 0
+
+# D3: time-interval differencing, each frame minus the one 4 frames before it
+$tid = subtraction:mask --view ${a.target.view} --pane 2 --tid-offset 4
+@expect ${tid.subtraction.dsa.tidOffset} == 4
+$mask2 = subtraction:mask --view ${a.target.view} --pane 2 --frames 1-2
+
+# the subtracted layout, with a band hidden over the top edge of each plane first
+$redA = redact:add --view ${a.target.view} --pane 1 --scope SERIES --rect 0,0,1024,40
+$redB = redact:add --view ${a.target.view} --pane 2 --scope SERIES --rect 0,0,1024,40
+$shot = view2d:capture --view ${a.target.view} --scope layout --out ${out}/dsa-${cp.seq}.png
+@expect ${shot.format} == png
+
+# D4: each plane built as a series of the study, with the run as series and as mask
+$dsaA = subtraction:create --series ${a.target.series} --mask-frames 1-2 --signed --no-open
+@expect ${dsaA.derivation} == SUB
+@expect ${dsaA.slices} == ${a.target.imageCount}
+@expect ${dsaA.dsa.maskFrames[1]} == 2
+@expect ${dsaA.sources[role=mask].series} == ${a.target.series}
+$dsaB = subtraction:create --series ${list.patients[0].studies[0].series[1].id} --mask-frames 1-2 --signed --no-open
+@expect ${dsaB.slices} == ${b.target.imageCount}
+$infoA = subtraction:info --series ${dsaA.series}
+@expect ${infoA.description} == ${dsaA.description}
+
+$delA = subtraction:delete --series ${dsaA.series}
+@expect ${delA.deleted} == true
+$delB = subtraction:delete --series ${dsaB.series}
+@expect ${delB.deleted} == true
+$back = state:rollback --to ${cp.checkpoint} --close-new
+@expect ${back.restored} == true
+$after = state:diff --from ${cp.checkpoint}
+@expect ${after.diff.empty} == true
