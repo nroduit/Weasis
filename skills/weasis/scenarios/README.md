@@ -19,6 +19,7 @@ to a finding; an observer runs them all on a candidate before a session.
 | `ecg.weasis` | an ECG opens in the waveform viewer, the identity of the file | a folder of ECG files |
 | `whole-slide.weasis` | a slide from files, the pyramid, a magnification, a measurement, the SR export | one DICOM slide |
 | `settings-sites.weasis` | where the settings live, a package exported and read back, the layers | none |
+| `ai-tasks.weasis` | AI tasks as UPS-RS workitems: the servers, a task created on a study, listed as waiting, never created twice, canceled | a study loaded from a DICOMweb server that takes AI tasks: `--set study=<uid> --set code=<a code no performer takes> --set scheme=<scheme>`; no `out` |
 | `commands.weasis` | the instance, a transaction and its rollback, the events, the feedback link | any study |
 
 ## Run one
@@ -29,11 +30,11 @@ weasis-cli script:run --file hanging-protocols.weasis \
     --report ~/weasis-preview/hanging-protocols.xml
 ```
 
-Every script takes `out`, a folder the instance may write to (your home folder is allowed by
-default); most take `data`, a folder of DICOM files loaded by the script. The answer is one JSON
-object per step, then a summary with the number of failed steps; add `--keep-going` to run on after
-a failure and see every one. The files the script writes carry the sequence number of its
-checkpoint in their names, so a second run never collides with the first.
+Every script but `ai-tasks.weasis` takes `out`, a folder the instance may write to (your home folder
+is allowed by default); most take `data`, a folder of DICOM files loaded by the script. The answer
+is one JSON object per step, then a summary with the number of failed steps; add `--keep-going` to
+run on after a failure and see every one. The files the script writes carry the sequence number of
+its checkpoint in their names, so a second run never collides with the first.
 
 A script loads what it needs, takes a checkpoint first and ends with a rollback to it: the display
 and the explorer are as they were before it ran. The expectations are structural (a unit, a count, a
