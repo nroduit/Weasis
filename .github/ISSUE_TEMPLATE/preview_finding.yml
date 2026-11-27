@@ -17,18 +17,27 @@ body:
         - Hanging protocols
         - Windows, screens and workspace
         - DICOM explorer
-        - Measurement tools
-        - Identity masking and redaction
-        - Printing
-        - Subtraction
+        - Import, retrieve, send and export
+        - "2D display: window/level, color maps, layouts, synchronization"
+        - MPR, fusion and volumes
         - 3D, zoom and color
+        - Measurement tools
+        - Subtraction
+        - Structured reports, segmentations, RT and presentation states
         - ECG / waveform viewer
         - Whole slide imaging viewer
+        - AI tasks
+        - Identity masking and redaction
+        - Printing
+        - Capture, image export and animations
         - Settings and site layers
+        - Translation and right-to-left
+        - Start-up, performance and memory
+        - Installation and coexistence with 4.x
         - Security and audit
         - Commands, scripts and weasis-cli
         - Plugins and developer kit
-        - Installation and coexistence with 4.x
+        - Documentation and help
         - Other
     validations:
       required: true
