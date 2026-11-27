@@ -52,6 +52,9 @@ A server is named by the id of its DICOMweb node of the preferences, or by its U
 | `catalog` | the tasks offered, in the order of the menu: code value, coding scheme designator, meaning | empty |
 
 The catalog is per server and set by the site (RAD-80 §4.80.4.1.2.1): there is no built-in list of tasks.
+The `scheme` of an entry is the designator of the coding scheme its code value belongs to.
+A task defined by the site or by the vendor of a model is not in a standard terminology, so it takes a private designator, by convention one that starts with `99` (`99SITE` in the example; PS3.3 §8.2).
+Weasis sends the designator as it is written and builds none in.
 
 ## Commands
 
@@ -65,6 +68,15 @@ weasis-cli ups:search --study 1.2.3
 weasis-cli ups:run --study 1.2.3 --code CT-ORGAN-SEG --scheme 99SITE --series 1.2.3.4
 weasis-cli ups:watch --study 1.2.3 --timeout 120
 weasis-cli ups:open --study 1.2.3 --workitem 1.2.3.99
+```
+
+With `--url`, `ups:run` also takes the parameters of the task, one `--param <code>=<type>=<value>` per value, sent as the Scheduled Processing Parameters Sequence (0074,1210) of the workitem (API 2.42).
+The type is `NUMERIC`, `TEXT` or `CODE`; the parameter code and a `CODE` value are `code` or `scheme:code`, and without a scheme they take the one of the task (`--scheme`).
+A numeric value is sent without a unit, and a task started from the explorer or without `--url` carries no parameter yet.
+
+```bash
+weasis-cli ups:run --url https://pacs/rs --study 1.2.3 --instance 1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5 \
+  --code IMG-ENHANCE --scheme 99SITE --param STRENGTH=NUMERIC=2.0 --param MODE=CODE=FAST
 ```
 
 The verbs that read the server need the `network.read` capability and `run` and `cancel` need `network.write`: a remote caller is refused until the policy of the instance allows them (see the *Commands* page of the preferences).

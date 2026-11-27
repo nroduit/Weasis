@@ -26,19 +26,17 @@ import org.dcm4che3.data.VR;
  * Numeric Value (0040,A30A) DS, TEXT in Text Value (0040,A160) UT, CODE in Concept Code Sequence
  * (0040,A168) SQ.
  *
- * <p>Parameter names are locally defined, so their coding scheme designator uses the private 99
- * prefix (PS3.3 8.2): 99CLARUS, the designator the tasks already use. The sequence is Type 2 on
+ * <p>A parameter name and a coded value are {@code code} or {@code scheme:code}. Without a scheme
+ * they take the coding scheme of the task they belong to: the names of the parameters are defined
+ * by whoever defines the task, so no designator is built into the viewer. The sequence is Type 2 on
  * Create (PS3.4 Table CC.2.5-3): required, so a workitem without parameters still carries it empty.
  */
 final class UpsParameters {
 
-  /** The local coding scheme of the parameter names (PS3.3 8.2, private 99 prefix). */
-  static final String SCHEME = "99CLARUS"; // NON-NLS
-
   /**
    * The Decimal String forms (PS3.5 6.2) a NUMERIC value may take: an integer, a fixed point or a
-   * scientific notation with an E/e exponent. The pattern is ASCII-only, so a matching value is
-   * one byte per character.
+   * scientific notation with an E/e exponent. The pattern is ASCII-only, so a matching value is one
+   * byte per character.
    */
   private static final Pattern NUMERIC =
       Pattern.compile("[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?");
@@ -61,30 +59,37 @@ final class UpsParameters {
       }
       // Validating at construction rather than at encode time makes a malformed value a command
       // error the moment --param is read, before any request goes out.
+      splitCode(name, "");
       if (type.equals("NUMERIC")) {
         validateNumeric(value);
       } else if (type.equals("CODE")) {
-        splitCode(value);
+        splitCode(value, "");
       }
     }
   }
 
-  /** The Content Item of one parameter, as a dataset of the (0074,1210) sequence. */
-  static Attributes item(Parameter parameter) {
+  /**
+   * The Content Item of one parameter, as a dataset of the (0074,1210) sequence.
+   *
+   * @param taskScheme the coding scheme of the task, used by a name or a coded value without one
+   */
+  static Attributes item(Parameter parameter, String taskScheme) {
+    Objects.requireNonNull(taskScheme, "Task scheme cannot be null");
     Attributes item = new Attributes();
     item.setString(Tag.ValueType, VR.CS, parameter.type());
-    // The Concept Name Code Sequence names the parameter with one Code; its meaning is the name
-    // itself because a local parameter carries no separate display text yet.
+    // The Concept Name Code Sequence names the parameter with one Code; its meaning is the code
+    // itself because a parameter carries no separate display text yet.
+    String[] concept = splitCode(parameter.name(), taskScheme);
     Attributes name = new Attributes();
-    setCodeValue(name, parameter.name());
-    name.setString(Tag.CodingSchemeDesignator, VR.SH, SCHEME);
-    name.setString(Tag.CodeMeaning, VR.LO, parameter.name());
+    setCodeValue(name, concept[1]);
+    name.setString(Tag.CodingSchemeDesignator, VR.SH, concept[0]);
+    name.setString(Tag.CodeMeaning, VR.LO, concept[1]);
     item.newSequence(Tag.ConceptNameCodeSequence, 1).add(name);
     switch (parameter.type()) {
       case "NUMERIC": // NON-NLS
         item.setString(Tag.NumericValue, VR.DS, parameter.value());
-        // Measurement Units Code Sequence is Type 1 for a NUMERIC item (PS3.3 Table 10-2): the
-        // unit of CLIP_LIMIT and TILE_GRID is dimensionless, so the UCUM "unity" code 1.
+        // Measurement Units Code Sequence is Type 1 for a NUMERIC item (PS3.3 Table 10-2). A
+        // parameter has no way to name its unit yet, so it is sent as the UCUM "unity" code 1.
         Attributes units = new Attributes();
         units.setString(Tag.CodeValue, VR.SH, "1");
         units.setString(Tag.CodingSchemeDesignator, VR.SH, "UCUM");
@@ -95,7 +100,7 @@ final class UpsParameters {
         item.setString(Tag.TextValue, VR.UT, parameter.value());
         break;
       case "CODE": // NON-NLS
-        String[] code = splitCode(parameter.value());
+        String[] code = splitCode(parameter.value(), taskScheme);
         Attributes value = new Attributes();
         setCodeValue(value, code[1]);
         value.setString(Tag.CodingSchemeDesignator, VR.SH, code[0]);
@@ -111,10 +116,10 @@ final class UpsParameters {
   }
 
   /** The Content Items of the parameters, in order: one item per value, the name may repeat. */
-  static List<Attributes> items(List<Parameter> parameters) {
+  static List<Attributes> items(List<Parameter> parameters, String taskScheme) {
     List<Attributes> items = new ArrayList<>(parameters.size());
     for (Parameter parameter : parameters) {
-      items.add(item(parameter));
+      items.add(item(parameter, taskScheme));
     }
     return items;
   }
@@ -162,23 +167,24 @@ final class UpsParameters {
   }
 
   /**
-   * Splits a CODE value, which is "value" or "scheme:value". Only the first colon separates them,
-   * so a value may itself carry colons; a bare value uses the local 99CLARUS scheme. Both
-   * components must be non-empty (PS3.3 8.8): an empty Code Value or scheme reads as no code.
+   * Splits a parameter name or a coded value, which is "code" or "scheme:code". Only the first
+   * colon separates them, so a code may itself carry colons; without a scheme the given one is
+   * used. Both components must be non-empty (PS3.3 8.8): an empty Code Value or scheme reads as no
+   * code.
    */
-  private static String[] splitCode(String value) {
+  private static String[] splitCode(String value, String defaultScheme) {
     int colon = value.indexOf(':');
     if (colon < 0) {
-      if (value.isEmpty()) {
-        throw new IllegalArgumentException("A CODE parameter has a non-empty value");
+      if (value.isBlank()) {
+        throw new IllegalArgumentException("A parameter name or coded value cannot be empty");
       }
-      return new String[] {SCHEME, value};
+      return new String[] {defaultScheme, value};
     }
     String scheme = value.substring(0, colon);
     String codeValue = value.substring(colon + 1);
-    if (scheme.isEmpty() || codeValue.isEmpty()) {
+    if (scheme.isBlank() || codeValue.isBlank()) {
       throw new IllegalArgumentException(
-          "A CODE parameter is scheme:value, neither empty: " + value);
+          "A parameter name or coded value is scheme:code, neither empty: " + value);
     }
     return new String[] {scheme, codeValue};
   }

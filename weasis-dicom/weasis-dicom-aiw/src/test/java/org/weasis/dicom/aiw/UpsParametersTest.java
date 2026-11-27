@@ -29,10 +29,20 @@ import org.junit.jupiter.api.Test;
 @DisplayNameGeneration(ReplaceUnderscores.class)
 class UpsParametersTest {
 
+  /** The coding scheme of the task of these tests, taken by a name or a value without one. */
+  private static final String TASK_SCHEME = "99SITE";
+
+  private static Attributes item(UpsParameters.Parameter parameter) {
+    return UpsParameters.item(parameter, TASK_SCHEME);
+  }
+
+  private static List<Attributes> items(List<UpsParameters.Parameter> parameters) {
+    return UpsParameters.items(parameters, TASK_SCHEME);
+  }
+
   @Test
   void a_numeric_parameter_is_a_numeric_content_item() {
-    Attributes item =
-        UpsParameters.item(new UpsParameters.Parameter("CLIP_LIMIT", "NUMERIC", "2.0"));
+    Attributes item = item(new UpsParameters.Parameter("CLIP_LIMIT", "NUMERIC", "2.0"));
 
     assertAll(
         () -> assertEquals("NUMERIC", item.getString(Tag.ValueType)),
@@ -45,7 +55,7 @@ class UpsParametersTest {
 
   @Test
   void a_text_parameter_is_a_text_content_item() {
-    Attributes item = UpsParameters.item(new UpsParameters.Parameter("NOTE", "TEXT", "hello"));
+    Attributes item = item(new UpsParameters.Parameter("NOTE", "TEXT", "hello"));
 
     assertAll(
         () -> assertEquals("TEXT", item.getString(Tag.ValueType)),
@@ -57,8 +67,7 @@ class UpsParametersTest {
 
   @Test
   void a_code_parameter_is_a_concept_code_sequence() {
-    Attributes item =
-        UpsParameters.item(new UpsParameters.Parameter("MODE", "CODE", "99CLARUS:FAST"));
+    Attributes item = item(new UpsParameters.Parameter("MODE", "CODE", "99CLARUS:FAST"));
 
     assertAll(
         () -> assertEquals("CODE", item.getString(Tag.ValueType)),
@@ -76,14 +85,13 @@ class UpsParametersTest {
 
   @Test
   void the_concept_name_code_sequence_names_the_parameter() {
-    Attributes item =
-        UpsParameters.item(new UpsParameters.Parameter("TILE_GRID", "NUMERIC", "8"));
+    Attributes item = item(new UpsParameters.Parameter("TILE_GRID", "NUMERIC", "8"));
 
     Attributes name = item.getSequence(Tag.ConceptNameCodeSequence).get(0);
     assertAll(
         () -> assertEquals(VR.SQ, item.getVR(Tag.ConceptNameCodeSequence)),
         () -> assertEquals("TILE_GRID", name.getString(Tag.CodeValue)),
-        () -> assertEquals("99CLARUS", name.getString(Tag.CodingSchemeDesignator)),
+        () -> assertEquals(TASK_SCHEME, name.getString(Tag.CodingSchemeDesignator)),
         () -> assertEquals(VR.SH, name.getVR(Tag.CodeValue)),
         () -> assertEquals(VR.SH, name.getVR(Tag.CodingSchemeDesignator)),
         () -> assertEquals(VR.LO, name.getVR(Tag.CodeMeaning)));
@@ -92,7 +100,7 @@ class UpsParametersTest {
   @Test
   void two_values_of_one_name_share_the_concept_name() {
     List<Attributes> items =
-        UpsParameters.items(
+        items(
             List.of(
                 new UpsParameters.Parameter("CLIP_LIMIT", "NUMERIC", "2.0"),
                 new UpsParameters.Parameter("CLIP_LIMIT", "NUMERIC", "4.0")));
@@ -102,11 +110,19 @@ class UpsParametersTest {
         () ->
             assertEquals(
                 "CLIP_LIMIT",
-                items.get(0).getSequence(Tag.ConceptNameCodeSequence).get(0).getString(Tag.CodeValue)),
+                items
+                    .get(0)
+                    .getSequence(Tag.ConceptNameCodeSequence)
+                    .get(0)
+                    .getString(Tag.CodeValue)),
         () ->
             assertEquals(
                 "CLIP_LIMIT",
-                items.get(1).getSequence(Tag.ConceptNameCodeSequence).get(0).getString(Tag.CodeValue)));
+                items
+                    .get(1)
+                    .getSequence(Tag.ConceptNameCodeSequence)
+                    .get(0)
+                    .getString(Tag.CodeValue)));
   }
 
   @Test
@@ -122,8 +138,7 @@ class UpsParametersTest {
 
   @Test
   void a_numeric_parameter_carries_its_measurement_units() {
-    Attributes item =
-        UpsParameters.item(new UpsParameters.Parameter("CLIP_LIMIT", "NUMERIC", "2.0"));
+    Attributes item = item(new UpsParameters.Parameter("CLIP_LIMIT", "NUMERIC", "2.0"));
 
     assertAll(
         () -> assertEquals(VR.SQ, item.getVR(Tag.MeasurementUnitsCodeSequence)),
@@ -138,7 +153,7 @@ class UpsParametersTest {
   @Test
   void a_name_longer_than_sixteen_characters_uses_the_long_code_value() {
     String name = "CONFIDENCE_THRESHOLD"; // NON-NLS
-    Attributes item = UpsParameters.item(new UpsParameters.Parameter(name, "NUMERIC", "0.9"));
+    Attributes item = item(new UpsParameters.Parameter(name, "NUMERIC", "0.9"));
 
     Attributes nameCode = item.getSequence(Tag.ConceptNameCodeSequence).get(0);
     assertAll(
@@ -150,8 +165,7 @@ class UpsParametersTest {
   @Test
   void a_code_value_longer_than_sixteen_characters_uses_the_long_code_value() {
     String codeValue = "12345678901234567"; // NON-NLS 17 characters
-    Attributes item =
-        UpsParameters.item(new UpsParameters.Parameter("MODE", "CODE", "99CLARUS:" + codeValue));
+    Attributes item = item(new UpsParameters.Parameter("MODE", "CODE", "99CLARUS:" + codeValue));
 
     Attributes code = item.getSequence(Tag.ConceptCodeSequence).get(0);
     assertAll(
@@ -213,19 +227,37 @@ class UpsParametersTest {
 
   @Test
   void a_bare_code_value_and_a_colon_inside_the_value_are_kept() {
-    Attributes bare = UpsParameters.item(new UpsParameters.Parameter("MODE", "CODE", "FAST"));
+    Attributes bare = item(new UpsParameters.Parameter("MODE", "CODE", "FAST"));
     Attributes bareCode = bare.getSequence(Tag.ConceptCodeSequence).get(0);
     assertAll(
         () -> assertEquals("FAST", bareCode.getString(Tag.CodeValue)),
-        () -> assertEquals(UpsParameters.SCHEME, bareCode.getString(Tag.CodingSchemeDesignator)));
+        () -> assertEquals(TASK_SCHEME, bareCode.getString(Tag.CodingSchemeDesignator)));
 
-    Attributes coloned =
-        UpsParameters.item(new UpsParameters.Parameter("MODE", "CODE", "99CLARUS:A:B"));
+    Attributes coloned = item(new UpsParameters.Parameter("MODE", "CODE", "99CLARUS:A:B"));
     Attributes colonedCode = coloned.getSequence(Tag.ConceptCodeSequence).get(0);
     assertAll(
         () -> assertEquals("A:B", colonedCode.getString(Tag.CodeValue)),
+        () -> assertEquals("99CLARUS", colonedCode.getString(Tag.CodingSchemeDesignator)));
+  }
+
+  @Test
+  void a_parameter_name_with_a_scheme_keeps_it_and_one_without_takes_the_scheme_of_the_task() {
+    Attributes named =
+        item(new UpsParameters.Parameter("99VENDOR:THRESHOLD", "NUMERIC", "0.5"))
+            .getSequence(Tag.ConceptNameCodeSequence)
+            .get(0);
+    Attributes bare =
+        item(new UpsParameters.Parameter("THRESHOLD", "NUMERIC", "0.5"))
+            .getSequence(Tag.ConceptNameCodeSequence)
+            .get(0);
+    assertAll(
+        () -> assertEquals("99VENDOR", named.getString(Tag.CodingSchemeDesignator)),
+        () -> assertEquals("THRESHOLD", named.getString(Tag.CodeValue)),
+        () -> assertEquals("THRESHOLD", named.getString(Tag.CodeMeaning)),
+        () -> assertEquals(TASK_SCHEME, bare.getString(Tag.CodingSchemeDesignator)),
         () ->
-            assertEquals(
-                "99CLARUS", colonedCode.getString(Tag.CodingSchemeDesignator)));
+            assertThrows(
+                IllegalArgumentException.class,
+                () -> new UpsParameters.Parameter(":THRESHOLD", "NUMERIC", "0.5")));
   }
 }

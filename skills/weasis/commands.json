@@ -1,5 +1,5 @@
 {
-  "apiVersion": "2.41",
+  "apiVersion": "2.42",
   "protocolVersion": 2,
   "applicationVersion": "development",
   "exitCodes": {
@@ -7541,7 +7541,7 @@
           "name": "run",
           "description": "Creates the workitem of a task unless the study has a pending one of that code (PS3.18 §11.4, RAD-80). On a loaded study the patient, the request and the input instances come from the model, for the whole study or the --series given; with --url they come from the options.",
           "since": "5.0",
-          "usage": "ups:run [-h] [--json] [--accession=<accession>] [--aet=<aet>] [--auth=<auth-id>] --code=<code> [--meaning=<text>] [--patient=<patient-id>] --scheme=<scheme> --study=<study-uid> [--url=<url>] [--instance=<series-uid/sop-class-uid/sop-uid>]... [--series=<series-uid>]...",
+          "usage": "ups:run [-h] [--json] [--accession=<accession>] [--aet=<aet>] [--auth=<auth-id>] --code=<code> [--meaning=<text>] [--patient=<patient-id>] --scheme=<scheme> --study=<study-uid> [--url=<url>] [--instance=<series-uid/sop-class-uid/sop-uid>]... [--param=<code=type=value>]... [--series=<series-uid>]...",
           "needs": [
             "network-write"
           ],
@@ -7617,6 +7617,17 @@
               "arity": "1",
               "required": false,
               "description": "Code meaning (default: the code value)."
+            },
+            {
+              "names": [
+                "--param"
+              ],
+              "label": "<code=type=value>",
+              "type": "string",
+              "arity": "1",
+              "required": false,
+              "default": "[]",
+              "description": "A Scheduled Processing Parameter (0074,1210): the parameter code, its value type (NUMERIC, TEXT or CODE) and its value, separated by '='. Repeatable. The parameter code and a CODE value are 'code' or 'scheme:code'; without a scheme they take the one of the task (--scheme)."
             },
             {
               "names": [
@@ -13889,6 +13900,10 @@
       "avoid": [
         "canvas index"
       ]
+    },
+    {
+      "term": "param",
+      "definition": "a parameter of a task: code, type and value"
     },
     {
       "term": "patient",

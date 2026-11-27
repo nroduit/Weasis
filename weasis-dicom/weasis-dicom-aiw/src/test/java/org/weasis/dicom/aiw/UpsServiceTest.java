@@ -340,12 +340,7 @@ class UpsServiceTest {
         }]
         """
             .formatted(
-                STUDY_UID,
-                WORKITEM_UID,
-                "SCHEDULED",
-                OTHER_STUDY_UID,
-                STUDY_UID,
-                "CT-ORGAN-SEG");
+                STUDY_UID, WORKITEM_UID, "SCHEDULED", OTHER_STUDY_UID, STUDY_UID, "CT-ORGAN-SEG");
 
     String uid = service().run(CODE, study(), List.of(instance()));
 

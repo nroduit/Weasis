@@ -1,6 +1,6 @@
 # Weasis commands
 
-Command API 2.41, protocol 2, application development.
+Command API 2.42, protocol 2, application development.
 
 ## color
 
@@ -1990,7 +1990,7 @@ Needs: network read
 
 Creates the workitem of a task unless the study has a pending one of that code (PS3.18 §11.4, RAD-80). On a loaded study the patient, the request and the input instances come from the model, for the whole study or the --series given; with --url they come from the options.
 
-Usage: `ups:run [-h] [--json] [--accession=<accession>] [--aet=<aet>] [--auth=<auth-id>] --code=<code> [--meaning=<text>] [--patient=<patient-id>] --scheme=<scheme> --study=<study-uid> [--url=<url>] [--instance=<series-uid/sop-class-uid/sop-uid>]... [--series=<series-uid>]...`
+Usage: `ups:run [-h] [--json] [--accession=<accession>] [--aet=<aet>] [--auth=<auth-id>] --code=<code> [--meaning=<text>] [--patient=<patient-id>] --scheme=<scheme> --study=<study-uid> [--url=<url>] [--instance=<series-uid/sop-class-uid/sop-uid>]... [--param=<code=type=value>]... [--series=<series-uid>]...`
 
 Needs: network write
 
@@ -2003,6 +2003,7 @@ Needs: network write
 | --instance | string | [] | With --url: an input instance. Repeatable. |
 | --json | boolean |  | Structured JSON output (default for remote calls). |
 | --meaning | string |  | Code meaning (default: the code value). |
+| --param | string | [] | A Scheduled Processing Parameter (0074,1210): the parameter code, its value type (NUMERIC, TEXT or CODE) and its value, separated by '='. Repeatable. The parameter code and a CODE value are 'code' or 'scheme:code'; without a scheme they take the one of the task (--scheme). |
 | --patient | string |  | With --url: Patient ID of the study. |
 | --scheme | string |  | Coding scheme designator of the code. |
 | --series | string | [] | On a loaded study: run on these series only. Repeatable. |
@@ -3251,6 +3252,7 @@ What the instance publishes on its event bus; `weasis-cli events` streams them, 
 | outputs | the result instances a completed workitem names |  |
 | page | one printed page, with its cells |  |
 | pane | one image canvas inside the grid of a view, addressed by its index within the view | canvas index |
+| param | a parameter of a task: code, type and value |  |
 | patient | the DICOM patient as loaded in the explorer model | exam |
 | phase | one time point of a dynamic series |  |
 | plugin | a module loaded by the plugin manager, with its id, version and signature |  |

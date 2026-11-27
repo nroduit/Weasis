@@ -17,7 +17,7 @@
     <revision>5.0.0</revision>
     <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
     <!-- Keep equal to CommandManager.API_VERSION: CommandManagerTest checks it -->
-    <weasis.command.api>2.41</weasis.command.api>
+    <weasis.command.api>2.42</weasis.command.api>
 
     <java-version>25</java-version>
     <jdk-version>25</jdk-version>

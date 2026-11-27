@@ -142,7 +142,8 @@ public class UpsService {
       // values per name.
       Sequence parametersSequence =
           data.newSequence(Tag.ScheduledProcessingParametersSequence, parameters.size());
-      for (Attributes parameter : UpsParameters.items(parameters)) {
+      for (Attributes parameter :
+          UpsParameters.items(parameters, catalogEntry.getCodingSchemeDesignator())) {
         parametersSequence.add(parameter);
       }
     }

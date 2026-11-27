@@ -11,9 +11,9 @@ package org.weasis.dicom.aiw;
 
 /**
  * The mutual exclusion of the notification channel: the append of a report and the close of the
- * channel share one monitor, so a report that passed the check before the close cannot append
- * after it, whatever the thread interleaving (JLS 17.4). Kept separate from {@link
- * UpsCommands.Watch} so the lock order is testable directly, without racing two threads.
+ * channel share one monitor, so a report that passed the check before the close cannot append after
+ * it, whatever the thread interleaving (JLS 17.4). Kept separate from {@link UpsCommands.Watch} so
+ * the lock order is testable directly, without racing two threads.
  */
 final class WatchGate {
 

@@ -278,8 +278,7 @@ class UpsCommandsTest {
 
     ScriptedUpsService(WebSocket socket, List<Attributes> searchResult) {
       super(
-          UpsConfig.builder().baseUrl("http://127.0.0.1").requesterAet("WEASIS").build(),
-          "WEASIS");
+          UpsConfig.builder().baseUrl("http://127.0.0.1").requesterAet("WEASIS").build(), "WEASIS");
       this.socket = socket;
       this.searchResult = searchResult;
     }
@@ -429,8 +428,7 @@ class UpsCommandsTest {
             assertTrue(
                 bodies.stream().anyMatch(b -> b.contains("\"00741210\"")), bodies.toString()),
         () ->
-            assertTrue(
-                bodies.stream().anyMatch(b -> b.contains("CLIP_LIMIT")), bodies.toString()));
+            assertTrue(bodies.stream().anyMatch(b -> b.contains("CLIP_LIMIT")), bodies.toString()));
   }
 
   @Test
@@ -719,7 +717,8 @@ class UpsCommandsTest {
   }
 
   @Test
-  void watch_closes_the_channel_after_the_first_report_and_silences_the_listener() throws Exception {
+  void watch_closes_the_channel_after_the_first_report_and_silences_the_listener()
+      throws Exception {
     AtomicBoolean aborted = new AtomicBoolean();
     WebSocket socket = fakeWebSocket(aborted);
     ScriptedUpsService service = new ScriptedUpsService(socket, List.of());

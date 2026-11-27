@@ -334,8 +334,9 @@ public class UpsCommands implements CommandExtension {
         paramLabel = "<code=type=value>",
         description =
             "A Scheduled Processing Parameter (0074,1210): the parameter code, its value type "
-                + "(NUMERIC, TEXT or CODE) and its value, separated by '='. Repeatable. A CODE "
-                + "value is 'value' or 'scheme:value'.")
+                + "(NUMERIC, TEXT or CODE) and its value, separated by '='. Repeatable. The "
+                + "parameter code and a CODE value are 'code' or 'scheme:code'; without a "
+                + "scheme they take the one of the task (--scheme).")
     List<String> params = new ArrayList<>();
 
     @Override
@@ -582,8 +583,7 @@ public class UpsCommands implements CommandExtension {
           sleepNanos = TimeUnit.SECONDS.toNanos(poll);
         } else {
           long remainingNanos = deadline - System.nanoTime();
-          sleepNanos =
-              Math.min(TimeUnit.SECONDS.toNanos(poll), Math.max(0, remainingNanos));
+          sleepNanos = Math.min(TimeUnit.SECONDS.toNanos(poll), Math.max(0, remainingNanos));
         }
         Thread.sleep(TimeUnit.NANOSECONDS.toMillis(sleepNanos));
         List<Attributes> current = service.search(study, null, null);
