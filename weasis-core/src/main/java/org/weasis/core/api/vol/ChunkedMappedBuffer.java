@@ -57,6 +57,15 @@ public final class ChunkedMappedBuffer {
     int numChunks = (int) ((totalBytes + CHUNK_BYTE_SIZE - 1) / CHUNK_BYTE_SIZE);
     this.chunks = new MappedByteBuffer[Math.max(numChunks, 1)];
 
+    // The file is sparse: a store that cannot hold it fails at the first page written past its
+    // free space, as a fault of the JVM and not as an exception the caller can handle.
+    File dir = file.getAbsoluteFile().getParentFile();
+    long usable = dir == null ? Long.MAX_VALUE : dir.getUsableSpace();
+    if (usable > 0 && totalBytes > usable) {
+      throw new IOException(
+          "Not enough space in %s to map %d MB (%d MB free)"
+              .formatted(dir, totalBytes >> 20, usable >> 20));
+    }
     try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
       raf.setLength(totalBytes);
       FileChannel channel = raf.getChannel();

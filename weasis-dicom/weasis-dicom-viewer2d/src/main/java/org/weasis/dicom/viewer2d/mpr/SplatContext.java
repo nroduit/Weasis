@@ -155,6 +155,16 @@ public final class SplatContext implements AutoCloseable {
    * @param totalVoxels total number of voxel elements (size.x × size.y × size.z × channels)
    */
   public static SplatContext create(boolean useWeightedSplat, long totalVoxels) {
+    return create(useWeightedSplat, totalVoxels, 0L);
+  }
+
+  /**
+   * Same as {@link #create(boolean, long)}, keeping {@code reservedDiskBytes} free in the cache
+   * directory for a volume already mapped there (its file is sparse: it is not yet counted as
+   * used).
+   */
+  public static SplatContext create(
+      boolean useWeightedSplat, long totalVoxels, long reservedDiskBytes) {
     if (!useWeightedSplat || totalVoxels <= 0) {
       return new SplatContext(null, null, null, null);
     }
@@ -182,6 +192,17 @@ public final class SplatContext implements AutoCloseable {
 
     // --- Attempt 3: disk-backed mapped accumulators ---
     long totalBytes = totalVoxels * Float.BYTES; // 4 bytes per float element
+    File dir = AppProperties.FILE_CACHE_DIR.toFile();
+    long usable = dir.getUsableSpace();
+    if (usable > 0 && 2 * totalBytes + reservedDiskBytes > usable) {
+      LOGGER.warn(
+          "Not enough space in {} for the splat accumulators ({} MB × 2, {} MB free):"
+              + " weighted splatting disabled",
+          dir,
+          totalBytes >> 20,
+          usable >> 20);
+      return new SplatContext(null, null, null, null);
+    }
     try {
       File wFile =
           File.createTempFile("splat_weight", ".tmp", AppProperties.FILE_CACHE_DIR.toFile());
