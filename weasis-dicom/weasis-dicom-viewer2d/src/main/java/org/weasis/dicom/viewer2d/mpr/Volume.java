@@ -449,7 +449,11 @@ public abstract sealed class Volume<T extends Number, A>
 
     final long totalVoxels = (long) size.x * size.y * size.z * channels;
     final long[] tBeforeClose = new long[1];
-    try (SplatContext sharedCtx = SplatContext.create(!isBasic, totalVoxels)) {
+    // A stack whose pixels all fall on voxels (axis-aligned, regular spacing) needs no weights:
+    // the two accumulators cost eight bytes per voxel for a result equal to the direct write.
+    boolean weighted = !isBasic && !isOnVoxelGrid(dicomImages, translation);
+    long mappedBytes = mappedBuffer == null ? 0L : mappedBuffer.totalBytes();
+    try (SplatContext sharedCtx = SplatContext.create(weighted, totalVoxels, mappedBytes)) {
 
       // Submit per-slice tasks with bounded concurrency
       CompletionService<MinMaxLocResult> ecs = new ExecutorCompletionService<>(VOLUME_BUILD_POOL);
@@ -481,17 +485,10 @@ public abstract sealed class Volume<T extends Number, A>
                 minMaxLoc.minVal = dcm.getMinValue(null);
                 minMaxLoc.maxVal = dcm.getMaxValue(null);
 
-                Matrix4d transform;
-                if (isBasic) {
-                  transform = computeSliceToVolumeTransform();
-                } else {
-                  Vector3d position = dcm.getSliceGeometry().getTLHC();
-                  transform = getBasisMatrix();
-                  position.sub(translation);
-                  transform.set(3, 0, position.x());
-                  transform.set(3, 1, position.y());
-                  transform.set(3, 2, position.z());
-                }
+                Matrix4d transform =
+                    isBasic
+                        ? computeSliceToVolumeTransform()
+                        : rectifiedSliceTransform(dcm.getSliceGeometry(), translation);
 
                 Dimension dim = new Dimension(src.width(), src.height());
                 SplatContext sliceCtx = sharedCtx.withTransformAndDim(transform, dim);
@@ -785,6 +782,61 @@ public abstract sealed class Volume<T extends Number, A>
             return 0;
           });
     }
+  }
+
+  /** The transform of a slice into the rectified volume: basis and position less translation. */
+  private Matrix4d rectifiedSliceTransform(GeometryOfSlice geometry, Vector3d translation) {
+    Vector3d position = new Vector3d(geometry.getTLHC());
+    position.sub(translation);
+    Matrix4d transform = getBasisMatrix();
+    transform.set(3, 0, position.x());
+    transform.set(3, 1, position.y());
+    transform.set(3, 2, position.z());
+    return transform;
+  }
+
+  /**
+   * Whether every pixel of the slices falls on a voxel of the rectified volume, one pixel step
+   * being one voxel step along an axis. The placement is affine, so the origin and the two pixel
+   * steps of each slice decide it.
+   */
+  private boolean isOnVoxelGrid(List<DicomImageElement> images, Vector3d translation) {
+    for (DicomImageElement dcm : images) {
+      GeometryOfSlice geometry = dcm.getSliceGeometry();
+      if (geometry == null) {
+        return false;
+      }
+      SlicePlacement p = placement(rectifiedSliceTransform(geometry, translation), 0);
+      double[] o = {p.x(0, 0), p.y(0, 0), p.z(0, 0)};
+      double[] dx = {p.x(1, 0) - o[0], p.y(1, 0) - o[1], p.z(1, 0) - o[2]};
+      double[] dy = {p.x(0, 1) - o[0], p.y(0, 1) - o[1], p.z(0, 1) - o[2]};
+      if (!isOnGrid(o) || !isUnitAxisStep(dx) || !isUnitAxisStep(dy)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static final double GRID_TOLERANCE = 1.0e-3;
+
+  private static boolean isOnGrid(double[] v) {
+    for (double c : v) {
+      if (Math.abs(c - Math.rint(c)) > GRID_TOLERANCE) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean isUnitAxisStep(double[] v) {
+    int sum = 0;
+    for (double c : v) {
+      if (Math.abs(c - Math.rint(c)) > GRID_TOLERANCE) {
+        return false;
+      }
+      sum += (int) Math.abs(Math.rint(c));
+    }
+    return sum == 1;
   }
 
   private SlicePlacement placement(Matrix4d transform, int sliceIndex) {
@@ -1180,9 +1232,13 @@ public abstract sealed class Volume<T extends Number, A>
             ctx.accumulate(linearIndex(x1, y1, z1, channel), rawValue, w111);
         }
       } else {
+        // Nearest voxel: a pixel on the grid computed as 2.9999999 belongs to voxel 3
+        int xn = SlicePlacement.floor(px + 0.5);
+        int yn = SlicePlacement.floor(py + 0.5);
+        int zn = SlicePlacement.floor(pz + 0.5);
         for (int channel = 0; channel < channels; channel++) {
           T value = getFromPixelArray(pixelData, (y * width + x) * channels + channel);
-          setIfInside(x0, y0, z0, channel, value);
+          setIfInside(xn, yn, zn, channel, value);
         }
       }
     } else {
