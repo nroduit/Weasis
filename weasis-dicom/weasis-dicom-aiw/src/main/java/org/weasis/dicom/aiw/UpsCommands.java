@@ -111,6 +111,7 @@ public class UpsCommands implements CommandExtension {
         Term.of("channel", "the notification channel of a UPS-RS server"), // NON-NLS
         Term.of("catalog", "the tasks a server offers"), // NON-NLS
         Term.of("code", "the value of a task code"), // NON-NLS
+        Term.of("param", "a parameter of a task: code, type and value"), // NON-NLS
         Term.of("canceled", "a cancellation request was accepted"), // NON-NLS
         Term.of("ready", "a workitem completed with results to open"), // NON-NLS
         Term.of("writable", "tasks may be created and canceled on the server"), // NON-NLS
@@ -328,17 +329,36 @@ public class UpsCommands implements CommandExtension {
         description = "With --url: an input instance. Repeatable.")
     List<String> instances = new ArrayList<>();
 
+    @Option(
+        names = "--param",
+        paramLabel = "<code=type=value>",
+        description =
+            "A Scheduled Processing Parameter (0074,1210): the parameter code, its value type "
+                + "(NUMERIC, TEXT or CODE) and its value, separated by '='. Repeatable. A CODE "
+                + "value is 'value' or 'scheme:value'.")
+    List<String> params = new ArrayList<>();
+
     @Override
     protected void run() {
       Code task = new Code(code, scheme, null, meaning == null ? code : meaning);
+      List<UpsParameters.Parameter> parameters = guarded(this::parameters);
       String uid;
       if (url == null) {
+        if (!parameters.isEmpty()) {
+          // The explorer path runs through AiTasks.run, which does not carry parameters yet.
+          // Refusing is safer than dropping them: a dropped parameter would run the task with the
+          // model defaults while the command line looks like the values were applied.
+          throw new CommandFailure(
+              CommandError.of(
+                  CommandError.NOT_APPLICABLE,
+                  "--param needs --url: the explorer path does not pass parameters yet"));
+        }
         Desk desk = desk(study, series);
         uid = guarded(() -> call(() -> AiTasks.run(desk, task)));
       } else {
         List<Attributes> inputs = guarded(() -> inputs(study, instances));
         Attributes data = studyData(study, patient, accession);
-        uid = call(() -> service(study).run(task, data, inputs));
+        uid = call(() -> service(study).run(task, data, inputs, parameters));
       }
       print(
           Json.createObjectBuilder()
@@ -347,6 +367,25 @@ public class UpsCommands implements CommandExtension {
               .add("code", code) // NON-NLS
               .build()
               .toString());
+    }
+
+    /** Parses every --param into a parameter; a malformed one is a verb error, never a drop. */
+    private List<UpsParameters.Parameter> parameters() {
+      List<UpsParameters.Parameter> result = new ArrayList<>();
+      for (String text : params) {
+        result.add(parseParameter(text));
+      }
+      return result;
+    }
+
+    private static UpsParameters.Parameter parseParameter(String text) {
+      // Split on '=' with a limit of 3: only the first two separators are structural
+      // (CODE=TYPE=VALUE), so the value may itself contain '='.
+      String[] parts = text.split("=", 3);
+      if (parts.length != 3 || parts[0].isBlank() || parts[1].isBlank() || parts[2].isBlank()) {
+        throw new IllegalArgumentException("A parameter is CODE=TYPE=VALUE: " + text);
+      }
+      return new UpsParameters.Parameter(parts[0], parts[1], parts[2]);
     }
 
     @Override

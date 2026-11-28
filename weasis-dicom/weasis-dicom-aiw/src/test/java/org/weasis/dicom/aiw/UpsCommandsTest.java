@@ -137,6 +137,7 @@ class UpsCommandsTest {
     }
     if ("POST".equals(exchange.getRequestMethod())) {
       creates.incrementAndGet();
+      bodies.add(readBody(exchange));
       exchange.getResponseHeaders().add("Content-Location", "/workitems/" + WORKITEM_UID);
       respond(exchange, 201, "");
       return;
@@ -401,6 +402,175 @@ class UpsCommandsTest {
         () -> assertEquals(CommandResult.OK, result.status(), String.valueOf(result)),
         () -> assertEquals(1, creates.get()),
         () -> assertTrue(result.body().contains(WORKITEM_UID), result.body()));
+  }
+
+  @Test
+  void a_valid_parameter_reaches_the_workitem_body() {
+    CommandResult result =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "CLIP_LIMIT=NUMERIC=2.0");
+
+    assertAll(
+        () -> assertEquals(CommandResult.OK, result.status(), String.valueOf(result)),
+        () -> assertEquals(1, creates.get()),
+        () ->
+            assertTrue(
+                bodies.stream().anyMatch(b -> b.contains("\"00741210\"")), bodies.toString()),
+        () ->
+            assertTrue(
+                bodies.stream().anyMatch(b -> b.contains("CLIP_LIMIT")), bodies.toString()));
+  }
+
+  @Test
+  void a_parameter_with_a_foreign_type_is_refused_before_any_request() {
+    CommandResult result =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "CLIP_LIMIT=BOOLEAN=2.0");
+
+    assertAll(
+        () -> assertNotEquals(CommandResult.OK, result.status()),
+        () -> assertEquals(0, creates.get()));
+  }
+
+  @Test
+  void a_malformed_parameter_is_refused_before_any_request() {
+    CommandResult result =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "malformed");
+
+    assertAll(
+        () -> assertNotEquals(CommandResult.OK, result.status()),
+        () -> assertEquals(0, creates.get()));
+  }
+
+  @Test
+  void a_numeric_parameter_with_an_invalid_value_is_refused_before_any_request() {
+    CommandResult nonNumeric =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "X=NUMERIC=abc");
+    CommandResult multi =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "X=NUMERIC=2.0\\4.0");
+    CommandResult empty =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "X=NUMERIC=");
+
+    assertAll(
+        () -> assertNotEquals(CommandResult.OK, nonNumeric.status()),
+        () -> assertNotEquals(CommandResult.OK, multi.status()),
+        () -> assertNotEquals(CommandResult.OK, empty.status()),
+        () -> assertEquals(0, creates.get()));
+  }
+
+  @Test
+  void a_code_parameter_with_an_empty_component_is_refused_before_any_request() {
+    CommandResult emptyValue =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "MODE=CODE=99CLARUS:");
+    CommandResult emptyScheme =
+        run(
+            "run",
+            "--url",
+            url(),
+            "--code",
+            "CT-ORGAN-SEG",
+            "--scheme",
+            "99CLARUS",
+            "--instance",
+            "1.2.3.4/1.2.840.10008.5.1.4.1.1.2/1.2.3.4.5",
+            "--study",
+            STUDY_UID,
+            "--param",
+            "MODE=CODE=:FAST");
+
+    assertAll(
+        () -> assertNotEquals(CommandResult.OK, emptyValue.status()),
+        () -> assertNotEquals(CommandResult.OK, emptyScheme.status()),
+        () -> assertEquals(0, creates.get()));
   }
 
   @Test

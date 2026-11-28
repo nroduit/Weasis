@@ -103,8 +103,24 @@ public class UpsService {
    */
   public String run(Code catalogEntry, Attributes study, Iterable<Attributes> instances)
       throws IOException, InterruptedException {
+    return run(catalogEntry, study, instances, List.of());
+  }
+
+  /**
+   * Creates the workitem of a task when the study has none for that code, with the Scheduled
+   * Processing Parameters (0074,1210) the performer is to run with.
+   *
+   * @param parameters the parameters of the task, one Content Item each, or empty for none
+   */
+  public String run(
+      Code catalogEntry,
+      Attributes study,
+      Iterable<Attributes> instances,
+      List<UpsParameters.Parameter> parameters)
+      throws IOException, InterruptedException {
     Objects.requireNonNull(catalogEntry, "Catalog entry cannot be null");
     Objects.requireNonNull(study, "Study cannot be null");
+    Objects.requireNonNull(parameters, "Parameters cannot be null");
     String studyUid = study.getString(Tag.StudyInstanceUID);
     if (studyUid == null) {
       throw new IllegalArgumentException("The study has no Study Instance UID");
@@ -117,6 +133,19 @@ public class UpsService {
     }
     Attributes data =
         UpsWorkitem.of(catalogEntry).patient(study).request(study).inputs(instances).build();
+    // Scheduled Processing Parameters (0074,1210) is Type 2 on Create (PS3.4 Table CC.2.5-3):
+    // it must be present and may be empty. The workitem template already carries an empty
+    // sequence, so keep it when there are no parameters and replace it with the items otherwise.
+    if (!parameters.isEmpty()) {
+      // One Content Item per value (PS3.3 Table 10-2) keeps a multi-value parameter as repeated
+      // items sharing the Concept Name, the shape the performer flattens back into a list of
+      // values per name.
+      Sequence parametersSequence =
+          data.newSequence(Tag.ScheduledProcessingParametersSequence, parameters.size());
+      for (Attributes parameter : UpsParameters.items(parameters)) {
+        parametersSequence.add(parameter);
+      }
+    }
     // The SOP Instance UID is not part of the data set: it travels in the workitem query parameter
     // (PS3.18 §11.4.1.1). It is minted here rather than left to the origin, because a bare
     // POST /workitems is ambiguous with the Search-with-body transaction of §11.9 - an origin that
