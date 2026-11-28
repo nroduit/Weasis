@@ -28,6 +28,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.net.auth.AuthMethod;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.aiw.TaskBoard.Source;
 import org.weasis.dicom.aiw.TaskBoard.Task;
 import org.weasis.dicom.aiw.UpsNodes.Node;
@@ -152,12 +153,20 @@ public final class AiTasks {
     }
   }
 
-  /** The instances of the series of the target that are in the model, as inputs of a task. */
-  static List<Attributes> inputInstances(ExplorerTarget target) {
+  /**
+   * The instances of the series of the target that are in the model, as inputs of a task. Each one
+   * carries the Retrieve URL (0008,1190) of its series, which the workitem turns into the WADO-RS
+   * Retrieval Sequence a performer needs to fetch the inputs (PS3.4 Table CC.2.5-2b).
+   *
+   * @param origin the DICOMweb server the study came from, source of the URL of a series that has
+   *     none
+   */
+  static List<Attributes> inputInstances(ExplorerTarget target, DicomWebOrigin origin) {
     List<Attributes> instances = new ArrayList<>();
     String studyUid = target.studyUID();
     for (DicomSeries series : target.series()) {
       String seriesUid = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+      String retrieveUrl = seriesRetrieveUrl(series, origin, studyUid, seriesUid);
       for (MediaElement media : series.getMedias(null, null)) {
         String sop = TagD.getTagValue(media, Tag.SOPInstanceUID, String.class);
         String sopClass = TagD.getTagValue(media, Tag.SOPClassUID, String.class);
@@ -169,10 +178,24 @@ public final class AiTasks {
         instance.setString(Tag.SeriesInstanceUID, VR.UI, seriesUid);
         instance.setString(Tag.SOPClassUID, VR.UI, sopClass);
         instance.setString(Tag.SOPInstanceUID, VR.UI, sop);
+        instance.setString(Tag.RetrieveURL, VR.UR, retrieveUrl);
         instances.add(instance);
       }
     }
     return instances;
+  }
+
+  /**
+   * The WADO-RS URL of a series: the one the query gave the series, else the series resource of the
+   * origin (PS3.18 §10.4.1.1.2), since the study is retrievable from the server it came from.
+   */
+  private static String seriesRetrieveUrl(
+      DicomSeries series, DicomWebOrigin origin, String studyUid, String seriesUid) {
+    String url = TagD.getTagValue(series, Tag.RetrieveURL, String.class);
+    if (StringUtil.hasText(url)) {
+      return url;
+    }
+    return origin.baseUrl() + "/studies/" + studyUid + "/series/" + seriesUid; // NON-NLS
   }
 
   /**
@@ -183,7 +206,8 @@ public final class AiTasks {
    */
   public static String run(Desk desk, Code code) throws IOException, InterruptedException {
     requireWrite(desk);
-    return desk.service().run(code, studyAttributes(desk.target()), inputInstances(desk.target()));
+    return desk.service()
+        .run(code, studyAttributes(desk.target()), inputInstances(desk.target(), desk.origin()));
   }
 
   /** Asks the server to cancel a queued task. */
