@@ -213,8 +213,14 @@ public final class AiTasks {
   /** Asks the server to cancel a queued task. */
   public static void cancel(Desk desk, String workitemUid)
       throws IOException, InterruptedException {
+    cancel(desk, workitemUid, null);
+  }
+
+  /** Asks the server to cancel a queued task, with the reason the caller gave. */
+  public static void cancel(Desk desk, String workitemUid, String reason)
+      throws IOException, InterruptedException {
     requireWrite(desk);
-    desk.service().cancel(workitemUid, null);
+    desk.service().cancel(workitemUid, reason);
   }
 
   private static void requireWrite(Desk desk) {

@@ -14,11 +14,13 @@ import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import java.io.IOException;
+import java.net.http.WebSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -387,7 +389,7 @@ public class UpsCommands implements CommandExtension {
             () ->
                 call(
                     () -> {
-                      AiTasks.cancel(desk, workitem);
+                      AiTasks.cancel(desk, workitem, reason);
                       return null;
                     }));
       } else {
@@ -483,7 +485,7 @@ public class UpsCommands implements CommandExtension {
      * Subscribes to the study and waits for the first report. The push path has two steps that an
      * origin may refuse, the Subscribe and the WebSocket handshake; either one means no channel.
      */
-    private boolean openChannel(UpsService service, List<JsonObject> events) {
+    boolean openChannel(UpsService service, List<JsonObject> events) {
       try {
         service.subscribe(studyFilter(study), false);
       } catch (IOException e) {
@@ -495,19 +497,22 @@ public class UpsCommands implements CommandExtension {
       }
       CountDownLatch first = new CountDownLatch(1);
       boolean[] refused = {false};
-      service
-          .watch(
-              report -> {
-                events.add(eventReport(report));
-                first.countDown();
-              })
-          .whenComplete(
-              (socket, error) -> {
-                if (error != null) {
-                  refused[0] = true;
-                  first.countDown();
-                }
-              });
+      WatchGate gate = new WatchGate();
+      CompletableFuture<WebSocket> channel =
+          service.watch(
+              report ->
+                  gate.accept(
+                      () -> {
+                        events.add(eventReport(report));
+                        first.countDown();
+                      }));
+      channel.whenComplete(
+          (socket, error) -> {
+            if (error != null) {
+              refused[0] = true;
+              first.countDown();
+            }
+          });
       try {
         if (timeout <= 0) {
           first.await();
@@ -517,17 +522,31 @@ public class UpsCommands implements CommandExtension {
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
+      // The notification channel is a WebSocket (PS3.18 11.13, RAD-109): it stays open and keeps
+      // delivering reports after the first one, so the Watcher closes it once it has its news.
+      gate.close();
+      channel.thenAccept(WebSocket::abort);
       return !refused[0];
     }
 
     /** The whole worklist first; then the rows whose state changed, or nothing at the timeout. */
-    private List<JsonObject> pollOnce(UpsService service) throws IOException, InterruptedException {
+    List<JsonObject> pollOnce(UpsService service) throws IOException, InterruptedException {
       List<Attributes> snapshot = service.search(study, null, null);
       Map<String, String> previous = states(snapshot);
       long deadline =
           timeout <= 0 ? Long.MAX_VALUE : System.nanoTime() + TimeUnit.SECONDS.toNanos(timeout);
       while (System.nanoTime() < deadline) {
-        Thread.sleep(TimeUnit.SECONDS.toMillis(poll));
+        // Sleep only what the deadline allows: a poll longer than the remaining budget must not
+        // oversleep it, or --timeout 1 --poll 3600 would wait an hour before checking the deadline.
+        long sleepNanos;
+        if (timeout <= 0) {
+          sleepNanos = TimeUnit.SECONDS.toNanos(poll);
+        } else {
+          long remainingNanos = deadline - System.nanoTime();
+          sleepNanos =
+              Math.min(TimeUnit.SECONDS.toNanos(poll), Math.max(0, remainingNanos));
+        }
+        Thread.sleep(TimeUnit.NANOSECONDS.toMillis(sleepNanos));
         List<Attributes> current = service.search(study, null, null);
         Map<String, String> now = states(current);
         if (!now.equals(previous)) {

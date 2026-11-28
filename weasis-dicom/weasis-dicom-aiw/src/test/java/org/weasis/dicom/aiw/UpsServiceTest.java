@@ -19,12 +19,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.net.InetSocketAddress;
+import java.net.http.WebSocket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Code;
 import org.dcm4che3.data.Sequence;
@@ -47,6 +52,7 @@ import org.weasis.dicom.web.UpsConfig;
 class UpsServiceTest {
 
   private static final String STUDY_UID = "1.2.826.0.1.3680043.8.498.1";
+  private static final String OTHER_STUDY_UID = "1.2.826.0.1.3680043.8.498.777";
   private static final String WORKITEM_UID = "1.2.826.0.1.3680043.8.498.99";
   private static final Code CODE = new Code("CT-ORGAN-SEG", "99CLARUS", null, "Organ segmentation");
 
@@ -141,12 +147,20 @@ class UpsServiceTest {
   }
 
   private static String workitemJson(String state, String codeValue) {
+    return workitemJson(STUDY_UID, state, codeValue);
+  }
+
+  /** A workitem whose Referenced Request Sequence names {@code referencedStudyUid}. */
+  private static String workitemJson(String referencedStudyUid, String state, String codeValue) {
     // DICOM JSON Model (PS3.18 §F.2): a bare array of datasets when the origin answers a search
     return """
     [{
       "0020000D": {"vr": "UI", "Value": ["%s"]},
       "00080018": {"vr": "UI", "Value": ["%s"]},
       "00741000": {"vr": "CS", "Value": ["%s"]},
+      "0040A370": {"vr": "SQ", "Value": [{
+        "0020000D": {"vr": "UI", "Value": ["%s"]}
+      }]},
       "00404018": {"vr": "SQ", "Value": [{
         "00080100": {"vr": "SH", "Value": ["%s"]},
         "00080102": {"vr": "SH", "Value": ["99CLARUS"]},
@@ -154,7 +168,7 @@ class UpsServiceTest {
       }]}
     }]
     """
-        .formatted(STUDY_UID, WORKITEM_UID, state, codeValue);
+        .formatted(STUDY_UID, WORKITEM_UID, state, referencedStudyUid, codeValue);
   }
 
   private static String outputBody() {
@@ -244,6 +258,55 @@ class UpsServiceTest {
   }
 
   @Test
+  void a_non_terminal_workitem_of_another_study_does_not_suppress_the_task() throws Exception {
+    searchBody = workitemJson(OTHER_STUDY_UID, "SCHEDULED", "CT-ORGAN-SEG");
+    String uid = service().run(CODE, study(), List.of(instance()));
+
+    assertAll(
+        () -> assertEquals(WORKITEM_UID, uid),
+        () ->
+            assertEquals(
+                1, creates.get(), "a foreign-study workitem must not suppress the Create"));
+  }
+
+  @Test
+  void a_workitem_referencing_the_study_in_a_later_request_item_suppresses_the_task()
+      throws Exception {
+    // Referenced Request Sequence may hold several requests (PS3.3 C.30.4): the study must match
+    // any item, not only the first, or Run would create a duplicate for an already covered study.
+    searchBody =
+        """
+        [{
+          "0020000D": {"vr": "UI", "Value": ["%s"]},
+          "00080018": {"vr": "UI", "Value": ["%s"]},
+          "00741000": {"vr": "CS", "Value": ["%s"]},
+          "0040A370": {"vr": "SQ", "Value": [
+            {"0020000D": {"vr": "UI", "Value": ["%s"]}},
+            {"0020000D": {"vr": "UI", "Value": ["%s"]}}
+          ]},
+          "00404018": {"vr": "SQ", "Value": [{
+            "00080100": {"vr": "SH", "Value": ["%s"]},
+            "00080102": {"vr": "SH", "Value": ["99CLARUS"]},
+            "00080104": {"vr": "LO", "Value": ["Organ segmentation"]}
+          }]}
+        }]
+        """
+            .formatted(
+                STUDY_UID,
+                WORKITEM_UID,
+                "SCHEDULED",
+                OTHER_STUDY_UID,
+                STUDY_UID,
+                "CT-ORGAN-SEG");
+
+    String uid = service().run(CODE, study(), List.of(instance()));
+
+    assertAll(
+        () -> assertEquals(WORKITEM_UID, uid),
+        () -> assertEquals(0, creates.get(), "the study matches the second request item"));
+  }
+
+  @Test
   void the_states_a_requestor_distinguishes_split_on_termination() {
     assertAll(
         () -> assertTrue(UpsService.isNonTerminal("SCHEDULED")),
@@ -313,5 +376,15 @@ class UpsServiceTest {
   void a_search_failure_surfaces_as_an_io_exception() {
     searchStatus = 500;
     assertThrows(IOException.class, () -> service().search(STUDY_UID, null, null));
+  }
+
+  @Test
+  void watch_returns_a_typed_channel_handle_so_the_caller_can_close_it() throws Exception {
+    Method method = UpsService.class.getMethod("watch", Consumer.class);
+    ParameterizedType type = (ParameterizedType) method.getGenericReturnType();
+
+    assertAll(
+        () -> assertEquals(CompletableFuture.class, method.getReturnType()),
+        () -> assertEquals(WebSocket.class, type.getActualTypeArguments()[0]));
   }
 }

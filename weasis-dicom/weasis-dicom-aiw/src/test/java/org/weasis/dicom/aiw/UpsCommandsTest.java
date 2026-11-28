@@ -22,17 +22,27 @@ import static org.mockito.Mockito.when;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
+import java.net.http.WebSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
@@ -42,6 +52,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 import org.weasis.core.api.command.CommandModel;
 import org.weasis.core.api.command.CommandResult;
@@ -57,6 +68,8 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomWebOrigin;
+import org.weasis.dicom.web.UpsConfig;
+import org.weasis.dicom.web.UpsResponse;
 
 /**
  * The {@code ups:} verbs against a recorded origin server: what each one asks, what it answers as
@@ -69,9 +82,11 @@ class UpsCommandsTest {
   private static final String WORKITEM_UID = "1.2.826.0.1.3680043.8.498.99";
 
   @TempDir Path folder;
+  private Path upsNodesPrevious;
 
   private HttpServer server;
   private final List<String> requests = new ArrayList<>();
+  private final List<String> bodies = new ArrayList<>();
   private final AtomicInteger creates = new AtomicInteger();
   private volatile String searchBody = "[]";
   private volatile int searchStatus = 200;
@@ -100,6 +115,11 @@ class UpsCommandsTest {
     server.stop(0);
   }
 
+  @AfterEach
+  void restoreNodes() {
+    UpsNodes.restore(upsNodesPrevious);
+  }
+
   private void handle(HttpExchange exchange) throws IOException {
     requests.add(exchange.getRequestMethod() + " " + exchange.getRequestURI());
     if (exchange.getRequestURI().getPath().contains("/subscribers/")) {
@@ -110,6 +130,7 @@ class UpsCommandsTest {
       if ("GET".equals(exchange.getRequestMethod())) {
         respond(exchange, 200, outputsBody());
       } else {
+        bodies.add(readBody(exchange));
         respond(exchange, 200, "");
       }
       return;
@@ -135,6 +156,10 @@ class UpsCommandsTest {
     exchange.close();
   }
 
+  private static String readBody(HttpExchange exchange) throws IOException {
+    return new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+  }
+
   private String url() {
     return "http://127.0.0.1:" + server.getAddress().getPort();
   }
@@ -145,6 +170,9 @@ class UpsCommandsTest {
       "0020000D": {"vr": "UI", "Value": ["%s"]},
       "00080018": {"vr": "UI", "Value": ["%s"]},
       "00741000": {"vr": "CS", "Value": ["%s"]},
+      "0040A370": {"vr": "SQ", "Value": [{
+        "0020000D": {"vr": "UI", "Value": ["%s"]}
+      }]},
       "00404018": {"vr": "SQ", "Value": [{
         "00080100": {"vr": "SH", "Value": ["CT-ORGAN-SEG"]},
         "00080102": {"vr": "SH", "Value": ["99CLARUS"]},
@@ -152,7 +180,7 @@ class UpsCommandsTest {
       }]}
     }]
     """
-        .formatted(STUDY_UID, WORKITEM_UID, state);
+        .formatted(STUDY_UID, WORKITEM_UID, state, STUDY_UID);
   }
 
   private static String outputsBody() {
@@ -181,6 +209,22 @@ class UpsCommandsTest {
 
   /** A model holding the study of the tests with one CT series, loaded from the test server. */
   private DicomModel loadedStudy(boolean writeAllowed) throws IOException {
+    DicomModel model = baseStudyModel(writeAllowed);
+    DicomSeries series = new DicomSeries("1.2.3.4");
+    series.setTag(TagD.get(Tag.SeriesInstanceUID), "1.2.3.4");
+    series.setTag(TagD.get(Tag.Modality), "CT");
+    series.addMedia(image("1.2.3.4", "1.2.3.4.1"));
+    model.addHierarchyNode(model.getStudyNode(STUDY_UID), series);
+    return model;
+  }
+
+  /** The study of the tests without a series, for the verbs that only need the study. */
+  private DicomModel loadedStudyWithoutSeries(boolean writeAllowed) throws IOException {
+    return baseStudyModel(writeAllowed);
+  }
+
+  /** The patient and the study of the tests, loaded from the test server, and the document. */
+  private DicomModel baseStudyModel(boolean writeAllowed) throws IOException {
     DicomModel model = new DicomModel();
     MediaSeriesGroup patient =
         new MediaSeriesGroupNode(
@@ -191,11 +235,6 @@ class UpsCommandsTest {
     study.setTag(TagD.get(Tag.StudyInstanceUID), STUDY_UID);
     model.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
     model.addHierarchyNode(patient, study);
-    DicomSeries series = new DicomSeries("1.2.3.4");
-    series.setTag(TagD.get(Tag.SeriesInstanceUID), "1.2.3.4");
-    series.setTag(TagD.get(Tag.Modality), "CT");
-    series.addMedia(image("1.2.3.4", "1.2.3.4.1"));
-    model.addHierarchyNode(study, series);
     DicomWebOrigin.attach(study, new DicomWebOrigin(url(), null, null));
     Path document = folder.resolve("upsNodes.json");
     Files.writeString(
@@ -206,7 +245,7 @@ class UpsCommandsTest {
                        "meaning": "Organ segmentation"}]}]}
         """
             .formatted(url(), writeAllowed));
-    UpsNodes.install(document);
+    upsNodesPrevious = UpsNodes.install(document);
     return model;
   }
 
@@ -225,6 +264,69 @@ class UpsCommandsTest {
     when(reader.getTagValue(any())).thenAnswer(inv -> ((TagW) inv.getArgument(0)).getValue(a));
     when(reader.getDicomObject()).thenReturn(a);
     return new DicomImageElement(reader, 0);
+  }
+
+  /**
+   * A scripted service for the watch verbs: it answers the Subscribe and the channel without a
+   * wire, and delivers one report to the listener it is given.
+   */
+  private static final class ScriptedUpsService extends UpsService {
+    volatile Consumer<Attributes> listener;
+    final WebSocket socket;
+    final List<Attributes> searchResult;
+
+    ScriptedUpsService(WebSocket socket, List<Attributes> searchResult) {
+      super(
+          UpsConfig.builder().baseUrl("http://127.0.0.1").requesterAet("WEASIS").build(),
+          "WEASIS");
+      this.socket = socket;
+      this.searchResult = searchResult;
+    }
+
+    @Override
+    public UpsResponse subscribe(Attributes filter, boolean deletionLock) {
+      return new UpsResponse(201, Optional.empty(), List.of());
+    }
+
+    @Override
+    public CompletableFuture<WebSocket> watch(Consumer<Attributes> listener) {
+      this.listener = listener;
+      Attributes report = new Attributes();
+      report.setString(Tag.EventTypeID, VR.UI, "1.2.840.10008.1.2.6.1");
+      report.setString(Tag.AffectedSOPInstanceUID, VR.UI, WORKITEM_UID);
+      listener.accept(report);
+      return CompletableFuture.completedFuture(socket);
+    }
+
+    @Override
+    public List<Attributes> search(String studyUid, String patientId, String accessionNumber) {
+      return searchResult;
+    }
+  }
+
+  /** A WebSocket that only records {@code abort()}, without the JDK implementation. */
+  private static WebSocket fakeWebSocket(AtomicBoolean aborted) {
+    return (WebSocket)
+        Proxy.newProxyInstance(
+            WebSocket.class.getClassLoader(),
+            new Class<?>[] {WebSocket.class},
+            (proxy, method, args) -> {
+              if ("abort".equals(method.getName())) { // NON-NLS
+                aborted.set(true);
+                return null;
+              }
+              Class<?> type = method.getReturnType();
+              if (type == boolean.class) {
+                return false;
+              }
+              if (type == int.class) {
+                return 0;
+              }
+              if (type == long.class) {
+                return 0L;
+              }
+              return null;
+            });
   }
 
   @Test
@@ -368,6 +470,30 @@ class UpsCommandsTest {
   }
 
   @Test
+  void cancel_on_a_loaded_study_forwards_the_reason() throws IOException {
+    DicomModel model = loadedStudyWithoutSeries(true);
+    CommandResult result =
+        run(
+            model,
+            "cancel",
+            "--study",
+            STUDY_UID,
+            "--workitem",
+            WORKITEM_UID,
+            "--reason",
+            "patient asked");
+
+    assertAll(
+        () -> assertEquals(CommandResult.OK, result.status(), String.valueOf(result)),
+        () ->
+            assertTrue(
+                bodies.stream().anyMatch(b -> b.contains("\"00741238\"")), bodies.toString()),
+        () ->
+            assertTrue(
+                bodies.stream().anyMatch(b -> b.contains("patient asked")), bodies.toString()));
+  }
+
+  @Test
   void outputs_lists_the_referenced_instances_of_a_workitem() {
     String body = run("outputs", "--url", url(), "--workitem", WORKITEM_UID).body();
 
@@ -420,6 +546,127 @@ class UpsCommandsTest {
     assertAll(
         () -> assertNotEquals(CommandResult.OK, result.status()),
         () -> assertTrue(requests.stream().noneMatch(r -> r.startsWith("GET"))));
+  }
+
+  @Test
+  void watch_closes_the_channel_after_the_first_report_and_silences_the_listener() throws Exception {
+    AtomicBoolean aborted = new AtomicBoolean();
+    WebSocket socket = fakeWebSocket(aborted);
+    ScriptedUpsService service = new ScriptedUpsService(socket, List.of());
+
+    UpsCommands.Watch command = new UpsCommands.Watch();
+    command.study = STUDY_UID;
+    command.timeout = 5;
+    List<JsonObject> events = Collections.synchronizedList(new ArrayList<>());
+    boolean channel = command.openChannel(service, events);
+
+    assertAll(
+        () -> assertTrue(channel),
+        () -> assertTrue(aborted.get(), "the channel is closed once the first report arrived"),
+        () -> assertEquals(1, events.size()));
+
+    // A report racing the close must not append to the events again.
+    Attributes late = new Attributes();
+    late.setString(Tag.EventTypeID, VR.UI, "1.2.840.10008.1.2.6.1");
+    late.setString(Tag.AffectedSOPInstanceUID, VR.UI, WORKITEM_UID);
+    service.listener.accept(late);
+    assertEquals(1, events.size(), "the listener is silenced once the channel is closed");
+  }
+
+  @Test
+  void a_close_blocks_while_an_append_is_in_flight_and_rejects_what_follows() throws Exception {
+    WatchGate gate = new WatchGate();
+    CountDownLatch entered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    AtomicInteger appended = new AtomicInteger();
+
+    // Park an append inside the gate: it holds the monitor exactly as an in-flight report does.
+    Thread appender =
+        new Thread(
+            () ->
+                gate.accept(
+                    () -> {
+                      entered.countDown();
+                      try {
+                        release.await();
+                      } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                      }
+                      appended.incrementAndGet();
+                    }),
+            "in-flight-append");
+    appender.start();
+
+    // close() shares the monitor with accept(): it cannot enter while the append is parked, so
+    // the closer must stay blocked, which is the mutual exclusion the channel relies on.
+    AtomicBoolean closed = new AtomicBoolean();
+    Thread closer =
+        new Thread(
+            () -> {
+              gate.close();
+              closed.set(true);
+            },
+            "closer");
+
+    try {
+      // Bounded wait: if the append never parks inside the gate (a regression in accept()), fail
+      // here instead of letting the appender park in release.await() forever.
+      assertTrue(entered.await(5, TimeUnit.SECONDS), "the append must enter the gate");
+
+      closer.start();
+      Thread.sleep(200);
+      assertFalse(closed.get(), "close must block while an append is in flight");
+    } finally {
+      // Release the parked append and collect both workers even when an assertion above throws, so
+      // a close() that returns while the append is in flight cannot leak the appender forever.
+      release.countDown();
+      appender.join(5000);
+      closer.join(5000);
+    }
+
+    assertFalse(appender.isAlive(), "the append must have finished");
+    assertFalse(closer.isAlive(), "close must have finished");
+    assertTrue(closed.get(), "close must have run once the append released the monitor");
+    assertEquals(1, appended.get(), "the in-flight append lands exactly once");
+
+    // Once closed, the gate rejects: an append that starts after close does not run.
+    gate.accept(appended::incrementAndGet);
+    assertEquals(1, appended.get(), "an append after close is rejected");
+  }
+
+  @Test
+  void accept_runs_the_append_until_the_gate_is_closed_and_then_rejects_it() {
+    WatchGate gate = new WatchGate();
+    AtomicInteger appended = new AtomicInteger();
+
+    gate.accept(appended::incrementAndGet);
+    assertEquals(1, appended.get(), "an append before the close runs");
+
+    gate.close();
+    gate.accept(appended::incrementAndGet);
+    assertEquals(1, appended.get(), "an append after the close is rejected");
+  }
+
+  @Test
+  @Timeout(10)
+  void polling_sleeps_no_longer_than_the_remaining_timeout() throws Exception {
+    ScriptedUpsService service = new ScriptedUpsService(null, List.of());
+
+    UpsCommands.Watch command = new UpsCommands.Watch();
+    command.study = STUDY_UID;
+    command.timeout = 1;
+    command.poll = 3600;
+
+    long start = System.nanoTime();
+    List<JsonObject> changed = command.pollOnce(service);
+    long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+
+    assertAll(
+        () -> assertTrue(changed.isEmpty()),
+        () ->
+            assertTrue(
+                elapsedMillis < 10_000,
+                "pollOnce must not sleep the full poll interval: took " + elapsedMillis + " ms"));
   }
 
   @Test

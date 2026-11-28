@@ -10,6 +10,7 @@
 package org.weasis.dicom.aiw;
 
 import java.io.IOException;
+import java.net.http.WebSocket;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -133,12 +134,36 @@ public class UpsService {
   private Optional<Attributes> nonTerminalWorkitem(String studyUid, Code catalogEntry)
       throws IOException, InterruptedException {
     for (Attributes workitem : search(studyUid, null, null)) {
+      // (0040,A370) is a Required matching key (PS3.4 Table CC.2.5-3), so a conformant origin
+      // already filtered on it. The guard is cheap insurance against a lax origin that answers
+      // every study's workitems, which would otherwise suppress the Create of this study.
+      if (!referencesStudy(workitem, studyUid)) {
+        continue;
+      }
       String state = workitem.getString(Tag.ProcedureStepState);
       if (isNonTerminal(state) && hasCode(workitem, catalogEntry)) {
         return Optional.of(workitem);
       }
     }
     return Optional.empty();
+  }
+
+  /**
+   * Whether the workitem references {@code studyUid} in any item of its Referenced Request Sequence
+   * (0040,A370): the sequence may hold several requests (PS3.3 C.30.4), so the study must match any
+   * of them, not only the first.
+   */
+  private static boolean referencesStudy(Attributes workitem, String studyUid) {
+    Sequence request = workitem.getSequence(Tag.ReferencedRequestSequence);
+    if (request == null || request.isEmpty()) {
+      return false;
+    }
+    for (Attributes item : request) {
+      if (studyUid.equals(item.getString(Tag.StudyInstanceUID))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** SCHEDULED and IN PROGRESS are the two states a Task Requestor still has to reckon with. */
@@ -188,7 +213,7 @@ public class UpsService {
    *
    * @return the subscription's completion handle: the channel is open once it completes
    */
-  public CompletableFuture<?> watch(Consumer<Attributes> listener) {
+  public CompletableFuture<WebSocket> watch(Consumer<Attributes> listener) {
     Objects.requireNonNull(listener, "Listener cannot be null");
     return client.openNotificationChannel(aeTitle, listener);
   }
